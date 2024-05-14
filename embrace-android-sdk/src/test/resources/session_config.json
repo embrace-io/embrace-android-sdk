@@ -1,6 +1,4 @@
 {
-  "max_session_seconds": 120,
-  "async_end": true,
   "error_log_strict_mode": true,
   "send_full_for": ["crash"],
   "components": ["breadcrumbs"]

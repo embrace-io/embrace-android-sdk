@@ -22,7 +22,7 @@ internal class EmbraceInternalErrorServiceTest {
     @Before
     fun setUp() {
         activityService = FakeProcessStateService()
-        service = EmbraceInternalErrorService(activityService, clock)
+        service = EmbraceInternalErrorService(clock)
         cfg = RemoteConfig()
         cfgService =
             FakeConfigService(dataCaptureEventBehavior = fakeDataCaptureEventBehavior { cfg })
@@ -37,7 +37,6 @@ internal class EmbraceInternalErrorServiceTest {
         val error = checkNotNull(service.getCapturedData())
         assertEquals(1, error.occurrences)
         with(error.exceptionErrors.single()) {
-            assertEquals("foreground", state)
             assertEquals(clock.now(), timestamp)
 
             // verify exc object
@@ -82,9 +81,6 @@ internal class EmbraceInternalErrorServiceTest {
 
         val error = checkNotNull(service.getCapturedData())
         assertEquals(1, error.occurrences)
-
-        val info = error.exceptionErrors.single()
-        assertEquals("background", info.state)
     }
 
     @Test

@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.injection.PayloadModule
-import io.embrace.android.embracesdk.injection.SdkObservabilityModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
@@ -130,15 +129,6 @@ internal typealias AnrModuleSupplier = (
 ) -> AnrModule
 
 /**
- * Function that returns an instance of [SdkObservabilityModule]. Matches the signature of the constructor for [SdkObservabilityModuleImpl]
- */
-
-internal typealias SdkObservabilityModuleSupplier = (
-    initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule
-) -> SdkObservabilityModule
-
-/**
  * Function that returns an instance of [CustomerLogModule]. Matches the signature of the constructor for [CustomerLogModuleImpl]
  */
 
@@ -207,7 +197,6 @@ internal typealias SessionModuleSupplier = (
     deliveryModule: DeliveryModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     customerLogModule: CustomerLogModule,
-    sdkObservabilityModule: SdkObservabilityModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadModule: PayloadModule,
@@ -244,7 +233,6 @@ internal typealias PayloadModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
-    sdkObservabilityModule: SdkObservabilityModule,
     sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
 ) -> PayloadModule
 

@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 
@@ -45,6 +47,11 @@ internal interface InitModule {
      * this out by proximity for stitched sessions.
      */
     val processIdentifier: String
+
+    /**
+     * Tracks internal errors
+     */
+    val internalErrorService: InternalErrorService
 }
 
 internal class InitModuleImpl(
@@ -54,6 +61,12 @@ internal class InitModuleImpl(
     override val logger: EmbLogger = EmbLoggerImpl(),
     override val systemInfo: SystemInfo = SystemInfo()
 ) : InitModule {
+
+    override val internalErrorService: InternalErrorService = EmbraceInternalErrorService(clock)
+
+    init {
+        logger.internalErrorService = internalErrorService
+    }
 
     override val telemetryService: TelemetryService by singleton {
         EmbraceTelemetryService(

@@ -31,7 +31,7 @@ internal class SessionPayloadSourceImplTest {
     fun setUp() {
         val errorService = FakeInternalErrorService().apply {
             data = LegacyExceptionError().apply {
-                addException(RuntimeException(), "test", FakeClock())
+                addException(RuntimeException(), FakeClock())
             }
         }
         sink = SpanSinkImpl().apply {

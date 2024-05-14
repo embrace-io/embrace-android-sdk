@@ -17,25 +17,13 @@ internal data class LegacyExceptionErrorInfo(
     @Json(name = "ts") val timestamp: Long? = null,
 
     /**
-     * App state (foreground or background).
-     */
-    @Json(name = "s") val state: String? = null,
-
-    /**
      * A list of exceptions.
      */
     @Json(name = "ex") val exceptions: List<LegacyExceptionInfo>? = null
 
 ) {
-    fun toNewPayload(): ExceptionErrorInfo {
-        val mappedState = when (state) {
-            "background" -> ExceptionErrorInfo.AppState.BACKGROUND
-            else -> ExceptionErrorInfo.AppState.FOREGROUND
-        }
-        return ExceptionErrorInfo(
-            timestamp,
-            mappedState,
-            exceptions?.map(LegacyExceptionInfo::toNewPayload)
-        )
-    }
+    fun toNewPayload(): ExceptionErrorInfo = ExceptionErrorInfo(
+        timestamp,
+        exceptions?.map(LegacyExceptionInfo::toNewPayload)
+    )
 }

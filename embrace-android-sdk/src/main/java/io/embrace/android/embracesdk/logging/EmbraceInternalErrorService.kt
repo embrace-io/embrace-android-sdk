@@ -3,13 +3,11 @@ package io.embrace.android.embracesdk.logging
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 
 /**
  * Intercepts Embrace SDK's exceptions errors and forwards them to the Embrace API.
  */
 internal class EmbraceInternalErrorService(
-    private val processStateService: ProcessStateService,
     private val clock: Clock
 ) : InternalErrorService {
 
@@ -20,7 +18,6 @@ internal class EmbraceInternalErrorService(
         if (configService == null || configService?.dataCaptureEventBehavior?.isInternalExceptionCaptureEnabled() == true) {
             err.addException(
                 throwable,
-                getApplicationState(),
                 clock
             )
         }
@@ -35,23 +32,5 @@ internal class EmbraceInternalErrorService(
 
     override fun cleanCollections() {
         err = LegacyExceptionError()
-    }
-
-    private fun getApplicationState(): String = when {
-        processStateService.isInBackground -> APPLICATION_STATE_BACKGROUND
-        else -> APPLICATION_STATE_FOREGROUND
-    }
-
-    companion object {
-
-        /**
-         * Signals to the API that the application was in the foreground.
-         */
-        private const val APPLICATION_STATE_FOREGROUND = "foreground"
-
-        /**
-         * Signals to the API that the application was in the background.
-         */
-        private const val APPLICATION_STATE_BACKGROUND = "background"
     }
 }

@@ -20,10 +20,7 @@ internal class LegacyLegacyExceptionErrorInfoTest {
     fun testExceptionErrorInfoSerialization() {
         val exceptionErrorInfo = LegacyExceptionErrorInfo(
             0,
-            "STATE",
-            listOf(
-                info,
-            )
+            listOf(info)
         )
         assertJsonMatchesGoldenFile("exception_error_info_expected.json", exceptionErrorInfo)
     }
@@ -32,7 +29,6 @@ internal class LegacyLegacyExceptionErrorInfoTest {
     fun testExceptionErrorInfoDeserialization() {
         val obj = deserializeJsonFromResource<LegacyExceptionErrorInfo>("exception_error_info_expected.json")
         assertEquals(0L, obj.timestamp)
-        assertEquals("STATE", obj.state)
         val exceptionInfo = obj.exceptions?.get(0)
         assertEquals(info.message, exceptionInfo?.message)
         assertEquals(info.name, exceptionInfo?.name)

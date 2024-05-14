@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import io.embrace.android.embracesdk.internal.payload.ExceptionErrorInfo.AppState
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.LegacyExceptionErrorInfo
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
@@ -16,7 +15,6 @@ internal class MapInternalErrorTest {
         input.exceptionErrors.add(
             LegacyExceptionErrorInfo(
                 timestamp = 0,
-                state = "foreground",
                 exceptions = listOf(
                     LegacyExceptionInfo(
                         name = "name",
@@ -33,7 +31,6 @@ internal class MapInternalErrorTest {
 
         val error = checkNotNull(output.errors).single()
         assertEquals(0L, error.timestamp)
-        assertEquals(AppState.FOREGROUND, error.appState)
 
         val exception = checkNotNull(error.exceptions).single()
         assertEquals("name", exception.name)

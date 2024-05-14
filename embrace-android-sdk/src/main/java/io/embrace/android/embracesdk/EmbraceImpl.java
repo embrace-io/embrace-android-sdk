@@ -36,7 +36,6 @@ import io.embrace.android.embracesdk.injection.DataContainerModule;
 import io.embrace.android.embracesdk.injection.DeliveryModule;
 import io.embrace.android.embracesdk.injection.EssentialServiceModule;
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper;
-import io.embrace.android.embracesdk.injection.SdkObservabilityModule;
 import io.embrace.android.embracesdk.injection.SessionModule;
 import io.embrace.android.embracesdk.internal.ApkToolsConfig;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
@@ -304,9 +303,8 @@ final class EmbraceImpl {
         final AnrModule anrModule = moduleInitBootstrapper.getAnrModule();
         anrService = anrModule.getAnrService();
 
-        final SdkObservabilityModule sdkObservabilityModule = moduleInitBootstrapper.getSdkObservabilityModule();
-        internalErrorService = sdkObservabilityModule.getInternalErrorService();
-        sdkObservabilityModule.getInternalErrorService().setConfigService(configService);
+        internalErrorService = moduleInitBootstrapper.getInitModule().getInternalErrorService();
+        internalErrorService.setConfigService(configService);
 
         final DeliveryModule deliveryModule = moduleInitBootstrapper.getDeliveryModule();
 

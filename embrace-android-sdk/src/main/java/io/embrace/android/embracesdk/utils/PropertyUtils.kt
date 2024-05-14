@@ -22,16 +22,15 @@ internal object PropertyUtils {
      * @return a normalized Map of the provided properties.
      */
     @JvmStatic
-    fun sanitizeProperties(properties: Map<String?, Any?>?, logger: EmbLogger): Map<String, Any> {
+    fun sanitizeProperties(properties: Map<String, Any?>?, logger: EmbLogger): Map<String, Any> {
         properties ?: return emptyMap()
 
         if (properties.size > MAX_PROPERTY_SIZE) {
             logger.logWarning("The maximum number of properties is $MAX_PROPERTY_SIZE, the rest will be ignored.")
         }
         return properties.entries
-            .filter { it.key != null }
             .take(MAX_PROPERTY_SIZE)
-            .associate { Pair(it.key ?: "null", checkIfSerializable(it.key ?: "", it.value, logger)) }
+            .associate { Pair(it.key, checkIfSerializable(it.key, it.value, logger)) }
     }
 
     private fun checkIfSerializable(key: String, value: Any?, logger: EmbLogger): Any {

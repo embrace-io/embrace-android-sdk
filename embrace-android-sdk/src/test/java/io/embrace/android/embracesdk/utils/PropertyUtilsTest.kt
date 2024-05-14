@@ -15,12 +15,11 @@ internal class PropertyUtilsTest {
         assertEquals(emptyMap<String, String>(), sanitizeProperties(emptyMap(), logger))
     }
 
-    @Suppress("UNCHECKED_CAST")
     @Test
     fun testPropertyLimitExceeded() {
         val input = (0..20).associateBy { "$it" }
         val expected = (0..9).associateBy { "$it" }
-        assertEquals(expected, sanitizeProperties(input as Map<String?, Any>?, logger))
+        assertEquals(expected, sanitizeProperties(input as Map<String, Any>?, logger))
     }
 
     @Test

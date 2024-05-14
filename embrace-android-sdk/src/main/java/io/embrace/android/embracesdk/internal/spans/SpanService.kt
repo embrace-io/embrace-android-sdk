@@ -21,7 +21,7 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
-        private: Boolean = internal,
+        private: Boolean = false,
     ): PersistableEmbraceSpan?
 
     /**

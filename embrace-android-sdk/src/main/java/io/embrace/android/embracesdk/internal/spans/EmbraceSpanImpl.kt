@@ -56,7 +56,7 @@ internal class EmbraceSpanImpl(
             false
         } else {
             var successful: Boolean
-            val attemptedStartTimeMs = startTimeMs ?: openTelemetryClock.now().nanosToMillis()
+            val attemptedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan(attemptedStartTimeMs))
                 successful = startedSpan.get() != null
@@ -74,7 +74,7 @@ internal class EmbraceSpanImpl(
             false
         } else {
             var successful = false
-            val attemptedEndTimeMs = endTimeMs ?: openTelemetryClock.now().nanosToMillis()
+            val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
 
             synchronized(startedSpan) {
                 startedSpan.get()?.let { spanToStop ->

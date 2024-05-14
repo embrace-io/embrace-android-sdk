@@ -22,7 +22,7 @@ internal class EmbraceTracer(
         spanService.startSpan(
             name = name,
             parent = parent,
-            startTimeMs = startTimeMs,
+            startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
             internal = false
         )
 

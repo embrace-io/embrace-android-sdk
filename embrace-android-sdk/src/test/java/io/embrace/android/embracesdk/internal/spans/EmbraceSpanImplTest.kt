@@ -121,6 +121,22 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `starting and stopping span with nanosecond timestamps`() {
+        with(embraceSpan) {
+            val expectedStartTimeMs = fakeClock.now() + 99
+            val expectedEndTimeMs = fakeClock.now() + 505
+            assertTrue(start(startTimeMs = expectedStartTimeMs.millisToNanos()))
+            assertTrue(stop(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs.millisToNanos()))
+            assertSnapshot(
+                expectedStartTimeMs = expectedStartTimeMs,
+                expectedEndTimeMs = expectedEndTimeMs,
+                expectedStatus = Span.Status.ERROR
+            )
+            validateStoppedSpan()
+        }
+    }
+
+    @Test
     fun `check adding events`() {
         with(embraceSpan) {
             assertTrue(start())

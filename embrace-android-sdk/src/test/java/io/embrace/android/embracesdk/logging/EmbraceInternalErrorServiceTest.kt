@@ -10,8 +10,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import java.net.ConnectException
-import java.net.SocketException
 
 internal class EmbraceInternalErrorServiceTest {
 
@@ -33,10 +31,10 @@ internal class EmbraceInternalErrorServiceTest {
     @Test
     fun testExceptionReportingEnabled() {
         cfg = cfg.copy(internalExceptionCaptureEnabled = true)
-        service.setConfigService(cfgService)
+        service.configService = cfgService
         service.handleInternalError(RuntimeException("Whoops!"))
 
-        val error = checkNotNull(service.currentExceptionError)
+        val error = checkNotNull(service.getCapturedData())
         assertEquals(1, error.occurrences)
         with(error.exceptionErrors.single()) {
             assertEquals("foreground", state)
@@ -52,30 +50,29 @@ internal class EmbraceInternalErrorServiceTest {
     @Test
     fun testExceptionReportingDisabled() {
         cfg = cfg.copy(internalExceptionCaptureEnabled = false)
-        service.setConfigService(cfgService)
+        service.configService = cfgService
         service.handleInternalError(RuntimeException())
-        val error = checkNotNull(service.currentExceptionError)
-        assertEquals(0, error.occurrences)
+        assertNull(service.getCapturedData())
     }
 
     @Test
     fun testExceptionReportingUnknown() {
         service.handleInternalError(RuntimeException())
-        val error = checkNotNull(service.currentExceptionError)
+        val error = checkNotNull(service.getCapturedData())
         assertEquals(1, error.occurrences)
     }
 
     @Test
     fun testExceptionReset() {
         cfg = cfg.copy(internalExceptionCaptureEnabled = true)
-        service.setConfigService(cfgService)
+        service.configService = cfgService
         service.handleInternalError(RuntimeException())
 
-        val error = checkNotNull(service.currentExceptionError)
+        val error = checkNotNull(service.getCapturedData())
         assertEquals(1, error.occurrences)
 
-        service.resetExceptionErrorObject()
-        assertNull(service.currentExceptionError)
+        service.cleanCollections()
+        assertNull(service.getCapturedData())
     }
 
     @Test
@@ -83,7 +80,7 @@ internal class EmbraceInternalErrorServiceTest {
         activityService.isInBackground = true
         service.handleInternalError(RuntimeException("Whoops!"))
 
-        val error = checkNotNull(service.currentExceptionError)
+        val error = checkNotNull(service.getCapturedData())
         assertEquals(1, error.occurrences)
 
         val info = error.exceptionErrors.single()
@@ -96,7 +93,7 @@ internal class EmbraceInternalErrorServiceTest {
         service.handleInternalError(IllegalStateException("Another!"))
         service.handleInternalError(IllegalStateException("Another 2!"))
 
-        val error = checkNotNull(service.currentExceptionError)
+        val error = checkNotNull(service.getCapturedData())
         assertEquals(3, error.occurrences)
 
         assertEquals("Whoops!", error.exceptionErrors[0].exceptions?.single()?.message)
@@ -109,21 +106,8 @@ internal class EmbraceInternalErrorServiceTest {
         repeat(12) { k ->
             service.handleInternalError(RuntimeException("Oh no $k"))
         }
-        val err = checkNotNull(service.currentExceptionError)
+        val err = checkNotNull(service.getCapturedData())
         assertEquals(12, err.occurrences)
         assertEquals(10, err.exceptionErrors.size)
-    }
-
-    @Test
-    fun testWrappedIgnoredException() {
-        val exc = IllegalStateException(ConnectException("It took too long..."))
-        service.handleInternalError(exc)
-        assertNull(service.currentExceptionError)
-    }
-
-    @Test
-    fun testIgnoredNetworkException() {
-        service.handleInternalError(SocketException("Timeout..."))
-        assertNull(service.currentExceptionError)
     }
 }

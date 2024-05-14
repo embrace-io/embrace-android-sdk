@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -44,7 +43,6 @@ internal class SessionOrchestratorTest {
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
-    private lateinit var internalErrorService: FakeInternalErrorService
     private lateinit var userService: FakeUserService
     private lateinit var ndkService: FakeNdkService
     private lateinit var deliveryService: FakeDeliveryService
@@ -67,7 +65,6 @@ internal class SessionOrchestratorTest {
         clock = FakeClock()
         configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
         memoryCleanerService = FakeMemoryCleanerService()
-        internalErrorService = FakeInternalErrorService()
         sessionProperties = fakeEmbraceSessionProperties()
         userService = FakeUserService()
         ndkService = FakeNdkService()
@@ -102,7 +99,6 @@ internal class SessionOrchestratorTest {
                 userService,
                 ndkService,
                 sessionProperties,
-                internalErrorService,
                 FakeNetworkConnectivityService()
             ),
             deliveryService,
@@ -372,7 +368,6 @@ internal class SessionOrchestratorTest {
                 userService,
                 ndkService,
                 sessionProperties,
-                internalErrorService,
                 FakeNetworkConnectivityService()
             ),
             deliveryService,

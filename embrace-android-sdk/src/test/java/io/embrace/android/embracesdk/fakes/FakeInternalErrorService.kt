@@ -6,21 +6,20 @@ import io.embrace.android.embracesdk.payload.LegacyExceptionError
 
 internal class FakeInternalErrorService : InternalErrorService {
 
-    var lastConfigService: ConfigService? = null
+    override var configService: ConfigService? = null
     var throwables: MutableList<Throwable> = mutableListOf()
     var resetCallCount: Int = 0
-
-    override fun setConfigService(configService: ConfigService?) {
-        this.lastConfigService = configService
-    }
+    var data: LegacyExceptionError? = null
 
     override fun handleInternalError(throwable: Throwable) {
         throwables.add(throwable)
     }
 
-    override fun resetExceptionErrorObject() {
-        resetCallCount++
+    override fun getCapturedData(): LegacyExceptionError? {
+        return data
     }
 
-    override var currentExceptionError: LegacyExceptionError? = null
+    override fun cleanCollections() {
+        resetCallCount++
+    }
 }

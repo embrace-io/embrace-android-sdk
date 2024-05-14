@@ -67,7 +67,7 @@ internal class V1PayloadMessageCollatorTest {
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             internalErrorService = FakeInternalErrorService().apply {
-                currentExceptionError = LegacyExceptionError()
+                data = LegacyExceptionError()
             },
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),

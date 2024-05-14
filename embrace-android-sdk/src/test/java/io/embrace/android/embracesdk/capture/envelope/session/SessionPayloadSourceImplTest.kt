@@ -30,7 +30,7 @@ internal class SessionPayloadSourceImplTest {
     @Before
     fun setUp() {
         val errorService = FakeInternalErrorService().apply {
-            currentExceptionError = LegacyExceptionError().apply {
+            data = LegacyExceptionError().apply {
                 addException(RuntimeException(), "test", FakeClock())
             }
         }

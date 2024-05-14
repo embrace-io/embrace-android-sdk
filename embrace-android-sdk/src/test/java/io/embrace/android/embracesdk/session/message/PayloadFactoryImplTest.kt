@@ -57,7 +57,7 @@ internal class PayloadFactoryImplTest {
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             internalErrorService = FakeInternalErrorService().apply {
-                currentExceptionError = LegacyExceptionError()
+                data = LegacyExceptionError()
             },
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),

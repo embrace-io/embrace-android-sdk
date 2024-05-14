@@ -59,7 +59,7 @@ internal class V2PayloadMessageCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply { currentExceptionError = LegacyExceptionError() },
+            internalErrorService = FakeInternalErrorService().apply { data = LegacyExceptionError() },
             breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),

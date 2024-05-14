@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
@@ -20,7 +19,6 @@ internal class OrchestratorBoundaryDelegate(
     private val userService: UserService,
     private val ndkService: NdkService?,
     private val sessionProperties: EmbraceSessionProperties,
-    private val internalErrorService: InternalErrorService,
     private val networkConnectivityService: NetworkConnectivityService
 ) {
 
@@ -29,7 +27,7 @@ internal class OrchestratorBoundaryDelegate(
      * resetting collections in services etc.
      */
     fun prepareForNewSession(clearUserInfo: Boolean = false) {
-        memoryCleanerService.cleanServicesCollections(internalErrorService)
+        memoryCleanerService.cleanServicesCollections()
         sessionProperties.clearTemporary()
 
         if (clearUserInfo) {

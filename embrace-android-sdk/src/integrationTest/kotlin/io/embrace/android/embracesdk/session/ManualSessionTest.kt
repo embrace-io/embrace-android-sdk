@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
@@ -27,7 +27,7 @@ internal class ManualSessionTest {
 
     @Before
     fun setUp() {
-        assertTrue(testRule.harness.getSentSessionMessages().isEmpty())
+        assertTrue(testRule.harness.getSentSessions().isEmpty())
     }
 
     @Test
@@ -37,7 +37,7 @@ internal class ManualSessionTest {
                 harness.overriddenClock.tick(10000) // enough to trigger new session
                 embrace.endSession()
             }
-            val messages = harness.getSentSessionMessages()
+            val messages = harness.getSentSessions()
             assertEquals(2, messages.size)
             val stateSession = messages[0] // started via state, ended manually
             val manualSession = messages[1] // started manually, ended via state
@@ -58,7 +58,7 @@ internal class ManualSessionTest {
                 harness.overriddenClock.tick(10000)
                 embrace.endSession()
             }
-            val messages = harness.getSentSessionMessages()
+            val messages = harness.getSentSessions()
             assertEquals(1, messages.size)
             verifySessionHappened(messages[0])
         }
@@ -74,7 +74,7 @@ internal class ManualSessionTest {
                 harness.overriddenClock.tick(1000) // not enough to trigger new session
                 embrace.endSession()
             }
-            val message = harness.getSentSessionMessages().single()
+            val message = harness.getSentSessions().single()
             verifySessionHappened(message)
             assertEquals(1, message.session.number)
         }

@@ -119,7 +119,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadFactory.startSessionTimestamps.size)
         assertEquals(1, payloadFactory.startBaTimestamps.size)
         assertEquals("fake-activity", sessionIdTracker.sessionId)
-        assertEquals(0, deliveryService.lastSentSessions.size)
+        assertEquals(0, deliveryService.sentSessionMessages.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -130,7 +130,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.startSessionTimestamps.size)
         assertEquals(0, payloadFactory.startBaTimestamps.size)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
-        assertEquals(0, deliveryService.lastSentSessions.size)
+        assertEquals(0, deliveryService.sentSessionMessages.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -142,7 +142,7 @@ internal class SessionOrchestratorTest {
         assertEquals(TIMESTAMP, payloadFactory.startSessionTimestamps.single())
         assertEquals(TIMESTAMP, payloadFactory.endBaTimestamps.single())
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
-        assertEquals(1, deliveryService.lastSentSessions.size)
+        assertEquals(1, deliveryService.sentSessionMessages.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -153,7 +153,7 @@ internal class SessionOrchestratorTest {
         assertEquals(TIMESTAMP, payloadFactory.endSessionTimestamps.single())
         assertEquals(TIMESTAMP, payloadFactory.startBaTimestamps.single())
         assertEquals("fake-activity", sessionIdTracker.sessionId)
-        assertEquals(1, deliveryService.lastSentSessions.size)
+        assertEquals(1, deliveryService.sentSessionMessages.size)
     }
 
     @Test
@@ -164,7 +164,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.manualSessionEndCount)
         assertEquals(1, payloadFactory.manualSessionStartCount)
         assertEquals("fakeSessionId", sessionIdTracker.sessionId)
-        assertEquals(1, deliveryService.lastSentSessions.size)
+        assertEquals(1, deliveryService.sentSessionMessages.size)
     }
 
     @Test
@@ -174,7 +174,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(0, payloadFactory.manualSessionEndCount)
         assertEquals(0, payloadFactory.manualSessionStartCount)
-        assertEquals(0, deliveryService.lastSentSessions.size)
+        assertEquals(0, deliveryService.sentSessionMessages.size)
     }
 
     @Test
@@ -195,7 +195,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadFactory.startSessionTimestamps.size)
         assertEquals(0, payloadFactory.manualSessionEndCount)
         assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(0, deliveryService.lastSentSessions.size)
+        assertEquals(0, deliveryService.sentSessionMessages.size)
     }
 
     @Test
@@ -251,7 +251,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.endSessionWithCrash("crashId")
         assertEquals("crashId", payloadFactory.baCrashId)
-        assertEquals(1, deliveryService.lastSentSessions.size)
+        assertEquals(1, deliveryService.sentSessionMessages.size)
     }
 
     @Test
@@ -260,7 +260,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         orchestrator.endSessionWithCrash("crashId")
         assertEquals("crashId", payloadFactory.crashId)
-        assertEquals(1, deliveryService.lastSentSessions.size)
+        assertEquals(1, deliveryService.sentSessionMessages.size)
     }
 
     @Test

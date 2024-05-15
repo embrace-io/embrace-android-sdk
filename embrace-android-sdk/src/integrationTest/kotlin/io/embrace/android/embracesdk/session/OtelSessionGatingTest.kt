@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
@@ -67,7 +67,7 @@ internal class OtelSessionGatingTest {
 
     @Before
     fun setUp() {
-        assertTrue(testRule.harness.getSentSessionMessages().isEmpty())
+        assertTrue(testRule.harness.getSentSessions().isEmpty())
     }
 
     @Test
@@ -76,7 +76,7 @@ internal class OtelSessionGatingTest {
 
         with(testRule) {
             simulateSession()
-            val payload = harness.getSentSessionMessages().single()
+            val payload = harness.getSentSessions().single()
             verifySessionHappened(payload)
             assertSessionGating(payload, gated = false)
         }
@@ -94,7 +94,7 @@ internal class OtelSessionGatingTest {
 
         with(testRule) {
             simulateSession()
-            val payload = harness.getSentSessionMessages().single()
+            val payload = harness.getSentSessions().single()
             verifySessionHappened(payload)
             assertSessionGating(payload, gated = true)
         }

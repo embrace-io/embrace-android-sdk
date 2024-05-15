@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getLastSentSessionMessage
+import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -226,7 +226,7 @@ internal class NetworkRequestApiTest {
                 embrace.recordNetworkRequest(request)
             }
 
-            val session = checkNotNull(testRule.harness.getLastSentSessionMessage())
+            val session = checkNotNull(testRule.harness.getLastSentSession())
 
             val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.request.method") })
             assertEquals(
@@ -275,7 +275,7 @@ internal class NetworkRequestApiTest {
     }
 
     private fun validateAndReturnExpectedNetworkSpan(): EmbraceSpanData {
-        val session = checkNotNull(testRule.harness.getLastSentSessionMessage())
+        val session = checkNotNull(testRule.harness.getLastSentSession())
 
         val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.request.method") })
         assertEquals(

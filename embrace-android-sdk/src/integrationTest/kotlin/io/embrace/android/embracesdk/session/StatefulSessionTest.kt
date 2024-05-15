@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
@@ -26,7 +26,7 @@ internal class StatefulSessionTest {
 
     @Before
     fun setUp() {
-        assertTrue(testRule.harness.getSentSessionMessages().isEmpty())
+        assertTrue(testRule.harness.getSentSessions().isEmpty())
     }
 
     @Test
@@ -40,7 +40,7 @@ internal class StatefulSessionTest {
             harness.recordSession { }
 
             // verify first session
-            val messages = testRule.harness.getSentSessionMessages()
+            val messages = testRule.harness.getSentSessions()
             val first = messages[0]
             verifySessionHappened(first)
             assertEquals(LifeEventType.STATE, first.session.startType)
@@ -59,7 +59,7 @@ internal class StatefulSessionTest {
             harness.recordSession {
                 harness.recordSession()
             }
-            val messages = testRule.harness.getSentSessionMessages()
+            val messages = testRule.harness.getSentSessions()
 
             // TODO: future the logic seems wrong here - nested calls should probably be ignored
             //  and should not drop a session. However, it's an unlikely scenario (if we trust)

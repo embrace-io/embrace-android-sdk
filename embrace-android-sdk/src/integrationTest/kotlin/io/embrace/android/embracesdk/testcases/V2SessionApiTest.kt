@@ -58,7 +58,6 @@ internal class V2SessionApiTest {
             val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
             assertEquals(startTime, networkStatusSpan.startTimeNanos.nanosToMillis())
             assertEquals("sys.network_status", networkStatusSpan.attributes["emb.type"])
-            assertEquals("true", networkStatusSpan.attributes["emb.private"])
 
             // validate session span
             val sessionSpan = snapshots.single { it.name == "emb-session" }

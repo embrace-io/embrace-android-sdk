@@ -68,7 +68,7 @@ internal class SpanServiceImplTest {
             assertEquals(SpanId.getInvalid(), parentSpanId)
             assertIsTypePerformance()
             assertIsKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
     }
 
@@ -140,7 +140,7 @@ internal class SpanServiceImplTest {
             assertEquals(childSpan.spanId, spanId)
             assertEquals(childSpan.traceId, traceId)
             assertNotKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
 
         with(currentSpans[1]) {
@@ -149,7 +149,7 @@ internal class SpanServiceImplTest {
             assertEquals(parentSpan.spanId, spanId)
             assertEquals(parentSpan.traceId, traceId)
             assertIsKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
     }
 
@@ -208,7 +208,7 @@ internal class SpanServiceImplTest {
             assertEquals("emb-child-span", name)
             assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(childSpanEndTimeMs, endTimeNanos.nanosToMillis())
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
             assertNotKeySpan()
             assertIsType(EmbType.Ux.View)
         }

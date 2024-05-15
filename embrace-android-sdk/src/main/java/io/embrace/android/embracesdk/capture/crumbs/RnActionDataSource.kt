@@ -38,7 +38,6 @@ internal open class RnActionDataSource(
                 startTimeMs = startTime,
                 endTimeMs = endTime,
                 type = schemaType.telemetryType,
-                private = false,
                 attributes = schemaType.attributes()
             )
         }

@@ -140,7 +140,7 @@ internal class SpanServiceImplTest {
             assertEquals(childSpan.spanId, spanId)
             assertEquals(childSpan.traceId, traceId)
             assertNotKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
 
         with(currentSpans[1]) {
@@ -149,7 +149,7 @@ internal class SpanServiceImplTest {
             assertEquals(parentSpan.spanId, spanId)
             assertEquals(parentSpan.traceId, traceId)
             assertIsKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
     }
 

@@ -81,8 +81,13 @@ internal class EmbraceTracerTest {
         val parent = checkNotNull(embraceTracer.startSpan(name = "test-span"))
         clock.tick(20L)
         val childStartTimeMs = clock.now() - 10L
-        val child =
-            checkNotNull(embraceTracer.startSpan(name = "child-span", parent = parent, startTimeMs = childStartTimeMs))
+        val child = checkNotNull(
+            embraceTracer.startSpan(
+                name = "child-span",
+                parent = parent,
+                startTimeMs = childStartTimeMs,
+            )
+        )
         assertTrue(parent.stop())
         assertTrue(child.stop())
         val spans = spanSink.flushSpans()
@@ -291,6 +296,26 @@ internal class EmbraceTracerTest {
             assertEquals(2, events.size)
             assertEquals(eventTimeNanos, events[0].timestampNanos)
             assertEquals(eventTimeNanos, events[1].timestampNanos)
+        }
+    }
+
+    @Test
+    fun `start and stop span with nanosecond timestamp`() {
+        spanSink.flushSpans()
+        val expectedStartTimeNanos = clock.nowInNanos()
+        val span = checkNotNull(
+            embraceTracer.startSpan(
+                name = "fallback-span",
+                parent = null,
+                startTimeMs = expectedStartTimeNanos
+            )
+        )
+        clock.tick(10L)
+        val expectedEndTimeNanos = clock.nowInNanos()
+        assertTrue(span.stop(endTimeMs = expectedEndTimeNanos))
+        with(verifyPublicSpan("fallback-span")) {
+            assertEquals(expectedStartTimeNanos, startTimeNanos)
+            assertEquals(expectedEndTimeNanos, endTimeNanos)
         }
     }
 

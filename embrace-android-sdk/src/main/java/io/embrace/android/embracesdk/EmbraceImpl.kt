@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CT
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
+import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -45,8 +46,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val bootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper(),
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker)
-) : UserApi by userApiDelegate {
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
+    private val sessionApiDelegate: SessionApiDelegate = SessionApiDelegate(bootstrapper, sdkCallChecker)
+) : UserApi by userApiDelegate, SessionApi by sessionApiDelegate {
 
     @JvmField
     val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
@@ -330,33 +332,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     /**
-     * Adds a property to the current session.
-     */
-    fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
-        if (sdkCallChecker.check("add_session_property")) {
-            return sessionPropertiesService?.addProperty(key, value, permanent) ?: false
-        }
-        return false
-    }
-
-    /**
-     * Removes a property from the current session.
-     */
-    fun removeSessionProperty(key: String): Boolean {
-        if (sdkCallChecker.check("remove_session_property")) {
-            return sessionPropertiesService?.removeProperty(key) ?: false
-        }
-        return false
-    }
-
-    fun getSessionProperties(): Map<String, String>? {
-        if (sdkCallChecker.check("get_session_properties")) {
-            return sessionPropertiesService?.getProperties()
-        }
-        return null
-    }
-
-    /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
      * the app, such as a user adding an item to their shopping cart.
      *
@@ -552,18 +527,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun logInternalError(error: Throwable) {
         if (sdkCallChecker.check("log_internal_error")) {
             internalErrorService?.handleInternalError(error)
-        }
-    }
-
-    /**
-     * Ends the current session and starts a new one.
-     *
-     *
-     * Cleans all the user info on the device.
-     */
-    fun endSession(clearUserInfo: Boolean) {
-        if (sdkCallChecker.check("end_session")) {
-            sessionOrchestrator?.endSessionWithManual(clearUserInfo)
         }
     }
 

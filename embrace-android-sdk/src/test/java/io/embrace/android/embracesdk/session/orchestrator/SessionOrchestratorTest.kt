@@ -129,13 +129,51 @@ internal class SessionOrchestratorTest {
     fun `saved background activity save overridden after is sent`() {
         createOrchestrator(true)
         clock.tick()
-        orchestrator.reportBackgroundActivityStateChange()
         baCacheExecutor.runCurrentlyBlocked()
+        assertEquals(SessionSnapshotType.PERIODIC_CACHE, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(1, deliveryService.getSavedBackgroundActivities().count())
         orchestrator.onForeground(true, clock.now())
         clock.tick()
         orchestrator.onBackground(clock.now())
-        val lastBackgroundActivitySaveType = checkNotNull(deliveryService.savedSessionMessages.last().second)
-        assertEquals(SessionSnapshotType.NORMAL_END, lastBackgroundActivitySaveType)
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(2, deliveryService.getSavedBackgroundActivities().count())
+    }
+
+    @Test
+    fun `background activity save invoked after ending will not save it again`() {
+        createOrchestrator(true)
+        clock.tick()
+        orchestrator.onForeground(true, clock.now())
+        clock.tick()
+        assertEquals(1, deliveryService.savedSessionMessages.count())
+        baCacheExecutor.runCurrentlyBlocked()
+        assertEquals(1, deliveryService.savedSessionMessages.count())
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
+    }
+
+    @Test
+    fun `saved session overridden after it is sent`() {
+        createOrchestrator(false)
+        clock.tick()
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(SessionSnapshotType.PERIODIC_CACHE, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(1, deliveryService.getSavedSessions().count())
+        orchestrator.onBackground(clock.now())
+        clock.tick()
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(2, deliveryService.getSavedSessions().count())
+    }
+
+    @Test
+    fun `session save invoked after ending will not save it again`() {
+        createOrchestrator(false)
+        clock.tick()
+        orchestrator.onBackground(clock.now())
+        clock.tick()
+        assertEquals(1, deliveryService.savedSessionMessages.count())
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(1, deliveryService.savedSessionMessages.count())
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
     }
 
     @Test

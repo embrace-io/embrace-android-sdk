@@ -5,7 +5,6 @@ import android.app.Application
 import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
-import io.embrace.android.embracesdk.EventType.Companion.fromSeverity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.event.EmbraceEventService
@@ -18,16 +17,14 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CTraceparent
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
-import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
-import io.embrace.android.embracesdk.utils.PropertyUtils.sanitizeProperties
+import io.embrace.android.embracesdk.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
@@ -49,8 +46,12 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
     private val sessionApiDelegate: SessionApiDelegate = SessionApiDelegate(bootstrapper, sdkCallChecker),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(bootstrapper, sdkCallChecker)
-) : UserApi by userApiDelegate, SessionApi by sessionApiDelegate, NetworkRequestApi by networkRequestApiDelegate {
+        NetworkRequestApiDelegate(bootstrapper, sdkCallChecker),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker)
+) : UserApi by userApiDelegate,
+    SessionApi by sessionApiDelegate,
+    NetworkRequestApi by networkRequestApiDelegate,
+    LogsApi by logsApiDelegate {
 
     @JvmField
     val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
@@ -337,7 +338,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
      * the app, such as a user adding an item to their shopping cart.
      *
-     *
      * The length of time a moment takes to execute is recorded.
      *
      * @param name       a name identifying the moment
@@ -353,7 +353,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     /**
      * Signals the end of a moment with the specified name.
-     *
      *
      * The duration of the moment is computed.
      *
@@ -387,59 +386,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     fun generateW3cTraceparent(): String = generateW3CTraceparent()
 
-    fun logMessage(message: String, severity: Severity, properties: Map<String, Any>?) {
-        logMessage(
-            fromSeverity(severity),
-            message,
-            properties,
-            null,
-            null,
-            LogExceptionType.NONE,
-            null,
-            null
-        )
-    }
-
-    fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>?, message: String?) {
-        val exceptionMessage = if (throwable.message != null) throwable.message else ""
-        logMessage(
-            fromSeverity(severity),
-            (
-                message
-                    ?: exceptionMessage
-                ) ?: "",
-            properties,
-            throwable.getSafeStackTrace(),
-            null,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            throwable.javaClass.simpleName,
-            exceptionMessage
-        )
-    }
-
-    fun logCustomStacktrace(
-        stacktraceElements: Array<StackTraceElement>,
-        severity: Severity,
-        properties: Map<String, Any>?,
-        message: String?
-    ) {
-        logMessage(
-            fromSeverity(severity),
-            message
-                ?: "",
-            properties,
-            stacktraceElements,
-            null,
-            LogExceptionType.HANDLED,
-            null,
-            null,
-            null,
-            message
-        )
-    }
-
     @JvmOverloads
     fun logMessage(
         type: EventType,
@@ -453,33 +399,22 @@ internal class EmbraceImpl @JvmOverloads constructor(
         exceptionName: String? = null,
         exceptionMessage: String? = null
     ) {
-        if (sdkCallChecker.check("log_message")) {
-            try {
-                appFramework?.let {
-                    logMessageService?.log(
-                        message,
-                        type,
-                        logExceptionType,
-                        normalizeProperties(properties, logger),
-                        stackTraceElements,
-                        customStackTrace,
-                        it,
-                        context,
-                        library,
-                        exceptionName,
-                        exceptionMessage
-                    )
-                }
-                onActivityReported()
-            } catch (ex: Exception) {
-                logger.logDebug("Failed to log message using Embrace SDK.", ex)
-            }
-        }
+        logsApiDelegate.logMessage(
+            type,
+            message,
+            properties,
+            stackTraceElements,
+            customStackTrace,
+            logExceptionType,
+            context,
+            library,
+            exceptionName,
+            exceptionMessage
+        )
     }
 
     /**
      * Logs a breadcrumb.
-     *
      *
      * Breadcrumbs track a user's journey through the application and will be shown on the timeline.
      *
@@ -530,7 +465,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     /**
      * Log the start of a fragment.
      *
-     *
      * A matching call to endFragment must be made.
      *
      * @param name the name of the fragment to log
@@ -545,7 +479,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     /**
      * Log the end of a fragment.
      *
-     *
      * A matching call to startFragment must be made before this is called.
      *
      * @param name the name of the fragment to log
@@ -555,31 +488,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             return breadcrumbService?.endView(name) ?: false
         }
         return false
-    }
-
-    /**
-     * Saves captured push notification information into session payload
-     *
-     * @param title                    the title of the notification as a string (or null)
-     * @param body                     the body of the notification as a string (or null)
-     * @param topic                    the notification topic (if a user subscribed to one), or null
-     * @param id                       A unique ID identifying the message
-     * @param notificationPriority     the notificationPriority of the message (as resolved on the device)
-     * @param messageDeliveredPriority the priority of the message (as resolved on the server)
-     */
-    fun logPushNotification(
-        title: String?,
-        body: String?,
-        topic: String?,
-        id: String?,
-        notificationPriority: Int?,
-        messageDeliveredPriority: Int,
-        type: PushNotificationBreadcrumb.NotificationType
-    ) {
-        if (sdkCallChecker.check("log_push_notification")) {
-            pushNotificationService?.logPushNotification(title, body, topic, id, notificationPriority, messageDeliveredPriority, type)
-            onActivityReported()
-        }
     }
 
     /**
@@ -684,7 +592,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     /**
      * Logs the fact that a particular view was entered.
      *
-     *
      * If the previously logged view has the same name, a duplicate view breadcrumb will not be
      * logged.
      *
@@ -731,20 +638,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             }
         } catch (exc: Exception) {
             logger.logError("Failed to sample current thread during ANRs", exc)
-        }
-    }
-
-    private fun normalizeProperties(properties: Map<String, Any>?, logger: EmbLogger): Map<String, Any>? {
-        var normalizedProperties: Map<String, Any> = HashMap()
-        if (properties != null) {
-            try {
-                normalizedProperties = sanitizeProperties(properties, logger)
-            } catch (e: Exception) {
-                this.logger.logError("Exception occurred while normalizing the properties.", e)
-            }
-            return normalizedProperties
-        } else {
-            return null
         }
     }
 

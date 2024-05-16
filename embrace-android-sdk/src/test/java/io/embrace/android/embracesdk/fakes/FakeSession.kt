@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.toOldPayload
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -25,14 +26,18 @@ internal fun fakeSession(
     messageType = Session.MESSAGE_TYPE_END
 )
 
-internal fun fakeV1SessionMessage(): SessionMessage = SessionMessage(
-    session = fakeSession()
+internal fun fakeV1SessionMessage(session: Session = fakeSession()): SessionMessage = SessionMessage(
+    session = session
 )
 
-internal fun fakeV1EndedSessionMessage(): SessionMessage = SessionMessage(
-    session = fakeSession().copy(endTime = 160000500000L),
-    spans = listOfNotNull(testSpan),
-    spanSnapshots = listOfNotNull(),
+internal fun fakeV1EndedSessionMessage(
+    session: Session = fakeSession(),
+    spans: List<EmbraceSpanData> = listOfNotNull(testSpan),
+    spanSnapshots: List<EmbraceSpanData> = listOfNotNull(),
+): SessionMessage = SessionMessage(
+    session = session.copy(endTime = 160000500000L),
+    spans = spans,
+    spanSnapshots = spanSnapshots,
 )
 
 internal fun fakeV1EndedSessionMessageWithSnapshot(): SessionMessage = SessionMessage(

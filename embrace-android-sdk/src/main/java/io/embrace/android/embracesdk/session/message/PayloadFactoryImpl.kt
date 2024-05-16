@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class PayloadFactoryImpl(
-    private val v1payloadMessageCollator: V1PayloadMessageCollator,
-    private val v2payloadMessageCollator: V2PayloadMessageCollator,
+    private val v1payloadMessageCollator: PayloadMessageCollator,
+    private val v2payloadMessageCollator: PayloadMessageCollator,
     private val configService: ConfigService,
     private val logger: EmbLogger
 ) : PayloadFactory {

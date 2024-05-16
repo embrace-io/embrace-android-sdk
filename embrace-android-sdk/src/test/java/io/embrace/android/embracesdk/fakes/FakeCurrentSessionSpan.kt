@@ -3,18 +3,25 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.sdk.trace.data.StatusData
+import java.util.concurrent.atomic.AtomicInteger
 
-internal class FakeCurrentSessionSpan : CurrentSessionSpan {
-
+internal class FakeCurrentSessionSpan(
+    private val clock: FakeClock = FakeClock()
+) : CurrentSessionSpan {
     var initializedCallCount = 0
     var addedEvents = mutableListOf<SpanEventData>()
-    var spanData = listOf<EmbraceSpanData>()
     var addedAttributes = mutableListOf<SpanAttributeData>()
+    var sessionSpan: FakeSpanData? = null
+
+    private val sessionIteration = AtomicInteger(1)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
+        sessionSpan = newSessionSpan(sdkInitStartTimeMs)
     }
 
     override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
@@ -35,7 +42,12 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
-        return spanData
+        val endingSessionSpan = checkNotNull(sessionSpan)
+        endingSessionSpan.endTimeNanos = clock.nowInNanos()
+        endingSessionSpan.spanStatus = if (appTerminationCause == null) StatusData.ok() else StatusData.error()
+        sessionIteration.incrementAndGet()
+        sessionSpan = if (appTerminationCause == null) newSessionSpan(clock.now()) else null
+        return listOf(EmbraceSpanData((endingSessionSpan)))
     }
 
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
@@ -43,10 +55,16 @@ internal class FakeCurrentSessionSpan : CurrentSessionSpan {
     }
 
     override fun getSessionId(): String {
-        return "testSessionId"
+        return "testSessionId$sessionIteration"
     }
 
     fun getAttribute(key: String): String? = addedAttributes.lastOrNull { it.key == key }?.value
 
     fun attributeCount(): Int = addedAttributes.size
+
+    private fun newSessionSpan(startTimeMs: Long) =
+        FakeSpanData(
+            startEpochNanos = startTimeMs.millisToNanos(),
+            name = "fake-session-span${getSessionId()}"
+        )
 }

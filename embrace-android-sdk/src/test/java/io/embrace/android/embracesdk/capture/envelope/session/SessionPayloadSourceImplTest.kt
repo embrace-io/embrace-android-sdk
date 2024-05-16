@@ -8,13 +8,13 @@ import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
@@ -38,7 +38,7 @@ internal class SessionPayloadSourceImplTest {
             storeCompletedSpans(listOf(cacheSpan))
         }
         currentSessionSpan = FakeCurrentSessionSpan().apply {
-            spanData = listOf(EmbraceSpanData(FakeSpanData("my-span")))
+            initializeService(1000L)
         }
         activeSpan = FakePersistableEmbraceSpan.started()
         spanRepository = SpanRepository()
@@ -57,8 +57,7 @@ internal class SessionPayloadSourceImplTest {
     fun `session crash`() {
         val payload = impl.getSessionPayload(SessionSnapshotType.JVM_CRASH)
         assertPayloadPopulated(payload)
-        val span = checkNotNull(payload.spans?.single())
-        assertEquals("my-span", span.name)
+        assertNotNull(payload.spans?.single())
     }
 
     @Test
@@ -73,8 +72,7 @@ internal class SessionPayloadSourceImplTest {
     fun `session lifecycle change`() {
         val payload = impl.getSessionPayload(SessionSnapshotType.NORMAL_END)
         assertPayloadPopulated(payload)
-        val span = checkNotNull(payload.spans?.single())
-        assertEquals("my-span", span.name)
+        assertNotNull(payload.spans?.single())
     }
 
     private fun assertPayloadPopulated(payload: SessionPayload) {

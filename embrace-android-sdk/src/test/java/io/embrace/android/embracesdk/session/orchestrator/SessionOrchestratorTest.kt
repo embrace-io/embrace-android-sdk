@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.FakePayloadFactory
 import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -14,31 +13,35 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
+import io.embrace.android.embracesdk.fakes.FakePayloadCollator
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.FakeV1PayloadCollator
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 internal class SessionOrchestratorTest {
 
-    companion object {
-        private const val TIMESTAMP = 1000L
-    }
-
     private lateinit var orchestrator: SessionOrchestratorImpl
-    private lateinit var payloadFactory: FakePayloadFactory
+    private lateinit var payloadFactory: PayloadFactoryImpl
+    private lateinit var v1PayloadCollator: FakeV1PayloadCollator
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
@@ -55,15 +58,291 @@ internal class SessionOrchestratorTest {
     private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: EmbLogger
-    private lateinit var sessionSpan: FakeCurrentSessionSpan
+    private lateinit var currentSessionSpan: FakeCurrentSessionSpan
+    private var orchestratorStartTimeMs: Long = 0
 
     @Before
     fun setUp() {
-        deliveryService = FakeDeliveryService()
-        processStateService = FakeProcessStateService()
-        payloadFactory = FakePayloadFactory()
         clock = FakeClock()
+        logger = EmbLoggerImpl()
         configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+    }
+
+    @Test
+    fun `test initial behavior in background`() {
+        createOrchestrator(true)
+        assertEquals(1, memoryCleanerService.callCount)
+        assertEquals(orchestrator, processStateService.listeners.single())
+        assertEquals(0, v1PayloadCollator.sessionCount.get())
+        assertEquals(1, v1PayloadCollator.baCount.get())
+        assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
+        assertEquals(0, deliveryService.sentSessionMessages.size)
+        assertEquals(1, fakeDataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `test initial behavior in foreground`() {
+        createOrchestrator(false)
+        assertEquals(1, memoryCleanerService.callCount)
+        assertEquals(orchestrator, processStateService.listeners.single())
+        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertEquals(0, v1PayloadCollator.baCount.get())
+        assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
+        assertEquals(0, deliveryService.sentSessionMessages.size)
+        assertEquals(1, fakeDataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `test on foreground call after starting in background`() {
+        createOrchestrator(true)
+        val expectedSessionId = sessionIdTracker.sessionId
+        clock.tick()
+        val foregroundTime = clock.now()
+        orchestrator.onForeground(true, foregroundTime)
+        assertEquals(2, memoryCleanerService.callCount)
+        assertEquals(1, fakeDataSource.enableDataCaptureCount)
+        validateSession(
+            sentSession = getOnlySentBackgroundActivity(),
+            endTimeMs = foregroundTime,
+            endType = Session.LifeEventType.BKGND_STATE,
+            expectedSessionId = expectedSessionId
+        )
+    }
+
+    @Test
+    fun `test on background call after starting in foreground`() {
+        createOrchestrator(false)
+        val expectedSessionId = sessionIdTracker.sessionId
+        clock.tick()
+        val backgroundTime = clock.now()
+        orchestrator.onBackground(backgroundTime)
+        assertEquals(2, memoryCleanerService.callCount)
+        validateSession(
+            sentSession = getOnlySentSession(),
+            endTimeMs = backgroundTime,
+            endType = Session.LifeEventType.STATE,
+            expectedSessionId = expectedSessionId
+        )
+    }
+
+    @Test
+    fun `saved background activity save overridden after is sent`() {
+        createOrchestrator(true)
+        clock.tick()
+        orchestrator.reportBackgroundActivityStateChange()
+        baCacheExecutor.runCurrentlyBlocked()
+        orchestrator.onForeground(true, clock.now())
+        clock.tick()
+        orchestrator.onBackground(clock.now())
+        val lastBackgroundActivitySaveType = checkNotNull(deliveryService.savedSessionMessages.last().second)
+        assertEquals(SessionSnapshotType.NORMAL_END, lastBackgroundActivitySaveType)
+    }
+
+    @Test
+    fun `end session with manual in foreground`() {
+        createOrchestrator(false)
+        clock.tick(10000)
+        val expectedSessionId = sessionIdTracker.sessionId
+        val endTimeMs = clock.now()
+        orchestrator.endSessionWithManual(true)
+        assertEquals(2, memoryCleanerService.callCount)
+        validateSession(
+            sentSession = getOnlySentSession(),
+            endTimeMs = endTimeMs,
+            endType = Session.LifeEventType.MANUAL,
+            expectedSessionId = expectedSessionId
+        )
+    }
+
+    @Test
+    fun `end session with manual in background`() {
+        createOrchestrator(true)
+        processStateService.isInBackground = true
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, memoryCleanerService.callCount)
+        assertNull(deliveryService.getLastSentSession())
+    }
+
+    @Test
+    fun `test manual session end disabled for session gating`() {
+        configService = FakeConfigService(
+            sessionBehavior = fakeSessionBehavior {
+                RemoteConfig(
+                    sessionConfig = SessionRemoteConfig(
+                        isEnabled = true
+                    ),
+                )
+            }
+        )
+        createOrchestrator(false)
+
+        clock.tick(10000)
+        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        orchestrator.endSessionWithManual(false)
+        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertEquals(1, memoryCleanerService.callCount)
+        assertNull(deliveryService.getLastSentSession())
+    }
+
+    @Test
+    fun `ending session manually clears user info`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(10000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, userService.clearedCount)
+        assertEquals(1, ndkService.userUpdateCount)
+    }
+
+    @Test
+    fun `ending session manually above time threshold succeeds`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(10000)
+        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        orchestrator.endSessionWithManual(true)
+        assertEquals(2, v1PayloadCollator.sessionCount.get())
+        assertNotNull(deliveryService.getLastSentSession())
+    }
+
+    @Test
+    fun `ending session manually below time threshold fails`() {
+        configService = FakeConfigService()
+        createOrchestrator(false)
+        clock.tick(1000)
+
+        orchestrator.endSessionWithManual(true)
+        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertNull(deliveryService.getLastSentSession())
+    }
+
+    @Test
+    fun `ending session manually when no session exists doesn not start a new session`() {
+        configService = FakeConfigService()
+        createOrchestrator(true)
+        clock.tick(1000)
+        orchestrator.endSessionWithManual(true)
+        assertEquals(0, v1PayloadCollator.baCount.get())
+    }
+
+    @Test
+    fun `end with crash in background`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        createOrchestrator(true)
+        orchestrator.endSessionWithCrash("crashId")
+        val sentBackgroundActivity = getOnlySentBackgroundActivity()
+        assertEquals("crashId", sentBackgroundActivity.crashReportId)
+    }
+
+    @Test
+    fun `end with crash in foreground`() {
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        createOrchestrator(false)
+        orchestrator.endSessionWithCrash("crashId")
+        val sentSession = getOnlySentSession()
+        assertEquals("crashId", sentSession.crashReportId)
+    }
+
+    @Test
+    fun `periodic caching started with initial session`() {
+        createOrchestrator(false)
+        assertEquals(0, deliveryService.savedSessionMessages.size)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertEquals(1, deliveryService.savedSessionMessages.size)
+    }
+
+    @Test
+    fun `test session span cold start`() {
+        createOrchestrator(true)
+        val expectedSessionSpanId = checkNotNull(sessionIdTracker.sessionId)
+        orchestrator.onForeground(true, clock.now())
+        val sessionSpan = checkNotNull(deliveryService.getLastSentBackgroundActivity()?.spans?.single())
+        with(sessionSpan) {
+            assertTrue(name.endsWith(expectedSessionSpanId))
+        }
+    }
+
+    @Test
+    fun `test session span non cold start`() {
+        createOrchestrator(true)
+        val expectedBackgroundSpanId = checkNotNull(sessionIdTracker.sessionId)
+        orchestrator.onForeground(true, orchestratorStartTimeMs)
+        val expectedSessionSpanId = checkNotNull(sessionIdTracker.sessionId)
+        orchestrator.onBackground(orchestratorStartTimeMs)
+        val backgroundSessionSpan = checkNotNull(deliveryService.getLastSentBackgroundActivity()?.spans?.single())
+        with(backgroundSessionSpan) {
+            assertTrue(name.endsWith(expectedBackgroundSpanId))
+        }
+        val foregroundSessionSpan = checkNotNull(deliveryService.getLastSentSession()?.spans?.single())
+        with(foregroundSessionSpan) {
+            assertTrue(name.endsWith(expectedSessionSpanId))
+        }
+    }
+
+    @Test
+    fun `test session span with crash`() {
+        createOrchestrator(true)
+        orchestrator.onForeground(true, orchestratorStartTimeMs)
+        val expectedSessionSpanId = checkNotNull(sessionIdTracker.sessionId)
+        orchestrator.endSessionWithCrash("my-crash-id")
+        val foregroundSessionSpan = checkNotNull(deliveryService.getLastSentSession()?.spans?.single())
+        with(foregroundSessionSpan) {
+            assertTrue(name.endsWith(expectedSessionSpanId))
+        }
+    }
+
+    @Test
+    fun `test foreground session span heartbeat`() {
+        createOrchestrator(true)
+        orchestrator.onForeground(true, orchestratorStartTimeMs)
+        assertHeartbeatMatchesClock()
+        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+
+        // run periodic cache
+        clock.tick(2000)
+        sessionCacheExecutor.runCurrentlyBlocked()
+        assertHeartbeatMatchesClock()
+        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+
+        // end with crash
+        orchestrator.endSessionWithCrash("my-crash-id")
+        assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
+    }
+
+    @Test
+    fun `test background session span heartbeat`() {
+        createOrchestrator(true)
+        assertHeartbeatMatchesClock()
+        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+
+        // run periodic cache
+        clock.tick(6000)
+        baCacheExecutor.runCurrentlyBlocked()
+        assertHeartbeatMatchesClock()
+        assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
+
+        // end with crash
+        orchestrator.endSessionWithCrash("my-crash-id")
+        assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
+    }
+
+    private fun assertHeartbeatMatchesClock() {
+        val attr = checkNotNull(currentSessionSpan.getAttribute("emb.heartbeat_time_unix_nano"))
+        assertEquals(clock.now(), attr.toLong().nanosToMillis())
+    }
+
+    private fun createOrchestrator(background: Boolean) {
+        deliveryService = FakeDeliveryService()
+        processStateService = FakeProcessStateService(background)
+        currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
+        v1PayloadCollator = FakeV1PayloadCollator(currentSessionSpan = currentSessionSpan)
+        payloadFactory = PayloadFactoryImpl(
+            v1payloadMessageCollator = v1PayloadCollator,
+            v2payloadMessageCollator = FakePayloadCollator(),
+            configService = configService,
+            logger = logger
+        )
         memoryCleanerService = FakeMemoryCleanerService()
         sessionProperties = fakeEmbraceSessionProperties()
         userService = FakeUserService()
@@ -71,11 +350,9 @@ internal class SessionOrchestratorTest {
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        logger = EmbLoggerImpl()
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
         periodicBackgroundActivityCacher = PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
         fakeDataSource = FakeDataSource(mockContext())
-        sessionSpan = FakeCurrentSessionSpan()
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             listOf(
                 DataSourceState(
@@ -105,277 +382,27 @@ internal class SessionOrchestratorTest {
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
-            sessionSpan,
+            currentSessionSpan,
             logger
         )
+        orchestratorStartTimeMs = clock.now()
         sessionProperties.add("key", "value", false)
     }
 
-    @Test
-    fun `test initial behavior in background`() {
-        createOrchestrator(true)
-        assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(orchestrator, processStateService.listeners.single())
-        assertEquals(0, payloadFactory.startSessionTimestamps.size)
-        assertEquals(1, payloadFactory.startBaTimestamps.size)
-        assertEquals("fake-activity", sessionIdTracker.sessionId)
-        assertEquals(0, deliveryService.sentSessionMessages.size)
-        assertEquals(1, fakeDataSource.enableDataCaptureCount)
-    }
-
-    @Test
-    fun `test initial behavior in foreground`() {
-        assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(orchestrator, processStateService.listeners.single())
-        assertEquals(1, payloadFactory.startSessionTimestamps.size)
-        assertEquals(0, payloadFactory.startBaTimestamps.size)
-        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
-        assertEquals(0, deliveryService.sentSessionMessages.size)
-        assertEquals(1, fakeDataSource.enableDataCaptureCount)
-    }
-
-    @Test
-    fun `test on foreground call`() {
-        createOrchestrator(true)
-        orchestrator.onForeground(true, TIMESTAMP)
-        assertEquals(2, memoryCleanerService.callCount)
-        assertEquals(TIMESTAMP, payloadFactory.startSessionTimestamps.single())
-        assertEquals(TIMESTAMP, payloadFactory.endBaTimestamps.single())
-        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
-        assertEquals(1, deliveryService.sentSessionMessages.size)
-        assertEquals(1, fakeDataSource.enableDataCaptureCount)
-    }
-
-    @Test
-    fun `test on background call`() {
-        orchestrator.onBackground(TIMESTAMP)
-        assertEquals(2, memoryCleanerService.callCount)
-        assertEquals(TIMESTAMP, payloadFactory.endSessionTimestamps.single())
-        assertEquals(TIMESTAMP, payloadFactory.startBaTimestamps.single())
-        assertEquals("fake-activity", sessionIdTracker.sessionId)
-        assertEquals(1, deliveryService.sentSessionMessages.size)
-    }
-
-    @Test
-    fun `end session with manual in foreground`() {
-        clock.tick(10000)
-        orchestrator.endSessionWithManual(true)
-        assertEquals(2, memoryCleanerService.callCount)
-        assertEquals(1, payloadFactory.manualSessionEndCount)
-        assertEquals(1, payloadFactory.manualSessionStartCount)
-        assertEquals("fakeSessionId", sessionIdTracker.sessionId)
-        assertEquals(1, deliveryService.sentSessionMessages.size)
-    }
-
-    @Test
-    fun `end session with manual in background`() {
-        processStateService.isInBackground = true
-        orchestrator.endSessionWithManual(true)
-        assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(0, payloadFactory.manualSessionEndCount)
-        assertEquals(0, payloadFactory.manualSessionStartCount)
-        assertEquals(0, deliveryService.sentSessionMessages.size)
-    }
-
-    @Test
-    fun `test manual session end disabled for session gating`() {
-        configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
-                RemoteConfig(
-                    sessionConfig = SessionRemoteConfig(
-                        isEnabled = true
-                    ),
-                )
-            }
-        )
-        createOrchestrator(false)
-
-        clock.tick(10000)
-        orchestrator.endSessionWithManual(false)
-        assertEquals(1, payloadFactory.startSessionTimestamps.size)
-        assertEquals(0, payloadFactory.manualSessionEndCount)
-        assertEquals(1, memoryCleanerService.callCount)
-        assertEquals(0, deliveryService.sentSessionMessages.size)
-    }
-
-    @Test
-    fun `ending session manually clears user info`() {
-        configService = FakeConfigService()
-        createOrchestrator(false)
-        clock.tick(10000)
-
-        orchestrator.endSessionWithManual(true)
-        assertEquals(1, userService.clearedCount)
-        assertEquals(1, ndkService.userUpdateCount)
-    }
-
-    @Test
-    fun `ending session manually above time threshold succeeds`() {
-        configService = FakeConfigService()
-        createOrchestrator(false)
-        clock.tick(10000)
-
-        orchestrator.endSessionWithManual(true)
-        assertEquals(1, payloadFactory.startSessionTimestamps.size)
-        assertEquals(1, payloadFactory.manualSessionStartCount)
-        assertEquals(1, payloadFactory.manualSessionEndCount)
-    }
-
-    @Test
-    fun `ending session manually below time threshold fails`() {
-        configService = FakeConfigService()
-        createOrchestrator(false)
-        clock.tick(1000)
-
-        orchestrator.endSessionWithManual(true)
-        assertEquals(1, payloadFactory.startSessionTimestamps.size)
-        assertEquals(0, payloadFactory.manualSessionStartCount)
-        assertEquals(0, payloadFactory.manualSessionEndCount)
-    }
-
-    @Test
-    fun `ending session manually when no session exists starts new session`() {
-        configService = FakeConfigService()
-        createOrchestrator(true)
-        clock.tick(1000)
-
-        orchestrator.endSessionWithManual(true)
-        assertEquals(0, payloadFactory.startSessionTimestamps.size)
-        assertEquals(0, payloadFactory.manualSessionStartCount)
-        assertEquals(0, payloadFactory.manualSessionEndCount)
-    }
-
-    @Test
-    fun `end with crash in background`() {
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
-        createOrchestrator(true)
-        orchestrator.endSessionWithCrash("crashId")
-        assertEquals("crashId", payloadFactory.baCrashId)
-        assertEquals(1, deliveryService.sentSessionMessages.size)
-    }
-
-    @Test
-    fun `end with crash in foreground`() {
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
-        createOrchestrator(false)
-        orchestrator.endSessionWithCrash("crashId")
-        assertEquals("crashId", payloadFactory.crashId)
-        assertEquals(1, deliveryService.sentSessionMessages.size)
-    }
-
-    @Test
-    fun `periodic caching started with initial session`() {
-        assertEquals(0, payloadFactory.snapshotSessionCount)
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, payloadFactory.snapshotSessionCount)
-    }
-
-    @Test
-    fun `test session span cold start`() {
-        createOrchestrator(true)
-        orchestrator.onForeground(true, TIMESTAMP)
-        assertSessionSpanAttrsAdded(true, "foreground")
-    }
-
-    @Test
-    fun `test session span non cold start`() {
-        createOrchestrator(true)
-        orchestrator.onForeground(true, TIMESTAMP)
-        orchestrator.onBackground(TIMESTAMP)
-        assertSessionSpanAttrsAdded(false, "background")
-
-        val startTypes = sessionSpan.addedAttributes.filter { it.key == "emb.session_start_type" }.map { it.value }
-        val endTypes = sessionSpan.addedAttributes.filter { it.key == "emb.session_end_type" }.map { it.value }
-        assertEquals(listOf("state", "state", "state", "state"), startTypes)
-        assertEquals(listOf("bkgnd_state", "state"), endTypes)
-    }
-
-    @Test
-    fun `test session span with crash`() {
-        createOrchestrator(true)
-        orchestrator.onForeground(true, TIMESTAMP)
-        orchestrator.endSessionWithCrash("my-crash-id")
-        assertSessionSpanAttrsAdded(true, "foreground", "my-crash-id", true)
-    }
-
-    @Test
-    fun `test foreground session span heartbeat`() {
-        createOrchestrator(true)
-        orchestrator.onForeground(true, TIMESTAMP)
-        assertHeartbeatMatchesClock()
-        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
-
-        // run periodic cache
-        clock.tick(2000)
-        sessionCacheExecutor.runCurrentlyBlocked()
-        assertHeartbeatMatchesClock()
-        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
-
-        // end with crash
-        orchestrator.endSessionWithCrash("my-crash-id")
-        assertEquals("false", sessionSpan.getAttribute("emb.terminated"))
-    }
-
-    @Test
-    fun `test background session span heartbeat`() {
-        createOrchestrator(true)
-        assertHeartbeatMatchesClock()
-        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
-
-        // run periodic cache
-        clock.tick(6000)
-        baCacheExecutor.runCurrentlyBlocked()
-        assertHeartbeatMatchesClock()
-        assertEquals("true", sessionSpan.getAttribute("emb.terminated"))
-
-        // end with crash
-        orchestrator.endSessionWithCrash("my-crash-id")
-        assertEquals("false", sessionSpan.getAttribute("emb.terminated"))
-    }
-
-    private fun assertHeartbeatMatchesClock() {
-        val attr = checkNotNull(sessionSpan.getAttribute("emb.heartbeat_time_unix_nano"))
-        assertEquals(clock.now(), attr.toLong().nanosToMillis())
-    }
-
-    private fun assertSessionSpanAttrsAdded(
-        coldStart: Boolean,
-        state: String,
-        crashId: String? = null,
-        cleanExit: Boolean = false
+    private fun validateSession(
+        sentSession: Session,
+        endTimeMs: Long,
+        endType: Session.LifeEventType,
+        expectedSessionId: String?
     ) {
-        assertEquals(coldStart.toString(), sessionSpan.getAttribute("emb.cold_start"))
-        assertEquals(cleanExit.toString(), sessionSpan.getAttribute("emb.clean_exit"))
-        assertEquals("1", sessionSpan.getAttribute("emb.session_number"))
-        assertEquals(state, sessionSpan.getAttribute("emb.state"))
-        assertEquals(crashId, sessionSpan.getAttribute("emb.crash_id"))
+        with(sentSession) {
+            assertEquals(endType, endType)
+            assertEquals(expectedSessionId, sessionId)
+        }
+        assertEquals(endTimeMs, checkNotNull(currentSessionSpan.sessionSpan).startEpochNanos.nanosToMillis())
     }
 
-    private fun createOrchestrator(background: Boolean) {
-        processStateService.listeners.clear()
-        processStateService.isInBackground = background
-        payloadFactory.startSessionTimestamps.clear()
-        payloadFactory.startBaTimestamps.clear()
-        memoryCleanerService = FakeMemoryCleanerService()
-        orchestrator = SessionOrchestratorImpl(
-            processStateService,
-            payloadFactory,
-            clock,
-            configService,
-            sessionIdTracker,
-            OrchestratorBoundaryDelegate(
-                memoryCleanerService,
-                userService,
-                ndkService,
-                sessionProperties,
-                FakeNetworkConnectivityService()
-            ),
-            deliveryService,
-            periodicSessionCacher,
-            periodicBackgroundActivityCacher,
-            dataCaptureOrchestrator,
-            sessionSpan,
-            logger
-        )
-    }
+    private fun getOnlySentSession() = checkNotNull(deliveryService.getSentSessions().single().session)
+
+    private fun getOnlySentBackgroundActivity() = checkNotNull(deliveryService.getSentBackgroundActivities().single().session)
 }

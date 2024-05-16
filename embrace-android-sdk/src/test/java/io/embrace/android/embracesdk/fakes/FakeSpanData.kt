@@ -26,7 +26,6 @@ internal class FakeSpanData(
     private var kind: SpanKind = SpanKind.INTERNAL,
     private var spanContext: SpanContext = newTraceRootContext(),
     private var parentSpanContext: SpanContext = SpanContext.getInvalid(),
-    private var status: StatusData = StatusData.unset(),
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
     private var attributes: Attributes =
         Attributes.builder().fromMap(
@@ -44,21 +43,21 @@ internal class FakeSpanData(
         )
     ),
     private var links: MutableList<LinkData> = mutableListOf(),
-    private var endEpochNanos: Long = 0L,
-    private var hasEnded: Boolean = false,
-    private var resource: Resource = Resource.empty()
+    private var resource: Resource = Resource.empty(),
+    var spanStatus: StatusData = StatusData.unset(),
+    var endTimeNanos: Long = 0L
 ) : SpanData {
     override fun getName(): String = name
     override fun getKind(): SpanKind = kind
     override fun getSpanContext(): SpanContext = spanContext
     override fun getParentSpanContext(): SpanContext = parentSpanContext
-    override fun getStatus(): StatusData = status
+    override fun getStatus(): StatusData = spanStatus
     override fun getStartEpochNanos(): Long = startEpochNanos
     override fun getAttributes(): Attributes = attributes
     override fun getEvents(): MutableList<EventData> = events
     override fun getLinks(): MutableList<LinkData> = links
-    override fun getEndEpochNanos(): Long = endEpochNanos
-    override fun hasEnded(): Boolean = hasEnded
+    override fun getEndEpochNanos(): Long = endTimeNanos
+    override fun hasEnded(): Boolean = status != StatusData.unset()
     override fun getTotalRecordedEvents(): Int = events.size
     override fun getTotalRecordedLinks(): Int = links.size
     override fun getTotalAttributeCount(): Int = attributes.size()
@@ -73,8 +72,8 @@ internal class FakeSpanData(
         val perfSpanCompleted =
             FakeSpanData(
                 name = "completed-perf-span",
-                status = StatusData.ok(),
-                endEpochNanos = (DEFAULT_START_TIME_MS + 60000L).millisToNanos()
+                spanStatus = StatusData.ok(),
+                endTimeNanos = (DEFAULT_START_TIME_MS + 60000L).millisToNanos()
             )
 
         private fun newTraceRootContext() = SpanContext.create(

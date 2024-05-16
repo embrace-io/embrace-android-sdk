@@ -18,13 +18,13 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CTraceparent
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 import io.embrace.android.embracesdk.utils.PropertyUtils.sanitizeProperties
@@ -47,8 +47,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
-    private val sessionApiDelegate: SessionApiDelegate = SessionApiDelegate(bootstrapper, sdkCallChecker)
-) : UserApi by userApiDelegate, SessionApi by sessionApiDelegate {
+    private val sessionApiDelegate: SessionApiDelegate = SessionApiDelegate(bootstrapper, sdkCallChecker),
+    private val networkRequestApiDelegate: NetworkRequestApiDelegate =
+        NetworkRequestApiDelegate(bootstrapper, sdkCallChecker)
+) : UserApi by userApiDelegate, SessionApi by sessionApiDelegate, NetworkRequestApi by networkRequestApiDelegate {
 
     @JvmField
     val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
@@ -384,19 +386,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     fun generateW3cTraceparent(): String = generateW3CTraceparent()
-
-    fun recordNetworkRequest(request: EmbraceNetworkRequest) {
-        if (sdkCallChecker.check("record_network_request")) {
-            logNetworkRequest(request)
-        }
-    }
-
-    private fun logNetworkRequest(request: EmbraceNetworkRequest) {
-        if (configService?.networkBehavior?.isUrlEnabled(request.url) == true) {
-            networkLoggingService?.logNetworkRequest(request)
-            onActivityReported()
-        }
-    }
 
     fun logMessage(message: String, severity: Severity, properties: Map<String, Any>?) {
         logMessage(

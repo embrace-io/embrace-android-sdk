@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -41,8 +42,7 @@ internal class FakeCustomerLogModule(
     )
 ) : CustomerLogModule {
 
-    override val networkCaptureService: NetworkCaptureService
-        get() = TODO("Not yet implemented")
+    override val networkCaptureService: NetworkCaptureService = FakeNetworkCaptureService()
 
     override val logOrchestrator: LogOrchestrator
         get() = FakeLogOrchestrator()

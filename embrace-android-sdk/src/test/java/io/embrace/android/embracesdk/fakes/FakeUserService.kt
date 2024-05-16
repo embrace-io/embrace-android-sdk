@@ -6,6 +6,11 @@ import io.embrace.android.embracesdk.payload.UserInfo
 internal class FakeUserService : UserService {
 
     var obj: UserInfo = UserInfo()
+    var id: String? = null
+    var email: String? = null
+    var name: String? = null
+    var payer: Boolean? = null
+    var personas: MutableList<String> = mutableListOf()
     var clearedCount = 0
 
     override fun getUserInfo(): UserInfo = obj
@@ -19,46 +24,46 @@ internal class FakeUserService : UserService {
     }
 
     override fun setUserIdentifier(userId: String?) {
-        TODO("Not yet implemented")
+        id = userId
     }
 
     override fun clearUserIdentifier() {
-        TODO("Not yet implemented")
+        id = null
     }
 
     override fun setUserEmail(email: String?) {
-        TODO("Not yet implemented")
+        this.email = email
     }
 
     override fun clearUserEmail() {
-        TODO("Not yet implemented")
+        email = null
     }
 
     override fun setUserAsPayer() {
-        TODO("Not yet implemented")
+        payer = true
     }
 
     override fun clearUserAsPayer() {
-        TODO("Not yet implemented")
+        payer = null
     }
 
     override fun addUserPersona(persona: String?) {
-        TODO("Not yet implemented")
+        personas.add(checkNotNull(persona))
     }
 
     override fun clearUserPersona(persona: String?) {
-        TODO("Not yet implemented")
+        personas.remove(checkNotNull(persona))
     }
 
     override fun clearAllUserPersonas() {
-        TODO("Not yet implemented")
+        personas.clear()
     }
 
     override fun setUsername(username: String?) {
-        TODO("Not yet implemented")
+        this.name = username
     }
 
     override fun clearUsername() {
-        TODO("Not yet implemented")
+        this.name = null
     }
 }

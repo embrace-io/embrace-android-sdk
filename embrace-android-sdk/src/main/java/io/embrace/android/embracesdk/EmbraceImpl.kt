@@ -6,45 +6,24 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.EventType.Companion.fromSeverity
-import io.embrace.android.embracesdk.anr.AnrService
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
-import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.user.UserService
-import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.event.EmbraceEventService
-import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CTraceparent
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
-import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
-import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
-import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.embrace.android.embracesdk.utils.PropertyUtils.sanitizeProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -62,22 +41,22 @@ import java.util.regex.Pattern
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl @JvmOverloads constructor(
-    private val moduleInitBootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper()
+    private val bootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper()
 ) {
 
     @JvmField
-    val tracer: EmbraceTracer = moduleInitBootstrapper.openTelemetryModule.embraceTracer
+    val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
-        UninitializedSdkInternalInterfaceImpl(moduleInitBootstrapper.openTelemetryModule.internalTracer)
+        UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
     }
 
     /**
      * Whether the Embrace SDK has been started yet.
      */
     private val started = AtomicBoolean(false)
-    private val sdkClock = moduleInitBootstrapper.initModule.clock
-    private val logger = moduleInitBootstrapper.initModule.logger
+    private val sdkClock = bootstrapper.initModule.clock
+    private val logger = bootstrapper.initModule.logger
 
     /**
      * Custom app ID that overrides the one specified at build time
@@ -93,89 +72,47 @@ internal class EmbraceImpl @JvmOverloads constructor(
         private set
 
     /**
-     * The type of application being instrumented by this SDK instance, whether it's directly used by an Android app, or used via a hosted
-     * SDK like Flutter, React Native, or Unity.
-     */
-    @Volatile
-    private var appFramework: Embrace.AppFramework? = null
-
-    @Volatile
-    private var breadcrumbService: BreadcrumbService? = null
-
-    @Volatile
-    private var sessionOrchestrator: SessionOrchestrator? = null
-
-    @Volatile
-    private var sessionPropertiesService: SessionPropertiesService? = null
-
-    @Volatile
-    var metadataService: MetadataService? = null
-        private set
-
-    @Volatile
-    private var sessionIdTracker: SessionIdTracker? = null
-
-    @Volatile
-    var activityService: ProcessStateService? = null
-        private set
-
-    @Volatile
-    var activityLifecycleTracker: ActivityTracker? = null
-        private set
-
-    @Volatile
-    private var networkLoggingService: NetworkLoggingService? = null
-
-    @Volatile
-    private var anrService: AnrService? = null
-
-    @Volatile
-    private var logMessageService: LogMessageService? = null
-
-    @Volatile
-    private var configService: ConfigService? = null
-
-    @Volatile
-    private var preferencesService: PreferencesService? = null
-
-    @Volatile
-    private var eventService: EventService? = null
-
-    @Volatile
-    private var userService: UserService? = null
-
-    @Volatile
-    var internalErrorService: InternalErrorService? = null
-        private set
-
-    @Volatile
-    private var ndkService: NdkService? = null
-
-    @Volatile
-    private var networkCaptureService: NetworkCaptureService? = null
-
-    @Volatile
-    private var webViewService: WebViewService? = null
-
-    @Volatile
-    private var telemetryService: TelemetryService? = null
-
-    private var nativeThreadSampler: NativeThreadSamplerService? = null
-
-    private var nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? = null
-
-    private var embraceInternalInterface: EmbraceInternalInterface? = null
-
-    private var internalInterfaceModule: InternalInterfaceModule? = null
-
-    private var pushNotificationService: PushNotificationCaptureService? = null
-
-    private var crashVerifier: LastRunCrashVerifier? = null
-
-    /**
      * Variable pointing to the composeActivityListener instance obtained using reflection
      */
     private var composeActivityListenerInstance: Any? = null
+    private var embraceInternalInterface: EmbraceInternalInterface? = null
+    private var internalInterfaceModule: InternalInterfaceModule? = null
+
+    val metadataService by embraceImplInject { bootstrapper.essentialServiceModule.metadataService }
+    val activityService by embraceImplInject { bootstrapper.essentialServiceModule.processStateService }
+    val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
+    val internalErrorService by embraceImplInject {
+        bootstrapper.initModule.internalErrorService.also {
+            it.configService = bootstrapper.essentialServiceModule.configService
+        }
+    }
+
+    /**
+     * The type of application being instrumented by this SDK instance, whether it's directly used by an Android app, or used via a hosted
+     * SDK like Flutter, React Native, or Unity.
+     */
+    private val appFramework by embraceImplInject { bootstrapper.coreModule.appFramework }
+    private val breadcrumbService by embraceImplInject { bootstrapper.dataCaptureServiceModule.breadcrumbService }
+    private val sessionOrchestrator by embraceImplInject { bootstrapper.sessionModule.sessionOrchestrator }
+    private val sessionPropertiesService by embraceImplInject { bootstrapper.sessionModule.sessionPropertiesService }
+    private val sessionIdTracker by embraceImplInject { bootstrapper.essentialServiceModule.sessionIdTracker }
+    private val networkLoggingService by embraceImplInject { bootstrapper.customerLogModule.networkLoggingService }
+    private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
+    private val logMessageService by embraceImplInject { bootstrapper.customerLogModule.logMessageService }
+    private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
+    private val preferencesService by embraceImplInject { bootstrapper.androidServicesModule.preferencesService }
+    private val eventService by embraceImplInject { bootstrapper.dataContainerModule.eventService }
+    private val userService by embraceImplInject { bootstrapper.essentialServiceModule.userService }
+    private val ndkService by embraceImplInject { bootstrapper.nativeModule.ndkService }
+    private val networkCaptureService by embraceImplInject { bootstrapper.customerLogModule.networkCaptureService }
+    private val webViewService by embraceImplInject { bootstrapper.dataCaptureServiceModule.webviewService }
+    private val telemetryService by embraceImplInject { bootstrapper.initModule.telemetryService }
+    private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
+    private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
+    private val pushNotificationService by embraceImplInject {
+        bootstrapper.dataCaptureServiceModule.pushNotificationService
+    }
+    private val crashVerifier by embraceImplInject { bootstrapper.crashModule.lastRunCrashVerifier }
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
@@ -225,18 +162,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val startTimeMs = sdkClock.now()
         logger.logInfo("Starting SDK for framework " + framework.name, null)
-        moduleInitBootstrapper.init(context, framework, startTimeMs, customAppId, configServiceProvider)
+        bootstrapper.init(context, framework, startTimeMs, customAppId, configServiceProvider)
         startSynchronous("post-services-setup")
-        telemetryService = moduleInitBootstrapper.initModule.telemetryService
 
-        val coreModule = moduleInitBootstrapper.coreModule
+        val coreModule = bootstrapper.coreModule
         application = coreModule.application
-        appFramework = coreModule.appFramework
 
-        val androidServicesModule = moduleInitBootstrapper.androidServicesModule
-        preferencesService = androidServicesModule.preferencesService
-
-        val essentialServiceModule = moduleInitBootstrapper.essentialServiceModule
+        val essentialServiceModule = bootstrapper.essentialServiceModule
         if (essentialServiceModule.configService.isSdkDisabled()) {
             logger.logInfo("Interrupting SDK start because it is disabled", null)
             stop()
@@ -247,57 +179,22 @@ internal class EmbraceImpl @JvmOverloads constructor(
             registerComposeActivityListener(coreModule)
         }
 
-        activityService = essentialServiceModule.processStateService
-        metadataService = essentialServiceModule.metadataService
-        sessionIdTracker = essentialServiceModule.sessionIdTracker
-        configService = essentialServiceModule.configService
-        activityLifecycleTracker = essentialServiceModule.activityLifecycleTracker
-        userService = essentialServiceModule.userService
-
-        val dataCaptureServiceModule = moduleInitBootstrapper.dataCaptureServiceModule
-        webViewService = dataCaptureServiceModule.webviewService
-        breadcrumbService = dataCaptureServiceModule.breadcrumbService
-        pushNotificationService = dataCaptureServiceModule.pushNotificationService
-
-        val anrModule = moduleInitBootstrapper.anrModule
-        anrService = anrModule.anrService
-
-        internalErrorService = moduleInitBootstrapper.initModule.internalErrorService.apply {
-            configService = configService
-        }
-
-        val deliveryModule = moduleInitBootstrapper.deliveryModule
-
-        val customerLogModule = moduleInitBootstrapper.customerLogModule
-        logMessageService = customerLogModule.logMessageService
-        networkCaptureService = customerLogModule.networkCaptureService
-        networkLoggingService = customerLogModule.networkLoggingService
-
-        val nativeModule = moduleInitBootstrapper.nativeModule
-        ndkService = nativeModule.ndkService
-        nativeThreadSampler = nativeModule.nativeThreadSamplerService
-        nativeThreadSamplerInstaller = nativeModule.nativeThreadSamplerInstaller
-
-        val dataContainerModule = moduleInitBootstrapper.dataContainerModule
-        eventService = dataContainerModule.eventService
-
-        val sessionModule = moduleInitBootstrapper.sessionModule
-        sessionOrchestrator = sessionModule.sessionOrchestrator
-        sessionPropertiesService = sessionModule.sessionPropertiesService
-
-        val crashModule = moduleInitBootstrapper.crashModule
+        val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
+        val deliveryModule = bootstrapper.deliveryModule
+        val dataContainerModule = bootstrapper.dataContainerModule
+        val crashModule = bootstrapper.crashModule
 
         startSynchronous("send-cached-sessions")
         // Send any sessions that were cached and not yet sent.
         deliveryModule.deliveryService.sendCachedSessions(crashModule::nativeCrashService, essentialServiceModule.sessionIdTracker)
         endSynchronous()
 
-        loadCrashVerifier(crashModule, moduleInitBootstrapper.workerThreadModule)
+        loadCrashVerifier(crashModule, bootstrapper.workerThreadModule)
 
         val internalInterfaceModuleImpl =
             InternalInterfaceModuleImpl(
-                moduleInitBootstrapper.initModule,
-                moduleInitBootstrapper.openTelemetryModule,
+                bootstrapper.initModule,
+                bootstrapper.openTelemetryModule,
                 coreModule,
                 essentialServiceModule,
                 this,
@@ -335,7 +232,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         // This should return immediately given that EmbraceSpansService initialization should be finished at this point
         // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
-        moduleInitBootstrapper.waitForAsyncInit()
+        bootstrapper.waitForAsyncInit()
     }
 
     /**
@@ -346,9 +243,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param workerThreadModule an instance of [WorkerThreadModule]
      */
     private fun loadCrashVerifier(crashModule: CrashModule, workerThreadModule: WorkerThreadModule) {
-        crashVerifier = crashModule.lastRunCrashVerifier.apply {
-            readAndCleanMarkerAsync(workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION))
-        }
+        crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION))
     }
 
     /**
@@ -427,7 +322,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
                     }
                 }
                 application = null
-                moduleInitBootstrapper.stopServices()
+                bootstrapper.stopServices()
             } catch (ex: Exception) {
                 logger.logError("Error while shutting down Embrace SDK", ex)
             }
@@ -638,7 +533,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     fun getTraceIdHeader(): String {
         if (configService != null && checkSdkStarted("get_trace_id_header", false)) {
-            return configService?.networkBehavior?.getTraceIdHeader() ?: NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+            return configService?.networkBehavior?.getTraceIdHeader()
+                ?: NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
         }
         return NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
     }
@@ -803,7 +699,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     fun getDeviceId(): String = when {
-        checkSdkStartedAndLogPublicApiUsage("get_device_id") -> preferencesService?.deviceIdentifier ?: ""
+        checkSdkStartedAndLogPublicApiUsage("get_device_id") ->
+            preferencesService?.deviceIdentifier
+                ?: ""
+
         else -> ""
     }
 
@@ -1055,7 +954,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             logger.logError("A SpanExporter can only be added before the SDK is started.", null)
             return
         }
-        moduleInitBootstrapper.openTelemetryModule.openTelemetryConfiguration.addSpanExporter(spanExporter)
+        bootstrapper.openTelemetryModule.openTelemetryConfiguration.addSpanExporter(spanExporter)
     }
 
     fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
@@ -1063,7 +962,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             logger.logError("A LogRecordExporter can only be added before the SDK is started.", null)
             return
         }
-        moduleInitBootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)
+        bootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)
     }
 
     companion object {

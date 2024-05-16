@@ -17,6 +17,5 @@ public final class WebViewChromeClientSwazzledHooks {
 
     @SuppressWarnings("MethodNameCheck")
     public static void _preOnConsoleMessage(@NonNull ConsoleMessage consoleMessage) {
-        Embrace.getInstance().getInternalInterface().logInfo("webview _preOnConsoleMessage", null);
     }
 }

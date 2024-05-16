@@ -105,7 +105,6 @@ public final class FirebaseSwazzledHooks {
     }
 
     private static void logError(@NonNull String message, @Nullable Exception e) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
         if (e != null) {
             Embrace.getInstance().getInternalInterface().logInternalError(e);
         }

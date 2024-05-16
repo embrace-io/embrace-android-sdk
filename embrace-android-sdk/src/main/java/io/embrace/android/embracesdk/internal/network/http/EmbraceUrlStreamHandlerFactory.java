@@ -44,7 +44,6 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
     }
 
     private static void logError(@NonNull String message, @Nullable Throwable throwable) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
         if (throwable != null) {
             Embrace.getInstance().getInternalInterface().logInternalError(throwable);
         }

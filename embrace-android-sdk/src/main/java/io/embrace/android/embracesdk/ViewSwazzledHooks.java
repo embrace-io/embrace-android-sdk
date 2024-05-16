@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk;
 
-import kotlin.Pair;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType;
+import kotlin.Pair;
 
 /**
  * @hide
@@ -44,7 +43,6 @@ public final class ViewSwazzledHooks {
     }
 
     private static void logError(@NonNull String message, @Nullable Throwable throwable) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
         if (throwable != null) {
             Embrace.getInstance().getInternalInterface().logInternalError(throwable);
         }

@@ -662,8 +662,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             try {
                 traceId = getRequestProperty(embrace.getTraceIdHeader());
             } catch (Exception e) {
-                Embrace.getInstance().getInternalInterface().logWarning(
-                    "Failed to retrieve actual trace id header. Current: " + traceId, null, null);
+                // don't do anything
             }
         }
     }

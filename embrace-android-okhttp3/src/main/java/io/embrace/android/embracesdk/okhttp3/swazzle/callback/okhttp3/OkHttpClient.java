@@ -34,13 +34,11 @@ public final class OkHttpClient {
          */
         @SuppressWarnings("MethodNameCheck")
         public static void _preBuild(okhttp3.OkHttpClient.Builder thiz) {
-            logInfo("Embrace OkHTTP Wrapper; onPrebuild");
             addEmbraceInterceptors(thiz);
         }
 
         @SuppressWarnings("MethodNameCheck")
         public static void _constructorOnPostBody(okhttp3.OkHttpClient.Builder thiz) {
-            logInfo("Embrace OkHTTP Wrapper; onPostBody");
             addEmbraceInterceptors(thiz);
         }
 
@@ -51,15 +49,14 @@ public final class OkHttpClient {
          */
         private static void addEmbraceInterceptors(okhttp3.OkHttpClient.Builder thiz) {
             try {
-                logInfo("Embrace OkHTTP Wrapper; Adding interceptors");
                 addInterceptor(thiz.interceptors(), new EmbraceOkHttp3ApplicationInterceptor());
                 addInterceptor(thiz.networkInterceptors(), new EmbraceOkHttp3NetworkInterceptor());
             } catch (NoSuchMethodError exception) {
                 // The customer may be overwriting OkHttpClient with their own implementation, and some of the
                 // methods we use are missing.
-                logError("Altered OkHttpClient implementation, could not add OkHttp interceptor. ", exception);
+                logInternalError("Altered OkHttpClient implementation, could not add OkHttp interceptor. ", exception);
             } catch (Exception exception) {
-                logError("Could not add OkHttp interceptor. ", exception);
+                logInternalError("Could not add OkHttp interceptor. ", exception);
             }
         }
 
@@ -73,10 +70,6 @@ public final class OkHttpClient {
                                            Interceptor interceptor) {
             if (interceptors != null && !containsInstance(interceptors, interceptor.getClass())) {
                 interceptors.add(0, interceptor);
-            } else {
-                logInfo(
-                        "Not adding interceptor [" + interceptor.getClass().getSimpleName() + "]"
-                );
             }
         }
 
@@ -92,21 +85,13 @@ public final class OkHttpClient {
                                                     Class<? extends T> clazz) {
             for (T classInstance : elementsList) {
                 if (clazz.isInstance(classInstance)) {
-                    logInfo(
-                            "[" + clazz.getSimpleName() + "] already present in list"
-                    );
                     return true;
                 }
             }
             return false;
         }
 
-        private static void logInfo(String message) {
-            Embrace.getInstance().getInternalInterface().logInfo(message, null);
-        }
-
-        private static void logError(String message, Throwable throwable) {
-            Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
+        private static void logInternalError(String message, Throwable throwable) {
             Embrace.getInstance().getInternalInterface().logInternalError(throwable);
         }
     }

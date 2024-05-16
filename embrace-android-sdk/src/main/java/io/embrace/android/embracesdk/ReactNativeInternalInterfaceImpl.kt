@@ -25,7 +25,7 @@ internal class ReactNativeInternalInterfaceImpl(
         type: String?,
         stacktrace: String?
     ) {
-        if (embrace.isStarted) {
+        if (embrace.isStarted()) {
             val exception = JsException(name, message, type, stacktrace)
             crashService.logUnhandledJsException(exception)
         } else {
@@ -39,7 +39,7 @@ internal class ReactNativeInternalInterfaceImpl(
         properties: Map<String, Any>,
         stacktrace: String?
     ) {
-        if (embrace.isStarted) {
+        if (embrace.isStarted()) {
             embrace.logMessage(
                 EventType.ERROR_LOG,
                 message,
@@ -56,7 +56,7 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     override fun setJavaScriptPatchNumber(number: String?) {
-        if (embrace.isStarted) {
+        if (embrace.isStarted()) {
             if (number == null) {
                 logger.logError("JavaScript patch number must not be null")
                 return
@@ -72,7 +72,7 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     override fun setReactNativeSdkVersion(version: String?) {
-        if (embrace.isStarted) {
+        if (embrace.isStarted()) {
             hostedSdkVersionInfo.hostedSdkVersion = version
         } else {
             logger.logSdkNotInitialized("set React Native SDK version")
@@ -80,7 +80,7 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     override fun setReactNativeVersionNumber(version: String?) {
-        if (embrace.isStarted) {
+        if (embrace.isStarted()) {
             if (version == null) {
                 logger.logError("ReactNative version must not be null")
                 return
@@ -104,7 +104,7 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
-        if (embrace.isStarted) {
+        if (embrace.isStarted()) {
             if (framework != AppFramework.REACT_NATIVE) {
                 logger.logError(
                     "Failed to set Java Script bundle ID URL. Current framework: " +

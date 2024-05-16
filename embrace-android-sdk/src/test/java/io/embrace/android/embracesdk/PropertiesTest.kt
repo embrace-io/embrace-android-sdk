@@ -10,8 +10,7 @@ internal class PropertiesTest {
 
     @Test
     fun testPropertiesNormalization() {
-        val sourceMap: MutableMap<String?, Any> = HashMap()
-        sourceMap[null] = "Null key"
+        val sourceMap: MutableMap<String, Any> = HashMap()
         sourceMap[""] = "Empty key"
         sourceMap["EmptyValue"] = ""
         sourceMap["NullValue"] = ""

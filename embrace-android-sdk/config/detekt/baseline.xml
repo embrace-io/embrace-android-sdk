@@ -6,5 +6,7 @@
     <ID>DataClassContainsFunctions:LegacyExceptionError.kt$LegacyExceptionError$private fun getExceptionInfo(ex: Throwable?): List&lt;LegacyExceptionInfo&gt;</ID>
     <ID>DataClassShouldBeImmutable:LegacyExceptionError.kt$LegacyExceptionError$@Json(name = "c") var occurrences: Int = 0</ID>
     <ID>DataClassShouldBeImmutable:LegacyExceptionError.kt$LegacyExceptionError$@Json(name = "rep") var exceptionErrors: MutableList&lt;LegacyExceptionErrorInfo&gt; = mutableListOf()</ID>
+    <ID>LargeClass:EmbraceImpl.kt$EmbraceImpl</ID>
+    <ID>TooManyFunctions:EmbraceImpl.kt$EmbraceImpl</ID>
   </CurrentIssues>
 </SmellBaseline>

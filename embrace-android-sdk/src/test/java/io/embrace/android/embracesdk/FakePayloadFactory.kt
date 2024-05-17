@@ -1,31 +1,24 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
-import java.util.concurrent.atomic.AtomicInteger
 
-internal class FakePayloadFactory(
-    val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan()
-) : PayloadFactory {
+internal class FakePayloadFactory : PayloadFactory {
+
     val startSessionTimestamps = mutableListOf<Long>()
     val endSessionTimestamps = mutableListOf<Long>()
     var manualSessionEndCount = 0
     var manualSessionStartCount = 0
     var snapshotSessionCount = 0
+    private var activeSession: Session? = null
     val endBaTimestamps = mutableListOf<Long>()
     val startBaTimestamps = mutableListOf<Long>()
-    var foregroundCrashId: String? = null
-    var backgroundCrashId: String? = null
-    private var activeSession: Session? = null
+    var baCrashId: String? = null
     private var snapshotBaCount: Int = 0
-    private val sessionCount = AtomicInteger(0)
-    private val baCount = AtomicInteger(0)
 
     override fun startPayloadWithState(
         state: ProcessState,
@@ -44,8 +37,8 @@ internal class FakePayloadFactory(
         initial: Session
     ): SessionMessage {
         return when (state) {
-            ProcessState.FOREGROUND -> endSessionWithState(initial = initial, timestamp = timestamp)
-            ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial = initial, timestamp = timestamp)
+            ProcessState.FOREGROUND -> endSessionWithState(timestamp)
+            ProcessState.BACKGROUND -> endBackgroundActivityWithState(timestamp)
         }
     }
 
@@ -55,127 +48,79 @@ internal class FakePayloadFactory(
         initial: Session,
         crashId: String
     ): SessionMessage {
-        return endSessionWithCrash(state, timestamp, initial, crashId)
+        return when (state) {
+            ProcessState.FOREGROUND -> endSessionWithCrash(crashId)
+            ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(crashId)
+        }
     }
 
     override fun snapshotPayload(
         state: ProcessState,
         timestamp: Long,
         initial: Session
-    ): SessionMessage {
+    ): SessionMessage? {
         return when (state) {
-            ProcessState.FOREGROUND -> snapshotSession(initial)
-            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+            ProcessState.FOREGROUND -> snapshotSession()
+            ProcessState.BACKGROUND -> snapshotBackgroundActivity()
         }
     }
 
     private fun startBackgroundActivityWithState(timestamp: Long): Session {
         startBaTimestamps.add(timestamp)
-        activeSession = newSession(
-            startTimeMs = timestamp,
-            appState = Session.APPLICATION_STATE_BACKGROUND,
-            number = baCount.incrementAndGet(),
-            startType = Session.LifeEventType.STATE
-        )
-        return checkNotNull(activeSession)
+        return fakeBackgroundActivity()
     }
 
-    private fun endBackgroundActivityWithState(
-        initial: Session,
-        timestamp: Long,
-    ): SessionMessage {
+    private fun endBackgroundActivityWithState(timestamp: Long): SessionMessage {
         endBaTimestamps.add(timestamp)
-        return endSession(initial = initial, endTimeMs = timestamp)
+        return fakeBackgroundActivityMessage()
     }
 
-    private fun endSessionWithCrash(
-        state: ProcessState,
-        timestamp: Long,
-        initial: Session,
+    private fun endBackgroundActivityWithCrash(
         crashId: String
     ): SessionMessage {
-        when (state) {
-            ProcessState.FOREGROUND -> foregroundCrashId = crashId
-            ProcessState.BACKGROUND -> backgroundCrashId = crashId
-        }
-
-        return endSession(initial = initial, endTimeMs = timestamp, crashId = crashId)
+        this.baCrashId = crashId
+        return fakeBackgroundActivityMessage()
     }
 
-    private fun snapshotBackgroundActivity(initial: Session): SessionMessage {
+    private fun snapshotBackgroundActivity(): SessionMessage {
         snapshotBaCount++
-        return snapshot(initial = initial)
+        return fakeBackgroundActivityMessage()
     }
 
     private fun startSessionWithState(timestamp: Long): Session {
         startSessionTimestamps.add(timestamp)
-        activeSession = newSession(
-            startTimeMs = timestamp,
-            appState = Session.APPLICATION_STATE_FOREGROUND,
-            number = sessionCount.incrementAndGet(),
-            startType = Session.LifeEventType.STATE,
-
-        )
+        activeSession = fakeSession(startMs = timestamp)
         return checkNotNull(activeSession)
     }
 
     override fun startSessionWithManual(timestamp: Long): Session {
         manualSessionStartCount++
-        activeSession = newSession(
-            startTimeMs = timestamp,
-            appState = Session.APPLICATION_STATE_FOREGROUND,
-            number = sessionCount.incrementAndGet(),
-            startType = Session.LifeEventType.MANUAL
-        )
+        activeSession = fakeSession()
         return checkNotNull(activeSession)
     }
 
-    private fun endSessionWithState(
-        initial: Session,
-        timestamp: Long,
-    ): SessionMessage {
+    private fun endSessionWithState(timestamp: Long): SessionMessage {
         endSessionTimestamps.add(timestamp)
-        return endSession(initial = initial, endTimeMs = timestamp)
+        activeSession = null
+        return fakeV1SessionMessage()
+    }
+
+    var crashId: String? = null
+
+    private fun endSessionWithCrash(crashId: String): SessionMessage {
+        this.crashId = crashId
+        activeSession = null
+        return fakeV1SessionMessage()
     }
 
     override fun endSessionWithManual(timestamp: Long, initial: Session): SessionMessage {
         manualSessionEndCount++
-        return endSession(initial = initial, endTimeMs = timestamp)
-    }
-
-    private fun snapshotSession(initial: Session): SessionMessage {
-        snapshotSessionCount++
-        return snapshot(initial = initial)
-    }
-
-    private fun newSession(
-        startTimeMs: Long,
-        appState: String,
-        number: Int,
-        startType: Session.LifeEventType
-    ) = Session(
-        sessionId = currentSessionSpan.getSessionId(),
-        startTime = startTimeMs,
-        appState = appState,
-        number = number,
-        messageType = "en",
-        isColdStart = false,
-        startType = startType
-    )
-
-    private fun endSession(initial: Session, endTimeMs: Long = 0L, crashId: String? = null): SessionMessage {
-        val endSessionMessage = fakeV1EndedSessionMessage(
-            session = initial.copy(endTime = endTimeMs, crashReportId = crashId),
-            spans = currentSessionSpan.endSession()
-        )
         activeSession = null
-        return endSessionMessage
+        return fakeV1SessionMessage()
     }
 
-    private fun snapshot(initial: Session) = fakeV1SessionMessage().copy(
-        session = initial,
-        spanSnapshots = listOf(
-            EmbraceSpanData(checkNotNull(currentSessionSpan.sessionSpan))
-        )
-    )
+    private fun snapshotSession(): SessionMessage? {
+        snapshotSessionCount++
+        return null
+    }
 }

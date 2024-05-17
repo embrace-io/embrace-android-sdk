@@ -7,7 +7,7 @@ public final class io/embrace/android/embracesdk/BuildConfig {
 	public fun <init> ()V
 }
 
-public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/EmbraceAndroidApi {
+public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/EmbraceAndroidApi, io/embrace/android/embracesdk/EmbraceApi, io/embrace/android/embracesdk/LogsApi, io/embrace/android/embracesdk/MomentsApi, io/embrace/android/embracesdk/NetworkRequestApi, io/embrace/android/embracesdk/SessionApi, io/embrace/android/embracesdk/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z

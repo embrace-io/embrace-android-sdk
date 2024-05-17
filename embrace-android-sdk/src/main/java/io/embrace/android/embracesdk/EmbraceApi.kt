@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
-import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter
 
@@ -11,7 +10,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  * [EmbraceApi] directly or implement it in your own custom classes,
  * as new functions may be added in future. Use the [Embrace] class instead.
  */
-internal interface EmbraceApi : LogsApi, MomentsApi, NetworkRequestApi, SessionApi, UserApi, TracingApi {
+internal interface EmbraceApi {
 
     /**
      * Sets a custom app ID that overrides the one specified at build time. Must be called before

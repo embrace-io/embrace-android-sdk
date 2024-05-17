@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
+import io.embrace.android.embracesdk.spans.TracingApi;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.jvm.functions.Function0;
@@ -28,7 +29,15 @@ import kotlin.jvm.functions.Function0;
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 @SuppressWarnings("unused")
-public final class Embrace implements EmbraceAndroidApi {
+public final class Embrace implements
+        LogsApi,
+        MomentsApi,
+        NetworkRequestApi,
+        SessionApi,
+        UserApi,
+        TracingApi,
+        EmbraceApi,
+        EmbraceAndroidApi {
 
     /**
      * Singleton instance of the Embrace SDK.

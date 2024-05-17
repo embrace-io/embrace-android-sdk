@@ -60,8 +60,8 @@ internal class FakePayloadFactory : PayloadFactory {
         initial: Session
     ): SessionMessage? {
         return when (state) {
-            ProcessState.FOREGROUND -> snapshotSession(initial)
-            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
+            ProcessState.FOREGROUND -> snapshotSession()
+            ProcessState.BACKGROUND -> snapshotBackgroundActivity()
         }
     }
 
@@ -82,9 +82,9 @@ internal class FakePayloadFactory : PayloadFactory {
         return fakeBackgroundActivityMessage()
     }
 
-    private fun snapshotBackgroundActivity(initial: Session): SessionMessage {
+    private fun snapshotBackgroundActivity(): SessionMessage {
         snapshotBaCount++
-        return fakeBackgroundActivityMessage().copy(session = initial)
+        return fakeBackgroundActivityMessage()
     }
 
     private fun startSessionWithState(timestamp: Long): Session {
@@ -119,8 +119,8 @@ internal class FakePayloadFactory : PayloadFactory {
         return fakeV1SessionMessage()
     }
 
-    private fun snapshotSession(initial: Session): SessionMessage {
+    private fun snapshotSession(): SessionMessage? {
         snapshotSessionCount++
-        return fakeV1SessionMessage().copy(session = initial)
+        return null
     }
 }

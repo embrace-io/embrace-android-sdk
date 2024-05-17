@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
+import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -27,13 +28,13 @@ internal open class FakeDeliveryService : DeliveryService {
     var lastSavedCrash: EventMessage? = null
     var lastSentCachedSession: String? = null
     val sentSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
-    val lastSavedSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
+    val savedSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
 
     override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
             sentSessionMessages.add(sessionMessage to snapshotType)
         }
-        lastSavedSessionMessages.add(sessionMessage to snapshotType)
+        savedSessionMessages.add(sessionMessage to snapshotType)
     }
 
     override fun sendCachedSessions(
@@ -71,18 +72,38 @@ internal open class FakeDeliveryService : DeliveryService {
     }
 
     fun getSentSessions(): List<SessionMessage> {
-        return sentSessionMessages.map { it.first }.filter { it.session.appState == "foreground" }
+        return sentSessionMessages.filter { it.first.session.appState == Session.APPLICATION_STATE_FOREGROUND }.map { it.first }
     }
 
     fun getSentBackgroundActivities(): List<SessionMessage> {
-        return sentSessionMessages.map { it.first }.filter { it.session.appState == "background" }
+        return sentSessionMessages.filter { it.first.session.appState == Session.APPLICATION_STATE_BACKGROUND }.map { it.first }
     }
 
-    fun getLastSavedSession(): SessionMessage? {
-        return lastSavedSessionMessages.map { it.first }.lastOrNull { it.session.appState == "foreground" }
+    fun getSavedSessions(): List<SessionMessage> {
+        return savedSessionMessages.filter {
+            it.first.session.appState == Session.APPLICATION_STATE_FOREGROUND
+        }.map { it.first }
+    }
+
+    fun getSavedBackgroundActivities(): List<SessionMessage> {
+        return savedSessionMessages.filter {
+            it.first.session.appState == Session.APPLICATION_STATE_BACKGROUND
+        }.map { it.first }
     }
 
     fun getLastSentSession(): SessionMessage? {
         return getSentSessions().lastOrNull()
+    }
+
+    fun getLastSentBackgroundActivity(): SessionMessage? {
+        return getSentBackgroundActivities().lastOrNull()
+    }
+
+    fun getLastSavedSession(): SessionMessage? {
+        return getSavedSessions().lastOrNull()
+    }
+
+    fun getLastSavedBackgroundActivity(): SessionMessage? {
+        return getSavedBackgroundActivities().lastOrNull()
     }
 }

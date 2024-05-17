@@ -70,6 +70,9 @@ internal class AppStartupTraceEmitter(
     private var startupActivityName: String? = null
 
     @Volatile
+    private var firstActivityInitStartMs: Long? = null
+
+    @Volatile
     private var startupActivityPreCreatedMs: Long? = null
 
     @Volatile
@@ -109,7 +112,11 @@ internal class AppStartupTraceEmitter(
     }
 
     override fun startupActivityInitStart(timestampMs: Long?) {
-        startupActivityInitStartMs = timestampMs ?: nowMs()
+        startupActivityInitStartMs = (timestampMs ?: nowMs()).apply {
+            if (firstActivityInitStartMs == null) {
+                firstActivityInitStartMs = this
+            }
+        }
     }
 
     override fun startupActivityPostCreated(timestampMs: Long?) {
@@ -183,8 +190,8 @@ internal class AppStartupTraceEmitter(
         sdkInitEndedInForeground = startupService.endedInForeground()
         sdkInitThreadName = startupService.getInitThreadName()
 
-        if (processStartTimeMs != null && traceEndTimeMs != null) {
-            val gap = applicationActivityCreationGap() ?: duration(sdkInitEndMs, startupActivityInitStartMs)
+        if (processStartTimeMs != null && traceEndTimeMs != null && sdkInitEndMs != null) {
+            val gap = applicationActivityCreationGap(sdkInitEndMs)
             if (gap != null) {
                 val startupTrace: EmbraceSpan? = if (!spanService.initialized()) {
                     logger.logWarning("Startup trace not recorded because the spans service is not initialized")
@@ -195,14 +202,17 @@ internal class AppStartupTraceEmitter(
                         applicationInitEndMs = applicationInitEndMs,
                         sdkInitStartMs = sdkInitStartMs,
                         sdkInitEndMs = sdkInitEndMs,
+                        firstActivityInitMs = firstActivityInitStartMs,
                         activityInitStartMs = startupActivityInitStartMs,
                         activityInitEndMs = startupActivityInitEndMs,
-                        traceEndTimeMs = traceEndTimeMs,
+                        traceEndTimeMs = traceEndTimeMs
                     )
                 } else {
-                    startupActivityInitStartMs?.let { startTime ->
+                    val warmStartTimeMs = firstActivityInitStartMs ?: startupActivityInitStartMs
+                    warmStartTimeMs?.let { startTime ->
                         recordWarmTtid(
                             traceStartTimeMs = startTime,
+                            activityInitStartMs = startupActivityInitStartMs,
                             activityInitEndMs = startupActivityInitEndMs,
                             traceEndTimeMs = traceEndTimeMs,
                             processToActivityCreateGap = gap,
@@ -238,6 +248,7 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
         sdkInitEndMs: Long?,
+        firstActivityInitMs: Long?,
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
@@ -273,12 +284,13 @@ internal class AppStartupTraceEmitter(
                     )
                 }
                 val lastEventBeforeActivityInit = applicationInitEndMs ?: sdkInitEndMs
-                if (lastEventBeforeActivityInit != null && activityInitStartMs != null) {
+                val firstActivityInit = firstActivityInitMs ?: activityInitStartMs
+                if (lastEventBeforeActivityInit != null && firstActivityInit != null) {
                     spanService.recordCompletedSpan(
                         name = "activity-init-gap",
                         parent = this,
                         startTimeMs = lastEventBeforeActivityInit,
-                        endTimeMs = activityInitStartMs,
+                        endTimeMs = firstActivityInit,
                         private = false,
                     )
                 }
@@ -313,6 +325,7 @@ internal class AppStartupTraceEmitter(
 
     private fun recordWarmTtid(
         traceStartTimeMs: Long,
+        activityInitStartMs: Long?,
         activityInitEndMs: Long?,
         traceEndTimeMs: Long,
         processToActivityCreateGap: Long?,
@@ -336,11 +349,11 @@ internal class AppStartupTraceEmitter(
                 if (stop(endTimeMs = traceEndTimeMs)) {
                     startupRecorded.set(true)
                 }
-                if (activityInitEndMs != null) {
+                if (activityInitStartMs != null && activityInitEndMs != null) {
                     spanService.recordCompletedSpan(
                         name = "activity-create",
                         parent = this,
-                        startTimeMs = traceStartTimeMs,
+                        startTimeMs = activityInitStartMs,
                         endTimeMs = activityInitEndMs,
                         private = false,
                     )
@@ -365,7 +378,8 @@ internal class AppStartupTraceEmitter(
 
     private fun processCreateDelay(): Long? = duration(processCreateRequestedMs, processCreatedMs)
 
-    private fun applicationActivityCreationGap(): Long? = duration(applicationInitEndMs, startupActivityInitStartMs)
+    private fun applicationActivityCreationGap(sdkInitEndMs: Long): Long? =
+        duration(applicationInitEndMs ?: sdkInitEndMs, firstActivityInitStartMs)
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
 
@@ -388,6 +402,10 @@ internal class AppStartupTraceEmitter(
 
         sdkInitEndedInForeground?.let { inForeground ->
             addAttribute("embrace-init-in-foreground", inForeground.toString())
+        }
+
+        firstActivityInitStartMs?.let { timeMs ->
+            addAttribute("first-activity-init-ms", timeMs.toString())
         }
 
         sdkInitThreadName?.let { threadName ->

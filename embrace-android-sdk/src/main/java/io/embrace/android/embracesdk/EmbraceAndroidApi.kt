@@ -8,7 +8,7 @@ import android.content.Context
  * [EmbraceAndroidApi] directly or implement it in your own custom classes,
  * as new functions may be added in future. Use the [Embrace] class instead.
  */
-internal interface EmbraceAndroidApi : EmbraceApi {
+internal interface EmbraceAndroidApi {
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be

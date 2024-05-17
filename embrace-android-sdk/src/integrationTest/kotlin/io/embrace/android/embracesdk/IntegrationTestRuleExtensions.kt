@@ -8,15 +8,15 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
-import java.io.IOException
+import org.json.JSONObject
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.robolectric.Robolectric
+import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import org.json.JSONObject
-import org.junit.Assert
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
@@ -98,29 +98,29 @@ internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int
 /**
  * Returns a list of [SessionMessage] that were sent by the SDK since startup.
  */
-internal fun IntegrationTestRule.Harness.getSentSessionMessages(): List<SessionMessage> {
-    return overriddenDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "foreground" }
+internal fun IntegrationTestRule.Harness.getSentSessions(): List<SessionMessage> {
+    return overriddenDeliveryModule.deliveryService.getSentSessions()
 }
 
 /**
  * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<SessionMessage> {
-    return overriddenDeliveryModule.deliveryService.lastSentSessions.map { it.first }.filter { it.session.appState == "background" }
+    return overriddenDeliveryModule.deliveryService.getSentBackgroundActivities()
 }
 
 /**
  * Returns the last [SessionMessage] that was saved by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSavedSessionMessage(): SessionMessage? {
-    return overriddenDeliveryModule.deliveryService.lastSavedSession
+internal fun IntegrationTestRule.Harness.getLastSavedSession(): SessionMessage? {
+    return overriddenDeliveryModule.deliveryService.getLastSavedSession()
 }
 
 /**
  * Returns the last [SessionMessage] that was sent by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSentSessionMessage(): SessionMessage? {
-    return getSentSessionMessages().lastOrNull()
+internal fun IntegrationTestRule.Harness.getLastSentSession(): SessionMessage? {
+    return getSentSessions().lastOrNull()
 }
 
 /**
@@ -155,7 +155,7 @@ internal fun IntegrationTestRule.Harness.recordSession(
     activityController?.pause()
     activityController?.stop()
     activityService.onBackground()
-    return getLastSentSessionMessage()
+    return getLastSentSession()
 }
 
 /**

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert
 import org.junit.Rule
@@ -80,7 +80,7 @@ internal class PushNotificationTest {
     }
 
     private fun IntegrationTestRule.assertNotification(type: String) {
-        val payload = harness.getSentSessionMessages().single()
+        val payload = harness.getSentSessions().single()
         val sessionSpan = payload.findSessionSpan()
         Assert.assertNotNull(sessionSpan)
         val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
@@ -112,7 +112,7 @@ internal class PushNotificationTest {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
             }
 
-            val payload = harness.getSentSessionMessages().single()
+            val payload = harness.getSentSessions().single()
             val sessionSpan = payload.findSessionSpan()
             Assert.assertNotNull(sessionSpan)
             val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)

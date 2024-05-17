@@ -18,29 +18,22 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 internal open class FakeDeliveryService : DeliveryService {
     var lastSentNetworkCall: NetworkEvent? = null
     var lastSentCrash: EventMessage? = null
-    var lastSentEvent: EventMessage? = null
     val lastSentLogs: MutableList<EventMessage> = mutableListOf()
     val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     val sentMoments: MutableList<EventMessage> = mutableListOf()
-    var sendBackgroundActivitiesInvokedCount: Int = 0
-    var lastSentBackgroundActivities: MutableList<SessionMessage> = mutableListOf()
-    var saveBackgroundActivityInvokedCount: Int = 0
-    var lastSavedBackgroundActivities: MutableList<SessionMessage> = mutableListOf()
     var lastEventSentAsync: EventMessage? = null
     var eventSentAsyncInvokedCount: Int = 0
     var lastSavedCrash: EventMessage? = null
     var lastSentCachedSession: String? = null
-    var lastSavedSession: SessionMessage? = null
-    var lastSnapshotType: SessionSnapshotType? = null
-    val lastSentSessions: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
+    val sentSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
+    val lastSavedSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
 
     override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
         if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
-            lastSentSessions.add(sessionMessage to snapshotType)
+            sentSessionMessages.add(sessionMessage to snapshotType)
         }
-        lastSavedSession = sessionMessage
-        lastSnapshotType = snapshotType
+        lastSavedSessionMessages.add(sessionMessage to snapshotType)
     }
 
     override fun sendCachedSessions(
@@ -75,5 +68,21 @@ internal open class FakeDeliveryService : DeliveryService {
     override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
         lastSavedCrash = crash
         lastSentCrash = crash
+    }
+
+    fun getSentSessions(): List<SessionMessage> {
+        return sentSessionMessages.map { it.first }.filter { it.session.appState == "foreground" }
+    }
+
+    fun getSentBackgroundActivities(): List<SessionMessage> {
+        return sentSessionMessages.map { it.first }.filter { it.session.appState == "background" }
+    }
+
+    fun getLastSavedSession(): SessionMessage? {
+        return lastSavedSessionMessages.map { it.first }.lastOrNull { it.session.appState == "foreground" }
+    }
+
+    fun getLastSentSession(): SessionMessage? {
+        return getSentSessions().lastOrNull()
     }
 }

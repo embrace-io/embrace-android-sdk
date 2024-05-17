@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.getLastSentLog
-import io.embrace.android.embracesdk.getLastSentSessionMessage
-import io.embrace.android.embracesdk.getSentSessionMessages
+import io.embrace.android.embracesdk.getLastSentSession
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
@@ -36,7 +36,7 @@ internal class CrashTest {
 
     @Before
     fun setup() {
-        assertTrue(testRule.harness.getSentSessionMessages().isEmpty())
+        assertTrue(testRule.harness.getSentSessions().isEmpty())
         testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
             RemoteConfig(oTelConfig = OTelRemoteConfig(isBetaEnabled = true))
         }
@@ -68,7 +68,7 @@ internal class CrashTest {
         assertEquals(expectedExceptionCause, log?.findLogAttribute("emb.android.crash.exception_cause"))
         assertNotNull(log?.findLogAttribute("emb.android.threads"))
 
-        val message = checkNotNull(testRule.harness.getLastSentSessionMessage())
+        val message = checkNotNull(testRule.harness.getLastSentSession())
         verifySessionHappened(message)
         assertNotNull(message.session.crashReportId)
         assertEquals(message.session.crashReportId, log?.findLogAttribute("log.record.uid"))
@@ -111,7 +111,7 @@ internal class CrashTest {
         assertEquals(expectedExceptionCause, log?.findLogAttribute("emb.android.crash.exception_cause"))
         assertNotNull(log?.findLogAttribute("emb.android.threads"))
 
-        val message = checkNotNull(testRule.harness.getLastSentSessionMessage())
+        val message = checkNotNull(testRule.harness.getLastSentSession())
         verifySessionHappened(message)
         assertNotNull(message.session.crashReportId)
         assertEquals(message.session.crashReportId, log?.findLogAttribute("log.record.uid"))

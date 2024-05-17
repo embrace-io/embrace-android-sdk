@@ -114,7 +114,7 @@ internal class PayloadFactoryBaTest {
     fun `background activity is not started whn the service initializes in the foreground`() {
         activityService.isInBackground = false
         this.service = createService(false)
-        assertTrue(deliveryService.lastSavedBackgroundActivities.isEmpty())
+        assertTrue(deliveryService.lastSavedSessionMessages.isEmpty())
     }
 
     @Test

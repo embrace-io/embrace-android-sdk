@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVital
 import io.embrace.android.embracesdk.payload.WebVitalType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
@@ -38,54 +39,48 @@ internal class WebViewDataSourceTest {
 
     @Test
     fun `calling loadDataIntoSession with a list of WebViewInfo, adds the events`() {
-        val webViewInfo1 = WebViewInfo(
-            url = "https://example2.com",
-            webVitals = mutableListOf(
-                WebVital(
-                    type = WebVitalType.LCP,
-                    name = "largest-contentful-paint",
-                    startTime = 1715203972149,
-                    duration = 200,
-                    properties = emptyMap(),
-                    score = 0.5
-                ),
-                WebVital(
-                    type = WebVitalType.FCP,
-                    name = "first-paint",
-                    startTime = 1715203972149,
-                    duration = 270,
-                    properties = emptyMap(),
-                    score = 0.5
-                )
-            ),
-            tag = "tag",
-            startTime = clock.now()
-        )
-        val webViewInfo2 = WebViewInfo(
-            url = "https://example2.com",
-            webVitals = mutableListOf(
-                WebVital(
-                    type = WebVitalType.LCP,
-                    name = "largest-contentful-paint",
-                    startTime = 1715203972149,
-                    duration = 200,
-                    properties = emptyMap(),
-                    score = 0.5
-                ),
-                WebVital(
-                    type = WebVitalType.FCP,
-                    name = "first-paint",
-                    startTime = 1715203972149,
-                    duration = 270,
-                    properties = emptyMap(),
-                    score = 0.5
-                )
-            ),
-            tag = "tag",
-            startTime = clock.now()
-        )
+        val webViewInfo1 = getWebViewInfo("https://example1.com")
+        val webViewInfo2 = getWebViewInfo("https://example2.com")
         dataSource.loadDataIntoSession(listOf(webViewInfo1, webViewInfo2))
-//        assertEquals(2, writer.addedEvents.size)
-//        assertEquals(2, writer.addedEvents.count { it.schemaType.fixedObjectName == "WebViewInfo" })
+        assertEquals(2, writer.addedEvents.size)
+        assertEquals(2, writer.addedEvents.count { it.schemaType.fixedObjectName == "webview-info" })
+        assertEquals("https://example1.com", writer.addedEvents[0].schemaType.attributes()["emb.webview_info.url"])
+        assertEquals("https://example2.com", writer.addedEvents[1].schemaType.attributes()["emb.webview_info.url"])
+    }
+
+    @Test
+    fun `test mapping from WebViewInfo to SpanEventData`() {
+        val webViewInfo = getWebViewInfo("https://example.com")
+        val spanEventData = dataSource.toSpanEventData(webViewInfo)
+        assertEquals("https://example.com", spanEventData.schemaType.attributes()["emb.webview_info.url"])
+        assertNotNull(spanEventData.schemaType.attributes()["emb.webview_info.web_vitals"])
+        assertEquals("tag", spanEventData.schemaType.attributes()["emb.webview_info.tag"])
+        assertEquals(webViewInfo.startTime * 1000000, spanEventData.spanStartTimeMs)
+    }
+
+    private fun getWebViewInfo(url: String): WebViewInfo {
+        return WebViewInfo(
+            url = url,
+            webVitals = mutableListOf(
+                WebVital(
+                    type = WebVitalType.LCP,
+                    name = "largest-contentful-paint",
+                    startTime = 1715203972149,
+                    duration = 200,
+                    properties = emptyMap(),
+                    score = 0.5
+                ),
+                WebVital(
+                    type = WebVitalType.FCP,
+                    name = "first-paint",
+                    startTime = 1715203972149,
+                    duration = 270,
+                    properties = emptyMap(),
+                    score = 0.5
+                )
+            ),
+            tag = "tag",
+            startTime = clock.now()
+        )
     }
 }

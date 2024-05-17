@@ -333,7 +333,6 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun getSpanId ()Ljava/lang/String;
 	public abstract fun getTraceId ()Ljava/lang/String;
 	public abstract fun isRecording ()Z
-	public abstract fun removeEvents (Ljava/lang/String;)V
 	public abstract fun start ()Z
 	public abstract fun start (Ljava/lang/Long;)Z
 	public abstract fun stop ()Z

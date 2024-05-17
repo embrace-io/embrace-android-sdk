@@ -285,21 +285,21 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logInfo(@NonNull String message) {
         if (verifyNonNullParameters("logInfo", message)) {
-            logMessage(message, Severity.INFO);
+            impl.logInfo(message);
         }
     }
 
     @Override
     public void logWarning(@NonNull String message) {
         if (verifyNonNullParameters("logWarning", message)) {
-            logMessage(message, Severity.WARNING);
+            impl.logWarning(message);
         }
     }
 
     @Override
     public void logError(@NonNull String message) {
         if (verifyNonNullParameters("logError", message)) {
-            logMessage(message, Severity.ERROR);
+            impl.logError(message);
         }
     }
 
@@ -313,7 +313,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logMessage(@NonNull String message, @NonNull Severity severity) {
         if (verifyNonNullParameters("logMessage", message, severity)) {
-            logMessage(message, severity, null);
+            impl.logMessage(message, severity);
         }
     }
 
@@ -329,14 +329,14 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logException(@NonNull Throwable throwable) {
         if (verifyNonNullParameters("logException", throwable)) {
-            logException(throwable, Severity.ERROR);
+            impl.logException(throwable);
         }
     }
 
     @Override
     public void logException(@NonNull Throwable throwable, @NonNull Severity severity) {
         if (verifyNonNullParameters("logException", throwable, severity)) {
-            logException(throwable, severity, null);
+            impl.logException(throwable, severity);
         }
     }
 
@@ -345,7 +345,7 @@ public final class Embrace implements EmbraceAndroidApi {
                              @NonNull Severity severity,
                              @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("logException", throwable, severity)) {
-            logException(throwable, severity, properties, null);
+            impl.logException(throwable, severity, properties);
         }
     }
 
@@ -362,14 +362,14 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements) {
         if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements)) {
-            logCustomStacktrace(stacktraceElements, Severity.ERROR);
+            impl.logCustomStacktrace(stacktraceElements);
         }
     }
 
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements, @NonNull Severity severity) {
         if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
-            logCustomStacktrace(stacktraceElements, severity, null);
+            impl.logCustomStacktrace(stacktraceElements, severity);
         }
     }
 
@@ -378,7 +378,7 @@ public final class Embrace implements EmbraceAndroidApi {
                                     @NonNull Severity severity,
                                     @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
-            logCustomStacktrace(stacktraceElements, severity, properties, null);
+            impl.logCustomStacktrace(stacktraceElements, severity, properties);
         }
     }
 
@@ -587,7 +587,8 @@ public final class Embrace implements EmbraceAndroidApi {
                     id,
                     notificationPriority,
                     messageDeliveredPriority,
-                    PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
+                    isNotification,
+                    hasData
             );
         }
     }

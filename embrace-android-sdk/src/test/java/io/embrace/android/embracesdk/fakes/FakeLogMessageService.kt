@@ -8,7 +8,21 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 internal class FakeLogMessageService : LogMessageService {
 
-    val loggedMessages = mutableListOf<String>()
+    internal class LogData(
+        val message: String,
+        val type: EventType,
+        val logExceptionType: LogExceptionType,
+        val properties: Map<String, Any>?,
+        val stackTraceElements: Array<StackTraceElement>?,
+        val customStackTrace: String?,
+        val framework: Embrace.AppFramework,
+        val context: String?,
+        val library: String?,
+        val exceptionName: String?,
+        val exceptionMessage: String?
+    )
+
+    val loggedMessages = mutableListOf<LogData>()
     val networkCalls = mutableListOf<NetworkCapturedCall>()
 
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
@@ -28,7 +42,21 @@ internal class FakeLogMessageService : LogMessageService {
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        loggedMessages.add(message)
+        loggedMessages.add(
+            LogData(
+                message = message,
+                type = type,
+                logExceptionType = logExceptionType,
+                properties = properties,
+                stackTraceElements = stackTraceElements,
+                customStackTrace = customStackTrace,
+                framework = framework,
+                context = context,
+                library = library,
+                exceptionName = exceptionName,
+                exceptionMessage = exceptionMessage
+            )
+        )
     }
 
     override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {

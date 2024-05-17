@@ -21,16 +21,7 @@ internal class EmbraceInternalInterfaceImpl(
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
-        embraceImpl.logMessage(
-            EventType.INFO_LOG,
-            message,
-            properties,
-            null,
-            null,
-            LogExceptionType.NONE,
-            null,
-            null
-        )
+        embraceImpl.logMessage(message, Severity.INFO, properties)
     }
 
     override fun logWarning(
@@ -38,16 +29,7 @@ internal class EmbraceInternalInterfaceImpl(
         properties: Map<String, Any>?,
         stacktrace: String?
     ) {
-        embraceImpl.logMessage(
-            EventType.WARNING_LOG,
-            message,
-            properties,
-            null,
-            stacktrace,
-            LogExceptionType.NONE,
-            null,
-            null
-        )
+        embraceImpl.logMessage(message, Severity.WARNING, properties)
     }
 
     override fun logError(
@@ -56,16 +38,7 @@ internal class EmbraceInternalInterfaceImpl(
         stacktrace: String?,
         isException: Boolean,
     ) {
-        embraceImpl.logMessage(
-            EventType.ERROR_LOG,
-            message,
-            properties,
-            null,
-            stacktrace,
-            LogExceptionType.NONE,
-            null,
-            null
-        )
+        embraceImpl.logMessage(message, Severity.ERROR, properties)
     }
 
     @Suppress("DEPRECATION")

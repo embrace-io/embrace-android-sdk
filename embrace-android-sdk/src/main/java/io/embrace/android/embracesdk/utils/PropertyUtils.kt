@@ -33,6 +33,21 @@ internal object PropertyUtils {
             .associate { Pair(it.key, checkIfSerializable(it.key, it.value, logger)) }
     }
 
+    @JvmStatic
+    fun normalizeProperties(properties: Map<String, Any>?, logger: EmbLogger): Map<String, Any>? {
+        var normalizedProperties: Map<String, Any> = HashMap()
+        if (properties != null) {
+            try {
+                normalizedProperties = sanitizeProperties(properties, logger)
+            } catch (e: Exception) {
+                logger.logError("Exception occurred while normalizing the properties.", e)
+            }
+            return normalizedProperties
+        } else {
+            return null
+        }
+    }
+
     private fun checkIfSerializable(key: String, value: Any?, logger: EmbLogger): Any {
         if (value == null) {
             return "null"

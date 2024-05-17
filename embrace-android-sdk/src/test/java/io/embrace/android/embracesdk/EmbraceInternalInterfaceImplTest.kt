@@ -55,16 +55,7 @@ internal class EmbraceInternalInterfaceImplTest {
     fun testLogInfo() {
         internalImpl.logInfo("", emptyMap())
         verify(exactly = 1) {
-            embraceImpl.logMessage(
-                EventType.INFO_LOG,
-                "",
-                emptyMap<String, String>(),
-                null,
-                null,
-                LogExceptionType.NONE,
-                null,
-                null
-            )
+            embraceImpl.logMessage("", Severity.INFO, emptyMap<String, String>())
         }
     }
 
@@ -72,16 +63,7 @@ internal class EmbraceInternalInterfaceImplTest {
     fun testLogWarning() {
         internalImpl.logWarning("", emptyMap(), null)
         verify(exactly = 1) {
-            embraceImpl.logMessage(
-                EventType.WARNING_LOG,
-                "",
-                emptyMap<String, String>(),
-                null,
-                null,
-                LogExceptionType.NONE,
-                null,
-                null
-            )
+            embraceImpl.logMessage("", Severity.WARNING, emptyMap<String, String>())
         }
     }
 
@@ -89,16 +71,7 @@ internal class EmbraceInternalInterfaceImplTest {
     fun testLogError() {
         internalImpl.logError("", emptyMap(), null, false)
         verify(exactly = 1) {
-            embraceImpl.logMessage(
-                EventType.ERROR_LOG,
-                "",
-                emptyMap<String, String>(),
-                null,
-                null,
-                LogExceptionType.NONE,
-                null,
-                null
-            )
+            embraceImpl.logMessage("", Severity.ERROR, emptyMap<String, String>())
         }
     }
 

@@ -3,15 +3,20 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class FakeSessionPropertiesService : SessionPropertiesService {
+
+    var props: MutableMap<String, String> = mutableMapOf()
+
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
-        TODO("Not yet implemented")
+        props[originalKey] = originalValue
+        return true
     }
 
     override fun removeProperty(originalKey: String): Boolean {
-        TODO("Not yet implemented")
+        props.remove(originalKey)
+        return true
     }
 
-    override fun getProperties(): Map<String, String> = emptyMap()
+    override fun getProperties(): Map<String, String> = props
 
     override fun populateCurrentSession(): Boolean = true
 }

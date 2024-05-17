@@ -6,6 +6,7 @@ internal class FakeSessionOrchestrator : SessionOrchestrator {
 
     var crashId: String? = null
     var manualEndCount = 0
+    var stateChangeCount = 0
 
     override fun endSessionWithManual(clearUserInfo: Boolean) {
         manualEndCount++
@@ -16,5 +17,6 @@ internal class FakeSessionOrchestrator : SessionOrchestrator {
     }
 
     override fun reportBackgroundActivityStateChange() {
+        stateChangeCount++
     }
 }

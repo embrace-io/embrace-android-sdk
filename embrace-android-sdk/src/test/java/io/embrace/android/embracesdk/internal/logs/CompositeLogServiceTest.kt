@@ -97,7 +97,7 @@ internal class CompositeLogServiceTest {
         logTestException()
         assertEquals(1, v1LogService.loggedMessages.size)
         assertEquals(0, v2LogService.exceptions.size)
-        v1LogService.loggedMessages.single().contains("IllegalArgumentException")
+        v1LogService.loggedMessages.single().message.contains("IllegalArgumentException")
     }
 
     @Test

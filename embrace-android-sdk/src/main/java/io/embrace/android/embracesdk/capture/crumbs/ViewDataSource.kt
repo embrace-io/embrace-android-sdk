@@ -2,16 +2,13 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
-import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -26,8 +23,7 @@ internal class ViewDataSource(
     spanService,
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
-),
-    StartSpanMapper<FragmentBreadcrumb> {
+) {
 
     private val viewSpans: LinkedHashMap<String, EmbraceSpan> = LinkedHashMap()
 
@@ -38,8 +34,18 @@ internal class ViewDataSource(
         countsTowardsLimits = true,
         inputValidation = { !name.isNullOrEmpty() },
         captureAction = {
-            val crumb = FragmentBreadcrumb(checkNotNull(name), clock.now())
-            startSpanCapture(crumb, ::toStartSpanData)?.apply {
+            val data = StartSpanData(
+                schemaType = SchemaType.View(checkNotNull(name)),
+                spanStartTimeMs = clock.now(),
+            )
+            startSpan(
+                name = data.schemaType.fixedObjectName,
+                startTimeMs = data.spanStartTimeMs,
+                type = data.schemaType.telemetryType
+            )?.apply {
+                data.schemaType.attributes().forEach {
+                    addAttribute(it.key, it.value)
+                }
                 viewSpans[name] = this
             }
         }
@@ -80,12 +86,5 @@ internal class ViewDataSource(
                 }
             )
         }
-    }
-
-    override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
-        StartSpanData(
-            schemaType = SchemaType.View(name),
-            spanStartTimeMs = start,
-        )
     }
 }

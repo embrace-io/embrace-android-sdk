@@ -4,16 +4,27 @@ import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 
 internal class FakeEventService : EventService {
+
+    internal class EventParams(
+        val name: String,
+        val identifier: String? = null,
+        val properties: Map<String, Any>? = null,
+        val startTime: Long? = null
+    )
+
+    val startedEvents = mutableListOf<EventParams>()
+    val endedEvents = mutableListOf<EventParams>()
+
     override fun startEvent(name: String) {
-        TODO("Not yet implemented")
+        startedEvents.add(EventParams(name))
     }
 
     override fun startEvent(name: String, identifier: String?) {
-        TODO("Not yet implemented")
+        startedEvents.add(EventParams(name, identifier))
     }
 
     override fun startEvent(name: String, identifier: String?, properties: Map<String, Any>?) {
-        TODO("Not yet implemented")
+        startedEvents.add(EventParams(name, identifier, properties))
     }
 
     override fun startEvent(
@@ -22,23 +33,23 @@ internal class FakeEventService : EventService {
         properties: Map<String, Any>?,
         startTime: Long?
     ) {
-        TODO("Not yet implemented")
+        startedEvents.add(EventParams(name, identifier, properties, startTime))
     }
 
     override fun endEvent(name: String) {
-        TODO("Not yet implemented")
+        endedEvents.add(EventParams(name))
     }
 
     override fun endEvent(name: String, identifier: String?) {
-        TODO("Not yet implemented")
+        endedEvents.add(EventParams(name, identifier))
     }
 
     override fun endEvent(name: String, properties: Map<String, Any>?) {
-        TODO("Not yet implemented")
+        endedEvents.add(EventParams(name, properties = properties))
     }
 
     override fun endEvent(name: String, identifier: String?, properties: Map<String, Any>?) {
-        TODO("Not yet implemented")
+        endedEvents.add(EventParams(name, identifier, properties))
     }
 
     override fun findEventIdsForSession(): List<String> {

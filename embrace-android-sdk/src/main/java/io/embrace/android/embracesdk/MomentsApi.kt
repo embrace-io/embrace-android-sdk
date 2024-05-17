@@ -1,102 +1,104 @@
-package io.embrace.android.embracesdk;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import java.util.Map;
+package io.embrace.android.embracesdk
 
 /**
  * The public API that is used to start & end moments.
  */
-interface MomentsApi {
+internal interface MomentsApi {
 
     /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
      * the app, such as a user adding an item to their shopping cart.
-     * <p>
+     *
      * The length of time a moment takes to execute is recorded.
      *
      * @param name a name identifying the moment
      */
-    void startMoment(@NonNull String name);
+    fun startMoment(name: String)
 
     /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
      * the app, such as a user adding an item to their shopping cart.
-     * <p>
+     *
      * The length of time a moment takes to execute is recorded.
      *
      * @param name       a name identifying the moment
      * @param identifier an identifier distinguishing between multiple moments with the same name
      */
-    void startMoment(@NonNull String name, @Nullable String identifier);
+    fun startMoment(name: String, identifier: String?)
 
     /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
      * the app, such as a user adding an item to their shopping cart.
-     * <p>
+     *
      * The length of time a moment takes to execute is recorded
      *
      * @param name       a name identifying the moment
      * @param identifier an identifier distinguishing between multiple moments with the same name
      * @param properties custom key-value pairs to provide with the moment
      */
-    void startMoment(@NonNull String name,
-                     @Nullable String identifier,
-                     @Nullable Map<String, Object> properties);
+    fun startMoment(
+        name: String,
+        identifier: String?,
+        properties: Map<String, Any?>?
+    )
 
     /**
      * Signals the end of a moment with the specified name.
-     * <p>
+     *
      * The duration of the moment is computed.
      *
      * @param name the name of the moment to end
      */
-    void endMoment(@NonNull String name);
+    fun endMoment(name: String)
 
     /**
      * Signals the end of a moment with the specified name.
-     * <p>
+     *
      * The duration of the moment is computed.
      *
      * @param name       the name of the moment to end
      * @param identifier the identifier of the moment to end, distinguishing between moments with the same name
      */
-    void endMoment(@NonNull String name, @Nullable String identifier);
+    fun endMoment(name: String, identifier: String?)
 
     /**
      * Signals the end of a moment with the specified name.
-     * <p>
+     *
+     *
      * The duration of the moment is computed.
      *
      * @param name       the name of the moment to end
      * @param properties custom key-value pairs to provide with the moment
      */
-    void endMoment(@NonNull String name,
-                   @Nullable Map<String, Object> properties);
+    fun endMoment(
+        name: String,
+        properties: Map<String, Any?>?
+    )
 
     /**
      * Signals the end of a moment with the specified name.
-     * <p>
+     *
      * The duration of the moment is computed.
      *
      * @param name       the name of the moment to end
      * @param identifier the identifier of the moment to end, distinguishing between moments with the same name
      * @param properties custom key-value pairs to provide with the moment
      */
-    void endMoment(@NonNull String name,
-                   @Nullable String identifier,
-                   @Nullable Map<String, Object> properties);
+    fun endMoment(
+        name: String,
+        identifier: String?,
+        properties: Map<String, Any?>?
+    )
 
     /**
      * Signals that the app has completed startup.
      */
-    void endAppStartup();
+    fun endAppStartup()
 
     /**
      * Signals that the app has completed startup.
      *
      * @param properties properties to include as part of the startup moment
      */
-    void endAppStartup(@NonNull Map<String, Object> properties);
+    fun endAppStartup(properties: Map<String, Any?>)
 }

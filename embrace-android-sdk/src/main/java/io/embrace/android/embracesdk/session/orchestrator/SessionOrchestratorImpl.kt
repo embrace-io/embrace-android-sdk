@@ -284,15 +284,19 @@ internal class SessionOrchestratorImpl(
 
     private fun scheduleSessionSave(
         endProcessState: ProcessState,
-        newState: Session
+        initial: Session
     ) {
         updatePeriodicCacheAttrs()
         periodicSessionCacher.start {
-            synchronized(lock) {
-                updatePeriodicCacheAttrs()
-                payloadFactory.snapshotPayload(endProcessState, clock.now(), newState)?.apply {
-                    deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+            if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {
+                synchronized(lock) {
+                    updatePeriodicCacheAttrs()
+                    payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
+                        deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+                    }
                 }
+            } else {
+                null
             }
         }
     }
@@ -300,11 +304,15 @@ internal class SessionOrchestratorImpl(
     private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: Session) {
         updatePeriodicCacheAttrs()
         periodicBackgroundActivityCacher.scheduleSave {
-            synchronized(lock) {
-                updatePeriodicCacheAttrs()
-                payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                    deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+            if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {
+                synchronized(lock) {
+                    updatePeriodicCacheAttrs()
+                    payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
+                        deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+                    }
                 }
+            } else {
+                null
             }
         }
     }

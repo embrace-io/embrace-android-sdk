@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
@@ -12,10 +11,12 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
+import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
@@ -24,7 +25,6 @@ import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter
-import java.util.regex.Pattern
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -46,13 +46,15 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val momentsApiDelegate: MomentsApiDelegate = MomentsApiDelegate(bootstrapper, sdkCallChecker),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
         ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker)
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
     LogsApi by logsApiDelegate,
     MomentsApi by momentsApiDelegate,
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
-    ViewTrackingApi by viewTrackingApiDelegate {
+    ViewTrackingApi by viewTrackingApiDelegate,
+    SdkStateApi by sdkStateApiDelegate {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -60,12 +62,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     private val sdkClock = bootstrapper.initModule.clock
     private val logger = bootstrapper.initModule.logger
-
-    /**
-     * Custom app ID that overrides the one specified at build time
-     */
-    @Volatile
-    private var customAppId: String? = null
+    private val customAppId: String?
+        get() = sdkStateApiDelegate.customAppId
 
     /**
      * The application being instrumented by the SDK.
@@ -88,16 +86,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     private val breadcrumbService by embraceImplInject { bootstrapper.dataCaptureServiceModule.breadcrumbService }
     private val sessionOrchestrator by embraceImplInject { bootstrapper.sessionModule.sessionOrchestrator }
-    private val sessionIdTracker by embraceImplInject { bootstrapper.essentialServiceModule.sessionIdTracker }
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
     private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
-    private val preferencesService by embraceImplInject { bootstrapper.androidServicesModule.preferencesService }
     private val eventService by embraceImplInject { bootstrapper.dataContainerModule.eventService }
     private val networkCaptureService by embraceImplInject { bootstrapper.customerLogModule.networkCaptureService }
     private val webViewService by embraceImplInject { bootstrapper.dataCaptureServiceModule.webviewService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
-    private val crashVerifier by embraceImplInject { bootstrapper.crashModule.lastRunCrashVerifier }
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
@@ -232,41 +227,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     /**
-     * Whether or not the SDK has been started.
-     *
-     * @return true if the SDK is started, false otherwise
-     */
-    fun isStarted(): Boolean = sdkCallChecker.started.get()
-
-    /**
-     * Sets a custom app ID that overrides the one specified at build time. Must be called before
-     * the SDK is started.
-     *
-     * @param appId custom app ID
-     * @return true if the app ID could be set, false otherwise.
-     */
-    fun setAppId(appId: String): Boolean {
-        if (isStarted()) {
-            logger.logError("You must set the custom app ID before the SDK is started.", null)
-            return false
-        }
-        if (appId.isEmpty()) {
-            logger.logError("App ID cannot be null or empty.", null)
-            return false
-        }
-        if (!appIdPattern.matcher(appId).find()) {
-            logger.logError(
-                "Invalid app ID. Must be a 5-character string with characters from the set [A-Za-z0-9], but it was \"$appId\".",
-                null
-            )
-            return false
-        }
-
-        customAppId = appId
-        return true
-    }
-
-    /**
      * Shuts down the Embrace SDK.
      */
     fun stop() {
@@ -352,14 +312,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    fun getDeviceId(): String = when {
-        sdkCallChecker.check("get_device_id") ->
-            preferencesService?.deviceIdentifier
-                ?: ""
-
-        else -> ""
-    }
-
     /**
      * Logs that a particular WebView URL was loaded.
      *
@@ -376,29 +328,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         if (isStarted() && configService?.webViewVitalsBehavior?.isWebViewVitalsEnabled() == true) {
             webViewService?.collectWebData(tag, message)
         }
-    }
-
-    fun getCurrentSessionId(): String? {
-        val localSessionIdTracker = sessionIdTracker
-        if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
-            val sessionId = localSessionIdTracker.getActiveSessionId()
-            if (sessionId != null) {
-                return sessionId
-            } else {
-                logger.logInfo("Session ID is null", null)
-            }
-        }
-        return null
-    }
-
-    fun getLastRunEndState(): LastRunEndState = if (isStarted() && crashVerifier != null) {
-        if (crashVerifier?.didLastRunCrash() == true) {
-            LastRunEndState.CRASH
-        } else {
-            LastRunEndState.CLEAN_EXIT
-        }
-    } else {
-        LastRunEndState.INVALID
     }
 
     /**
@@ -475,9 +404,5 @@ internal class EmbraceImpl @JvmOverloads constructor(
             return
         }
         bootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)
-    }
-
-    companion object {
-        private val appIdPattern: Pattern = Pattern.compile("^[A-Za-z0-9]{5}$")
     }
 }

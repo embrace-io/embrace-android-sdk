@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fcm.swazzle.callback.com.android.fcm;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -18,7 +17,6 @@ public final class FirebaseSwazzledHooks {
     @InternalApi
     public static void _onMessageReceived(@NonNull RemoteMessage message) {
         if (!Embrace.getInstance().isStarted()) {
-            logError("Embrace received push notification data before the SDK was started", null);
             return;
         }
 
@@ -34,21 +32,21 @@ public final class FirebaseSwazzledHooks {
             try {
                 messageId = message.getMessageId();
             } catch (Exception e) {
-                logError("Failed to capture FCM messageId", e);
+                logError(e);
             }
 
             String topic = null;
             try {
                 topic = message.getFrom();
             } catch (Exception e) {
-                logError("Failed to capture FCM topic", e);
+                logError(e);
             }
 
             Integer messagePriority = null;
             try {
                 messagePriority = message.getPriority();
             } catch (Exception e) {
-                logError("Failed to capture FCM message priority", e);
+                logError(e);
             }
 
             RemoteMessage.Notification notification = null;
@@ -56,7 +54,7 @@ public final class FirebaseSwazzledHooks {
             try {
                 notification = message.getNotification();
             } catch (Exception e) {
-                logError("Failed to capture FCM RemoteMessage Notification", e);
+                logError(e);
             }
 
             String title = null;
@@ -66,19 +64,19 @@ public final class FirebaseSwazzledHooks {
                 try {
                     title = notification.getTitle();
                 } catch (Exception e) {
-                    logError("Failed to capture FCM title", e);
+                    logError(e);
                 }
 
                 try {
                     body = notification.getBody();
                 } catch (Exception e) {
-                    logError("Failed to capture FCM body", e);
+                    logError(e);
                 }
 
                 try {
                     notificationPriority = notification.getNotificationPriority();
                 } catch (Exception e) {
-                    logError("Failed to capture FCM notificationPriority", e);
+                    logError(e);
                 }
             }
 
@@ -97,17 +95,14 @@ public final class FirebaseSwazzledHooks {
                         hasData
                 );
             } catch (Exception e) {
-                logError("Failed to log push Notification", e);
+                logError(e);
             }
         } catch (Exception e) {
-            logError("Push Notification Error", e);
+            logError(e);
         }
     }
 
-    private static void logError(@NonNull String message, @Nullable Exception e) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
-        if (e != null) {
-            Embrace.getInstance().getInternalInterface().logInternalError(e);
-        }
+    private static void logError(@NonNull Exception e) {
+        Embrace.getInstance().getInternalInterface().logInternalError(e);
     }
 }

@@ -48,12 +48,8 @@ class StreamHandlerFactoryInstaller {
             Object existingFactory = getFactoryField().get(null);
             if (existingFactory == null) {
                 // No factory is registered, so we can simply register the Embrace factory
-                Embrace.getInstance().getInternalInterface().logInfo("Registering EmbraceUrlStreamHandlerFactory.", null);
                 URL.setURLStreamHandlerFactory(new EmbraceUrlStreamHandlerFactory());
             } else {
-                Embrace.getInstance().getInternalInterface().logInfo("Existing URLStreamHandlerFactory detected " +
-                    "(" + existingFactory.getClass().getName() + "). Wrapping with Embrace factory " +
-                    "to enable network traffic interception.", null);
                 WrappingFactory wrappingFactory = new WrappingFactory((URLStreamHandlerFactory) existingFactory, enableRequestSizeCapture);
                 clearFactory();
                 URL.setURLStreamHandlerFactory(wrappingFactory);
@@ -105,7 +101,6 @@ class StreamHandlerFactoryInstaller {
     }
 
     static void logError(@NonNull String message, @Nullable Throwable throwable) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
         if (throwable != null) {
             Embrace.getInstance().getInternalInterface().logInternalError(throwable);
         }

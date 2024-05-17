@@ -4,10 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
-import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
 
 @InternalApi
@@ -54,38 +52,24 @@ public class EmbraceHttpPathOverride {
 
     private static Boolean validatePathOverride(String path) {
         if (path == null) {
-            logError("URL relative path cannot be null");
             return false;
         }
         if (path.isEmpty()) {
-            logError("Relative path must have non-zero length");
             return false;
         }
         if (path.length() > RELATIVE_PATH_MAX_LENGTH) {
-            logError(String.format(Locale.US,
-                    "Relative path %s is greater than the maximum allowed length of %d. It will be ignored",
-                    path, RELATIVE_PATH_MAX_LENGTH));
             return false;
         }
         if (!StandardCharsets.US_ASCII.newEncoder().canEncode(path)) {
-            logError("Relative path must not contain unicode " +
-                    "characters. Relative path " + path + " will be ignored.");
             return false;
         }
         if (!path.startsWith("/")) {
-            logError("Relative path must start with a /");
             return false;
         }
         if (!RELATIVE_PATH_PATTERN.matcher(path).matches()) {
-            logError("Relative path contains invalid chars. " +
-                    "Relative path " + path + " will be ignored.");
             return false;
         }
 
         return true;
-    }
-    
-    private static void logError(@NonNull String message) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
     }
 }

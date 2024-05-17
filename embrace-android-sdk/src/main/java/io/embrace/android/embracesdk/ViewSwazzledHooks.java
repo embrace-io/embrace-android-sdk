@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk;
 
-import kotlin.Pair;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType;
+import kotlin.Pair;
 
 /**
  * @hide
@@ -37,17 +36,14 @@ public final class ViewSwazzledHooks {
         } catch (NoSuchMethodError error) {
             // The customer may be overwriting View with their own implementation, and some of the
             // methods we use are missing.
-            logError("Could not log onClickEvent. Some methods are missing. ", error);
+            logError(error);
         } catch (Exception exception) {
-            logError("Could not log onClickEvent.", exception);
+            logError(exception);
         }
     }
 
-    private static void logError(@NonNull String message, @Nullable Throwable throwable) {
-        Embrace.getInstance().getInternalInterface().logError(message, null, null, false);
-        if (throwable != null) {
-            Embrace.getInstance().getInternalInterface().logInternalError(throwable);
-        }
+    private static void logError(@NonNull Throwable throwable) {
+        Embrace.getInstance().getInternalInterface().logInternalError(throwable);
     }
 
     @InternalApi

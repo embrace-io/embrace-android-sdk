@@ -7,8 +7,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import io.embrace.android.embracesdk.Embrace;
-
 class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
 
     private final HttpURLConnection connection;
@@ -30,8 +28,6 @@ class EmbraceHttpUrlConnectionOverride implements HttpPathOverrideRequest {
             return new URL(connection.getURL().getProtocol(), connection.getURL().getHost(),
                 connection.getURL().getPort(), pathOverride + "?" + connection.getURL().getQuery()).toString();
         } catch (MalformedURLException e) {
-            Embrace.getInstance().getInternalInterface().logError(
-                    "Failed to override path of " + connection.getURL() + " with " + pathOverride, null, null, false);
             return connection.getURL().toString();
         }
     }

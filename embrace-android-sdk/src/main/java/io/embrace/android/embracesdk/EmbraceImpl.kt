@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
-import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
@@ -22,7 +20,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDele
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
-import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
+import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -48,12 +46,15 @@ internal class EmbraceImpl @JvmOverloads constructor(
         NetworkRequestApiDelegate(bootstrapper, sdkCallChecker),
     private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker),
     private val momentsApiDelegate: MomentsApiDelegate = MomentsApiDelegate(bootstrapper, sdkCallChecker),
+    private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
+        ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
     LogsApi by logsApiDelegate,
     MomentsApi by momentsApiDelegate,
-    TracingApi by bootstrapper.openTelemetryModule.embraceTracer {
+    TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
+    ViewTrackingApi by viewTrackingApiDelegate {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -75,10 +76,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     var application: Application? = null
         private set
 
-    /**
-     * Variable pointing to the composeActivityListener instance obtained using reflection
-     */
-    private var composeActivityListenerInstance: Any? = null
     private var embraceInternalInterface: EmbraceInternalInterface? = null
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
@@ -91,31 +88,17 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    /**
-     * The type of application being instrumented by this SDK instance, whether it's directly used by an Android app, or used via a hosted
-     * SDK like Flutter, React Native, or Unity.
-     */
-    private val appFramework by embraceImplInject { bootstrapper.coreModule.appFramework }
     private val breadcrumbService by embraceImplInject { bootstrapper.dataCaptureServiceModule.breadcrumbService }
     private val sessionOrchestrator by embraceImplInject { bootstrapper.sessionModule.sessionOrchestrator }
-    private val sessionPropertiesService by embraceImplInject { bootstrapper.sessionModule.sessionPropertiesService }
     private val sessionIdTracker by embraceImplInject { bootstrapper.essentialServiceModule.sessionIdTracker }
-    private val networkLoggingService by embraceImplInject { bootstrapper.customerLogModule.networkLoggingService }
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
-    private val logMessageService by embraceImplInject { bootstrapper.customerLogModule.logMessageService }
     private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
     private val preferencesService by embraceImplInject { bootstrapper.androidServicesModule.preferencesService }
     private val eventService by embraceImplInject { bootstrapper.dataContainerModule.eventService }
-    private val userService by embraceImplInject { bootstrapper.essentialServiceModule.userService }
-    private val ndkService by embraceImplInject { bootstrapper.nativeModule.ndkService }
     private val networkCaptureService by embraceImplInject { bootstrapper.customerLogModule.networkCaptureService }
     private val webViewService by embraceImplInject { bootstrapper.dataCaptureServiceModule.webviewService }
-    private val telemetryService by embraceImplInject { bootstrapper.initModule.telemetryService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
-    private val pushNotificationService by embraceImplInject {
-        bootstrapper.dataCaptureServiceModule.pushNotificationService
-    }
     private val crashVerifier by embraceImplInject { bootstrapper.crashModule.lastRunCrashVerifier }
 
     /**
@@ -180,7 +163,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
 
         if (essentialServiceModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
-            registerComposeActivityListener(coreModule)
+            registerComposeActivityListener(coreModule.application)
         }
 
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
@@ -251,34 +234,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     /**
-     * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
-     *
-     * @param coreModule instance containing a required set of dependencies
-     */
-    private fun registerComposeActivityListener(coreModule: CoreModule) {
-        try {
-            val composeActivityListener = Class.forName("io.embrace.android.embracesdk.compose.ComposeActivityListener")
-            composeActivityListenerInstance = composeActivityListener.newInstance()
-            coreModule.application.registerActivityLifecycleCallbacks(composeActivityListenerInstance as ActivityLifecycleCallbacks?)
-        } catch (e: Throwable) {
-            logger.logError("registerComposeActivityListener error", e)
-        }
-    }
-
-    /**
-     * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
-     *
-     * @param app Global application class
-     */
-    private fun unregisterComposeActivityListener(app: Application) {
-        try {
-            app.unregisterActivityLifecycleCallbacks(composeActivityListenerInstance as ActivityLifecycleCallbacks?)
-        } catch (e: Throwable) {
-            logger.logError("Instantiation error for ComposeActivityListener", e)
-        }
-    }
-
-    /**
      * Whether or not the SDK has been started.
      *
      * @return true if the SDK is started, false otherwise
@@ -321,9 +276,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             logger.logInfo("Shutting down Embrace SDK.", null)
             try {
                 application?.let {
-                    if (composeActivityListenerInstance != null) {
-                        unregisterComposeActivityListener(it)
-                    }
+                    unregisterComposeActivityListener(it)
                 }
                 application = null
                 bootstrapper.stopServices()
@@ -420,34 +373,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     /**
-     * Log the start of a fragment.
-     *
-     * A matching call to endFragment must be made.
-     *
-     * @param name the name of the fragment to log
-     */
-    fun startView(name: String): Boolean {
-        if (sdkCallChecker.check("start_view")) {
-            return breadcrumbService?.startView(name) ?: false
-        }
-        return false
-    }
-
-    /**
-     * Log the end of a fragment.
-     *
-     * A matching call to startFragment must be made before this is called.
-     *
-     * @param name the name of the fragment to log
-     */
-    fun endView(name: String): Boolean {
-        if (sdkCallChecker.check("end_view")) {
-            return breadcrumbService?.endView(name) ?: false
-        }
-        return false
-    }
-
-    /**
      * Logs that a particular WebView URL was loaded.
      *
      * @param url the url to log
@@ -455,20 +380,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun logWebView(url: String?) {
         if (sdkCallChecker.check("log_web_view")) {
             breadcrumbService?.logWebView(url, sdkClock.now())
-            onActivityReported()
-        }
-    }
-
-    /**
-     * Logs a tap on a screen element.
-     *
-     * @param point       the coordinates of the screen tap
-     * @param elementName the name of the element which was tapped
-     * @param type        the type of tap that occurred
-     */
-    fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumbType) {
-        if (sdkCallChecker.check("log_tap")) {
-            breadcrumbService?.logTap(point, elementName, sdkClock.now(), type)
             onActivityReported()
         }
     }
@@ -529,42 +440,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     fun getReactNativeInternalInterface(): ReactNativeInternalInterface? = internalInterfaceModule?.reactNativeInternalInterface
-
-    /**
-     * Logs a React Native Redux Action.
-     */
-    fun logRnAction(
-        name: String,
-        startTime: Long,
-        endTime: Long,
-        properties: Map<String?, Any?>,
-        bytesSent: Int,
-        output: String
-    ) {
-        if (sdkCallChecker.check("log_react_native_action")) {
-            breadcrumbService?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
-        }
-    }
-
-    /**
-     * Logs the fact that a particular view was entered.
-     *
-     * If the previously logged view has the same name, a duplicate view breadcrumb will not be
-     * logged.
-     *
-     * @param screen the name of the view to log
-     */
-    fun logRnView(screen: String) {
-        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
-            logger.logWarning("[Embrace] logRnView is only available on React Native", null)
-            return
-        }
-
-        if (sdkCallChecker.check("log RN view")) {
-            breadcrumbService?.logView(screen, sdkClock.now())
-            onActivityReported()
-        }
-    }
 
     fun getUnityInternalInterface(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
 

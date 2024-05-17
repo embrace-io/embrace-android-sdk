@@ -5,13 +5,11 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CTraceparent
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
@@ -285,16 +283,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             }
         }
     }
-
-    fun getTraceIdHeader(): String {
-        if (configService != null && sdkCallChecker.check("get_trace_id_header")) {
-            return configService?.networkBehavior?.getTraceIdHeader()
-                ?: NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
-        }
-        return NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
-    }
-
-    fun generateW3cTraceparent(): String = generateW3CTraceparent()
 
     @JvmOverloads
     fun logMessage(

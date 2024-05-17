@@ -14,4 +14,8 @@ internal interface NetworkRequestApi {
      * You can create an instance of [EmbraceNetworkRequest] using the factory functions.
      */
     fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
+
+    fun getTraceIdHeader(): String
+
+    fun generateW3cTraceparent(): String
 }

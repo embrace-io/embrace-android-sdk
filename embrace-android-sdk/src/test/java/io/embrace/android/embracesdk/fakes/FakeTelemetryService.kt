@@ -5,8 +5,10 @@ import io.embrace.android.embracesdk.telemetry.TelemetryService
 internal class FakeTelemetryService : TelemetryService {
 
     val storageTelemetryMap = mutableMapOf<String, String>()
+    val apiCalls: MutableList<String> = mutableListOf()
+
     override fun onPublicApiCalled(name: String) {
-        // no-op
+        apiCalls.add(name)
     }
 
     override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {

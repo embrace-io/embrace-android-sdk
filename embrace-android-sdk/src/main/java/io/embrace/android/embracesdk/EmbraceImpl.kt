@@ -18,6 +18,8 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CTraceparent
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
+import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -29,7 +31,6 @@ import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 
 /**
@@ -41,8 +42,11 @@ import java.util.regex.Pattern
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl @JvmOverloads constructor(
-    private val bootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper()
-) {
+    private val bootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper(),
+    private val sdkCallChecker: SdkCallChecker =
+        SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker)
+) : UserApi by userApiDelegate {
 
     @JvmField
     val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
@@ -51,10 +55,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
     }
 
-    /**
-     * Whether the Embrace SDK has been started yet.
-     */
-    private val started = AtomicBoolean(false)
     private val sdkClock = bootstrapper.initModule.clock
     private val logger = bootstrapper.initModule.logger
 
@@ -215,7 +215,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         logger.logInfo(startMsg, null)
 
         val endTimeMs = sdkClock.now()
-        started.set(true)
+        sdkCallChecker.started.set(true)
         endSynchronous()
         val inForeground = !essentialServiceModule.processStateService.isInBackground
 
@@ -279,7 +279,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      *
      * @return true if the SDK is started, false otherwise
      */
-    fun isStarted(): Boolean = started.get()
+    fun isStarted(): Boolean = sdkCallChecker.started.get()
 
     /**
      * Sets a custom app ID that overrides the one specified at build time. Must be called before
@@ -313,7 +313,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Shuts down the Embrace SDK.
      */
     fun stop() {
-        if (started.compareAndSet(true, false)) {
+        if (sdkCallChecker.started.compareAndSet(true, false)) {
             logger.logInfo("Shutting down Embrace SDK.", null)
             try {
                 application?.let {
@@ -330,117 +330,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     /**
-     * Sets the user ID. This would typically be some form of unique identifier such as a UUID or
-     * database key for the user.
-     *
-     * @param userId the unique identifier for the user
-     */
-    fun setUserIdentifier(userId: String?) {
-        if (checkSdkStartedAndLogPublicApiUsage("set_user_identifier")) {
-            userService?.setUserIdentifier(userId)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Clears the currently set user ID. For example, if the user logs out.
-     */
-    fun clearUserIdentifier() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear_user_identifier")) {
-            userService?.clearUserIdentifier()
-        }
-    }
-
-    /**
-     * Sets the current user's email address.
-     *
-     * @param email the email address of the current user
-     */
-    fun setUserEmail(email: String?) {
-        if (checkSdkStartedAndLogPublicApiUsage("set_user_email")) {
-            userService?.setUserEmail(email)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Clears the currently set user's email address.
-     */
-    fun clearUserEmail() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear_user_email")) {
-            userService?.clearUserEmail()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Sets this user as a paying user. This adds a persona to the user's identity.
-     */
-    fun setUserAsPayer() {
-        if (checkSdkStartedAndLogPublicApiUsage("set_user_as_payer")) {
-            userService?.setUserAsPayer()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Clears this user as a paying user. This would typically be called if a user is no longer
-     * paying for the service and has reverted back to a basic user.
-     */
-    fun clearUserAsPayer() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear_user_as_payer")) {
-            userService?.clearUserAsPayer()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Sets a custom user persona. A persona is a trait associated with a given user.
-     *
-     * @param persona the persona to set
-     */
-    fun addUserPersona(persona: String) {
-        if (checkSdkStartedAndLogPublicApiUsage("add_user_persona")) {
-            userService?.addUserPersona(persona)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Clears the custom user persona, if it is set.
-     *
-     * @param persona the persona to clear
-     */
-    fun clearUserPersona(persona: String) {
-        if (checkSdkStartedAndLogPublicApiUsage("clear_user_persona")) {
-            userService?.clearUserPersona(persona)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Clears all custom user personas from the user.
-     */
-    fun clearAllUserPersonas() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear_user_personas")) {
-            userService?.clearAllUserPersonas()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
      * Adds a property to the current session.
      */
     fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
-        if (checkSdkStartedAndLogPublicApiUsage("add_session_property")) {
+        if (sdkCallChecker.check("add_session_property")) {
             return sessionPropertiesService?.addProperty(key, value, permanent) ?: false
         }
         return false
@@ -450,41 +343,17 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Removes a property from the current session.
      */
     fun removeSessionProperty(key: String): Boolean {
-        if (checkSdkStartedAndLogPublicApiUsage("remove_session_property")) {
+        if (sdkCallChecker.check("remove_session_property")) {
             return sessionPropertiesService?.removeProperty(key) ?: false
         }
         return false
     }
 
     fun getSessionProperties(): Map<String, String>? {
-        if (checkSdkStartedAndLogPublicApiUsage("get_session_properties")) {
+        if (sdkCallChecker.check("get_session_properties")) {
             return sessionPropertiesService?.getProperties()
         }
         return null
-    }
-
-    /**
-     * Sets the username of the currently logged in user.
-     *
-     * @param username the username to set
-     */
-    fun setUsername(username: String?) {
-        if (checkSdkStartedAndLogPublicApiUsage("set_username")) {
-            userService?.setUsername(username)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
-    }
-
-    /**
-     * Clears the username of the currently logged in user, for example if the user has logged out.
-     */
-    fun clearUsername() {
-        if (checkSdkStartedAndLogPublicApiUsage("clear_username")) {
-            userService?.clearUsername()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
-        }
     }
 
     /**
@@ -499,7 +368,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param properties custom key-value pairs to provide with the moment
      */
     fun startMoment(name: String, identifier: String?, properties: Map<String, Any>?) {
-        if (checkSdkStartedAndLogPublicApiUsage("start_moment")) {
+        if (sdkCallChecker.check("start_moment")) {
             eventService?.startEvent(name, identifier, normalizeProperties(properties, logger))
             onActivityReported()
         }
@@ -516,7 +385,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param properties custom key-value pairs to provide with the moment
      */
     fun endMoment(name: String, identifier: String?, properties: Map<String, Any>?) {
-        if (checkSdkStartedAndLogPublicApiUsage("end_moment")) {
+        if (sdkCallChecker.check("end_moment")) {
             eventService?.endEvent(name, identifier, normalizeProperties(properties, logger))
             onActivityReported()
         }
@@ -532,7 +401,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     fun getTraceIdHeader(): String {
-        if (configService != null && checkSdkStarted("get_trace_id_header", false)) {
+        if (configService != null && sdkCallChecker.check("get_trace_id_header")) {
             return configService?.networkBehavior?.getTraceIdHeader()
                 ?: NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
         }
@@ -542,7 +411,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun generateW3cTraceparent(): String = generateW3CTraceparent()
 
     fun recordNetworkRequest(request: EmbraceNetworkRequest) {
-        if (checkSdkStartedAndLogPublicApiUsage("record_network_request")) {
+        if (sdkCallChecker.check("record_network_request")) {
             logNetworkRequest(request)
         }
     }
@@ -620,7 +489,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         exceptionName: String? = null,
         exceptionMessage: String? = null
     ) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_message")) {
+        if (sdkCallChecker.check("log_message")) {
             try {
                 appFramework?.let {
                     logMessageService?.log(
@@ -653,7 +522,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param message the name of the breadcrumb to log
      */
     fun addBreadcrumb(message: String) {
-        if (checkSdkStartedAndLogPublicApiUsage("add_breadcrumb")) {
+        if (sdkCallChecker.check("add_breadcrumb")) {
             breadcrumbService?.logCustom(message, sdkClock.now())
             onActivityReported()
         }
@@ -663,7 +532,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
     fun logInternalError(message: String?, details: String?) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
+        if (sdkCallChecker.check("log_internal_error")) {
             if (message == null) {
                 return
             }
@@ -681,7 +550,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
     fun logInternalError(error: Throwable) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_internal_error")) {
+        if (sdkCallChecker.check("log_internal_error")) {
             internalErrorService?.handleInternalError(error)
         }
     }
@@ -693,13 +562,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Cleans all the user info on the device.
      */
     fun endSession(clearUserInfo: Boolean) {
-        if (checkSdkStartedAndLogPublicApiUsage("end_session")) {
+        if (sdkCallChecker.check("end_session")) {
             sessionOrchestrator?.endSessionWithManual(clearUserInfo)
         }
     }
 
     fun getDeviceId(): String = when {
-        checkSdkStartedAndLogPublicApiUsage("get_device_id") ->
+        sdkCallChecker.check("get_device_id") ->
             preferencesService?.deviceIdentifier
                 ?: ""
 
@@ -715,7 +584,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param name the name of the fragment to log
      */
     fun startView(name: String): Boolean {
-        if (checkSdkStartedAndLogPublicApiUsage("start_view")) {
+        if (sdkCallChecker.check("start_view")) {
             return breadcrumbService?.startView(name) ?: false
         }
         return false
@@ -730,7 +599,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param name the name of the fragment to log
      */
     fun endView(name: String): Boolean {
-        if (checkSdkStartedAndLogPublicApiUsage("end_view")) {
+        if (sdkCallChecker.check("end_view")) {
             return breadcrumbService?.endView(name) ?: false
         }
         return false
@@ -755,7 +624,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         messageDeliveredPriority: Int,
         type: PushNotificationBreadcrumb.NotificationType
     ) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_push_notification")) {
+        if (sdkCallChecker.check("log_push_notification")) {
             pushNotificationService?.logPushNotification(title, body, topic, id, notificationPriority, messageDeliveredPriority, type)
             onActivityReported()
         }
@@ -767,7 +636,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param url the url to log
      */
     fun logWebView(url: String?) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_web_view")) {
+        if (sdkCallChecker.check("log_web_view")) {
             breadcrumbService?.logWebView(url, sdkClock.now())
             onActivityReported()
         }
@@ -781,7 +650,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param type        the type of tap that occurred
      */
     fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumbType) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_tap")) {
+        if (sdkCallChecker.check("log_tap")) {
             breadcrumbService?.logTap(point, elementName, sdkClock.now(), type)
             onActivityReported()
         }
@@ -795,7 +664,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     fun getCurrentSessionId(): String? {
         val localSessionIdTracker = sessionIdTracker
-        if (localSessionIdTracker != null && checkSdkStarted("get_current_session_id", false)) {
+        if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
             val sessionId = localSessionIdTracker.getActiveSessionId()
             if (sessionId != null) {
                 return sessionId
@@ -855,7 +724,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         bytesSent: Int,
         output: String
     ) {
-        if (checkSdkStartedAndLogPublicApiUsage("log_react_native_action")) {
+        if (sdkCallChecker.check("log_react_native_action")) {
             breadcrumbService?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
         }
     }
@@ -875,7 +744,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             return
         }
 
-        if (checkSdkStartedAndLogPublicApiUsage("log RN view")) {
+        if (sdkCallChecker.check("log RN view")) {
             breadcrumbService?.logView(screen, sdkClock.now())
             onActivityReported()
         }
@@ -884,7 +753,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun getUnityInternalInterface(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
 
     fun installUnityThreadSampler() {
-        if (checkSdkStartedAndLogPublicApiUsage("install_unity_thread_sampler")) {
+        if (sdkCallChecker.check("install_unity_thread_sampler")) {
             sampleCurrentThreadDuringAnrs()
         }
     }
@@ -925,28 +794,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         } else {
             return null
         }
-    }
-
-    /**
-     * Checks if the SDK is started and logs the public API usage.
-     *
-     *
-     * Every public API usage should go through this method, except the ones that are called too often and may cause a performance hit.
-     * For instance, get_current_session_id and get_trace_id_header go directly through checkSdkStarted.
-     */
-    private fun checkSdkStartedAndLogPublicApiUsage(action: String): Boolean {
-        return checkSdkStarted(action, true)
-    }
-
-    private fun checkSdkStarted(action: String, logPublicApiUsage: Boolean): Boolean {
-        val isStarted = isStarted()
-        if (!isStarted) {
-            logger.logSdkNotInitialized(action)
-        }
-        if (telemetryService != null && logPublicApiUsage) {
-            telemetryService?.onPublicApiCalled(action)
-        }
-        return isStarted
     }
 
     fun addSpanExporter(spanExporter: SpanExporter) {

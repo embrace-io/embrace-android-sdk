@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.mockk.mockk
 
 internal class FakeDataCaptureServiceModule(
     override val memoryService: MemoryService = FakeMemoryService(),
@@ -24,17 +25,13 @@ internal class FakeDataCaptureServiceModule(
         EmbraceWebViewService(FakeConfigService(), EmbraceSerializer(), EmbLoggerImpl()),
 ) : DataCaptureServiceModule {
 
-    override val pushNotificationService: PushNotificationCaptureService
-        get() = TODO("Not yet implemented")
+    override val pushNotificationService: PushNotificationCaptureService = mockk(relaxed = true)
 
-    override val componentCallbackService: ComponentCallbackService
-        get() = TODO("Not yet implemented")
+    override val componentCallbackService: ComponentCallbackService = mockk(relaxed = true)
 
     override val startupService: StartupService = FakeStartupService()
 
-    override val startupTracker: StartupTracker
-        get() = TODO("Not yet implemented")
+    override val startupTracker: StartupTracker = mockk(relaxed = true)
 
-    override val appStartupDataCollector: AppStartupDataCollector
-        get() = TODO("Not yet implemented")
+    override val appStartupDataCollector: AppStartupDataCollector = mockk(relaxed = true)
 }

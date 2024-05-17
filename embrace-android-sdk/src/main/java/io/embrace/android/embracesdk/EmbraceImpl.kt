@@ -7,7 +7,6 @@ import android.content.Context
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
-import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
@@ -18,13 +17,13 @@ import io.embrace.android.embracesdk.internal.IdGenerator.Companion.generateW3CT
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
-import io.embrace.android.embracesdk.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
@@ -47,11 +46,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val sessionApiDelegate: SessionApiDelegate = SessionApiDelegate(bootstrapper, sdkCallChecker),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
         NetworkRequestApiDelegate(bootstrapper, sdkCallChecker),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker)
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker),
+    private val momentsApiDelegate: MomentsApiDelegate = MomentsApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
-    LogsApi by logsApiDelegate {
+    LogsApi by logsApiDelegate,
+    MomentsApi by momentsApiDelegate {
 
     @JvmField
     val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
@@ -332,48 +333,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 logger.logError("Error while shutting down Embrace SDK", ex)
             }
         }
-    }
-
-    /**
-     * Starts a 'moment'. Moments are used for encapsulating particular activities within
-     * the app, such as a user adding an item to their shopping cart.
-     *
-     * The length of time a moment takes to execute is recorded.
-     *
-     * @param name       a name identifying the moment
-     * @param identifier an identifier distinguishing between multiple moments with the same name
-     * @param properties custom key-value pairs to provide with the moment
-     */
-    fun startMoment(name: String, identifier: String?, properties: Map<String, Any>?) {
-        if (sdkCallChecker.check("start_moment")) {
-            eventService?.startEvent(name, identifier, normalizeProperties(properties, logger))
-            onActivityReported()
-        }
-    }
-
-    /**
-     * Signals the end of a moment with the specified name.
-     *
-     * The duration of the moment is computed.
-     *
-     * @param name       the name of the moment to end
-     * @param identifier the identifier of the moment to end, distinguishing between moments with the same name
-     * @param properties custom key-value pairs to provide with the moment
-     */
-    fun endMoment(name: String, identifier: String?, properties: Map<String, Any>?) {
-        if (sdkCallChecker.check("end_moment")) {
-            eventService?.endEvent(name, identifier, normalizeProperties(properties, logger))
-            onActivityReported()
-        }
-    }
-
-    /**
-     * Signals that the app has completed startup.
-     *
-     * @param properties properties to include as part of the startup moment
-     */
-    fun endAppStartup(properties: Map<String, Any>?) {
-        endMoment(EmbraceEventService.STARTUP_EVENT_NAME, null, properties)
     }
 
     fun getTraceIdHeader(): String {

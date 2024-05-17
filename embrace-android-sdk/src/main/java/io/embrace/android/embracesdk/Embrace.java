@@ -217,7 +217,7 @@ public final class Embrace implements EmbraceAndroidApi {
     @Override
     public void startMoment(@NonNull String name,
                             @Nullable String identifier,
-                            @Nullable Map<String, Object> properties) {
+                            @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("startMoment", name)) {
             impl.startMoment(name, identifier, properties);
         }
@@ -238,14 +238,14 @@ public final class Embrace implements EmbraceAndroidApi {
     }
 
     @Override
-    public void endMoment(@NonNull String name, @Nullable Map<String, Object> properties) {
+    public void endMoment(@NonNull String name, @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("endMoment", name)) {
             endMoment(name, null, properties);
         }
     }
 
     @Override
-    public void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, Object> properties) {
+    public void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, ?> properties) {
         if (verifyNonNullParameters("endMoment", name)) {
             impl.endMoment(name, identifier, properties);
         }
@@ -253,11 +253,11 @@ public final class Embrace implements EmbraceAndroidApi {
 
     @Override
     public void endAppStartup() {
-        impl.endAppStartup(null);
+        impl.endAppStartup();
     }
 
     @Override
-    public void endAppStartup(@NonNull Map<String, Object> properties) {
+    public void endAppStartup(@NonNull Map<String, ?> properties) {
         if (verifyNonNullParameters("endAppStartup", properties)) {
             impl.endAppStartup(properties);
         }

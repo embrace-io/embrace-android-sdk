@@ -404,10 +404,10 @@ internal class AppStartupTraceEmitter(
     companion object {
         /**
          * The gap between the end of the Embrace SDK initialization to when the first activity loaded after startup happens.
-         * If this gap is greater than 1 minute, it's likely that the app process was not created because the user tapped on the app icon,
+         * If this gap is greater than 2 seconds, it is assumed that the app process was not created because the user tapped on the app,
          * so we track this app launch as a warm start.
          */
-        const val SDK_AND_ACTIVITY_INIT_GAP = 60000L
+        const val SDK_AND_ACTIVITY_INIT_GAP = 2000L
 
         fun duration(start: Long?, end: Long?): Long? = if (start != null && end != null) {
             end - start

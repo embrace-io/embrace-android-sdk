@@ -26,7 +26,7 @@ internal class WebViewDataSource(
     destination = writer,
     logger = logger,
     limitStrategy = UpToLimitStrategy(logger, webViewVitalsBehavior::getMaxWebViewVitals),
-    ),
+),
     SpanEventMapper<WebViewInfo> {
 
     fun loadDataIntoSession(webViewInfoList: List<WebViewInfo>) {

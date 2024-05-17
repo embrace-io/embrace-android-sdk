@@ -24,8 +24,10 @@ import org.junit.Test
 internal class EmbraceWebViewServiceTest {
 
     private val expectedCompleteData =
-        ResourceReader.readResourceAsText("expected_c" +
-            "ore_vital_script.json")
+        ResourceReader.readResourceAsText(
+            "expected_c" +
+                "ore_vital_script.json"
+        )
     private val expectedCompleteData2 =
         ResourceReader.readResourceAsText("expected_core_vital_script1.json")
 

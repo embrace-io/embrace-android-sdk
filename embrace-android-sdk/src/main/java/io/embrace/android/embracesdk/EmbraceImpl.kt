@@ -22,8 +22,8 @@ import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDele
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
+import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
@@ -52,10 +52,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
     LogsApi by logsApiDelegate,
-    MomentsApi by momentsApiDelegate {
-
-    @JvmField
-    val tracer: EmbraceTracer = bootstrapper.openTelemetryModule.embraceTracer
+    MomentsApi by momentsApiDelegate,
+    TracingApi by bootstrapper.openTelemetryModule.embraceTracer {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)

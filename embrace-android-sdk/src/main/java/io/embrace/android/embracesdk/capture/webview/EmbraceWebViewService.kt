@@ -16,7 +16,7 @@ internal class EmbraceWebViewService(
     private val serializer: EmbraceSerializer,
     private val logger: EmbLogger,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
-    ) : WebViewService, MemoryCleanerListener {
+) : WebViewService, MemoryCleanerListener {
 
     /**
      * The information collected for each WebView

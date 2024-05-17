@@ -15,23 +15,23 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="interface EmbraceAndroidApi extends EmbraceApi {"
-        errorLine2="          ~~~~~~~~~~~~~~~~~">
+        errorLine1="internal interface EmbraceAndroidApi : EmbraceApi {"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/io/embrace/android/embracesdk/EmbraceAndroidApi.java"
-            line="13"
-            column="11"/>
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceAndroidApi.kt"
+            line="11"
+            column="20"/>
     </issue>
 
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="interface EmbraceApi extends LogsApi, MomentsApi, NetworkRequestApi, SessionApi, UserApi, TracingApi {"
-        errorLine2="          ~~~~~~~~~~">
+        errorLine1="internal interface EmbraceApi : LogsApi, MomentsApi, NetworkRequestApi, SessionApi, UserApi, TracingApi {"
+        errorLine2="                   ~~~~~~~~~~">
         <location
-            file="src/main/java/io/embrace/android/embracesdk/EmbraceApi.java"
-            line="17"
-            column="11"/>
+            file="src/main/java/io/embrace/android/embracesdk/EmbraceApi.kt"
+            line="14"
+            column="20"/>
     </issue>
 
     <issue

@@ -54,9 +54,9 @@ public final class OkHttpClient {
             } catch (NoSuchMethodError exception) {
                 // The customer may be overwriting OkHttpClient with their own implementation, and some of the
                 // methods we use are missing.
-                logInternalError("Altered OkHttpClient implementation, could not add OkHttp interceptor. ", exception);
+                logInternalError(exception);
             } catch (Exception exception) {
-                logInternalError("Could not add OkHttp interceptor. ", exception);
+                logInternalError(exception);
             }
         }
 
@@ -91,7 +91,7 @@ public final class OkHttpClient {
             return false;
         }
 
-        private static void logInternalError(String message, Throwable throwable) {
+        private static void logInternalError(Throwable throwable) {
             Embrace.getInstance().getInternalInterface().logInternalError(throwable);
         }
     }

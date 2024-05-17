@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
@@ -28,7 +27,7 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
             handlers.put(PROTOCOL_HTTP, new EmbraceHttpUrlStreamHandler(newUrlStreamHandler(CLASS_HTTP_OKHTTP_STREAM_HANDLER)));
             handlers.put(PROTOCOL_HTTPS, new EmbraceHttpsUrlStreamHandler(newUrlStreamHandler(CLASS_HTTPS_OKHTTP_STREAM_HANDLER)));
         } catch (Exception ex) {
-            logError("Failed initialize EmbraceUrlStreamHandlerFactory", ex);
+            logError(ex);
         }
     }
 
@@ -38,15 +37,13 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
         } catch (Exception e) {
             // We catch Exception here instead of the specific exceptions that can be thrown due to a change in the way some
             // of these exceptions are compiled on different OS versions.
-            logError("Failed to instantiate new URLStreamHandler instance: " + className, e);
+            logError(e);
             return null;
         }
     }
 
-    private static void logError(@NonNull String message, @Nullable Throwable throwable) {
-        if (throwable != null) {
-            Embrace.getInstance().getInternalInterface().logInternalError(throwable);
-        }
+    private static void logError(@NonNull Throwable throwable) {
+        Embrace.getInstance().getInternalInterface().logInternalError(throwable);
     }
 
     @Override

@@ -13,6 +13,7 @@ import java.util.Map;
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
+import io.embrace.android.embracesdk.internal.api.SdkStateApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
@@ -37,7 +38,8 @@ public final class Embrace implements
         UserApi,
         TracingApi,
         EmbraceApi,
-        EmbraceAndroidApi {
+        EmbraceAndroidApi,
+        SdkStateApi {
 
     /**
      * Singleton instance of the Embrace SDK.

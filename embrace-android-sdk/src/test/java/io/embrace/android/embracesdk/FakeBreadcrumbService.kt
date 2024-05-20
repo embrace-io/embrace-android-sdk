@@ -8,6 +8,10 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 internal class FakeBreadcrumbService : BreadcrumbService {
 
     val logViewCalls = mutableListOf<String?>()
+    val startViewCalls = mutableListOf<String?>()
+    val endViewCalls = mutableListOf<String?>()
+    val tapCalls = mutableListOf<String?>()
+    val rnActionCalls = mutableListOf<String?>()
     val pushNotifications = mutableListOf<PushNotificationBreadcrumb>()
     var flushCount: Int = 0
 
@@ -24,10 +28,12 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun startView(name: String?): Boolean {
+        startViewCalls.add(name)
         return false
     }
 
     override fun endView(name: String?): Boolean {
+        endViewCalls.add(name)
         return false
     }
 
@@ -37,6 +43,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
         timestamp: Long,
         type: TapBreadcrumb.TapBreadcrumbType
     ) {
+        tapCalls.add(element)
     }
 
     override fun logCustom(message: String, timestamp: Long) {
@@ -50,6 +57,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
         bytesSent: Int,
         output: String
     ) {
+        rnActionCalls.add(name)
     }
 
     override fun logWebView(url: String?, startTime: Long) {

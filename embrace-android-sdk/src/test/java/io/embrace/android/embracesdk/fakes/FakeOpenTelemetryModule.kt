@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.mockk.mockk
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.api.trace.TracerProvider
 
 internal class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
@@ -32,4 +33,6 @@ internal class FakeOpenTelemetryModule(
         get() = TODO()
     override val logger: Logger
         get() = FakeOtelLogger()
+    override val externalTracerProvider: TracerProvider
+        get() = TODO("Not yet implemented")
 }

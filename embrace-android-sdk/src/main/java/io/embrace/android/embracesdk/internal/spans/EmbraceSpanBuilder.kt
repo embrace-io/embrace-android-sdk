@@ -30,7 +30,7 @@ internal class EmbraceSpanBuilder(
         name
     }
 
-    private val otelSpanBuilder = tracer.spanBuilder(spanName)
+    internal val otelSpanBuilder: SpanBuilder = tracer.spanBuilder(spanName)
 
     init {
         // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
@@ -50,8 +50,9 @@ internal class EmbraceSpanBuilder(
         }
     }
 
-    fun startSpan(startTimeMs: Long): Span {
-        val startedSpan = otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS).startSpan()
+    fun startSpan(startTimeMs: Long? = null): Span {
+        startTimeMs?.apply { otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS) }
+        val startedSpan = otelSpanBuilder.startSpan()
         fixedAttributes.forEach { attribute ->
             startedSpan.setFixedAttribute(attribute)
         }

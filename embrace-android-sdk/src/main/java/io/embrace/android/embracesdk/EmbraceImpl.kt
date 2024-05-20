@@ -101,6 +101,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             it.configService = bootstrapper.essentialServiceModule.configService
         }
     }
+    val tracerProvider by embraceImplInject { bootstrapper.openTelemetryModule.externalTracerProvider }
 
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
     private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }

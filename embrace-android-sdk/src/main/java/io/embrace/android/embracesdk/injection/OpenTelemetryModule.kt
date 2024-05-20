@@ -14,10 +14,13 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.internal.spans.TracerCache
+import io.embrace.android.embracesdk.opentelemetry.EmbTracerProvider
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.api.trace.TracerProvider
 
 /**
  * Module that instantiates various OpenTelemetry related components
@@ -73,6 +76,11 @@ internal interface OpenTelemetryModule {
      * Provides storage for completed logs that have not been forwarded yet to the delivery service
      */
     val logSink: LogSink
+
+    /**
+     * Provides [Tracer] instances for instrumentation external to the Embrace SDK to create spans
+     */
+    val externalTracerProvider: TracerProvider
 }
 
 internal class OpenTelemetryModuleImpl(
@@ -146,7 +154,7 @@ internal class OpenTelemetryModuleImpl(
     override val embraceTracer: EmbraceTracer by singleton {
         EmbraceTracer(
             clock = initModule.clock,
-            spanService = spanService
+            spanService = spanService,
         )
     }
 
@@ -163,5 +171,15 @@ internal class OpenTelemetryModuleImpl(
 
     override val logSink: LogSink by lazy {
         LogSinkImpl()
+    }
+
+    override val externalTracerProvider by lazy {
+        EmbTracerProvider(
+            sdkTracerProvider = openTelemetrySdk.coreTracerProvider,
+            tracerCache = TracerCache(
+                spanService = spanService,
+                clock = initModule.openTelemetryClock,
+            )
+        )
     }
 }

@@ -48,6 +48,18 @@ internal class SpanServiceImpl(
         }
     }
 
+    override fun createSpan(
+        embraceSpanBuilder: EmbraceSpanBuilder
+    ): PersistableEmbraceSpan? {
+        return if (inputsValid(embraceSpanBuilder.spanName) &&
+            currentSessionSpan.canStartNewSpan(embraceSpanBuilder.parent, false)
+        ) {
+            embraceSpanFactory.create(embraceSpanBuilder)
+        } else {
+            null
+        }
+    }
+
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,

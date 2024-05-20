@@ -26,6 +26,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
 import io.embrace.android.embracesdk.spans.TracingApi;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.TracerProvider;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.jvm.functions.Function0;
@@ -551,6 +553,17 @@ public final class Embrace implements
     public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs,
                                        @Nullable Map<String, String> attributes, @Nullable List<EmbraceSpanEvent> events) {
         return recordCompletedSpan(name, startTimeMs, endTimeMs, null, null, attributes, events);
+    }
+
+    @Nullable
+    @Override
+    public Tracer getTracer(@NonNull String instrumentationModuleName) {
+        TracerProvider traceProvider = impl.getTracerProvider();
+        if (traceProvider != null && verifyNonNullParameters("getTracer", instrumentationModuleName)) {
+            return traceProvider.get(instrumentationModuleName);
+        }
+
+        return null;
     }
 
     @Nullable

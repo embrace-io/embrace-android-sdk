@@ -24,6 +24,10 @@ internal interface SpanService : Initializable {
         private: Boolean = false,
     ): PersistableEmbraceSpan?
 
+    fun createSpan(
+        embraceSpanBuilder: EmbraceSpanBuilder
+    ): EmbraceSpan?
+
     /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters
      */

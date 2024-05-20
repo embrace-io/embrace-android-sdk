@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
+import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.sdk.trace.IdGenerator
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -36,6 +37,8 @@ internal class FakePersistableEmbraceSpan(
     private var spanStartTimeMs: Long? = null
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
+
+    override val spanContext: SpanContext? = null
 
     override var traceId: String? = parent?.traceId
 

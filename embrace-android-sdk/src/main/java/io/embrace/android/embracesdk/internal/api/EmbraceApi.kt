@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
+import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter
 
@@ -95,4 +96,9 @@ internal interface EmbraceApi {
      * @param logRecordExporter the LogRecord exporter to add
      */
     fun addLogRecordExporter(logRecordExporter: LogRecordExporter)
+
+    /**
+     * Returns a [Tracer] that can be used record spans that will be identified with the given module
+     */
+    fun getTracer(instrumentationModuleName: String): Tracer
 }

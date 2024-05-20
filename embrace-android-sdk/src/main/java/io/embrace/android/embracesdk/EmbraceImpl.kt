@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.OtelExporterApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
@@ -21,8 +22,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
-import io.opentelemetry.sdk.logs.export.LogRecordExporter
-import io.opentelemetry.sdk.trace.export.SpanExporter
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -44,7 +43,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val momentsApiDelegate: MomentsApiDelegate = MomentsApiDelegate(bootstrapper, sdkCallChecker),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
         ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker)
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
+    private val otelExporterApiDelegate: OtelExporterApiDelegate =
+        OtelExporterApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -52,7 +53,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     MomentsApi by momentsApiDelegate,
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
     ViewTrackingApi by viewTrackingApiDelegate,
-    SdkStateApi by sdkStateApiDelegate {
+    SdkStateApi by sdkStateApiDelegate,
+    OtelExporterApi by otelExporterApiDelegate {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -329,21 +331,5 @@ internal class EmbraceImpl @JvmOverloads constructor(
         } catch (exc: Exception) {
             logger.logError("Failed to sample current thread during ANRs", exc)
         }
-    }
-
-    fun addSpanExporter(spanExporter: SpanExporter) {
-        if (isStarted()) {
-            logger.logError("A SpanExporter can only be added before the SDK is started.", null)
-            return
-        }
-        bootstrapper.openTelemetryModule.openTelemetryConfiguration.addSpanExporter(spanExporter)
-    }
-
-    fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
-        if (isStarted()) {
-            logger.logError("A LogRecordExporter can only be added before the SDK is started.", null)
-            return
-        }
-        bootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)
     }
 }

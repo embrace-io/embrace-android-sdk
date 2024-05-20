@@ -15,7 +15,7 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface EmbraceAndroidApi : EmbraceApi {"
+        errorLine1="internal interface EmbraceAndroidApi {"
         errorLine2="                   ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceAndroidApi.kt"
@@ -26,11 +26,11 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface EmbraceApi : LogsApi, MomentsApi, NetworkRequestApi, SessionApi, UserApi, TracingApi {"
+        errorLine1="internal interface EmbraceApi {"
         errorLine2="                   ~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceApi.kt"
-            line="14"
+            line="13"
             column="20"/>
     </issue>
 
@@ -274,6 +274,17 @@
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
             line="65"
             column="31"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="internal interface ViewTrackingApi {"
+        errorLine2="                   ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/ViewTrackingApi.kt"
+            line="6"
+            column="20"/>
     </issue>
 
     <issue

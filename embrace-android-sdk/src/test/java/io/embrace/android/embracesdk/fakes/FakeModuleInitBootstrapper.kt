@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 
 internal fun fakeModuleInitBootstrapper(
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
-    fakeInitModule: FakeInitModule = FakeInitModule(),
+    fakeInitModule: FakeInitModule = FakeInitModule(logger = fakeEmbLogger),
     fakeOpenTelemetryModule: FakeOpenTelemetryModule = FakeOpenTelemetryModule(),
     coreModuleSupplier: CoreModuleSupplier = { _, _, _ -> FakeCoreModule() },
     systemServiceModuleSupplier: SystemServiceModuleSupplier = { _, _ -> FakeSystemServiceModule() },

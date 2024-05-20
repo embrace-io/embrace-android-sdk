@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
@@ -10,12 +11,12 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal class FakeInitModule(
     clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     openTelemetryClock: io.opentelemetry.sdk.common.Clock = FakeOpenTelemetryClock(clock),
-    logger: EmbLoggerImpl = EmbLoggerImpl(),
+    logger: EmbLogger = FakeEmbLogger(),
     systemInfo: SystemInfo = SystemInfo(
         osVersion = "99.0.0",
         deviceManufacturer = "Fake Manufacturer",

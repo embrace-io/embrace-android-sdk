@@ -13,6 +13,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     val endViewCalls = mutableListOf<String?>()
     val tapCalls = mutableListOf<String?>()
     val rnActionCalls = mutableListOf<String?>()
+    val webviewCalls = mutableListOf<String?>()
     val pushNotifications = mutableListOf<PushNotificationBreadcrumb>()
     var flushCount: Int = 0
 
@@ -63,6 +64,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun logWebView(url: String?, startTime: Long) {
+        webviewCalls.add(url)
     }
 
     var viewBreadcrumbScreenName: String? = null

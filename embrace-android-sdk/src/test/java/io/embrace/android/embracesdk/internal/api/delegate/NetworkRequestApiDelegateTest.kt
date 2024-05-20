@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -51,5 +52,15 @@ internal class NetworkRequestApiDelegateTest {
         delegate.recordNetworkRequest(request)
         assertEquals(1, orchestrator.stateChangeCount)
         assertEquals(request, networkLoggingService.requests.single())
+    }
+
+    @Test
+    fun `test trace id header`() {
+        assertEquals("x-emb-trace-id", delegate.getTraceIdHeader())
+    }
+
+    @Test
+    fun testGenerateW3cTraceparent() {
+        assertNotNull(delegate.generateW3cTraceparent())
     }
 }

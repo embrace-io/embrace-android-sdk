@@ -1,7 +1,11 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService

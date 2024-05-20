@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.payload.TapBreadcrumb
 internal class FakeBreadcrumbService : BreadcrumbService {
 
     val logViewCalls = mutableListOf<String?>()
+    val customCalls = mutableListOf<String?>()
     val startViewCalls = mutableListOf<String?>()
     val endViewCalls = mutableListOf<String?>()
     val tapCalls = mutableListOf<String?>()
@@ -47,6 +48,7 @@ internal class FakeBreadcrumbService : BreadcrumbService {
     }
 
     override fun logCustom(message: String, timestamp: Long) {
+        customCalls.add(message)
     }
 
     override fun logRnAction(

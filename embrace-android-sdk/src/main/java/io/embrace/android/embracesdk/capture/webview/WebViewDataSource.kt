@@ -25,7 +25,7 @@ internal class WebViewDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger, webViewVitalsBehavior::getMaxWebViewVitals),
+    limitStrategy = UpToLimitStrategy(webViewVitalsBehavior::getMaxWebViewVitals),
 ),
     SpanEventMapper<WebViewInfo> {
 

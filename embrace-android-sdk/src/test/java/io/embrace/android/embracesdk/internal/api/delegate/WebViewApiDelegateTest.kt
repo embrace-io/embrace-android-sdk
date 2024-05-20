@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -24,7 +25,11 @@ internal class WebViewApiDelegateTest {
 
     @Before
     fun setUp() {
-        val bootstrapper = fakeModuleInitBootstrapper()
+        val bootstrapper = fakeModuleInitBootstrapper(
+            dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+                FakeDataCaptureServiceModule(webviewService = FakeWebViewService())
+            }
+        )
         bootstrapper.init(ApplicationProvider.getApplicationContext(), Embrace.AppFramework.NATIVE, 0)
         orchestrator = bootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
         breadcrumbService = bootstrapper.dataCaptureServiceModule.breadcrumbService as FakeBreadcrumbService

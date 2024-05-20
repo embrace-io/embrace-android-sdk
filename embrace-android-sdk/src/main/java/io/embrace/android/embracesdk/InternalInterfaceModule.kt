@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.CrashModule
+import io.embrace.android.embracesdk.injection.CustomerLogModule
+import io.embrace.android.embracesdk.injection.DataContainerModule
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule
@@ -20,12 +22,22 @@ internal class InternalInterfaceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
+    customerLogModule: CustomerLogModule,
+    dataContainerModule: DataContainerModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
-        EmbraceInternalInterfaceImpl(embrace, initModule, essentialServiceModule.configService, openTelemetryModule.internalTracer)
+        EmbraceInternalInterfaceImpl(
+            embrace,
+            initModule,
+            customerLogModule.networkCaptureService,
+            dataContainerModule.eventService,
+            initModule.internalErrorService,
+            essentialServiceModule.configService,
+            openTelemetryModule.internalTracer
+        )
     }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {

@@ -87,7 +87,7 @@ public final class Embrace implements
     @Override
     public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework);
+            impl.start(context, appFramework, () -> null);
         }
     }
 
@@ -109,7 +109,7 @@ public final class Embrace implements
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework);
+            impl.start(context, appFramework, () -> null);
         }
     }
 

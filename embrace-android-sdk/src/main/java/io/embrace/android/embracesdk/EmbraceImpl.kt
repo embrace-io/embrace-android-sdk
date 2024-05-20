@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.injection.CrashModule
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
@@ -22,7 +21,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter
 
@@ -88,8 +86,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val sessionOrchestrator by embraceImplInject { bootstrapper.sessionModule.sessionOrchestrator }
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
     private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
-    private val eventService by embraceImplInject { bootstrapper.dataContainerModule.eventService }
-    private val networkCaptureService by embraceImplInject { bootstrapper.customerLogModule.networkCaptureService }
     private val webViewService by embraceImplInject { bootstrapper.dataCaptureServiceModule.webviewService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
@@ -104,15 +100,12 @@ internal class EmbraceImpl @JvmOverloads constructor(
      *
      * @param context                  an instance of context
      * @param appFramework             the AppFramework of the application
+     * @param configServiceProvider    provider for the config service
      */
-    fun start(context: Context, appFramework: Embrace.AppFramework) {
-        startInternal(context, appFramework) { null }
-    }
-
-    fun startInternal(
+    fun start(
         context: Context,
         appFramework: Embrace.AppFramework,
-        configServiceProvider: () -> ConfigService?
+        configServiceProvider: () -> ConfigService? = { null }
     ) {
         try {
             startSynchronous("sdk-start")
@@ -169,7 +162,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
         deliveryModule.deliveryService.sendCachedSessions(crashModule::nativeCrashService, essentialServiceModule.sessionIdTracker)
         endSynchronous()
 
-        loadCrashVerifier(crashModule, bootstrapper.workerThreadModule)
+        crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+            bootstrapper.workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+        )
 
         val internalInterfaceModuleImpl =
             InternalInterfaceModuleImpl(
@@ -177,6 +172,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 bootstrapper.openTelemetryModule,
                 coreModule,
                 essentialServiceModule,
+                bootstrapper.customerLogModule,
+                bootstrapper.dataContainerModule,
                 this,
                 crashModule
             )
@@ -213,17 +210,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // This should return immediately given that EmbraceSpansService initialization should be finished at this point
         // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
         bootstrapper.waitForAsyncInit()
-    }
-
-    /**
-     * Loads the crash verifier to get the end state of the app crashed in the last run.
-     * This method is called when the app starts.
-     *
-     * @param crashModule        an instance of [CrashModule]
-     * @param workerThreadModule an instance of [WorkerThreadModule]
-     */
-    private fun loadCrashVerifier(crashModule: CrashModule, workerThreadModule: WorkerThreadModule) {
-        crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION))
     }
 
     /**
@@ -281,34 +267,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun addBreadcrumb(message: String) {
         if (sdkCallChecker.check("add_breadcrumb")) {
             breadcrumbService?.logCustom(message, sdkClock.now())
-            onActivityReported()
-        }
-    }
-
-    /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     */
-    fun logInternalError(message: String?, details: String?) {
-        if (sdkCallChecker.check("log_internal_error")) {
-            if (message == null) {
-                return
-            }
-
-            val messageWithDetails: String = if (details != null) {
-                "$message: $details"
-            } else {
-                message
-            }
-            internalErrorService?.handleInternalError(RuntimeException(messageWithDetails))
-        }
-    }
-
-    /**
-     * Logs an internal error to the Embrace SDK - this is not intended for public use.
-     */
-    fun logInternalError(error: Throwable) {
-        if (sdkCallChecker.check("log_internal_error")) {
-            internalErrorService?.handleInternalError(error)
+            sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }
 
@@ -320,7 +279,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun logWebView(url: String?) {
         if (sdkCallChecker.check("log_web_view")) {
             breadcrumbService?.logWebView(url, sdkClock.now())
-            onActivityReported()
+            sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }
 
@@ -343,19 +302,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    fun shouldCaptureNetworkCall(url: String, method: String): Boolean {
-        if (isStarted() && networkCaptureService != null) {
-            return networkCaptureService?.getNetworkCaptureRules(url, method)?.isNotEmpty() ?: false
-        }
-        return false
-    }
-
-    fun setProcessStartedByNotification() {
-        if (isStarted()) {
-            eventService?.setProcessStartedByNotification()
-        }
-    }
-
     fun getReactNativeInternalInterface(): ReactNativeInternalInterface? = internalInterfaceModule?.reactNativeInternalInterface
 
     fun getUnityInternalInterface(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
@@ -367,11 +313,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     fun getFlutterInternalInterface(): FlutterInternalInterface? = internalInterfaceModule?.flutterInternalInterface
-
-    private fun onActivityReported() {
-        val orchestrator = sessionOrchestrator
-        orchestrator?.reportBackgroundActivityStateChange()
-    }
 
     private fun sampleCurrentThreadDuringAnrs() {
         try {

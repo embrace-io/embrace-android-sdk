@@ -8,6 +8,9 @@ import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
@@ -35,6 +38,9 @@ internal class EmbraceInternalInterfaceImplTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
+    private lateinit var fakeNetworkCaptureService: FakeNetworkCaptureService
+    private lateinit var fakeEventService: FakeEventService
+    private lateinit var fakeInternalErrorService: FakeInternalErrorService
 
     @Before
     fun setUp() {
@@ -42,9 +48,15 @@ internal class EmbraceInternalInterfaceImplTest {
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
         initModule = FakeInitModule(clock = fakeClock)
         fakeConfigService = FakeConfigService()
+        fakeNetworkCaptureService = FakeNetworkCaptureService()
+        fakeEventService = FakeEventService()
+        fakeInternalErrorService = FakeInternalErrorService()
         internalImpl = EmbraceInternalInterfaceImpl(
             embraceImpl,
             initModule,
+            fakeNetworkCaptureService,
+            fakeEventService,
+            fakeInternalErrorService,
             fakeConfigService,
             initModule.openTelemetryModule.internalTracer
         )
@@ -226,17 +238,14 @@ internal class EmbraceInternalInterfaceImplTest {
     fun `check logInternalError with exception`() {
         val expectedException = SocketException()
         internalImpl.logInternalError(expectedException)
-        verify(exactly = 1) {
-            embraceImpl.logInternalError(expectedException)
-        }
+        initModule.internalErrorService
+        checkNotNull(fakeInternalErrorService.throwables.single())
     }
 
     @Test
     fun `check logInternalError with error type and message`() {
         internalImpl.logInternalError("err", "message")
-        verify(exactly = 1) {
-            embraceImpl.logInternalError("err", "message")
-        }
+        checkNotNull(fakeInternalErrorService.throwables.single())
     }
 
     @Test

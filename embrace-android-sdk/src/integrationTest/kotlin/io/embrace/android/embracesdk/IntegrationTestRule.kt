@@ -110,7 +110,7 @@ internal class IntegrationTestRule(
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
-                embraceImpl.startInternal(overriddenCoreModule.context, appFramework) { overriddenConfigService }
+                embraceImpl.start(overriddenCoreModule.context, appFramework) { overriddenConfigService }
             }
         }
     }
@@ -127,7 +127,7 @@ internal class IntegrationTestRule(
         appFramework: AppFramework = harness.appFramework,
         configServiceProvider: Provider<ConfigService> = { harness.overriddenConfigService }
     ) {
-        Embrace.getImpl().startInternal(context, appFramework, configServiceProvider)
+        Embrace.getImpl().start(context, appFramework, configServiceProvider)
     }
 
     /**

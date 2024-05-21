@@ -9,7 +9,7 @@ internal class LocalConfig(
     /**
      * The Embrace app ID. This is used to identify the app within the database.
      */
-    val appId: String,
+    val appId: String?,
 
     /**
      * Control whether the Embrace SDK is able to capture native crashes.

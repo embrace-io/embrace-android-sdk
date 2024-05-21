@@ -64,4 +64,6 @@ internal class OpenTelemetryConfiguration(
     fun addLogExporter(logExporter: LogRecordExporter) {
         externalLogExporters.add(logExporter)
     }
+
+    fun hasConfiguredOtelExporters() = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
 }

@@ -63,7 +63,7 @@ internal interface EssentialServiceModule {
     val userService: UserService
     val urlBuilder: ApiUrlBuilder
     val apiClient: ApiClient
-    val apiService: ApiService
+    val apiService: ApiService?
     val sharedObjectLoader: SharedObjectLoader
     val cpuInfoDelegate: CpuInfoDelegate
     val deviceArchitecture: DeviceArchitecture
@@ -95,6 +95,7 @@ internal class EssentialServiceModuleImpl(
             coreModule.context.packageName,
             customAppId,
             coreModule.jsonSerializer,
+            openTelemetryModule.openTelemetryConfiguration,
             initModule.logger
         )
     }
@@ -226,7 +227,7 @@ internal class EssentialServiceModuleImpl(
                 thresholdCheck = thresholdCheck,
                 localSupplier = localConfig.sdkConfig::baseUrls,
             )
-
+            checkNotNull(appId)
             val coreBaseUrl = sdkEndpointBehavior.getData(appId)
             val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
 
@@ -278,7 +279,10 @@ internal class EssentialServiceModuleImpl(
         }
     }
 
-    override val apiService: ApiService by singleton {
+    override val apiService: ApiService? by singleton {
+        if (appId == null) {
+            return@singleton null
+        }
         Systrace.traceSynchronous("api-service-init") {
             EmbraceApiService(
                 apiClient = apiClient,

@@ -23,10 +23,20 @@ internal class SdkEndpointBehavior(
     /**
      * Data base URL.
      */
-    fun getData(appId: String): String = local?.data ?: "https://a-$appId.$DATA_DEFAULT"
+    fun getData(appId: String?): String {
+        if (appId == null) {
+            return ""
+        }
+        return local?.data ?: "https://a-$appId.$DATA_DEFAULT"
+    }
 
     /**
      * Config base URL.
      */
-    fun getConfig(appId: String): String = local?.config ?: "https://a-$appId.$CONFIG_DEFAULT"
+    fun getConfig(appId: String?): String {
+        if (appId == null) {
+            return ""
+        }
+        return local?.config ?: "https://a-$appId.$CONFIG_DEFAULT"
+    }
 }

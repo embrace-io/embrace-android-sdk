@@ -478,7 +478,7 @@ internal class ModuleInitBootstrapper(
     }
 
     fun stopServices() {
-        if (isInitialized()) {
+        if (!isInitialized()) {
             return
         }
 
@@ -487,13 +487,12 @@ internal class ModuleInitBootstrapper(
                 coreModule.serviceRegistry.close()
                 workerThreadModule.close()
                 essentialServiceModule.processStateService.close()
-            } else {
                 asyncInitTask.set(null)
             }
         }
     }
 
-    private fun isInitialized(): Boolean = asyncInitTask.get() != null
+    fun isInitialized(): Boolean = asyncInitTask.get() != null
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
         Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }

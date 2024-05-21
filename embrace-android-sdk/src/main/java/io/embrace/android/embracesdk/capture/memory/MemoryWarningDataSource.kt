@@ -19,7 +19,7 @@ internal class MemoryWarningDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = sessionSpanWriter,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger) { EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS }
+    limitStrategy = UpToLimitStrategy { EmbraceMemoryService.MAX_CAPTURED_MEMORY_WARNINGS }
 ),
     SpanEventMapper<MemoryWarning> {
 

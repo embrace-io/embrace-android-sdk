@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.arch.limits
 
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.EmbLogger
 
 /**
  * Allows capturing data up until a limit, then stops capturing.
  */
 internal class UpToLimitStrategy(
-    private val logger: EmbLogger,
     private val limitProvider: Provider<Int>,
 ) : LimitStrategy {
 
@@ -17,7 +15,6 @@ internal class UpToLimitStrategy(
     override fun shouldCapture(): Boolean {
         synchronized(lock) {
             if (count >= limitProvider()) {
-                logger.logWarning("Data capture limit reached.")
                 return false
             }
             count++

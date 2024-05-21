@@ -18,7 +18,7 @@ internal class NetworkStatusDataSource(
 ) : StartSpanMapper<NetworkStatusData>, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger) { MAX_CAPTURED_NETWORK_STATUS }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATUS }
 ) {
     private companion object {
         private const val MAX_CAPTURED_NETWORK_STATUS = 100

@@ -25,7 +25,7 @@ internal class ViewDataSource(
 ) : SpanDataSourceImpl(
     spanService,
     logger,
-    UpToLimitStrategy(logger) { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
+    UpToLimitStrategy { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
 ),
     StartSpanMapper<FragmentBreadcrumb> {
 

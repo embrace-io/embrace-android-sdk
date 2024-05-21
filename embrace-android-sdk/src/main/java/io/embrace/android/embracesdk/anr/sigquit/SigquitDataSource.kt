@@ -23,7 +23,7 @@ internal class SigquitDataSource(
 ) : SpanEventMapper<Long>, DataSourceImpl<SessionSpanWriter>(
     writer,
     logger,
-    UpToLimitStrategy(logger) { 50 }
+    UpToLimitStrategy { 50 }
 ) {
 
     private val googleAnrTrackerInstalled = AtomicBoolean(false)

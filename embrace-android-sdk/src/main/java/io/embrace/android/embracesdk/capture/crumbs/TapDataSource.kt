@@ -21,7 +21,7 @@ internal class TapDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getTapBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getTapBreadcrumbLimit)
 ),
     SpanEventMapper<TapBreadcrumb> {
 

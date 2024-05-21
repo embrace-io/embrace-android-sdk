@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 

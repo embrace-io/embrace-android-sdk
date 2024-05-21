@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api
 
 import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.Embrace.LastRunEndState

@@ -4,13 +4,24 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.InternalInterfaceModule
+import io.embrace.android.embracesdk.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
+import io.embrace.android.embracesdk.internal.api.LogsApi
+import io.embrace.android.embracesdk.internal.api.MomentsApi
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.api.OtelExporterApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.api.SessionApi
+import io.embrace.android.embracesdk.internal.api.UserApi
+import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
+import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -18,6 +29,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.OtelExporterApiDelega
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
@@ -46,6 +58,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
     private val otelExporterApiDelegate: OtelExporterApiDelegate =
         OtelExporterApiDelegate(bootstrapper, sdkCallChecker),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -54,7 +67,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
     ViewTrackingApi by viewTrackingApiDelegate,
     SdkStateApi by sdkStateApiDelegate,
-    OtelExporterApi by otelExporterApiDelegate {
+    OtelExporterApi by otelExporterApiDelegate,
+    BreadcrumbApi by breadcrumbApiDelegate {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -257,20 +271,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             exceptionName,
             exceptionMessage
         )
-    }
-
-    /**
-     * Logs a breadcrumb.
-     *
-     * Breadcrumbs track a user's journey through the application and will be shown on the timeline.
-     *
-     * @param message the name of the breadcrumb to log
-     */
-    fun addBreadcrumb(message: String) {
-        if (sdkCallChecker.check("add_breadcrumb")) {
-            breadcrumbService?.logCustom(message, sdkClock.now())
-            sessionOrchestrator?.reportBackgroundActivityStateChange()
-        }
     }
 
     /**

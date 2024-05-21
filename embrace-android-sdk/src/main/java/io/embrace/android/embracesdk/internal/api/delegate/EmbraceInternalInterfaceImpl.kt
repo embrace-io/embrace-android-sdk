@@ -1,6 +1,11 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.LogType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.injection.InitModule
@@ -54,8 +59,13 @@ internal class EmbraceInternalInterfaceImpl(
         properties: Map<String, Any>?,
         customStackTrace: Array<StackTraceElement>?
     ) {
+        val eventType = when (type) {
+            LogType.ERROR -> EventType.ERROR_LOG
+            LogType.WARNING -> EventType.WARNING_LOG
+            else -> EventType.INFO_LOG
+        }
         embraceImpl.logMessage(
-            type.toEventType(),
+            eventType,
             throwable.message ?: "",
             properties,
             customStackTrace ?: throwable.stackTrace,

@@ -1,5 +1,9 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api.delegate
 
+import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.FlutterInternalInterface
+import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.logging.EmbLogger

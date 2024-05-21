@@ -1,6 +1,7 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData

@@ -1,14 +1,14 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.CrashModule
-import io.embrace.android.embracesdk.injection.CustomerLogModule
-import io.embrace.android.embracesdk.injection.DataContainerModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.injection.singleton
+import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.FlutterInternalInterface
+import io.embrace.android.embracesdk.ReactNativeInternalInterface
+import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 
 internal interface InternalInterfaceModule {
     val embraceInternalInterface: EmbraceInternalInterface

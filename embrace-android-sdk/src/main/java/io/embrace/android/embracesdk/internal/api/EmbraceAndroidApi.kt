@@ -1,6 +1,7 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
+import io.embrace.android.embracesdk.Embrace
 
 /**
  * Declares the functions that consist of Embrace's public API - specifically

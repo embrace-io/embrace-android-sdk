@@ -1,4 +1,6 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api
+
+import io.embrace.android.embracesdk.Severity
 
 /**
  * The public API that is used to send log messages.

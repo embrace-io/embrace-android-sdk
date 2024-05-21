@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
+import io.embrace.android.embracesdk.internal.api.WebViewApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
@@ -32,6 +33,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.WebViewApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
 
@@ -59,6 +61,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val otelExporterApiDelegate: OtelExporterApiDelegate =
         OtelExporterApiDelegate(bootstrapper, sdkCallChecker),
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
+    private val webviewApiDelegate: WebViewApiDelegate = WebViewApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -68,7 +71,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     ViewTrackingApi by viewTrackingApiDelegate,
     SdkStateApi by sdkStateApiDelegate,
     OtelExporterApi by otelExporterApiDelegate,
-    BreadcrumbApi by breadcrumbApiDelegate {
+    BreadcrumbApi by breadcrumbApiDelegate,
+    WebViewApi by webviewApiDelegate {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -98,11 +102,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    private val breadcrumbService by embraceImplInject { bootstrapper.dataCaptureServiceModule.breadcrumbService }
-    private val sessionOrchestrator by embraceImplInject { bootstrapper.sessionModule.sessionOrchestrator }
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
     private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
-    private val webViewService by embraceImplInject { bootstrapper.dataCaptureServiceModule.webviewService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
 
@@ -271,24 +272,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             exceptionName,
             exceptionMessage
         )
-    }
-
-    /**
-     * Logs that a particular WebView URL was loaded.
-     *
-     * @param url the url to log
-     */
-    fun logWebView(url: String?) {
-        if (sdkCallChecker.check("log_web_view")) {
-            breadcrumbService?.logWebView(url, sdkClock.now())
-            sessionOrchestrator?.reportBackgroundActivityStateChange()
-        }
-    }
-
-    fun trackWebViewPerformance(tag: String, message: String) {
-        if (isStarted() && configService?.webViewVitalsBehavior?.isWebViewVitalsEnabled() == true) {
-            webViewService?.collectWebData(tag, message)
-        }
     }
 
     /**

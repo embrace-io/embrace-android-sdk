@@ -21,7 +21,7 @@ internal class BreadcrumbDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getCustomBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
 ),
     SpanEventMapper<CustomBreadcrumb> {
 

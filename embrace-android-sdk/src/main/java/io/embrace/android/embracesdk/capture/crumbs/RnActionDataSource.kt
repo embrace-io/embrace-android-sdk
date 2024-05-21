@@ -14,7 +14,7 @@ internal open class RnActionDataSource(
 ) : SpanDataSourceImpl(
     spanService,
     logger,
-    UpToLimitStrategy(logger) { breadcrumbBehavior.getCustomBreadcrumbLimit() }
+    UpToLimitStrategy { breadcrumbBehavior.getCustomBreadcrumbLimit() }
 ) {
     open fun logRnAction(
         name: String?,

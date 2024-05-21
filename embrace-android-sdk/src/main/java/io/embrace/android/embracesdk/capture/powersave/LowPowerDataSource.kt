@@ -26,7 +26,7 @@ internal class LowPowerDataSource(
 ) : StartSpanMapper<Long>, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger) { MAX_CAPTURED_POWER_MODE_INTERVALS }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS }
 ) {
 
     private companion object {

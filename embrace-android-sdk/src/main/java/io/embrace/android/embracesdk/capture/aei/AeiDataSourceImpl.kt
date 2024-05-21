@@ -44,7 +44,7 @@ internal class AeiDataSourceImpl(
 ) : AeiDataSource, LogEventMapper<BlobMessage>, LogDataSourceImpl(
     logWriter,
     logger,
-    limitStrategy = UpToLimitStrategy(logger) { SDK_AEI_SEND_LIMIT }
+    limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
 ) {
 
     companion object {

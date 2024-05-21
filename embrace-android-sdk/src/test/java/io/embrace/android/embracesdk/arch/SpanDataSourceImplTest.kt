@@ -38,7 +38,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `capture data respects limits`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -52,7 +52,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `capture data respects validation`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -88,7 +88,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `start span respects limits`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -102,7 +102,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `start span respects validation`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -138,7 +138,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `stop span does not increment limits`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -152,7 +152,7 @@ internal class SpanDataSourceImplTest {
     @Test
     fun `stop span respects validation`() {
         val dst = FakeSpanService()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {

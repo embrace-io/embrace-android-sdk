@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.arch.limits
 
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,7 +10,7 @@ internal class UpToLimitStrategyTest {
 
     @Test
     fun shouldCapture() {
-        val strategy = UpToLimitStrategy(EmbLoggerImpl(), provider)
+        val strategy = UpToLimitStrategy(provider)
         repeat(10) {
             assertTrue(strategy.shouldCapture())
         }

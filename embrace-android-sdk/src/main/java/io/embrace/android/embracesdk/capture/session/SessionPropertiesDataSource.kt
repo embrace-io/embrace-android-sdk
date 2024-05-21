@@ -15,7 +15,7 @@ internal class SessionPropertiesDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger) { sessionBehavior.getMaxSessionProperties() }
+    limitStrategy = UpToLimitStrategy { sessionBehavior.getMaxSessionProperties() }
 ) {
     /**
      * Assume input has already been sanitized

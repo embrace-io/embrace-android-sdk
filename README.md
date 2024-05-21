@@ -36,6 +36,6 @@ The Embrace Android SDK gives you performance and stability insights into the us
 
 # License
 
-[![AGPLv3](https://img.shields.io/github/license/suitecrm/suitecrm.svg)](./LICENSE.txt)
+[![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-orange)](./LICENSE.txt)
 
-Android Embrace SDK is published under the AGPLv3 license.
+Android Embrace SDK is published under the Apache-2.0 license.

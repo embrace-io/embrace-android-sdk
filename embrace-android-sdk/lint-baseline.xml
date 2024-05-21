@@ -15,28 +15,6 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface EmbraceAndroidApi {"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/EmbraceAndroidApi.kt"
-            line="11"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface EmbraceApi {"
-        errorLine2="                   ~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/EmbraceApi.kt"
-            line="13"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
         errorLine1="internal class EmbraceAutomaticVerification("
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
@@ -81,39 +59,6 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal class FlutterInternalInterfaceImpl("
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/FlutterInternalInterfaceImpl.kt"
-            line="7"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface InternalInterfaceModule {"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/InternalInterfaceModule.kt"
-            line="11"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal class InternalInterfaceModuleImpl("
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/InternalInterfaceModule.kt"
-            line="18"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
         errorLine1="public enum class LogExceptionType(internal val value: String) {"
         errorLine2="                  ~~~~~~~~~~~~~~~~">
         <location
@@ -125,45 +70,12 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="public enum LogType {"
-        errorLine2="            ~~~~~~~">
+        errorLine1="public enum class LogType {"
+        errorLine2="                  ~~~~~~~">
         <location
-            file="src/main/java/io/embrace/android/embracesdk/LogType.java"
+            file="src/main/java/io/embrace/android/embracesdk/LogType.kt"
             line="10"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface LogsApi {"
-        errorLine2="                   ~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/LogsApi.kt"
-            line="6"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface MomentsApi {"
-        errorLine2="                   ~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/MomentsApi.kt"
-            line="6"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface NetworkRequestApi {"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/NetworkRequestApi.kt"
-            line="8"
-            column="20"/>
+            column="19"/>
     </issue>
 
     <issue
@@ -175,28 +87,6 @@
             file="src/main/java/io/embrace/android/embracesdk/ReactNativeInternalInterface.kt"
             line="12"
             column="18"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal class ReactNativeInternalInterfaceImpl("
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/ReactNativeInternalInterfaceImpl.kt"
-            line="12"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface SessionApi {"
-        errorLine2="                   ~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/SessionApi.kt"
-            line="6"
-            column="20"/>
     </issue>
 
     <issue
@@ -224,33 +114,11 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal class UnityInternalInterfaceImpl("
-        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/UnityInternalInterfaceImpl.kt"
-            line="9"
-            column="16"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface UserApi {"
-        errorLine2="                   ~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/UserApi.kt"
-            line="6"
-            column="20"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
         errorLine1="public final class ViewSwazzledHooks {"
         errorLine2="                   ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="15"
+            line="14"
             column="20"/>
     </issue>
 
@@ -261,7 +129,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="54"
+            line="50"
             column="31"/>
     </issue>
 
@@ -272,19 +140,8 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="65"
+            line="61"
             column="31"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="internal interface ViewTrackingApi {"
-        errorLine2="                   ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/ViewTrackingApi.kt"
-            line="6"
-            column="20"/>
     </issue>
 
     <issue
@@ -316,7 +173,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="59"
+            line="55"
             column="80"/>
     </issue>
 
@@ -327,7 +184,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="70"
+            line="66"
             column="88"/>
     </issue>
 
@@ -382,7 +239,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="59"
+            line="55"
             column="40"/>
     </issue>
 
@@ -393,7 +250,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="59"
+            line="55"
             column="80"/>
     </issue>
 
@@ -404,7 +261,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="70"
+            line="66"
             column="44"/>
     </issue>
 
@@ -415,7 +272,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="70"
+            line="66"
             column="88"/>
     </issue>
 

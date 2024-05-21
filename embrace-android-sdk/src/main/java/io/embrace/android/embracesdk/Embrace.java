@@ -13,7 +13,14 @@ import java.util.Map;
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
+import io.embrace.android.embracesdk.internal.api.EmbraceAndroidApi;
+import io.embrace.android.embracesdk.internal.api.EmbraceApi;
+import io.embrace.android.embracesdk.internal.api.LogsApi;
+import io.embrace.android.embracesdk.internal.api.MomentsApi;
+import io.embrace.android.embracesdk.internal.api.NetworkRequestApi;
 import io.embrace.android.embracesdk.internal.api.SdkStateApi;
+import io.embrace.android.embracesdk.internal.api.SessionApi;
+import io.embrace.android.embracesdk.internal.api.UserApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
@@ -87,7 +94,7 @@ public final class Embrace implements
     @Override
     public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework);
+            impl.start(context, appFramework, () -> null);
         }
     }
 
@@ -109,7 +116,7 @@ public final class Embrace implements
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework);
+            impl.start(context, appFramework, () -> null);
         }
     }
 

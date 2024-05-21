@@ -1,12 +1,14 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.CrashModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.injection.singleton
+import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.FlutterInternalInterface
+import io.embrace.android.embracesdk.ReactNativeInternalInterface
+import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 
 internal interface InternalInterfaceModule {
     val embraceInternalInterface: EmbraceInternalInterface
@@ -20,12 +22,22 @@ internal class InternalInterfaceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
+    customerLogModule: CustomerLogModule,
+    dataContainerModule: DataContainerModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {
-        EmbraceInternalInterfaceImpl(embrace, initModule, essentialServiceModule.configService, openTelemetryModule.internalTracer)
+        EmbraceInternalInterfaceImpl(
+            embrace,
+            initModule,
+            customerLogModule.networkCaptureService,
+            dataContainerModule.eventService,
+            initModule.internalErrorService,
+            essentialServiceModule.configService,
+            openTelemetryModule.internalTracer
+        )
     }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface by singleton {

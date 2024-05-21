@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api
 
 /**
  * The public API that is used to set user information.

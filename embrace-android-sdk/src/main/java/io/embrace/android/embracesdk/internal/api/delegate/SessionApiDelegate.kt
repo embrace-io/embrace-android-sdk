@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.SessionApi
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.api.SessionApi
 
 internal class SessionApiDelegate(
     bootstrapper: ModuleInitBootstrapper,

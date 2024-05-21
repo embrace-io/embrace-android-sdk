@@ -1,21 +1,32 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
+import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.LogType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
+import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceInternalInterfaceImpl(
     private val embraceImpl: EmbraceImpl,
     private val initModule: InitModule,
+    private val networkCaptureService: NetworkCaptureService,
+    private val eventService: EventService,
+    private val internalErrorService: InternalErrorService,
     private val configService: ConfigService,
     internalTracer: InternalTracer
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
@@ -48,8 +59,13 @@ internal class EmbraceInternalInterfaceImpl(
         properties: Map<String, Any>?,
         customStackTrace: Array<StackTraceElement>?
     ) {
+        val eventType = when (type) {
+            LogType.ERROR -> EventType.ERROR_LOG
+            LogType.WARNING -> EventType.WARNING_LOG
+            else -> EventType.INFO_LOG
+        }
         embraceImpl.logMessage(
-            type.toEventType(),
+            eventType,
             throwable.message ?: "",
             properties,
             customStackTrace ?: throwable.stackTrace,
@@ -144,10 +160,12 @@ internal class EmbraceInternalInterfaceImpl(
         embraceImpl.recordNetworkRequest(embraceNetworkRequest)
     }
 
-    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = embraceImpl.shouldCaptureNetworkCall(url, method)
+    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean {
+        return networkCaptureService.getNetworkCaptureRules(url, method).isNotEmpty()
+    }
 
     override fun setProcessStartedByNotification() {
-        embraceImpl.setProcessStartedByNotification()
+        eventService.setProcessStartedByNotification()
     }
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
@@ -161,11 +179,19 @@ internal class EmbraceInternalInterfaceImpl(
     override fun isNdkEnabled(): Boolean = configService.autoDataCaptureBehavior.isNdkEnabled()
 
     override fun logInternalError(message: String?, details: String?) {
-        embraceImpl.logInternalError(message, details)
+        if (message == null) {
+            return
+        }
+        val messageWithDetails: String = if (details != null) {
+            "$message: $details"
+        } else {
+            message
+        }
+        internalErrorService.handleInternalError(RuntimeException(messageWithDetails))
     }
 
     override fun logInternalError(error: Throwable) {
-        embraceImpl.logInternalError(error)
+        internalErrorService.handleInternalError(error)
     }
 
     override fun stopSdk() {

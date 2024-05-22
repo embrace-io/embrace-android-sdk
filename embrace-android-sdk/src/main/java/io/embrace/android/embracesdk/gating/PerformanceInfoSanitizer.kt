@@ -10,8 +10,7 @@ internal class PerformanceInfoSanitizer(
     Sanitizable<PerformanceInfo> {
     override fun sanitize(): PerformanceInfo? {
         return info?.copy(
-            diskUsage = diskUsage(info),
-            networkRequests = networkRequests(info)
+            diskUsage = diskUsage(info)
         )
     }
 
@@ -20,14 +19,6 @@ internal class PerformanceInfoSanitizer(
         else -> null
     }
 
-    private fun networkRequests(performanceInfo: PerformanceInfo) = when {
-        shouldSendCapturedNetwork() -> performanceInfo.networkRequests
-        else -> null
-    }
-
     private fun shouldSendCurrentDiskUsage() =
         enabledComponents.contains(PERFORMANCE_CURRENT_DISK_USAGE)
-
-    private fun shouldSendCapturedNetwork() =
-        enabledComponents.contains(SessionGatingKeys.PERFORMANCE_NETWORK)
 }

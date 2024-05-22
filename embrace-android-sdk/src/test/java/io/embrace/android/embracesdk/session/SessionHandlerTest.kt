@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
@@ -97,7 +96,6 @@ internal class SessionHandlerTest {
     private lateinit var gatingService: FakeGatingService
     private lateinit var configService: FakeConfigService
     private lateinit var ndkService: FakeNdkService
-    private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var payloadFactory: PayloadFactory
     private lateinit var executorService: BlockingScheduledExecutorService
@@ -115,8 +113,6 @@ internal class SessionHandlerTest {
         ndkService = FakeNdkService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        breadcrumbService = FakeBreadcrumbService()
-        breadcrumbService.viewBreadcrumbScreenName = "screen"
         memoryCleanerService = FakeMemoryCleanerService()
 
         localConfig = LocalConfig(
@@ -154,7 +150,6 @@ internal class SessionHandlerTest {
             performanceInfoService,
             webViewService,
             null,
-            breadcrumbService,
             userService,
             preferencesService,
             initModule.openTelemetryModule.spanRepository,

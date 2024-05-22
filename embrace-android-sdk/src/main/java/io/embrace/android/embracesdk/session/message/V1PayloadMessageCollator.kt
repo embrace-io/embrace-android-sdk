@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
-import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -36,7 +35,6 @@ internal class V1PayloadMessageCollator(
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val breadcrumbService: BreadcrumbService,
     private val userService: UserService,
     private val preferencesService: PreferencesService,
     private val spanRepository: SpanRepository,
@@ -174,12 +172,6 @@ internal class V1PayloadMessageCollator(
                 ?.plus(nativeAnrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload))
                 ?: result
         }
-        val breadcrumbs = captureDataSafely(logger) {
-            when {
-                !params.isCacheAttempt -> breadcrumbService.flushBreadcrumbs()
-                else -> breadcrumbService.getBreadcrumbs()
-            }
-        }
         val spanSnapshots = captureDataSafely(logger) {
             spanRepository.getActiveSpans().mapNotNull { it.snapshot()?.toOldPayload() }
         }
@@ -197,7 +189,6 @@ internal class V1PayloadMessageCollator(
                     null
                 )
             },
-            breadcrumbs = breadcrumbs,
             spans = spans,
             spanSnapshots = spanSnapshots,
         )

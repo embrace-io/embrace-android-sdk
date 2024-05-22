@@ -23,7 +23,6 @@ internal class SessionMessageTest {
     private val appInfo = AppInfo("fake-app-version")
     private val deviceInfo = DeviceInfo("fake-manufacturer")
     private val performanceInfo = PerformanceInfo(DiskUsage(150923409L, 509209823L))
-    private val breadcrumbs = Breadcrumbs()
     private val spans = listOf(
         EmbraceSpanData(
             "fake-span-id",
@@ -45,7 +44,6 @@ internal class SessionMessageTest {
         appInfo,
         deviceInfo,
         performanceInfo,
-        breadcrumbs,
         spans,
         spanSnapshots
     )

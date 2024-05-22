@@ -136,4 +136,15 @@ internal class PublicApiTest {
             }
         }
     }
+
+    @Test
+    fun `SDK can be stopped`() {
+        with(testRule) {
+            assertFalse(embrace.isStarted)
+            startSdk(context = harness.overriddenCoreModule.context)
+            assertTrue(embrace.isStarted)
+            stopSdk()
+            assertFalse(embrace.isStarted)
+        }
+    }
 }

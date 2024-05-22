@@ -13,23 +13,5 @@ internal data class PerformanceInfo(
      * Current disk space usage of the app, and free space on the device.
      */
     @Json(name = "ds")
-    val diskUsage: DiskUsage? = null,
-
-    /**
-     * Timestamps where Google ANRs were triggered.
-     */
-    @Json(name = "ga")
-    val googleAnrTimestamps: List<Long>? = null,
-
-    /**
-     * ApplicationExitInfo
-     */
-    @Json(name = "aei")
-    val appExitInfoData: List<AppExitInfoData>? = null,
-
-    /**
-     * Network requests that happened during the session
-     */
-    @Json(name = "nr")
-    val networkRequests: NetworkRequests? = null
+    val diskUsage: DiskUsage? = null
 )

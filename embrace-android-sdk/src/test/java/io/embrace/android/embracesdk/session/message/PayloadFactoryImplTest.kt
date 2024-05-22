@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
@@ -59,7 +58,6 @@ internal class PayloadFactoryImplTest {
             internalErrorService = FakeInternalErrorService().apply {
                 data = LegacyExceptionError()
             },
-            breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
             spanRepository = initModule.openTelemetryModule.spanRepository,

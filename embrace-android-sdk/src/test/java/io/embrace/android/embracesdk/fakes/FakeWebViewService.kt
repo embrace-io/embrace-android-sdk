@@ -5,6 +5,9 @@ import io.embrace.android.embracesdk.payload.WebViewInfo
 
 internal class FakeWebViewService : FakeDataCaptureService<WebViewInfo>(), WebViewService {
 
+    val tags = mutableListOf<String?>()
+
     override fun collectWebData(tag: String, message: String) {
+        tags.add(tag)
     }
 }

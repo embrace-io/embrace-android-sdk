@@ -130,6 +130,10 @@ internal class IntegrationTestRule(
         Embrace.getImpl().start(context, appFramework, configServiceProvider)
     }
 
+    fun stopSdk() {
+        Embrace.getImpl().stop()
+    }
+
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */

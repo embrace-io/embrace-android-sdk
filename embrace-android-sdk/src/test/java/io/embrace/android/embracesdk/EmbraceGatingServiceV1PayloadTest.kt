@@ -39,8 +39,6 @@ import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.NetworkRequests
-import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -379,15 +377,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
             diskUsage = DiskUsage(100, null)
         )
 
-        val sessionPerformanceInfo = performanceInfo.copy(
-            networkRequests =
-            NetworkRequests(
-                NetworkSessionV2(
-                    listOf(),
-                    mapOf()
-                )
-            )
-        )
+        val sessionPerformanceInfo = performanceInfo.copy()
 
         val sessionMessage = SessionMessage(
             session = fakeSession(),
@@ -409,7 +399,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
         val perfInfo = checkNotNull(sanitizedMessage.performanceInfo)
         assertNotNull(perfInfo.diskUsage)
-        assertNotNull(perfInfo.networkRequests)
     }
 
     @Test

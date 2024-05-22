@@ -30,7 +30,7 @@ internal class ThermalStateDataSource(
 ) : StartSpanMapper<ThermalState>, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger) { MAX_CAPTURED_THERMAL_STATES }
+    limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
 ) {
     private companion object {
         private const val MAX_CAPTURED_THERMAL_STATES = 100

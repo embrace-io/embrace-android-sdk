@@ -119,4 +119,19 @@ internal class ModuleInitBootstrapperTest {
             bootstrapper.waitForAsyncInit(500L, TimeUnit.MILLISECONDS)
         }
     }
+
+    @Test
+    fun `stopping services makes bootstrapper not initialized`() {
+        assertTrue(
+            moduleInitBootstrapper.init(
+                context = context,
+                appFramework = Embrace.AppFramework.NATIVE,
+                sdkStartTimeMs = 0L,
+            )
+        )
+
+        assertTrue(moduleInitBootstrapper.isInitialized())
+        moduleInitBootstrapper.stopServices()
+        assertFalse(moduleInitBootstrapper.isInitialized())
+    }
 }

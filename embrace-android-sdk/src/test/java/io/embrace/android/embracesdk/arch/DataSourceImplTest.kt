@@ -38,7 +38,7 @@ internal class DataSourceImplTest {
     @Test
     fun `capture data respects limits`() {
         val dst = FakeCurrentSessionSpan()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {
@@ -52,7 +52,7 @@ internal class DataSourceImplTest {
     @Test
     fun `capture data respects validation`() {
         val dst = FakeCurrentSessionSpan()
-        val source = FakeDataSourceImpl(dst, UpToLimitStrategy(EmbLoggerImpl()) { 2 })
+        val source = FakeDataSourceImpl(dst, UpToLimitStrategy { 2 })
 
         var count = 0
         repeat(4) {

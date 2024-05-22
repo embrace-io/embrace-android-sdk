@@ -37,7 +37,10 @@ internal abstract class DataSourceImpl<T>(
     ): Boolean {
         try {
             if (enforceLimits && !limitStrategy.shouldCapture()) {
-                logger.logWarning("Data capture limit reached.")
+                logger.logInfo(
+                    "Data capture limit reached for ${this.javaClass.name}." +
+                        " Ignoring to keep payload size reasonable - other data types will still be captured normally."
+                )
                 return false
             }
             if (!inputValidation()) {

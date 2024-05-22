@@ -21,7 +21,7 @@ internal class WebViewUrlDataSource(
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
-    limitStrategy = UpToLimitStrategy(logger, breadcrumbBehavior::getWebViewBreadcrumbLimit)
+    limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getWebViewBreadcrumbLimit)
 ),
     SpanEventMapper<WebViewBreadcrumb> {
 

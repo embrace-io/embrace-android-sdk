@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -38,11 +36,9 @@ internal class V2PayloadMessageCollator(
     private val metadataService: MetadataService,
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
-    private val internalErrorService: InternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val userService: UserService,
     private val preferencesService: PreferencesService,
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
@@ -136,12 +132,8 @@ internal class V2PayloadMessageCollator(
             type = envelope.type,
 
             // make legacy fields null
-            userInfo = null,
             version = null,
             spans = null,
-
-            // future: make appInfo, deviceInfo, performanceInfo, breadcrumbs null.
-            // this is blocked until we can migrate others
         )
     }
 
@@ -151,32 +143,13 @@ internal class V2PayloadMessageCollator(
     private fun buildFinalBackgroundActivity(
         params: FinalEnvelopeParams
     ): Session = with(params) {
-        val startTime = initial.startTime
         return initial.copy(
             endTime = endTime,
             eventIds = captureDataSafely(logger) {
                 eventService.findEventIdsForSession()
             },
-            infoLogIds = captureDataSafely(logger) { logMessageService.findInfoLogIds(startTime, endTime) },
-            warningLogIds = captureDataSafely(logger) {
-                logMessageService.findWarningLogIds(
-                    startTime,
-                    endTime
-                )
-            },
-            errorLogIds = captureDataSafely(logger) {
-                logMessageService.findErrorLogIds(
-                    startTime,
-                    endTime
-                )
-            },
-            infoLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getInfoLogsAttemptedToSend),
-            warnLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getWarnLogsAttemptedToSend),
-            errorLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getErrorLogsAttemptedToSend),
-            exceptionError = captureDataSafely(logger, internalErrorService::getCapturedData),
             lastHeartbeatTime = endTime,
             endType = lifeEventType,
-            unhandledExceptions = captureDataSafely(logger, logMessageService::getUnhandledExceptionsSent),
             crashReportId = crashId
         )
     }
@@ -215,7 +188,6 @@ internal class V2PayloadMessageCollator(
 
         return SessionMessage(
             session = finalPayload,
-            userInfo = captureDataSafely(logger, userService::getUserInfo),
             appInfo = captureDataSafely(logger, metadataService::getAppInfo),
             deviceInfo = captureDataSafely(logger, metadataService::getDeviceInfo),
             performanceInfo = captureDataSafely(logger) {

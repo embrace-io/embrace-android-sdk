@@ -75,7 +75,27 @@ internal class V2PayloadMessageCollatorTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        v2collator = V2PayloadMessageCollator(gatingService, v1collator, sessionEnvelopeSource, initModule.logger)
+        v2collator = V2PayloadMessageCollator(
+            gatingService = gatingService,
+            nativeThreadSamplerService = null,
+            webViewService = FakeWebViewService(),
+            userService = FakeUserService(),
+            preferencesService = FakePreferenceService(),
+            eventService = FakeEventService(),
+            logMessageService = FakeLogMessageService(),
+            internalErrorService = FakeInternalErrorService().apply { data = LegacyExceptionError() },
+            metadataService = FakeMetadataService(),
+            performanceInfoService = FakePerformanceInfoService(),
+            spanRepository = initModule.openTelemetryModule.spanRepository,
+            spanSink = initModule.openTelemetryModule.spanSink,
+            currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
+            sessionPropertiesService = FakeSessionPropertiesService(),
+            startupService = FakeStartupService(),
+            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
+            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
+            logger = initModule.logger,
+            sessionEnvelopeSource = sessionEnvelopeSource
+        )
     }
 
     @Test

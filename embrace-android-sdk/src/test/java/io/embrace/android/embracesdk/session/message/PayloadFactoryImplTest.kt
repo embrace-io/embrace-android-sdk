@@ -70,14 +70,31 @@ internal class PayloadFactoryImplTest {
             logger = initModule.logger
         )
         val v2Collator = V2PayloadMessageCollator(
-            FakeGatingService(),
-            v1Collator,
-            SessionEnvelopeSourceImpl(
+            gatingService = FakeGatingService(),
+            nativeThreadSamplerService = null,
+            webViewService = FakeWebViewService(),
+            userService = FakeUserService(),
+            preferencesService = FakePreferenceService(),
+            eventService = FakeEventService(),
+            logMessageService = FakeLogMessageService(),
+            internalErrorService = FakeInternalErrorService().apply {
+                data = LegacyExceptionError()
+            },
+            metadataService = FakeMetadataService(),
+            performanceInfoService = FakePerformanceInfoService(),
+            spanRepository = initModule.openTelemetryModule.spanRepository,
+            spanSink = initModule.openTelemetryModule.spanSink,
+            currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
+            sessionPropertiesService = FakeSessionPropertiesService(),
+            startupService = FakeStartupService(),
+            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
+            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
+            logger = initModule.logger,
+            sessionEnvelopeSource = SessionEnvelopeSourceImpl(
                 FakeEnvelopeMetadataSource(),
                 FakeEnvelopeResourceSource(),
                 FakeSessionPayloadSource()
-            ),
-            initModule.logger
+            )
         )
         factory = PayloadFactoryImpl(
             v1payloadMessageCollator = v1Collator,

@@ -38,7 +38,9 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -101,6 +103,8 @@ internal class SessionHandlerTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var scheduledWorker: ScheduledWorker
     private lateinit var logger: EmbLogger
+    private lateinit var spanRepository: SpanRepository
+    private lateinit var currentSessionSpan: CurrentSessionSpan
 
     @Before
     fun before() {
@@ -141,6 +145,9 @@ internal class SessionHandlerTest {
         val initModule = FakeInitModule(clock = clock)
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
+        spanRepository = initModule.openTelemetryModule.spanRepository
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+
         val payloadMessageCollator = V1PayloadMessageCollator(
             gatingService,
             metadataService,
@@ -163,13 +170,28 @@ internal class SessionHandlerTest {
         )
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
-            payloadMessageCollator,
             SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
                 sessionPayloadSource = FakeSessionPayloadSource()
             ),
-            logger
+            metadataService,
+            eventService,
+            logMessageService,
+            internalErrorService,
+            performanceInfoService,
+            FakeWebViewService(),
+            null,
+            userService,
+            preferencesService,
+            spanRepository,
+            spanSink,
+            currentSessionSpan,
+            FakeSessionPropertiesService(),
+            FakeStartupService(),
+            AnrOtelMapper(FakeAnrService()),
+            NativeAnrOtelMapper(null, EmbraceSerializer()),
+            logger,
         )
         payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService, logger)
     }

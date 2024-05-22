@@ -1,12 +1,9 @@
 package io.embrace.android.embracesdk.capture.webview
 
-import io.embrace.android.embracesdk.arch.DataCaptureService
-import io.embrace.android.embracesdk.payload.WebViewInfo
-
 /**
  * Collects WebViews information, like view properties, console logs, or core web vitals.
  */
-internal interface WebViewService : DataCaptureService<List<WebViewInfo>?> {
+internal interface WebViewService {
 
     /**
      * Collects WebView logs triggered by the Embrace JS Plugin.
@@ -16,4 +13,12 @@ internal interface WebViewService : DataCaptureService<List<WebViewInfo>?> {
      *
      */
     fun collectWebData(tag: String, message: String)
+
+    /**
+     * Loads the collected data into the session.
+     * This method should be called when the session is being closed.
+     * As there is a processing where the data can be overridden by a second message,
+     * this method should be called once the session is ending.
+     */
+    fun loadDataIntoSession()
 }

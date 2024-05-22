@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -132,6 +133,19 @@ internal class EmbraceSpanImpl(
         return false
     }
 
+    override fun removeEvents(type: EmbType): Boolean {
+        synchronized(eventCount) {
+            events.forEach { event ->
+                if (event.hasFixedAttribute(type)) {
+                    events.remove(event)
+                    eventCount.decrementAndGet()
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     override fun addAttribute(key: String, value: String): Boolean {
         if (attributes.size < MAX_ATTRIBUTE_COUNT && attributeValid(key, value)) {
             synchronized(attributes) {
@@ -181,7 +195,7 @@ internal class EmbraceSpanImpl(
         internal const val MAX_EVENT_COUNT = 10
         internal const val MAX_ATTRIBUTE_COUNT = 50
         internal const val MAX_ATTRIBUTE_KEY_LENGTH = 50
-        internal const val MAX_ATTRIBUTE_VALUE_LENGTH = 200
+        internal const val MAX_ATTRIBUTE_VALUE_LENGTH = 500
 
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH

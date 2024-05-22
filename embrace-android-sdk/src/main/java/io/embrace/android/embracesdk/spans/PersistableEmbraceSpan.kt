@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.spans
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -28,4 +29,9 @@ internal interface PersistableEmbraceSpan : EmbraceSpan {
      * Remove the custom attribute with the given key name
      */
     fun removeCustomAttribute(key: String): Boolean
+
+    /**
+     * Removes all events with the given [EmbType]
+     */
+    fun removeEvents(type: EmbType): Boolean
 }

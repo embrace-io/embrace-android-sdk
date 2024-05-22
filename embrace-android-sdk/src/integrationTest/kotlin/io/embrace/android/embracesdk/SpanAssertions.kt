@@ -17,6 +17,15 @@ internal fun EmbraceSpanData.findEventOfType(telemetryType: TelemetryType): Embr
     }
 
 /**
+ * Finds the Span Events matching the given [TelemetryType]
+
+ */
+internal fun EmbraceSpanData.findEventsOfType(telemetryType: TelemetryType): List<EmbraceSpanEvent> =
+    checkNotNull(events.filter { it.attributes.hasFixedAttribute(telemetryType) }) {
+        "Events not found: $name"
+    }
+
+/**
  * Finds the span attribute matching the name.
  */
 internal fun EmbraceSpanData.findSpanAttribute(key: String): String =

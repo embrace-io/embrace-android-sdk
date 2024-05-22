@@ -83,7 +83,6 @@ internal class V1PayloadMessageCollator(
                 )
             },
             properties = captureDataSafely(logger, sessionPropertiesService::getProperties),
-            webViewInfo = captureDataSafely(logger, webViewService::getCapturedData),
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
             endTime = endTimeVal,
@@ -152,6 +151,7 @@ internal class V1PayloadMessageCollator(
         endTime: Long,
     ): SessionMessage {
         val spans: List<EmbraceSpanData>? = captureDataSafely(logger) {
+            webViewService.loadDataIntoSession()
             val result = when {
                 !params.captureSpans -> null
                 !params.isCacheAttempt -> {

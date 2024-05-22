@@ -1,18 +1,22 @@
 package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
+import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import java.util.EnumMap
 
 internal class EmbraceWebViewService(
     val configService: ConfigService,
     private val serializer: EmbraceSerializer,
-    private val logger: EmbLogger
-) : WebViewService {
+    private val logger: EmbLogger,
+    private val dataSourceModuleProvider: Provider<DataSourceModule?>,
+) : WebViewService, MemoryCleanerListener {
 
     /**
      * The information collected for each WebView
@@ -27,8 +31,13 @@ internal class EmbraceWebViewService(
         }
     }
 
-    override fun getCapturedData(): List<WebViewInfo> {
-        return webViewInfoMap.values.toList().take(configService.webViewVitalsBehavior.getMaxWebViewVitals())
+    override fun loadDataIntoSession() {
+        dataSourceModuleProvider()
+            ?.webViewDataSource
+            ?.dataSource
+            ?.loadDataIntoSession(
+                webViewInfoMap.values.toList()
+            )
     }
 
     private fun collectWebVital(message: String, tag: String) {

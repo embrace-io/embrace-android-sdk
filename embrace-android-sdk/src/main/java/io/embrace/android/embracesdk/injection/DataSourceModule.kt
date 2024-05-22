@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import android.os.Build
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
+import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
+import io.embrace.android.embracesdk.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -52,6 +54,7 @@ internal interface DataSourceModule {
     val sigquitDataSource: DataSourceState<SigquitDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
     val thermalStateDataSource: DataSourceState<ThermalStateDataSource>?
+    val webViewDataSource: DataSourceState<WebViewDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -248,6 +251,20 @@ internal class DataSourceModuleImpl(
                 configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
                     configService.sdkModeBehavior.isBetaFeaturesEnabled()
             }
+        )
+    }
+
+    override val webViewDataSource: DataSourceState<WebViewDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                WebViewDataSource(
+                    webViewVitalsBehavior = essentialServiceModule.configService.webViewVitalsBehavior,
+                    writer = otelModule.currentSessionSpan,
+                    logger = initModule.logger,
+                    serializer = coreModule.jsonSerializer
+                )
+            },
+            configGate = { configService.webViewVitalsBehavior.isWebViewVitalsEnabled() }
         )
     }
 

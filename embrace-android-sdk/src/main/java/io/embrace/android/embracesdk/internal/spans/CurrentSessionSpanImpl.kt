@@ -108,6 +108,11 @@ internal class CurrentSessionSpanImpl(
         )
     }
 
+    override fun removeEvents(type: EmbType) {
+        val currentSession = sessionSpan.get() ?: return
+        currentSession.removeEvents(type)
+    }
+
     override fun addCustomAttribute(attribute: SpanAttributeData): Boolean {
         val currentSession = sessionSpan.get() ?: return false
         return currentSession.addAttribute(attribute.key, attribute.value)

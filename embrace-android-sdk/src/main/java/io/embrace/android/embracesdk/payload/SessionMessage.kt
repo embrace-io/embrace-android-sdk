@@ -45,12 +45,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     @Json(name = "p")
     val performanceInfo: PerformanceInfo? = null,
 
-    /**
-     * Breadcrumbs which occurred as part of this session.
-     */
-    @Json(name = "br")
-    val breadcrumbs: Breadcrumbs? = null,
-
     @Json(name = "spans")
     val spans: List<EmbraceSpanData>? = null,
 

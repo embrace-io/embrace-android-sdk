@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
@@ -58,7 +57,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var activityService: FakeProcessStateService
     private lateinit var eventService: EventService
     private lateinit var logMessageService: LogMessageService
@@ -81,7 +79,6 @@ internal class PayloadFactoryBaTest {
         performanceInfoService = FakePerformanceInfoService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
-        breadcrumbService = FakeBreadcrumbService()
         activityService = FakeProcessStateService(isInBackground = true)
         eventService = FakeEventService()
         logMessageService = FakeLogMessageService()
@@ -157,14 +154,6 @@ internal class PayloadFactoryBaTest {
         assertEquals(0, spanSink.completedSpans().size)
     }
 
-    @Test
-    fun `foregrounding background activity flushes breadcrumbs`() {
-        service = createService()
-        clock.tick(1000L)
-        service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
-        assertEquals(1, breadcrumbService.flushCount)
-    }
-
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val gatingService = FakeGatingService()
         val logger = EmbLoggerImpl()
@@ -177,7 +166,6 @@ internal class PayloadFactoryBaTest {
             performanceInfoService,
             FakeWebViewService(),
             null,
-            breadcrumbService,
             userService,
             preferencesService,
             spanRepository,

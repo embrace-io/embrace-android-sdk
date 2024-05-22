@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
@@ -60,7 +59,6 @@ internal class V2PayloadMessageCollatorTest {
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             internalErrorService = FakeInternalErrorService().apply { data = LegacyExceptionError() },
-            breadcrumbService = FakeBreadcrumbService(),
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
             spanRepository = initModule.openTelemetryModule.spanRepository,
@@ -169,7 +167,6 @@ internal class V2PayloadMessageCollatorTest {
         assertNotNull(appInfo)
         assertNotNull(deviceInfo)
         assertNotNull(performanceInfo)
-        assertNotNull(breadcrumbs)
         assertNotNull(resource)
         assertNotNull(metadata)
         assertNotNull(data)

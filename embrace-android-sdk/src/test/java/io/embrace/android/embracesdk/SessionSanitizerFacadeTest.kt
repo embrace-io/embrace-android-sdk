@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -15,10 +14,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class SessionSanitizerFacadeTest {
-
-    private val breadcrumbs = Breadcrumbs(
-        emptyList()
-    )
 
     private val sessionPerformanceInfo = fakePerformanceInfo()
 
@@ -46,8 +41,7 @@ internal class SessionSanitizerFacadeTest {
         userInfo = userInfo,
         appInfo = AppInfo(),
         deviceInfo = DeviceInfo(),
-        performanceInfo = sessionPerformanceInfo,
-        breadcrumbs = breadcrumbs
+        performanceInfo = sessionPerformanceInfo
     )
 
     private val enabledComponents = setOf(
@@ -90,7 +84,6 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.session.startupDuration)
         assertNotNull(sanitizedMessage.session.startupThreshold)
 
-        assertNotNull(sanitizedMessage.performanceInfo?.networkRequests)
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)
@@ -117,7 +110,6 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.session.startupDuration)
         assertNull(sanitizedMessage.session.startupThreshold)
 
-        assertNull(sanitizedMessage.performanceInfo?.networkRequests)
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)

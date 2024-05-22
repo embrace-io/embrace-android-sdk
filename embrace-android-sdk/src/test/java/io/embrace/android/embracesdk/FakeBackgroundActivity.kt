@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.PerformanceInfo
@@ -16,7 +15,6 @@ internal fun fakeBackgroundActivityMessage(): SessionMessage {
     val userInfo = UserInfo("fake-user-id")
     val appInfo = AppInfo("fake-app-id")
     val deviceInfo = DeviceInfo("fake-manufacturer")
-    val breadcrumbs = Breadcrumbs()
     val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
     val perfInfo = PerformanceInfo(DiskUsage(1, 2))
 
@@ -26,7 +24,6 @@ internal fun fakeBackgroundActivityMessage(): SessionMessage {
         appInfo,
         deviceInfo,
         perfInfo,
-        breadcrumbs,
         spans
     )
 }

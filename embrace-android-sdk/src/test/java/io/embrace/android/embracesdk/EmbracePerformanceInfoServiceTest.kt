@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -35,9 +34,6 @@ internal class EmbracePerformanceInfoServiceTest {
     fun testSessionPerformanceInfoNonColdStart() {
         val info = service.getSessionPerformanceInfo(0, SESSION_END_TIME_MS, false, null)
         assertBasicPerfInfoIncluded(info)
-
-        // verify certain fields were not included in non-cold start
-        assertNull(info.appExitInfoData)
     }
 
     @Test

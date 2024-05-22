@@ -23,8 +23,6 @@
       "fs": 2
     }
   },
-  "br": {
-  },
   "spans": [
     {
       "trace_id": "fake-span-id",

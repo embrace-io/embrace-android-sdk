@@ -216,7 +216,6 @@ internal fun verifySessionMessage(sessionMessage: SessionMessage) {
 
     if (sessionMessage.session.messageType == "en") {
         assertNotNull(sessionMessage.userInfo)
-        assertNotNull(sessionMessage.breadcrumbs)
         assertNotNull(sessionMessage.performanceInfo)
     }
 }
@@ -233,7 +232,6 @@ internal fun verifyBgActivityMessage(message: SessionMessage) {
 
     if (message.session.messageType == "en") {
         assertNotNull(message.userInfo)
-        assertNotNull(message.breadcrumbs)
         assertNotNull(message.performanceInfo)
     }
 }

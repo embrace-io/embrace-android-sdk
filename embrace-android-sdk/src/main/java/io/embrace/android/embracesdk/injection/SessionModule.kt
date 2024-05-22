@@ -53,7 +53,6 @@ internal class SessionModuleImpl(
             dataContainerModule.performanceInfoService,
             dataCaptureServiceModule.webviewService,
             nativeModule.nativeThreadSamplerService,
-            dataCaptureServiceModule.breadcrumbService,
             essentialServiceModule.userService,
             androidServicesModule.preferencesService,
             openTelemetryModule.spanRepository,

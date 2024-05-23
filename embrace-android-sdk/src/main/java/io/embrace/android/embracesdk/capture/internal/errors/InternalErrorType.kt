@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.logging
+package io.embrace.android.embracesdk.capture.internal.errors
 
 /**
  * Represents a type of internal error that can be recorded for the Embrace SDK's telemetry.

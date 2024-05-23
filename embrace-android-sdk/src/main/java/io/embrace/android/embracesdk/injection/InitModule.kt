@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -7,8 +9,6 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 

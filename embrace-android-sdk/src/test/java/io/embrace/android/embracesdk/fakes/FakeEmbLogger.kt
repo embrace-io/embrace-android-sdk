@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorService
-import io.embrace.android.embracesdk.logging.InternalErrorType
 
 internal class FakeEmbLogger : EmbLogger {
 

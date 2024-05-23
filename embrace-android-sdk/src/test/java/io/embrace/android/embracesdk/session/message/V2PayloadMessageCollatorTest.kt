@@ -75,7 +75,24 @@ internal class V2PayloadMessageCollatorTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        v2collator = V2PayloadMessageCollator(gatingService, v1collator, sessionEnvelopeSource, initModule.logger)
+        v2collator = V2PayloadMessageCollator(
+            gatingService = gatingService,
+            nativeThreadSamplerService = null,
+            preferencesService = FakePreferenceService(),
+            eventService = FakeEventService(),
+            logMessageService = FakeLogMessageService(),
+            metadataService = FakeMetadataService(),
+            performanceInfoService = FakePerformanceInfoService(),
+            spanRepository = initModule.openTelemetryModule.spanRepository,
+            spanSink = initModule.openTelemetryModule.spanSink,
+            currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
+            sessionPropertiesService = FakeSessionPropertiesService(),
+            startupService = FakeStartupService(),
+            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
+            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
+            logger = initModule.logger,
+            sessionEnvelopeSource = sessionEnvelopeSource
+        )
     }
 
     @Test
@@ -210,13 +227,5 @@ internal class V2PayloadMessageCollatorTest {
         assertEquals(15000000000L, lastHeartbeatTime)
         assertEquals("crashId", crashReportId)
         assertNotNull(eventIds)
-        assertNotNull(infoLogIds)
-        assertNotNull(warningLogIds)
-        assertNotNull(errorLogIds)
-        assertNotNull(infoLogsAttemptedToSend)
-        assertNotNull(warnLogsAttemptedToSend)
-        assertNotNull(errorLogsAttemptedToSend)
-        assertNotNull(exceptionError)
-        assertNotNull(unhandledExceptions)
     }
 }

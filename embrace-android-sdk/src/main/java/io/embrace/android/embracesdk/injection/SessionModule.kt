@@ -69,8 +69,20 @@ internal class SessionModuleImpl(
     override val v2PayloadMessageCollator: V2PayloadMessageCollator by singleton {
         V2PayloadMessageCollator(
             essentialServiceModule.gatingService,
-            v1PayloadMessageCollator,
             payloadModule.sessionEnvelopeSource,
+            essentialServiceModule.metadataService,
+            dataContainerModule.eventService,
+            customerLogModule.logMessageService,
+            dataContainerModule.performanceInfoService,
+            nativeModule.nativeThreadSamplerService,
+            androidServicesModule.preferencesService,
+            openTelemetryModule.spanRepository,
+            openTelemetryModule.spanSink,
+            openTelemetryModule.currentSessionSpan,
+            sessionPropertiesService,
+            dataCaptureServiceModule.startupService,
+            anrModule.anrOtelMapper,
+            nativeModule.nativeAnrOtelMapper,
             initModule.logger
         )
     }

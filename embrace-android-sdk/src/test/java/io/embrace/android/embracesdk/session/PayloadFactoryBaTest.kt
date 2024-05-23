@@ -182,7 +182,24 @@ internal class PayloadFactoryBaTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
-        val v2Collator = V2PayloadMessageCollator(gatingService, collator, sessionEnvelopeSource, logger)
+        val v2Collator = V2PayloadMessageCollator(
+            gatingService,
+            sessionEnvelopeSource,
+            metadataService,
+            eventService,
+            logMessageService,
+            performanceInfoService,
+            null,
+            preferencesService,
+            spanRepository,
+            spanSink,
+            currentSessionSpan,
+            FakeSessionPropertiesService(),
+            FakeStartupService(),
+            AnrOtelMapper(FakeAnrService()),
+            NativeAnrOtelMapper(null, EmbraceSerializer()),
+            logger
+        )
         return PayloadFactoryImpl(collator, v2Collator, configService, logger).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)

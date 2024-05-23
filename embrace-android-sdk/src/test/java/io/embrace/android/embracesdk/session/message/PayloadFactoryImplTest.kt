@@ -72,14 +72,9 @@ internal class PayloadFactoryImplTest {
         val v2Collator = V2PayloadMessageCollator(
             gatingService = FakeGatingService(),
             nativeThreadSamplerService = null,
-            webViewService = FakeWebViewService(),
-            userService = FakeUserService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply {
-                data = LegacyExceptionError()
-            },
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
             spanRepository = initModule.openTelemetryModule.spanRepository,

@@ -78,12 +78,9 @@ internal class V2PayloadMessageCollatorTest {
         v2collator = V2PayloadMessageCollator(
             gatingService = gatingService,
             nativeThreadSamplerService = null,
-            webViewService = FakeWebViewService(),
-            userService = FakeUserService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply { data = LegacyExceptionError() },
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
             spanRepository = initModule.openTelemetryModule.spanRepository,
@@ -230,13 +227,5 @@ internal class V2PayloadMessageCollatorTest {
         assertEquals(15000000000L, lastHeartbeatTime)
         assertEquals("crashId", crashReportId)
         assertNotNull(eventIds)
-        assertNotNull(infoLogIds)
-        assertNotNull(warningLogIds)
-        assertNotNull(errorLogIds)
-        assertNotNull(infoLogsAttemptedToSend)
-        assertNotNull(warnLogsAttemptedToSend)
-        assertNotNull(errorLogsAttemptedToSend)
-        assertNotNull(exceptionError)
-        assertNotNull(unhandledExceptions)
     }
 }

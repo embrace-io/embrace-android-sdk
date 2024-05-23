@@ -30,7 +30,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -176,11 +175,8 @@ internal class PayloadFactorySessionTest {
             metadataService,
             eventService,
             logMessageService,
-            internalErrorService,
             performanceInfoService,
-            FakeWebViewService(),
             null,
-            userService,
             preferencesService,
             spanRepository,
             spanSink,

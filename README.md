@@ -8,7 +8,8 @@
   </a>
 </p>
 
-The Embrace Android SDK gives you performance and stability insights into the user experience of your mobile apps.
+The Embrace SDK is effectively an instrumentation library/agent designed for mobile that auto-instruments mobile events and records them as OTel signals. It actually uses the vanilla Java SDK to create the OTel signals behind the scenes.
+It can be considered an alternative to the official [Android instrumentation library](https://github.com/open-telemetry/opentelemetry-android), but it uses the Embrace data model for user session transition, captures more mobile telemetry out of the box, and provides a different API that is designed with mobile devs in mind.
 
 [![codecov](https://codecov.io/gh/embrace-io/embrace-android-sdk/graph/badge.svg?token=4kNC8ceoVB)](https://codecov.io/gh/embrace-io/embrace-android-sdk)
 [![android api](https://img.shields.io/badge/Android_API-21-green.svg "Android min API 21")](https://dash.embrace.io/signup/)

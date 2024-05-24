@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.fakeCachedV1SessionMessageWithHeartbeatTime
+import io.embrace.android.embracesdk.fakes.fakeCachedV1SessionMessageWithTerminationTime
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessage
 import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessageWithSnapshot
@@ -148,6 +150,42 @@ internal class EmbraceDeliveryServiceTest {
     }
 
     @Test
+    fun `missing end time in session will find appropriate fallback for end time of failed span`() {
+        assertNotNull(cacheService.writeSession(sessionWithTerminationTimeFileName, sessionWithTerminationTime))
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
+        val sentSessionWithTerminationTime = apiService.sessionRequests.single()
+        assertNotNull(cacheService.writeSession(sessionWithLastHeartbeatTimeFileName, sessionWithLastHeartbeatTime))
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
+        val sentSessionWithLastHeartbeatTime = apiService.sessionRequests.last()
+
+        checkNotNull(sessionWithTerminationTime.spanSnapshots).single().let { snapshot ->
+            assertEmbraceSpanData(
+                span = sentSessionWithTerminationTime.spans?.single { it.spanId == snapshot.spanId },
+                expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos.nanosToMillis()),
+                expectedEndTimeMs = checkNotNull(sessionWithTerminationTime.session.terminationTime),
+                expectedParentId = SpanId.getInvalid(),
+                expectedErrorCode = ErrorCode.FAILURE,
+                expectedCustomAttributes = mapOf(
+                    EmbType.Performance.Default.toEmbraceKeyValuePair()
+                )
+            )
+        }
+
+        checkNotNull(sessionWithLastHeartbeatTime.spanSnapshots).single().let { snapshot ->
+            assertEmbraceSpanData(
+                span = sentSessionWithLastHeartbeatTime.spans?.single { it.spanId == snapshot.spanId },
+                expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos.nanosToMillis()),
+                expectedEndTimeMs = checkNotNull(sessionWithLastHeartbeatTime.session.lastHeartbeatTime),
+                expectedParentId = SpanId.getInvalid(),
+                expectedErrorCode = ErrorCode.FAILURE,
+                expectedCustomAttributes = mapOf(
+                    EmbType.Performance.Default.toEmbraceKeyValuePair()
+                )
+            )
+        }
+    }
+
+    @Test
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
         val startedSnapshot = EmbraceSpanData(perfSpanSnapshot)
         val completedSpan = startedSnapshot.copy(status = StatusCode.OK, endTimeNanos = startedSnapshot.startTimeNanos + 10000000L)
@@ -251,6 +289,18 @@ internal class EmbraceDeliveryServiceTest {
         private val sessionWithSnapshotFileName = CachedSession.create(
             sessionWithSnapshot.session.sessionId,
             sessionWithSnapshot.session.startTime,
+            false
+        ).filename
+        private val sessionWithTerminationTime = fakeCachedV1SessionMessageWithTerminationTime()
+        private val sessionWithTerminationTimeFileName = CachedSession.create(
+            sessionWithTerminationTime.session.sessionId,
+            sessionWithTerminationTime.session.startTime,
+            false
+        ).filename
+        private val sessionWithLastHeartbeatTime = fakeCachedV1SessionMessageWithHeartbeatTime()
+        private val sessionWithLastHeartbeatTimeFileName = CachedSession.create(
+            sessionWithLastHeartbeatTime.session.sessionId,
+            sessionWithLastHeartbeatTime.session.startTime,
             false
         ).filename
         private val logsEnvelope = Envelope(

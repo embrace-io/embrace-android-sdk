@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.payload.LegacyExceptionError
  * Reports an internal error to Embrace. An internal error is defined as an exception that was
  * caught within Embrace code & logged to [EmbLogger].
  */
-internal interface InternalErrorService : DataCaptureService<LegacyExceptionError?> {
+internal interface InternalErrorService : DataCaptureService<LegacyExceptionError?>, InternalErrorHandler {
     var configService: ConfigService?
-    fun handleInternalError(throwable: Throwable)
 }

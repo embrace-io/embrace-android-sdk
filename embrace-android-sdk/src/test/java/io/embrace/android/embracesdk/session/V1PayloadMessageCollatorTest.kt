@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
@@ -19,7 +18,6 @@ import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -65,9 +63,6 @@ internal class V1PayloadMessageCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply {
-                data = LegacyExceptionError()
-            },
             metadataService = FakeMetadataService(),
             performanceInfoService = FakePerformanceInfoService(),
             spanRepository = initModule.openTelemetryModule.spanRepository,
@@ -253,7 +248,6 @@ internal class V1PayloadMessageCollatorTest {
         assertNotNull(infoLogsAttemptedToSend)
         assertNotNull(warnLogsAttemptedToSend)
         assertNotNull(errorLogsAttemptedToSend)
-        assertNotNull(exceptionError)
         assertNotNull(unhandledExceptions)
     }
 }

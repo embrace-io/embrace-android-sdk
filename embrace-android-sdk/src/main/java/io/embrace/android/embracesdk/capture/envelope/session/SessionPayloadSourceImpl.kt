@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.capture.envelope.session
 
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 internal class SessionPayloadSourceImpl(
-    private val internalErrorService: InternalErrorService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -29,7 +27,6 @@ internal class SessionPayloadSourceImpl(
 
     override fun getSessionPayload(endType: SessionSnapshotType): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
-        val internalErrors = captureDataSafely(logger) { internalErrorService.getCapturedData()?.toNewPayload() }
         val snapshots = retrieveSpanSnapshotData()
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
@@ -37,7 +34,6 @@ internal class SessionPayloadSourceImpl(
         return SessionPayload(
             spans = spans,
             spanSnapshots = snapshots,
-            internalError = internalErrors,
             sharedLibSymbolMapping = sharedLibSymbolMapping
         )
     }

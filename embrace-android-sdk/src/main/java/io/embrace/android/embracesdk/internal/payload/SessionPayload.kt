@@ -10,7 +10,6 @@ import com.squareup.moshi.JsonClass
  * span, which contains metadata about the session represented by this payload. The spans included
  * here may not have started in this session, but they ended during it.
  * @param spanSnapshots A list of spans that are still active at the time of the session's end.
- * @param internalError
  * @param sharedLibSymbolMapping A map of symbols that are associated with the session. We use this
  * to associate the symbolication files that have been uploaded with UUIDs with the stacktrace module
  * names, which don’t have UUIDs in them. Previous name: s.sb
@@ -27,9 +26,6 @@ internal data class SessionPayload(
     /* A list of spans that are still active at the time of the session's end. */
     @Json(name = "span_snapshots")
     val spanSnapshots: List<Span>? = null,
-
-    @Json(name = "internal_error")
-    val internalError: InternalError? = null,
 
     /**
      * A map of symbols that are associated with the session.

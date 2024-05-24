@@ -49,7 +49,6 @@ internal class SessionModuleImpl(
             essentialServiceModule.metadataService,
             dataContainerModule.eventService,
             customerLogModule.logMessageService,
-            initModule.internalErrorService,
             dataContainerModule.performanceInfoService,
             dataCaptureServiceModule.webviewService,
             nativeModule.nativeThreadSamplerService,

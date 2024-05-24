@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorDataSource
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
@@ -55,6 +57,7 @@ internal interface DataSourceModule {
     val rnActionDataSource: DataSourceState<RnActionDataSource>
     val thermalStateDataSource: DataSourceState<ThermalStateDataSource>?
     val webViewDataSource: DataSourceState<WebViewDataSource>
+    val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
 }
 
 internal class DataSourceModuleImpl(
@@ -264,6 +267,18 @@ internal class DataSourceModuleImpl(
                 )
             },
             configGate = { configService.webViewVitalsBehavior.isWebViewVitalsEnabled() }
+        )
+    }
+
+    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by dataSourceState {
+        DataSourceState(
+            factory = {
+                InternalErrorDataSourceImpl(
+                    logWriter = essentialServiceModule.logWriter,
+                    logger = initModule.logger,
+                )
+            },
+            configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() }
         )
     }
 

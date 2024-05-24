@@ -50,6 +50,26 @@ internal fun fakeV1EndedSessionMessageWithSnapshot(): SessionMessage = SessionMe
     spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
 )
 
+internal fun fakeCachedV1SessionMessageWithTerminationTime(): SessionMessage = SessionMessage(
+    session = fakeSession().copy(
+        sessionId = "fakeSessionWithTerminationTime",
+        startTime = 161000000000L,
+        terminationTime = 161000500000L
+    ),
+    spans = listOfNotNull(testSpan),
+    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
+)
+
+internal fun fakeCachedV1SessionMessageWithHeartbeatTime(): SessionMessage = SessionMessage(
+    session = fakeSession().copy(
+        sessionId = "fakeSessionWithHeartbeat",
+        startTime = 161000000000L,
+        lastHeartbeatTime = 161000600000L
+    ),
+    spans = listOfNotNull(testSpan),
+    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
+)
+
 internal fun fakeV2SessionMessage(): SessionMessage = SessionMessage(
     session = fakeSession(),
     metadata = EnvelopeMetadata(),

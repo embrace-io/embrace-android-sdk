@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.arch.limits.LimitStrategy
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorType
 
 /**
  * Base class for data sources.

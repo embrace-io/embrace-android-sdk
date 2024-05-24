@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.logging
+package io.embrace.android.embracesdk.capture.internal.errors
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock

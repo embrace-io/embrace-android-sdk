@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -39,7 +40,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator

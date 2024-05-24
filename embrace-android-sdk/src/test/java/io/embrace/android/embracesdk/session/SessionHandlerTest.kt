@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -45,7 +46,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.logging.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState

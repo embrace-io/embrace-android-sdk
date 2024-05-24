@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
@@ -27,7 +28,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.worker.TaskPriority

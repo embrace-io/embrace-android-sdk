@@ -173,7 +173,6 @@ internal class PayloadFactoryBaTest {
             metadataService,
             eventService,
             logMessageService,
-            internalErrorService,
             performanceInfoService,
             FakeWebViewService(),
             null,

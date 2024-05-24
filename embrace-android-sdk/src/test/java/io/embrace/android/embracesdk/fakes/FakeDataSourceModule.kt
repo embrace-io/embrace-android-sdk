@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.capture.crumbs.WebViewUrlDataSource
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorDataSource
 import io.embrace.android.embracesdk.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
@@ -35,4 +36,5 @@ internal class FakeDataSourceModule : DataSourceModule {
     override val rnActionDataSource: DataSourceState<RnActionDataSource> = DataSourceState({ null })
     override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> = DataSourceState({ null })
     override val webViewDataSource: DataSourceState<WebViewDataSource> = DataSourceState({ null })
+    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> = DataSourceState({ null })
 }

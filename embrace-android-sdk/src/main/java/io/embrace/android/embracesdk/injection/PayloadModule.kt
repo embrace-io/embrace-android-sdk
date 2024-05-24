@@ -65,7 +65,6 @@ internal class PayloadModuleImpl(
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(
-            initModule.internalErrorService,
             nativeModule.nativeThreadSamplerService,
             otelModule.spanSink,
             otelModule.currentSessionSpan,

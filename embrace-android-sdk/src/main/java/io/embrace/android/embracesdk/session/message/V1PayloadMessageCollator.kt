@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -31,7 +30,6 @@ internal class V1PayloadMessageCollator(
     private val metadataService: MetadataService,
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
-    private val internalErrorService: InternalErrorService,
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
@@ -136,7 +134,6 @@ internal class V1PayloadMessageCollator(
             infoLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getInfoLogsAttemptedToSend),
             warnLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getWarnLogsAttemptedToSend),
             errorLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getErrorLogsAttemptedToSend),
-            exceptionError = captureDataSafely(logger, internalErrorService::getCapturedData),
             lastHeartbeatTime = endTime,
             endType = lifeEventType,
             unhandledExceptions = captureDataSafely(logger, logMessageService::getUnhandledExceptionsSent),

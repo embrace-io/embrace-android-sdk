@@ -61,9 +61,6 @@ internal class InternalErrorDataSourceImplTest {
         assertEquals("", data.message)
         assertEquals(EmbType.System.InternalError, data.schemaType.telemetryType)
         assertEquals("internal-error", data.schemaType.fixedObjectName)
-
-        val attrs = data.schemaType.attributes()
-        assertEquals("sys.internal", attrs["emb.type"])
-        return attrs
+        return data.schemaType.attributes()
     }
 }

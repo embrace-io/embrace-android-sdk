@@ -28,10 +28,6 @@
   "lic": 1,
   "lwc": 2,
   "lec": 3,
-  "e": {
-    "c": 0,
-    "rep": []
-  },
   "ri": "fake-crash-id",
   "em": "s",
   "sm": "s",

@@ -68,7 +68,7 @@ internal class InitModuleImpl(
     override val systemInfo: SystemInfo = SystemInfo()
 ) : InitModule {
 
-    override val internalErrorService: InternalErrorService = EmbraceInternalErrorService(clock)
+    override val internalErrorService: InternalErrorService = EmbraceInternalErrorService()
 
     init {
         logger.internalErrorService = internalErrorService

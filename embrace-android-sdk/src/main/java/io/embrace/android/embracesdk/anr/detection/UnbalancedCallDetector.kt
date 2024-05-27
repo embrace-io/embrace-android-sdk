@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.anr.detection
 
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorType
 
 internal class UnbalancedCallDetector(
     private val logger: EmbLogger

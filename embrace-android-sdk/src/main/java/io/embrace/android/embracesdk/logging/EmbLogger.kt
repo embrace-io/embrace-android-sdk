@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.logging
 
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
+
 /**
  * A simple interface that is used within the Embrace SDK for logging.
  */

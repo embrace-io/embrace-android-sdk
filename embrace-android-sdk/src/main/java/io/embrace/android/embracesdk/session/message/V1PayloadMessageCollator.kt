@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -19,7 +20,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorService
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService

@@ -37,6 +37,6 @@ It can be considered an alternative to the official [Android instrumentation lib
 
 # License
 
-[![AGPLv3](https://img.shields.io/github/license/suitecrm/suitecrm.svg)](./LICENSE.txt)
+[![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-orange)](./LICENSE.txt)
 
-Android Embrace SDK is published under the AGPLv3 license.
+Android Embrace SDK is published under the Apache-2.0 license.

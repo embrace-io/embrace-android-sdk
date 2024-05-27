@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.logging
 
 import android.util.Log
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.logging.EmbLogger.Severity
 

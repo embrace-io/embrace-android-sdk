@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
@@ -18,7 +19,6 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.InternalErrorType
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.BlobSession

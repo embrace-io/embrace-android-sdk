@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.logging
 
+import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService

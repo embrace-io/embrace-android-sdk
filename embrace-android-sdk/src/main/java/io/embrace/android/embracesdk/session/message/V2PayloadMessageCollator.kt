@@ -129,7 +129,6 @@ internal class V2PayloadMessageCollator(
             type = envelope.type,
 
             // make legacy fields null
-            version = null,
             spans = null,
         )
     }

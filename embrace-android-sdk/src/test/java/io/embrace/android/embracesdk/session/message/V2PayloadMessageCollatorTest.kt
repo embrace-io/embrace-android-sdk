@@ -176,7 +176,6 @@ internal class V2PayloadMessageCollatorTest {
     private fun SessionMessage.verifyFinalFieldsPopulated(
         payloadType: PayloadType
     ) {
-        assertNull(version)
         assertNull(spans)
         assertNotNull(appInfo)
         assertNotNull(deviceInfo)

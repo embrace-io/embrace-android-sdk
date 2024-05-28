@@ -68,9 +68,8 @@ internal class ApiRequestMapper(
         return requestBuilder(url)
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    fun sessionRequest(v2Payload: Boolean): ApiRequest {
-        val url = Endpoint.SESSIONS // send to v1 endpoint for now.
+    fun sessionRequest(): ApiRequest {
+        val url = Endpoint.SESSIONS_V2
         return requestBuilder(url.asEmbraceUrl())
     }
 

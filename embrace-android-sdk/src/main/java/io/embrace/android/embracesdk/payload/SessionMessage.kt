@@ -44,9 +44,3 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     @Json(name = "data")
     val data: SessionPayload? = null
 )
-
-/**
- * Returns true if this message is a v2 payload. If so, it should be sent to a different
- * endpoint & handled differently.
- */
-internal fun SessionMessage.isV2Payload() = data?.spans != null

@@ -20,13 +20,9 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
-import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState.FOREGROUND
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -92,17 +88,9 @@ internal class PayloadFactoryImplTest {
     }
 
     @Test
-    fun `legacy payload generated`() {
-        val session = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false))
-        val sessionMessage = checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session))
-        assertFalse(sessionMessage.isV2Payload())
-    }
-
-    @Test
     fun `v2 payload generated`() {
         oTelConfig = OTelRemoteConfig(isDevEnabled = true)
         val session = checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false))
-        val sessionMessage = checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session)).copy(data = SessionPayload(emptyList()))
-        assertTrue(sessionMessage.isV2Payload())
+        checkNotNull(factory.endPayloadWithState(FOREGROUND, 0, session))
     }
 }

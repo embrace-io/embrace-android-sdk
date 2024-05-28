@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -54,8 +53,7 @@ internal class EmbraceDeliveryCacheManager(
                 sessionId,
                 sessionStartTimeMs,
                 writeSync,
-                snapshot,
-                sessionMessage.isV2Payload()
+                snapshot
             ) { filename: String ->
                 Systrace.traceSynchronous("serialize-session") {
                     cacheService.writeSession(filename, sessionMessage)
@@ -208,11 +206,10 @@ internal class EmbraceDeliveryCacheManager(
         sessionStartTimeMs: Long,
         writeSync: Boolean = false,
         snapshot: Boolean = false,
-        v2Payload: Boolean,
         saveAction: (filename: String) -> Unit
     ) {
         if (writeSync) {
-            saveSessionBytesImpl(sessionId, sessionStartTimeMs, v2Payload, saveAction)
+            saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
         } else {
             // snapshots are low priority compared to state ends + loading/unloading other payload
             // types. State ends are critical as they contain the final information.
@@ -221,7 +218,7 @@ internal class EmbraceDeliveryCacheManager(
                 else -> TaskPriority.CRITICAL
             }
             backgroundWorker.submit(priority) {
-                saveSessionBytesImpl(sessionId, sessionStartTimeMs, v2Payload, saveAction)
+                saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
             }
         }
     }
@@ -229,13 +226,12 @@ internal class EmbraceDeliveryCacheManager(
     private fun saveSessionBytesImpl(
         sessionId: String,
         sessionStartTimeMs: Long,
-        v2Payload: Boolean,
         saveAction: (filename: String) -> Unit
     ) {
         try {
             synchronized(cachedSessions) {
                 val cachedSession = cachedSessions.getOrElse(sessionId) {
-                    CachedSession.create(sessionId, sessionStartTimeMs, v2Payload)
+                    CachedSession.create(sessionId, sessionStartTimeMs)
                 }
                 saveAction(cachedSession.filename)
                 if (!cachedSessions.containsKey(cachedSession.sessionId)) {

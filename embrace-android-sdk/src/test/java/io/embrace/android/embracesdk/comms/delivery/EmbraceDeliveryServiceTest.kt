@@ -284,7 +284,7 @@ internal class EmbraceDeliveryServiceTest {
         private val sessionFileName = CachedSession.create(
             sessionMessage.session.sessionId,
             sessionMessage.session.startTime,
-            false
+            true
         ).filename
         private val anotherMessage = sessionMessage.copy(session = fakeSession().copy(sessionId = "session2"))
         private val anotherMessageFileName = CachedSession.create(

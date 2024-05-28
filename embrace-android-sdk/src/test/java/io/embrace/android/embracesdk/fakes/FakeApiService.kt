@@ -70,7 +70,7 @@ internal class FakeApiService : ApiService {
         blobRequests.add(blobMessage)
     }
 
-    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
+    override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
         if (throwExceptionSendSession) {
             error("FakeApiService.sendSession")
         }

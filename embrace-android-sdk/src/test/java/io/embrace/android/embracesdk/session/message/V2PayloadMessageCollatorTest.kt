@@ -177,7 +177,6 @@ internal class V2PayloadMessageCollatorTest {
         payloadType: PayloadType
     ) {
         assertNull(spans)
-        assertNotNull(appInfo)
         assertNotNull(deviceInfo)
         assertNotNull(performanceInfo)
         assertNotNull(resource)

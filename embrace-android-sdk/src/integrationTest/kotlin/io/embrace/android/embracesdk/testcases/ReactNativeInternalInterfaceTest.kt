@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
@@ -7,10 +5,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -30,7 +31,9 @@ internal class ReactNativeInternalInterfaceTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule(
         harnessSupplier = {
-            IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE)
+            IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE).apply {
+                overriddenConfigService.oTelBehavior = fakeV2OtelBehavior()
+            }
         }
     )
 
@@ -46,10 +49,10 @@ internal class ReactNativeInternalInterfaceTest {
 
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertNull(session?.appInfo?.reactNativeVersion)
-            assertNull(session?.appInfo?.hostedSdkVersion)
-            assertNull(session?.appInfo?.javaScriptPatchNumber)
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertNull(res.hostedPlatformVersion)
+            assertNull(res.javascriptPatchNumber)
         }
     }
 
@@ -62,10 +65,11 @@ internal class ReactNativeInternalInterfaceTest {
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.reactNativeVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
-            assertEquals("666", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
+            assertEquals("666", res.javascriptPatchNumber)
         }
     }
 
@@ -82,10 +86,11 @@ internal class ReactNativeInternalInterfaceTest {
 
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.reactNativeVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
-            assertEquals("666", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
+            assertEquals("666", res.javascriptPatchNumber)
         }
     }
 
@@ -104,10 +109,11 @@ internal class ReactNativeInternalInterfaceTest {
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("999")
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertEquals("28.9.2", checkNotNull(session?.appInfo?.reactNativeVersion))
-            assertEquals("1.2.4", checkNotNull(session?.appInfo?.hostedSdkVersion))
-            assertEquals("999", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals("28.9.2", res.hostedPlatformVersion)
+            assertEquals("1.2.4", res.hostedSdkVersion)
+            assertEquals("999", res.javascriptPatchNumber)
         }
     }
 
@@ -125,21 +131,18 @@ internal class ReactNativeInternalInterfaceTest {
                 )
             })
 
-            val spans = message.findSpansOfType(EmbType.System.ReactNativeAction)
-
+            val spans = message.findSpansByName("emb-rn-action")
             assertEquals(1, spans.size)
 
             val span = spans.single()
-
             assertEquals("emb-rn-action", span.name)
             assertEquals("sys.rn_action", span.findSpanAttribute("emb.type"))
             assertEquals("MyAction", span.findSpanAttribute("name"))
             assertEquals("SUCCESS", span.findSpanAttribute("outcome"))
             assertEquals("100", span.findSpanAttribute("payload_size"))
             assertEquals("value", span.findSpanAttribute("emb.properties.key"))
-            assertEquals(1000, span.startTimeNanos.nanosToMillis())
-            assertEquals(5000, span.endTimeNanos.nanosToMillis())
-
+            assertEquals(1000L, span.startTimeUnixNano?.nanosToMillis())
+            assertEquals(5000L, span.endTimeUnixNano?.nanosToMillis())
         }
     }
 }

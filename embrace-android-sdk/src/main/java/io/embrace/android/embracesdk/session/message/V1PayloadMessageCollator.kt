@@ -163,6 +163,7 @@ internal class V1PayloadMessageCollator(
                     }
                     spans
                 }
+
                 else -> spanSink.completedSpans()
             }
             // add ANR spans if the payload is capturing spans.
@@ -176,7 +177,6 @@ internal class V1PayloadMessageCollator(
 
         return SessionMessage(
             session = finalPayload,
-            appInfo = captureDataSafely(logger, metadataService::getAppInfo),
             deviceInfo = captureDataSafely(logger, metadataService::getDeviceInfo),
             performanceInfo = captureDataSafely(logger) {
                 performanceInfoService.getSessionPerformanceInfo(

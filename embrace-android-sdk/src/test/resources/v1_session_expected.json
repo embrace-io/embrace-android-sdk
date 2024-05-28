@@ -1,19 +1,4 @@
 {
-  "a": {
-    "f": 1,
-    "vu": false,
-    "vul": false,
-    "v": "UNKNOWN",
-    "fl": "delicious",
-    "bi": "5.22.0",
-    "bt": "release",
-    "bv": "0",
-    "e": "dev",
-    "ou": false,
-    "oul": false,
-    "sdc": "53",
-    "sdk": "__EMBRACE_TEST_IGNORE__"
-  },
   "d": "__EMBRACE_TEST_IGNORE__",
   "p": {
     "ds": {

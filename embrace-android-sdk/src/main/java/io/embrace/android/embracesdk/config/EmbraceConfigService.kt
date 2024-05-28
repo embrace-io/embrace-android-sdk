@@ -36,7 +36,7 @@ import kotlin.math.min
  */
 internal class EmbraceConfigService @JvmOverloads constructor(
     private val localConfig: LocalConfig,
-    private val apiService: ApiService,
+    private val apiService: ApiService?,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: EmbLogger,
@@ -181,8 +181,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      */
 
     fun loadConfigFromCache() {
-        val cachedConfig = apiService.getCachedConfig()
-        val obj = cachedConfig.remoteConfig
+        val cachedConfig = apiService?.getCachedConfig()
+        val obj = cachedConfig?.remoteConfig
 
         if (obj != null) {
             val oldConfig = configProp
@@ -214,7 +214,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             if (configRequiresRefresh()) {
                 try {
                     lastRefreshConfigAttempt = clock.now()
-                    val newConfig = apiService.getConfig()
+                    val newConfig = apiService?.getConfig()
                     if (newConfig != null) {
                         updateConfig(previousConfig, newConfig)
                         lastUpdated = clock.now()

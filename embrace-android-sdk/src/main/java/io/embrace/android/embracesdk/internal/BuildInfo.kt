@@ -66,10 +66,7 @@ internal class BuildInfo internal constructor(
                     ex
                 )
             } catch (ex: Resources.NotFoundException) {
-                throw IllegalArgumentException(
-                    "No resource found for $buildProperty property. Failed to create build info.",
-                    ex
-                )
+                null
             }
         }
     }

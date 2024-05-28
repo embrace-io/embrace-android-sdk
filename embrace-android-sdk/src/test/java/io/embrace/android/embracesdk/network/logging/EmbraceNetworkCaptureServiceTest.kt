@@ -12,9 +12,13 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.mockk.clearAllMocks
 import io.mockk.unmockkAll
 import org.junit.AfterClass
@@ -50,12 +54,19 @@ internal class EmbraceNetworkCaptureServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
+            val otelCfg = OpenTelemetryConfiguration(
+                SpanSinkImpl(),
+                LogSinkImpl(),
+                SystemInfo(),
+                "my-id"
+            )
             mockLocalConfig =
                 LocalConfigParser.buildConfig(
                     "GrCPU",
                     false,
                     "{\"base_urls\": {\"data\": \"https://data.emb-api.com\"}}",
                     EmbraceSerializer(),
+                    otelCfg,
                     EmbLoggerImpl()
                 )
         }

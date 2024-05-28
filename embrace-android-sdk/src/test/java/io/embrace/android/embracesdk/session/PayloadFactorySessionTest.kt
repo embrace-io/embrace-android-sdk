@@ -172,7 +172,6 @@ internal class PayloadFactorySessionTest {
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
             sessionEnvelopeSource,
-            metadataService,
             eventService,
             logMessageService,
             performanceInfoService,

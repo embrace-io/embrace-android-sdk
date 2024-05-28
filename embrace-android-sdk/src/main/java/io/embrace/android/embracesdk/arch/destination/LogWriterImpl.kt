@@ -18,7 +18,7 @@ internal class LogWriterImpl(
     private val metadataService: MetadataService,
 ) : LogWriter {
 
-    override fun <T> addLog(log: T, mapper: (T.() -> LogEventData)?, isPrivate: Boolean) {
+    override fun <T> addLog(log: T, isPrivate: Boolean, mapper: (T.() -> LogEventData)?) {
         val logEventData = if (log is LogEventData) {
             log
         } else if (mapper != null) {

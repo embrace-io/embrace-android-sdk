@@ -201,7 +201,7 @@ internal class AeiDataSourceImpl(
                         BlobSession(sessionIdTracker.getActiveSessionId()),
                         userService.getUserInfo()
                     )
-                    addLog(blob, ::toLogEventData)
+                    addLog(blob, mapper = ::toLogEventData)
                 }
             )
         }

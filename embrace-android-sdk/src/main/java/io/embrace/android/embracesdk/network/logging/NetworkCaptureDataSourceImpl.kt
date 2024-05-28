@@ -26,7 +26,7 @@ internal class NetworkCaptureDataSourceImpl(
      * @param networkCapturedCall the captured network information
      */
     override fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall) {
-        logWriter.addLog(networkCapturedCall, ::toLogEventData)
+        logWriter.addLog(networkCapturedCall, mapper = ::toLogEventData)
     }
 
     override fun toLogEventData(obj: NetworkCapturedCall): LogEventData {

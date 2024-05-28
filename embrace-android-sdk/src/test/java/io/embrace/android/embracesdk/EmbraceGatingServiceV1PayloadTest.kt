@@ -33,11 +33,11 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMI
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.Orientation
@@ -362,8 +362,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
             session = fakeSession(),
             metadata = EnvelopeMetadata(
                 personas = setOf("persona")
-            ),
-            performanceInfo = PerformanceInfo(),
+            )
         )
 
         cfg = buildCustomRemoteConfig(setOf(USER_PERSONAS), null)
@@ -374,17 +373,10 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
     @Test
     fun `test gate performance info for Session`() {
-        val performanceInfo = PerformanceInfo(
-            diskUsage = DiskUsage(100, null)
-        )
-
-        val sessionPerformanceInfo = performanceInfo.copy()
-
         val sessionMessage = SessionMessage(
             session = fakeSession(),
-            performanceInfo = sessionPerformanceInfo
+            resource = EnvelopeResource(diskTotalCapacity = 100)
         )
-
         cfg = buildCustomRemoteConfig(
             setOf(
                 PERFORMANCE_ANR,
@@ -398,8 +390,8 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
-        val perfInfo = checkNotNull(sanitizedMessage.performanceInfo)
-        assertNotNull(perfInfo.diskUsage)
+        val perfInfo = checkNotNull(sanitizedMessage.resource)
+        assertNotNull(perfInfo.diskTotalCapacity)
     }
 
     @Test

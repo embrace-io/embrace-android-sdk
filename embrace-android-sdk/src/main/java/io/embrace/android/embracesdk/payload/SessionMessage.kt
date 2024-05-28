@@ -20,12 +20,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     @Json(name = "s")
     val session: Session,
 
-    /**
-     * The device's performance info, such as power, cpu, network.
-     */
-    @Json(name = "p")
-    val performanceInfo: PerformanceInfo? = null,
-
     @Json(name = "spans")
     val spans: List<EmbraceSpanData>? = null,
 

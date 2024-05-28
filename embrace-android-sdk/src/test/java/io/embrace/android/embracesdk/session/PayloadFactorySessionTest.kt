@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -63,7 +62,6 @@ internal class PayloadFactorySessionTest {
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var configService: FakeConfigService
     private lateinit var clock: FakeClock
-    private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var activityService: FakeProcessStateService
@@ -104,7 +102,6 @@ internal class PayloadFactorySessionTest {
         clock = FakeClock(10000L)
         spanSink = FakeInitModule(clock = clock).openTelemetryModule.spanSink
 
-        performanceInfoService = FakePerformanceInfoService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
@@ -174,7 +171,6 @@ internal class PayloadFactorySessionTest {
             sessionEnvelopeSource,
             eventService,
             logMessageService,
-            performanceInfoService,
             null,
             preferencesService,
             spanRepository,

@@ -211,10 +211,6 @@ internal fun verifySessionHappened(message: SessionMessage) {
 
 internal fun verifySessionMessage(sessionMessage: SessionMessage) {
     assertNotNull(sessionMessage.session)
-
-    if (sessionMessage.session.messageType == "en") {
-        assertNotNull(sessionMessage.performanceInfo)
-    }
 }
 
 internal fun verifyBgActivityHappened(message: SessionMessage) {
@@ -224,10 +220,6 @@ internal fun verifyBgActivityHappened(message: SessionMessage) {
 
 internal fun verifyBgActivityMessage(message: SessionMessage) {
     assertNotNull(message.session)
-
-    if (message.session.messageType == "en") {
-        assertNotNull(message.performanceInfo)
-    }
 }
 
 private const val CHECK_INTERVAL_MS: Int = 10

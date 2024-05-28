@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -54,7 +53,6 @@ internal class PayloadFactoryBaTest {
     private val initial = fakeBackgroundActivity()
     private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
-    private lateinit var performanceInfoService: FakePerformanceInfoService
     private lateinit var metadataService: MetadataService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var activityService: FakeProcessStateService
@@ -76,7 +74,6 @@ internal class PayloadFactoryBaTest {
     @Before
     fun init() {
         clock = FakeClock(10000L)
-        performanceInfoService = FakePerformanceInfoService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
@@ -162,7 +159,6 @@ internal class PayloadFactoryBaTest {
             eventService,
             logMessageService,
             internalErrorService,
-            performanceInfoService,
             FakeWebViewService(),
             null,
             preferencesService,
@@ -185,7 +181,6 @@ internal class PayloadFactoryBaTest {
             sessionEnvelopeSource,
             eventService,
             logMessageService,
-            performanceInfoService,
             null,
             preferencesService,
             spanRepository,

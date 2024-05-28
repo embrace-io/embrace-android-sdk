@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
@@ -29,7 +28,6 @@ internal class V1PayloadMessageCollator(
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
     private val internalErrorService: InternalErrorService,
-    private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val preferencesService: PreferencesService,
@@ -87,7 +85,7 @@ internal class V1PayloadMessageCollator(
             startupThreshold = startupInfo?.threshold,
             symbols = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
         )
-        val envelope = buildWrapperEnvelope(params, endSession, initial.startTime, endTime)
+        val envelope = buildWrapperEnvelope(params, endSession)
         return gatingService.gateSessionMessage(envelope)
     }
 
@@ -98,9 +96,7 @@ internal class V1PayloadMessageCollator(
         params: FinalEnvelopeParams.BackgroundActivityParams
     ): SessionMessage {
         val msg = buildFinalBackgroundActivity(params)
-        val startTime = msg.startTime
-        val endTime = params.endTime
-        val envelope = buildWrapperEnvelope(params, msg, startTime, endTime)
+        val envelope = buildWrapperEnvelope(params, msg)
         return gatingService.gateSessionMessage(envelope)
     }
 
@@ -142,9 +138,7 @@ internal class V1PayloadMessageCollator(
 
     private fun buildWrapperEnvelope(
         params: FinalEnvelopeParams,
-        finalPayload: Session,
-        startTime: Long,
-        endTime: Long,
+        finalPayload: Session
     ): SessionMessage {
         val spans: List<EmbraceSpanData>? = captureDataSafely(logger) {
             webViewService.loadDataIntoSession()
@@ -175,14 +169,6 @@ internal class V1PayloadMessageCollator(
 
         return SessionMessage(
             session = finalPayload,
-            performanceInfo = captureDataSafely(logger) {
-                performanceInfoService.getSessionPerformanceInfo(
-                    startTime,
-                    endTime,
-                    finalPayload.isColdStart,
-                    null
-                )
-            },
             spans = spans,
             spanSnapshots = spanSnapshots,
         )

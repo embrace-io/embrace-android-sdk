@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
@@ -35,7 +34,6 @@ internal class V1PayloadMessageCollator(
     private val performanceInfoService: PerformanceInfoService,
     private val webViewService: WebViewService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val userService: UserService,
     private val preferencesService: PreferencesService,
     private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
@@ -178,7 +176,6 @@ internal class V1PayloadMessageCollator(
 
         return SessionMessage(
             session = finalPayload,
-            userInfo = captureDataSafely(logger, userService::getUserInfo),
             appInfo = captureDataSafely(logger, metadataService::getAppInfo),
             deviceInfo = captureDataSafely(logger, metadataService::getDeviceInfo),
             performanceInfo = captureDataSafely(logger) {

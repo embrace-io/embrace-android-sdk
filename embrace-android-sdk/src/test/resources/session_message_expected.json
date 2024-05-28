@@ -9,10 +9,6 @@
     "sm": "s",
     "sp": {}
   },
-  "u": {
-    "id": "fake-user-id",
-    "em": "fake-user-name"
-  },
   "a": {
     "v": "fake-app-version"
   },

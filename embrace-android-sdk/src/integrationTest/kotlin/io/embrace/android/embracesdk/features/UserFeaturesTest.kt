@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.recordSession
@@ -17,7 +20,11 @@ internal class UserFeaturesTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule(
         harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
+            IntegrationTestRule.Harness(startImmediately = false).apply {
+                overriddenConfigService.oTelBehavior = fakeOTelBehavior {
+                    RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
+                }
+            }
         }
     )
 
@@ -56,11 +63,11 @@ internal class UserFeaturesTest {
     }
 
     private fun SessionMessage.assertUserInfo(preferencesService: PreferencesService, userId: String?, userName: String?, email: String?) {
-        assertEquals(userId, userInfo?.userId)
+        assertEquals(userId, checkNotNull(metadata).userId)
         assertEquals(userId, preferencesService.userIdentifier)
-        assertEquals(userName, userInfo?.username)
+        assertEquals(userName, metadata.username)
         assertEquals(userName, preferencesService.username)
-        assertEquals(email, userInfo?.email)
+        assertEquals(email, metadata.email)
         assertEquals(email, preferencesService.userEmailAddress)
     }
 }

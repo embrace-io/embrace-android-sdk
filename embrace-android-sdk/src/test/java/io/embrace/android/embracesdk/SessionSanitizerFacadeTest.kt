@@ -4,11 +4,11 @@ import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
+import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.UserInfo
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -16,11 +16,6 @@ import org.junit.Test
 internal class SessionSanitizerFacadeTest {
 
     private val sessionPerformanceInfo = fakePerformanceInfo()
-
-    private val userInfo = UserInfo(
-        personas = setOf("personas"),
-        email = "example@embrace.com"
-    )
 
     private val session = fakeSession().copy(
         properties = mapOf("example" to "example"),
@@ -38,10 +33,13 @@ internal class SessionSanitizerFacadeTest {
 
     private val sessionMessage = SessionMessage(
         session = session,
-        userInfo = userInfo,
         appInfo = AppInfo(),
         deviceInfo = DeviceInfo(),
-        performanceInfo = sessionPerformanceInfo
+        performanceInfo = sessionPerformanceInfo,
+        metadata = EnvelopeMetadata(
+            email = "example@embrace.com",
+            personas = setOf("personas")
+        )
     )
 
     private val enabledComponents = setOf(
@@ -70,7 +68,7 @@ internal class SessionSanitizerFacadeTest {
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, enabledComponents).getSanitizedMessage()
 
-        assertNotNull(sanitizedMessage.userInfo?.personas)
+        assertNotNull(sanitizedMessage.metadata?.personas)
 
         assertNotNull(sanitizedMessage.session.properties)
         assertNotNull(sanitizedMessage.session.orientations)
@@ -96,7 +94,7 @@ internal class SessionSanitizerFacadeTest {
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, setOf()).getSanitizedMessage()
 
-        assertNull(sanitizedMessage.userInfo?.personas)
+        assertNull(sanitizedMessage.metadata?.personas)
 
         assertNull(sanitizedMessage.session.properties)
         assertNull(sanitizedMessage.session.orientations)

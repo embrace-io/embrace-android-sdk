@@ -22,12 +22,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     val session: Session,
 
     /**
-     * The user information.
-     */
-    @Json(name = "u")
-    val userInfo: UserInfo? = null,
-
-    /**
      * The app information.
      */
     @Json(name = "a")

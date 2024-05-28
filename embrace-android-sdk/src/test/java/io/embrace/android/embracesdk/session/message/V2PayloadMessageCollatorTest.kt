@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -54,7 +53,6 @@ internal class V2PayloadMessageCollatorTest {
             gatingService = gatingService,
             nativeThreadSamplerService = null,
             webViewService = FakeWebViewService(),
-            userService = FakeUserService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
@@ -178,7 +176,6 @@ internal class V2PayloadMessageCollatorTest {
     private fun SessionMessage.verifyFinalFieldsPopulated(
         payloadType: PayloadType
     ) {
-        assertNull(userInfo)
         assertNull(version)
         assertNull(spans)
         assertNotNull(appInfo)

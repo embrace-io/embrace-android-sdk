@@ -157,7 +157,6 @@ internal class SessionHandlerTest {
             performanceInfoService,
             webViewService,
             null,
-            userService,
             preferencesService,
             initModule.openTelemetryModule.spanRepository,
             initModule.openTelemetryModule.spanSink,

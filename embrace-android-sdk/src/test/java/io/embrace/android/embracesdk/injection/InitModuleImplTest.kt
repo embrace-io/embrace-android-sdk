@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -22,6 +23,7 @@ internal class InitModuleImplTest {
         assertTrue(initModule.telemetryService is EmbraceTelemetryService)
         assertEquals(initModule.systemInfo, SystemInfo())
         assertEquals(initModule.processIdentifier.length, 16)
+        assertNotNull(initModule.jsonSerializer)
     }
 
     @Test

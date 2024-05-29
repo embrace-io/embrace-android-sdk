@@ -53,7 +53,7 @@ internal class NativeModuleImpl(
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT),
                 essentialServiceModule.deviceArchitecture,
-                coreModule.jsonSerializer
+                initModule.jsonSerializer
             )
         }
     }
@@ -76,7 +76,7 @@ internal class NativeModuleImpl(
     }
 
     override val nativeAnrOtelMapper: NativeAnrOtelMapper by singleton {
-        NativeAnrOtelMapper(nativeThreadSamplerService, coreModule.jsonSerializer)
+        NativeAnrOtelMapper(nativeThreadSamplerService, initModule.jsonSerializer)
     }
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {

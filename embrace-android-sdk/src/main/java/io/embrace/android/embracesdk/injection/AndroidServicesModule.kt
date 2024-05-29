@@ -28,7 +28,7 @@ internal class AndroidServicesModuleImpl(
             workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
             lazyPrefs,
             initModule.clock,
-            coreModule.jsonSerializer
+            initModule.jsonSerializer
         )
     }
 }

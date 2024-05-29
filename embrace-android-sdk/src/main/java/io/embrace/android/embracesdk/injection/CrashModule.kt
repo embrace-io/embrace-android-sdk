@@ -26,7 +26,6 @@ internal interface CrashModule {
 
 internal class CrashModuleImpl(
     initModule: InitModule,
-    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
@@ -76,7 +75,7 @@ internal class CrashModuleImpl(
             crashMarker,
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
-            coreModule.jsonSerializer,
+            initModule.jsonSerializer,
             initModule.logger,
         )
     }
@@ -109,7 +108,7 @@ internal class CrashModuleImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,
                 configService = essentialServiceModule.configService,
-                serializer = coreModule.jsonSerializer,
+                serializer = initModule.jsonSerializer,
                 logger = initModule.logger,
             )
         } else {

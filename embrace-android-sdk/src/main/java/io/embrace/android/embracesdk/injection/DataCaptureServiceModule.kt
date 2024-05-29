@@ -92,7 +92,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val webviewService: WebViewService by singleton {
         EmbraceWebViewService(
             configService,
-            coreModule.jsonSerializer,
+            initModule.jsonSerializer,
             initModule.logger,
         ) { dataSourceModule }
     }

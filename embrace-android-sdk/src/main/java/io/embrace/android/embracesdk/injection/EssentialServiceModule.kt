@@ -94,7 +94,7 @@ internal class EssentialServiceModuleImpl(
             coreModule.resources,
             coreModule.context.packageName,
             customAppId,
-            coreModule.jsonSerializer,
+            initModule.jsonSerializer,
             openTelemetryModule.openTelemetryConfiguration,
             initModule.logger
         )
@@ -286,7 +286,7 @@ internal class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("api-service-init") {
             EmbraceApiService(
                 apiClient = apiClient,
-                serializer = coreModule.jsonSerializer,
+                serializer = initModule.jsonSerializer,
                 cachedConfigProvider = { url: String, request: ApiRequest ->
                     Systrace.traceSynchronous("provide-cache-config") {
                         storageModule.cache.retrieveCachedConfig(url, request)

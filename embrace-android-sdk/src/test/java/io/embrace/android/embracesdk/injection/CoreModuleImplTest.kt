@@ -22,7 +22,6 @@ internal class CoreModuleImplTest {
         assertSame(ctx, module.context)
         assertSame(ctx, module.application)
         assertNotNull(module.serviceRegistry)
-        assertNotNull(module.jsonSerializer)
     }
 
     @Test

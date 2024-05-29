@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.json.JSONObject
@@ -167,7 +167,7 @@ internal fun <T> IntegrationTestRule.validatePayloadAgainstGoldenFile(
     goldenFileName: String
 ) {
     try {
-        val observedJson = harness.overriddenCoreModule.jsonSerializer.toJson(payload)
+        val observedJson = harness.overriddenInitModule.jsonSerializer.toJson(payload)
         val expectedJson = ResourceReader.readResourceAsText(goldenFileName)
         val result = JsonComparator.compare(JSONObject(expectedJson), JSONObject(observedJson))
 

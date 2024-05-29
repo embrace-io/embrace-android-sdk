@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.registry.ServiceRegistry
@@ -29,7 +28,6 @@ internal class FakeCoreModule(
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
     override val appFramework: AppFramework = AppFramework.NATIVE,
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(logger),
-    override val jsonSerializer: EmbraceSerializer = EmbraceSerializer(),
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
     override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName),

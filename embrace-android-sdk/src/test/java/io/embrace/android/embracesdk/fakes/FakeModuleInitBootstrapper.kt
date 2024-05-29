@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 
+@Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
     fakeInitModule: FakeInitModule = FakeInitModule(logger = fakeEmbLogger),
@@ -45,13 +46,13 @@ internal fun fakeModuleInitBootstrapper(
     essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
     dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeDataSourceModule() },
     dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
-    deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _ -> FakeDeliveryModule() },
+    deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
     customerLogModuleSupplier: CustomerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule() },
     nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
     dataContainerModuleSupplier: DataContainerModuleSupplier = { _, _, _, _, _ -> FakeDataContainerModule() },
     sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
-    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeCrashModule() },
+    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeCrashModule() },
     payloadModuleSupplier: PayloadModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakePayloadModule() }
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,

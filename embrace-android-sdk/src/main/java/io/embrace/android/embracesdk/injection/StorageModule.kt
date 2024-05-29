@@ -38,7 +38,7 @@ internal class StorageModuleImpl(
 
     override val cache by singleton {
         ApiResponseCache(
-            coreModule.jsonSerializer,
+            initModule.jsonSerializer,
             storageService,
             initModule.logger
         )
@@ -47,7 +47,7 @@ internal class StorageModuleImpl(
     override val cacheService: CacheService by singleton {
         EmbraceCacheService(
             storageService,
-            coreModule.jsonSerializer,
+            initModule.jsonSerializer,
             initModule.logger
         )
     }

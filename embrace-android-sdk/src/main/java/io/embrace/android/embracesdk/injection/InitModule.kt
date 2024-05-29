@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
@@ -52,6 +53,11 @@ internal interface InitModule {
      * Tracks internal errors
      */
     val internalErrorService: InternalErrorService
+
+    /**
+     * Returns the serializer used to serialize data to JSON
+     */
+    val jsonSerializer: EmbraceSerializer
 }
 
 internal class InitModuleImpl(
@@ -75,4 +81,8 @@ internal class InitModuleImpl(
     }
 
     override val processIdentifier: String = IdGenerator.generateLaunchInstanceId()
+
+    override val jsonSerializer: EmbraceSerializer by singleton {
+        EmbraceSerializer()
+    }
 }

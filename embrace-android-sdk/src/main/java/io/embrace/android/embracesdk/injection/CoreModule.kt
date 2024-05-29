@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry
 
@@ -40,11 +39,6 @@ internal interface CoreModule {
      * Returns the service registry. This is used to register services that need to be closed
      */
     val serviceRegistry: ServiceRegistry
-
-    /**
-     * Returns the serializer used to serialize data to JSON
-     */
-    val jsonSerializer: EmbraceSerializer
 
     /**
      * Returns an service to retrieve Android resources
@@ -80,10 +74,6 @@ internal class CoreModuleImpl(
 
     override val serviceRegistry: ServiceRegistry by singleton {
         ServiceRegistry(logger)
-    }
-
-    override val jsonSerializer: EmbraceSerializer by singleton {
-        EmbraceSerializer()
     }
 
     override val resources: AndroidResourcesService by singleton {

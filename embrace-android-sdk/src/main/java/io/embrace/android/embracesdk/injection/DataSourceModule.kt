@@ -261,7 +261,7 @@ internal class DataSourceModuleImpl(
                     webViewVitalsBehavior = essentialServiceModule.configService.webViewVitalsBehavior,
                     writer = otelModule.currentSessionSpan,
                     logger = initModule.logger,
-                    serializer = coreModule.jsonSerializer
+                    serializer = initModule.jsonSerializer
                 )
             },
             configGate = { configService.webViewVitalsBehavior.isWebViewVitalsEnabled() }

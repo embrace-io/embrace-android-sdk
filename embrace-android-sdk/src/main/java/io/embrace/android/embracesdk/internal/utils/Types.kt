@@ -111,7 +111,6 @@ internal typealias DataCaptureServiceModuleSupplier = (
  */
 internal typealias DeliveryModuleSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
@@ -209,7 +208,6 @@ internal typealias SessionModuleSupplier = (
 
 internal typealias CrashModuleSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,

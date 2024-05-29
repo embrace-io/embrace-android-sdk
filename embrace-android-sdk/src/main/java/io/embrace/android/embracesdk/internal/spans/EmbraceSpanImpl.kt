@@ -8,6 +8,10 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
+import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
+import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
@@ -24,7 +28,8 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSpanImpl(
     private val spanBuilder: EmbraceSpanBuilder,
     private val openTelemetryClock: Clock,
-    private val spanRepository: SpanRepository
+    private val spanRepository: SpanRepository,
+    private val serializer: PlatformSerializer,
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
@@ -114,24 +119,37 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
-        if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
-            val newEvent = EmbraceSpanEvent.create(
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
+        recordEvent(name = name, attributes = attributes) {
+            EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
                 attributes = attributes
             )
-            synchronized(eventCount) {
-                if (eventCount.get() < MAX_EVENT_COUNT && isRecording) {
-                    events.add(newEvent)
-                    eventCount.incrementAndGet()
-                    return true
-                }
-            }
         }
 
-        return false
-    }
+    override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
+        recordEvent(name = EXCEPTION_EVENT_NAME, attributes = attributes) {
+            val eventAttributes = mutableMapOf<String, String>()
+            if (attributes != null) {
+                eventAttributes.putAll(attributes)
+            }
+            exception.javaClass.canonicalName?.let { type ->
+                eventAttributes[exceptionType.key] = type
+            }
+            exception.message?.let { message ->
+                eventAttributes[exceptionMessage.key] = message
+            }
+
+            eventAttributes[exceptionStacktrace.key] =
+                serializer.toJson(exception.stackTrace.map(StackTraceElement::toString).take(200).toList(), List::class.java)
+
+            EmbraceSpanEvent.create(
+                name = EXCEPTION_EVENT_NAME,
+                timestampMs = openTelemetryClock.now().nanosToMillis(),
+                attributes = eventAttributes
+            )
+        }
 
     override fun removeEvents(type: EmbType): Boolean {
         synchronized(eventCount) {
@@ -188,6 +206,22 @@ internal class EmbraceSpanImpl(
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
+    private fun recordEvent(name: String, attributes: Map<String, String>?, eventSupplier: () -> EmbraceSpanEvent?): Boolean {
+        if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
+            synchronized(eventCount) {
+                if (eventCount.get() < MAX_EVENT_COUNT && isRecording) {
+                    eventSupplier()?.apply {
+                        events.add(this)
+                        eventCount.incrementAndGet()
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+
     internal fun wrappedSpan(): io.opentelemetry.api.trace.Span? = startedSpan.get()
 
     companion object {
@@ -196,6 +230,7 @@ internal class EmbraceSpanImpl(
         internal const val MAX_ATTRIBUTE_COUNT = 50
         internal const val MAX_ATTRIBUTE_KEY_LENGTH = 50
         internal const val MAX_ATTRIBUTE_VALUE_LENGTH = 500
+        internal const val EXCEPTION_EVENT_NAME = "exception"
 
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH

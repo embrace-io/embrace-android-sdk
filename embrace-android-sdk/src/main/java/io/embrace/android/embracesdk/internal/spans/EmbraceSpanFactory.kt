@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.trace.Tracer
@@ -23,7 +24,8 @@ internal interface EmbraceSpanFactory {
 internal class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
-    private val spanRepository: SpanRepository
+    private val spanRepository: SpanRepository,
+    private val serializer: PlatformSerializer,
 ) : EmbraceSpanFactory {
 
     override fun create(
@@ -41,6 +43,7 @@ internal class EmbraceSpanFactoryImpl(
             parent = parent
         ),
         openTelemetryClock = openTelemetryClock,
-        spanRepository = spanRepository
+        spanRepository = spanRepository,
+        serializer = serializer
     )
 }

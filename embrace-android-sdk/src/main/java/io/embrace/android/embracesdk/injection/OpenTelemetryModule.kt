@@ -122,7 +122,8 @@ internal class OpenTelemetryModuleImpl(
         EmbraceSpanFactoryImpl(
             tracer = tracer,
             openTelemetryClock = initModule.openTelemetryClock,
-            spanRepository = spanRepository
+            spanRepository = spanRepository,
+            serializer = initModule.jsonSerializer
         )
     }
 

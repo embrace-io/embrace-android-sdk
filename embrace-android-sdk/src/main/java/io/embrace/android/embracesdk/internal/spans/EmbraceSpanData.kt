@@ -49,7 +49,7 @@ internal data class EmbraceSpanData(
         endTimeNanos = spanData.endEpochNanos,
         status = spanData.status.statusCode,
         events = fromEventData(eventDataList = spanData.events),
-        attributes = spanData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
+        attributes = spanData.attributes.toStringMap(),
     )
 
     companion object {
@@ -59,7 +59,7 @@ internal data class EmbraceSpanData(
                 val event = EmbraceSpanEvent.create(
                     name = eventData.name,
                     timestampMs = eventData.epochNanos.nanosToMillis(),
-                    attributes = eventData.attributes.asMap().entries.associate { it.key.key to it.value.toString() }
+                    attributes = eventData.attributes.toStringMap(),
                 )
                 if (event != null) {
                     events.add(event)

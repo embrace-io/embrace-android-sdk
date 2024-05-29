@@ -98,6 +98,10 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
+    override fun updateName(newName: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override fun snapshot(): Span? {
         return if (spanId == null) {
             null

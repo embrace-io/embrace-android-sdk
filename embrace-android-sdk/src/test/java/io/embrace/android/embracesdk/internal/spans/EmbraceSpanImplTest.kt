@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_EVENT_NAME
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -159,6 +160,23 @@ internal class EmbraceSpanImplTest {
             assertTrue(
                 addEvent(name = "future event", timestampMs = fakeClock.now() + 2L, mapOf(Pair("key", "value"), Pair("key2", "value1")))
             )
+        }
+    }
+
+    @Test
+    fun `span name update`() {
+        with(embraceSpan) {
+            assertTrue(embraceSpan.updateName("new-name"))
+            assertFalse(embraceSpan.updateName(TOO_LONG_SPAN_NAME))
+            assertFalse(embraceSpan.updateName(""))
+            assertFalse(embraceSpan.updateName(" "))
+            assertTrue(start())
+            assertEquals("new-name", embraceSpan.snapshot()?.name)
+            assertTrue(embraceSpan.updateName("new-new-name"))
+            assertEquals("new-new-name", embraceSpan.snapshot()?.name)
+            assertTrue(stop())
+            assertFalse(embraceSpan.updateName("failed-to-update"))
+            assertEquals("new-new-name", embraceSpan.snapshot()?.name)
         }
     }
 

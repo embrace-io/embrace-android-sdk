@@ -116,4 +116,9 @@ public interface EmbraceSpan {
      * if the validation at the Embrace Level has passed and the call to add the Attribute at the OpenTelemetry level was successful.
      */
     public fun addAttribute(key: String, value: String): Boolean
+
+    /**
+     * Update the name of the span. Returns false if the update was not successful, like when it has already been stopped
+     */
+    public fun updateName(newName: String): Boolean
 }

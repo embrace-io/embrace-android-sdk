@@ -342,6 +342,7 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun stop (Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
 	public abstract fun stop (Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;)Z
 	public abstract fun stop (Ljava/lang/Long;)Z
+	public abstract fun updateName (Ljava/lang/String;)Z
 }
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls {

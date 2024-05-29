@@ -25,7 +25,6 @@ internal class EmbraceSpanFactoryImplTest {
             tracer = initModule.openTelemetryModule.tracer,
             openTelemetryClock = initModule.openTelemetryClock,
             spanRepository = spanRepository,
-            serializer = initModule.jsonSerializer,
         )
     }
 

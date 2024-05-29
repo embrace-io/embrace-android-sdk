@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
@@ -57,7 +58,6 @@ internal class EmbraceSpanImplTest {
             ),
             openTelemetryClock = fakeInitModule.openTelemetryClock,
             spanRepository = spanRepository,
-            serializer = serializer,
         )
         fakeClock.tick(100)
     }
@@ -166,11 +166,9 @@ internal class EmbraceSpanImplTest {
     fun `recording exceptions as span events`() {
         val timestampNanos = openTelemetryClock.now()
         val firstException = IllegalStateException("oops")
-        val firstExceptionStackTrace =
-            serializer.toJson(firstException.stackTrace.map(StackTraceElement::toString).take(200).toList(), List::class.java)
+        val firstExceptionStackTrace = firstException.truncatedStacktraceText()
         val secondException = RuntimeException("haha", firstException)
-        val secondExceptionStackTrace =
-            serializer.toJson(secondException.stackTrace.map(StackTraceElement::toString).take(200).toList(), List::class.java)
+        val secondExceptionStackTrace = secondException.truncatedStacktraceText()
 
         with(embraceSpan) {
             assertFalse(recordException(exception = IllegalStateException()))
@@ -181,6 +179,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(stop())
             assertFalse(recordException(exception = IllegalStateException()))
         }
+
         with(checkNotNull(embraceSpan.snapshot())) {
             assertEquals(2, checkNotNull(events).size)
             with(events.first()) {
@@ -191,7 +190,6 @@ internal class EmbraceSpanImplTest {
                 assertEquals("oops", attributes.single { it.key == exceptionMessage.key }.data)
                 assertEquals(firstExceptionStackTrace, attributes.single { it.key == exceptionStacktrace.key }.data)
             }
-
             with(events.last()) {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
                 checkNotNull(attributes)

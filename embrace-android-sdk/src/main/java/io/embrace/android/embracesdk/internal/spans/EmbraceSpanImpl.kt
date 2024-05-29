@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.opentelemetry.exceptionType
@@ -29,7 +29,6 @@ internal class EmbraceSpanImpl(
     private val spanBuilder: EmbraceSpanBuilder,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private val serializer: PlatformSerializer,
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
@@ -134,15 +133,16 @@ internal class EmbraceSpanImpl(
             if (attributes != null) {
                 eventAttributes.putAll(attributes)
             }
+
             exception.javaClass.canonicalName?.let { type ->
                 eventAttributes[exceptionType.key] = type
             }
+
             exception.message?.let { message ->
                 eventAttributes[exceptionMessage.key] = message
             }
 
-            eventAttributes[exceptionStacktrace.key] =
-                serializer.toJson(exception.stackTrace.map(StackTraceElement::toString).take(200).toList(), List::class.java)
+            eventAttributes[exceptionStacktrace.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
                 name = EXCEPTION_EVENT_NAME,

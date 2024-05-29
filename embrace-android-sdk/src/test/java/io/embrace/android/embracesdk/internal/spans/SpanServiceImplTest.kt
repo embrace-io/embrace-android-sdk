@@ -53,7 +53,6 @@ internal class SpanServiceImplTest {
                 tracer = initModule.openTelemetryModule.tracer,
                 openTelemetryClock = initModule.openTelemetryClock,
                 spanRepository = initModule.openTelemetryModule.spanRepository,
-                serializer = initModule.jsonSerializer,
             )
         )
         spansService.initializeService(initModule.clock.now())

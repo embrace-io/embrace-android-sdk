@@ -17,3 +17,13 @@ internal fun Throwable.getSafeStackTrace(): Array<StackTraceElement>? {
         null
     }
 }
+
+/**
+ * Returns a string representing the first 200 elements of the stacktrace of this [Throwable], stringified and with a line break in between
+ */
+internal fun Throwable.truncatedStacktraceText() = stackTrace.truncate().joinToString(separator = " \n")
+
+/**
+ * Returns a list of the first 200 elements of the stacktrace (stringified) of this [Throwable]
+ */
+internal fun Array<StackTraceElement>.truncate() = take(200).map(StackTraceElement::toString).toList()

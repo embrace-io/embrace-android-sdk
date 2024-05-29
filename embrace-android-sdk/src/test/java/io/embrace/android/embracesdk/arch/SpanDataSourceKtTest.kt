@@ -22,7 +22,6 @@ internal class SpanDataSourceKtTest {
                 tracer = initModule.openTelemetryModule.tracer,
                 openTelemetryClock = initModule.openTelemetryClock,
                 spanRepository = initModule.openTelemetryModule.spanRepository,
-                serializer = initModule.jsonSerializer,
             )
         )
         service.initializeService(1500000000000)

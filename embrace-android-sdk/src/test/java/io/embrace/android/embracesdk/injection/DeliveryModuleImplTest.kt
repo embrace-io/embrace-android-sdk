@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
@@ -13,10 +12,8 @@ internal class DeliveryModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
-        val coreModule = FakeCoreModule()
         val module = DeliveryModuleImpl(
             initModule,
-            coreModule,
             WorkerThreadModuleImpl(InitModuleImpl()),
             FakeStorageModule(),
             FakeEssentialServiceModule(),

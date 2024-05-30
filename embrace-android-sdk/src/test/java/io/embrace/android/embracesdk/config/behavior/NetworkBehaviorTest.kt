@@ -9,8 +9,12 @@ import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfi
 import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
+import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -146,8 +150,14 @@ internal class NetworkBehaviorTest {
 
     @Test
     fun testGetCapturePublicKey() {
+        val otelCfg = OpenTelemetryConfiguration(
+            SpanSinkImpl(),
+            LogSinkImpl(),
+            SystemInfo(),
+            "my-id"
+        )
         val json = ResourceReader.readResourceAsText("public_key_config.json")
-        val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer(), EmbLoggerImpl())
+        val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer(), otelCfg, EmbLoggerImpl())
         val behavior = fakeNetworkBehavior(localCfg = localConfig::sdkConfig)
         assertEquals(testCleanPublicKey, behavior.getCapturePublicKey())
     }

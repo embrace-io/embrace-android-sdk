@@ -300,7 +300,7 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getLightweightAppInfo(): AppInfo = getAppInfo(false)
 
-    override fun getAppId(): String {
+    override fun getAppId(): String? {
         return configService.sdkModeBehavior.appId
     }
 

@@ -1,8 +1,13 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.config.LocalConfigParser
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -14,10 +19,33 @@ internal class LocalConfigTest {
 
     private val serializer = EmbraceSerializer()
     private val logger = EmbLoggerImpl()
+    private val cfg = OpenTelemetryConfiguration(
+        SpanSinkImpl(),
+        LogSinkImpl(),
+        SystemInfo(),
+        "my-id"
+    )
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testEmptyAppId() {
+        LocalConfigParser.buildConfig(null, false, null, serializer, cfg, logger)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testNullAppId() {
+        LocalConfigParser.buildConfig("", false, null, serializer, cfg, logger)
+    }
+
+    @Test
+    fun testNoAppIdRequiredWithExporters() {
+        cfg.addLogExporter(FakeLogRecordExporter())
+        val cfg = LocalConfigParser.buildConfig("abcdefoi", false, null, serializer, cfg, logger)
+        assertNotNull(cfg)
+    }
 
     @Test
     fun testEmptyConfig() {
-        val localConfig = LocalConfigParser.buildConfig("GrCPU", false, null, serializer, logger)
+        val localConfig = LocalConfigParser.buildConfig("GrCPU", false, null, serializer, cfg, logger)
         assertNotNull(localConfig)
     }
 
@@ -29,6 +57,7 @@ internal class LocalConfigTest {
                 false,
                 "{\"app\": {\"report_disk_usage\": false}}",
                 serializer,
+                cfg,
                 logger
             )
         assertFalse(checkNotNull(localConfig.sdkConfig.app?.reportDiskUsage))
@@ -38,7 +67,7 @@ internal class LocalConfigTest {
     fun testBetaFunctionalityOnlyConfig() {
         // disabled explicitly
         var localConfig =
-            LocalConfigParser.buildConfig("GrCPU", false, "{\"beta_features_enabled\": false}", serializer, logger)
+            LocalConfigParser.buildConfig("GrCPU", false, "{\"beta_features_enabled\": false}", serializer, cfg, logger)
         assertFalse(checkNotNull(localConfig.sdkConfig.betaFeaturesEnabled))
 
         // enabled explicitly
@@ -47,12 +76,13 @@ internal class LocalConfigTest {
             false,
             "{\"beta_features_enabled\": true}",
             serializer,
+            cfg,
             logger
         )
         assertTrue(checkNotNull(localConfig.sdkConfig.betaFeaturesEnabled))
 
         // enabled by default
-        localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, logger)
+        localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, cfg, logger)
         assertNull(localConfig.sdkConfig.betaFeaturesEnabled)
     }
 
@@ -60,7 +90,7 @@ internal class LocalConfigTest {
     fun testSigHandlerDetectionOnlyConfig() {
         // disabled explicitly
         var localConfig =
-            LocalConfigParser.buildConfig("GrCPU", false, "{\"sig_handler_detection\": false}", serializer, logger)
+            LocalConfigParser.buildConfig("GrCPU", false, "{\"sig_handler_detection\": false}", serializer, cfg, logger)
         assertFalse(checkNotNull(localConfig.sdkConfig.sigHandlerDetection))
 
         // enabled explicitly
@@ -69,12 +99,13 @@ internal class LocalConfigTest {
             false,
             "{\"sig_handler_detection\": true}",
             serializer,
+            cfg,
             logger
         )
         assertTrue(checkNotNull(localConfig.sdkConfig.sigHandlerDetection))
 
         // enabled by default
-        localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, logger)
+        localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, cfg, logger)
         assertNull(localConfig.sdkConfig.sigHandlerDetection)
     }
 
@@ -85,6 +116,7 @@ internal class LocalConfigTest {
             false,
             "{\"base_urls\": {\"config\": \"custom_config\"}}",
             serializer,
+            cfg,
             logger
         )
         assertEquals(localConfig.sdkConfig.baseUrls?.config, "custom_config")
@@ -94,6 +126,7 @@ internal class LocalConfigTest {
                 false,
                 "{\"base_urls\": {\"data\": \"custom_data\"}}",
                 serializer,
+                cfg,
                 logger
             )
         assertEquals(localConfig.sdkConfig.baseUrls?.data, "custom_data")
@@ -102,6 +135,7 @@ internal class LocalConfigTest {
             false,
             "{\"base_urls\": {\"images\": \"custom_images\"}}",
             serializer,
+            cfg,
             logger
         )
         assertEquals(localConfig.sdkConfig.baseUrls?.images, "custom_images")
@@ -109,7 +143,7 @@ internal class LocalConfigTest {
 
     @Test
     fun testViewConfigOnlyConfig() {
-        var localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, logger)
+        var localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, cfg, logger)
         assertNull(
             localConfig.sdkConfig.viewConfig?.enableAutomaticActivityCapture,
         )
@@ -118,6 +152,7 @@ internal class LocalConfigTest {
             false,
             "{\"view_config\":{\"enable_automatic_activity_capture\":false}}",
             serializer,
+            cfg,
             logger
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.viewConfig?.enableAutomaticActivityCapture))
@@ -131,6 +166,7 @@ internal class LocalConfigTest {
                 false,
                 "{\"crash_handler\": {\"enabled\": false}}",
                 serializer,
+                cfg,
                 logger
             )
         assertFalse(checkNotNull(localConfig.sdkConfig.crashHandler?.enabled))
@@ -140,6 +176,7 @@ internal class LocalConfigTest {
                 false,
                 "{\"crash_handler\": {\"ndk_enabled\": false}}",
                 serializer,
+                cfg,
                 logger
             )
         assertFalse(localConfig.ndkEnabled)
@@ -152,6 +189,7 @@ internal class LocalConfigTest {
             false,
             "{\"session\": {\"components\": [\"breadcrumbs_taps\"]}}",
             serializer,
+            cfg,
             logger
         )
         assertTrue(
@@ -166,6 +204,7 @@ internal class LocalConfigTest {
                 false,
                 "{\"session\": {\"send_full_for\": []}}",
                 serializer,
+                cfg,
                 logger
             )
         assertTrue(
@@ -178,6 +217,7 @@ internal class LocalConfigTest {
             false,
             "{\"session\": {\"send_full_for\": [\"crashes\"]}}",
             serializer,
+            cfg,
             logger
         )
         val sessionConfig = localConfig.sdkConfig.sessionConfig
@@ -196,6 +236,7 @@ internal class LocalConfigTest {
             false,
             "{\"startup_moment\": {\"automatically_end\": false}}",
             serializer,
+            cfg,
             logger
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.startupMoment?.automaticallyEnd))
@@ -209,6 +250,7 @@ internal class LocalConfigTest {
                 false,
                 "{\"taps\": {\"capture_coordinates\": false}}",
                 serializer,
+                cfg,
                 logger
             )
         assertFalse(checkNotNull(localConfig.sdkConfig.taps?.captureCoordinates))
@@ -221,6 +263,7 @@ internal class LocalConfigTest {
             false,
             "{\"networking\": {\"capture_request_content_length\": true}}",
             serializer,
+            cfg,
             logger
         )
         assertTrue(
@@ -232,6 +275,7 @@ internal class LocalConfigTest {
             false,
             "{\"networking\": {\"enable_native_monitoring\": true}}",
             serializer,
+            cfg,
             logger
         )
         assertTrue(checkNotNull(localConfig.sdkConfig.networking?.enableNativeMonitoring))
@@ -240,6 +284,7 @@ internal class LocalConfigTest {
             false,
             "{\"networking\": {\"trace_id_header\": \"custom-value\"}}",
             serializer,
+            cfg,
             logger
         )
         assertEquals(
@@ -251,6 +296,7 @@ internal class LocalConfigTest {
             false,
             "{\"networking\": {\"disabled_url_patterns\": [\"a.b.c\", \"https://example.com\", \"https://example2.com/foo/123/bar\"]}}",
             serializer,
+            cfg,
             logger
         )
         assertEquals(
@@ -266,6 +312,7 @@ internal class LocalConfigTest {
             false,
             "{\"webview\": {\"enable\": false}}",
             serializer,
+            cfg,
             logger
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.webViewConfig?.captureWebViews))
@@ -274,6 +321,7 @@ internal class LocalConfigTest {
             false,
             "{\"webview\": {\"capture_query_params\": false}}",
             serializer,
+            cfg,
             logger
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.webViewConfig?.captureQueryParams))
@@ -286,6 +334,7 @@ internal class LocalConfigTest {
             false,
             "{\"background_activity\": {}}",
             serializer,
+            cfg,
             logger
         )
         var backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
@@ -306,6 +355,7 @@ internal class LocalConfigTest {
             false,
             "{\"background_activity\": {\"capture_enabled\": true}}",
             serializer,
+            cfg,
             logger
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
@@ -318,6 +368,7 @@ internal class LocalConfigTest {
             false,
             "{\"background_activity\": {\"capture_enabled\": true, \"manual_background_activity_limit\": 50}}",
             serializer,
+            cfg,
             logger
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
@@ -333,6 +384,7 @@ internal class LocalConfigTest {
             false,
             "{\"background_activity\": {\"capture_enabled\": true, \"min_background_activity_duration\": 300}}",
             serializer,
+            cfg,
             logger
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
@@ -348,6 +400,7 @@ internal class LocalConfigTest {
             false,
             "{\"background_activity\": {\"capture_enabled\": true, \"max_cached_activities\": 50}}",
             serializer,
+            cfg,
             logger
         )
         backgroundActivityCfg = checkNotNull(localConfig.sdkConfig.backgroundActivityConfig)
@@ -362,7 +415,7 @@ internal class LocalConfigTest {
 
     @Test
     fun testComposeConfig() {
-        var localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, logger)
+        var localConfig = LocalConfigParser.buildConfig("GrCPU", false, "{}", serializer, cfg, logger)
         assertNull(
             localConfig.sdkConfig.composeConfig?.captureComposeOnClick,
         )
@@ -371,6 +424,7 @@ internal class LocalConfigTest {
             false,
             "{\"compose\":{\"capture_compose_onclick\":false}}",
             serializer,
+            cfg,
             logger
         )
         assertFalse(checkNotNull(localConfig.sdkConfig.composeConfig?.captureComposeOnClick))
@@ -383,6 +437,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"memory_info\": false}}",
             serializer,
+            cfg,
             logger
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -394,6 +449,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"memory_info\": true}}",
             serializer,
+            this.cfg,
             logger
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -409,6 +465,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"power_save_mode_info\": false}}",
             serializer,
+            cfg,
             logger
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -420,6 +477,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"power_save_mode_info\": true}}",
             serializer,
+            this.cfg,
             logger
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -435,6 +493,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"network_connectivity_info\": false}}",
             serializer,
+            cfg,
             logger
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -447,6 +506,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"network_connectivity_info\": true}}",
             serializer,
+            this.cfg,
             logger
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -463,6 +523,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"anr_info\": false}}",
             serializer,
+            cfg,
             logger
         )
         var cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)
@@ -474,6 +535,7 @@ internal class LocalConfigTest {
             false,
             "{\"automatic_data_capture\": { \"anr_info\": true}}",
             serializer,
+            this.cfg,
             logger
         )
         cfg = checkNotNull(localConfig.sdkConfig.automaticDataCaptureConfig)

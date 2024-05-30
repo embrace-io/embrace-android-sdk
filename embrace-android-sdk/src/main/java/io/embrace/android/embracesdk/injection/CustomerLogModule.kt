@@ -46,7 +46,7 @@ internal class CustomerLogModuleImpl(
             androidServicesModule.preferencesService,
             logMessageService,
             essentialServiceModule.configService,
-            coreModule.jsonSerializer,
+            initModule.jsonSerializer,
             initModule.logger
         )
     }
@@ -108,7 +108,7 @@ internal class CustomerLogModuleImpl(
             { networkCaptureDataSource },
             essentialServiceModule.configService,
             initModule.logger,
-            coreModule.jsonSerializer
+            initModule.jsonSerializer
         )
     }
 

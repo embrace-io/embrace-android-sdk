@@ -257,7 +257,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     deliveryModule = init(DeliveryModule::class) {
-                        deliveryModuleSupplier(initModule, coreModule, workerThreadModule, storageModule, essentialServiceModule)
+                        deliveryModuleSupplier(initModule, workerThreadModule, storageModule, essentialServiceModule)
                     }
 
                     postInit(DeliveryModule::class) {
@@ -414,7 +414,6 @@ internal class ModuleInitBootstrapper(
                     crashModule = init(CrashModule::class) {
                         crashModuleSupplier(
                             initModule,
-                            coreModule,
                             storageModule,
                             essentialServiceModule,
                             deliveryModule,

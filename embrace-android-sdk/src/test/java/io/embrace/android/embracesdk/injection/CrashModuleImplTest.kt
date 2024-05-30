@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -42,7 +41,6 @@ internal class CrashModuleImplTest {
     fun testDefaultImplementations() {
         val module = CrashModuleImpl(
             InitModuleImpl(),
-            FakeCoreModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),
@@ -63,7 +61,6 @@ internal class CrashModuleImplTest {
     fun `NdkService used as NativeCrashService if NDK feature is on and beta flag is off`() {
         val module = CrashModuleImpl(
             InitModuleImpl(),
-            FakeCoreModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(
                 configService = FakeConfigService(
@@ -89,7 +86,6 @@ internal class CrashModuleImplTest {
     fun `default config turns on v2 native crash service`() {
         val module = CrashModuleImpl(
             InitModuleImpl(),
-            FakeCoreModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(
                 configService = FakeConfigService(

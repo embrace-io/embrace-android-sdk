@@ -32,12 +32,16 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
+import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.Orientation
@@ -80,6 +84,13 @@ internal class EmbraceGatingServiceV1PayloadTest {
         LOG_PROPERTIES,
         LOGS_INFO,
         LOGS_WARN
+    )
+
+    private val otelCfg = OpenTelemetryConfiguration(
+        SpanSinkImpl(),
+        LogSinkImpl(),
+        SystemInfo(),
+        "my-id"
     )
 
     private lateinit var sessionBehavior: SessionBehavior
@@ -177,6 +188,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
                 "]" +
                 "}}",
             EmbraceSerializer(),
+            otelCfg,
             EmbLoggerImpl()
         )
 

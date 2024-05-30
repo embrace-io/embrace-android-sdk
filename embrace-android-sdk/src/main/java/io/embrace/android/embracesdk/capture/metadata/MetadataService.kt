@@ -33,7 +33,7 @@ internal interface MetadataService {
      *
      * @return the app ID.
      */
-    fun getAppId(): String
+    fun getAppId(): String?
 
     /**
      * Gets information and specifications of the current device. This is sent with the following

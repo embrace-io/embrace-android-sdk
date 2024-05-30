@@ -104,7 +104,7 @@ internal class IntegrationTestRule(
                 coreModuleSupplier = { _, _, _ -> overriddenCoreModule },
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-                deliveryModuleSupplier = { _, _, _, _, _ -> overriddenDeliveryModule },
+                deliveryModuleSupplier = { _, _, _, _ -> overriddenDeliveryModule },
                 anrModuleSupplier = { _, _, _, _ -> fakeAnrModule }
             )
             val embraceImpl = EmbraceImpl(bootstrapper)

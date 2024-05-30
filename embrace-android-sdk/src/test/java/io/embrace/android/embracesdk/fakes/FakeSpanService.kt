@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -25,6 +26,8 @@ internal class FakeSpanService : SpanService {
     ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(null, name, type, internal, private).apply {
         createdSpans.add(this)
     }
+
+    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): EmbraceSpan? = null
 
     override fun <T> recordSpan(
         name: String,

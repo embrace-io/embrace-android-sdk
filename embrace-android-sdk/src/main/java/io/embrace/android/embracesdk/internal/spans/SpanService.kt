@@ -25,6 +25,12 @@ internal interface SpanService : Initializable {
     ): PersistableEmbraceSpan?
 
     /**
+     * Return an [EmbraceSpan] instance that can be used to record spans given the [EmbraceSpanBuilder]. Returns null if the builder will
+     * not build a valid span or if the SDK and session is not in a state where a new span can be recorded.
+     */
+    fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): EmbraceSpan?
+
+    /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters
      */
     fun startSpan(

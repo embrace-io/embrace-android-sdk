@@ -38,7 +38,7 @@ internal class EmbraceSpanImpl(
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val schemaAttributes = spanBuilder.fixedAttributes.associate {
+    private val schemaAttributes = spanBuilder.getFixedAttributes().associate {
         it.toEmbraceKeyValuePair()
     }.toMutableMap()
     private val attributes = ConcurrentHashMap<String, String>()

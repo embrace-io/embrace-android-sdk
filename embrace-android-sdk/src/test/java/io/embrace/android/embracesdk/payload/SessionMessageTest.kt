@@ -5,9 +5,7 @@ import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.fixtures.testSpanSnapshot
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -32,12 +30,9 @@ internal class SessionMessageTest {
         )
     )
 
-    private val spanSnapshots = listOfNotNull(testSpanSnapshot.toOldPayload())
-
     private val info = SessionMessage(
         session,
-        spans,
-        spanSnapshots
+        spans
     )
 
     @Test
@@ -51,7 +46,6 @@ internal class SessionMessageTest {
         assertNotNull(obj)
         assertEquals(session, obj.session)
         assertEquals(spans, obj.spans)
-        assertEquals(spanSnapshots, obj.spanSnapshots)
     }
 
     @Test(expected = JsonDataException::class)
@@ -62,7 +56,7 @@ internal class SessionMessageTest {
     @Test
     fun `is v2 payload`() {
         assertFalse(info.isV2Payload())
-        val obj = SessionMessage(session = session, data = SessionPayload())
+        val obj = SessionMessage(session = session, data = SessionPayload(spans = emptyList()))
         assertTrue(obj.isV2Payload())
     }
 }

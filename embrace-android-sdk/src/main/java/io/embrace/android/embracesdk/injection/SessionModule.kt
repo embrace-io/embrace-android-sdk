@@ -71,7 +71,6 @@ internal class SessionModuleImpl(
             customerLogModule.logMessageService,
             nativeModule.nativeThreadSamplerService,
             androidServicesModule.preferencesService,
-            openTelemetryModule.spanRepository,
             openTelemetryModule.spanSink,
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,

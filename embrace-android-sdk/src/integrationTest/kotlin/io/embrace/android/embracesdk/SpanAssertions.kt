@@ -94,10 +94,12 @@ internal fun SessionMessage.findSpansByName(name: String): List<Span> {
     }
 }
 
-internal fun SessionMessage.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<EmbraceSpanData> =
-    checkNotNull(spanSnapshots?.filter { it.hasFixedAttribute(telemetryType) }) {
+internal fun SessionMessage.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<Span> {
+    val snapshots = checkNotNull(data?.spanSnapshots)
+    return checkNotNull(snapshots.filter { it.hasFixedAttribute(telemetryType) }) {
         "Span snapshots of type not found: ${telemetryType.key}"
     }
+}
 
 /**
  * Returns true if a span exists with the given [TelemetryType].

@@ -161,6 +161,10 @@ internal fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Bo
 internal fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]
 
+internal fun io.embrace.android.embracesdk.internal.payload.Span.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean {
+    return fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
+}
+
 internal fun EmbraceSpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]
 

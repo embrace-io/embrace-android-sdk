@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -101,7 +103,7 @@ internal class FakeV1PayloadCollator(
         return SessionMessage(
             session = finalPayload,
             spans = spans,
-            spanSnapshots = spanSnapshots,
+            data = SessionPayload(spanSnapshots = spanSnapshots.map(EmbraceSpanData::toNewPayload))
         )
     }
 }

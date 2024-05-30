@@ -23,7 +23,7 @@ internal interface EmbraceSpanFactory {
 internal class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
-    private val spanRepository: SpanRepository
+    private val spanRepository: SpanRepository,
 ) : EmbraceSpanFactory {
 
     override fun create(

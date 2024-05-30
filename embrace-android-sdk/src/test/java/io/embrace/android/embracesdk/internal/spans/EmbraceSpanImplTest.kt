@@ -14,6 +14,11 @@ import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
+import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
+import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
+import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -32,6 +37,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var openTelemetryClock: Clock
     private lateinit var embraceSpan: EmbraceSpanImpl
     private lateinit var spanRepository: SpanRepository
+    private lateinit var serializer: PlatformSerializer
     private val tracer = OpenTelemetrySdk.builder()
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
@@ -42,6 +48,7 @@ internal class EmbraceSpanImplTest {
         val fakeInitModule = FakeInitModule(fakeClock)
         openTelemetryClock = fakeInitModule.openTelemetryClock
         spanRepository = SpanRepository()
+        serializer = fakeInitModule.jsonSerializer
         embraceSpan = EmbraceSpanImpl(
             spanBuilder = tracer.embraceSpanBuilder(
                 name = EXPECTED_SPAN_NAME,
@@ -50,7 +57,7 @@ internal class EmbraceSpanImplTest {
                 private = false
             ),
             openTelemetryClock = fakeInitModule.openTelemetryClock,
-            spanRepository = spanRepository
+            spanRepository = spanRepository,
         )
         fakeClock.tick(100)
     }
@@ -156,6 +163,46 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
+    fun `recording exceptions as span events`() {
+        val timestampNanos = openTelemetryClock.now()
+        val firstException = IllegalStateException("oops")
+        val firstExceptionStackTrace = firstException.truncatedStacktraceText()
+        val secondException = RuntimeException("haha", firstException)
+        val secondExceptionStackTrace = secondException.truncatedStacktraceText()
+
+        with(embraceSpan) {
+            assertFalse(recordException(exception = IllegalStateException()))
+            assertTrue(start())
+            assertTrue(recordException(exception = firstException))
+            assertTrue(recordException(exception = secondException, attributes = mapOf("myKey" to "myValue")))
+            assertFalse(recordException(exception = RuntimeException(), attributes = tooBigEventAttributes))
+            assertTrue(stop())
+            assertFalse(recordException(exception = IllegalStateException()))
+        }
+
+        with(checkNotNull(embraceSpan.snapshot())) {
+            assertEquals(2, checkNotNull(events).size)
+            with(events.first()) {
+                assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
+                checkNotNull(attributes)
+                assertEquals(timestampNanos, timeUnixNano)
+                assertEquals(IllegalStateException::class.java.canonicalName, attributes.single { it.key == exceptionType.key }.data)
+                assertEquals("oops", attributes.single { it.key == exceptionMessage.key }.data)
+                assertEquals(firstExceptionStackTrace, attributes.single { it.key == exceptionStacktrace.key }.data)
+            }
+            with(events.last()) {
+                assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
+                checkNotNull(attributes)
+                assertEquals(timestampNanos, timeUnixNano)
+                assertEquals(RuntimeException::class.java.canonicalName, attributes.single { it.key == exceptionType.key }.data)
+                assertEquals("haha", attributes.single { it.key == exceptionMessage.key }.data)
+                assertEquals("myValue", attributes.single { it.key == "myKey" }.data)
+                assertEquals(secondExceptionStackTrace, attributes.single { it.key == exceptionStacktrace.key }.data)
+            }
+        }
+    }
+
+    @Test
     fun `cannot stop twice irrespective of error code`() {
         with(embraceSpan) {
             assertTrue(start())
@@ -176,7 +223,8 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME))
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
-            repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 4) {
+            assertTrue(recordException(exception = RuntimeException()))
+            repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(
@@ -194,6 +242,7 @@ internal class EmbraceSpanImplTest {
                 )
             )
             assertFalse(addEvent("failed event"))
+            assertFalse(recordException(exception = RuntimeException()))
             assertTrue(stop())
         }
     }

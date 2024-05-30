@@ -40,4 +40,14 @@ internal class EmbraceSerializerTest {
         assertEquals(session1, result[0])
         assertEquals(session2, result[1])
     }
+
+    @Test
+    fun `verify truncation of stacktrace serialized JSON`() {
+        val elements = Array(201) { StackTraceElement("A", "B", "C", 1) }
+        val serializedString = serializer.truncatedStacktrace(elements)
+        assertEquals(200, serializedString.count { it == 'A' })
+        assertEquals(200, serializedString.count { it == 'B' })
+        assertEquals(200, serializedString.count { it == 'C' })
+        assertEquals(200, serializedString.count { it == '1' })
+    }
 }

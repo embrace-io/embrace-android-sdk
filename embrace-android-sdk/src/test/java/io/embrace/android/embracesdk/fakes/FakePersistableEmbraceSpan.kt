@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.EXCEPTION_EVENT_NAME
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -83,6 +84,9 @@ internal class FakePersistableEmbraceSpan(
         )
         return true
     }
+
+    override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
+        addEvent(EXCEPTION_EVENT_NAME, null, attributes)
 
     override fun removeEvents(type: EmbType): Boolean {
         events.removeAll { it.hasFixedAttribute(type) }

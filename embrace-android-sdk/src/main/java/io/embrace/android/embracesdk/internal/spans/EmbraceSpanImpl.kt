@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsVali
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -164,10 +165,10 @@ internal class EmbraceSpanImpl(
             Span(
                 traceId = traceId,
                 spanId = spanId,
-                parentSpanId = parent?.spanId,
+                parentSpanId = parent?.spanId ?: SpanId.getInvalid(),
                 name = spanBuilder.spanName,
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
-                endTimeNanos = spanEndTimeMs?.millisToNanos(),
+                endTimeNanos = spanEndTimeMs?.millisToNanos() ?: openTelemetryClock.now(),
                 status = status,
                 events = events.map(EmbraceSpanEvent::toNewPayload),
                 attributes = allAttributes().toNewPayload()

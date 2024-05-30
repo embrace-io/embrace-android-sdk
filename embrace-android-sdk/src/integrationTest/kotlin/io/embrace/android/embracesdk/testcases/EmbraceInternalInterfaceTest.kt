@@ -8,20 +8,16 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentLogMessages
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.StatusCode
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -31,7 +27,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -49,9 +44,6 @@ internal class EmbraceInternalInterfaceTest {
     @Before
     fun setup() {
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
-        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-            RemoteConfig(oTelConfig = OTelRemoteConfig(isStableEnabled = false))
-        }
     }
 
     @Test
@@ -118,46 +110,6 @@ internal class EmbraceInternalInterfaceTest {
     }
 
     @Test
-    fun `internal logging methods work as expected in v1`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            val expectedProperties = mapOf(Pair("key", "value"))
-            harness.recordSession {
-                embrace.internalInterface.logInfo("info", expectedProperties)
-                embrace.internalInterface.logWarning("warning", expectedProperties, null)
-                embrace.internalInterface.logError("error", expectedProperties, null, false)
-                embrace.internalInterface.logHandledException(NullPointerException(), LogType.ERROR, expectedProperties, null)
-                val logs = harness.getSentLogMessages(4)
-
-                assertLogMessageReceived(
-                    logs[0],
-                    message = "info",
-                    eventType = EventType.INFO_LOG,
-                    properties = expectedProperties
-                )
-                assertLogMessageReceived(
-                    logs[1],
-                    message = "warning",
-                    eventType = EventType.WARNING_LOG,
-                    properties = expectedProperties
-                )
-                assertLogMessageReceived(
-                    logs[2],
-                    message = "error",
-                    eventType = EventType.ERROR_LOG,
-                    properties = expectedProperties
-                )
-                assertLogMessageReceived(
-                    logs[3],
-                    message = "",
-                    eventType = EventType.ERROR_LOG,
-                    properties = expectedProperties
-                )
-            }
-        }
-    }
-
-    @Test
     fun `network recording methods work as expected`() {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
@@ -212,8 +164,8 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val spans = checkNotNull(session?.spans)
-            val requests = checkNotNull(spans.filter { it.attributes.findAttributeValue("http.request.method") != null })
+            val spans = checkNotNull(session?.data?.spans)
+            val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue("http.request.method") != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,
@@ -235,7 +187,7 @@ internal class EmbraceInternalInterfaceTest {
             })
 
             val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-            val attrs = tapBreadcrumb.attributes
+            val attrs = checkNotNull(tapBreadcrumb.attributes)
             assertEquals("button", attrs.findAttributeValue("view.name"))
             assertEquals("10,99", attrs.findAttributeValue("tap.coords"))
             assertEquals("tap", attrs.findAttributeValue("tap.type"))
@@ -307,18 +259,18 @@ internal class EmbraceInternalInterfaceTest {
                 }
             }
 
-            val unfilteredSpans = checkNotNull(sessionPayload?.spans)
-            val spans = checkNotNull(unfilteredSpans.filter { it.name.startsWith("tz-") }.associateBy { it.name })
+            val unfilteredSpans = checkNotNull(sessionPayload?.data?.spans)
+            val spans = checkNotNull(unfilteredSpans.filter { checkNotNull(it.name).startsWith("tz-") }.associateBy { it.name })
             assertEquals(4, spans.size)
             with(checkNotNull(spans["tz-parent-span"])) {
-                assertEquals("testvalue", attributes.findAttributeValue("testkey"))
+                assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
             }
             with(checkNotNull(spans["tz-child-span"])) {
-                val spanEvent = events[0]
-                val spanAttrs = spanEvent.attributes
+                val spanEvent = checkNotNull(events)[0]
+                val spanAttrs = checkNotNull(spanEvent.attributes)
                 assertEquals("cool event bro", spanEvent.name)
                 assertEquals("value", spanAttrs.findAttributeValue("key"))
-                assertEquals(StatusCode.ERROR, status)
+                assertEquals(Span.Status.ERROR, status)
             }
             with(checkNotNull(spans["tz-another-span"])) {
                 assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)

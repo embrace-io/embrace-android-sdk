@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
@@ -200,7 +201,7 @@ internal class NetworkRequestApiTest {
             }
 
             val networkSpan = validateAndReturnExpectedNetworkSpan()
-            assertEquals(URL, networkSpan.attributes["url.full"])
+            assertEquals(URL, networkSpan.attributes?.findAttributeValue("url.full"))
         }
     }
 
@@ -230,7 +231,7 @@ internal class NetworkRequestApiTest {
 
             val session = checkNotNull(testRule.harness.getLastSentSession())
 
-            val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.request.method") })
+            val spans = checkNotNull(session.data?.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${spans.size}",
                 2,
@@ -253,7 +254,7 @@ internal class NetworkRequestApiTest {
 
             val networkSpan = validateAndReturnExpectedNetworkSpan()
             with(networkSpan) {
-                val attrs = this.attributes
+                val attrs = checkNotNull(attributes)
                 assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
                 assertEquals(expectedRequest.httpMethod, attrs.findAttributeValue("http.request.method"))
                 assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
@@ -277,11 +278,11 @@ internal class NetworkRequestApiTest {
         }
     }
 
-    private fun validateAndReturnExpectedNetworkSpan(): EmbraceSpanData {
+    private fun validateAndReturnExpectedNetworkSpan(): Span {
         val session = checkNotNull(testRule.harness.getLastSentSession())
 
-        val unfilteredSpans = checkNotNull(session.spans)
-        val spans = checkNotNull(unfilteredSpans.filter { it.attributes.findAttributeValue("http.request.method") != null })
+        val unfilteredSpans = checkNotNull(session.data?.spans)
+        val spans = checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue("http.request.method") != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

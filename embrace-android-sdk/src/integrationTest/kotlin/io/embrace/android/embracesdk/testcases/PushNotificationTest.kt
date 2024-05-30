@@ -8,11 +8,9 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -85,8 +83,7 @@ internal class PushNotificationTest {
             })
             val sessionSpan = payload.findSessionSpan()
             val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
-            assertNotNull(event)
-            assertTrue(event.timestampNanos > 0)
+            assertTrue(checkNotNull(event.timestampNanos) > 0)
             assertEquals(
                 mapOf(
                     EmbType.System.PushNotification.toEmbraceKeyValuePair(),
@@ -97,17 +94,15 @@ internal class PushNotificationTest {
                     "notification.from" to "from",
                     "notification.priority" to "1"
                 ),
-                event.attributes
+                event.attributes?.toMap()
             )
         }
     }
 
     private fun SessionMessage.assertNotification(type: String) {
         val sessionSpan = findSessionSpan()
-        assertNotNull(sessionSpan)
         val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
-        assertNotNull(event)
-        assertTrue(event.timestampNanos > 0)
+        assertTrue(checkNotNull(event.timestampNanos) > 0)
         assertEquals(
             mapOf(
                 EmbType.System.PushNotification.toEmbraceKeyValuePair(),
@@ -118,7 +113,7 @@ internal class PushNotificationTest {
                 "notification.from" to "",
                 "notification.priority" to "1"
             ),
-            event.attributes
+            event.attributes?.toMap()
         )
     }
 }

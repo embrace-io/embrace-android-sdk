@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.payload.WebVital
 import io.embrace.android.embracesdk.payload.WebVitalType
 import io.embrace.android.embracesdk.recordSession
@@ -32,7 +32,6 @@ internal class WebviewFeatureTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
-
     @Before
     fun setup() {
         testRule.harness.overriddenConfigService.webViewVitalsBehavior =
@@ -52,7 +51,7 @@ internal class WebviewFeatureTest {
             assertEquals(1, events.size)
 
             val event = events[0]
-            val attrs = event.attributes
+            val attrs = checkNotNull(event.attributes)
             assertEquals("emb-webview-info", event.name)
             assertEquals("myWebView", attrs.findAttributeValue("emb.webview_info.tag"))
             assertEquals("https://embrace.io/", attrs.findAttributeValue("emb.webview_info.url"))

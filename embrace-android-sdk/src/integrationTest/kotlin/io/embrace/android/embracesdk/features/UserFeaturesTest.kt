@@ -19,7 +19,7 @@ internal class UserFeaturesTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false, useV2Payload = true)
+        IntegrationTestRule.Harness(startImmediately = false)
     }
 
     @Test

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fixtures
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl
 import io.embrace.android.embracesdk.opentelemetry.embSequenceId
@@ -38,7 +39,7 @@ internal val testSpan = EmbraceSpanData(
         Pair(embSequenceId.name, "3"),
         EmbType.Performance.Default.toEmbraceKeyValuePair(),
     )
-)
+).toNewPayload()
 
 internal val testSpanSnapshot = Span(
     traceId = "snapshot-trace-id",

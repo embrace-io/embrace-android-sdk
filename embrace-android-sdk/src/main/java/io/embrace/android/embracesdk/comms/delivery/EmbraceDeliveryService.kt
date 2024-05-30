@@ -4,9 +4,7 @@ import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toFailedSpan
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -111,16 +109,16 @@ internal class EmbraceDeliveryService(
 
             allSessions.map { it.sessionId }.forEach { sessionId ->
                 cacheManager.transformSession(sessionId = sessionId) {
-                    val completedSpanIds = spans?.map { it.spanId }?.toSet() ?: emptySet()
-                    val spansToFail = data?.spanSnapshots?.map(Span::toOldPayload)
+                    val completedSpanIds = data?.spans?.map { it.spanId }?.toSet() ?: emptySet()
+                    val spansToFail = data?.spanSnapshots
                         ?.filterNot { completedSpanIds.contains(it.spanId) }
                         ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
                         ?: emptyList()
-                    val completedSpans = (spans ?: emptyList()) + spansToFail
+                    val completedSpans = (data?.spans ?: emptyList()) + spansToFail
                     copy(
-                        spans = completedSpans,
                         data = data?.copy(
-                            spanSnapshots = emptyList()
+                            spans = completedSpans,
+                            spanSnapshots = emptyList(),
                         )
                     )
                 }

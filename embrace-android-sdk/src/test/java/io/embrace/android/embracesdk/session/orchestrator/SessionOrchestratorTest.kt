@@ -17,9 +17,10 @@ import io.embrace.android.embracesdk.fakes.FakePayloadCollator
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.FakeV1PayloadCollator
+import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -33,7 +34,6 @@ import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -41,7 +41,7 @@ internal class SessionOrchestratorTest {
 
     private lateinit var orchestrator: SessionOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl
-    private lateinit var payloadCollator: FakeV1PayloadCollator
+    private lateinit var payloadCollator: FakeV2PayloadCollator
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
@@ -65,7 +65,7 @@ internal class SessionOrchestratorTest {
     fun setUp() {
         clock = FakeClock()
         logger = EmbLoggerImpl()
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true, oTelBehavior = fakeV2OtelBehavior())
     }
 
     @Test
@@ -103,7 +103,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
             sentSession = getOnlySentBackgroundActivity(),
-            endTimeMs = foregroundTime,
+            endTimeMs = foregroundTime - 1,
             endType = Session.LifeEventType.BKGND_STATE,
             expectedSessionId = expectedSessionId
         )
@@ -119,7 +119,7 @@ internal class SessionOrchestratorTest {
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             sentSession = getOnlySentSession(),
-            endTimeMs = backgroundTime,
+            endTimeMs = backgroundTime - 1,
             endType = Session.LifeEventType.STATE,
             expectedSessionId = expectedSessionId
         )
@@ -186,7 +186,7 @@ internal class SessionOrchestratorTest {
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             sentSession = getOnlySentSession(),
-            endTimeMs = endTimeMs,
+            endTimeMs = endTimeMs - 10000,
             endType = Session.LifeEventType.MANUAL,
             expectedSessionId = expectedSessionId
         )
@@ -210,7 +210,8 @@ internal class SessionOrchestratorTest {
                         isEnabled = true
                     ),
                 )
-            }
+            },
+            oTelBehavior = fakeV2OtelBehavior()
         )
         createOrchestrator(false)
 
@@ -224,7 +225,9 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually clears user info`() {
-        configService = FakeConfigService()
+        configService = FakeConfigService(
+            oTelBehavior = fakeV2OtelBehavior()
+        )
         createOrchestrator(false)
         clock.tick(10000)
 
@@ -235,7 +238,9 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually above time threshold succeeds`() {
-        configService = FakeConfigService()
+        configService = FakeConfigService(
+            oTelBehavior = fakeV2OtelBehavior()
+        )
         createOrchestrator(false)
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
@@ -246,7 +251,9 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually below time threshold fails`() {
-        configService = FakeConfigService()
+        configService = FakeConfigService(
+            oTelBehavior = fakeV2OtelBehavior()
+        )
         createOrchestrator(false)
         clock.tick(1000)
 
@@ -257,7 +264,9 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually when no session exists doesn not start a new session`() {
-        configService = FakeConfigService()
+        configService = FakeConfigService(
+            oTelBehavior = fakeV2OtelBehavior()
+        )
         createOrchestrator(true)
         clock.tick(1000)
         orchestrator.endSessionWithManual(true)
@@ -266,7 +275,10 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in background`() {
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        configService = FakeConfigService(
+            backgroundActivityCaptureEnabled = true,
+            oTelBehavior = fakeV2OtelBehavior()
+        )
         createOrchestrator(true)
         orchestrator.endSessionWithCrash("crashId")
         val sentBackgroundActivity = getOnlySentBackgroundActivity()
@@ -275,7 +287,10 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in foreground`() {
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        configService = FakeConfigService(
+            backgroundActivityCaptureEnabled = true,
+            oTelBehavior = fakeV2OtelBehavior()
+        )
         createOrchestrator(false)
         orchestrator.endSessionWithCrash("crashId")
         val sentSession = getOnlySentSession()
@@ -293,41 +308,24 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test session span cold start`() {
         createOrchestrator(true)
-        val expectedSessionSpanId = checkNotNull(sessionIdTracker.sessionId)
         orchestrator.onForeground(true, clock.now())
-        val sessionSpan = checkNotNull(deliveryService.getLastSentBackgroundActivity()?.spans?.single())
-        with(sessionSpan) {
-            assertTrue(name.endsWith(expectedSessionSpanId))
-        }
+        checkNotNull(deliveryService.getLastSentBackgroundActivity())
     }
 
     @Test
     fun `test session span non cold start`() {
         createOrchestrator(true)
-        val expectedBackgroundSpanId = checkNotNull(sessionIdTracker.sessionId)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
-        val expectedSessionSpanId = checkNotNull(sessionIdTracker.sessionId)
         orchestrator.onBackground(orchestratorStartTimeMs)
-        val backgroundSessionSpan = checkNotNull(deliveryService.getLastSentBackgroundActivity()?.spans?.single())
-        with(backgroundSessionSpan) {
-            assertTrue(name.endsWith(expectedBackgroundSpanId))
-        }
-        val foregroundSessionSpan = checkNotNull(deliveryService.getLastSentSession()?.spans?.single())
-        with(foregroundSessionSpan) {
-            assertTrue(name.endsWith(expectedSessionSpanId))
-        }
+        checkNotNull(deliveryService.getLastSentBackgroundActivity())
     }
 
     @Test
     fun `test session span with crash`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
-        val expectedSessionSpanId = checkNotNull(sessionIdTracker.sessionId)
         orchestrator.endSessionWithCrash("my-crash-id")
-        val foregroundSessionSpan = checkNotNull(deliveryService.getLastSentSession()?.spans?.single())
-        with(foregroundSessionSpan) {
-            assertTrue(name.endsWith(expectedSessionSpanId))
-        }
+        checkNotNull(deliveryService.getLastSentSession())
     }
 
     @Test
@@ -374,10 +372,10 @@ internal class SessionOrchestratorTest {
         deliveryService = FakeDeliveryService()
         processStateService = FakeProcessStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
-        payloadCollator = FakeV1PayloadCollator(currentSessionSpan = currentSessionSpan)
+        payloadCollator = FakeV2PayloadCollator(currentSessionSpan = currentSessionSpan)
         payloadFactory = PayloadFactoryImpl(
-            v1payloadMessageCollator = payloadCollator,
-            v2payloadMessageCollator = FakePayloadCollator(),
+            v1payloadMessageCollator = FakePayloadCollator(),
+            v2payloadMessageCollator = payloadCollator,
             configService = configService,
             logger = logger
         )

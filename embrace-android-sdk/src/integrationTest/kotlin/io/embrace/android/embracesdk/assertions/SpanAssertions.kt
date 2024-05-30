@@ -12,9 +12,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -24,38 +23,38 @@ import org.junit.Assert.assertTrue
  * Assert the [EmbraceSpanData] is as expected
  */
 internal fun assertEmbraceSpanData(
-    span: EmbraceSpanData?,
+    span: Span?,
     expectedStartTimeMs: Long,
     expectedEndTimeMs: Long,
     expectedParentId: String,
     expectedTraceId: String? = null,
-    expectedStatus: StatusCode = StatusCode.OK,
+    expectedStatus: Span.Status = Span.Status.OK,
     expectedErrorCode: ErrorCode? = null,
     expectedCustomAttributes: Map<String, String> = emptyMap(),
-    expectedEvents: List<EmbraceSpanEvent> = emptyList(),
+    expectedEvents: List<SpanEvent> = emptyList(),
     private: Boolean = false,
     key: Boolean = false,
 ) {
     checkNotNull(span)
     with(span) {
-        assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
-        assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
+        assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+        assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
         assertEquals(expectedParentId, parentSpanId)
         if (expectedTraceId != null) {
             assertEquals(expectedTraceId, traceId)
         } else {
-            assertEquals(32, traceId.length)
+            assertEquals(32, traceId?.length)
         }
 
         if (expectedErrorCode != null) {
             assertError(expectedErrorCode)
         } else {
             assertEquals(expectedStatus, status)
-            assertNull(attributes[ErrorCodeAttribute.Failure.key.name])
+            assertNull(attributes?.findAttributeValue(ErrorCodeAttribute.Failure.key.name))
         }
 
         expectedCustomAttributes.forEach { entry ->
-            assertEquals(entry.value, attributes[entry.key])
+            assertEquals(entry.value, attributes?.findAttributeValue(entry.key))
         }
         assertEquals(expectedEvents, events)
         if (private) {

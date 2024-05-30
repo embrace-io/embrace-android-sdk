@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -175,7 +176,7 @@ internal class CurrentSessionSpanImplTests {
         val flushedSpans = currentSessionSpan.endSession(AppTerminationCause.Crash).associateBy { it.name }
 
         assertEmbraceSpanData(
-            span = flushedSpans["emb-session"],
+            span = flushedSpans["emb-session"]?.toNewPayload(),
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = SpanId.getInvalid(),
@@ -188,7 +189,7 @@ internal class CurrentSessionSpanImplTests {
         )
 
         assertEmbraceSpanData(
-            span = flushedSpans[crashedSpanName],
+            span = flushedSpans[crashedSpanName]?.toNewPayload(),
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = SpanId.getInvalid(),
@@ -238,15 +239,12 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        val testEvent = span.findEventOfType(EmbType.System.Breadcrumb)
-        assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
-        assertEquals(
-            mapOf(
-                EmbType.System.Breadcrumb.toEmbraceKeyValuePair(),
-                "message" to "test-event"
-            ),
-            testEvent.attributes
-        )
+        val testEvent = span.toNewPayload().findEventOfType(EmbType.System.Breadcrumb)
+        assertEquals(1000L, testEvent.timestampNanos?.nanosToMillis())
+
+        val attrs = checkNotNull(testEvent.attributes)
+        assertEquals("test-event", attrs.single { it.key == "message" }.data)
+        assertEquals("sys.breadcrumb", attrs.single { it.key == "emb.type" }.data)
     }
 
     @Test

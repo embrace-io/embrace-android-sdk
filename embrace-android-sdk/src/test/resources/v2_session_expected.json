@@ -1,7 +1,4 @@
 {
-  "a": "__EMBRACE_TEST_IGNORE__",
-  "br": "__EMBRACE_TEST_IGNORE__",
-  "d": "__EMBRACE_TEST_IGNORE__",
   "data": {
     "span_snapshots": "__EMBRACE_TEST_IGNORE__",
     "spans": "__EMBRACE_TEST_IGNORE__"
@@ -14,7 +11,6 @@
     "user_id": "some id",
     "username": "John Doe"
   },
-  "p": "__EMBRACE_TEST_IGNORE__",
   "resource": {
     "app_version": "",
     "app_framework": 1,

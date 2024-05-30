@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakeBackgroundActivity
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -14,8 +12,7 @@ import org.junit.Test
 internal class BackgroundActivityMessageTest {
 
     private val backgroundActivity = fakeBackgroundActivity()
-    private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
-    private val info = SessionMessage(backgroundActivity, spans)
+    private val info = SessionMessage(backgroundActivity)
 
     @Test
     fun testSerialization() {
@@ -27,7 +24,6 @@ internal class BackgroundActivityMessageTest {
         val obj = deserializeJsonFromResource<SessionMessage>("bg_activity_message_expected.json")
         assertNotNull(obj)
         assertEquals(backgroundActivity.startTime, obj.session.startTime)
-        assertEquals(spans, obj.spans)
     }
 
     @Test(expected = JsonDataException::class)

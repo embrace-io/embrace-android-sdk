@@ -2,18 +2,14 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.opentelemetry.api.trace.StatusCode
 
 internal fun fakeBackgroundActivityMessage(): SessionMessage {
     val backgroundActivity = fakeBackgroundActivity()
-    val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
 
     return SessionMessage(
         backgroundActivity,
-        spans,
         metadata = EnvelopeMetadata(
             userId = "fake-user-id",
         ),

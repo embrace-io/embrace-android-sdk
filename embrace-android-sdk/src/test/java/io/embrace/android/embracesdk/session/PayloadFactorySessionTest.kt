@@ -27,8 +27,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
-import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -183,12 +181,9 @@ internal class PayloadFactorySessionTest {
             logMessageService,
             null,
             preferencesService,
-            spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService(),
-            fakeAnrOtelMapper(),
-            fakeNativeAnrOtelMapper(),
             logger
         )
         service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService(), logger)

@@ -5,7 +5,6 @@ import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 
 /**
  * The session message, containing the session itself, as well as performance information about the
@@ -19,9 +18,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
      */
     @Json(name = "s")
     val session: Session,
-
-    @Json(name = "spans")
-    val spans: List<EmbraceSpanData>? = null,
 
     /*
      * Values below this point are copied temporarily from [Envelope]. Eventually we will migrate

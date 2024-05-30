@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -81,16 +81,16 @@ internal class ThermalStateFeatureTest {
 
             spans.forEach {
                 assertEquals("emb-thermal-state", it.name)
-                assertEquals("perf.thermal_state", it.attributes.findAttributeValue("emb.type"))
+                assertEquals("perf.thermal_state", it.attributes?.findAttributeValue("emb.type"))
             }
             val firstSpan = spans.first()
-            assertEquals(PowerManager.THERMAL_STATUS_CRITICAL.toString(), firstSpan.attributes.findAttributeValue("status"))
-            assertEquals(startTimeMs, firstSpan.startTimeNanos.nanosToMillis())
-            assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos.nanosToMillis())
+            assertEquals(PowerManager.THERMAL_STATUS_CRITICAL.toString(), firstSpan.attributes?.findAttributeValue("status"))
+            assertEquals(startTimeMs, firstSpan.startTimeNanos?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos?.nanosToMillis())
             val secondSpan = spans.last()
-            assertEquals(PowerManager.THERMAL_STATUS_MODERATE.toString(), secondSpan.attributes.findAttributeValue("status"))
-            assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos.nanosToMillis())
-            assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos.nanosToMillis())
+            assertEquals(PowerManager.THERMAL_STATUS_MODERATE.toString(), secondSpan.attributes?.findAttributeValue("status"))
+            assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos?.nanosToMillis())
 
             val snapshots = message.findSpanSnapshotsOfType(EmbType.Performance.ThermalState)
             assertEquals(1, snapshots.size)

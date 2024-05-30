@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -39,16 +39,16 @@ internal class ViewFeatureTest {
             val span1 = viewSpans[0]
 
             with(span1) {
-                assertEquals("MyView", attributes.findAttributeValue("view.name"))
-                assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
-                assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
+                assertEquals("MyView", attributes?.findAttributeValue("view.name"))
+                assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
+                assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
             }
 
             val span2 = viewSpans[1]
             with(span2) {
-                assertEquals("AnotherView", attributes.findAttributeValue("view.name"))
-                assertEquals(startTimeMs + 1000L, startTimeNanos.nanosToMillis())
-                assertEquals(startTimeMs + 3000L, endTimeNanos.nanosToMillis())
+                assertEquals("AnotherView", attributes?.findAttributeValue("view.name"))
+                assertEquals(startTimeMs + 1000L, startTimeNanos?.nanosToMillis())
+                assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
             }
         }
     }

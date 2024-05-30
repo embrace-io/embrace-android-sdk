@@ -14,7 +14,7 @@ import io.opentelemetry.api.trace.StatusCode
 internal fun EmbraceSpanData.toNewPayload() = Span(
     traceId = traceId,
     spanId = spanId,
-    parentSpanId = parentSpanId,
+    parentSpanId = parentSpanId ?: SpanId.getInvalid(),
     name = name,
     startTimeNanos = startTimeNanos,
     endTimeNanos = endTimeNanos,

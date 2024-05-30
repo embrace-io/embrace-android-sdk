@@ -180,7 +180,7 @@ internal class IntegrationTestRule(
                 deliveryService = FakeDeliveryService(),
             ),
         val fakeAnrModule: AnrModule = FakeAnrModule(),
-        val useV2Payload: Boolean = false
+        val useV2Payload: Boolean = true
     ) {
         init {
             if (useV2Payload) {

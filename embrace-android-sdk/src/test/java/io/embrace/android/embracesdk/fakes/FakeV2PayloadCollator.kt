@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
@@ -11,7 +7,7 @@ import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import java.util.concurrent.atomic.AtomicInteger
 
-internal class FakeV1PayloadCollator(
+internal class FakeV2PayloadCollator(
     val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan()
 ) : PayloadMessageCollator {
 
@@ -57,12 +53,12 @@ internal class FakeV1PayloadCollator(
             startupDuration = if (initial.isColdStart) 1000L else null,
             startupThreshold = if (initial.isColdStart) 5000L else null,
         )
-        return buildWrapperEnvelope(params, endSession)
+        return buildWrapperEnvelope(endSession)
     }
 
     override fun buildFinalBackgroundActivityMessage(
         params: FinalEnvelopeParams.BackgroundActivityParams
-    ): SessionMessage = buildWrapperEnvelope(params, buildFinalBackgroundActivity(params))
+    ): SessionMessage = buildWrapperEnvelope(buildFinalBackgroundActivity(params))
 
     /**
      * Creates a background activity stop message.
@@ -78,32 +74,5 @@ internal class FakeV1PayloadCollator(
         )
     }
 
-    private fun buildWrapperEnvelope(
-        params: FinalEnvelopeParams,
-        finalPayload: Session,
-    ): SessionMessage {
-        val spans: List<EmbraceSpanData>? =
-            when {
-                !params.captureSpans -> null
-                !params.isCacheAttempt -> {
-                    val appTerminationCause = when {
-                        finalPayload.crashReportId != null -> AppTerminationCause.Crash
-                        else -> null
-                    }
-                    currentSessionSpan.endSession(appTerminationCause)
-                }
-
-                else -> null
-            }
-
-        val spanSnapshots = currentSessionSpan.sessionSpan?.let { span ->
-            listOf(EmbraceSpanData(spanData = span))
-        } ?: listOf()
-
-        return SessionMessage(
-            session = finalPayload,
-            spans = spans,
-            data = SessionPayload(spanSnapshots = spanSnapshots.map(EmbraceSpanData::toNewPayload))
-        )
-    }
+    private fun buildWrapperEnvelope(finalPayload: Session) = SessionMessage(session = finalPayload)
 }

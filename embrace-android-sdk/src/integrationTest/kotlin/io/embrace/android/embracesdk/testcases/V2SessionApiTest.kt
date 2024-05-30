@@ -6,10 +6,9 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
-import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.toMap
 import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
@@ -60,12 +59,12 @@ internal class V2SessionApiTest {
             // validate network status span
             val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
             assertEquals(startTime, networkStatusSpan.startTimeUnixNano?.nanosToMillis())
-            assertEquals("sys.network_status", networkStatusSpan.findSpanAttribute("emb.type"))
+            assertEquals("sys.network_status", networkStatusSpan.attributes?.findAttributeValue("emb.type"))
 
             // validate session span
             val sessionSpan = snapshots.single { it.name == "emb-session" }
             assertEquals(startTime, sessionSpan.startTimeUnixNano?.nanosToMillis())
-            assertNotNull(sessionSpan.findSpanAttribute("emb.session_id"))
+            assertNotNull(sessionSpan.attributes?.findAttributeValue("emb.session_id"))
             val attrs = sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap()
 
             val expected = mapOf(

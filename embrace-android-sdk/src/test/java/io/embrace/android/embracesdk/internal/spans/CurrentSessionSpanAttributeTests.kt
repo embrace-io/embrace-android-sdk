@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -47,7 +47,7 @@ internal class CurrentSessionSpanAttributeTests {
     }
 
     private fun EmbraceSpanData.assertCommonSessionSpanAttrs() {
-        assertNotNull(findSpanAttribute("emb.session_id"))
-        assertEquals("ux.session", findSpanAttribute("emb.type"))
+        assertNotNull(attributes.findAttributeValue("emb.session_id"))
+        assertEquals("ux.session", attributes.findAttributeValue("emb.type"))
     }
 }

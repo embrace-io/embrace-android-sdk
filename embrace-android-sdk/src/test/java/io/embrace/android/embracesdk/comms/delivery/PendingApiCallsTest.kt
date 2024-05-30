@@ -26,7 +26,7 @@ internal class PendingApiCallsTest {
     @Test
     fun `test adding pending api calls associated to endpoints`() {
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
+            url = EmbraceUrl.create("http://test.url/spans"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -81,7 +81,7 @@ internal class PendingApiCallsTest {
         pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
+            url = EmbraceUrl.create("http://test.url/spans"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",

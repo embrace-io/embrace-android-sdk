@@ -69,5 +69,5 @@ internal data class ApiRequest(
      * Returns true if the request is a session request. This heuristic should not be widely used
      * - it is only used to prioritise session requests over other requests.
      */
-    fun isSessionRequest(): Boolean = url.toString().endsWith("sessions")
+    fun isSessionRequest(): Boolean = url.toString().endsWith("spans")
 }

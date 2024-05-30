@@ -156,8 +156,8 @@ internal class EmbraceApiService(
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
-        return postOnWorker(action, mapper.sessionRequest(isV2), onFinish)
+    override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
+        return postOnWorker(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(

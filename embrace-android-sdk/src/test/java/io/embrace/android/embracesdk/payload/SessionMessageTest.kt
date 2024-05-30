@@ -5,13 +5,10 @@ import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionMessageTest {
@@ -51,12 +48,5 @@ internal class SessionMessageTest {
     @Test(expected = JsonDataException::class)
     fun testEmptyObject() {
         deserializeEmptyJsonString<SessionMessage>()
-    }
-
-    @Test
-    fun `is v2 payload`() {
-        assertFalse(info.isV2Payload())
-        val obj = SessionMessage(session = session, data = SessionPayload(spans = emptyList()))
-        assertTrue(obj.isV2Payload())
     }
 }

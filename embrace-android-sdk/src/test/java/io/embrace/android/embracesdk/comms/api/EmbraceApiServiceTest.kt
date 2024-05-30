@@ -243,26 +243,13 @@ internal class EmbraceApiServiceTest {
     }
 
     @Test
-    fun `send v1 session`() {
-        fakeApiClient.queueResponse(successfulPostResponse)
-        val payload = "{}".toByteArray(Charsets.UTF_8)
-        var finished = false
-        apiService.sendSession(false, { it.write(payload) }) { finished = true }
-        verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/sessions",
-            expectedPayload = payload
-        )
-        assertTrue(finished)
-    }
-
-    @Test
     fun `send v2 session`() {
         fakeApiClient.queueResponse(successfulPostResponse)
         val payload = "".toByteArray(Charsets.UTF_8)
         var finished = false
-        apiService.sendSession(true, { it.write(payload) }) { finished = true }
+        apiService.sendSession({ it.write(payload) }) { finished = true }
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/sessions",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/spans",
             expectedPayload = payload
         )
         assertTrue(finished)
@@ -349,7 +336,7 @@ internal class EmbraceApiServiceTest {
         testScheduledExecutor = mockk(relaxed = true)
         initApiService()
         val payload = "{}".toByteArray(Charsets.UTF_8)
-        apiService.sendSession(false, { it.write(payload) }) {}
+        apiService.sendSession({ it.write(payload) }) {}
         verify(exactly = 1) { testScheduledExecutor.submit(any<Runnable>()) }
     }
 

@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -54,7 +53,7 @@ internal class EmbraceDeliveryService(
                     serializer.toJson(sessionMessage, SessionMessage::class.java, it)
                 }
             }
-            val future = apiService.sendSession(sessionMessage.isV2Payload(), action) { successful ->
+            val future = apiService.sendSession(action) { successful ->
                 if (!successful) {
                     val message =
                         "Session deleted without request being sent: ID $sessionId, timestamp ${sessionMessage.session.startTime}"
@@ -164,9 +163,7 @@ internal class EmbraceDeliveryService(
                 val sessionId = cachedSession.sessionId
                 val action = cacheManager.loadSessionAsAction(sessionId)
                 if (action != null) {
-                    // temporarily assume all sessions are v1. Future changeset
-                    // will encode this information in the filename.
-                    apiService.sendSession(false, action) { successful ->
+                    apiService.sendSession(action) { successful ->
                         if (!successful) {
                             val message = "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
                             logger.logWarning(message, SessionPurgeException(message))

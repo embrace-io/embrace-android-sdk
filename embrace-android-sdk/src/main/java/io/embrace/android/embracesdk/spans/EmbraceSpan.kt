@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.spans
 
 import io.embrace.android.embracesdk.annotation.BetaApi
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.SpanContext
 
 /**
  * Represents a Span that can be started and stopped with the appropriate [ErrorCode] if applicable. This wraps the OpenTelemetry Span
@@ -9,6 +10,11 @@ import io.opentelemetry.api.common.Attributes
  */
 @BetaApi
 public interface EmbraceSpan {
+    /**
+     * The [SpanContext] for this [EmbraceSpan] instance. This is null if the span has not been started.
+     */
+    public val spanContext: SpanContext?
+
     /**
      * ID of the Trace that this Span belongs to. The format adheres to the OpenTelemetry standard for Trace IDs
      */

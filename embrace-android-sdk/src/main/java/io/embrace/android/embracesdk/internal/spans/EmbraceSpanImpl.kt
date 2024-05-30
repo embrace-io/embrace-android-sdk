@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsVali
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -48,11 +49,14 @@ internal class EmbraceSpanImpl(
 
     override val parent: EmbraceSpan? = spanBuilder.parent
 
+    override val spanContext: SpanContext?
+        get() = startedSpan.get()?.spanContext
+
     override val traceId: String?
-        get() = startedSpan.get()?.spanContext?.traceId
+        get() = spanContext?.traceId
 
     override val spanId: String?
-        get() = startedSpan.get()?.spanContext?.spanId
+        get() = spanContext?.spanId
 
     override val isRecording: Boolean
         get() = startedSpan.get()?.isRecording == true

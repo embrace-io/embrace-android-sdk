@@ -15,12 +15,13 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
+import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.sdk.trace.IdGenerator
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class FakePersistableEmbraceSpan(
     override val parent: EmbraceSpan?,
-    val name: String? = null,
+    var name: String? = null,
     val type: TelemetryType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
@@ -33,9 +34,11 @@ internal class FakePersistableEmbraceSpan(
     var stopped = false
     var errorCode: ErrorCode? = null
 
-    private var spanStartTimeMs: Long? = null
-    private var spanEndTimeMs: Long? = null
-    private var status = Span.Status.UNSET
+    var spanStartTimeMs: Long? = null
+    var spanEndTimeMs: Long? = null
+    var status = Span.Status.UNSET
+
+    override val spanContext: SpanContext? = null
 
     override var traceId: String? = parent?.traceId
 
@@ -72,7 +75,7 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
-    override fun addEvent(name: String): Boolean = addEvent(name)
+    override fun addEvent(name: String): Boolean = addEvent(name, null, null)
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean {
         events.add(
@@ -99,7 +102,8 @@ internal class FakePersistableEmbraceSpan(
     }
 
     override fun updateName(newName: String): Boolean {
-        TODO("Not yet implemented")
+        name = newName
+        return true
     }
 
     override fun snapshot(): Span? {
@@ -128,25 +132,28 @@ internal class FakePersistableEmbraceSpan(
     override fun removeCustomAttribute(key: String): Boolean = attributes.remove(key) != null
 
     companion object {
-        fun notStarted(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan =
+        fun notStarted(parent: EmbraceSpan? = null, clock: FakeClock = FakeClock()): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
                 parent = parent,
-                name = "not-started"
+                name = "not-started",
+                fakeClock = clock,
             )
 
-        fun started(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
+        fun started(parent: EmbraceSpan? = null, clock: FakeClock = FakeClock()): FakePersistableEmbraceSpan {
             val span = FakePersistableEmbraceSpan(
                 parent = parent,
-                name = "started"
+                name = "started",
+                fakeClock = clock,
             )
             span.start()
             return span
         }
 
-        fun stopped(parent: EmbraceSpan? = null): FakePersistableEmbraceSpan {
+        fun stopped(parent: EmbraceSpan? = null, clock: FakeClock = FakeClock()): FakePersistableEmbraceSpan {
             val span = FakePersistableEmbraceSpan(
                 parent = parent,
-                name = "stopped"
+                name = "stopped",
+                fakeClock = clock,
             )
             span.start()
             span.stop()

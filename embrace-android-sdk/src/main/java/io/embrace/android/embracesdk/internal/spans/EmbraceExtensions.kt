@@ -119,6 +119,13 @@ internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null)
 }
 
 /**
+ * Returns the attributes as a new Map<String, String>
+ */
+internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
+    it.key.key.toString() to it.value.toString()
+}
+
+/**
  * Populate an [AttributesBuilder] with String key-value pairs from a [Map]
  */
 internal fun AttributesBuilder.fromMap(attributes: Map<String, String>): AttributesBuilder {

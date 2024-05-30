@@ -173,7 +173,6 @@ internal class SessionHandlerTest {
             logMessageService,
             null,
             preferencesService,
-            spanRepository,
             spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),

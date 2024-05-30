@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -164,13 +165,13 @@ internal class V1PayloadMessageCollator(
                 ?: result
         }
         val spanSnapshots = captureDataSafely(logger) {
-            spanRepository.getActiveSpans().mapNotNull { it.snapshot()?.toOldPayload() }
+            spanRepository.getActiveSpans().mapNotNull { it.snapshot() }
         }
 
         return SessionMessage(
             session = finalPayload,
             spans = spans,
-            spanSnapshots = spanSnapshots,
+            data = SessionPayload(spanSnapshots = spanSnapshots)
         )
     }
 }

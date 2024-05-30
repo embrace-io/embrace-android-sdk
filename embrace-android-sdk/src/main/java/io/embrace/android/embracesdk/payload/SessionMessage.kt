@@ -23,9 +23,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     @Json(name = "spans")
     val spans: List<EmbraceSpanData>? = null,
 
-    @Json(name = "span_snapshots")
-    val spanSnapshots: List<EmbraceSpanData>? = null,
-
     /*
      * Values below this point are copied temporarily from [Envelope]. Eventually we will migrate
      * everything to use [Envelope] and [SessionPayload] and remove this class,
@@ -52,4 +49,4 @@ internal data class SessionMessage @JvmOverloads internal constructor(
  * Returns true if this message is a v2 payload. If so, it should be sent to a different
  * endpoint & handled differently.
  */
-internal fun SessionMessage.isV2Payload() = data != null
+internal fun SessionMessage.isV2Payload() = data?.spans != null

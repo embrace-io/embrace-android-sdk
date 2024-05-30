@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
@@ -34,7 +33,6 @@ internal class V2PayloadMessageCollator(
     private val logMessageService: LogMessageService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val preferencesService: PreferencesService,
-    private val spanRepository: SpanRepository,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
@@ -170,14 +168,9 @@ internal class V2PayloadMessageCollator(
                 ?.plus(nativeAnrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload))
                 ?: result
         }
-        val spanSnapshots = captureDataSafely(logger) {
-            spanRepository.getActiveSpans().mapNotNull { it.snapshot()?.toOldPayload() }
-        }
-
         return SessionMessage(
             session = finalPayload,
-            spans = spans,
-            spanSnapshots = spanSnapshots,
+            spans = spans
         )
     }
 }

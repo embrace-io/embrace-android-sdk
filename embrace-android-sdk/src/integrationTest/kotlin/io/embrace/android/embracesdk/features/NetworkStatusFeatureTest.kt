@@ -53,7 +53,7 @@ internal class NetworkStatusFeatureTest {
             assertEquals("emb-network-status", snapshot.name)
             assertEquals("sys.network_status", snapshot.findSpanAttribute("emb.type"))
             assertEquals("wifi", snapshot.findSpanAttribute("network"))
-            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeUnixNano?.nanosToMillis())
         }
     }
 
@@ -72,7 +72,7 @@ internal class NetworkStatusFeatureTest {
             assertEquals("emb-network-status", snapshot.name)
             assertEquals("sys.network_status", snapshot.findSpanAttribute("emb.type"))
             assertEquals("wan", snapshot.findSpanAttribute("network"))
-            assertEquals(startTimeMs, snapshot.startTimeNanos.nanosToMillis())
+            assertEquals(startTimeMs, snapshot.startTimeUnixNano?.nanosToMillis())
         }
     }
 }

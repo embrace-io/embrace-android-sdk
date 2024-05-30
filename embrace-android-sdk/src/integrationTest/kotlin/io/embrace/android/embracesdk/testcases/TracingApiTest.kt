@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -239,8 +240,8 @@ internal class TracingApiTest {
                 private = false
             )
 
-            val snapshots = checkNotNull(sessionMessage.spanSnapshots).associateBy { it.name }
-            val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
+            val snapshots = checkNotNull(sessionMessage.data?.spanSnapshots).associateBy { it.name }
+            val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"]).toOldPayload()
             unendingSpanSnapshot.assertIsTypePerformance()
             assertEmbraceSpanData(
                 span = unendingSpanSnapshot,
@@ -259,7 +260,7 @@ internal class TracingApiTest {
                 key = true
             )
 
-            val sessionSpanSnapshot = checkNotNull(snapshots["emb-session"])
+            val sessionSpanSnapshot = checkNotNull(snapshots["emb-session"]).toOldPayload()
             sessionSpanSnapshot.assertIsType(EmbType.Ux.Session)
             assertEmbraceSpanData(
                 span = sessionSpanSnapshot,

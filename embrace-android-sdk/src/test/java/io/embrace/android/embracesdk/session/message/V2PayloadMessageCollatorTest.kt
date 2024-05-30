@@ -75,7 +75,6 @@ internal class V2PayloadMessageCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            spanRepository = initModule.openTelemetryModule.spanRepository,
             spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),

@@ -6,9 +6,12 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
+import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.toMap
 import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -51,19 +54,19 @@ internal class V2SessionApiTest {
             validatePayloadAgainstGoldenFile(message, "v2_session_expected.json")
 
             // validate snapshots separately, as the JSON diff is tricky to debug
-            val snapshots = checkNotNull(message.spanSnapshots)
+            val snapshots = checkNotNull(message.data?.spanSnapshots)
             assertEquals(2, snapshots.size)
 
             // validate network status span
             val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
-            assertEquals(startTime, networkStatusSpan.startTimeNanos.nanosToMillis())
-            assertEquals("sys.network_status", networkStatusSpan.attributes["emb.type"])
+            assertEquals(startTime, networkStatusSpan.startTimeUnixNano?.nanosToMillis())
+            assertEquals("sys.network_status", networkStatusSpan.findSpanAttribute("emb.type"))
 
             // validate session span
             val sessionSpan = snapshots.single { it.name == "emb-session" }
-            assertEquals(startTime, sessionSpan.startTimeNanos.nanosToMillis())
-            assertNotNull(sessionSpan.attributes["emb.session_id"])
-            val attrs = sessionSpan.attributes.filterKeys { it != "emb.session_id" }
+            assertEquals(startTime, sessionSpan.startTimeUnixNano?.nanosToMillis())
+            assertNotNull(sessionSpan.findSpanAttribute("emb.session_id"))
+            val attrs = sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap()
 
             val expected = mapOf(
                 "emb.cold_start" to "true",

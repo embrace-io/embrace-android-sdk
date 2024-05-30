@@ -30,5 +30,7 @@
     "wvi_beta": "__EMBRACE_TEST_IGNORE__"
   },
   "spans": "__EMBRACE_TEST_IGNORE__",
-  "span_snapshots": "__EMBRACE_TEST_IGNORE__"
+  "data": {
+    "span_snapshots": "__EMBRACE_TEST_IGNORE__"
+  }
 }

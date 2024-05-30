@@ -194,7 +194,6 @@ internal class PayloadFactoryBaTest {
             logMessageService,
             null,
             preferencesService,
-            spanRepository,
             spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),

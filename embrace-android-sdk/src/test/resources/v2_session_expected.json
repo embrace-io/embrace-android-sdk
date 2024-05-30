@@ -39,7 +39,6 @@
     "num_cores": "__EMBRACE_TEST_IGNORE__"
   },
   "s": "__EMBRACE_TEST_IGNORE__",
-  "span_snapshots": "__EMBRACE_TEST_IGNORE__",
   "type": "session",
   "version": "0.1.0"
 }

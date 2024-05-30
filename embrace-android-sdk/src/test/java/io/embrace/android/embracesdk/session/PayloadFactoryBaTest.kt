@@ -166,7 +166,6 @@ internal class PayloadFactoryBaTest {
             performanceInfoService,
             FakeWebViewService(),
             null,
-            userService,
             preferencesService,
             spanRepository,
             spanSink,

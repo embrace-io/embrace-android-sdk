@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
+import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -357,18 +358,18 @@ internal class EmbraceGatingServiceV1PayloadTest {
 
     @Test
     fun `test gate user personas for Session`() {
-        val userInfo = UserInfo(personas = setOf("persona"))
-
         val sessionMessage = SessionMessage(
             session = fakeSession(),
-            userInfo = userInfo,
-            performanceInfo = PerformanceInfo()
+            metadata = EnvelopeMetadata(
+                personas = setOf("persona")
+            ),
+            performanceInfo = PerformanceInfo(),
         )
 
         cfg = buildCustomRemoteConfig(setOf(USER_PERSONAS), null)
 
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
-        assertNotNull(sanitizedMessage.userInfo?.personas)
+        assertNotNull(sanitizedMessage.metadata?.personas)
     }
 
     @Test

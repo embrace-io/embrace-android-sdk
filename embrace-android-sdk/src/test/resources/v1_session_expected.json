@@ -50,12 +50,6 @@
     "e": "__EMBRACE_TEST_IGNORE__",
     "wvi_beta": "__EMBRACE_TEST_IGNORE__"
   },
-  "u": {
-    "id": "some id",
-    "em": "user@email.com",
-    "un": "John Doe",
-    "per": "__EMBRACE_TEST_IGNORE__"
-  },
   "spans": "__EMBRACE_TEST_IGNORE__",
   "span_snapshots": "__EMBRACE_TEST_IGNORE__",
   "v": 13

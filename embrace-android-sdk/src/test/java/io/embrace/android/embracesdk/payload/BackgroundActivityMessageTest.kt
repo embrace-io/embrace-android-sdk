@@ -14,7 +14,6 @@ import org.junit.Test
 internal class BackgroundActivityMessageTest {
 
     private val backgroundActivity = fakeBackgroundActivity()
-    private val userInfo = UserInfo("fake-user-id")
     private val appInfo = AppInfo("fake-app-id")
     private val deviceInfo = DeviceInfo("fake-manufacturer")
     private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
@@ -22,7 +21,6 @@ internal class BackgroundActivityMessageTest {
 
     private val info = SessionMessage(
         backgroundActivity,
-        userInfo,
         appInfo,
         deviceInfo,
         perfInfo,
@@ -40,7 +38,6 @@ internal class BackgroundActivityMessageTest {
         assertNotNull(obj)
 
         assertEquals(backgroundActivity.startTime, obj.session.startTime)
-        assertEquals(userInfo, obj.userInfo)
         assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
         assertEquals(perfInfo, obj.performanceInfo)

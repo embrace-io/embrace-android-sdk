@@ -8,9 +8,6 @@
     "cs": false,
     "sm": "s"
   },
-  "u": {
-    "id": "fake-user-id"
-  },
   "a": {
     "v": "fake-app-id"
   },

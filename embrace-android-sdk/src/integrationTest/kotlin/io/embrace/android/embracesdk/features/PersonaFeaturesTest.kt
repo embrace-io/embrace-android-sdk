@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.recordSession
@@ -16,7 +19,11 @@ internal class PersonaFeaturesTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule(
         harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
+            IntegrationTestRule.Harness(startImmediately = false).apply {
+                overriddenConfigService.oTelBehavior = fakeOTelBehavior {
+                    RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
+                }
+            }
         }
     )
 
@@ -57,7 +64,8 @@ internal class PersonaFeaturesTest {
     private fun SessionMessage.assertPersonaDoesNotExist(persona: String) = assertPersona(false, this, persona)
 
     private fun assertPersona(exists: Boolean, session: SessionMessage, persona: String) {
-        assertEquals(exists, session.userInfo?.personas?.find { it == persona } != null)
+        val personas = checkNotNull(session.metadata).personas
+        assertEquals(exists, personas?.find { it == persona } != null)
         assertEquals(
             exists,
             testRule.harness.overriddenAndroidServicesModule.preferencesService.userPersonas?.find { it == persona } != null

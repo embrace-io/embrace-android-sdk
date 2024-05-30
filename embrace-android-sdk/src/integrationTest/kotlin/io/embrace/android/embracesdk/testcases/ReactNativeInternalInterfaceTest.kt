@@ -5,8 +5,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
-import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
@@ -135,12 +136,13 @@ internal class ReactNativeInternalInterfaceTest {
             assertEquals(1, spans.size)
 
             val span = spans.single()
+            val attrs = checkNotNull(span.attributes)
             assertEquals("emb-rn-action", span.name)
-            assertEquals("sys.rn_action", span.findSpanAttribute("emb.type"))
-            assertEquals("MyAction", span.findSpanAttribute("name"))
-            assertEquals("SUCCESS", span.findSpanAttribute("outcome"))
-            assertEquals("100", span.findSpanAttribute("payload_size"))
-            assertEquals("value", span.findSpanAttribute("emb.properties.key"))
+            assertEquals("sys.rn_action", attrs.findAttributeValue("emb.type"))
+            assertEquals("MyAction", attrs.findAttributeValue("name"))
+            assertEquals("SUCCESS", attrs.findAttributeValue("outcome"))
+            assertEquals("100", attrs.findAttributeValue("payload_size"))
+            assertEquals("value", attrs.findAttributeValue("emb.properties.key"))
             assertEquals(1000L, span.startTimeUnixNano?.nanosToMillis())
             assertEquals(5000L, span.endTimeUnixNano?.nanosToMillis())
         }

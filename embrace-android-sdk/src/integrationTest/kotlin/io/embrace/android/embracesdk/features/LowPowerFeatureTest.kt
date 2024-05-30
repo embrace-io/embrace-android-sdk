@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.recordSession
@@ -40,7 +40,7 @@ internal class LowPowerFeatureTest {
             val span = spans.single()
 
             assertEquals("emb-device-low-power", span.name)
-            assertEquals("sys.low_power", span.findSpanAttribute("emb.type"))
+            assertEquals("sys.low_power", span.attributes.findAttributeValue("emb.type"))
             assertEquals(startTimeMs, span.startTimeNanos.nanosToMillis())
             assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos.nanosToMillis())
         }

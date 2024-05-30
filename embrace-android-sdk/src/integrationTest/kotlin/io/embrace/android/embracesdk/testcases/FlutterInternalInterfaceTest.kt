@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.findLogAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -152,7 +152,7 @@ internal class FlutterInternalInterfaceTest {
                 )
                 flushLogs()
             }
-            val log = harness.getLastSentLog()
+            val log = checkNotNull(harness.getLastSentLog())
 
             assertOtelLogReceived(
                 log,
@@ -164,9 +164,10 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
             )
-            assertEquals(expectedStacktrace, log?.findLogAttribute("exception.stacktrace"))
-            assertEquals(expectedContext, log?.findLogAttribute("emb.exception.context"))
-            assertEquals(expectedLibrary, log?.findLogAttribute("emb.exception.library"))
+            val attrs = checkNotNull(log.attributes)
+            assertEquals(expectedStacktrace, attrs.findAttributeValue("exception.stacktrace"))
+            assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
+            assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
         }
     }
 
@@ -188,7 +189,7 @@ internal class FlutterInternalInterfaceTest {
                 )
                 flushLogs()
             }
-            val log = harness.getLastSentLog()
+            val log = checkNotNull(harness.getLastSentLog())
 
             assertOtelLogReceived(
                 log,
@@ -200,9 +201,10 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
             )
-            assertEquals(expectedStacktrace, log?.findLogAttribute("exception.stacktrace"))
-            assertEquals(expectedContext, log?.findLogAttribute("emb.exception.context"))
-            assertEquals(expectedLibrary, log?.findLogAttribute("emb.exception.library"))
+            val attrs = checkNotNull(log.attributes)
+            assertEquals(expectedStacktrace, attrs.findAttributeValue("exception.stacktrace"))
+            assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
+            assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
         }
     }
 

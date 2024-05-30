@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -539,7 +539,7 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(expectedEndTimeMs, trace.endTimeNanos.nanosToMillis())
         trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
         trace.assertIsKeySpan()
-        assertEquals(STARTUP_ACTIVITY_NAME, trace.findSpanAttribute("startup-activity-name"))
+        assertEquals(STARTUP_ACTIVITY_NAME, trace.attributes.findAttributeValue("startup-activity-name"))
         assertEquals(expectedProcessCreateDelayMs?.toString(), trace.attributes["process-create-delay-ms"])
         assertEquals(expectedActivityPreCreatedMs?.toString(), trace.attributes["startup-activity-pre-created-ms"])
         assertEquals(expectedActivityPostCreatedMs?.toString(), trace.attributes["startup-activity-post-created-ms"])

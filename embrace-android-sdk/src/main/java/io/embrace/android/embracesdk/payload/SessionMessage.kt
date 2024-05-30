@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -44,9 +43,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
 
     @Json(name = "span_snapshots")
     val spanSnapshots: List<EmbraceSpanData>? = null,
-
-    @Json(name = "v")
-    val version: Int? = ApiClient.MESSAGE_VERSION,
 
     /*
      * Values below this point are copied temporarily from [Envelope]. Eventually we will migrate

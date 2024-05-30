@@ -55,15 +55,13 @@ internal class OtelSessionGatingTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            Harness(
-                overriddenDeliveryModule = FakeDeliveryModule(
-                    deliveryService = GatedDeliveryService(gatingService)
-                )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        Harness(
+            overriddenDeliveryModule = FakeDeliveryModule(
+                deliveryService = GatedDeliveryService(gatingService)
             )
-        }
-    )
+        )
+    }
 
     @Before
     fun setUp() {

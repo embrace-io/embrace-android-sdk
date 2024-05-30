@@ -41,7 +41,8 @@ internal class FlutterInternalInterfaceTest {
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.REMOTE_LOGGING),
-        ).apply { overriddenConfigService.oTelBehavior = fakeV2OtelBehavior() }
+            useV2Payload = true
+        )
     }
 
     @Before

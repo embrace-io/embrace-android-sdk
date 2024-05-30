@@ -30,13 +30,9 @@ import org.robolectric.annotation.Config
 internal class ReactNativeInternalInterfaceTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE).apply {
-                overriddenConfigService.oTelBehavior = fakeV2OtelBehavior()
-            }
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE, useV2Payload = true)
+    }
 
     @Before
     fun setup() {

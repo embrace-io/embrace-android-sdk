@@ -23,11 +23,7 @@ internal class ActivityFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
-        }
-    )
+    val testRule = IntegrationTestRule { IntegrationTestRule.Harness(startImmediately = false) }
 
     @Test
     fun `automatically capture activities`() {

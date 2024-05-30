@@ -24,13 +24,9 @@ import org.robolectric.annotation.Config
 internal class UnityInternalInterfaceTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.UNITY).apply {
-                overriddenConfigService.oTelBehavior = fakeV2OtelBehavior()
-            }
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.UNITY, useV2Payload = true)
+    }
 
     @Before
     fun setup() {

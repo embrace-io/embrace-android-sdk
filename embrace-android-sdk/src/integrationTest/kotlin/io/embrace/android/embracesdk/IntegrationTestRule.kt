@@ -139,7 +139,7 @@ internal class IntegrationTestRule(
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */
-    internal class Harness(
+    internal class Harness @JvmOverloads constructor(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
         val startImmediately: Boolean = true,
         val appFramework: AppFramework = AppFramework.NATIVE,
@@ -180,7 +180,15 @@ internal class IntegrationTestRule(
                 deliveryService = FakeDeliveryService(),
             ),
         val fakeAnrModule: AnrModule = FakeAnrModule(),
+        val useV2Payload: Boolean = false
     ) {
+        init {
+            if (useV2Payload) {
+                overriddenConfigService.oTelBehavior = fakeOTelBehavior {
+                    RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
+                }
+            }
+        }
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)
         }
@@ -188,17 +196,6 @@ internal class IntegrationTestRule(
 
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
-
-        @JvmOverloads
-        fun newHarness(startImmediately: Boolean = true, useV2Payload: Boolean = false): Harness {
-            return Harness(startImmediately = startImmediately).apply {
-                if (useV2Payload) {
-                    overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-                        RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
-                    }
-                }
-            }
-        }
 
         private val DEFAULT_SDK_LOCAL_CONFIG = SdkLocalConfig(
             networking = NetworkLocalConfig(

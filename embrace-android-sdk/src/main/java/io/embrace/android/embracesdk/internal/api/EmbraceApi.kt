@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.api
 
 import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
-import io.opentelemetry.sdk.logs.export.LogRecordExporter
-import io.opentelemetry.sdk.trace.export.SpanExporter
 
 /**
  * Declares the functions that consist of Embrace's public API. You should not use
@@ -81,18 +79,4 @@ internal interface EmbraceApi {
      * @return LastRunEndState enum value representing the end state of the last run.
      */
     val lastRunEndState: LastRunEndState
-
-    /**
-     * Adds a [SpanExporter] to the tracer.
-     *
-     * @param spanExporter the span exporter to add
-     */
-    fun addSpanExporter(spanExporter: SpanExporter)
-
-    /**
-     * Adds a [LogRecordExporter] to the open telemetry logger.
-     *
-     * @param logRecordExporter the LogRecord exporter to add
-     */
-    fun addLogRecordExporter(logRecordExporter: LogRecordExporter)
 }

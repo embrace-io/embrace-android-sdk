@@ -19,7 +19,7 @@ internal class SpanDataSourceKtTest {
             spanRepository = initModule.openTelemetryModule.spanRepository,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             embraceSpanFactory = EmbraceSpanFactoryImpl(
-                tracer = initModule.openTelemetryModule.tracer,
+                tracer = initModule.openTelemetryModule.sdkTracer,
                 openTelemetryClock = initModule.openTelemetryClock,
                 spanRepository = initModule.openTelemetryModule.spanRepository,
             )

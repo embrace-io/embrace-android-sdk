@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -45,8 +47,8 @@ internal class OpenTelemetrySdkTest {
     }
 
     @Test
-    fun `check resource added by default tracer`() {
-        sdk.getOpenTelemetryTracer().spanBuilder("test").startSpan().end()
+    fun `check resource added by sdk tracer`() {
+        sdk.sdkTracer.spanBuilder("test").startSpan().end()
         spanExporter.exportedSpans.single().resource.assertExpectedAttributes(
             expectedServiceName = configuration.embraceServiceName,
             expectedServiceVersion = configuration.embraceVersionName,
@@ -62,5 +64,35 @@ internal class OpenTelemetrySdkTest {
             expectedServiceVersion = configuration.embraceVersionName,
             systemInfo = systemInfo
         )
+    }
+
+    @Test
+    fun `sdk name and version used as instrumentation scope for tracer instance used by embrace`() {
+        sdk.sdkTracer
+            .spanBuilder("test")
+            .startSpan()
+            .end()
+        with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
+            assertEquals(configuration.embraceServiceName, name)
+            assertEquals(configuration.embraceVersionName, version)
+            assertNull(schemaUrl)
+        }
+    }
+
+    @Test
+    fun `instrumentation scope set properly on external tracer`() {
+        sdk.sdkTracerProvider
+            .tracerBuilder("testScope")
+            .setInstrumentationVersion("v1")
+            .setSchemaUrl("url")
+            .build()
+            .spanBuilder("test")
+            .startSpan()
+            .end()
+        with(spanExporter.exportedSpans.single().instrumentationScopeInfo) {
+            assertEquals("testScope", name)
+            assertEquals("v1", version)
+            assertEquals("url", schemaUrl)
+        }
     }
 }

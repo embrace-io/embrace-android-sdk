@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.SessionMessage
 
 internal class SessionSanitizerFacade(
@@ -10,14 +11,13 @@ internal class SessionSanitizerFacade(
 
     fun getSanitizedMessage(): SessionMessage {
         val sanitizedSession = SessionSanitizer(sessionMessage.session, components).sanitize()
-        val sanitizedPerformanceInfo = PerformanceInfoSanitizer(sessionMessage.performanceInfo, components).sanitize()
         val sanitizedSpans = SpanSanitizer(sessionMessage.spans, components).sanitize()
 
         return sessionMessage.copy(
             session = sanitizedSession,
-            performanceInfo = sanitizedPerformanceInfo,
             spans = sanitizedSpans,
-            metadata = sanitizeMetadata(components)
+            metadata = sanitizeMetadata(components),
+            resource = sanitizeResource(components)
         )
     }
 
@@ -30,6 +30,19 @@ internal class SessionSanitizerFacade(
         }
         return sessionMessage.metadata
     }
+
+    private fun sanitizeResource(enabledComponents: Set<String>): EnvelopeResource {
+        if (sessionMessage.resource == null) {
+            return EnvelopeResource()
+        }
+        if (!shouldSendCurrentDiskUsage(enabledComponents)) {
+            return sessionMessage.resource.copy(diskTotalCapacity = null)
+        }
+        return sessionMessage.resource
+    }
+
+    private fun shouldSendCurrentDiskUsage(enabledComponents: Set<String>) =
+        enabledComponents.contains(SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE)
 
     private fun shouldSendUserPersonas(enabledComponents: Set<String>) =
         enabledComponents.contains(SessionGatingKeys.USER_PERSONAS)

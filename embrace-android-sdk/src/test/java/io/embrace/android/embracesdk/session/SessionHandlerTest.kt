@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
@@ -82,7 +80,6 @@ internal class SessionHandlerTest {
 
     private val initial = fakeSession(startMs = NOW)
     private val userService: FakeUserService = FakeUserService()
-    private val performanceInfoService: PerformanceInfoService = FakePerformanceInfoService()
     private val webViewService: WebViewService = FakeWebViewService()
     private var activeSession: Session = fakeSession()
 
@@ -153,7 +150,6 @@ internal class SessionHandlerTest {
             eventService,
             logMessageService,
             internalErrorService,
-            performanceInfoService,
             webViewService,
             null,
             preferencesService,
@@ -175,7 +171,6 @@ internal class SessionHandlerTest {
             ),
             eventService,
             logMessageService,
-            performanceInfoService,
             null,
             preferencesService,
             spanRepository,

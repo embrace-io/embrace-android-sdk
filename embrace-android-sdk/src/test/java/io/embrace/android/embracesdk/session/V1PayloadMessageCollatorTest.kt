@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
@@ -65,7 +64,6 @@ internal class V1PayloadMessageCollatorTest {
             internalErrorService = FakeInternalErrorService().apply {
                 data = LegacyExceptionError()
             },
-            performanceInfoService = FakePerformanceInfoService(),
             spanRepository = initModule.openTelemetryModule.spanRepository,
             spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
@@ -201,7 +199,6 @@ internal class V1PayloadMessageCollatorTest {
     private fun SessionMessage.verifyFinalFieldsPopulated(
         payloadType: PayloadType
     ) {
-        assertNotNull(performanceInfo)
         session.verifyInitialFieldsPopulated(payloadType)
         session.verifyFinalFieldsPopulated(payloadType)
     }

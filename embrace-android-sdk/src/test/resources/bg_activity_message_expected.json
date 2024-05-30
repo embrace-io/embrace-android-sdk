@@ -8,12 +8,6 @@
     "cs": false,
     "sm": "s"
   },
-  "p": {
-    "ds": {
-      "as": 1,
-      "fs": 2
-    }
-  },
   "spans": [
     {
       "trace_id": "fake-span-id",

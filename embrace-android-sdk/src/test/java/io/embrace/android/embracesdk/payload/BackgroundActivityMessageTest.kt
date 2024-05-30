@@ -15,13 +15,7 @@ internal class BackgroundActivityMessageTest {
 
     private val backgroundActivity = fakeBackgroundActivity()
     private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
-    private val perfInfo = PerformanceInfo(DiskUsage(1, 2))
-
-    private val info = SessionMessage(
-        backgroundActivity,
-        perfInfo,
-        spans
-    )
+    private val info = SessionMessage(backgroundActivity, spans)
 
     @Test
     fun testSerialization() {
@@ -32,9 +26,7 @@ internal class BackgroundActivityMessageTest {
     fun testDeserialization() {
         val obj = deserializeJsonFromResource<SessionMessage>("bg_activity_message_expected.json")
         assertNotNull(obj)
-
         assertEquals(backgroundActivity.startTime, obj.session.startTime)
-        assertEquals(perfInfo, obj.performanceInfo)
         assertEquals(spans, obj.spans)
     }
 

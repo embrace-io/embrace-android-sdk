@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
@@ -12,8 +12,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class SessionSanitizerFacadeTest {
-
-    private val sessionPerformanceInfo = fakePerformanceInfo()
 
     private val session = fakeSession().copy(
         properties = mapOf("example" to "example"),
@@ -31,10 +29,12 @@ internal class SessionSanitizerFacadeTest {
 
     private val sessionMessage = SessionMessage(
         session = session,
-        performanceInfo = sessionPerformanceInfo,
         metadata = EnvelopeMetadata(
             email = "example@embrace.com",
             personas = setOf("personas")
+        ),
+        resource = EnvelopeResource(
+            diskTotalCapacity = 100
         )
     )
 
@@ -77,8 +77,7 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.session.eventIds)
         assertNotNull(sanitizedMessage.session.startupDuration)
         assertNotNull(sanitizedMessage.session.startupThreshold)
-
-        assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
+        assertNotNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
 
     @Test
@@ -100,7 +99,6 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.session.eventIds)
         assertNull(sanitizedMessage.session.startupDuration)
         assertNull(sanitizedMessage.session.startupThreshold)
-
-        assertNull(sanitizedMessage.performanceInfo?.diskUsage)
+        assertNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
 }

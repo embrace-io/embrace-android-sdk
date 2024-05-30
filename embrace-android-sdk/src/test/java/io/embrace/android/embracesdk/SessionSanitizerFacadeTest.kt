@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
-import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
@@ -32,7 +31,6 @@ internal class SessionSanitizerFacadeTest {
 
     private val sessionMessage = SessionMessage(
         session = session,
-        deviceInfo = DeviceInfo(),
         performanceInfo = sessionPerformanceInfo,
         metadata = EnvelopeMetadata(
             email = "example@embrace.com",
@@ -81,8 +79,6 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.session.startupThreshold)
 
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
-
-        assertNotNull(sanitizedMessage.deviceInfo)
     }
 
     @Test
@@ -106,7 +102,5 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.session.startupThreshold)
 
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)
-
-        assertNotNull(sanitizedMessage.deviceInfo)
     }
 }

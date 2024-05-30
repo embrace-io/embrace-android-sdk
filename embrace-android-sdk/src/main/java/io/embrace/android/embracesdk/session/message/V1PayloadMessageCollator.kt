@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.event.EventService
@@ -27,7 +26,6 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class V1PayloadMessageCollator(
     private val gatingService: GatingService,
-    private val metadataService: MetadataService,
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
     private val internalErrorService: InternalErrorService,
@@ -177,7 +175,6 @@ internal class V1PayloadMessageCollator(
 
         return SessionMessage(
             session = finalPayload,
-            deviceInfo = captureDataSafely(logger, metadataService::getDeviceInfo),
             performanceInfo = captureDataSafely(logger) {
                 performanceInfoService.getSessionPerformanceInfo(
                     startTime,

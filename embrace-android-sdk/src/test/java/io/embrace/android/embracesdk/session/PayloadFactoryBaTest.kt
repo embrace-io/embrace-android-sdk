@@ -159,7 +159,6 @@ internal class PayloadFactoryBaTest {
         val logger = EmbLoggerImpl()
         val collator = V1PayloadMessageCollator(
             gatingService,
-            metadataService,
             eventService,
             logMessageService,
             internalErrorService,
@@ -184,7 +183,6 @@ internal class PayloadFactoryBaTest {
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
             sessionEnvelopeSource,
-            metadataService,
             eventService,
             logMessageService,
             performanceInfoService,

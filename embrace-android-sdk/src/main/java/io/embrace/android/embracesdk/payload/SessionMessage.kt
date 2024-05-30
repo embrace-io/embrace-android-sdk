@@ -21,12 +21,6 @@ internal data class SessionMessage @JvmOverloads internal constructor(
     val session: Session,
 
     /**
-     * The device information.
-     */
-    @Json(name = "d")
-    val deviceInfo: DeviceInfo? = null,
-
-    /**
      * The device's performance info, such as power, cpu, network.
      */
     @Json(name = "p")

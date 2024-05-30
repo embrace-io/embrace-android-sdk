@@ -150,7 +150,6 @@ internal class SessionHandlerTest {
 
         val payloadMessageCollator = V1PayloadMessageCollator(
             gatingService,
-            metadataService,
             eventService,
             logMessageService,
             internalErrorService,
@@ -174,7 +173,6 @@ internal class SessionHandlerTest {
                 resourceSource = FakeEnvelopeResourceSource(),
                 sessionPayloadSource = FakeSessionPayloadSource()
             ),
-            metadataService,
             eventService,
             logMessageService,
             performanceInfoService,

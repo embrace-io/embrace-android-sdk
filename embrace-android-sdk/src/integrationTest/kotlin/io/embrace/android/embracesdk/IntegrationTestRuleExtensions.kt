@@ -211,7 +211,6 @@ internal fun verifySessionHappened(message: SessionMessage) {
 
 internal fun verifySessionMessage(sessionMessage: SessionMessage) {
     assertNotNull(sessionMessage.session)
-    assertNotNull(sessionMessage.deviceInfo)
 
     if (sessionMessage.session.messageType == "en") {
         assertNotNull(sessionMessage.performanceInfo)
@@ -225,7 +224,6 @@ internal fun verifyBgActivityHappened(message: SessionMessage) {
 
 internal fun verifyBgActivityMessage(message: SessionMessage) {
     assertNotNull(message.session)
-    assertNotNull(message.deviceInfo)
 
     if (message.session.messageType == "en") {
         assertNotNull(message.performanceInfo)

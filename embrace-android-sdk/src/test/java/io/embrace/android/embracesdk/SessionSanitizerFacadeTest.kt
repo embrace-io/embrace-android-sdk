@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
-import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -33,7 +32,6 @@ internal class SessionSanitizerFacadeTest {
 
     private val sessionMessage = SessionMessage(
         session = session,
-        appInfo = AppInfo(),
         deviceInfo = DeviceInfo(),
         performanceInfo = sessionPerformanceInfo,
         metadata = EnvelopeMetadata(
@@ -84,7 +82,6 @@ internal class SessionSanitizerFacadeTest {
 
         assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
-        assertNotNull(sanitizedMessage.appInfo)
         assertNotNull(sanitizedMessage.deviceInfo)
     }
 
@@ -110,7 +107,6 @@ internal class SessionSanitizerFacadeTest {
 
         assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
-        assertNotNull(sanitizedMessage.appInfo)
         assertNotNull(sanitizedMessage.deviceInfo)
     }
 }

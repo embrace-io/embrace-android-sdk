@@ -19,7 +19,6 @@ import org.junit.Test
 internal class SessionMessageTest {
 
     private val session = fakeSession()
-    private val appInfo = AppInfo("fake-app-version")
     private val deviceInfo = DeviceInfo("fake-manufacturer")
     private val performanceInfo = PerformanceInfo(DiskUsage(150923409L, 509209823L))
     private val spans = listOf(
@@ -39,7 +38,6 @@ internal class SessionMessageTest {
 
     private val info = SessionMessage(
         session,
-        appInfo,
         deviceInfo,
         performanceInfo,
         spans,
@@ -56,7 +54,6 @@ internal class SessionMessageTest {
         val obj = deserializeJsonFromResource<SessionMessage>("session_message_expected.json")
         assertNotNull(obj)
         assertEquals(session, obj.session)
-        assertEquals(appInfo, obj.appInfo)
         assertEquals(deviceInfo, obj.deviceInfo)
         assertEquals(performanceInfo, obj.performanceInfo)
         assertEquals(spans, obj.spans)

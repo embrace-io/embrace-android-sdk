@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -30,6 +31,15 @@ internal fun EmbraceSpanData.findEventsOfType(telemetryType: TelemetryType): Lis
  */
 internal fun EmbraceSpanData.findSpanAttribute(key: String): String =
     checkNotNull(attributes[key]) {
+        "Attribute not found: $key"
+    }
+
+
+/**
+ * Finds the span attribute matching the name.
+ */
+internal fun Span.findSpanAttribute(key: String): String =
+    checkNotNull(attributes?.singleOrNull { it.key == key }?.data) {
         "Attribute not found: $key"
     }
 
@@ -74,6 +84,15 @@ internal fun SessionMessage.findSpansOfType(telemetryType: TelemetryType): List<
     checkNotNull(spans?.filter { it.hasFixedAttribute(telemetryType) }) {
         "Spans of type not found: ${telemetryType.key}"
     }
+
+/**
+ * Finds the span matching the given [TelemetryType].
+ */
+internal fun SessionMessage.findSpansByName(name: String): List<Span> {
+    return checkNotNull(data?.spans?.filter { it.name == name }) {
+        "Spans not found named: $name"
+    }
+}
 
 internal fun SessionMessage.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<EmbraceSpanData> =
     checkNotNull(spanSnapshots?.filter { it.hasFixedAttribute(telemetryType) }) {

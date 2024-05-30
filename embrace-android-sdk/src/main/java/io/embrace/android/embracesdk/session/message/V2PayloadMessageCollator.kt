@@ -184,7 +184,6 @@ internal class V2PayloadMessageCollator(
 
         return SessionMessage(
             session = finalPayload,
-            appInfo = captureDataSafely(logger, metadataService::getAppInfo),
             deviceInfo = captureDataSafely(logger, metadataService::getDeviceInfo),
             performanceInfo = captureDataSafely(logger) {
                 performanceInfoService.getSessionPerformanceInfo(

@@ -35,6 +35,7 @@ internal class EmbraceSpanImpl(
     private var spanStartTimeMs: Long? = null
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
+    private var updatedName: String? = null
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val schemaAttributes = spanBuilder.fixedAttributes.associate {
         it.toEmbraceKeyValuePair()
@@ -57,16 +58,20 @@ internal class EmbraceSpanImpl(
         get() = startedSpan.get()?.isRecording == true
 
     override fun start(startTimeMs: Long?): Boolean {
-        return if (startedSpan.get() != null) {
+        return if (spanStarted()) {
             false
         } else {
             var successful: Boolean
             val attemptedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan(attemptedStartTimeMs))
-                successful = startedSpan.get() != null
+                successful = spanStarted()
             }
             if (successful) {
+                updatedName?.let { newName ->
+                    startedSpan.get()?.updateName(newName)
+                }
+
                 spanStartTimeMs = attemptedStartTimeMs
                 spanRepository.trackStartedSpan(this)
             }
@@ -177,13 +182,27 @@ internal class EmbraceSpanImpl(
         return false
     }
 
+    override fun updateName(newName: String): Boolean {
+        if (newName.isValidName()) {
+            synchronized(startedSpan) {
+                if (!spanStarted() || isRecording) {
+                    updatedName = newName
+                    startedSpan.get()?.updateName(newName)
+                    return true
+                }
+            }
+        }
+
+        return false
+    }
+
     override fun snapshot(): Span? {
         return if (canSnapshot()) {
             Span(
                 traceId = traceId,
                 spanId = spanId,
                 parentSpanId = parent?.spanId,
-                name = spanBuilder.spanName,
+                name = getSpanName(),
                 startTimeUnixNano = spanStartTimeMs?.millisToNanos(),
                 endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
                 status = status,
@@ -222,6 +241,10 @@ internal class EmbraceSpanImpl(
         return false
     }
 
+    private fun spanStarted() = startedSpan.get() != null
+
+    private fun getSpanName() = synchronized(startedSpan) { updatedName ?: spanBuilder.spanName }
+
     internal fun wrappedSpan(): io.opentelemetry.api.trace.Span? = startedSpan.get()
 
     companion object {
@@ -239,5 +262,7 @@ internal class EmbraceSpanImpl(
             addAttribute(fixedAttribute.key.name, fixedAttribute.value)
             return this
         }
+
+        internal fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
     }
 }

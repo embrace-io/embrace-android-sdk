@@ -331,6 +331,7 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;)Z
 	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
 	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun getSpanContext ()Lio/opentelemetry/api/trace/SpanContext;
 	public abstract fun getSpanId ()Ljava/lang/String;
 	public abstract fun getTraceId ()Ljava/lang/String;
 	public abstract fun isRecording ()Z

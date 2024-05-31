@@ -18,6 +18,8 @@ internal interface EmbraceSpanFactory {
         private: Boolean = internal,
         parent: EmbraceSpan? = null
     ): PersistableEmbraceSpan
+
+    fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan
 }
 
 internal class EmbraceSpanFactoryImpl(
@@ -32,15 +34,20 @@ internal class EmbraceSpanFactoryImpl(
         internal: Boolean,
         private: Boolean,
         parent: EmbraceSpan?
-    ): PersistableEmbraceSpan = EmbraceSpanImpl(
-        spanBuilder = tracer.embraceSpanBuilder(
+    ): PersistableEmbraceSpan = create(
+        embraceSpanBuilder = tracer.embraceSpanBuilder(
             name = name,
             type = type,
             internal = internal,
             private = private,
-            parent = parent
-        ),
-        openTelemetryClock = openTelemetryClock,
-        spanRepository = spanRepository
+            parent = parent,
+        )
     )
+
+    override fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan =
+        EmbraceSpanImpl(
+            spanBuilder = embraceSpanBuilder,
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository
+        )
 }

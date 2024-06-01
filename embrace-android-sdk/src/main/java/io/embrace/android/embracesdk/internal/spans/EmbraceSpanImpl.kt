@@ -69,7 +69,10 @@ internal class EmbraceSpanImpl(
             false
         } else {
             var successful: Boolean
-            val attemptedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
+            val attemptedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis()
+                ?: spanBuilder.startTimeMs
+                ?: openTelemetryClock.now().nanosToMillis()
+
             synchronized(startedSpan) {
                 startedSpan.set(spanBuilder.startSpan(attemptedStartTimeMs))
                 successful = spanStarted()

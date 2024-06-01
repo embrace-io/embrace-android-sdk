@@ -36,7 +36,7 @@ internal class EmbraceSpanBuilderTest {
             assertTrue(contains(EmbType.Performance.Default))
             assertTrue(contains(KeySpan))
         }
-        val span = spanBuilder.startSpan()
+        val span = spanBuilder.startSpan(clock.now())
         assertTrue(span.isRecording)
         span.end()
         assertFalse(span.isRecording)

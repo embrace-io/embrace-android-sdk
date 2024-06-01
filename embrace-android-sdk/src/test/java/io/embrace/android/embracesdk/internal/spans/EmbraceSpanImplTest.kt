@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
@@ -57,7 +58,7 @@ internal class EmbraceSpanImplTest {
                 internal = false,
                 private = false
             ),
-            openTelemetryClock = fakeInitModule.openTelemetryClock,
+            openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
         )
         fakeClock.tick(100)
@@ -293,6 +294,16 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate full snapshot`() {
+        embraceSpan = EmbraceSpanImpl(
+            spanBuilder = tracer.embraceSpanBuilder(
+                name = EXPECTED_SPAN_NAME,
+                type = EmbType.System.LowPower,
+                internal = true,
+                private = true
+            ),
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository,
+        )
         assertTrue(embraceSpan.start())
         assertNotNull(embraceSpan.snapshot())
         with(embraceSpan) {
@@ -313,7 +324,9 @@ internal class EmbraceSpanImplTest {
             assertEquals(traceId, snapshot.traceId)
             assertEquals(spanId, snapshot.spanId)
             assertNull(snapshot.parentSpanId)
-            assertEquals(EXPECTED_SPAN_NAME, snapshot.name)
+            assertEquals(EXPECTED_SPAN_NAME.toEmbraceObjectName(), snapshot.name)
+            assertTrue(hasFixedAttribute(EmbType.System.LowPower))
+            assertTrue(hasFixedAttribute(PrivateSpan))
             assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeUnixNano)
             assertEquals(Span.Status.UNSET, snapshot.status)
 
@@ -334,16 +347,20 @@ internal class EmbraceSpanImplTest {
     private fun EmbraceSpanImpl.assertSnapshot(
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long? = null,
+        expectedType: EmbType = EmbType.Performance.Default,
         expectedStatus: Span.Status = Span.Status.UNSET,
         eventCount: Int = 0,
         expectedEmbraceAttributes: Int = 2,
-        expectedCustomAttributeCount: Int = 0
+        expectedCustomAttributeCount: Int = 0,
+        isPrivate: Boolean = false,
     ) {
         with(checkNotNull(snapshot())) {
             assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
             assertEquals(expectedStatus, status)
             assertEquals(eventCount, events?.size)
+            assertTrue(hasFixedAttribute(expectedType))
+            assertEquals(isPrivate, hasFixedAttribute(PrivateSpan))
             checkNotNull(attributes)
             val embraceAttributeCount = attributes.filter { checkNotNull(it.key).startsWith("emb.") }.size
             val customAttributeCount = attributes.size - embraceAttributeCount

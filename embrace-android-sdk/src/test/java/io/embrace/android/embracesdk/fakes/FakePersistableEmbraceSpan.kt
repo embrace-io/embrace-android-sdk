@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.EXCEPTION_EVENT_NAME
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -66,7 +65,8 @@ internal class FakePersistableEmbraceSpan(
             status = if (errorCode == null) {
                 Span.Status.OK
             } else {
-                setFixedAttribute(errorCode.fromErrorCode())
+                val code = errorCode.fromErrorCode()
+                setSystemAttribute(code.key, code.value)
                 Span.Status.ERROR
             }
             spanEndTimeMs = endTimeMs ?: fakeClock.now()
@@ -124,10 +124,14 @@ internal class FakePersistableEmbraceSpan(
         }
     }
 
-    override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
+    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
 
-    override fun getAttribute(key: EmbraceAttributeKey): String? = attributes[key.name]
+    override fun getSystemAttribute(key: EmbraceAttributeKey): String? = attributes[key.name]
+
+    override fun setSystemAttribute(key: EmbraceAttributeKey, value: String) {
+        attributes[key.name] = value
+    }
 
     override fun removeCustomAttribute(key: String): Boolean = attributes.remove(key) != null
 

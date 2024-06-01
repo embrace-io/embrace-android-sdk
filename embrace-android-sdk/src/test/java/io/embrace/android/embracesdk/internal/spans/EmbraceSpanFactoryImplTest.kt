@@ -37,9 +37,9 @@ internal class EmbraceSpanFactoryImplTest {
         val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = false)
         assertTrue(span.start(clock.now()))
         with(span) {
-            assertTrue(hasEmbraceAttribute(EmbType.Performance.Default))
+            assertTrue(hasFixedAttribute(EmbType.Performance.Default))
             assertNull(parent)
-            assertFalse(hasEmbraceAttribute(PrivateSpan))
+            assertFalse(hasFixedAttribute(PrivateSpan))
             assertEquals("test", snapshot()?.name)
         }
         assertNotNull(spanRepository.getSpan(spanId = checkNotNull(span.spanId)))
@@ -50,9 +50,9 @@ internal class EmbraceSpanFactoryImplTest {
         val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = true)
         assertTrue(span.start(clock.now()))
         with(span) {
-            assertTrue(hasEmbraceAttribute(EmbType.Performance.Default))
+            assertTrue(hasFixedAttribute(EmbType.Performance.Default))
             assertNull(parent)
-            assertTrue(hasEmbraceAttribute(PrivateSpan))
+            assertTrue(hasFixedAttribute(PrivateSpan))
             assertEquals("emb-test", snapshot()?.name)
         }
     }
@@ -62,9 +62,9 @@ internal class EmbraceSpanFactoryImplTest {
         val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = true, private = false)
         assertTrue(span.start(clock.now()))
         with(span) {
-            assertTrue(hasEmbraceAttribute(EmbType.Performance.Default))
+            assertTrue(hasFixedAttribute(EmbType.Performance.Default))
             assertNull(parent)
-            assertFalse(hasEmbraceAttribute(PrivateSpan))
+            assertFalse(hasFixedAttribute(PrivateSpan))
             assertEquals("emb-test", snapshot()?.name)
         }
     }
@@ -82,9 +82,9 @@ internal class EmbraceSpanFactoryImplTest {
 
         with(embraceSpanFactory.create(embraceSpanBuilder = spanBuilder)) {
             assertTrue(start(clock.now()))
-            assertTrue(hasEmbraceAttribute(EmbType.System.LowPower))
+            assertTrue(hasFixedAttribute(EmbType.System.LowPower))
             assertEquals(spanParent, parent)
-            assertFalse(hasEmbraceAttribute(PrivateSpan))
+            assertFalse(hasFixedAttribute(PrivateSpan))
             assertEquals("from-span-builder", snapshot()?.name)
         }
     }

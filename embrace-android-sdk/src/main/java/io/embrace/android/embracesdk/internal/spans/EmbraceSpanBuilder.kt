@@ -29,8 +29,9 @@ internal class EmbraceSpanBuilder(
         name
     }
 
-    private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
     private val otelSpanBuilder = tracer.spanBuilder(spanName)
+    private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
+    private val customAttributes = mutableMapOf<String, String>()
 
     init {
         // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
@@ -53,11 +54,10 @@ internal class EmbraceSpanBuilder(
     fun startSpan(startTimeMs: Long? = null): Span {
         startTimeMs?.apply { otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS) }
         val startedSpan = otelSpanBuilder.startSpan()
-        fixedAttributes.forEach { attribute ->
-            startedSpan.setFixedAttribute(attribute)
-        }
         return startedSpan
     }
 
     fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
+
+    fun getCustomAttributes(): Map<String, String> = customAttributes
 }

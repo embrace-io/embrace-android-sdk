@@ -15,6 +15,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.trace.SpanContext
+import io.opentelemetry.api.trace.TraceFlags
+import io.opentelemetry.api.trace.TraceState
 import io.opentelemetry.sdk.trace.IdGenerator
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -37,11 +39,14 @@ internal class FakePersistableEmbraceSpan(
     var spanEndTimeMs: Long? = null
     var status = Span.Status.UNSET
 
-    override val spanContext: SpanContext? = null
+    override var spanContext: SpanContext? = null
 
-    override var traceId: String? = parent?.traceId
+    override val traceId: String?
+        get() = spanContext?.traceId
 
-    override var spanId: String? = null
+    override val spanId: String?
+        get() = spanContext?.spanId
+
     override val isRecording: Boolean
         get() = started && !stopped
 
@@ -49,10 +54,19 @@ internal class FakePersistableEmbraceSpan(
 
     override fun start(startTimeMs: Long?): Boolean {
         if (!started) {
-            spanId = IdGenerator.random().generateSpanId()
-            if (parent == null) {
-                traceId = IdGenerator.random().generateTraceId()
+            val spanTraceId = if (parent == null) {
+                IdGenerator.random().generateTraceId()
+            } else {
+                parent.traceId
             }
+
+            spanContext = SpanContext.create(
+                checkNotNull(spanTraceId),
+                IdGenerator.random().generateSpanId(),
+                TraceFlags.getDefault(),
+                TraceState.getDefault()
+            )
+
             spanStartTimeMs = startTimeMs ?: fakeClock.now()
             started = true
         }

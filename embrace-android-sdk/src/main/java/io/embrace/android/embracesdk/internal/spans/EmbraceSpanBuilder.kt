@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
+import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import java.util.concurrent.TimeUnit
@@ -30,20 +31,17 @@ internal class EmbraceSpanBuilder(
     }
 
     var startTimeMs: Long? = null
-    private val otelSpanBuilder = tracer.spanBuilder(spanName)
+    private val sdkSpanBuilder = tracer.spanBuilder(spanName)
     private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
     private val customAttributes = mutableMapOf<String, String>()
 
     init {
         // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
         if (parent == null) {
-            otelSpanBuilder.setNoParent()
-            if (telemetryType == EmbType.Performance.Default) {
-                fixedAttributes.add(KeySpan)
-            }
+            setNoParent()
         } else if (parent is EmbraceSpanImpl) {
             parent.wrappedSpan()?.let {
-                otelSpanBuilder.setParent(Context.current().with(it))
+                setParent(Context.current().with(it))
             }
         }
 
@@ -53,11 +51,30 @@ internal class EmbraceSpanBuilder(
     }
 
     fun startSpan(startTimeMs: Long): Span {
-        otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
-        return otelSpanBuilder.startSpan()
+        sdkSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
+        return sdkSpanBuilder.startSpan()
     }
 
     fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
 
     fun getCustomAttributes(): Map<String, String> = customAttributes
+
+    fun setParent(context: Context) {
+        sdkSpanBuilder.setParent(context)
+        val parentSpanContext = Span.fromContext(context).spanContext
+        if (fixedAttributes.contains(EmbType.Performance.Default) && parentSpanContext != Context.root()) {
+            fixedAttributes.remove(KeySpan)
+        }
+    }
+
+    fun setNoParent() {
+        sdkSpanBuilder.setNoParent()
+        if (fixedAttributes.contains(EmbType.Performance.Default)) {
+            fixedAttributes.add(KeySpan)
+        }
+    }
+
+    fun setSpanKind(spanKind: SpanKind) {
+        sdkSpanBuilder.setSpanKind(spanKind)
+    }
 }

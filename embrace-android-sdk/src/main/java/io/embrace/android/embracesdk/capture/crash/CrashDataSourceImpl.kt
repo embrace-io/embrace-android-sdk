@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType.System.ReactNativeCrash
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -45,7 +46,7 @@ internal class CrashDataSourceImpl(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val serializer: EmbraceSerializer,
-    logger: EmbLogger,
+    private val logger: EmbLogger,
 ) : CrashDataSource,
     LogDataSourceImpl(
         destination = logWriter,
@@ -55,6 +56,14 @@ internal class CrashDataSourceImpl(
 
     private var mainCrashHandled = false
     private var jsException: JsException? = null
+
+    init {
+        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled() &&
+            !ApkToolsConfig.IS_EXCEPTION_CAPTURE_DISABLED
+        ) {
+            registerExceptionHandler()
+        }
+    }
 
     /**
      * Handles a crash caught by the [EmbraceUncaughtExceptionHandler] by constructing a
@@ -170,5 +179,15 @@ internal class CrashDataSourceImpl(
 
     private fun encodeToUTF8String(source: String): String {
         return source.toByteArray().toUTF8String()
+    }
+
+    /**
+     * Registers the Embrace [java.lang.Thread.UncaughtExceptionHandler] to intercept uncaught
+     * exceptions and forward them to the Embrace API as crashes.
+     */
+    private fun registerExceptionHandler() {
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, logger)
+        Thread.setDefaultUncaughtExceptionHandler(embraceHandler)
     }
 }

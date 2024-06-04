@@ -419,11 +419,9 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             storageModule,
                             essentialServiceModule,
-                            deliveryModule,
                             nativeModule,
                             sessionModule,
                             anrModule,
-                            dataContainerModule,
                             androidServicesModule,
                             customerLogModule,
                         )

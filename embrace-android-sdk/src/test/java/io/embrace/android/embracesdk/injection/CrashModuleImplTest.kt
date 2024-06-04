@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
@@ -43,11 +41,9 @@ internal class CrashModuleImplTest {
             InitModuleImpl(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
-            FakeDeliveryModule(),
             FakeNativeModule(),
             FakeSessionModule(),
             FakeAnrModule(),
-            FakeDataContainerModule(),
             FakeAndroidServicesModule(),
             FakeCustomerLogModule(),
         )
@@ -68,11 +64,9 @@ internal class CrashModuleImplTest {
                     oTelBehavior = oTelBehaviorWithBetaFeatureDisabled
                 )
             ),
-            FakeDeliveryModule(),
             FakeNativeModule(),
             FakeSessionModule(),
             FakeAnrModule(),
-            FakeDataContainerModule(),
             FakeAndroidServicesModule(),
             FakeCustomerLogModule(),
         )
@@ -92,11 +86,9 @@ internal class CrashModuleImplTest {
                     autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled
                 )
             ),
-            FakeDeliveryModule(),
             FakeNativeModule(),
             FakeSessionModule(),
             FakeAnrModule(),
-            FakeDataContainerModule(),
             FakeAndroidServicesModule(),
             FakeCustomerLogModule(),
         )

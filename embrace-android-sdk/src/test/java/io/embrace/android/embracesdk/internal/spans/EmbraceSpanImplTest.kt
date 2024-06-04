@@ -344,6 +344,48 @@ internal class EmbraceSpanImplTest {
         }
     }
 
+    @Test
+    fun `start time from span start method overrides all`() {
+        val spanBuilder = tracer.embraceSpanBuilder(
+            name = EXPECTED_SPAN_NAME,
+            type = EmbType.System.LowPower,
+            internal = true,
+            private = true
+        )
+        spanBuilder.startTimeMs = fakeClock.tick()
+        embraceSpan = EmbraceSpanImpl(
+            spanBuilder = spanBuilder,
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository,
+        )
+
+        val timePassedIn = fakeClock.tick()
+        fakeClock.tick()
+        assertTrue(embraceSpan.start(startTimeMs = timePassedIn))
+        assertEquals(timePassedIn, embraceSpan.snapshot()?.startTimeUnixNano?.nanosToMillis())
+    }
+
+    @Test
+    fun `start time from span builder used if no start time passed into start method`() {
+        val spanBuilder = tracer.embraceSpanBuilder(
+            name = EXPECTED_SPAN_NAME,
+            type = EmbType.System.LowPower,
+            internal = true,
+            private = true
+        )
+
+        val timeOnSpanBuilder = fakeClock.tick()
+        spanBuilder.startTimeMs = timeOnSpanBuilder
+        embraceSpan = EmbraceSpanImpl(
+            spanBuilder = spanBuilder,
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository,
+        )
+        fakeClock.tick()
+        assertTrue(embraceSpan.start())
+        assertEquals(timeOnSpanBuilder, embraceSpan.snapshot()?.startTimeUnixNano?.nanosToMillis())
+    }
+
     private fun EmbraceSpanImpl.assertSnapshot(
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long? = null,

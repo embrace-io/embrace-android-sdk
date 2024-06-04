@@ -70,7 +70,7 @@ internal class SpanRepository {
      * Stop the existing active spans and mark them as failed
      */
     fun failActiveSpans(failureTimeMs: Long) {
-        getActiveSpans().filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }.forEach { span ->
+        getActiveSpans().filterNot { it.hasFixedAttribute(EmbType.Ux.Session) }.forEach { span ->
             span.stop(ErrorCode.FAILURE, failureTimeMs)
         }
     }

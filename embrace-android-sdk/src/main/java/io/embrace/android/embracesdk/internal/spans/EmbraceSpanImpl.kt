@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -38,10 +39,12 @@ internal class EmbraceSpanImpl(
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val schemaAttributes = spanBuilder.getFixedAttributes().associate {
-        it.toEmbraceKeyValuePair()
-    }.toMutableMap()
-    private val attributes = ConcurrentHashMap<String, String>()
+    private val systemAttributes = ConcurrentHashMap<EmbraceAttributeKey, String>().apply {
+        putAll(spanBuilder.getFixedAttributes().associate { it.key to it.value })
+    }
+    private val customAttributes = ConcurrentHashMap<String, String>().apply {
+        putAll(spanBuilder.getCustomAttributes())
+    }
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
@@ -92,7 +95,10 @@ internal class EmbraceSpanImpl(
 
             synchronized(startedSpan) {
                 startedSpan.get()?.let { spanToStop ->
-                    allAttributes().forEach { attribute ->
+                    systemAttributes.forEach { systemAttribute ->
+                        spanToStop.setEmbraceAttribute(systemAttribute.key, systemAttribute.value)
+                    }
+                    customAttributes.forEach { attribute ->
                         spanToStop.setAttribute(attribute.key, attribute.value)
                     }
 
@@ -174,10 +180,10 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (attributes.size < MAX_ATTRIBUTE_COUNT && attributeValid(key, value)) {
-            synchronized(attributes) {
-                if (attributes.size < MAX_ATTRIBUTE_COUNT && isRecording) {
-                    attributes[key] = value
+        if (customAttributes.size < MAX_ATTRIBUTE_COUNT && attributeValid(key, value)) {
+            synchronized(customAttributes) {
+                if (customAttributes.size < MAX_ATTRIBUTE_COUNT && isRecording) {
+                    customAttributes[key] = value
                     return true
                 }
             }
@@ -211,21 +217,25 @@ internal class EmbraceSpanImpl(
                 endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = events.map(EmbraceSpanEvent::toNewPayload),
-                attributes = allAttributes().toNewPayload()
+                attributes = getAttributesPayload()
             )
         } else {
             null
         }
     }
 
-    override fun hasEmbraceAttribute(fixedAttribute: FixedAttribute): Boolean =
-        allAttributes().hasFixedAttribute(fixedAttribute)
+    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean = systemAttributes[fixedAttribute.key] == fixedAttribute.value
 
-    override fun getAttribute(key: EmbraceAttributeKey): String? = allAttributes()[key.name]
+    override fun getSystemAttribute(key: EmbraceAttributeKey): String? = systemAttributes[key]
 
-    override fun removeCustomAttribute(key: String): Boolean = attributes.remove(key) != null
+    override fun setSystemAttribute(key: EmbraceAttributeKey, value: String) {
+        systemAttributes[key] = value
+    }
 
-    private fun allAttributes(): Map<String, String> = attributes + schemaAttributes
+    override fun removeCustomAttribute(key: String): Boolean = customAttributes.remove(key) != null
+
+    private fun getAttributesPayload(): List<Attribute> =
+        systemAttributes.map { Attribute(it.key.name, it.value) } + customAttributes.toNewPayload()
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
@@ -261,11 +271,6 @@ internal class EmbraceSpanImpl(
 
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH
-
-        internal fun EmbraceSpan.setFixedAttribute(fixedAttribute: FixedAttribute): EmbraceSpan {
-            addAttribute(fixedAttribute.key.name, fixedAttribute.value)
-            return this
-        }
 
         internal fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
     }

@@ -19,17 +19,17 @@ internal class EmbraceSpanBuilder(
     tracer: Tracer,
     name: String,
     telemetryType: TelemetryType,
-    internal: Boolean,
+    val internal: Boolean,
     private: Boolean,
     val parent: EmbraceSpan?,
 ) {
-    val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
     val spanName = if (internal) {
         name.toEmbraceObjectName()
     } else {
         name
     }
 
+    private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
     private val otelSpanBuilder = tracer.spanBuilder(spanName)
 
     init {
@@ -50,11 +50,14 @@ internal class EmbraceSpanBuilder(
         }
     }
 
-    fun startSpan(startTimeMs: Long): Span {
-        val startedSpan = otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS).startSpan()
+    fun startSpan(startTimeMs: Long? = null): Span {
+        startTimeMs?.apply { otelSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS) }
+        val startedSpan = otelSpanBuilder.startSpan()
         fixedAttributes.forEach { attribute ->
             startedSpan.setFixedAttribute(attribute)
         }
         return startedSpan
     }
+
+    fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
 }

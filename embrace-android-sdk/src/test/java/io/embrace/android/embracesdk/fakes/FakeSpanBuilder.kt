@@ -17,12 +17,12 @@ internal class FakeSpanBuilder(
     var startTimestampMs: Long? = null
 
     override fun setParent(context: Context): SpanBuilder {
-        this.parentContext = context
+        parentContext = context
         return this
     }
 
     override fun setNoParent(): SpanBuilder {
-        this.parentContext = Context.root()
+        parentContext = Context.root()
         return this
     }
 

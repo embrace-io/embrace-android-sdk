@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -7,6 +8,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
+import io.opentelemetry.context.Context
 
 internal class FakeSpanService : SpanService {
 
@@ -23,11 +25,27 @@ internal class FakeSpanService : SpanService {
         type: TelemetryType,
         internal: Boolean,
         private: Boolean
-    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(null, name, type, internal, private).apply {
+    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
+        name = name,
+        parentContext = parent?.run { Context.root().with(parent as PersistableEmbraceSpan) } ?: Context.root(),
+        type = type,
+        internal = internal,
+        private = private
+    ).apply {
         createdSpans.add(this)
     }
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): EmbraceSpan? = null
+    override fun createSpan(
+        embraceSpanBuilder: EmbraceSpanBuilder
+    ): EmbraceSpan = FakePersistableEmbraceSpan(
+        name = embraceSpanBuilder.spanName,
+        parentContext = embraceSpanBuilder.parentContext,
+        type = embraceSpanBuilder.getFixedAttributes().filterIsInstance<TelemetryType>().single(),
+        internal = embraceSpanBuilder.internal,
+        private = embraceSpanBuilder.getFixedAttributes().contains(PrivateSpan)
+    ).apply {
+        createdSpans.add(this)
+    }
 
     override fun <T> recordSpan(
         name: String,
@@ -55,7 +73,13 @@ internal class FakeSpanService : SpanService {
         errorCode: ErrorCode?
     ): Boolean {
         createdSpans.add(
-            FakePersistableEmbraceSpan(parent, name, type, internal, private).apply {
+            FakePersistableEmbraceSpan(
+                name = name,
+                parentContext = parent?.run { Context.root().with(parent as PersistableEmbraceSpan) } ?: Context.root(),
+                type = type,
+                internal = internal,
+                private = private
+            ).apply {
                 start(startTimeMs)
                 attributes.forEach { (key, value) -> addAttribute(key, value) }
                 events.forEach {

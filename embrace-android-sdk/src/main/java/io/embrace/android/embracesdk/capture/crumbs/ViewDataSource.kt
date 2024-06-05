@@ -50,9 +50,7 @@ internal class ViewDataSource(
      */
     fun changeView(name: String?) {
         val lastView = viewSpans.keys.lastOrNull()
-        if (name.equals(lastView, ignoreCase = true)) {
-            endView(lastView)
-        }
+        endView(lastView)
         startView(name)
     }
 

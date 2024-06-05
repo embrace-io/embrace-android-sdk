@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
+import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -209,6 +210,8 @@ internal class EmbraceSpanImpl(
         return false
     }
 
+    override fun asNewContext(): Context? = startedSpan.get()?.run { spanBuilder.parentContext.with(this) }
+
     override fun snapshot(): Span? {
         return if (canSnapshot()) {
             Span(
@@ -261,8 +264,6 @@ internal class EmbraceSpanImpl(
     private fun spanStarted() = startedSpan.get() != null
 
     private fun getSpanName() = synchronized(startedSpan) { updatedName ?: spanBuilder.spanName }
-
-    internal fun wrappedSpan(): io.opentelemetry.api.trace.Span? = startedSpan.get()
 
     companion object {
         internal const val MAX_NAME_LENGTH = 50

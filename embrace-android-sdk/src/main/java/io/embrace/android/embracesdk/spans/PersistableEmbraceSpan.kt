@@ -4,11 +4,18 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.opentelemetry.context.Context
 
 /**
  * An [EmbraceSpan] that has can generate a snapshot of its current state for persistence
  */
 internal interface PersistableEmbraceSpan : EmbraceSpan {
+
+    /**
+     * Create a new [Context] object based in this span and its parent's context. This can be used for the parent [Context] for a new span
+     * with this span as its parent.
+     */
+    fun asNewContext(): Context?
 
     /**
      * Create a snapshot of the current state of the object

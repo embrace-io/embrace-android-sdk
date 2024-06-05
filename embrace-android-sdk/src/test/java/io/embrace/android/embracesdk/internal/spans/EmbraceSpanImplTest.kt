@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
+import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.fixtures.maxSizeEventAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEventAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -384,6 +385,29 @@ internal class EmbraceSpanImplTest {
         fakeClock.tick()
         assertTrue(embraceSpan.start())
         assertEquals(timeOnSpanBuilder, embraceSpan.snapshot()?.startTimeUnixNano?.nanosToMillis())
+    }
+
+    @Test
+    fun `validate context objects are propagated from the parent to the child span`() {
+        val spanBuilder = tracer.embraceSpanBuilder(
+            name = EXPECTED_SPAN_NAME,
+            type = EmbType.System.LowPower,
+            internal = true,
+            private = true
+        )
+        val newParentContext = spanBuilder.parentContext.with(fakeContextKey, "fake-value")
+        spanBuilder.setParent(newParentContext)
+
+        embraceSpan = EmbraceSpanImpl(
+            spanBuilder = spanBuilder,
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository,
+        )
+
+        assertNull(embraceSpan.asNewContext())
+        assertTrue(embraceSpan.start())
+        val newSpanContext = checkNotNull(embraceSpan.asNewContext())
+        assertEquals("fake-value", newSpanContext.get(fakeContextKey))
     }
 
     private fun EmbraceSpanImpl.assertSnapshot(

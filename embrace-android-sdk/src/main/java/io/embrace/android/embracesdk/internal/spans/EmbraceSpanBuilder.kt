@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
@@ -30,19 +31,21 @@ internal class EmbraceSpanBuilder(
         name
     }
 
+    lateinit var parentContext: Context
+        private set
+
     var startTimeMs: Long? = null
+
     private val sdkSpanBuilder = tracer.spanBuilder(spanName)
     private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
     private val customAttributes = mutableMapOf<String, String>()
 
     init {
         // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
-        if (parent == null) {
+        if (parent is PersistableEmbraceSpan) {
+            setParent(parent.asNewContext() ?: Context.root())
+        } else {
             setNoParent()
-        } else if (parent is EmbraceSpanImpl) {
-            parent.wrappedSpan()?.let {
-                setParent(Context.current().with(it))
-            }
         }
 
         if (private) {
@@ -59,7 +62,12 @@ internal class EmbraceSpanBuilder(
 
     fun getCustomAttributes(): Map<String, String> = customAttributes
 
+    fun setCustomAttribute(key: String, value: String) {
+        customAttributes[key] = value
+    }
+
     fun setParent(context: Context) {
+        parentContext = context
         sdkSpanBuilder.setParent(context)
         val parentSpanContext = Span.fromContext(context).spanContext
         if (fixedAttributes.contains(EmbType.Performance.Default) && parentSpanContext != Context.root()) {
@@ -68,6 +76,7 @@ internal class EmbraceSpanBuilder(
     }
 
     fun setNoParent() {
+        parentContext = Context.root()
         sdkSpanBuilder.setNoParent()
         if (fixedAttributes.contains(EmbType.Performance.Default)) {
             fixedAttributes.add(KeySpan)

@@ -30,7 +30,7 @@ internal class EmbraceBreadcrumbService(
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
     override fun logView(screen: String?, timestamp: Long) {
-        dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen, false)
+        dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen)
     }
 
     override fun startView(name: String?): Boolean {

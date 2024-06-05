@@ -48,9 +48,9 @@ internal class ViewDataSource(
     /**
      * Called when a view is started, ending the last view.
      */
-    fun changeView(name: String?, force: Boolean) {
+    fun changeView(name: String?) {
         val lastView = viewSpans.keys.lastOrNull()
-        if (force || name.equals(lastView, ignoreCase = true)) {
+        if (name.equals(lastView, ignoreCase = true)) {
             endView(lastView)
         }
         startView(name)

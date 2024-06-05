@@ -157,9 +157,9 @@ internal class EmbraceSpanBuilderTest {
     }
 
     @Test
-    fun `context propagated even if it does not context a span`() {
-        val fakeContext = Context.root().with(fakeContextKey, "fake-value")
-        val parent = FakePersistableEmbraceSpan.started(parentContext = fakeContext)
+    fun `context value propagated even if it does not context a span`() {
+        val fakeRootContext = Context.root().with(fakeContextKey, "fake-value")
+        val parent = FakePersistableEmbraceSpan.started(parentContext = fakeRootContext)
         val spanBuilder = EmbraceSpanBuilder(
             tracer = tracer,
             name = "parent",
@@ -169,11 +169,11 @@ internal class EmbraceSpanBuilderTest {
             parent = parent,
         )
 
-        assertEquals(fakeContext, spanBuilder.parentContext)
+        assertEquals("fake-value", spanBuilder.parentContext.get(fakeContextKey))
 
         val span = spanBuilder.startSpan(clock.now()) as FakeSpan
         assertNotEquals(parent.spanContext?.traceId, span.spanContext.traceId)
-        assertEquals(fakeContext, span.fakeSpanBuilder.parentContext)
+        assertEquals("fake-value", span.fakeSpanBuilder.parentContext.get(fakeContextKey))
     }
 
     private fun Span.assertFakeSpanBuilder(

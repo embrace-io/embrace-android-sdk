@@ -69,21 +69,26 @@ internal class EmbraceSpanBuilder(
     fun setParent(context: Context) {
         parentContext = context
         sdkSpanBuilder.setParent(context)
-        val parentSpanContext = Span.fromContext(context).spanContext
-        if (fixedAttributes.contains(EmbType.Performance.Default) && parentSpanContext != Context.root()) {
-            fixedAttributes.remove(KeySpan)
-        }
+        updateKeySpan()
     }
 
     fun setNoParent() {
         parentContext = Context.root()
         sdkSpanBuilder.setNoParent()
-        if (fixedAttributes.contains(EmbType.Performance.Default)) {
-            fixedAttributes.add(KeySpan)
-        }
+        updateKeySpan()
     }
 
     fun setSpanKind(spanKind: SpanKind) {
         sdkSpanBuilder.setSpanKind(spanKind)
+    }
+
+    private fun updateKeySpan() {
+        if (fixedAttributes.contains(EmbType.Performance.Default)) {
+            if (Span.fromContext(parentContext) == Span.getInvalid()) {
+                fixedAttributes.add(KeySpan)
+            } else {
+                fixedAttributes.remove(KeySpan)
+            }
+        }
     }
 }

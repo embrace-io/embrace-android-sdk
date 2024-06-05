@@ -28,7 +28,7 @@ internal class FakePersistableEmbraceSpan(
     val internal: Boolean = false,
     val private: Boolean = internal,
     private val fakeClock: FakeClock = FakeClock(),
-    var fakeContext: Context? = null
+    var parentContext: Context = Context.root()
 ) : PersistableEmbraceSpan {
 
     val attributes = mutableMapOf(type.toEmbraceKeyValuePair())
@@ -40,6 +40,7 @@ internal class FakePersistableEmbraceSpan(
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
     var status = Span.Status.UNSET
+    var sdkSpan: io.opentelemetry.api.trace.Span? = null
 
     override var spanContext: SpanContext? = null
 
@@ -70,6 +71,7 @@ internal class FakePersistableEmbraceSpan(
             )
 
             spanStartTimeMs = startTimeMs ?: fakeClock.now()
+            sdkSpan = FakeSpanBuilder(name).setParent(parentContext).startSpan()
             started = true
         }
         return true
@@ -122,7 +124,7 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
-    override fun asNewContext(): Context? = fakeContext
+    override fun asNewContext(): Context? = sdkSpan?.run { parentContext.with(this) }
 
     override fun snapshot(): Span? {
         return if (spanId == null) {
@@ -163,14 +165,14 @@ internal class FakePersistableEmbraceSpan(
 
         fun started(
             parent: PersistableEmbraceSpan? = null,
-            parentContext: Context? = parent?.run { parent.asNewContext() },
+            parentContext: Context = parent?.run { parent.asNewContext() } ?: Context.root(),
             clock: FakeClock = FakeClock()
         ): FakePersistableEmbraceSpan {
             val span = FakePersistableEmbraceSpan(
                 parent = parent,
                 name = "started",
                 fakeClock = clock,
-                fakeContext = parentContext
+                parentContext = parentContext
             )
             span.start()
             return span

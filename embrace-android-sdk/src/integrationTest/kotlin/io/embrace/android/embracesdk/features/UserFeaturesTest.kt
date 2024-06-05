@@ -18,15 +18,9 @@ internal class UserFeaturesTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.Harness(startImmediately = false).apply {
-                overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-                    RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
-                }
-            }
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(startImmediately = false, useV2Payload = true)
+    }
 
     @Test
     fun `user info setting and clearing`() {

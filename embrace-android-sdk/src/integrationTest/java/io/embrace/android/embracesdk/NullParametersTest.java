@@ -33,9 +33,7 @@ public class NullParametersTest {
     private static final String NULL_STRING = null;
 
     @Rule
-    public IntegrationTestRule testRule = new IntegrationTestRule(
-            () -> IntegrationTestRule.Companion.newHarness(true)
-    );
+    public IntegrationTestRule testRule = new IntegrationTestRule();
 
     @NonNull
     private final Embrace embrace = testRule.getEmbrace();

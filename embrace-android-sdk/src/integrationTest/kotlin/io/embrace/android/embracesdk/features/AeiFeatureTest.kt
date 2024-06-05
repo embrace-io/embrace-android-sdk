@@ -28,9 +28,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(harnessSupplier = {
-        IntegrationTestRule.Harness(startImmediately = false)
-    })
+    val testRule = IntegrationTestRule { IntegrationTestRule.Harness(startImmediately = false) }
 
     @Test
     fun `application exit info feature`() {

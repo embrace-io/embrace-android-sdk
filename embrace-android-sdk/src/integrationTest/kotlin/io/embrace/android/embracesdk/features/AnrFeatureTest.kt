@@ -36,32 +36,30 @@ internal class AnrFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            val clock = FakeClock(currentTime = START_TIME_MS)
-            val initModule = FakeInitModule(clock)
-            val workerThreadModule =
-                FakeWorkerThreadModule(initModule, WorkerName.ANR_MONITOR).apply {
-                    anrMonitorThread = AtomicReference(Thread.currentThread())
-                }
-            anrMonitorExecutor = workerThreadModule.executor
-            val anrModule = AnrModuleImpl(
-                initModule,
-                FakeEssentialServiceModule(),
-                workerThreadModule,
-                FakeOpenTelemetryModule()
-            )
-            blockedThreadDetector = anrModule.blockedThreadDetector
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        val clock = FakeClock(currentTime = START_TIME_MS)
+        val initModule = FakeInitModule(clock)
+        val workerThreadModule =
+            FakeWorkerThreadModule(initModule, WorkerName.ANR_MONITOR).apply {
+                anrMonitorThread = AtomicReference(Thread.currentThread())
+            }
+        anrMonitorExecutor = workerThreadModule.executor
+        val anrModule = AnrModuleImpl(
+            initModule,
+            FakeEssentialServiceModule(),
+            workerThreadModule,
+            FakeOpenTelemetryModule()
+        )
+        blockedThreadDetector = anrModule.blockedThreadDetector
 
-            IntegrationTestRule.Harness(
-                currentTimeMs = START_TIME_MS,
-                overriddenClock = clock,
-                overriddenInitModule = initModule,
-                overriddenWorkerThreadModule = workerThreadModule,
-                fakeAnrModule = anrModule
-            )
-        }
-    )
+        IntegrationTestRule.Harness(
+            currentTimeMs = START_TIME_MS,
+            overriddenClock = clock,
+            overriddenInitModule = initModule,
+            overriddenWorkerThreadModule = workerThreadModule,
+            fakeAnrModule = anrModule
+        )
+    }
 
     @Test
     fun `trigger ANRs`() {

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.FakeAnrService
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
@@ -54,6 +55,7 @@ internal class V1PayloadMessageCollatorTest {
             data = listOf(fakeCompletedAnrInterval, fakeInProgressAnrInterval)
         }
 
+        val clock = FakeClock()
         collator = V1PayloadMessageCollator(
             gatingService = gatingService,
             nativeThreadSamplerService = null,
@@ -69,8 +71,8 @@ internal class V1PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = AnrOtelMapper(anrService),
-            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
+            anrOtelMapper = AnrOtelMapper(anrService, clock),
+            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer(), clock),
             logger = initModule.logger
         )
     }

@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
@@ -15,7 +13,6 @@ import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -31,12 +28,13 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
@@ -158,8 +156,8 @@ internal class SessionHandlerTest {
             initModule.openTelemetryModule.currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService(),
-            AnrOtelMapper(FakeAnrService()),
-            NativeAnrOtelMapper(null, EmbraceSerializer()),
+            fakeAnrOtelMapper(),
+            fakeNativeAnrOtelMapper(),
             logger
         )
         val v2Collator = V2PayloadMessageCollator(
@@ -177,8 +175,8 @@ internal class SessionHandlerTest {
             currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService(),
-            AnrOtelMapper(FakeAnrService()),
-            NativeAnrOtelMapper(null, EmbraceSerializer()),
+            fakeAnrOtelMapper(),
+            fakeNativeAnrOtelMapper(),
             logger,
         )
         payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService, logger)

@@ -76,7 +76,7 @@ internal class NativeModuleImpl(
     }
 
     override val nativeAnrOtelMapper: NativeAnrOtelMapper by singleton {
-        NativeAnrOtelMapper(nativeThreadSamplerService, initModule.jsonSerializer)
+        NativeAnrOtelMapper(nativeThreadSamplerService, initModule.jsonSerializer, initModule.clock)
     }
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {

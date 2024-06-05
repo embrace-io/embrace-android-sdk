@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.anr.ndk
 
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -22,12 +23,12 @@ internal class NativeAnrOtelMapperTest {
     @Before
     fun setUp() {
         service = FakeNativeThreadSamplerService()
-        mapper = NativeAnrOtelMapper(service, EmbraceSerializer())
+        mapper = NativeAnrOtelMapper(service, EmbraceSerializer(), FakeClock())
     }
 
     @Test
     fun `disabled service`() {
-        val disabledMapper = NativeAnrOtelMapper(null, EmbraceSerializer())
+        val disabledMapper = NativeAnrOtelMapper(null, EmbraceSerializer(), FakeClock())
         assertEquals(emptyList<Span>(), disabledMapper.snapshot(false))
     }
 

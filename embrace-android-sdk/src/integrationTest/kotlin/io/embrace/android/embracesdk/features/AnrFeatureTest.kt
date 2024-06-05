@@ -148,7 +148,7 @@ internal class AnrFeatureTest {
             // assert ANRs received
             val spans = message.findAnrSpans()
             val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = 0)
+            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = 10000032000)
         }
     }
 

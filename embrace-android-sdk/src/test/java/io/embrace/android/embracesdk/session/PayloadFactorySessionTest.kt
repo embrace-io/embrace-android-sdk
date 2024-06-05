@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -14,7 +12,6 @@ import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -30,6 +27,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
+import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -188,8 +187,8 @@ internal class PayloadFactorySessionTest {
             currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService(),
-            AnrOtelMapper(FakeAnrService()),
-            NativeAnrOtelMapper(null, EmbraceSerializer()),
+            fakeAnrOtelMapper(),
+            fakeNativeAnrOtelMapper(),
             logger
         )
         service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService(), logger)

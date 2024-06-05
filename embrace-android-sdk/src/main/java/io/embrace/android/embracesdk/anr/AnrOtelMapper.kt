@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.anr
 
 import io.embrace.android.embracesdk.arch.DataCaptureServiceOtelConverter
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -14,7 +15,8 @@ import io.opentelemetry.sdk.trace.IdGenerator
  * Maps captured ANRs to OTel constructs.
  */
 internal class AnrOtelMapper(
-    private val anrService: AnrService
+    private val anrService: AnrService,
+    private val clock: Clock
 ) : DataCaptureServiceOtelConverter {
 
     override fun snapshot(isFinalPayload: Boolean): List<Span> {
@@ -29,7 +31,7 @@ internal class AnrOtelMapper(
                 parentSpanId = SpanId.getInvalid(),
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),
-                endTimeNanos = interval.endTime?.millisToNanos(),
+                endTimeNanos = (interval.endTime ?: clock.now()).millisToNanos(),
                 status = Span.Status.OK,
                 attributes = attrs,
                 events = events

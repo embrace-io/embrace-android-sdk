@@ -116,8 +116,7 @@ internal class DataSourceModuleImpl(
                     otelModule.spanService,
                     initModule.logger
                 )
-            },
-            configGate = { configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled() }
+            }
         )
     }
 

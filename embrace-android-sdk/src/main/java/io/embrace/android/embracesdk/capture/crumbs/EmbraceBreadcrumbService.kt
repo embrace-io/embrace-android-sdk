@@ -105,7 +105,7 @@ internal class EmbraceBreadcrumbService(
     }
 
     override fun onView(activity: Activity) {
-        if (configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
+        if (configService.breadcrumbBehavior.isAutomaticActivityCaptureEnabled()) {
             logView(activity.javaClass.name)
         }
     }
@@ -114,10 +114,9 @@ internal class EmbraceBreadcrumbService(
      * Close all open fragments when the activity closes
      */
     override fun onViewClose(activity: Activity) {
-        if (!configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
-            return
+        if (configService.breadcrumbBehavior.isAutomaticActivityCaptureEnabled()) {
+            dataSourceModuleProvider()?.viewDataSource?.dataSource?.onViewClose()
         }
-        dataSourceModuleProvider()?.viewDataSource?.dataSource?.onViewClose()
     }
 
     override fun cleanCollections() {

@@ -29,10 +29,9 @@ internal interface BreadcrumbService {
      * The view breadcrumb will not be registered if the last view breadcrumb registry has the same
      * screen name.
      *
-     * @param screen    name of the screen.
-     * @param timestamp time of occurrence of the tap event.
+     * @param screen    name of the screen
      */
-    fun logView(screen: String?, timestamp: Long)
+    fun logView(screen: String?)
 
     /**
      * Logs the start of a view. Must be matched by a call to

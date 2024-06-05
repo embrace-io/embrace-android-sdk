@@ -86,7 +86,7 @@ internal class ViewTrackingApiDelegate(
         }
 
         if (sdkCallChecker.check("log RN view")) {
-            breadcrumbService?.logView(screen, sdkClock.now())
+            breadcrumbService?.logView(screen)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

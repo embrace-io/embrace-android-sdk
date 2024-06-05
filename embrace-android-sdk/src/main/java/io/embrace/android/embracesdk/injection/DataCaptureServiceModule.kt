@@ -100,7 +100,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val breadcrumbService: BreadcrumbService by singleton {
         Systrace.traceSynchronous("breadcrumb-service-init") {
             EmbraceBreadcrumbService(
-                initModule.clock,
                 configService
             ) { dataSourceModule }
         }

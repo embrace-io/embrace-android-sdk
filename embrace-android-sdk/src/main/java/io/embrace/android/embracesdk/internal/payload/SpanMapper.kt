@@ -16,8 +16,8 @@ internal fun EmbraceSpanData.toNewPayload() = Span(
     spanId = spanId,
     parentSpanId = parentSpanId,
     name = name,
-    startTimeUnixNano = startTimeNanos,
-    endTimeUnixNano = endTimeNanos,
+    startTimeNanos = startTimeNanos,
+    endTimeNanos = endTimeNanos,
     status = when (status) {
         StatusCode.UNSET -> Span.Status.UNSET
         StatusCode.OK -> Span.Status.OK
@@ -30,13 +30,13 @@ internal fun EmbraceSpanData.toNewPayload() = Span(
 
 internal fun EmbraceSpanEvent.toNewPayload() = SpanEvent(
     name = name,
-    timeUnixNano = timestampNanos,
+    timestampNanos = timestampNanos,
     attributes = attributes.toNewPayload()
 )
 
 internal fun SpanEvent.toOldPayload() = EmbraceSpanEvent(
     name = name ?: "",
-    timestampNanos = timeUnixNano ?: 0,
+    timestampNanos = timestampNanos ?: 0,
     attributes = attributes?.toOldPayload() ?: emptyMap()
 )
 
@@ -52,8 +52,8 @@ internal fun Span.toOldPayload(): EmbraceSpanData {
         spanId = spanId ?: "",
         parentSpanId = parentSpanId ?: SpanId.getInvalid(),
         name = name ?: "",
-        startTimeNanos = startTimeUnixNano ?: 0,
-        endTimeNanos = endTimeUnixNano ?: 0L,
+        startTimeNanos = startTimeNanos ?: 0,
+        endTimeNanos = endTimeNanos ?: 0L,
         status = when (status) {
             Span.Status.UNSET -> StatusCode.UNSET
             Span.Status.OK -> StatusCode.OK
@@ -89,7 +89,7 @@ internal fun Span.toFailedSpan(endTimeMs: Long): Span {
     }
 
     return copy(
-        endTimeUnixNano = endTimeMs.millisToNanos(),
+        endTimeNanos = endTimeMs.millisToNanos(),
         status = Span.Status.ERROR,
         attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
     )

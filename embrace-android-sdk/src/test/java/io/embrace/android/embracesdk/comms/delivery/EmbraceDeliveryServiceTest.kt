@@ -138,9 +138,10 @@ internal class EmbraceDeliveryServiceTest {
         assertEquals(2, sentSession.spans?.size)
         assertEquals(0, sentSession.data?.spanSnapshots?.size)
         val snapshot = checkNotNull(sessionWithSnapshot.data?.spanSnapshots).single()
+        val span = sentSession.spans?.single { it.spanId == snapshot.spanId }
         assertEmbraceSpanData(
-            span = sentSession.spans?.single { it.spanId == snapshot.spanId },
-            expectedStartTimeMs = checkNotNull(snapshot.startTimeUnixNano?.nanosToMillis()),
+            span = span,
+            expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
             expectedEndTimeMs = checkNotNull(sessionWithSnapshot.session.endTime),
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
@@ -160,9 +161,10 @@ internal class EmbraceDeliveryServiceTest {
         val sentSessionWithLastHeartbeatTime = apiService.sessionRequests.last()
 
         checkNotNull(sessionWithTerminationTime.data?.spanSnapshots).single().let { snapshot ->
+            val span = sentSessionWithTerminationTime.spans?.single { it.spanId == snapshot.spanId }
             assertEmbraceSpanData(
-                span = sentSessionWithTerminationTime.spans?.single { it.spanId == snapshot.spanId },
-                expectedStartTimeMs = checkNotNull(snapshot.startTimeUnixNano?.nanosToMillis()),
+                span = span,
+                expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
                 expectedEndTimeMs = checkNotNull(sessionWithTerminationTime.session.terminationTime),
                 expectedParentId = SpanId.getInvalid(),
                 expectedErrorCode = ErrorCode.FAILURE,
@@ -173,9 +175,10 @@ internal class EmbraceDeliveryServiceTest {
         }
 
         checkNotNull(sessionWithLastHeartbeatTime.data?.spanSnapshots).single().let { snapshot ->
+            val span = sentSessionWithLastHeartbeatTime.spans?.single { it.spanId == snapshot.spanId }
             assertEmbraceSpanData(
-                span = sentSessionWithLastHeartbeatTime.spans?.single { it.spanId == snapshot.spanId },
-                expectedStartTimeMs = checkNotNull(snapshot.startTimeUnixNano?.nanosToMillis()),
+                span = span,
+                expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
                 expectedEndTimeMs = checkNotNull(sessionWithLastHeartbeatTime.session.lastHeartbeatTime),
                 expectedParentId = SpanId.getInvalid(),
                 expectedErrorCode = ErrorCode.FAILURE,

@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * An event that occurred during a span
  *
  * @param name The name of the event
- * @param timeUnixNano The time the event occurred, in nanoseconds since the Unix epoch
+ * @param timestampNanos The time the event occurred, in nanoseconds since the Unix epoch
  * @param attributes
  */
 @JsonClass(generateAdapter = true)
@@ -19,7 +19,7 @@ internal data class SpanEvent(
 
     /* The time the event occurred, in nanoseconds since the Unix epoch */
     @Json(name = "time_unix_nano")
-    val timeUnixNano: Long? = null,
+    val timestampNanos: Long? = null,
 
     @Json(name = "attributes")
     val attributes: List<Attribute>? = null

@@ -39,8 +39,9 @@ internal class LowPowerFeatureTest {
             assertEquals(1, spans.size)
             val span = spans.single()
 
+            val attrs = span.attributes
             assertEquals("emb-device-low-power", span.name)
-            assertEquals("sys.low_power", span.attributes.findAttributeValue("emb.type"))
+            assertEquals("sys.low_power", attrs.findAttributeValue("emb.type"))
             assertEquals(startTimeMs, span.startTimeNanos.nanosToMillis())
             assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos.nanosToMillis())
         }

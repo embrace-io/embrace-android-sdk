@@ -75,7 +75,7 @@ internal class NativeAnrOtelMapperTest {
 
         // assert span
         assertEquals("emb_native_thread_blockage", span.name)
-        assertEquals(1000L.millisToNanos(), span.startTimeUnixNano)
+        assertEquals(1000L.millisToNanos(), span.startTimeNanos)
 
         // assert span attrs
         val attrs = checkNotNull(span.attributes)
@@ -89,7 +89,7 @@ internal class NativeAnrOtelMapperTest {
         // assert span event
         val event = checkNotNull(span.events?.single())
         assertEquals("emb_native_thread_blockage_sample", event.name)
-        assertEquals(2000L.millisToNanos(), event.timeUnixNano)
+        assertEquals(2000L.millisToNanos(), event.timestampNanos)
         val eventAttrs = checkNotNull(event.attributes)
         assertEquals("0", eventAttrs.findAttribute("result").data)
         assertEquals("5", eventAttrs.findAttribute("sample_overhead_ms").data)

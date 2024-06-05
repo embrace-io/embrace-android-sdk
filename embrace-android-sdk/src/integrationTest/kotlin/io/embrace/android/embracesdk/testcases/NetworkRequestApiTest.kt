@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -19,6 +20,7 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 internal class NetworkRequestApiTest {
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
@@ -251,24 +253,25 @@ internal class NetworkRequestApiTest {
 
             val networkSpan = validateAndReturnExpectedNetworkSpan()
             with(networkSpan) {
-                assertEquals(expectedRequest.url, this.attributes["url.full"])
-                assertEquals(expectedRequest.httpMethod, this.attributes["http.request.method"])
-                assertEquals(expectedRequest.startTime.millisToNanos(), this.startTimeNanos)
-                assertEquals(expectedRequest.endTime.millisToNanos(), this.endTimeNanos)
-                assertEquals(expectedRequest.traceId, this.attributes["emb.trace_id"])
-                assertEquals(expectedRequest.w3cTraceparent, this.attributes["emb.w3c_traceparent"])
+                val attrs = this.attributes
+                assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
+                assertEquals(expectedRequest.httpMethod, attrs.findAttributeValue("http.request.method"))
+                assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
+                assertEquals(expectedRequest.endTime.millisToNanos(), endTimeNanos)
+                assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
+                assertEquals(expectedRequest.w3cTraceparent, attrs.findAttributeValue("emb.w3c_traceparent"))
                 if (completed) {
-                    assertEquals(expectedRequest.responseCode.toString(), this.attributes["http.response.status_code"])
-                    assertEquals(expectedRequest.bytesSent.toString(), this.attributes["http.request.body.size"])
-                    assertEquals(expectedRequest.bytesReceived.toString(), this.attributes["http.response.body.size"])
-                    assertEquals(null, this.attributes["error.type"])
-                    assertEquals(null, this.attributes["error.message"])
+                    assertEquals(expectedRequest.responseCode.toString(), attrs.findAttributeValue("http.response.status_code"))
+                    assertEquals(expectedRequest.bytesSent.toString(), attrs.findAttributeValue("http.request.body.size"))
+                    assertEquals(expectedRequest.bytesReceived.toString(), attrs.findAttributeValue("http.response.body.size"))
+                    assertEquals(null, attrs.findAttributeValue("error.type"))
+                    assertEquals(null, attrs.findAttributeValue("error.message"))
                 } else {
-                    assertEquals(null, this.attributes["http.response.status_code"])
-                    assertEquals(null, this.attributes["http.request.body.size"])
-                    assertEquals(null, this.attributes["http.response.body.size"])
-                    assertEquals(expectedRequest.errorType, this.attributes["error.type"])
-                    assertEquals(expectedRequest.errorMessage, this.attributes["error.message"])
+                    assertEquals(null, attrs.findAttributeValue("http.response.status_code"))
+                    assertEquals(null, attrs.findAttributeValue("http.request.body.size"))
+                    assertEquals(null, attrs.findAttributeValue("http.response.body.size"))
+                    assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
+                    assertEquals(expectedRequest.errorMessage, attrs.findAttributeValue("error.message"))
                 }
             }
         }
@@ -277,7 +280,8 @@ internal class NetworkRequestApiTest {
     private fun validateAndReturnExpectedNetworkSpan(): EmbraceSpanData {
         val session = checkNotNull(testRule.harness.getLastSentSession())
 
-        val spans = checkNotNull(session.spans?.filter { it.attributes.containsKey("http.request.method") })
+        val unfilteredSpans = checkNotNull(session.spans)
+        val spans = checkNotNull(unfilteredSpans.filter { it.attributes.findAttributeValue("http.request.method") != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

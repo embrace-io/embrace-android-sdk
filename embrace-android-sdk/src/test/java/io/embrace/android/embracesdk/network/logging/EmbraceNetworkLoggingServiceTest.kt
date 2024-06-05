@@ -45,7 +45,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         assertEquals(4, spans.size)
 
-        val sortedRequests = spans.sortedBy { it.startTimeUnixNano }
+        val sortedRequests = spans.sortedBy { it.startTimeNanos }
         assertEquals("www.example1.com", sortedRequests.at(0)?.attributes?.first { it.key == "url.full" }?.data)
         assertEquals("www.example2.com", sortedRequests.at(1)?.attributes?.first { it.key == "url.full" }?.data)
         assertEquals("www.example3.com", sortedRequests.at(2)?.attributes?.first { it.key == "url.full" }?.data)

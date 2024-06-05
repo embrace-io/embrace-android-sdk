@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -165,10 +167,23 @@ internal fun io.embrace.android.embracesdk.internal.payload.Span.hasFixedAttribu
     return fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
 }
 
+internal fun List<Attribute>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean = any {
+    it.key == fixedAttribute.key.name
+}
+
 internal fun EmbraceSpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]
 
 internal fun EmbraceSpanData.getSessionProperty(key: String): String? = attributes[key.toSessionPropertyAttributeName()]
+
+internal fun SpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+    fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
+
+internal fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it.key == key }?.data
+
+internal fun io.embrace.android.embracesdk.internal.payload.Span.getSessionProperty(key: String): String? {
+    return attributes?.findAttributeValue(key.toSessionPropertyAttributeName())
+}
 
 internal fun Map<String, String>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     this[fixedAttribute.key.name] == fixedAttribute.value

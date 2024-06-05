@@ -187,6 +187,7 @@ internal class ApiClientImplTest {
         val delivered = server.takeRequest()
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("Connection")
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
@@ -198,7 +199,6 @@ internal class ApiClientImplTest {
                 "X-EM-DID" to "test_did",
                 "X-EM-SID" to "test_eid",
                 "X-EM-LID" to "test_lid",
-                "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
             ),
             headers
@@ -244,13 +244,13 @@ internal class ApiClientImplTest {
         val headers = delivered.headers.toMap()
             .minus("Host")
             .minus("User-Agent")
+            .minus("Connection")
         val userAgent = delivered.headers.toMap()["User-Agent"]
         assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "Content-Type" to "application/json",
-                "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
             ),
             headers
@@ -263,13 +263,13 @@ internal class ApiClientImplTest {
         val headers = delivered.headers.toMap()
             .minus("Host")
             .minus("User-Agent")
+            .minus("Connection")
         val userAgent = delivered.headers.toMap()["User-Agent"]
         assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "Content-Type" to "application/json",
-                "Connection" to "keep-alive"
+                "Content-Type" to "application/json"
             ),
             headers
         )

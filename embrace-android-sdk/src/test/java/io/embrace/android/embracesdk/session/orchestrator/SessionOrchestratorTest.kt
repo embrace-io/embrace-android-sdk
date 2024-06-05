@@ -41,7 +41,7 @@ internal class SessionOrchestratorTest {
 
     private lateinit var orchestrator: SessionOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl
-    private lateinit var v1PayloadCollator: FakeV1PayloadCollator
+    private lateinit var payloadCollator: FakeV1PayloadCollator
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
@@ -73,8 +73,8 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, processStateService.listeners.single())
-        assertEquals(0, v1PayloadCollator.sessionCount.get())
-        assertEquals(1, v1PayloadCollator.baCount.get())
+        assertEquals(0, payloadCollator.sessionCount.get())
+        assertEquals(1, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
         assertEquals(0, deliveryService.sentSessionMessages.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -85,8 +85,8 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         assertEquals(1, memoryCleanerService.callCount)
         assertEquals(orchestrator, processStateService.listeners.single())
-        assertEquals(1, v1PayloadCollator.sessionCount.get())
-        assertEquals(0, v1PayloadCollator.baCount.get())
+        assertEquals(1, payloadCollator.sessionCount.get())
+        assertEquals(0, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
         assertEquals(0, deliveryService.sentSessionMessages.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
@@ -215,9 +215,9 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
 
         clock.tick(10000)
-        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(false)
-        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(1, memoryCleanerService.callCount)
         assertNull(deliveryService.getLastSentSession())
     }
@@ -238,9 +238,9 @@ internal class SessionOrchestratorTest {
         configService = FakeConfigService()
         createOrchestrator(false)
         clock.tick(10000)
-        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(true)
-        assertEquals(2, v1PayloadCollator.sessionCount.get())
+        assertEquals(2, payloadCollator.sessionCount.get())
         assertNotNull(deliveryService.getLastSentSession())
     }
 
@@ -251,7 +251,7 @@ internal class SessionOrchestratorTest {
         clock.tick(1000)
 
         orchestrator.endSessionWithManual(true)
-        assertEquals(1, v1PayloadCollator.sessionCount.get())
+        assertEquals(1, payloadCollator.sessionCount.get())
         assertNull(deliveryService.getLastSentSession())
     }
 
@@ -261,7 +261,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         clock.tick(1000)
         orchestrator.endSessionWithManual(true)
-        assertEquals(0, v1PayloadCollator.baCount.get())
+        assertEquals(0, payloadCollator.baCount.get())
     }
 
     @Test
@@ -374,9 +374,9 @@ internal class SessionOrchestratorTest {
         deliveryService = FakeDeliveryService()
         processStateService = FakeProcessStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
-        v1PayloadCollator = FakeV1PayloadCollator(currentSessionSpan = currentSessionSpan)
+        payloadCollator = FakeV1PayloadCollator(currentSessionSpan = currentSessionSpan)
         payloadFactory = PayloadFactoryImpl(
-            v1payloadMessageCollator = v1PayloadCollator,
+            v1payloadMessageCollator = payloadCollator,
             v2payloadMessageCollator = FakePayloadCollator(),
             configService = configService,
             logger = logger

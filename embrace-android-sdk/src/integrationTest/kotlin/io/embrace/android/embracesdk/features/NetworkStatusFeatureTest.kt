@@ -55,7 +55,7 @@ internal class NetworkStatusFeatureTest {
             assertEquals("emb-network-status", snapshot.name)
             assertEquals("sys.network_status", snapshotAttrs.findAttributeValue("emb.type"))
             assertEquals("wifi", snapshotAttrs.findAttributeValue("network"))
-            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeUnixNano?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 
@@ -75,7 +75,7 @@ internal class NetworkStatusFeatureTest {
             val snapshotAttrs = checkNotNull(snapshot.attributes)
             assertEquals("sys.network_status", snapshotAttrs.findAttributeValue("emb.type"))
             assertEquals("wan", snapshotAttrs.findAttributeValue("network"))
-            assertEquals(startTimeMs, snapshot.startTimeUnixNano?.nanosToMillis())
+            assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 }

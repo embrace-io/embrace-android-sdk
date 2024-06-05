@@ -247,12 +247,12 @@ internal class EmbraceSpanImplTest {
             assertEquals(spanId, snapshot.spanId)
             assertNull(snapshot.parentSpanId)
             assertEquals(EXPECTED_SPAN_NAME, snapshot.name)
-            assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeUnixNano)
+            assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeNanos)
             assertEquals(Span.Status.UNSET, snapshot.status)
 
             val snapshotEvent = checkNotNull(snapshot.events).single()
             assertEquals(EXPECTED_EVENT_NAME, snapshotEvent.name)
-            assertEquals(expectedEventTime.millisToNanos(), snapshotEvent.timeUnixNano)
+            assertEquals(expectedEventTime.millisToNanos(), snapshotEvent.timestampNanos)
 
             val eventAttributes = checkNotNull(snapshotEvent.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, eventAttributes.key)
@@ -273,8 +273,8 @@ internal class EmbraceSpanImplTest {
         expectedCustomAttributeCount: Int = 0
     ) {
         with(checkNotNull(snapshot())) {
-            assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertEquals(expectedStatus, status)
             assertEquals(eventCount, events?.size)
             checkNotNull(attributes)

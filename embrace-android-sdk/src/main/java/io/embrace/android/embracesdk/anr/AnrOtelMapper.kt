@@ -28,8 +28,8 @@ internal class AnrOtelMapper(
                 spanId = IdGenerator.random().generateSpanId(),
                 parentSpanId = SpanId.getInvalid(),
                 name = "emb-thread-blockage",
-                startTimeUnixNano = interval.startTime.millisToNanos(),
-                endTimeUnixNano = interval.endTime?.millisToNanos(),
+                startTimeNanos = interval.startTime.millisToNanos(),
+                endTimeNanos = interval.endTime?.millisToNanos(),
                 status = Span.Status.OK,
                 attributes = attrs,
                 events = events
@@ -75,7 +75,7 @@ internal class AnrOtelMapper(
         }
         return SpanEvent(
             name = "perf.thread_blockage_sample",
-            timeUnixNano = sample.timestamp.millisToNanos(),
+            timestampNanos = sample.timestamp.millisToNanos(),
             attributes = attrs
         )
     }

@@ -539,13 +539,14 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(expectedEndTimeMs, trace.endTimeNanos.nanosToMillis())
         trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
         trace.assertIsKeySpan()
-        assertEquals(STARTUP_ACTIVITY_NAME, trace.attributes.findAttributeValue("startup-activity-name"))
-        assertEquals(expectedProcessCreateDelayMs?.toString(), trace.attributes["process-create-delay-ms"])
-        assertEquals(expectedActivityPreCreatedMs?.toString(), trace.attributes["startup-activity-pre-created-ms"])
-        assertEquals(expectedActivityPostCreatedMs?.toString(), trace.attributes["startup-activity-post-created-ms"])
-        assertEquals(expectedFirstActivityLifecycleEventMs?.toString(), trace.attributes["first-activity-init-ms"])
-        assertEquals("false", trace.attributes["embrace-init-in-foreground"])
-        assertEquals("main", trace.attributes["embrace-init-thread-name"])
+        val attrs = trace.attributes
+        assertEquals(STARTUP_ACTIVITY_NAME, attrs.findAttributeValue("startup-activity-name"))
+        assertEquals(expectedProcessCreateDelayMs?.toString(), attrs.findAttributeValue("process-create-delay-ms"))
+        assertEquals(expectedActivityPreCreatedMs?.toString(), attrs.findAttributeValue("startup-activity-pre-created-ms"))
+        assertEquals(expectedActivityPostCreatedMs?.toString(), attrs.findAttributeValue("startup-activity-post-created-ms"))
+        assertEquals(expectedFirstActivityLifecycleEventMs?.toString(), attrs.findAttributeValue("first-activity-init-ms"))
+        assertEquals("false", attrs.findAttributeValue("embrace-init-in-foreground"))
+        assertEquals("main", attrs.findAttributeValue("embrace-init-thread-name"))
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

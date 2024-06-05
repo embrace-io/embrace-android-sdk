@@ -82,8 +82,8 @@ internal fun Span.assertSpanPayload(
     private: Boolean = false,
     key: Boolean = false,
 ) {
-    assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
-    assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
+    assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+    assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
     assertEquals(expectedParentId, parentSpanId)
     if (expectedTraceId != null) {
         assertEquals(expectedTraceId, traceId)
@@ -91,7 +91,7 @@ internal fun Span.assertSpanPayload(
         assertEquals(32, traceId?.length)
     }
 
-    if (endTimeUnixNano == null) {
+    if (endTimeNanos == null) {
         assertEquals(Span.Status.UNSET, status)
     } else if (errorCode == null) {
         assertSuccessful()

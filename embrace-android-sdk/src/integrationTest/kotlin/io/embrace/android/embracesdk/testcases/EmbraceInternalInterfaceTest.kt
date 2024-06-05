@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
 import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentLogMessages
@@ -38,6 +39,7 @@ import java.net.SocketException
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceInternalInterfaceTest {
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
@@ -210,7 +212,8 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val requests = checkNotNull(session?.spans?.filter { it.attributes.containsKey("http.request.method") })
+            val spans = checkNotNull(session?.spans)
+            val requests = checkNotNull(spans.filter { it.attributes.findAttributeValue("http.request.method") != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,
@@ -232,9 +235,10 @@ internal class EmbraceInternalInterfaceTest {
             })
 
             val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-            assertEquals("button", tapBreadcrumb.attributes["view.name"])
-            assertEquals("10,99", tapBreadcrumb.attributes["tap.coords"])
-            assertEquals("tap", tapBreadcrumb.attributes["tap.type"])
+            val attrs = tapBreadcrumb.attributes
+            assertEquals("button", attrs.findAttributeValue("view.name"))
+            assertEquals("10,99", attrs.findAttributeValue("tap.coords"))
+            assertEquals("tap", attrs.findAttributeValue("tap.type"))
         }
     }
 
@@ -303,14 +307,17 @@ internal class EmbraceInternalInterfaceTest {
                 }
             }
 
-            val spans = checkNotNull(sessionPayload?.spans?.filter { it.name.startsWith("tz-") }?.associateBy { it.name })
+            val unfilteredSpans = checkNotNull(sessionPayload?.spans)
+            val spans = checkNotNull(unfilteredSpans.filter { it.name.startsWith("tz-") }.associateBy { it.name })
             assertEquals(4, spans.size)
             with(checkNotNull(spans["tz-parent-span"])) {
-                assertEquals("testvalue", attributes["testkey"])
+                assertEquals("testvalue", attributes.findAttributeValue("testkey"))
             }
             with(checkNotNull(spans["tz-child-span"])) {
-                assertEquals("cool event bro", events[0].name)
-                assertEquals("value", events[0].attributes["key"])
+                val spanEvent = events[0]
+                val spanAttrs = spanEvent.attributes
+                assertEquals("cool event bro", spanEvent.name)
+                assertEquals("value", spanAttrs.findAttributeValue("key"))
                 assertEquals(StatusCode.ERROR, status)
             }
             with(checkNotNull(spans["tz-another-span"])) {

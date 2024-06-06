@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,14 +43,14 @@ internal class ActivityFeatureTest {
             })
 
             val viewSpans = message.findSpansOfType(EmbType.Ux.View)
-            Assert.assertEquals(1, viewSpans.size)
+            assertEquals(1, viewSpans.size)
 
             val span1 = viewSpans[0]
 
             with(span1) {
-                Assert.assertEquals("android.app.Activity", attributes.findAttributeValue("view.name"))
-                Assert.assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
-                Assert.assertEquals(startTimeMs + 30000L, endTimeNanos.nanosToMillis())
+                assertEquals("android.app.Activity", attributes.findAttributeValue("view.name"))
+                assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
+                assertEquals(startTimeMs + 30000L, endTimeNanos.nanosToMillis())
             }
         }
     }

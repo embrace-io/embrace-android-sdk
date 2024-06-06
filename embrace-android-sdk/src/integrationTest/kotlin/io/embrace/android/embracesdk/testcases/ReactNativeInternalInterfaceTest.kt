@@ -4,12 +4,8 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findSpansByName
-import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -139,8 +135,8 @@ internal class ReactNativeInternalInterfaceTest {
             assertEquals("SUCCESS", attrs.findAttributeValue("outcome"))
             assertEquals("100", attrs.findAttributeValue("payload_size"))
             assertEquals("value", attrs.findAttributeValue("emb.properties.key"))
-            assertEquals(1000L, span.startTimeUnixNano?.nanosToMillis())
-            assertEquals(5000L, span.endTimeUnixNano?.nanosToMillis())
+            assertEquals(1000L, span.startTimeNanos?.nanosToMillis())
+            assertEquals(5000L, span.endTimeNanos?.nanosToMillis())
         }
     }
 }

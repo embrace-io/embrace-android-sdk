@@ -160,27 +160,21 @@ internal class TracingApiTest {
                 expectedEndTimeMs = testStartTimeMs + 400,
                 expectedParentId = SpanId.getInvalid(),
                 expectedCustomAttributes = mapOf(Pair("oMg", "OmG")),
-                expectedEvents = listOf(
-                    checkNotNull(
-                        EmbraceSpanEvent.create(
-                            name = "parent event",
-                            timestampMs = testStartTimeMs + 200,
-                            attributes = null
-                        )
+                expectedEvents = listOfNotNull(
+                    EmbraceSpanEvent.create(
+                        name = "parent event",
+                        timestampMs = testStartTimeMs + 200,
+                        attributes = null
                     ),
-                    checkNotNull(
-                        EmbraceSpanEvent.create(
-                            name = "parent event with attributes and bad input time",
-                            timestampMs = testStartTimeMs + 200,
-                            attributes = mapOf("key" to "value")
-                        )
+                    EmbraceSpanEvent.create(
+                        name = "parent event with attributes and bad input time",
+                        timestampMs = testStartTimeMs + 200,
+                        attributes = mapOf("key" to "value")
                     ),
-                    checkNotNull(
-                        EmbraceSpanEvent.create(
-                            name = "delayed event",
-                            timestampMs = testStartTimeMs + 350,
-                            attributes = null
-                        ),
+                    EmbraceSpanEvent.create(
+                        name = "delayed event",
+                        timestampMs = testStartTimeMs + 350,
+                        attributes = null
                     )
                 ),
                 key = true
@@ -201,14 +195,12 @@ internal class TracingApiTest {
                 expectedTraceId = traceRootSpan.traceId,
                 expectedErrorCode = ErrorCode.FAILURE,
                 expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
-                expectedEvents = listOf(
-                    checkNotNull(
-                        EmbraceSpanEvent.create(
-                            name = "failure time",
-                            timestampMs = testStartTimeMs + 400,
-                            attributes = mapOf(
-                                Pair("retry", "1")
-                            )
+                expectedEvents = listOfNotNull(
+                    EmbraceSpanEvent.create(
+                        name = "failure time",
+                        timestampMs = testStartTimeMs + 400,
+                        attributes = mapOf(
+                            Pair("retry", "1")
                         )
                     )
                 )
@@ -273,6 +265,7 @@ internal class TracingApiTest {
 
     private fun getSdkInitSpanFromBackgroundActivity(): List<EmbraceSpanData> {
         val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities().last()
-        return lastSentBackgroundActivity.spans?.filter { it.name == "emb-sdk-init" } ?: emptyList()
+        val spans = checkNotNull(lastSentBackgroundActivity.spans)
+        return spans.filter { it.name == "emb-sdk-init" }
     }
 }

@@ -110,7 +110,7 @@ internal class AnrOtelMapperTest {
         val spans = mapper.snapshot(false)
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
-        assertEquals(END_TIME_MS, span.endTimeUnixNano?.nanosToMillis())
+        assertEquals(END_TIME_MS, span.endTimeNanos?.nanosToMillis())
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
 
         // validate samples
@@ -127,7 +127,7 @@ internal class AnrOtelMapperTest {
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
 
-        assertNull(span.endTimeUnixNano)
+        assertNull(span.endTimeNanos)
         val attributes = checkNotNull(span.attributes)
         val lastKnownTime =
             checkNotNull(attributes.findAttribute("last_known_time_unix_nano").data)
@@ -175,7 +175,7 @@ internal class AnrOtelMapperTest {
         assertNotNull(spanId)
         assertEquals(SpanId.getInvalid(), parentSpanId)
         assertEquals("emb-thread-blockage", name)
-        assertEquals(START_TIME_MS, startTimeUnixNano?.nanosToMillis())
+        assertEquals(START_TIME_MS, startTimeNanos?.nanosToMillis())
         assertEquals(Span.Status.OK, status)
         assertEquals("perf.thread_blockage", attributes?.findAttribute("emb.type")?.data)
     }
@@ -183,7 +183,7 @@ internal class AnrOtelMapperTest {
     private fun assertSampleMapped(event: SpanEvent, sample: AnrSample) {
         assertEquals("perf.thread_blockage_sample", event.name)
         assertEquals("perf.thread_blockage_sample", event.attributes?.findAttribute("emb.type")?.data)
-        assertEquals(sample.timestamp, checkNotNull(event.timeUnixNano).nanosToMillis())
+        assertEquals(sample.timestamp, checkNotNull(event.timestampNanos).nanosToMillis())
 
         val attrs = checkNotNull(event.attributes)
         val overhead = attrs.findAttribute("sample_overhead").data

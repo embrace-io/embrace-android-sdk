@@ -55,7 +55,7 @@ internal class ThermalStateFeatureTest {
             assertEquals("emb-thermal-state", snapshot.name)
             assertEquals("perf.thermal_state", attrs.findAttributeValue("emb.type"))
             assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), attrs.findAttributeValue("status"))
-            assertEquals(startTimeMs, snapshot.startTimeUnixNano?.nanosToMillis())
+            assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 
@@ -99,7 +99,7 @@ internal class ThermalStateFeatureTest {
             assertEquals("emb-thermal-state", snapshot.name)
             assertEquals("perf.thermal_state", snapshot.attributes?.findAttributeValue("emb.type"))
             assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), snapshot.attributes?.findAttributeValue("status"))
-            assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeUnixNano?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 

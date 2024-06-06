@@ -58,12 +58,12 @@ internal class V2SessionApiTest {
 
             // validate network status span
             val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
-            assertEquals(startTime, networkStatusSpan.startTimeUnixNano?.nanosToMillis())
+            assertEquals(startTime, networkStatusSpan.startTimeNanos?.nanosToMillis())
             assertEquals("sys.network_status", networkStatusSpan.attributes?.findAttributeValue("emb.type"))
 
             // validate session span
             val sessionSpan = snapshots.single { it.name == "emb-session" }
-            assertEquals(startTime, sessionSpan.startTimeUnixNano?.nanosToMillis())
+            assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
             assertNotNull(sessionSpan.attributes?.findAttributeValue("emb.session_id"))
             val attrs = sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap()
 

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.injection.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -163,8 +164,9 @@ internal class AnrFeatureTest {
         assertEquals(endTime, span.endTimeNanos.nanosToMillis())
 
         // assert span attributes
-        assertEquals(expectedIntervalCode, span.attributes["interval_code"])
-        assertEquals("perf.thread_blockage", span.attributes["emb.type"])
+        val attributes = span.attributes
+        assertEquals(expectedIntervalCode, attributes.findAttributeValue("interval_code"))
+        assertEquals("perf.thread_blockage", attributes.findAttributeValue("emb.type"))
 
         val events = span.events
 
@@ -173,8 +175,8 @@ internal class AnrFeatureTest {
 
             // assert attributes
             val attrs = event.attributes
-            assertEquals("perf.thread_blockage_sample", attrs["emb.type"])
-            assertEquals("0", attrs["sample_overhead"])
+            assertEquals("perf.thread_blockage_sample", attrs.findAttributeValue("emb.type"))
+            assertEquals("0", attrs.findAttributeValue("sample_overhead"))
 
             val expectedCode = when {
                 index < MAX_SAMPLE_COUNT -> "0"

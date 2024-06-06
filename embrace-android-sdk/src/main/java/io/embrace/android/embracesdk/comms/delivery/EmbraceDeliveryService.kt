@@ -110,16 +110,16 @@ internal class EmbraceDeliveryService(
             }
 
             allSessions.map { it.sessionId }.forEach { sessionId ->
-                cacheManager.transformSession(sessionId = sessionId) { sessionMessage ->
-                    val completedSpanIds = sessionMessage.spans?.map { it.spanId }?.toSet() ?: emptySet()
-                    val spansToFail = sessionMessage.data?.spanSnapshots?.map(Span::toOldPayload)
+                cacheManager.transformSession(sessionId = sessionId) {
+                    val completedSpanIds = spans?.map { it.spanId }?.toSet() ?: emptySet()
+                    val spansToFail = data?.spanSnapshots?.map(Span::toOldPayload)
                         ?.filterNot { completedSpanIds.contains(it.spanId) }
-                        ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(sessionMessage)) }
+                        ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
                         ?: emptyList()
-                    val completedSpans = (sessionMessage.spans ?: emptyList()) + spansToFail
-                    sessionMessage.copy(
+                    val completedSpans = (spans ?: emptyList()) + spansToFail
+                    copy(
                         spans = completedSpans,
-                        data = sessionMessage.data?.copy(
+                        data = data?.copy(
                             spanSnapshots = emptyList()
                         )
                     )
@@ -144,17 +144,14 @@ internal class EmbraceDeliveryService(
     }
 
     private fun addCrashDataToCachedSession(nativeCrashData: NativeCrashData) {
-        cacheManager.transformSession(nativeCrashData.sessionId) { sessionMessage ->
-            attachCrashToSession(nativeCrashData, sessionMessage)
+        cacheManager.transformSession(nativeCrashData.sessionId) {
+            attachCrashToSession(nativeCrashData)
         }
     }
 
-    private fun attachCrashToSession(
-        nativeCrashData: NativeCrashData,
-        sessionMessage: SessionMessage
-    ): SessionMessage {
-        val session = sessionMessage.session.copy(crashReportId = nativeCrashData.nativeCrashId)
-        return sessionMessage.copy(session = session)
+    private fun SessionMessage.attachCrashToSession(nativeCrashData: NativeCrashData): SessionMessage {
+        val session = session.copy(crashReportId = nativeCrashData.nativeCrashId)
+        return copy(session = session)
     }
 
     private fun sendCachedSessions(cachedSessions: List<CachedSession>) {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.Breadcrumbs
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
@@ -23,11 +24,12 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
  * in server-side configuration. They are stored in an unbounded queue.
  */
 internal class EmbraceBreadcrumbService(
+    private val clock: Clock,
     private val configService: ConfigService,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>
 ) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
 
-    override fun logView(screen: String?) {
+    override fun logView(screen: String?, timestamp: Long) {
         dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen)
     }
 
@@ -106,7 +108,7 @@ internal class EmbraceBreadcrumbService(
 
     override fun onView(activity: Activity) {
         if (configService.breadcrumbBehavior.isAutomaticActivityCaptureEnabled()) {
-            logView(activity.javaClass.name)
+            logView(activity.javaClass.name, clock.now())
         }
     }
 

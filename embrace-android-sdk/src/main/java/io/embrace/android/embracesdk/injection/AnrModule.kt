@@ -56,7 +56,7 @@ internal class AnrModuleImpl(
     }
 
     override val anrOtelMapper: AnrOtelMapper by singleton {
-        AnrOtelMapper(anrService)
+        AnrOtelMapper(anrService, initModule.clock)
     }
 
     override val responsivenessMonitorService: ResponsivenessMonitorService by singleton {

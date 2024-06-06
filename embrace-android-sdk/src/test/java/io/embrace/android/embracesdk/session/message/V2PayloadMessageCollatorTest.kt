@@ -1,10 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
@@ -15,9 +12,10 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
+import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -60,8 +58,8 @@ internal class V2PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
-            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
+            anrOtelMapper = fakeAnrOtelMapper(),
+            nativeAnrOtelMapper = fakeNativeAnrOtelMapper(),
             logger = initModule.logger
         )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
@@ -79,8 +77,8 @@ internal class V2PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = AnrOtelMapper(FakeAnrService()),
-            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer()),
+            anrOtelMapper = fakeAnrOtelMapper(),
+            nativeAnrOtelMapper = fakeNativeAnrOtelMapper(),
             logger = initModule.logger,
             sessionEnvelopeSource = sessionEnvelopeSource
         )

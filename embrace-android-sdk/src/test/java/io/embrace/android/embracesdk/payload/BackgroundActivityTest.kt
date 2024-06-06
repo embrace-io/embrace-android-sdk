@@ -25,8 +25,7 @@ internal class BackgroundActivityTest {
         errorLogIds = listOf("fake-err-id"),
         crashReportId = "fake-crash-id",
         endType = Session.LifeEventType.BKGND_STATE,
-        startType = Session.LifeEventType.BKGND_STATE,
-        properties = mapOf("fake-key" to "fake-value")
+        startType = Session.LifeEventType.BKGND_STATE
     )
 
     @Test
@@ -54,7 +53,6 @@ internal class BackgroundActivityTest {
             assertEquals("fake-crash-id", crashReportId)
             assertEquals(Session.LifeEventType.BKGND_STATE, endType)
             assertEquals(Session.LifeEventType.BKGND_STATE, startType)
-            assertEquals(mapOf("fake-key" to "fake-value"), properties)
         }
     }
 

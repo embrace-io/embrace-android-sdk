@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -178,7 +177,6 @@ internal class PayloadFactorySessionTest {
             logMessageService,
             preferencesService,
             currentSessionSpan,
-            FakeSessionPropertiesService(),
             FakeStartupService(),
             logger
         )

@@ -20,8 +20,5 @@
   ],
   "ri": "fake-crash-id",
   "em": "bs",
-  "sm": "bs",
-  "sp": {
-    "fake-key": "fake-value"
-  }
+  "sm": "bs"
 }

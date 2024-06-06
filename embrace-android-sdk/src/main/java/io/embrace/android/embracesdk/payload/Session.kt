@@ -48,12 +48,6 @@ internal data class Session @JvmOverloads internal constructor(
     @Json(name = "tt")
     val terminationTime: Long? = null,
 
-    @Json(name = "ce")
-    val isEndedCleanly: Boolean? = null,
-
-    @Json(name = "tr")
-    val isReceivedTermination: Boolean? = null,
-
     @Json(name = "ss")
     val eventIds: List<String>? = null,
 
@@ -77,9 +71,6 @@ internal data class Session @JvmOverloads internal constructor(
 
     @Json(name = "sm")
     val startType: LifeEventType? = null,
-
-    @Json(name = "sp")
-    val properties: Map<String, String>? = null,
 
     @Json(name = "sd")
     val startupDuration: Long? = null,

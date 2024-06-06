@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 /**
  * Generates a V2 payload
@@ -24,7 +23,6 @@ internal class PayloadMessageCollatorImpl(
     private val logMessageService: LogMessageService,
     private val preferencesService: PreferencesService,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService,
     private val logger: EmbLogger,
 ) : PayloadMessageCollator {
@@ -37,8 +35,7 @@ internal class PayloadMessageCollatorImpl(
                 isColdStart = coldStart,
                 appState = appState,
                 startType = startType,
-                number = getSessionNumber(preferencesService),
-                properties = getProperties(sessionPropertiesService),
+                number = getSessionNumber(preferencesService)
             )
         }
     }
@@ -58,16 +55,13 @@ internal class PayloadMessageCollatorImpl(
             val startupInfo = getStartupEventInfo(eventService)
 
             val endSession = base.copy(
-                isEndedCleanly = endType.endedCleanly,
                 networkLogIds = captureDataSafely(logger) {
                     logMessageService.findNetworkLogIds(
                         initial.startTime,
                         endTime
                     )
                 },
-                properties = captureDataSafely(logger, sessionPropertiesService::getProperties),
                 terminationTime = terminationTime,
-                isReceivedTermination = receivedTermination,
                 endTime = endTimeVal,
                 sdkStartupDuration = startupService.getSdkStartupDuration(initial.isColdStart),
                 startupDuration = startupInfo?.duration,

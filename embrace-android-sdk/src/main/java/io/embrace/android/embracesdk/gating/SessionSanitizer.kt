@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.gating
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOGS_INFO
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOGS_WARN
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_MOMENTS
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.payload.Session
@@ -15,17 +14,9 @@ internal class SessionSanitizer(
 
     @Suppress("ComplexMethod")
     override fun sanitize(): Session {
-        val properties = when {
-            !shouldSendSessionProperties() -> null
-            else -> session.properties
-        }
         val terminationTime = when {
             !shouldSendUserTerminations() -> null
             else -> session.terminationTime
-        }
-        val receivedTermination = when {
-            !shouldSendUserTerminations() -> null
-            else -> session.isReceivedTermination
         }
         val infoLogIds = when {
             !shouldSendInfoLog() -> null
@@ -48,9 +39,7 @@ internal class SessionSanitizer(
             else -> session.startupThreshold
         }
         return session.copy(
-            properties = properties,
             terminationTime = terminationTime,
-            isReceivedTermination = receivedTermination,
             infoLogIds = infoLogIds,
             warningLogIds = warnLogIds,
             eventIds = eventIds,
@@ -58,9 +47,6 @@ internal class SessionSanitizer(
             startupThreshold = startupThreshold
         )
     }
-
-    private fun shouldSendSessionProperties() =
-        enabledComponents.contains(SESSION_PROPERTIES)
 
     private fun shouldSendUserTerminations() =
         enabledComponents.contains(SESSION_USER_TERMINATION)

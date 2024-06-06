@@ -2,11 +2,16 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.getLastSavedSession
 import io.embrace.android.embracesdk.getLastSentSession
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.worker.WorkerName.PERIODIC_CACHE
 import org.junit.Assert.assertEquals
@@ -42,24 +47,30 @@ internal class PeriodicSessionCacheTest {
                 executor.runCurrentlyBlocked()
                 embrace.addSessionProperty("Test", "Test", true)
 
-                var endMessage = checkNotNull(harness.getLastSavedSession())
-                assertEquals(false, endMessage.session.isEndedCleanly)
-                assertEquals(true, endMessage.session.isReceivedTermination)
-                assertEquals(0, endMessage.session.properties?.size)
+                val endMessage = checkNotNull(harness.getLastSavedSession())
+                val span = endMessage.findSpanSnapshotsOfType(EmbType.Ux.Session).single()
+                val attrs = checkNotNull(span.attributes)
+                assertEquals(false, attrs.findAttributeValue("emb.clean_exit").toBoolean())
+                assertEquals(true, attrs.findAttributeValue("emb.terminated").toBoolean())
+                assertNull(span.getSessionProperty("Test"))
 
                 // trigger another periodic cache
                 executor.moveForwardAndRunBlocked(2000)
-                endMessage = checkNotNull(harness.getLastSavedSession())
-                assertEquals(false, endMessage.session.isEndedCleanly)
-                assertEquals(true, endMessage.session.isReceivedTermination)
-                assertEquals("Test", checkNotNull(endMessage.session.properties)["Test"])
+
+                val nextMessage = checkNotNull(harness.getLastSavedSession())
+                val nextSpan = nextMessage.findSpanSnapshotsOfType(EmbType.Ux.Session).single()
+                val nextAttrs = checkNotNull(nextSpan.attributes)
+                assertEquals(false, nextAttrs.findAttributeValue("emb.clean_exit").toBoolean())
+                assertEquals(true, nextAttrs.findAttributeValue("emb.terminated").toBoolean())
+                assertEquals("Test", nextSpan.getSessionProperty("Test"))
             }
 
-            val endMessage = checkNotNull(harness.getLastSentSession())
-            assertEquals(true, endMessage.session.isEndedCleanly)
-            assertNull(endMessage.session.isReceivedTermination)
-            assertEquals("Test", checkNotNull(endMessage.session.properties)["Test"])
+            val endMessage = checkNotNull(harness.getLastSavedSession())
+            val span = endMessage.findSessionSpan()
+            val attrs = checkNotNull(span.attributes)
+            assertEquals(true, attrs.findAttributeValue("emb.clean_exit").toBoolean())
+            assertEquals(false, attrs.findAttributeValue("emb.terminated").toBoolean())
+            assertEquals("Test", span.getSessionProperty("Test"))
         }
     }
-
 }

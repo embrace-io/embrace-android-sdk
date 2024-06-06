@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -76,20 +75,6 @@ internal class EmbraceGatingServiceV2PayloadTest {
         // result shouldn't be sanitized.
         val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
         assertNotNull(checkNotNull(result.metadata).personas)
-    }
-
-    @Test
-    fun `regular sessions are gated`() {
-        val session = fakeSession().copy(
-            properties = mapOf("key" to "value")
-        )
-        cfg = buildCustomRemoteConfig(setOf(), null)
-
-        // only check for session properties. Other assertions should go in OtelSessionGatingTest
-        // as it's more comprehensive than this unit test.
-        val sessionMessage = SessionMessage(session)
-        val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
-        assertNull(checkNotNull(result.metadata).personas)
     }
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>?) =

@@ -56,7 +56,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
@@ -163,7 +162,6 @@ internal class SessionHandlerTest {
             logMessageService,
             preferencesService,
             currentSessionSpan,
-            FakeSessionPropertiesService(),
             FakeStartupService(),
             logger,
         )
@@ -213,11 +211,9 @@ internal class SessionHandlerTest {
         verify(exactly = 0) { sessionProperties.clearTemporary() }
 
         with(session) {
-            assertFalse(checkNotNull(isEndedCleanly))
             assertEquals("foreground", appState)
             assertEquals(emptyList<String>(), eventIds)
             assertEquals(NOW, lastHeartbeatTime)
-            assertEquals(sessionProperties.get(), properties)
             assertEquals(Session.LifeEventType.STATE, endType)
             assertEquals(crashId, crashReportId)
             assertEquals(NOW, endTime)

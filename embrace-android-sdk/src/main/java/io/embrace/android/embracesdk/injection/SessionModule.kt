@@ -48,7 +48,6 @@ internal class SessionModuleImpl(
             customerLogModule.logMessageService,
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService,
             dataCaptureServiceModule.startupService,
             initModule.logger
         )

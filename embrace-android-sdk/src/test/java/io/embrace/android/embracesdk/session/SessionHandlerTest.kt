@@ -47,8 +47,7 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
@@ -142,17 +141,7 @@ internal class SessionHandlerTest {
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
 
-        val payloadMessageCollator = V1PayloadMessageCollator(
-            gatingService,
-            eventService,
-            logMessageService,
-            preferencesService,
-            initModule.openTelemetryModule.currentSessionSpan,
-            FakeSessionPropertiesService(),
-            FakeStartupService(),
-            logger
-        )
-        val v2Collator = V2PayloadMessageCollator(
+        val collator = PayloadMessageCollatorImpl(
             gatingService,
             SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
@@ -178,7 +167,7 @@ internal class SessionHandlerTest {
             FakeStartupService(),
             logger,
         )
-        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService, logger)
+        payloadFactory = PayloadFactoryImpl(collator, configService, logger)
     }
 
     @After

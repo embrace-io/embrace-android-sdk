@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
-import io.embrace.android.embracesdk.fakes.FakePayloadCollator
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -374,8 +373,7 @@ internal class SessionOrchestratorTest {
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
         payloadCollator = FakeV2PayloadCollator(currentSessionSpan = currentSessionSpan)
         payloadFactory = PayloadFactoryImpl(
-            v1payloadMessageCollator = FakePayloadCollator(),
-            v2payloadMessageCollator = payloadCollator,
+            payloadMessageCollator = payloadCollator,
             configService = configService,
             logger = logger
         )

@@ -62,8 +62,7 @@ internal class SessionModuleImplTest {
             dataSourceModule,
             FakePayloadModule()
         )
-        assertNotNull(module.v1PayloadMessageCollator)
-        assertNotNull(module.v2PayloadMessageCollator)
+        assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
@@ -100,8 +99,7 @@ internal class SessionModuleImplTest {
             dataSourceModule,
             FakePayloadModule()
         )
-        assertNotNull(module.v1PayloadMessageCollator)
-        assertNotNull(module.v2PayloadMessageCollator)
+        assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)

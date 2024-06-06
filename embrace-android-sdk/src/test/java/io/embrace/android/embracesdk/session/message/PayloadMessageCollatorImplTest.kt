@@ -1,38 +1,32 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeAnrService
+import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
-import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
-import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
+import org.junit.Assert
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-internal class V1PayloadMessageCollatorTest {
+internal class PayloadMessageCollatorImplTest {
 
     private lateinit var initModule: FakeInitModule
     private lateinit var coreModule: FakeCoreModule
-    private lateinit var collator: PayloadMessageCollator
+    private lateinit var collator: PayloadMessageCollatorImpl
     private lateinit var gatingService: FakeGatingService
-    private lateinit var anrService: FakeAnrService
 
     private enum class PayloadType {
         BACKGROUND_ACTIVITY,
@@ -44,11 +38,12 @@ internal class V1PayloadMessageCollatorTest {
         initModule = FakeInitModule()
         coreModule = FakeCoreModule()
         gatingService = FakeGatingService()
-        anrService = FakeAnrService().apply {
-            data = listOf(fakeCompletedAnrInterval, fakeInProgressAnrInterval)
-        }
-
-        collator = V1PayloadMessageCollator(
+        val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
+            metadataSource = FakeEnvelopeMetadataSource(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            sessionPayloadSource = FakeSessionPayloadSource()
+        )
+        collator = PayloadMessageCollatorImpl(
             gatingService = gatingService,
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
@@ -56,7 +51,8 @@ internal class V1PayloadMessageCollatorTest {
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            logger = initModule.logger
+            logger = initModule.logger,
+            sessionEnvelopeSource = sessionEnvelopeSource
         )
     }
 
@@ -65,7 +61,7 @@ internal class V1PayloadMessageCollatorTest {
         val msg = collator.buildInitialSession(
             InitialEnvelopeParams.BackgroundActivityParams(
                 false,
-                LifeEventType.BKGND_STATE,
+                Session.LifeEventType.BKGND_STATE,
                 5
             )
         )
@@ -77,7 +73,7 @@ internal class V1PayloadMessageCollatorTest {
         val msg = collator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 false,
-                LifeEventType.STATE,
+                Session.LifeEventType.STATE,
                 5
             )
         )
@@ -90,7 +86,7 @@ internal class V1PayloadMessageCollatorTest {
         val startMsg = collator.buildInitialSession(
             InitialEnvelopeParams.BackgroundActivityParams(
                 false,
-                LifeEventType.BKGND_STATE,
+                Session.LifeEventType.BKGND_STATE,
                 5
             )
         )
@@ -101,7 +97,7 @@ internal class V1PayloadMessageCollatorTest {
             FinalEnvelopeParams.BackgroundActivityParams(
                 startMsg,
                 15000000000,
-                LifeEventType.BKGND_STATE,
+                Session.LifeEventType.BKGND_STATE,
                 SessionSnapshotType.NORMAL_END,
                 initModule.logger,
                 true,
@@ -109,7 +105,7 @@ internal class V1PayloadMessageCollatorTest {
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
+        assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
     @Test
@@ -118,7 +114,7 @@ internal class V1PayloadMessageCollatorTest {
         val startMsg = collator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 false,
-                LifeEventType.STATE,
+                Session.LifeEventType.STATE,
                 5
             )
         )
@@ -129,46 +125,25 @@ internal class V1PayloadMessageCollatorTest {
             FinalEnvelopeParams.SessionParams(
                 startMsg,
                 15000000000,
-                LifeEventType.STATE,
+                Session.LifeEventType.STATE,
                 SessionSnapshotType.NORMAL_END,
                 initModule.logger,
                 true,
-                "crashId"
+                "crashId",
             )
         )
         payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
-        assertEquals(1, gatingService.sessionMessagesFiltered.size)
-    }
-
-    @Test
-    fun `anr spans added to message`() {
-        // create start message
-        val startMsg = collator.buildInitialSession(
-            InitialEnvelopeParams.SessionParams(
-                true,
-                LifeEventType.STATE,
-                5
-            )
-        )
-
-        // create session
-        val cacheEndPayload = collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
-                startMsg,
-                15000000000,
-                LifeEventType.STATE,
-                SessionSnapshotType.PERIODIC_CACHE,
-                initModule.logger,
-                false,
-                "crashId"
-            )
-        )
-        assertNull(cacheEndPayload.data?.spans)
+        assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
     private fun SessionMessage.verifyFinalFieldsPopulated(
         payloadType: PayloadType
     ) {
+        assertNotNull(resource)
+        assertNotNull(metadata)
+        assertNotNull(data)
+        assertNotNull(newVersion)
+        assertNotNull(type)
         session.verifyInitialFieldsPopulated(payloadType)
         session.verifyFinalFieldsPopulated(payloadType)
     }
@@ -176,7 +151,7 @@ internal class V1PayloadMessageCollatorTest {
     private fun Session.verifyInitialFieldsPopulated(payloadType: PayloadType) {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
-        assertFalse(isColdStart)
+        Assert.assertFalse(isColdStart)
         assertNotNull(number)
 
         val expectedState = when (payloadType) {
@@ -184,8 +159,8 @@ internal class V1PayloadMessageCollatorTest {
             PayloadType.SESSION -> Session.APPLICATION_STATE_FOREGROUND
         }
         val expectedStartType = when (payloadType) {
-            PayloadType.BACKGROUND_ACTIVITY -> LifeEventType.BKGND_STATE
-            PayloadType.SESSION -> LifeEventType.STATE
+            PayloadType.BACKGROUND_ACTIVITY -> Session.LifeEventType.BKGND_STATE
+            PayloadType.SESSION -> Session.LifeEventType.STATE
         }
         val expectedSessionProps = when (payloadType) {
             PayloadType.BACKGROUND_ACTIVITY -> null
@@ -198,16 +173,13 @@ internal class V1PayloadMessageCollatorTest {
 
     private fun Session.verifyFinalFieldsPopulated(payloadType: PayloadType) {
         val expectedEndType = when (payloadType) {
-            PayloadType.BACKGROUND_ACTIVITY -> LifeEventType.BKGND_STATE
-            PayloadType.SESSION -> LifeEventType.STATE
+            PayloadType.BACKGROUND_ACTIVITY -> Session.LifeEventType.BKGND_STATE
+            PayloadType.SESSION -> Session.LifeEventType.STATE
         }
         assertEquals(15000000000L, endTime)
         assertEquals(expectedEndType, endType)
         assertEquals(15000000000L, lastHeartbeatTime)
         assertEquals("crashId", crashReportId)
         assertNotNull(eventIds)
-        assertNotNull(infoLogIds)
-        assertNotNull(warningLogIds)
-        assertNotNull(errorLogIds)
     }
 }

@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePayloadCollator
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -46,7 +45,7 @@ import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -182,7 +181,7 @@ internal class PayloadFactoryBaTest {
                 ::FakeSessionPropertiesService,
             )
         )
-        val v2Collator = V2PayloadMessageCollator(
+        val collator = PayloadMessageCollatorImpl(
             gatingService,
             sessionEnvelopeSource,
             eventService,
@@ -193,7 +192,7 @@ internal class PayloadFactoryBaTest {
             FakeStartupService(),
             logger
         )
-        return PayloadFactoryImpl(FakePayloadCollator(), v2Collator, configService, logger).apply {
+        return PayloadFactoryImpl(collator, configService, logger).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)
             }

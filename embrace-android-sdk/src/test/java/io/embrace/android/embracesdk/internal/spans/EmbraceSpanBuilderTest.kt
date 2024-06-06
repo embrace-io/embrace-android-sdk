@@ -7,11 +7,13 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -64,7 +66,7 @@ internal class EmbraceSpanBuilderTest {
             parent = null,
         )
         val parent = tracer.spanBuilder("parent-span").startSpan()
-        val parentContext = Context.current().with(parent)
+        val parentContext = Context.root().with(parent).with(fakeContextKey, "value")
         spanBuilder.setParent(parentContext)
         with(spanBuilder.getFixedAttributes().toSet()) {
             assertFalse(contains(KeySpan))
@@ -138,6 +140,40 @@ internal class EmbraceSpanBuilderTest {
             expectedStartTimeMs = startTime,
             expectedSpanKind = SpanKind.CLIENT
         )
+    }
+
+    @Test
+    fun `custom attribute setting`() {
+        val spanBuilder = EmbraceSpanBuilder(
+            tracer = tracer,
+            name = "test",
+            telemetryType = EmbType.Performance.Default,
+            internal = false,
+            private = false,
+            parent = null,
+        )
+        spanBuilder.setCustomAttribute("test-key", "test-value")
+        assertEquals("test-value", spanBuilder.getCustomAttributes()["test-key"])
+    }
+
+    @Test
+    fun `context value propagated even if it does not context a span`() {
+        val fakeRootContext = Context.root().with(fakeContextKey, "fake-value")
+        val parent = FakePersistableEmbraceSpan.started(parentContext = fakeRootContext)
+        val spanBuilder = EmbraceSpanBuilder(
+            tracer = tracer,
+            name = "parent",
+            telemetryType = EmbType.Performance.Default,
+            internal = false,
+            private = false,
+            parent = parent,
+        )
+
+        assertEquals("fake-value", spanBuilder.parentContext.get(fakeContextKey))
+
+        val span = spanBuilder.startSpan(clock.now()) as FakeSpan
+        assertNotEquals(parent.spanContext?.traceId, span.spanContext.traceId)
+        assertEquals("fake-value", span.fakeSpanBuilder.parentContext.get(fakeContextKey))
     }
 
     private fun Span.assertFakeSpanBuilder(

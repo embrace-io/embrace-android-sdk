@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
@@ -18,6 +19,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Context
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -25,6 +29,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
@@ -38,9 +44,11 @@ internal class TracingApiTest {
     )
 
     private val results = mutableListOf<String>()
+    private lateinit var executor: SingleThreadTestScheduledExecutor
 
     @Before
     fun setup() {
+        executor =  SingleThreadTestScheduledExecutor()
         results.clear()
     }
 
@@ -269,6 +277,38 @@ internal class TracingApiTest {
                 expectedStatus = StatusCode.UNSET,
                 private = false
             )
+        }
+    }
+
+    @Test
+    fun `span can be parented by a span created on a different thread`() {
+        with(testRule) {
+            embrace.start(harness.overriddenCoreModule.context)
+            val session = harness.recordSession {
+                val latch = CountDownLatch(1)
+                val parentThreadId = Thread.currentThread().id
+                var childThreadId: Long = -1L
+                val parent = checkNotNull(embrace.startSpan("parent"))
+                val currentContext = Context.current()
+                var currentContext2: Context? = null
+                executor.submit {
+                    childThreadId = Thread.currentThread().id
+                    currentContext2 = Context.current()
+                    val child = checkNotNull(embrace.startSpan(name = "child", parent = parent))
+                    assertTrue(child.stop())
+                    latch.countDown()
+                }
+                latch.await(1, TimeUnit.SECONDS)
+                assertTrue(parent.stop())
+                assertNotEquals(-1L, childThreadId)
+                assertNotEquals(parentThreadId, childThreadId)
+                assertEquals(currentContext, currentContext2)
+            }
+            val spans = checkNotNull(session?.spans).associateBy { it.name }
+            val parentSpan = checkNotNull(spans["parent"])
+            val childSpan = checkNotNull(spans["child"])
+            assertEquals(parentSpan.traceId, childSpan.traceId)
+            assertEquals(parentSpan.spanId, childSpan.parentSpanId)
         }
     }
 

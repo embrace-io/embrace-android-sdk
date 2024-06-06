@@ -30,7 +30,6 @@ internal class FakeV2PayloadCollator(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
-            messageType = Session.MESSAGE_TYPE_END,
             appState = appState,
             startType = startType,
             number = sessionNumber,

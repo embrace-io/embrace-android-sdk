@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.payload.LegacyExceptionError
-import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.payload.WebViewInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -23,34 +20,19 @@ internal class SessionTest {
         isEndedCleanly = true,
         isReceivedTermination = true,
         isColdStart = true,
-        messageType = "fake-message-type",
         terminationTime = 16090292309L,
         eventIds = listOf("fake-event-id"),
         infoLogIds = listOf("fake-info-id"),
         warningLogIds = listOf("fake-warn-id"),
         errorLogIds = listOf("fake-err-id"),
         networkLogIds = listOf("fake-network-id"),
-        infoLogsAttemptedToSend = 1,
-        warnLogsAttemptedToSend = 2,
-        errorLogsAttemptedToSend = 3,
         crashReportId = "fake-crash-id",
         endType = LifeEventType.STATE,
         startType = LifeEventType.STATE,
         startupDuration = 1223,
         startupThreshold = 5000,
         sdkStartupDuration = 109,
-        unhandledExceptions = 1,
-        exceptionError = LegacyExceptionError(),
-        orientations = listOf(Orientation(1, 16092342200)),
-        properties = mapOf("fake-key" to "fake-value"),
-        symbols = mapOf("fake-native-key" to "fake-native-value"),
-        webViewInfo = listOf(
-            WebViewInfo(
-                "fake-webview-id",
-                url = "fake-url",
-                startTime = 16090292309L
-            )
-        )
+        properties = mapOf("fake-key" to "fake-value")
     )
 
     @Test
@@ -69,7 +51,6 @@ internal class SessionTest {
             assertEquals(987654321L, endTime)
             assertEquals(5, number)
             assertEquals("foreground", appState)
-            assertEquals("fake-message-type", messageType)
             assertEquals(16090292309L, terminationTime)
             assertEquals(123456780L, lastHeartbeatTime)
             assertTrue(checkNotNull(isEndedCleanly))
@@ -80,21 +61,13 @@ internal class SessionTest {
             assertEquals(listOf("fake-warn-id"), warningLogIds)
             assertEquals(listOf("fake-err-id"), errorLogIds)
             assertEquals(listOf("fake-network-id"), networkLogIds)
-            assertEquals(1, infoLogsAttemptedToSend)
-            assertEquals(2, warnLogsAttemptedToSend)
-            assertEquals(3, errorLogsAttemptedToSend)
             assertEquals("fake-crash-id", crashReportId)
             assertEquals(LifeEventType.STATE, endType)
             assertEquals(LifeEventType.STATE, startType)
             assertEquals(1223L, startupDuration)
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)
-            assertEquals(1, unhandledExceptions)
-            assertEquals(LegacyExceptionError(), exceptionError)
-            assertEquals(listOf(Orientation(1, 16092342200)), orientations)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
-            assertEquals(mapOf("fake-native-key" to "fake-native-value"), symbols)
-            assertEquals(1, webViewInfo?.size)
         }
     }
 

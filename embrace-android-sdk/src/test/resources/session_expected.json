@@ -2,7 +2,6 @@
   "id": "fake-session-id",
   "st": 123456789,
   "sn": 5,
-  "ty": "fake-message-type",
   "as": "foreground",
   "cs": true,
   "et": 987654321,
@@ -25,38 +24,13 @@
   "nc": [
     "fake-network-id"
   ],
-  "lic": 1,
-  "lwc": 2,
-  "lec": 3,
-  "e": {
-    "c": 0,
-    "rep": []
-  },
   "ri": "fake-crash-id",
   "em": "s",
   "sm": "s",
-  "oc": [
-    {
-      "o": "p",
-      "ts": 16092342200
-    }
-  ],
   "sp": {
     "fake-key": "fake-value"
   },
   "sd": 1223,
   "sdt": 5000,
-  "si": 109,
-  "ue": 1,
-  "sb": {
-    "fake-native-key": "fake-native-value"
-  },
-  "wvi_beta": [
-    {
-      "t": "fake-webview-id",
-      "vt": [],
-      "u": "fake-url",
-      "ts": 16090292309
-    }
-  ]
+  "si": 109
 }

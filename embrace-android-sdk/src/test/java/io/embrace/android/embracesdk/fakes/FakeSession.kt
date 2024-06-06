@@ -21,8 +21,7 @@ internal fun fakeSession(
     appState = APPLICATION_STATE_FOREGROUND,
     isColdStart = true,
     startType = Session.LifeEventType.STATE,
-    properties = properties,
-    messageType = Session.MESSAGE_TYPE_END
+    properties = properties
 )
 
 internal fun fakeV1SessionMessage(session: Session = fakeSession()): SessionMessage = SessionMessage(

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.gating
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOGS_INFO
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOGS_WARN
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_MOMENTS
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_ORIENTATIONS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
@@ -20,10 +19,6 @@ internal class SessionSanitizer(
             !shouldSendSessionProperties() -> null
             else -> session.properties
         }
-        val orientations = when {
-            !shouldSendTrackedOrientations() -> null
-            else -> session.orientations
-        }
         val terminationTime = when {
             !shouldSendUserTerminations() -> null
             else -> session.terminationTime
@@ -36,17 +31,9 @@ internal class SessionSanitizer(
             !shouldSendInfoLog() -> null
             else -> session.infoLogIds
         }
-        val infoLogsAttemptedToSend = when {
-            !shouldSendInfoLog() -> null
-            else -> session.infoLogsAttemptedToSend
-        }
         val warnLogIds = when {
             !shouldSendWarnLog() -> null
             else -> session.warningLogIds
-        }
-        val warnLogsAttemptedToSend = when {
-            !shouldSendWarnLog() -> null
-            else -> session.warnLogsAttemptedToSend
         }
         val eventIds = when {
             !shouldSendMoment() -> null
@@ -62,13 +49,10 @@ internal class SessionSanitizer(
         }
         return session.copy(
             properties = properties,
-            orientations = orientations,
             terminationTime = terminationTime,
             isReceivedTermination = receivedTermination,
             infoLogIds = infoLogIds,
-            infoLogsAttemptedToSend = infoLogsAttemptedToSend,
             warningLogIds = warnLogIds,
-            warnLogsAttemptedToSend = warnLogsAttemptedToSend,
             eventIds = eventIds,
             startupDuration = startupDuration,
             startupThreshold = startupThreshold
@@ -77,9 +61,6 @@ internal class SessionSanitizer(
 
     private fun shouldSendSessionProperties() =
         enabledComponents.contains(SESSION_PROPERTIES)
-
-    private fun shouldSendTrackedOrientations() =
-        enabledComponents.contains(SESSION_ORIENTATIONS)
 
     private fun shouldSendUserTerminations() =
         enabledComponents.contains(SESSION_USER_TERMINATION)

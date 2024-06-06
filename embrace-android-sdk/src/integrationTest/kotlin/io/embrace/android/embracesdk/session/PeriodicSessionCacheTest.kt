@@ -43,7 +43,6 @@ internal class PeriodicSessionCacheTest {
                 embrace.addSessionProperty("Test", "Test", true)
 
                 var endMessage = checkNotNull(harness.getLastSavedSession())
-                assertEquals("en", endMessage.session.messageType)
                 assertEquals(false, endMessage.session.isEndedCleanly)
                 assertEquals(true, endMessage.session.isReceivedTermination)
                 assertEquals(0, endMessage.session.properties?.size)
@@ -51,14 +50,12 @@ internal class PeriodicSessionCacheTest {
                 // trigger another periodic cache
                 executor.moveForwardAndRunBlocked(2000)
                 endMessage = checkNotNull(harness.getLastSavedSession())
-                assertEquals("en", endMessage.session.messageType)
                 assertEquals(false, endMessage.session.isEndedCleanly)
                 assertEquals(true, endMessage.session.isReceivedTermination)
                 assertEquals("Test", checkNotNull(endMessage.session.properties)["Test"])
             }
 
             val endMessage = checkNotNull(harness.getLastSentSession())
-            assertEquals("en", endMessage.session.messageType)
             assertEquals(true, endMessage.session.isEndedCleanly)
             assertNull(endMessage.session.isReceivedTermination)
             assertEquals("Test", checkNotNull(endMessage.session.properties)["Test"])

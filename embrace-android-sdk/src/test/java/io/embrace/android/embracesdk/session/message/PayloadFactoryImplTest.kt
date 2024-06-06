@@ -9,14 +9,12 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState.FOREGROUND
 import org.junit.Before
 import org.junit.Test
@@ -38,13 +36,9 @@ internal class PayloadFactoryImplTest {
         val initModule = FakeInitModule()
         val v1Collator = V1PayloadMessageCollator(
             gatingService = FakeGatingService(),
-            nativeThreadSamplerService = null,
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply {
-                data = LegacyExceptionError()
-            },
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
@@ -52,7 +46,6 @@ internal class PayloadFactoryImplTest {
         )
         val v2Collator = V2PayloadMessageCollator(
             gatingService = FakeGatingService(),
-            nativeThreadSamplerService = null,
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),

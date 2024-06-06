@@ -6,14 +6,12 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -43,11 +41,9 @@ internal class V2PayloadMessageCollatorTest {
         gatingService = FakeGatingService()
         v1collator = V1PayloadMessageCollator(
             gatingService = gatingService,
-            nativeThreadSamplerService = null,
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            internalErrorService = FakeInternalErrorService().apply { data = LegacyExceptionError() },
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
@@ -60,7 +56,6 @@ internal class V2PayloadMessageCollatorTest {
         )
         v2collator = V2PayloadMessageCollator(
             gatingService = gatingService,
-            nativeThreadSamplerService = null,
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
@@ -184,7 +179,6 @@ internal class V2PayloadMessageCollatorTest {
         }
         assertEquals(expectedState, appState)
         assertEquals(expectedStartType, startType)
-        assertEquals(Session.MESSAGE_TYPE_END, messageType)
         assertEquals(expectedSessionProps, properties)
     }
 

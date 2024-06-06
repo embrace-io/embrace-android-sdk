@@ -28,12 +28,6 @@ internal data class Session @JvmOverloads internal constructor(
     val number: Int,
 
     /**
-     * Type of the session message (start or end)
-     */
-    @Json(name = "ty")
-    val messageType: String,
-
-    /**
      * Application state for this session (foreground or background)
      */
     @Json(name = "as")
@@ -75,18 +69,6 @@ internal data class Session @JvmOverloads internal constructor(
     @Json(name = "nc")
     val networkLogIds: List<String>? = null,
 
-    @Json(name = "lic")
-    val infoLogsAttemptedToSend: Int? = null,
-
-    @Json(name = "lwc")
-    val warnLogsAttemptedToSend: Int? = null,
-
-    @Json(name = "lec")
-    val errorLogsAttemptedToSend: Int? = null,
-
-    @Json(name = "e")
-    val exceptionError: LegacyExceptionError? = null,
-
     @Json(name = "ri")
     val crashReportId: String? = null,
 
@@ -95,9 +77,6 @@ internal data class Session @JvmOverloads internal constructor(
 
     @Json(name = "sm")
     val startType: LifeEventType? = null,
-
-    @Json(name = "oc")
-    val orientations: List<Orientation>? = null,
 
     @Json(name = "sp")
     val properties: Map<String, String>? = null,
@@ -109,16 +88,7 @@ internal data class Session @JvmOverloads internal constructor(
     val startupThreshold: Long? = null,
 
     @Json(name = "si")
-    val sdkStartupDuration: Long? = null,
-
-    @Json(name = "ue")
-    val unhandledExceptions: Int? = null,
-
-    @Json(name = "sb")
-    val symbols: Map<String, String>? = null,
-
-    @Json(name = "wvi_beta")
-    val webViewInfo: List<WebViewInfo>? = null
+    val sdkStartupDuration: Long? = null
 ) {
 
     /**
@@ -154,10 +124,5 @@ internal data class Session @JvmOverloads internal constructor(
          * Signals to the API that this is a background session.
          */
         internal const val APPLICATION_STATE_BACKGROUND = "background"
-
-        /**
-         * Signals to the API the end of a session.
-         */
-        internal const val MESSAGE_TYPE_END = "en"
     }
 }

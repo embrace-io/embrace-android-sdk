@@ -44,13 +44,11 @@ import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.Orientation
 import io.embrace.android.embracesdk.payload.PerformanceInfo
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.utils.at
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -228,19 +226,6 @@ internal class EmbraceGatingServiceV1PayloadTest {
     }
 
     @Test
-    fun `test gate tracked orientations for Session`() {
-        val session = fakeSession().copy(
-            orientations = listOf(Orientation(1, 123123123))
-        )
-        cfg = buildCustomRemoteConfig(setOf(SESSION_ORIENTATIONS), null)
-
-        val sessionMessage = SessionMessage(session)
-        val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
-
-        assertNotNull(sanitizedMessage.session.orientations)
-    }
-
-    @Test
     fun `test gate user termination for Session`() {
         val session = fakeSession().copy(
             terminationTime = 123123123,
@@ -289,9 +274,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
     fun `test do not gate logs for Session`() {
         val session = fakeSession().copy(
             infoLogIds = listOf("INFO-LOG"),
-            infoLogsAttemptedToSend = 1,
-            warningLogIds = listOf("WARNING-LOG"),
-            warnLogsAttemptedToSend = 1
+            warningLogIds = listOf("WARNING-LOG")
         )
         cfg = buildCustomRemoteConfig(setOf(LOGS_WARN, LOGS_INFO), null)
 
@@ -299,10 +282,8 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
         val infoIds = checkNotNull(sanitizedMessage.session.infoLogIds)
-        assertTrue(sanitizedMessage.session.infoLogsAttemptedToSend == 1)
         assertTrue(infoIds.contains("INFO-LOG"))
         val warnIds = checkNotNull(sanitizedMessage.session.warningLogIds)
-        assertTrue(sanitizedMessage.session.warnLogsAttemptedToSend == 1)
         assertTrue(warnIds.contains("WARNING-LOG"))
     }
 
@@ -310,9 +291,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
     fun `test gate logs for Session`() {
         val session = fakeSession().copy(
             infoLogIds = listOf("INFO-LOG"),
-            infoLogsAttemptedToSend = 1,
             warningLogIds = listOf("WARNING-LOG"),
-            warnLogsAttemptedToSend = 1
         )
         cfg = buildCustomRemoteConfig(setOf(), null)
 
@@ -320,9 +299,7 @@ internal class EmbraceGatingServiceV1PayloadTest {
         val sanitizedMessage = gatingService.gateSessionMessage(sessionMessage)
 
         assertNull(sanitizedMessage.session.infoLogIds)
-        assertFalse(sanitizedMessage.session.infoLogsAttemptedToSend == 1)
         assertNull(sanitizedMessage.session.warningLogIds)
-        assertFalse(sanitizedMessage.session.warnLogsAttemptedToSend == 1)
     }
 
     @Test

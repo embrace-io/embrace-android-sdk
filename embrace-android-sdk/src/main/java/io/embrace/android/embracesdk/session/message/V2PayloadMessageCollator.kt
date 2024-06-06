@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
@@ -24,7 +23,6 @@ internal class V2PayloadMessageCollator(
     private val sessionEnvelopeSource: SessionEnvelopeSource,
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
-    private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val preferencesService: PreferencesService,
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
@@ -38,7 +36,6 @@ internal class V2PayloadMessageCollator(
                 sessionId = currentSessionSpan.getSessionId(),
                 startTime = startTime,
                 isColdStart = coldStart,
-                messageType = Session.MESSAGE_TYPE_END,
                 appState = appState,
                 startType = startType,
                 number = getSessionNumber(preferencesService),
@@ -75,8 +72,7 @@ internal class V2PayloadMessageCollator(
                 endTime = endTimeVal,
                 sdkStartupDuration = startupService.getSdkStartupDuration(initial.isColdStart),
                 startupDuration = startupInfo?.duration,
-                startupThreshold = startupInfo?.threshold,
-                symbols = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
+                startupThreshold = startupInfo?.threshold
             )
             val envelope = buildWrapperEnvelope(endSession)
             gatingService.gateSessionMessage(envelope)

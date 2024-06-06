@@ -59,7 +59,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -147,8 +146,6 @@ internal class SessionHandlerTest {
             gatingService,
             eventService,
             logMessageService,
-            internalErrorService,
-            null,
             preferencesService,
             initModule.openTelemetryModule.currentSessionSpan,
             FakeSessionPropertiesService(),
@@ -175,7 +172,6 @@ internal class SessionHandlerTest {
             ),
             eventService,
             logMessageService,
-            null,
             preferencesService,
             currentSessionSpan,
             FakeSessionPropertiesService(),
@@ -229,10 +225,8 @@ internal class SessionHandlerTest {
 
         with(session) {
             assertFalse(checkNotNull(isEndedCleanly))
-            assertEquals("en", messageType)
             assertEquals("foreground", appState)
             assertEquals(emptyList<String>(), eventIds)
-            assertNull(exceptionError)
             assertEquals(NOW, lastHeartbeatTime)
             assertEquals(sessionProperties.get(), properties)
             assertEquals(Session.LifeEventType.STATE, endType)
@@ -241,7 +235,6 @@ internal class SessionHandlerTest {
             assertEquals(sdkStartupDuration, sdkStartupDuration)
             assertEquals(0L, startupDuration)
             assertEquals(0L, startupThreshold)
-            assertEquals(null, webViewInfo)
         }
     }
 

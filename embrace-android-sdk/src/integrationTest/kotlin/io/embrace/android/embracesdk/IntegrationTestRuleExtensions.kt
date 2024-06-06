@@ -206,7 +206,6 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: Provider<T>, waitTim
 
 internal fun verifySessionHappened(message: SessionMessage) {
     verifySessionMessage(message)
-    assertEquals("en", message.session.messageType)
 }
 
 internal fun verifySessionMessage(sessionMessage: SessionMessage) {
@@ -215,7 +214,6 @@ internal fun verifySessionMessage(sessionMessage: SessionMessage) {
 
 internal fun verifyBgActivityHappened(message: SessionMessage) {
     verifyBgActivityMessage(message)
-    assertEquals("en", message.session.messageType)
 }
 
 internal fun verifyBgActivityMessage(message: SessionMessage) {

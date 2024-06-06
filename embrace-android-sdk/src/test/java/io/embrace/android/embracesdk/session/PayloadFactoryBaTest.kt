@@ -187,7 +187,6 @@ internal class PayloadFactoryBaTest {
             sessionEnvelopeSource,
             eventService,
             logMessageService,
-            null,
             preferencesService,
             currentSessionSpan,
             FakeSessionPropertiesService(),

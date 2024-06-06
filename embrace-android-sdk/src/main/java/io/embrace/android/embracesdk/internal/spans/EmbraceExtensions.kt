@@ -65,7 +65,7 @@ internal fun Tracer.embraceSpanBuilder(
     telemetryType = type,
     internal = internal,
     private = private,
-    parent = parent,
+    parentSpan = parent,
 )
 
 /**

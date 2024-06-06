@@ -40,7 +40,7 @@ internal class FakePersistableEmbraceSpan(
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
     var status = Span.Status.UNSET
-    var sdkSpan: io.opentelemetry.api.trace.Span? = null
+    private var sdkSpan: io.opentelemetry.api.trace.Span? = null
 
     override var spanContext: SpanContext? = null
 
@@ -124,7 +124,7 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
-    override fun asNewContext(): Context? = sdkSpan?.run { parentContext.with(this) }
+    override fun asNewContext(): Context? = sdkSpan?.let { parentContext.with(this).with(it) }
 
     override fun snapshot(): Span? {
         return if (spanId == null) {

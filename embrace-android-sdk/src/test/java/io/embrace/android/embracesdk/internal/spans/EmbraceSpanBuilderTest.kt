@@ -13,7 +13,6 @@ import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -37,7 +36,7 @@ internal class EmbraceSpanBuilderTest {
             telemetryType = EmbType.Performance.Default,
             internal = true,
             private = true,
-            parent = null,
+            parentSpan = null,
         )
         val originalStartTime = clock.now()
         spanBuilder.startTimeMs = originalStartTime
@@ -63,11 +62,11 @@ internal class EmbraceSpanBuilderTest {
             telemetryType = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
+            parentSpan = null,
         )
-        val parent = tracer.spanBuilder("parent-span").startSpan()
-        val parentContext = Context.root().with(parent).with(fakeContextKey, "value")
-        spanBuilder.setParent(parentContext)
+        val parent = FakePersistableEmbraceSpan.started()
+        val parentContext = checkNotNull(parent.asNewContext()?.with(fakeContextKey, "value"))
+        spanBuilder.setParentContext(parentContext)
         with(spanBuilder.getFixedAttributes().toSet()) {
             assertFalse(contains(KeySpan))
         }
@@ -76,7 +75,7 @@ internal class EmbraceSpanBuilderTest {
             expectedName = "test",
             expectedParentContext = parentContext,
             expectedStartTimeMs = startTime,
-            expectedTraceId = parent.spanContext.traceId
+            expectedTraceId = parent.spanContext?.traceId
         )
     }
 
@@ -90,7 +89,7 @@ internal class EmbraceSpanBuilderTest {
             telemetryType = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = parent,
+            parentSpan = parent,
         )
 
         assertNull(spanBuilder.getFixedAttributes().find { it == KeySpan })
@@ -109,7 +108,7 @@ internal class EmbraceSpanBuilderTest {
             telemetryType = EmbType.Ux.View,
             internal = false,
             private = false,
-            parent = parent,
+            parentSpan = parent,
         )
 
         assertNull(uxSpanBuilder.getFixedAttributes().find { it == KeySpan })
@@ -131,7 +130,7 @@ internal class EmbraceSpanBuilderTest {
             telemetryType = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
+            parentSpan = null,
         )
         val startTime = clock.now()
         spanBuilder.setSpanKind(SpanKind.CLIENT)
@@ -150,7 +149,7 @@ internal class EmbraceSpanBuilderTest {
             telemetryType = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = null,
+            parentSpan = null,
         )
         spanBuilder.setCustomAttribute("test-key", "test-value")
         assertEquals("test-value", spanBuilder.getCustomAttributes()["test-key"])
@@ -159,20 +158,19 @@ internal class EmbraceSpanBuilderTest {
     @Test
     fun `context value propagated even if it does not context a span`() {
         val fakeRootContext = Context.root().with(fakeContextKey, "fake-value")
-        val parent = FakePersistableEmbraceSpan.started(parentContext = fakeRootContext)
         val spanBuilder = EmbraceSpanBuilder(
             tracer = tracer,
             name = "parent",
             telemetryType = EmbType.Performance.Default,
             internal = false,
             private = false,
-            parent = parent,
+            parentSpan = null,
         )
 
+        spanBuilder.setParentContext(fakeRootContext)
         assertEquals("fake-value", spanBuilder.parentContext.get(fakeContextKey))
 
         val span = spanBuilder.startSpan(clock.now()) as FakeSpan
-        assertNotEquals(parent.spanContext?.traceId, span.spanContext.traceId)
         assertEquals("fake-value", span.fakeSpanBuilder.parentContext.get(fakeContextKey))
     }
 

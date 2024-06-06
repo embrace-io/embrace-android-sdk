@@ -396,7 +396,7 @@ internal class EmbraceSpanImplTest {
             private = true
         )
         val newParentContext = spanBuilder.parentContext.with(fakeContextKey, "fake-value")
-        spanBuilder.setParent(newParentContext)
+        spanBuilder.setParentContext(newParentContext)
 
         embraceSpan = EmbraceSpanImpl(
             spanBuilder = spanBuilder,

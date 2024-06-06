@@ -45,7 +45,7 @@ internal class BreadcrumbBehavior(
     /**
      * Controls whether activity lifecycle changes are captured in breadcrumbs
      */
-    fun isActivityBreadcrumbCaptureEnabled() =
+    fun isAutomaticActivityCaptureEnabled() =
         local?.viewConfig?.enableAutomaticActivityCapture
             ?: ENABLE_AUTOMATIC_ACTIVITY_CAPTURE_DEFAULT
 

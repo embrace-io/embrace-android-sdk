@@ -8,15 +8,20 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
 
 internal fun fakeSession(
     sessionId: String = "fakeSessionId",
-    startMs: Long = 160000000000L,
-    number: Int = 1
+    startMs: Long = 160000000000L
 ): Session = Session(
     sessionId = sessionId,
-    startTime = startMs,
-    number = number,
+    startTime = startMs
+)
+
+internal fun fakeSessionZygote() = SessionZygote(
+    sessionId = "fakeSessionId",
+    startTime = 160000000000L,
+    number = 1,
     appState = APPLICATION_STATE_FOREGROUND,
     isColdStart = true,
     startType = Session.LifeEventType.STATE

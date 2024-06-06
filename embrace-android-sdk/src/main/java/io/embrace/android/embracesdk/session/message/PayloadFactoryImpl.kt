@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
@@ -20,7 +20,7 @@ internal class PayloadFactoryImpl(
             ProcessState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
         }
 
-    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: Session) =
+    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: SessionZygote) =
         when (state) {
             ProcessState.FOREGROUND -> endSessionWithState(initial, timestamp)
             ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial, timestamp)
@@ -29,20 +29,20 @@ internal class PayloadFactoryImpl(
     override fun endPayloadWithCrash(
         state: ProcessState,
         timestamp: Long,
-        initial: Session,
+        initial: SessionZygote,
         crashId: String
     ) = when (state) {
         ProcessState.FOREGROUND -> endSessionWithCrash(initial, timestamp, crashId)
         ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, timestamp, crashId)
     }
 
-    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: Session) =
+    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote) =
         when (state) {
             ProcessState.FOREGROUND -> snapshotSession(initial, timestamp)
             ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial, timestamp)
         }
 
-    override fun startSessionWithManual(timestamp: Long): Session {
+    override fun startSessionWithManual(timestamp: Long): SessionZygote {
         return payloadMessageCollator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 false,
@@ -52,7 +52,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    override fun endSessionWithManual(timestamp: Long, initial: Session): SessionMessage {
+    override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): SessionMessage {
         return payloadMessageCollator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
@@ -64,7 +64,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
+    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): SessionZygote {
         return payloadMessageCollator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 coldStart,
@@ -74,7 +74,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session? {
+    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): SessionZygote? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
@@ -94,7 +94,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun endSessionWithState(initial: Session, timestamp: Long): SessionMessage {
+    private fun endSessionWithState(initial: SessionZygote, timestamp: Long): SessionMessage {
         return payloadMessageCollator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
@@ -106,7 +106,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun endBackgroundActivityWithState(initial: Session, timestamp: Long): SessionMessage? {
+    private fun endBackgroundActivityWithState(initial: SessionZygote, timestamp: Long): SessionMessage? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
@@ -125,7 +125,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun endSessionWithCrash(
-        initial: Session,
+        initial: SessionZygote,
         timestamp: Long,
         crashId: String
     ): SessionMessage {
@@ -142,7 +142,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun endBackgroundActivityWithCrash(
-        initial: Session,
+        initial: SessionZygote,
         timestamp: Long,
         crashId: String
     ): SessionMessage? {
@@ -164,7 +164,7 @@ internal class PayloadFactoryImpl(
     /**
      * Called when the session is persisted every 2s to cache its state.
      */
-    private fun snapshotSession(initial: Session, timestamp: Long): SessionMessage {
+    private fun snapshotSession(initial: SessionZygote, timestamp: Long): SessionMessage {
         return payloadMessageCollator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 initial = initial,
@@ -176,7 +176,7 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun snapshotBackgroundActivity(initial: Session, timestamp: Long): SessionMessage? {
+    private fun snapshotBackgroundActivity(initial: SessionZygote, timestamp: Long): SessionMessage? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }

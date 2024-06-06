@@ -2,7 +2,10 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
@@ -43,7 +46,8 @@ internal class StatefulSessionTest {
             val messages = testRule.harness.getSentSessions()
             val first = messages[0]
             verifySessionHappened(first)
-            assertEquals(LifeEventType.STATE, first.session.startType)
+            val attrs = checkNotNull(first.findSessionSpan().attributes)
+            assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue("emb.session_start_type"))
             assertEquals(LifeEventType.STATE, first.session.endType)
 
             // verify second session

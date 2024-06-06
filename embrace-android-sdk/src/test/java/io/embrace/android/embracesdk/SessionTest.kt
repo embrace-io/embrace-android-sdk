@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionTest {
@@ -14,10 +13,7 @@ internal class SessionTest {
         sessionId = "fake-session-id",
         startTime = 123456789L,
         endTime = 987654321L,
-        number = 5,
-        appState = "foreground",
         lastHeartbeatTime = 123456780L,
-        isColdStart = true,
         terminationTime = 16090292309L,
         eventIds = listOf("fake-event-id"),
         infoLogIds = listOf("fake-info-id"),
@@ -26,7 +22,6 @@ internal class SessionTest {
         networkLogIds = listOf("fake-network-id"),
         crashReportId = "fake-crash-id",
         endType = LifeEventType.STATE,
-        startType = LifeEventType.STATE,
         startupDuration = 1223,
         startupThreshold = 5000,
         sdkStartupDuration = 109
@@ -46,11 +41,8 @@ internal class SessionTest {
             assertEquals("fake-session-id", sessionId)
             assertEquals(123456789L, startTime)
             assertEquals(987654321L, endTime)
-            assertEquals(5, number)
-            assertEquals("foreground", appState)
             assertEquals(16090292309L, terminationTime)
             assertEquals(123456780L, lastHeartbeatTime)
-            assertTrue(isColdStart)
             assertEquals(listOf("fake-event-id"), eventIds)
             assertEquals(listOf("fake-info-id"), infoLogIds)
             assertEquals(listOf("fake-warn-id"), warningLogIds)
@@ -58,7 +50,6 @@ internal class SessionTest {
             assertEquals(listOf("fake-network-id"), networkLogIds)
             assertEquals("fake-crash-id", crashReportId)
             assertEquals(LifeEventType.STATE, endType)
-            assertEquals(LifeEventType.STATE, startType)
             assertEquals(1223L, startupDuration)
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)

@@ -22,21 +22,6 @@ internal data class Session @JvmOverloads internal constructor(
     val startTime: Long,
 
     /**
-     * The ordinal of the session, starting from 1.
-     */
-    @Json(name = "sn")
-    val number: Int,
-
-    /**
-     * Application state for this session (foreground or background)
-     */
-    @Json(name = "as")
-    val appState: String,
-
-    @Json(name = "cs")
-    val isColdStart: Boolean,
-
-    /**
      * The time that the session ended.
      */
     @Json(name = "et")
@@ -68,9 +53,6 @@ internal data class Session @JvmOverloads internal constructor(
 
     @Json(name = "em")
     val endType: LifeEventType? = null,
-
-    @Json(name = "sm")
-    val startType: LifeEventType? = null,
 
     @Json(name = "sd")
     val startupDuration: Long? = null,

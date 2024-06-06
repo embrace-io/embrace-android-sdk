@@ -1,10 +1,6 @@
 {
   "s": {
     "id": "fakeSessionId",
-    "st": 160000000000,
-    "sn": 1,
-    "as": "foreground",
-    "cs": true,
-    "sm": "s"
+    "st": 160000000000
   }
 }

@@ -2,7 +2,10 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifyBgActivityMessage
 import org.junit.Assert.assertEquals
@@ -35,12 +38,14 @@ internal class BackgroundActivityTest {
             // verify first bg activity
             val first = bgActivities[0]
             verifyBgActivityMessage(first)
-            assertEquals(1, first.session.number)
+            val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
+            assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
 
             // verify second bg activity
             val second = bgActivities[1]
             verifyBgActivityMessage(second)
-            assertEquals(2, second.session.number)
+            val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
+            assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
 
             // ID should be different for each
             assertNotEquals(first.session.sessionId, second.session.sessionId)

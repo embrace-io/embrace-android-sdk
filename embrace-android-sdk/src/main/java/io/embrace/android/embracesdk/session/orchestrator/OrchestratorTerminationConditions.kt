@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.session.orchestrator
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 
 /**
@@ -16,7 +16,7 @@ private const val MIN_SESSION_MS = 5000L
 internal fun shouldEndManualSession(
     configService: ConfigService,
     clock: Clock,
-    activeSession: Session?,
+    activeSession: SessionZygote?,
     state: ProcessState,
     logger: EmbLogger
 ): Boolean {

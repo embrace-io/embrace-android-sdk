@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakeBackgroundActivity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -31,6 +30,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
+import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -53,7 +53,7 @@ import org.junit.Test
 
 internal class PayloadFactoryBaTest {
 
-    private val initial = fakeBackgroundActivity()
+    private val initial = fakeSessionZygote()
     private lateinit var service: PayloadFactoryImpl
     private lateinit var clock: FakeClock
     private lateinit var metadataService: MetadataService

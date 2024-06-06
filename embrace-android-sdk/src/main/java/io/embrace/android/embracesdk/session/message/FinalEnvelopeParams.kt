@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
@@ -12,7 +13,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
  * sent to the backend.
  */
 internal sealed class FinalEnvelopeParams(
-    val initial: Session,
+    val initial: SessionZygote,
     val endTime: Long,
     val lifeEventType: Session.LifeEventType?,
     crashId: String?,
@@ -36,7 +37,7 @@ internal sealed class FinalEnvelopeParams(
      * Initial parameters required to create a background activity object.
      */
     internal class BackgroundActivityParams(
-        initial: Session,
+        initial: SessionZygote,
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
         endType: SessionSnapshotType,
@@ -63,7 +64,7 @@ internal sealed class FinalEnvelopeParams(
      * Initial parameters required to create a session object.
      */
     internal class SessionParams(
-        initial: Session,
+        initial: SessionZygote,
         endTime: Long,
         lifeEventType: Session.LifeEventType?,
         endType: SessionSnapshotType,

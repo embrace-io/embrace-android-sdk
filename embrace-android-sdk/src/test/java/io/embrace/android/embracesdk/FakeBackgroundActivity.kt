@@ -22,9 +22,5 @@ internal fun fakeBackgroundActivityMessage(): SessionMessage {
 
 internal fun fakeBackgroundActivity() = Session(
     "fake-activity",
-    0,
-    appState = "background",
-    number = 1,
-    isColdStart = false,
-    startType = Session.LifeEventType.STATE
+    0
 )

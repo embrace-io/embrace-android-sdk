@@ -5,7 +5,10 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
@@ -43,8 +46,12 @@ internal class ManualSessionTest {
             val manualSession = messages[1] // started manually, ended via state
             verifySessionHappened(stateSession)
             verifySessionHappened(manualSession)
-            assertEquals(1, stateSession.session.number)
-            assertEquals(2, manualSession.session.number)
+
+            val stateAttrs = checkNotNull(stateSession.findSessionSpan().attributes)
+            assertEquals("1", stateAttrs.findAttributeValue(embSessionNumber.name))
+
+            val manualAttrs = checkNotNull(manualSession.findSessionSpan().attributes)
+            assertEquals("2", manualAttrs.findAttributeValue(embSessionNumber.name))
         }
     }
 
@@ -76,7 +83,8 @@ internal class ManualSessionTest {
             }
             val message = harness.getSentSessions().single()
             verifySessionHappened(message)
-            assertEquals(1, message.session.number)
+            val attrs = checkNotNull(message.findSessionSpan().attributes)
+            assertEquals("1", attrs.findAttributeValue(embSessionNumber.name))
         }
     }
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.toFailedSpan
@@ -9,10 +10,12 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeCrashService
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -148,8 +151,17 @@ internal class EmbraceDeliveryService(
     }
 
     private fun SessionMessage.attachCrashToSession(nativeCrashData: NativeCrashData): SessionMessage {
-        val session = session.copy(crashReportId = nativeCrashData.nativeCrashId)
-        return copy(session = session)
+        val spans = data?.spans ?: return this
+        val sessionSpan = getSessionSpan() ?: return this
+
+        val alteredSessionSpan = sessionSpan.copy(
+            attributes = sessionSpan.attributes?.plus(Attribute(embCrashId.name, nativeCrashData.nativeCrashId))
+        )
+        return copy(
+            data = data.copy(
+                spans = spans.minus(sessionSpan).plus(alteredSessionSpan)
+            )
+        )
     }
 
     private fun sendCachedSessions(cachedSessions: List<CachedSession>) {

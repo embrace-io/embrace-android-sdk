@@ -4,9 +4,12 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionSpan
 
 /**
  * Receives the local and remote config to build the Gating config and define the amount of
@@ -53,7 +56,7 @@ internal class EmbraceGatingService(
             }
 
             // check if the session has a crash report id. If so, send the full session payload.
-            if (sessionMessage.session.crashReportId != null) {
+            if (sessionMessage.hasAssociatedCrash()) {
                 return sessionMessage
             }
 
@@ -77,7 +80,7 @@ internal class EmbraceGatingService(
             }
 
             // check if the session has a crash report id. If so, send the full session payload.
-            if (sessionMessage.session.crashReportId != null) {
+            if (sessionMessage.hasAssociatedCrash()) {
                 return envelope
             }
             return EnvelopeSanitizerFacade(envelope, components).sanitize()
@@ -98,5 +101,9 @@ internal class EmbraceGatingService(
         }
 
         return eventMessage
+    }
+
+    private fun SessionMessage.hasAssociatedCrash(): Boolean {
+        return getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name) != null
     }
 }

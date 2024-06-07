@@ -212,7 +212,6 @@ internal class SessionHandlerTest {
         with(session) {
             assertEquals(emptyList<String>(), eventIds)
             assertEquals(NOW, lastHeartbeatTime)
-            assertEquals(crashId, crashReportId)
             assertEquals(NOW, endTime)
             assertEquals(sdkStartupDuration, sdkStartupDuration)
         }

@@ -18,8 +18,7 @@ internal class SessionTest {
         infoLogIds = listOf("fake-info-id"),
         warningLogIds = listOf("fake-warn-id"),
         errorLogIds = listOf("fake-err-id"),
-        networkLogIds = listOf("fake-network-id"),
-        crashReportId = "fake-crash-id"
+        networkLogIds = listOf("fake-network-id")
     )
 
     @Test
@@ -43,7 +42,6 @@ internal class SessionTest {
             assertEquals(listOf("fake-warn-id"), warningLogIds)
             assertEquals(listOf("fake-err-id"), errorLogIds)
             assertEquals(listOf("fake-network-id"), networkLogIds)
-            assertEquals("fake-crash-id", crashReportId)
         }
     }
 

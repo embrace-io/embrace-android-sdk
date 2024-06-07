@@ -13,7 +13,9 @@ import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
+import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.verifySessionHappened
 import io.opentelemetry.api.logs.Severity
@@ -27,6 +29,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class CrashTest {
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
@@ -71,8 +74,9 @@ internal class CrashTest {
 
         val message = checkNotNull(testRule.harness.getLastSentSession())
         verifySessionHappened(message)
-        assertNotNull(message.session.crashReportId)
-        assertEquals(message.session.crashReportId, attrs.findAttributeValue("log.record.uid"))
+        val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+        assertNotNull(crashId)
+        assertEquals(crashId, attrs.findAttributeValue("log.record.uid"))
     }
 
     @Test
@@ -115,7 +119,8 @@ internal class CrashTest {
 
         val message = checkNotNull(testRule.harness.getLastSentSession())
         verifySessionHappened(message)
-        assertNotNull(message.session.crashReportId)
-        assertEquals(message.session.crashReportId, attrs.findAttributeValue("log.record.uid"))
+        val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+        assertNotNull(crashId)
+        assertEquals(crashId, attrs.findAttributeValue("log.record.uid"))
     }
 }

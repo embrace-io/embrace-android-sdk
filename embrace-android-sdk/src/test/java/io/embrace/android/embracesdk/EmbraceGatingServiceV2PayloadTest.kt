@@ -9,10 +9,13 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -68,10 +71,22 @@ internal class EmbraceGatingServiceV2PayloadTest {
             setOf(SessionGatingKeys.FULL_SESSION_ERROR_LOGS)
         )
         val sessionMessage = SessionMessage(
-            fakeSession().copy(
-                crashReportId = "crashReportId",
-            )
+            data = SessionPayload(
+                spans = listOf(
+                    Span(
+                        attributes = listOf(
+                            Attribute("emb.type", "ux.session"),
+                            Attribute(embCrashId.name, "my-crash-id")
+                        )
+                    )
+                )
+            ),
+            metadata = EnvelopeMetadata(
+                personas = setOf("foo")
+            ),
+            session = fakeSession()
         )
+
         // result shouldn't be sanitized.
         val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
         assertNotNull(checkNotNull(result.metadata).personas)

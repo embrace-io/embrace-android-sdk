@@ -20,7 +20,7 @@ internal sealed class SchemaType(
 ) {
     protected abstract val schemaAttributes: Map<String, String>
 
-    private val commonAttributes: Map<String, String> = mutableMapOf(telemetryType.toEmbraceKeyValuePair()).apply {
+    private val commonAttributes: Map<String, String> = mutableMapOf<String, String>().apply {
         if (telemetryType.sendImmediately) {
             plusAssign(SendImmediately.toEmbraceKeyValuePair())
         }

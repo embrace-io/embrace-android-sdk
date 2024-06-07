@@ -40,7 +40,6 @@ internal class TapBreadcrumbDataSourceTest {
             assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    EmbType.Ux.Tap.toEmbraceKeyValuePair(),
                     "view.name" to "my-button-id",
                     "tap.type" to "tap",
                     "tap.coords" to "126,309"

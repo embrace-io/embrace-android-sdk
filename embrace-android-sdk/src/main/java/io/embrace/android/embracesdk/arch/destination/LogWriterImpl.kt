@@ -46,8 +46,11 @@ internal class LogWriterImpl(
             builder.setFixedAttribute(PrivateSpan)
         }
 
-        logEventData.schemaType.attributes().forEach {
-            builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
+        with(logEventData.schemaType) {
+            builder.setFixedAttribute(telemetryType)
+            attributes().forEach {
+                builder.setAttribute(AttributeKey.stringKey(it.key), it.value)
+            }
         }
 
         builder.emit()

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
@@ -49,7 +48,6 @@ internal class PayloadMessageCollatorImplTest {
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
             logger = initModule.logger,
             sessionEnvelopeSource = sessionEnvelopeSource
@@ -162,13 +160,8 @@ internal class PayloadMessageCollatorImplTest {
             PayloadType.BACKGROUND_ACTIVITY -> Session.LifeEventType.BKGND_STATE
             PayloadType.SESSION -> Session.LifeEventType.STATE
         }
-        val expectedSessionProps = when (payloadType) {
-            PayloadType.BACKGROUND_ACTIVITY -> null
-            PayloadType.SESSION -> emptyMap<String, String>()
-        }
         assertEquals(expectedState, appState)
         assertEquals(expectedStartType, startType)
-        assertEquals(expectedSessionProps, properties)
     }
 
     private fun Session.verifyFinalFieldsPopulated(payloadType: PayloadType) {

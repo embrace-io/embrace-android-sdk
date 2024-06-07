@@ -17,8 +17,6 @@ internal class SessionTest {
         number = 5,
         appState = "foreground",
         lastHeartbeatTime = 123456780L,
-        isEndedCleanly = true,
-        isReceivedTermination = true,
         isColdStart = true,
         terminationTime = 16090292309L,
         eventIds = listOf("fake-event-id"),
@@ -31,8 +29,7 @@ internal class SessionTest {
         startType = LifeEventType.STATE,
         startupDuration = 1223,
         startupThreshold = 5000,
-        sdkStartupDuration = 109,
-        properties = mapOf("fake-key" to "fake-value")
+        sdkStartupDuration = 109
     )
 
     @Test
@@ -53,8 +50,6 @@ internal class SessionTest {
             assertEquals("foreground", appState)
             assertEquals(16090292309L, terminationTime)
             assertEquals(123456780L, lastHeartbeatTime)
-            assertTrue(checkNotNull(isEndedCleanly))
-            assertTrue(checkNotNull(isReceivedTermination))
             assertTrue(isColdStart)
             assertEquals(listOf("fake-event-id"), eventIds)
             assertEquals(listOf("fake-info-id"), infoLogIds)
@@ -67,7 +62,6 @@ internal class SessionTest {
             assertEquals(1223L, startupDuration)
             assertEquals(5000L, startupThreshold)
             assertEquals(109L, sdkStartupDuration)
-            assertEquals(mapOf("fake-key" to "fake-value"), properties)
         }
     }
 

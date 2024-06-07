@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -40,7 +39,6 @@ internal class PayloadFactoryImplTest {
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
             logger = initModule.logger,
             sessionEnvelopeSource = SessionEnvelopeSourceImpl(

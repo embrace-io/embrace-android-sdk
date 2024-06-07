@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -276,9 +278,16 @@ internal class ApiClientImplTest {
     }
 
     private fun createLargeSessionPayload(): String {
-        val props = (1..5000).associate { "my_big_key_$it" to "my_big_val_$it" }
-        val session = fakeSession().copy(properties = props)
-        return serializer.toJson(session)
+        val msg = SessionPayload(
+            spans = listOf(
+                Span(
+                    attributes = (1..5000).map {
+                        Attribute("my_big_key_$it", "my_big_val_$it")
+                    }
+                )
+            )
+        )
+        return serializer.toJson(msg)
     }
 
     companion object {

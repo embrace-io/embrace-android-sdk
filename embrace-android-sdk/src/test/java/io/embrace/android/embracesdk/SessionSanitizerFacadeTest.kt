@@ -13,9 +13,7 @@ import org.junit.Test
 internal class SessionSanitizerFacadeTest {
 
     private val session = fakeSession().copy(
-        properties = mapOf("example" to "example"),
         terminationTime = 100L,
-        isReceivedTermination = false,
         infoLogIds = listOf("infoLog"),
         warningLogIds = listOf("warningLog"),
         eventIds = listOf("eventId"),
@@ -62,9 +60,7 @@ internal class SessionSanitizerFacadeTest {
 
         assertNotNull(sanitizedMessage.metadata?.personas)
 
-        assertNotNull(sanitizedMessage.session.properties)
         assertNotNull(sanitizedMessage.session.terminationTime)
-        assertNotNull(sanitizedMessage.session.isReceivedTermination)
         assertNotNull(sanitizedMessage.session.infoLogIds)
         assertNotNull(sanitizedMessage.session.warningLogIds)
         assertNotNull(sanitizedMessage.session.eventIds)
@@ -81,9 +77,7 @@ internal class SessionSanitizerFacadeTest {
 
         assertNull(sanitizedMessage.metadata?.personas)
 
-        assertNull(sanitizedMessage.session.properties)
         assertNull(sanitizedMessage.session.terminationTime)
-        assertNull(sanitizedMessage.session.isReceivedTermination)
         assertNull(sanitizedMessage.session.infoLogIds)
         assertNull(sanitizedMessage.session.warningLogIds)
         assertNull(sanitizedMessage.session.eventIds)

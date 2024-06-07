@@ -12,16 +12,14 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 internal fun fakeSession(
     sessionId: String = "fakeSessionId",
     startMs: Long = 160000000000L,
-    number: Int = 1,
-    properties: Map<String, String> = mapOf()
+    number: Int = 1
 ): Session = Session(
     sessionId = sessionId,
     startTime = startMs,
     number = number,
     appState = APPLICATION_STATE_FOREGROUND,
     isColdStart = true,
-    startType = Session.LifeEventType.STATE,
-    properties = properties
+    startType = Session.LifeEventType.STATE
 )
 
 internal fun fakeV1SessionMessage(session: Session = fakeSession()): SessionMessage = SessionMessage(

@@ -65,7 +65,8 @@ internal class V2SessionApiTest {
                 "emb.session_end_type" to "state",
                 "emb.heartbeat_time_unix_nano" to "${startTime.millisToNanos()}",
                 "emb.session_number" to "1",
-                "emb.type" to "ux.session"
+                "emb.type" to "ux.session",
+                "emb.error_log_count" to "0"
             )
             assertEquals(expected, attrs)
         }

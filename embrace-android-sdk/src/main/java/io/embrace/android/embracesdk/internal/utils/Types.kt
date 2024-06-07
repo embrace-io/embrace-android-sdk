@@ -89,6 +89,7 @@ internal typealias EssentialServiceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
+    customerLogModuleProvider: Provider<CustomerLogModule>,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     configServiceProvider: Provider<ConfigService?>
 ) -> EssentialServiceModule
@@ -193,13 +194,13 @@ internal typealias SessionModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
-    dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadModule: PayloadModule,
-    dataCaptureServiceModule: DataCaptureServiceModule
+    dataCaptureServiceModule: DataCaptureServiceModule,
+    dataContainerModule: DataContainerModule,
+    customerLogModule: CustomerLogModule
 ) -> SessionModule
 
 /**

@@ -13,12 +13,7 @@ internal class SessionTest {
         startTime = 123456789L,
         endTime = 987654321L,
         lastHeartbeatTime = 123456780L,
-        terminationTime = 16090292309L,
-        eventIds = listOf("fake-event-id"),
-        infoLogIds = listOf("fake-info-id"),
-        warningLogIds = listOf("fake-warn-id"),
-        errorLogIds = listOf("fake-err-id"),
-        networkLogIds = listOf("fake-network-id")
+        terminationTime = 16090292309L
     )
 
     @Test
@@ -37,11 +32,6 @@ internal class SessionTest {
             assertEquals(987654321L, endTime)
             assertEquals(16090292309L, terminationTime)
             assertEquals(123456780L, lastHeartbeatTime)
-            assertEquals(listOf("fake-event-id"), eventIds)
-            assertEquals(listOf("fake-info-id"), infoLogIds)
-            assertEquals(listOf("fake-warn-id"), warningLogIds)
-            assertEquals(listOf("fake-err-id"), errorLogIds)
-            assertEquals(listOf("fake-network-id"), networkLogIds)
         }
     }
 

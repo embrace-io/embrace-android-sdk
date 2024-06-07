@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -421,7 +422,7 @@ internal class SessionOrchestratorTest {
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
             currentSessionSpan,
-            SessionSpanAttrPopulator(currentSessionSpan, FakeEventService(), FakeStartupService()),
+            SessionSpanAttrPopulator(currentSessionSpan, FakeEventService(), FakeStartupService(), FakeLogMessageService()),
             logger
         )
         orchestratorStartTimeMs = clock.now()

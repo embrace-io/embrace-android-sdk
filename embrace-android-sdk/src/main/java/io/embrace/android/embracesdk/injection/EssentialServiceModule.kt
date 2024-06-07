@@ -83,6 +83,7 @@ internal class EssentialServiceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
+    customerLogModuleProvider: Provider<CustomerLogModule>,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     private val configServiceProvider: Provider<ConfigService?> = { null }
 ) : EssentialServiceModule {
@@ -242,7 +243,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val gatingService: GatingService by singleton {
-        EmbraceGatingService(configService, initModule.logger)
+        EmbraceGatingService(configService, customerLogModuleProvider().logMessageService, initModule.logger)
     }
 
     override val userService: UserService by singleton {

@@ -187,6 +187,7 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             storageModule,
                             customAppId,
+                            { customerLogModule },
                             { dataSourceModule },
                             configServiceProvider
                         )
@@ -399,13 +400,13 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             essentialServiceModule,
                             nativeModule,
-                            dataContainerModule,
                             deliveryModule,
-                            customerLogModule,
                             workerThreadModule,
                             dataSourceModule,
                             payloadModule,
-                            dataCaptureServiceModule
+                            dataCaptureServiceModule,
+                            dataContainerModule,
+                            customerLogModule
                         )
                     }
 

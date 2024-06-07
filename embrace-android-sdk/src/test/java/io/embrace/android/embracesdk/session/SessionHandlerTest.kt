@@ -11,15 +11,11 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -64,8 +60,6 @@ import org.junit.Test
 internal class SessionHandlerTest {
 
     companion object {
-        private val eventService: EventService = FakeEventService()
-        private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private val internalErrorService = EmbraceInternalErrorService(clock)
         private const val NOW = 123L
@@ -159,8 +153,6 @@ internal class SessionHandlerTest {
                     ::FakeSessionPropertiesService,
                 )
             ),
-            eventService,
-            logMessageService,
             preferencesService,
             currentSessionSpan,
             logger,
@@ -210,7 +202,6 @@ internal class SessionHandlerTest {
         verify(exactly = 0) { sessionProperties.clearTemporary() }
 
         with(session) {
-            assertEquals(emptyList<String>(), eventIds)
             assertEquals(NOW, lastHeartbeatTime)
             assertEquals(NOW, endTime)
             assertEquals(sdkStartupDuration, sdkStartupDuration)

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -108,7 +109,7 @@ internal class EmbraceLogMessageServiceTest {
                 cfg
             }
         )
-        gatingService = EmbraceGatingService(configService, logcat)
+        gatingService = EmbraceGatingService(configService, FakeLogMessageService(), logcat)
         sessionIdTracker.setActiveSessionId("session-123", true)
         metadataService.setAppForeground()
         metadataService.setAppId("appId")

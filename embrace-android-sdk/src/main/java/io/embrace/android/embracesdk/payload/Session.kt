@@ -31,22 +31,7 @@ internal data class Session @JvmOverloads internal constructor(
     val lastHeartbeatTime: Long? = null,
 
     @Json(name = "tt")
-    val terminationTime: Long? = null,
-
-    @Json(name = "ss")
-    val eventIds: List<String>? = null,
-
-    @Json(name = "il")
-    val infoLogIds: List<String>? = null,
-
-    @Json(name = "wl")
-    val warningLogIds: List<String>? = null,
-
-    @Json(name = "el")
-    val errorLogIds: List<String>? = null,
-
-    @Json(name = "nc")
-    val networkLogIds: List<String>? = null
+    val terminationTime: Long? = null
 ) {
 
     /**

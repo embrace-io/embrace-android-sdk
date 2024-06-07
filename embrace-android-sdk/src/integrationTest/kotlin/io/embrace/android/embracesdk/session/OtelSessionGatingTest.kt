@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
@@ -52,6 +53,7 @@ internal class OtelSessionGatingTest {
                 RemoteConfig(sessionConfig = gatingConfig)
             },
         ),
+        FakeLogMessageService(),
         EmbLoggerImpl()
     )
 

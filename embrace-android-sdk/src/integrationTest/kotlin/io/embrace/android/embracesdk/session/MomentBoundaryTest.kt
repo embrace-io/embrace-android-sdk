@@ -55,9 +55,6 @@ internal class MomentBoundaryTest {
             assertEquals(MOMENT_NAME, myEndMoment.event.name)
             assertEquals(EventType.END, myEndMoment.event.type)
             assertEquals(message.session.sessionId, myEndMoment.event.sessionId)
-
-            val expectedEventIds = listOf(startMoment.event.eventId, myStartMoment.event.eventId)
-            assertEquals(expectedEventIds, message.session.eventIds)
         }
     }
 
@@ -96,10 +93,6 @@ internal class MomentBoundaryTest {
             assertEquals(MOMENT_NAME, myEndMoment.event.name)
             assertEquals(EventType.END, myEndMoment.event.type)
             assertEquals(secondMessage.session.sessionId, myEndMoment.event.sessionId)
-
-            val expectedEventIds = listOf(startMoment.event.eventId, myStartMoment.event.eventId)
-            assertEquals(expectedEventIds, firstMessage.session.eventIds)
-            assertEquals(expectedEventIds, secondMessage.session.eventIds)
         }
     }
 

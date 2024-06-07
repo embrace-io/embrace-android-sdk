@@ -103,7 +103,7 @@ internal class CurrentSessionSpanImpl(
         return currentSession.addEvent(
             event.schemaType.fixedObjectName.toEmbraceObjectName(),
             event.spanStartTimeMs,
-            event.schemaType.attributes()
+            event.schemaType.attributes() + event.schemaType.telemetryType.toEmbraceKeyValuePair()
         )
     }
 

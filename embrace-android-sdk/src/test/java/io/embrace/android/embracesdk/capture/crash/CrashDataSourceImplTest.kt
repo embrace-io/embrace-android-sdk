@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.capture.crash
 
 import io.embrace.android.embracesdk.FakeNdkService
+import io.embrace.android.embracesdk.arch.assertIsType
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
@@ -136,11 +138,12 @@ internal class CrashDataSourceImplTest {
         crashDataSource.logUnhandledJsException(localJsException)
         crashDataSource.handleCrash(testException)
 
-        val lastSentCrashAttributes = logWriter.logEvents.single().schemaType.attributes()
+        val logEvent = logWriter.logEvents.single()
+        logEvent.assertIsType(EmbType.System.ReactNativeCrash)
+        val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertEquals(lastSentCrashAttributes["log.record.uid"], sessionOrchestrator.crashId)
-        assertEquals(lastSentCrashAttributes["emb.type"], "sys.android.react_native_crash")
         assertEquals(
             "{\"n\":\"NullPointerException\",\"" +
                 "m\":\"Null pointer exception occurred\",\"" +

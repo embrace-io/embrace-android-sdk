@@ -20,7 +20,6 @@ internal val testSessionMessageOneMinuteLater =
 internal val testSessionMessage2 = SessionMessage(
     session = fakeSession(
         sessionId = "03FC033631F346C48AF6E3D5B56F6AA3",
-        startMs = testSessionMessageOneMinuteLater.session.startTime + 300000L,
-        number = testSessionMessageOneMinuteLater.session.number + 1
+        startMs = testSessionMessageOneMinuteLater.session.startTime + 300000L
     )
 )

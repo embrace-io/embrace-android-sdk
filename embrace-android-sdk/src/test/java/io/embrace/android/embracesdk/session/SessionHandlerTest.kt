@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -44,6 +45,7 @@ import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
@@ -73,7 +75,7 @@ internal class SessionHandlerTest {
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
     }
 
-    private val initial = fakeSession(startMs = NOW)
+    private val initial = fakeSessionZygote().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
     private var activeSession: Session = fakeSession()
 
@@ -193,8 +195,7 @@ internal class SessionHandlerTest {
         val startTime = 120L
         val sdkStartupDuration = 2L
         activeSession = fakeSession().copy(
-            startTime = startTime,
-            isColdStart = true
+            startTime = startTime
         )
 
         val msg = payloadFactory.endPayloadWithCrash(
@@ -211,7 +212,6 @@ internal class SessionHandlerTest {
         verify(exactly = 0) { sessionProperties.clearTemporary() }
 
         with(session) {
-            assertEquals("foreground", appState)
             assertEquals(emptyList<String>(), eventIds)
             assertEquals(NOW, lastHeartbeatTime)
             assertEquals(Session.LifeEventType.STATE, endType)
@@ -296,7 +296,7 @@ internal class SessionHandlerTest {
         assertEquals(0, spanSink.completedSpans().size)
     }
 
-    private fun startFakeSession(): Session {
+    private fun startFakeSession(): SessionZygote {
         return checkNotNull(payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true))
     }
 

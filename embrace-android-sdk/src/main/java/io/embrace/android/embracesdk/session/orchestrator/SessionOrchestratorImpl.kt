@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
@@ -50,7 +51,7 @@ internal class SessionOrchestratorImpl(
     /**
      * The currently active session.
      */
-    private var activeSession: Session? = null
+    private var activeSession: SessionZygote? = null
     private var state = when {
         processStateService.isInBackground -> ProcessState.BACKGROUND
         else -> ProcessState.FOREGROUND
@@ -76,7 +77,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
             timestamp = timestamp,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithState(ProcessState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
@@ -92,7 +93,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
             timestamp = timestamp,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
@@ -110,7 +111,7 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.END_MANUAL,
             timestamp = timestamp,
             clearUserInfo = clearUserInfo,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endSessionWithManual(timestamp, initial)
             },
             newSessionAction = {
@@ -133,7 +134,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.CRASH,
             timestamp = timestamp,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             },
             crashId = crashId
@@ -166,8 +167,8 @@ internal class SessionOrchestratorImpl(
     private fun transitionState(
         transitionType: TransitionType,
         timestamp: Long,
-        oldSessionAction: ((initial: Session) -> SessionMessage?)? = null,
-        newSessionAction: (Provider<Session?>)? = null,
+        oldSessionAction: ((initial: SessionZygote) -> SessionMessage?)? = null,
+        newSessionAction: (Provider<SessionZygote?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
         crashId: String? = null
@@ -237,13 +238,13 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun populateSessionSpanStartAttrs(session: Session) {
+    private fun populateSessionSpanStartAttrs(session: SessionZygote) {
         with(sessionSpanWriter) {
             addCustomAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
             addCustomAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
             addCustomAttribute(SpanAttributeData(embState.name, session.appState))
             addCustomAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
-            session.startType?.toString()?.toLowerCase(Locale.US)?.let {
+            session.startType.toString().toLowerCase(Locale.US).let {
                 addCustomAttribute(SpanAttributeData(embSessionStartType.name, it))
             }
         }
@@ -274,7 +275,7 @@ internal class SessionOrchestratorImpl(
 
     private fun initiatePeriodicCaching(
         endProcessState: ProcessState,
-        newState: Session
+        newState: SessionZygote
     ) {
         when (endProcessState) {
             ProcessState.FOREGROUND -> scheduleSessionSave(endProcessState, newState)
@@ -284,7 +285,7 @@ internal class SessionOrchestratorImpl(
 
     private fun scheduleSessionSave(
         endProcessState: ProcessState,
-        initial: Session
+        initial: SessionZygote
     ) {
         updatePeriodicCacheAttrs()
         periodicSessionCacher.start {
@@ -301,7 +302,7 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: Session) {
+    private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: SessionZygote) {
         updatePeriodicCacheAttrs()
         periodicBackgroundActivityCacher.scheduleSave {
             if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {

@@ -1,10 +1,6 @@
 {
   "s": {
     "id": "fake-activity",
-    "st": 0,
-    "sn": 1,
-    "as": "background",
-    "cs": false,
-    "sm": "s"
+    "st": 0
   }
 }

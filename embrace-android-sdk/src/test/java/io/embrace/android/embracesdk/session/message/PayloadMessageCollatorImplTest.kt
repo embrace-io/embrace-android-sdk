@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -63,7 +63,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        msg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+        msg.toSession().verifyInitialFieldsPopulated()
     }
 
     @Test
@@ -75,7 +75,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        msg.verifyInitialFieldsPopulated(PayloadType.SESSION)
+        msg.toSession().verifyInitialFieldsPopulated()
     }
 
     @Test
@@ -88,7 +88,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        startMsg.verifyInitialFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+        startMsg.toSession().verifyInitialFieldsPopulated()
 
         // create session
         val payload = collator.buildFinalBackgroundActivityMessage(
@@ -116,7 +116,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        startMsg.verifyInitialFieldsPopulated(PayloadType.SESSION)
+        startMsg.toSession().verifyInitialFieldsPopulated()
 
         // create session
         val payload = collator.buildFinalSessionMessage(
@@ -142,26 +142,13 @@ internal class PayloadMessageCollatorImplTest {
         assertNotNull(data)
         assertNotNull(newVersion)
         assertNotNull(type)
-        session.verifyInitialFieldsPopulated(payloadType)
+        session.verifyInitialFieldsPopulated()
         session.verifyFinalFieldsPopulated(payloadType)
     }
 
-    private fun Session.verifyInitialFieldsPopulated(payloadType: PayloadType) {
+    private fun Session.verifyInitialFieldsPopulated() {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
-        Assert.assertFalse(isColdStart)
-        assertNotNull(number)
-
-        val expectedState = when (payloadType) {
-            PayloadType.BACKGROUND_ACTIVITY -> Session.APPLICATION_STATE_BACKGROUND
-            PayloadType.SESSION -> Session.APPLICATION_STATE_FOREGROUND
-        }
-        val expectedStartType = when (payloadType) {
-            PayloadType.BACKGROUND_ACTIVITY -> Session.LifeEventType.BKGND_STATE
-            PayloadType.SESSION -> Session.LifeEventType.STATE
-        }
-        assertEquals(expectedState, appState)
-        assertEquals(expectedStartType, startType)
     }
 
     private fun Session.verifyFinalFieldsPopulated(payloadType: PayloadType) {

@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.ndk.NativeCrashService
+import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.Session
@@ -72,24 +74,26 @@ internal open class FakeDeliveryService : DeliveryService {
     }
 
     fun getSentSessions(): List<SessionMessage> {
-        return sentSessionMessages.filter { it.first.session.appState == Session.APPLICATION_STATE_FOREGROUND }.map { it.first }
+        return sentSessionMessages.filter { it.first.findAppState() == Session.APPLICATION_STATE_FOREGROUND }.map { it.first }
     }
 
     fun getSentBackgroundActivities(): List<SessionMessage> {
-        return sentSessionMessages.filter { it.first.session.appState == Session.APPLICATION_STATE_BACKGROUND }.map { it.first }
+        return sentSessionMessages.filter { it.first.findAppState() == Session.APPLICATION_STATE_BACKGROUND }.map { it.first }
     }
 
     fun getSavedSessions(): List<SessionMessage> {
         return savedSessionMessages.filter {
-            it.first.session.appState == Session.APPLICATION_STATE_FOREGROUND
+            it.first.findAppState() == Session.APPLICATION_STATE_FOREGROUND
         }.map { it.first }
     }
 
     fun getSavedBackgroundActivities(): List<SessionMessage> {
         return savedSessionMessages.filter {
-            it.first.session.appState == Session.APPLICATION_STATE_BACKGROUND
+            it.first.findAppState() == Session.APPLICATION_STATE_BACKGROUND
         }.map { it.first }
     }
+
+    private fun SessionMessage.findAppState() = findSessionSpan().attributes?.findAttributeValue(embState.name)
 
     fun getLastSentSession(): SessionMessage? {
         return getSentSessions().lastOrNull()

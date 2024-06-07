@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
+import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -27,9 +29,9 @@ internal class PayloadMessageCollatorImpl(
     private val logger: EmbLogger,
 ) : PayloadMessageCollator {
 
-    override fun buildInitialSession(params: InitialEnvelopeParams): Session {
+    override fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote {
         return with(params) {
-            Session(
+            SessionZygote(
                 sessionId = currentSessionSpan.getSessionId(),
                 startTime = startTime,
                 isColdStart = coldStart,
@@ -107,7 +109,7 @@ internal class PayloadMessageCollatorImpl(
     private fun buildFinalBackgroundActivity(
         params: FinalEnvelopeParams
     ): Session = with(params) {
-        return initial.copy(
+        return initial.toSession().copy(
             endTime = endTime,
             eventIds = captureDataSafely(logger) {
                 eventService.findEventIdsForSession()

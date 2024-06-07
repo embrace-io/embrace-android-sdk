@@ -1,11 +1,8 @@
 {
   "id": "fake-session-id",
   "st": 123456789,
-  "as": "foreground",
   "et": 987654321,
-  "sn": 5,
   "ht": 123456780,
-  "cs": true,
   "ss": [
     "fake-event-id"
   ],
@@ -19,6 +16,5 @@
     "fake-err-id"
   ],
   "ri": "fake-crash-id",
-  "em": "bs",
-  "sm": "bs"
+  "em": "bs"
 }

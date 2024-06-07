@@ -130,12 +130,12 @@ internal class SessionOrchestratorTest {
         clock.tick()
         baCacheExecutor.runCurrentlyBlocked()
         assertEquals(SessionSnapshotType.PERIODIC_CACHE, checkNotNull(deliveryService.savedSessionMessages.last().second))
-        assertEquals(1, deliveryService.getSavedBackgroundActivities().count())
+        assertEquals(1, deliveryService.savedSessionMessages.size)
         orchestrator.onForeground(true, clock.now())
         clock.tick()
         orchestrator.onBackground(clock.now())
         assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
-        assertEquals(2, deliveryService.getSavedBackgroundActivities().count())
+        assertEquals(3, deliveryService.savedSessionMessages.size)
     }
 
     @Test
@@ -156,11 +156,11 @@ internal class SessionOrchestratorTest {
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(SessionSnapshotType.PERIODIC_CACHE, checkNotNull(deliveryService.savedSessionMessages.last().second))
-        assertEquals(1, deliveryService.getSavedSessions().count())
+        assertEquals(1, deliveryService.savedSessionMessages.size)
         orchestrator.onBackground(clock.now())
         clock.tick()
         assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
-        assertEquals(2, deliveryService.getSavedSessions().count())
+        assertEquals(2, deliveryService.savedSessionMessages.size)
     }
 
     @Test
@@ -245,7 +245,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(true)
         assertEquals(2, payloadCollator.sessionCount.get())
-        assertNotNull(deliveryService.getLastSentSession())
+        assertNotNull(deliveryService.sentSessionMessages.last().first)
     }
 
     @Test
@@ -308,7 +308,7 @@ internal class SessionOrchestratorTest {
     fun `test session span cold start`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, clock.now())
-        checkNotNull(deliveryService.getLastSentBackgroundActivity())
+        checkNotNull(deliveryService.sentSessionMessages.last().first)
     }
 
     @Test
@@ -316,7 +316,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.onBackground(orchestratorStartTimeMs)
-        checkNotNull(deliveryService.getLastSentBackgroundActivity())
+        checkNotNull(deliveryService.sentSessionMessages.last().first)
     }
 
     @Test
@@ -324,7 +324,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.endSessionWithCrash("my-crash-id")
-        checkNotNull(deliveryService.getLastSentSession())
+        checkNotNull(deliveryService.sentSessionMessages.last().first)
     }
 
     @Test
@@ -436,7 +436,7 @@ internal class SessionOrchestratorTest {
         assertEquals(endTimeMs, checkNotNull(currentSessionSpan.sessionSpan).startEpochNanos.nanosToMillis())
     }
 
-    private fun getOnlySentSession() = checkNotNull(deliveryService.getSentSessions().single().session)
+    private fun getOnlySentSession() = checkNotNull(deliveryService.sentSessionMessages.single().first.session)
 
-    private fun getOnlySentBackgroundActivity() = checkNotNull(deliveryService.getSentBackgroundActivities().single().session)
+    private fun getOnlySentBackgroundActivity() = checkNotNull(deliveryService.sentSessionMessages.single().first.session)
 }

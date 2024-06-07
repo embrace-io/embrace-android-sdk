@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
+import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
 import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
@@ -26,7 +28,7 @@ internal class FakeV2PayloadCollator(
                 error("Unknown appState")
             }
         }
-        Session(
+        SessionZygote(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
@@ -63,7 +65,7 @@ internal class FakeV2PayloadCollator(
     private fun buildFinalBackgroundActivity(
         params: FinalEnvelopeParams
     ): Session = with(params) {
-        return initial.copy(
+        return initial.toSession().copy(
             endTime = endTime,
             lastHeartbeatTime = endTime,
             endType = lifeEventType,

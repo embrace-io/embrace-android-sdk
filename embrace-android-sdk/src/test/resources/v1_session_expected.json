@@ -1,17 +1,14 @@
 {
   "s": {
     "as": "__EMBRACE_TEST_IGNORE__",
-    "ty": "__EMBRACE_TEST_IGNORE__",
     "bf": "__EMBRACE_TEST_IGNORE__",
     "cs": true,
     "et": "__EMBRACE_TEST_IGNORE__",
     "em": "s",
     "ce": true,
     "el": [],
-    "lec": 0,
     "ss": "__EMBRACE_TEST_IGNORE__",
     "il": [],
-    "lic": 0,
     "ht": "__EMBRACE_TEST_IGNORE__",
     "sn": "__EMBRACE_TEST_IGNORE__",
     "sp": {},
@@ -21,11 +18,8 @@
     "sm": "s",
     "sd": "__EMBRACE_TEST_IGNORE__",
     "sdt": "__EMBRACE_TEST_IGNORE__",
-    "ue": 0,
-    "lwc": 0,
     "nc": [],
     "wl": [],
-    "e": "__EMBRACE_TEST_IGNORE__",
-    "wvi_beta": "__EMBRACE_TEST_IGNORE__"
+    "e": "__EMBRACE_TEST_IGNORE__"
   }
 }

@@ -17,22 +17,16 @@ internal class BackgroundActivityTest {
         appState = "foreground",
         endTime = 987654321L,
         number = 5,
-        messageType = "fake-message-type",
         lastHeartbeatTime = 123456780L,
         isColdStart = true,
         eventIds = listOf("fake-event-id"),
         infoLogIds = listOf("fake-info-id"),
         warningLogIds = listOf("fake-warn-id"),
         errorLogIds = listOf("fake-err-id"),
-        infoLogsAttemptedToSend = 1,
-        warnLogsAttemptedToSend = 2,
-        errorLogsAttemptedToSend = 3,
-        exceptionError = LegacyExceptionError(),
         crashReportId = "fake-crash-id",
         endType = Session.LifeEventType.BKGND_STATE,
         startType = Session.LifeEventType.BKGND_STATE,
-        properties = mapOf("fake-key" to "fake-value"),
-        unhandledExceptions = 1
+        properties = mapOf("fake-key" to "fake-value")
     )
 
     @Test
@@ -51,21 +45,15 @@ internal class BackgroundActivityTest {
             assertEquals(987654321L, endTime)
             assertEquals(5, number)
             assertEquals("foreground", appState)
-            assertEquals("fake-message-type", messageType)
             assertEquals(123456780L, lastHeartbeatTime)
             assertTrue(checkNotNull(isColdStart))
             assertEquals(listOf("fake-event-id"), eventIds)
             assertEquals(listOf("fake-info-id"), infoLogIds)
             assertEquals(listOf("fake-warn-id"), warningLogIds)
             assertEquals(listOf("fake-err-id"), errorLogIds)
-            assertEquals(1, infoLogsAttemptedToSend)
-            assertEquals(2, warnLogsAttemptedToSend)
-            assertEquals(3, errorLogsAttemptedToSend)
             assertEquals("fake-crash-id", crashReportId)
             assertEquals(Session.LifeEventType.BKGND_STATE, endType)
             assertEquals(Session.LifeEventType.BKGND_STATE, startType)
-            assertEquals(1, unhandledExceptions)
-            assertEquals(LegacyExceptionError(), exceptionError)
             assertEquals(mapOf("fake-key" to "fake-value"), properties)
         }
     }

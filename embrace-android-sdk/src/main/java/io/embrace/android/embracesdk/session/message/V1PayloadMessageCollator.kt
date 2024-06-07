@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
@@ -18,8 +16,6 @@ internal class V1PayloadMessageCollator(
     private val gatingService: GatingService,
     private val eventService: EventService,
     private val logMessageService: LogMessageService,
-    private val internalErrorService: InternalErrorService,
-    private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val preferencesService: PreferencesService,
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
@@ -36,7 +32,6 @@ internal class V1PayloadMessageCollator(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,
             isColdStart = coldStart,
-            messageType = Session.MESSAGE_TYPE_END,
             appState = appState,
             startType = startType,
             number = getSessionNumber(preferencesService),
@@ -68,8 +63,7 @@ internal class V1PayloadMessageCollator(
             endTime = endTimeVal,
             sdkStartupDuration = startupService.getSdkStartupDuration(initial.isColdStart),
             startupDuration = startupInfo?.duration,
-            startupThreshold = startupInfo?.threshold,
-            symbols = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
+            startupThreshold = startupInfo?.threshold
         )
         val envelope = buildWrapperEnvelope(endSession)
         return gatingService.gateSessionMessage(envelope)
@@ -111,13 +105,8 @@ internal class V1PayloadMessageCollator(
                     endTime
                 )
             },
-            infoLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getInfoLogsAttemptedToSend),
-            warnLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getWarnLogsAttemptedToSend),
-            errorLogsAttemptedToSend = captureDataSafely(logger, logMessageService::getErrorLogsAttemptedToSend),
-            exceptionError = captureDataSafely(logger, internalErrorService::getCapturedData),
             lastHeartbeatTime = endTime,
             endType = lifeEventType,
-            unhandledExceptions = captureDataSafely(logger, logMessageService::getUnhandledExceptionsSent),
             crashReportId = crashId
         )
     }

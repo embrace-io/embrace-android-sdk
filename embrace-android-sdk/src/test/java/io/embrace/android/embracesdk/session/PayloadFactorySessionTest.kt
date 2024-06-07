@@ -179,7 +179,6 @@ internal class PayloadFactorySessionTest {
             sessionEnvelopeSource,
             eventService,
             logMessageService,
-            null,
             preferencesService,
             currentSessionSpan,
             FakeSessionPropertiesService(),

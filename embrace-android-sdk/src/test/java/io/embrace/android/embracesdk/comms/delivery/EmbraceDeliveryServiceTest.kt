@@ -14,11 +14,11 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.fakeCachedV1SessionMessageWithHeartbeatTime
-import io.embrace.android.embracesdk.fakes.fakeCachedV1SessionMessageWithTerminationTime
+import io.embrace.android.embracesdk.fakes.fakeCachedSessionMessageWithHeartbeatTime
+import io.embrace.android.embracesdk.fakes.fakeCachedSessionMessageWithTerminationTime
+import io.embrace.android.embracesdk.fakes.fakeEndedSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeEndedSessionMessageWithSnapshot
 import io.embrace.android.embracesdk.fakes.fakeSession
-import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessage
-import io.embrace.android.embracesdk.fakes.fakeV1EndedSessionMessageWithSnapshot
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -135,10 +135,10 @@ internal class EmbraceDeliveryServiceTest {
         assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         val sentSession = apiService.sessionRequests.single()
-        assertEquals(2, sentSession.spans?.size)
+        assertEquals(2, sentSession.data?.spans?.size)
         assertEquals(0, sentSession.data?.spanSnapshots?.size)
         val snapshot = checkNotNull(sessionWithSnapshot.data?.spanSnapshots).single()
-        val span = sentSession.spans?.single { it.spanId == snapshot.spanId }
+        val span = sentSession.data?.spans?.single { it.spanId == snapshot.spanId }
         assertEmbraceSpanData(
             span = span,
             expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
@@ -161,7 +161,7 @@ internal class EmbraceDeliveryServiceTest {
         val sentSessionWithLastHeartbeatTime = apiService.sessionRequests.last()
 
         checkNotNull(sessionWithTerminationTime.data?.spanSnapshots).single().let { snapshot ->
-            val span = sentSessionWithTerminationTime.spans?.single { it.spanId == snapshot.spanId }
+            val span = sentSessionWithTerminationTime.data?.spans?.single { it.spanId == snapshot.spanId }
             assertEmbraceSpanData(
                 span = span,
                 expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
@@ -175,7 +175,7 @@ internal class EmbraceDeliveryServiceTest {
         }
 
         checkNotNull(sessionWithLastHeartbeatTime.data?.spanSnapshots).single().let { snapshot ->
-            val span = sentSessionWithLastHeartbeatTime.spans?.single { it.spanId == snapshot.spanId }
+            val span = sentSessionWithLastHeartbeatTime.data?.spans?.single { it.spanId == snapshot.spanId }
             assertEmbraceSpanData(
                 span = span,
                 expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
@@ -194,15 +194,15 @@ internal class EmbraceDeliveryServiceTest {
         val startedSnapshot = EmbraceSpanData(perfSpanSnapshot)
         val completedSpan = startedSnapshot.copy(status = StatusCode.OK, endTimeNanos = startedSnapshot.startTimeNanos + 10000000L)
         val snapshots = listOfNotNull(startedSnapshot)
-        val spans = listOf(completedSpan)
-        val base = fakeV1EndedSessionMessage()
+        val spans = listOf(completedSpan.toNewPayload())
+        val base = fakeEndedSessionMessage()
         val messedUpSession = base.copy(
-            spans = spans,
             data = checkNotNull(base.data).copy(
+                spans = spans,
                 spanSnapshots = snapshots.map(EmbraceSpanData::toNewPayload)
             )
         )
-        assertEquals(1, messedUpSession.spans?.size)
+        assertEquals(1, messedUpSession.data?.spans?.size)
         assertEquals(1, messedUpSession.data?.spanSnapshots?.size)
         val messedUpSessionFilename = CachedSession.create(
             messedUpSession.session.sessionId,
@@ -212,22 +212,22 @@ internal class EmbraceDeliveryServiceTest {
         assertNotNull(cacheService.writeSession(messedUpSessionFilename, messedUpSession))
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         val sentSession = apiService.sessionRequests.single()
-        assertEquals(1, sentSession.spans?.size)
+        assertEquals(1, sentSession.data?.spans?.size)
         assertEquals(0, sentSession.data?.spanSnapshots?.size)
-        assertEquals(completedSpan, sentSession.spans?.single())
+        assertEquals(completedSpan.toNewPayload(), sentSession.data?.spans?.single())
     }
 
     @Test
     fun `crash during sending of cache session should preserve conversion of failed snapshot`() {
         assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
-        assertEquals(1, sessionWithSnapshot.spans?.size)
+        assertEquals(1, sessionWithSnapshot.data?.spans?.size)
         assertEquals(1, sessionWithSnapshot.data?.spanSnapshots?.size)
         apiService.throwExceptionSendSession = true
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
         val transformedSession =
             checkNotNull(cacheService.loadObject(sessionWithSnapshotFileName, SessionMessage::class.java))
-        assertEquals(2, transformedSession.spans?.size)
+        assertEquals(2, transformedSession.data?.spans?.size)
         assertEquals(0, transformedSession.data?.spanSnapshots?.size)
     }
 
@@ -283,7 +283,7 @@ internal class EmbraceDeliveryServiceTest {
     }
 
     companion object {
-        private val sessionMessage = fakeV1EndedSessionMessage()
+        private val sessionMessage = fakeEndedSessionMessage()
         private val sessionFileName = CachedSession.create(
             sessionMessage.session.sessionId,
             sessionMessage.session.startTime,
@@ -295,19 +295,19 @@ internal class EmbraceDeliveryServiceTest {
             anotherMessage.session.startTime,
             false
         ).filename
-        private val sessionWithSnapshot = fakeV1EndedSessionMessageWithSnapshot()
+        private val sessionWithSnapshot = fakeEndedSessionMessageWithSnapshot()
         private val sessionWithSnapshotFileName = CachedSession.create(
             sessionWithSnapshot.session.sessionId,
             sessionWithSnapshot.session.startTime,
             false
         ).filename
-        private val sessionWithTerminationTime = fakeCachedV1SessionMessageWithTerminationTime()
+        private val sessionWithTerminationTime = fakeCachedSessionMessageWithTerminationTime()
         private val sessionWithTerminationTimeFileName = CachedSession.create(
             sessionWithTerminationTime.session.sessionId,
             sessionWithTerminationTime.session.startTime,
             false
         ).filename
-        private val sessionWithLastHeartbeatTime = fakeCachedV1SessionMessageWithHeartbeatTime()
+        private val sessionWithLastHeartbeatTime = fakeCachedSessionMessageWithHeartbeatTime()
         private val sessionWithLastHeartbeatTimeFileName = CachedSession.create(
             sessionWithLastHeartbeatTime.session.sessionId,
             sessionWithLastHeartbeatTime.session.startTime,

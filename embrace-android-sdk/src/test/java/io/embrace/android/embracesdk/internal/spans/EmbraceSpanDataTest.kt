@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.fixtures.testSpan
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -9,7 +10,7 @@ import org.junit.Test
 internal class EmbraceSpanDataTest {
 
     private val serializer = EmbraceSerializer()
-    private val span = testSpan
+    private val span = testSpan.toOldPayload()
 
     @Test
     fun testDeserialization() {

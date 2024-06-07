@@ -7,18 +7,5 @@
     "as": "background",
     "cs": false,
     "sm": "s"
-  },
-  "spans": [
-    {
-      "trace_id": "fake-span-id",
-      "span_id": "",
-      "parent_span_id": "",
-      "name": "",
-      "start_time_unix_nano": 0,
-      "end_time_unix_nano": 0,
-      "status": "OK",
-      "events": [],
-      "attributes": {}
-    }
-  ]
+  }
 }

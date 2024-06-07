@@ -4,15 +4,19 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
+import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.injection.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -148,33 +152,33 @@ internal class AnrFeatureTest {
             // assert ANRs received
             val spans = message.findAnrSpans()
             val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = 10000032000)
+            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = testRule.harness.overriddenClock.now())
         }
     }
 
     private fun assertAnrReceived(
-        span: EmbraceSpanData,
+        span: Span,
         startTime: Long,
         sampleCount: Int,
         expectedIntervalCode: String = "0",
         endTime: Long = startTime + ANR_THRESHOLD_MS + (sampleCount * INTERVAL_MS)
     ) {
         // assert span start/end times
-        assertEquals(startTime, span.startTimeNanos.nanosToMillis())
-        assertEquals(endTime, span.endTimeNanos.nanosToMillis())
+        assertEquals(startTime, span.startTimeNanos?.nanosToMillis())
+        assertEquals(endTime, span.endTimeNanos?.nanosToMillis())
 
         // assert span attributes
-        val attributes = span.attributes
+        val attributes = checkNotNull(span.attributes)
         assertEquals(expectedIntervalCode, attributes.findAttributeValue("interval_code"))
         assertEquals("perf.thread_blockage", attributes.findAttributeValue("emb.type"))
 
-        val events = span.events
+        val events = checkNotNull(span.events)
 
         events.forEachIndexed { index, event ->
             assertEquals("perf.thread_blockage_sample", event.name)
 
             // assert attributes
-            val attrs = event.attributes
+            val attrs = checkNotNull(event.attributes)
             assertEquals("perf.thread_blockage_sample", attrs.findAttributeValue("emb.type"))
             assertEquals("0", attrs.findAttributeValue("sample_overhead"))
 
@@ -182,11 +186,11 @@ internal class AnrFeatureTest {
                 index < MAX_SAMPLE_COUNT -> "0"
                 else -> "1"
             }
-            assertEquals(expectedCode, attrs["sample_code"])
+            assertEquals(expectedCode, attrs.findAttributeValue("sample_code"))
 
             // assert interval time
             val expectedTime = startTime + ANR_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)
-            assertEquals(expectedTime, event.timestampNanos.nanosToMillis())
+            assertEquals(expectedTime, event.timestampNanos?.nanosToMillis())
         }
     }
 
@@ -224,5 +228,5 @@ internal class AnrFeatureTest {
         }
     }
 
-    private fun SessionMessage.findAnrSpans() = checkNotNull(spans?.filter { it.name == SPAN_NAME })
+    private fun SessionMessage.findAnrSpans() = checkNotNull(data?.spans?.filter { it.name == SPAN_NAME })
 }

@@ -174,8 +174,6 @@ internal fun List<Attribute>.hasFixedAttribute(fixedAttribute: FixedAttribute): 
 internal fun EmbraceSpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]
 
-internal fun EmbraceSpanData.getSessionProperty(key: String): String? = attributes[key.toSessionPropertyAttributeName()]
-
 internal fun SpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
 

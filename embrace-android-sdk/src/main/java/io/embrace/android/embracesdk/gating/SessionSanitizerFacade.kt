@@ -11,13 +11,13 @@ internal class SessionSanitizerFacade(
 
     fun getSanitizedMessage(): SessionMessage {
         val sanitizedSession = SessionSanitizer(sessionMessage.session, components).sanitize()
-        val sanitizedSpans = SpanSanitizer(sessionMessage.spans, components).sanitize()
+        val sanitizedSpans = SpanSanitizer(sessionMessage.data?.spans, components).sanitize()
 
         return sessionMessage.copy(
             session = sanitizedSession,
-            spans = sanitizedSpans,
             metadata = sanitizeMetadata(components),
-            resource = sanitizeResource(components)
+            resource = sanitizeResource(components),
+            data = sessionMessage.data?.copy(spans = sanitizedSpans)
         )
     }
 

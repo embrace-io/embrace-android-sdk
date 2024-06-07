@@ -7,11 +7,11 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.recordSession

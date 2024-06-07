@@ -28,7 +28,7 @@ internal class SessionPropertiesTest {
                 embrace.addSessionProperty("temp", "tempVal", false)
             })
 
-            val spans = checkNotNull(session1.spans)
+            val spans = checkNotNull(session1.data?.spans)
             with(checkNotNull(spans.find { it.hasFixedAttribute(EmbType.Ux.Session) })) {
                 assertEquals("thurr", getSessionProperty("always"))
                 assertEquals("permVal", getSessionProperty("perm"))
@@ -40,7 +40,7 @@ internal class SessionPropertiesTest {
                 embrace.removeSessionProperty("perm")
             })
 
-            val spans2 = checkNotNull(session2.spans)
+            val spans2 = checkNotNull(session2.data?.spans)
             with(checkNotNull(spans2.find { it.hasFixedAttribute(EmbType.Ux.Session) })) {
                 assertEquals("thurr", getSessionProperty("always"))
                 assertEquals("value", getSessionProperty("newTemp"))

@@ -1,19 +1,12 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -33,12 +26,9 @@ internal class V2PayloadMessageCollator(
     private val logMessageService: LogMessageService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val preferencesService: PreferencesService,
-    private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val sessionPropertiesService: SessionPropertiesService,
     private val startupService: StartupService,
-    private val anrOtelMapper: AnrOtelMapper,
-    private val nativeAnrOtelMapper: NativeAnrOtelMapper,
     private val logger: EmbLogger,
 ) : PayloadMessageCollator {
 
@@ -88,10 +78,10 @@ internal class V2PayloadMessageCollator(
                 startupThreshold = startupInfo?.threshold,
                 symbols = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
             )
-            val envelope = buildWrapperEnvelope(newParams, endSession)
+            val envelope = buildWrapperEnvelope(endSession)
             gatingService.gateSessionMessage(envelope)
         }
-        return obj.convertToV2Payload(newParams.endType)
+        return obj.convertToV2Payload(newParams.endType, newParams.crashId)
     }
 
     override fun buildFinalBackgroundActivityMessage(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
@@ -105,23 +95,20 @@ internal class V2PayloadMessageCollator(
             logger = logger
         )
         val msg = buildFinalBackgroundActivity(newParams)
-        val envelope = buildWrapperEnvelope(newParams, msg)
+        val envelope = buildWrapperEnvelope(msg)
         val obj = gatingService.gateSessionMessage(envelope)
-        return obj.convertToV2Payload(newParams.endType)
+        return obj.convertToV2Payload(newParams.endType, newParams.crashId)
     }
 
-    private fun SessionMessage.convertToV2Payload(endType: SessionSnapshotType): SessionMessage {
-        val envelope = gatingService.gateSessionEnvelope(this, sessionEnvelopeSource.getEnvelope(endType))
+    private fun SessionMessage.convertToV2Payload(endType: SessionSnapshotType, crashId: String?): SessionMessage {
+        val envelope = gatingService.gateSessionEnvelope(this, sessionEnvelopeSource.getEnvelope(endType, crashId))
         return copy(
             // future work: make legacy fields null here.
             resource = envelope.resource,
             metadata = envelope.metadata,
             data = envelope.data,
             newVersion = envelope.version,
-            type = envelope.type,
-
-            // make legacy fields null
-            spans = null,
+            type = envelope.type
         )
     }
 
@@ -142,35 +129,5 @@ internal class V2PayloadMessageCollator(
         )
     }
 
-    private fun buildWrapperEnvelope(
-        params: FinalEnvelopeParams,
-        finalPayload: Session,
-    ): SessionMessage {
-        val spans: List<EmbraceSpanData>? = captureDataSafely(logger) {
-            val result = when {
-                !params.captureSpans -> null
-                !params.isCacheAttempt -> {
-                    val appTerminationCause = when {
-                        finalPayload.crashReportId != null -> AppTerminationCause.Crash
-                        else -> null
-                    }
-                    val spans = currentSessionSpan.endSession(appTerminationCause)
-                    if (appTerminationCause == null) {
-                        sessionPropertiesService.populateCurrentSession()
-                    }
-                    spans
-                }
-
-                else -> spanSink.completedSpans()
-            }
-            // add ANR spans if the payload is capturing spans.
-            result?.plus(anrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload))
-                ?.plus(nativeAnrOtelMapper.snapshot(!params.isCacheAttempt).map(Span::toOldPayload))
-                ?: result
-        }
-        return SessionMessage(
-            session = finalPayload,
-            spans = spans
-        )
-    }
+    private fun buildWrapperEnvelope(finalPayload: Session) = SessionMessage(session = finalPayload)
 }

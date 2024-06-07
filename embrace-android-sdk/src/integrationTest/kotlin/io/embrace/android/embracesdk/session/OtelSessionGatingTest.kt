@@ -5,12 +5,14 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
+import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.findSessionSpan
@@ -109,7 +111,7 @@ internal class OtelSessionGatingTest {
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.WebView))
 
-        val spans = checkNotNull(payload.spans)
+        val spans = checkNotNull(payload.data?.spans)
         val anrSpans = spans.filter { it.name == "emb-thread-blockage" }
         val expectedCount = when (gated) {
             true -> 0

@@ -3,18 +3,14 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.toMap
 import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,13 +21,6 @@ internal class V2SessionApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
-
-    @Before
-    fun setUp() {
-        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-            RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
-        }
-    }
 
     /**
      * Verifies that a session end message is sent.
@@ -65,7 +54,7 @@ internal class V2SessionApiTest {
             val sessionSpan = snapshots.single { it.name == "emb-session" }
             assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
             assertNotNull(sessionSpan.attributes?.findAttributeValue("emb.session_id"))
-            val attrs = sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap()
+            val attrs = checkNotNull(sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap())
 
             val expected = mapOf(
                 "emb.cold_start" to "true",

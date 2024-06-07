@@ -14,9 +14,6 @@ import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeWebViewService
-import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
-import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
@@ -42,20 +39,15 @@ internal class PayloadFactoryImplTest {
         val v1Collator = V1PayloadMessageCollator(
             gatingService = FakeGatingService(),
             nativeThreadSamplerService = null,
-            webViewService = FakeWebViewService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             internalErrorService = FakeInternalErrorService().apply {
                 data = LegacyExceptionError()
             },
-            spanRepository = initModule.openTelemetryModule.spanRepository,
-            spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = fakeAnrOtelMapper(),
-            nativeAnrOtelMapper = fakeNativeAnrOtelMapper(),
             logger = initModule.logger
         )
         val v2Collator = V2PayloadMessageCollator(
@@ -64,12 +56,9 @@ internal class PayloadFactoryImplTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = fakeAnrOtelMapper(),
-            nativeAnrOtelMapper = fakeNativeAnrOtelMapper(),
             logger = initModule.logger,
             sessionEnvelopeSource = SessionEnvelopeSourceImpl(
                 FakeEnvelopeMetadataSource(),

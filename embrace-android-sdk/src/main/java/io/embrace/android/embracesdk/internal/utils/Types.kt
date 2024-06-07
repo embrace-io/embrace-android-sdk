@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AnrModule
@@ -198,8 +199,7 @@ internal typealias SessionModuleSupplier = (
     customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule,
-    anrModule: AnrModule
+    payloadModule: PayloadModule
 ) -> SessionModule
 
 /**
@@ -231,7 +231,9 @@ internal typealias PayloadModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
+    anrModule: AnrModule,
     sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
+    webViewServiceProvider: Provider<WebViewService>,
 ) -> PayloadModule
 
 /**

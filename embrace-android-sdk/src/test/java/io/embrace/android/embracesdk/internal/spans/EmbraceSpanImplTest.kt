@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -78,10 +79,15 @@ internal class EmbraceSpanImplTest {
             assertNotNull(traceId)
             assertNotNull(spanId)
             assertTrue(isRecording)
-            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs)
+            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, expectedEndTimeMs = expectedStartTimeMs)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
-            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, eventCount = 1, expectedCustomAttributeCount = 1)
+            assertSnapshot(
+                expectedStartTimeMs = expectedStartTimeMs,
+                expectedEndTimeMs = expectedStartTimeMs,
+                eventCount = 1,
+                expectedCustomAttributeCount = 1
+            )
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
         }
@@ -245,7 +251,7 @@ internal class EmbraceSpanImplTest {
 
             assertEquals(traceId, snapshot.traceId)
             assertEquals(spanId, snapshot.spanId)
-            assertNull(snapshot.parentSpanId)
+            assertEquals(SpanId.getInvalid(), snapshot.parentSpanId)
             assertEquals(EXPECTED_SPAN_NAME, snapshot.name)
             assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeNanos)
             assertEquals(Span.Status.UNSET, snapshot.status)

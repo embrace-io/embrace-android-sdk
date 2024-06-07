@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -22,15 +23,16 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePayloadCollator
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
+import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -44,7 +46,6 @@ import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
 import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -93,7 +94,8 @@ internal class PayloadFactoryBaTest {
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true
+            backgroundActivityCaptureEnabled = true,
+            oTelBehavior = fakeV2OtelBehavior()
         )
         configService.updateListeners()
         val otelCfg = OpenTelemetryConfiguration(
@@ -132,7 +134,7 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
-        assertEquals(1, msg.spans?.size)
+        assertEquals(1, msg.data?.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
 
@@ -144,7 +146,7 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
-        assertEquals(1, msg.spans?.size)
+        assertEquals(1, msg.data?.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
 
@@ -157,34 +159,28 @@ internal class PayloadFactoryBaTest {
 
         // there should be 1 completed span: the session span
         checkNotNull(msg)
-        assertEquals(1, msg.spans?.size)
+        assertEquals(1, msg.data?.spans?.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val gatingService = FakeGatingService()
         val logger = EmbLoggerImpl()
-        val collator = V1PayloadMessageCollator(
-            gatingService,
-            eventService,
-            logMessageService,
-            internalErrorService,
-            FakeWebViewService(),
-            null,
-            preferencesService,
-            spanRepository,
-            spanSink,
-            currentSessionSpan,
-            FakeSessionPropertiesService(),
-            FakeStartupService(),
-            fakeAnrOtelMapper(),
-            fakeNativeAnrOtelMapper(),
-            logger
-        )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
-            sessionPayloadSource = FakeSessionPayloadSource()
+            sessionPayloadSource = SessionPayloadSourceImpl(
+                internalErrorService,
+                null,
+                spanSink,
+                currentSessionSpan,
+                spanRepository,
+                fakeAnrOtelMapper(),
+                fakeNativeAnrOtelMapper(),
+                logger,
+                ::FakeWebViewService,
+                ::FakeSessionPropertiesService,
+            )
         )
         val v2Collator = V2PayloadMessageCollator(
             gatingService,
@@ -193,15 +189,12 @@ internal class PayloadFactoryBaTest {
             logMessageService,
             null,
             preferencesService,
-            spanSink,
             currentSessionSpan,
             FakeSessionPropertiesService(),
             FakeStartupService(),
-            fakeAnrOtelMapper(),
-            fakeNativeAnrOtelMapper(),
             logger
         )
-        return PayloadFactoryImpl(collator, v2Collator, configService, logger).apply {
+        return PayloadFactoryImpl(FakePayloadCollator(), v2Collator, configService, logger).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true)
             }

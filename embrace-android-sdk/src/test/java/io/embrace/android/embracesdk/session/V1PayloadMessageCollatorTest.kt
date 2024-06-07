@@ -1,22 +1,17 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.FakeAnrService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -55,24 +50,18 @@ internal class V1PayloadMessageCollatorTest {
             data = listOf(fakeCompletedAnrInterval, fakeInProgressAnrInterval)
         }
 
-        val clock = FakeClock()
         collator = V1PayloadMessageCollator(
             gatingService = gatingService,
             nativeThreadSamplerService = null,
-            webViewService = FakeWebViewService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             internalErrorService = FakeInternalErrorService().apply {
                 data = LegacyExceptionError()
             },
-            spanRepository = initModule.openTelemetryModule.spanRepository,
-            spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = AnrOtelMapper(anrService, clock),
-            nativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer(), clock),
             logger = initModule.logger
         )
     }
@@ -169,21 +158,6 @@ internal class V1PayloadMessageCollatorTest {
         )
 
         // create session
-        val normalEndPayload = collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
-                startMsg,
-                15000000000,
-                LifeEventType.STATE,
-                SessionSnapshotType.NORMAL_END,
-                initModule.logger,
-                true,
-                "crashId"
-            )
-        )
-        val spans = checkNotNull(normalEndPayload.spans)
-        assertEquals(2, spans.count { it.name == "emb-thread-blockage" })
-
-        // create session
         val cacheEndPayload = collator.buildFinalSessionMessage(
             FinalEnvelopeParams.SessionParams(
                 startMsg,
@@ -195,7 +169,7 @@ internal class V1PayloadMessageCollatorTest {
                 "crashId"
             )
         )
-        assertNull(cacheEndPayload.spans)
+        assertNull(cacheEndPayload.data?.spans)
     }
 
     private fun SessionMessage.verifyFinalFieldsPopulated(

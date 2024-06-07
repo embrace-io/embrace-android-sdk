@@ -345,8 +345,11 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             workerThreadModule,
                             nativeModule,
-                            openTelemetryModule
-                        ) { sessionModule.sessionPropertiesService }
+                            openTelemetryModule,
+                            anrModule,
+                            { sessionModule.sessionPropertiesService },
+                            { dataCaptureServiceModule.webviewService }
+                        )
                     }
 
                     customerLogModule = init(CustomerLogModule::class) {
@@ -402,8 +405,7 @@ internal class ModuleInitBootstrapper(
                             customerLogModule,
                             workerThreadModule,
                             dataSourceModule,
-                            payloadModule,
-                            anrModule
+                            payloadModule
                         )
                     }
 

@@ -39,8 +39,7 @@ internal class SessionModuleImpl(
     customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule,
-    anrModule: AnrModule
+    payloadModule: PayloadModule
 ) : SessionModule {
 
     override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
@@ -49,16 +48,11 @@ internal class SessionModuleImpl(
             dataContainerModule.eventService,
             customerLogModule.logMessageService,
             initModule.internalErrorService,
-            dataCaptureServiceModule.webviewService,
             nativeModule.nativeThreadSamplerService,
             androidServicesModule.preferencesService,
-            openTelemetryModule.spanRepository,
-            openTelemetryModule.spanSink,
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService,
-            anrModule.anrOtelMapper,
-            nativeModule.nativeAnrOtelMapper,
             initModule.logger
         )
     }
@@ -71,12 +65,9 @@ internal class SessionModuleImpl(
             customerLogModule.logMessageService,
             nativeModule.nativeThreadSamplerService,
             androidServicesModule.preferencesService,
-            openTelemetryModule.spanSink,
             openTelemetryModule.currentSessionSpan,
             sessionPropertiesService,
             dataCaptureServiceModule.startupService,
-            anrModule.anrOtelMapper,
-            nativeModule.nativeAnrOtelMapper,
             initModule.logger
         )
     }

@@ -7,6 +7,9 @@ import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
+import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
+import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
@@ -49,8 +52,12 @@ internal class SessionPayloadSourceImplTest {
             sink,
             currentSessionSpan,
             spanRepository,
+            fakeAnrOtelMapper(),
+            fakeNativeAnrOtelMapper(),
             EmbLoggerImpl(),
-        ) { FakeSessionPropertiesService() }
+            ::FakeWebViewService,
+            ::FakeSessionPropertiesService
+        )
     }
 
     @Test

@@ -3,16 +3,16 @@ package io.embrace.android.embracesdk.gating
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_TAPS
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 internal class SpanSanitizer(
-    private val spans: List<EmbraceSpanData>?,
+    private val spans: List<Span>?,
     private val enabledComponents: Set<String>
-) : Sanitizable<List<EmbraceSpanData>> {
+) : Sanitizable<List<Span>> {
 
-    override fun sanitize(): List<EmbraceSpanData>? {
+    override fun sanitize(): List<Span>? {
         if (spans == null) {
             return null
         }
@@ -22,9 +22,9 @@ internal class SpanSanitizer(
             sanitizedSpans.singleOrNull { it.name == "emb-session" } ?: return spans
         sanitizedSpans.remove(sessionSpan)
 
-        val sanitizedEvents = sessionSpan.events.filter(::sanitizeEvents)
+        val sanitizedEvents = sessionSpan.events?.filter(::sanitizeEvents)
 
-        val sanitizedSessionSpan = EmbraceSpanData(
+        val sanitizedSessionSpan = Span(
             sessionSpan.traceId,
             sessionSpan.spanId,
             sessionSpan.parentSpanId,
@@ -39,7 +39,7 @@ internal class SpanSanitizer(
         return sanitizedSpans
     }
 
-    private fun sanitizeSpans(span: EmbraceSpanData): Boolean {
+    private fun sanitizeSpans(span: Span): Boolean {
         return when {
             span.hasFixedAttribute(EmbType.Ux.View) && !shouldAddViewBreadcrumbs() -> false
             span.name == "emb-thread-blockage" && !shouldSendANRs() -> false
@@ -47,7 +47,7 @@ internal class SpanSanitizer(
         }
     }
 
-    private fun sanitizeEvents(event: EmbraceSpanEvent): Boolean {
+    private fun sanitizeEvents(event: SpanEvent): Boolean {
         return !(
             (event.hasFixedAttribute(EmbType.System.Breadcrumb) && !shouldAddCustomBreadcrumbs()) ||
                 (event.hasFixedAttribute(EmbType.Ux.Tap) && !shouldAddTapBreadcrumbs()) ||

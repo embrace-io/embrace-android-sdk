@@ -60,8 +60,7 @@ internal class SessionModuleImplTest {
             FakeCustomerLogModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule(),
-            FakeAnrModule()
+            FakePayloadModule()
         )
         assertNotNull(module.v1PayloadMessageCollator)
         assertNotNull(module.v2PayloadMessageCollator)
@@ -99,8 +98,7 @@ internal class SessionModuleImplTest {
             FakeCustomerLogModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule(),
-            FakeAnrModule()
+            FakePayloadModule()
         )
         assertNotNull(module.v1PayloadMessageCollator)
         assertNotNull(module.v2PayloadMessageCollator)

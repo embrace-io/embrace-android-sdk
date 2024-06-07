@@ -25,7 +25,7 @@ internal class UnityInternalInterfaceTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.UNITY, useV2Payload = true)
+        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.UNITY)
     }
 
     @Before

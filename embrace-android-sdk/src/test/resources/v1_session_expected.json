@@ -1,5 +1,4 @@
 {
-  "d": "__EMBRACE_TEST_IGNORE__",
   "s": {
     "as": "__EMBRACE_TEST_IGNORE__",
     "ty": "__EMBRACE_TEST_IGNORE__",
@@ -28,9 +27,5 @@
     "wl": [],
     "e": "__EMBRACE_TEST_IGNORE__",
     "wvi_beta": "__EMBRACE_TEST_IGNORE__"
-  },
-  "spans": "__EMBRACE_TEST_IGNORE__",
-  "data": {
-    "span_snapshots": "__EMBRACE_TEST_IGNORE__"
   }
 }

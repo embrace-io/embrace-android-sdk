@@ -11,9 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.fakes.FakeWebViewService
-import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
-import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LegacyExceptionError
@@ -23,7 +20,6 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -48,18 +44,13 @@ internal class V2PayloadMessageCollatorTest {
         v1collator = V1PayloadMessageCollator(
             gatingService = gatingService,
             nativeThreadSamplerService = null,
-            webViewService = FakeWebViewService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             internalErrorService = FakeInternalErrorService().apply { data = LegacyExceptionError() },
-            spanRepository = initModule.openTelemetryModule.spanRepository,
-            spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = fakeAnrOtelMapper(),
-            nativeAnrOtelMapper = fakeNativeAnrOtelMapper(),
             logger = initModule.logger
         )
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
@@ -73,12 +64,9 @@ internal class V2PayloadMessageCollatorTest {
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
-            spanSink = initModule.openTelemetryModule.spanSink,
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             sessionPropertiesService = FakeSessionPropertiesService(),
             startupService = FakeStartupService(),
-            anrOtelMapper = fakeAnrOtelMapper(),
-            nativeAnrOtelMapper = fakeNativeAnrOtelMapper(),
             logger = initModule.logger,
             sessionEnvelopeSource = sessionEnvelopeSource
         )
@@ -167,7 +155,6 @@ internal class V2PayloadMessageCollatorTest {
     private fun SessionMessage.verifyFinalFieldsPopulated(
         payloadType: PayloadType
     ) {
-        assertNull(spans)
         assertNotNull(resource)
         assertNotNull(metadata)
         assertNotNull(data)

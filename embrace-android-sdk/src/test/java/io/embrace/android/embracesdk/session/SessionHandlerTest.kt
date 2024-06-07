@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
@@ -164,7 +163,6 @@ internal class SessionHandlerTest {
             logMessageService,
             preferencesService,
             currentSessionSpan,
-            FakeStartupService(),
             logger,
         )
         payloadFactory = PayloadFactoryImpl(collator, configService, logger)
@@ -218,8 +216,6 @@ internal class SessionHandlerTest {
             assertEquals(crashId, crashReportId)
             assertEquals(NOW, endTime)
             assertEquals(sdkStartupDuration, sdkStartupDuration)
-            assertEquals(0L, startupDuration)
-            assertEquals(0L, startupThreshold)
         }
     }
 

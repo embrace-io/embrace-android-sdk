@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
@@ -188,7 +187,6 @@ internal class PayloadFactoryBaTest {
             logMessageService,
             preferencesService,
             currentSessionSpan,
-            FakeStartupService(),
             logger
         )
         return PayloadFactoryImpl(collator, configService, logger).apply {

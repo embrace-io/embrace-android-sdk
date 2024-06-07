@@ -401,11 +401,11 @@ internal class ModuleInitBootstrapper(
                             nativeModule,
                             dataContainerModule,
                             deliveryModule,
-                            dataCaptureServiceModule,
                             customerLogModule,
                             workerThreadModule,
                             dataSourceModule,
-                            payloadModule
+                            payloadModule,
+                            dataCaptureServiceModule
                         )
                     }
 

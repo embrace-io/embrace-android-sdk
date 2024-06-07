@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState.FOREGROUND
@@ -39,7 +38,6 @@ internal class PayloadFactoryImplTest {
             eventService = FakeEventService(),
             logMessageService = FakeLogMessageService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            startupService = FakeStartupService(),
             logger = initModule.logger,
             sessionEnvelopeSource = SessionEnvelopeSourceImpl(
                 FakeEnvelopeMetadataSource(),

@@ -52,16 +52,7 @@ internal data class Session @JvmOverloads internal constructor(
     val crashReportId: String? = null,
 
     @Json(name = "em")
-    val endType: LifeEventType? = null,
-
-    @Json(name = "sd")
-    val startupDuration: Long? = null,
-
-    @Json(name = "sdt")
-    val startupThreshold: Long? = null,
-
-    @Json(name = "si")
-    val sdkStartupDuration: Long? = null
+    val endType: LifeEventType? = null
 ) {
 
     /**

@@ -16,9 +16,7 @@ internal class SessionSanitizerFacadeTest {
         terminationTime = 100L,
         infoLogIds = listOf("infoLog"),
         warningLogIds = listOf("warningLog"),
-        eventIds = listOf("eventId"),
-        startupDuration = 100L,
-        startupThreshold = 500L
+        eventIds = listOf("eventId")
     )
 
     private val sessionMessage = SessionMessage(
@@ -64,8 +62,6 @@ internal class SessionSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.session.infoLogIds)
         assertNotNull(sanitizedMessage.session.warningLogIds)
         assertNotNull(sanitizedMessage.session.eventIds)
-        assertNotNull(sanitizedMessage.session.startupDuration)
-        assertNotNull(sanitizedMessage.session.startupThreshold)
         assertNotNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
 
@@ -81,8 +77,6 @@ internal class SessionSanitizerFacadeTest {
         assertNull(sanitizedMessage.session.infoLogIds)
         assertNull(sanitizedMessage.session.warningLogIds)
         assertNull(sanitizedMessage.session.eventIds)
-        assertNull(sanitizedMessage.session.startupDuration)
-        assertNull(sanitizedMessage.session.startupThreshold)
         assertNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
 }

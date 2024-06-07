@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
+import io.embrace.android.embracesdk.session.orchestrator.SessionSpanAttrPopulator
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -33,11 +34,11 @@ internal class SessionModuleImpl(
     nativeModule: NativeModule,
     dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
     customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule
+    payloadModule: PayloadModule,
+    dataCaptureServiceModule: DataCaptureServiceModule
 ) : SessionModule {
 
     override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
@@ -48,7 +49,6 @@ internal class SessionModuleImpl(
             customerLogModule.logMessageService,
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan,
-            dataCaptureServiceModule.startupService,
             initModule.logger
         )
     }
@@ -102,6 +102,14 @@ internal class SessionModuleImpl(
         DataCaptureOrchestrator(dataSources, initModule.logger, essentialServiceModule.configService)
     }
 
+    private val sessionSpanAttrPopulator by singleton {
+        SessionSpanAttrPopulator(
+            openTelemetryModule.currentSessionSpan,
+            dataContainerModule.eventService,
+            dataCaptureServiceModule.startupService
+        )
+    }
+
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
@@ -115,6 +123,7 @@ internal class SessionModuleImpl(
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
             openTelemetryModule.currentSessionSpan,
+            sessionSpanAttrPopulator,
             initModule.logger
         )
     }

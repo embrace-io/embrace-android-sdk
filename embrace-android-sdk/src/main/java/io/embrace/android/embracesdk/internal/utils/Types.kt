@@ -195,11 +195,11 @@ internal typealias SessionModuleSupplier = (
     nativeModule: NativeModule,
     dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
     customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule
+    payloadModule: PayloadModule,
+    dataCaptureServiceModule: DataCaptureServiceModule
 ) -> SessionModule
 
 /**

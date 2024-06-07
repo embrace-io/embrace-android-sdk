@@ -41,10 +41,8 @@ import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import io.mockk.clearAllMocks
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import org.junit.After
@@ -172,9 +170,8 @@ internal class PayloadFactorySessionTest {
             sessionPayloadSource = FakeSessionPayloadSource()
         )
         val logger = EmbLoggerImpl()
-        val v1Collator = mockk<V1PayloadMessageCollator>(relaxed = true)
         val gatingService = FakeGatingService()
-        val v2Collator = V2PayloadMessageCollator(
+        val collator = PayloadMessageCollatorImpl(
             gatingService,
             sessionEnvelopeSource,
             eventService,
@@ -185,6 +182,6 @@ internal class PayloadFactorySessionTest {
             FakeStartupService(),
             logger
         )
-        service = PayloadFactoryImpl(v1Collator, v2Collator, FakeConfigService(), logger)
+        service = PayloadFactoryImpl(collator, FakeConfigService(), logger)
     }
 }

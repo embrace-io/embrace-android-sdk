@@ -6,8 +6,7 @@ import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityC
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
@@ -18,8 +17,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface SessionModule {
     val payloadFactory: PayloadFactory
-    val v1PayloadMessageCollator: V1PayloadMessageCollator
-    val v2PayloadMessageCollator: V2PayloadMessageCollator
+    val payloadMessageCollatorImpl: PayloadMessageCollatorImpl
     val sessionPropertiesService: SessionPropertiesService
     val sessionOrchestrator: SessionOrchestrator
     val periodicSessionCacher: PeriodicSessionCacher
@@ -42,21 +40,8 @@ internal class SessionModuleImpl(
     payloadModule: PayloadModule
 ) : SessionModule {
 
-    override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
-        V1PayloadMessageCollator(
-            essentialServiceModule.gatingService,
-            dataContainerModule.eventService,
-            customerLogModule.logMessageService,
-            androidServicesModule.preferencesService,
-            openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService,
-            dataCaptureServiceModule.startupService,
-            initModule.logger
-        )
-    }
-
-    override val v2PayloadMessageCollator: V2PayloadMessageCollator by singleton {
-        V2PayloadMessageCollator(
+    override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
+        PayloadMessageCollatorImpl(
             essentialServiceModule.gatingService,
             payloadModule.sessionEnvelopeSource,
             dataContainerModule.eventService,
@@ -97,8 +82,7 @@ internal class SessionModuleImpl(
 
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
-            v1PayloadMessageCollator,
-            v2PayloadMessageCollator,
+            payloadMessageCollatorImpl,
             essentialServiceModule.configService,
             initModule.logger
         )

@@ -15,10 +15,9 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 /**
- * Generates a V2 payload. This currently calls through to the V1 collator for
- * backwards compatibility.
+ * Generates a V2 payload
  */
-internal class V2PayloadMessageCollator(
+internal class PayloadMessageCollatorImpl(
     private val gatingService: GatingService,
     private val sessionEnvelopeSource: SessionEnvelopeSource,
     private val eventService: EventService,

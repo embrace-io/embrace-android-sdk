@@ -34,17 +34,7 @@ internal class PayloadFactoryImplTest {
             )
         )
         val initModule = FakeInitModule()
-        val v1Collator = V1PayloadMessageCollator(
-            gatingService = FakeGatingService(),
-            preferencesService = FakePreferenceService(),
-            eventService = FakeEventService(),
-            logMessageService = FakeLogMessageService(),
-            currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService = FakeSessionPropertiesService(),
-            startupService = FakeStartupService(),
-            logger = initModule.logger
-        )
-        val v2Collator = V2PayloadMessageCollator(
+        val collator = PayloadMessageCollatorImpl(
             gatingService = FakeGatingService(),
             preferencesService = FakePreferenceService(),
             eventService = FakeEventService(),
@@ -60,8 +50,7 @@ internal class PayloadFactoryImplTest {
             )
         )
         factory = PayloadFactoryImpl(
-            v1payloadMessageCollator = v1Collator,
-            v2payloadMessageCollator = v2Collator,
+            payloadMessageCollator = collator,
             configService = configService,
             logger = initModule.logger
         )

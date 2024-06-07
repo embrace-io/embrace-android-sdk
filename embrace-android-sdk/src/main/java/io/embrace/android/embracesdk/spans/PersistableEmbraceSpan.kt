@@ -5,11 +5,13 @@ import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.opentelemetry.context.Context
+import io.opentelemetry.context.ContextKey
+import io.opentelemetry.context.ImplicitContextKeyed
 
 /**
  * An [EmbraceSpan] that has can generate a snapshot of its current state for persistence
  */
-internal interface PersistableEmbraceSpan : EmbraceSpan {
+internal interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
 
     /**
      * Create a new [Context] object based in this span and its parent's context. This can be used for the parent [Context] for a new span
@@ -46,4 +48,10 @@ internal interface PersistableEmbraceSpan : EmbraceSpan {
      * Removes all events with the given [EmbType]
      */
     fun removeEvents(type: EmbType): Boolean
+
+    override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
 }
+
+internal fun Context.getParentSpan(): PersistableEmbraceSpan? = get(embraceSpanContextKey)
+
+private val embraceSpanContextKey = ContextKey.named<PersistableEmbraceSpan>("embrace-span-key")

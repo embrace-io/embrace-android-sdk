@@ -51,7 +51,7 @@ internal class SpanServiceImpl(
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
         return if (
             inputsValid(embraceSpanBuilder.spanName) &&
-            currentSessionSpan.canStartNewSpan(embraceSpanBuilder.parent, embraceSpanBuilder.internal)
+            currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
         ) {
             embraceSpanFactory.create(embraceSpanBuilder)
         } else {

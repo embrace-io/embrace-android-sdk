@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.spans.getParentSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
@@ -23,16 +24,16 @@ internal class EmbraceSpanBuilder(
     telemetryType: TelemetryType,
     val internal: Boolean,
     private: Boolean,
-    val parent: EmbraceSpan?,
+    parentSpan: EmbraceSpan?,
 ) {
+    lateinit var parentContext: Context
+        private set
+
     val spanName = if (internal) {
         name.toEmbraceObjectName()
     } else {
         name
     }
-
-    lateinit var parentContext: Context
-        private set
 
     var startTimeMs: Long? = null
 
@@ -42,8 +43,9 @@ internal class EmbraceSpanBuilder(
 
     init {
         // If there is a parent, extract the wrapped OTel span and set it as the parent in the wrapped OTel SpanBuilder
-        if (parent is PersistableEmbraceSpan) {
-            setParent(parent.asNewContext() ?: Context.root())
+        if (parentSpan is PersistableEmbraceSpan) {
+            val newParentContext = parentSpan.asNewContext() ?: Context.root()
+            setParentContext(newParentContext.with(parentSpan))
         } else {
             setNoParent()
         }
@@ -66,9 +68,11 @@ internal class EmbraceSpanBuilder(
         customAttributes[key] = value
     }
 
-    fun setParent(context: Context) {
+    fun getParentSpan(): EmbraceSpan? = parentContext.getParentSpan()
+
+    fun setParentContext(context: Context) {
         parentContext = context
-        sdkSpanBuilder.setParent(context)
+        sdkSpanBuilder.setParent(parentContext)
         updateKeySpan()
     }
 
@@ -84,7 +88,7 @@ internal class EmbraceSpanBuilder(
 
     private fun updateKeySpan() {
         if (fixedAttributes.contains(EmbType.Performance.Default)) {
-            if (Span.fromContext(parentContext) == Span.getInvalid()) {
+            if (getParentSpan() == null) {
                 fixedAttributes.add(KeySpan)
             } else {
                 fixedAttributes.remove(KeySpan)

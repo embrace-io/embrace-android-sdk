@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.spans.getParentSpan
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -7,7 +8,6 @@ import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.TraceFlags
 import io.opentelemetry.api.trace.TraceState
-import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.IdGenerator
 import java.util.concurrent.TimeUnit
 
@@ -17,11 +17,7 @@ internal class FakeSpan(
 
     private val spanContext: SpanContext =
         SpanContext.create(
-            if (fakeSpanBuilder.parentContext == Context.root()) {
-                IdGenerator.random().generateTraceId()
-            } else {
-                Span.fromContext(fakeSpanBuilder.parentContext).spanContext.traceId
-            },
+            fakeSpanBuilder.parentContext.getParentSpan()?.traceId ?: IdGenerator.random().generateTraceId(),
             IdGenerator.random().generateSpanId(),
             TraceFlags.getDefault(),
             TraceState.getDefault()

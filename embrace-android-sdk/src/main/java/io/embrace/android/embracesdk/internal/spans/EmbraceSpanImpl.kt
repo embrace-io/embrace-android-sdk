@@ -51,7 +51,7 @@ internal class EmbraceSpanImpl(
     // do the bookkeeping separately so we don't have to worry about this
     private val eventCount = AtomicInteger(0)
 
-    override val parent: EmbraceSpan? = spanBuilder.parent
+    override val parent: EmbraceSpan? = spanBuilder.getParentSpan()
 
     override val spanContext: SpanContext?
         get() = startedSpan.get()?.spanContext

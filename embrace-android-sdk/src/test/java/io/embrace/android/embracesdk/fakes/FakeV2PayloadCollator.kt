@@ -65,7 +65,6 @@ internal class FakeV2PayloadCollator(
         return initial.toSession().copy(
             endTime = endTime,
             lastHeartbeatTime = endTime,
-            endType = lifeEventType,
             crashReportId = crashId
         )
     }

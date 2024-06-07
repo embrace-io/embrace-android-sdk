@@ -109,7 +109,6 @@ internal class PayloadMessageCollatorImpl(
                 eventService.findEventIdsForSession()
             },
             lastHeartbeatTime = endTime,
-            endType = lifeEventType,
             crashReportId = crashId
         )
     }

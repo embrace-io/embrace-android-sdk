@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -20,8 +19,7 @@ internal class SessionTest {
         warningLogIds = listOf("fake-warn-id"),
         errorLogIds = listOf("fake-err-id"),
         networkLogIds = listOf("fake-network-id"),
-        crashReportId = "fake-crash-id",
-        endType = LifeEventType.STATE
+        crashReportId = "fake-crash-id"
     )
 
     @Test
@@ -46,7 +44,6 @@ internal class SessionTest {
             assertEquals(listOf("fake-err-id"), errorLogIds)
             assertEquals(listOf("fake-network-id"), networkLogIds)
             assertEquals("fake-crash-id", crashReportId)
-            assertEquals(LifeEventType.STATE, endType)
         }
     }
 

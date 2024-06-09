@@ -36,8 +36,12 @@ internal class CurrentSessionSpanImpl(
     private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
-        synchronized(sessionSpan) {
-            sessionSpan.set(startSessionSpan(sdkInitStartTimeMs))
+        if (sessionSpan.get() == null) {
+            synchronized(sessionSpan) {
+                if (sessionSpan.get() == null) {
+                    sessionSpan.set(startSessionSpan(sdkInitStartTimeMs))
+                }
+            }
         }
     }
 
@@ -73,27 +77,31 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
-        val endingSessionSpan = sessionSpan.get() ?: return emptyList()
         synchronized(sessionSpan) {
-            // Right now, session spans don't survive native crashes and sudden process terminations,
-            // so telemetry will not be recorded in those cases, for now.
-            val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
+            val endingSessionSpan = sessionSpan.get()
+            return if (endingSessionSpan != null && endingSessionSpan.isRecording) {
+                // Right now, session spans don't survive native crashes and sudden process terminations,
+                // so telemetry will not be recorded in those cases, for now.
+                val telemetryAttributes = telemetryService.getAndClearTelemetryAttributes()
 
-            telemetryAttributes.forEach {
-                endingSessionSpan.addAttribute(it.key, it.value)
-            }
+                telemetryAttributes.forEach {
+                    endingSessionSpan.addAttribute(it.key, it.value)
+                }
 
-            if (appTerminationCause == null) {
-                endingSessionSpan.stop()
-                spanRepository.clearCompletedSpans()
-                sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                if (appTerminationCause == null) {
+                    endingSessionSpan.stop()
+                    spanRepository.clearCompletedSpans()
+                    sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                } else {
+                    val crashTime = openTelemetryClock.now().nanosToMillis()
+                    spanRepository.failActiveSpans(crashTime)
+                    endingSessionSpan.setSystemAttribute(appTerminationCause.key, appTerminationCause.value)
+                    endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
+                }
+                spanSink.flushSpans()
             } else {
-                val crashTime = openTelemetryClock.now().nanosToMillis()
-                spanRepository.failActiveSpans(crashTime)
-                endingSessionSpan.setSystemAttribute(appTerminationCause.key, appTerminationCause.value)
-                endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
+                emptyList()
             }
-            return spanSink.flushSpans()
         }
     }
 

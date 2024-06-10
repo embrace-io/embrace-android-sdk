@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -80,7 +81,7 @@ internal class EmbraceCrashServiceTest {
     }
 
     private fun setupForHandleCrash() {
-        val gatingService = EmbraceGatingService(FakeConfigService(), logger)
+        val gatingService = EmbraceGatingService(FakeConfigService(), FakeLogMessageService(), logger)
 
         embraceCrashService = EmbraceCrashService(
             logOrchestrator,

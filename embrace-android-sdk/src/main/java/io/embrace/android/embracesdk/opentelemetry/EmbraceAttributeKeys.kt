@@ -92,3 +92,8 @@ internal val embSessionStartupThreshold = EmbraceAttributeKey("threshold")
  * Attribute name that identifies the SDK duration
  */
 internal val embSdkStartupDuration = EmbraceAttributeKey("sdk_startup_duration")
+
+/**
+ * Attribute name that identifies the error log count in a session
+ */
+internal val embErrorLogCount = EmbraceAttributeKey("error_log_count")

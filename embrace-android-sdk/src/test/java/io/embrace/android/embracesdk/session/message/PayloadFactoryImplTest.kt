@@ -6,9 +6,7 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
@@ -35,8 +33,6 @@ internal class PayloadFactoryImplTest {
         val collator = PayloadMessageCollatorImpl(
             gatingService = FakeGatingService(),
             preferencesService = FakePreferenceService(),
-            eventService = FakeEventService(),
-            logMessageService = FakeLogMessageService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             logger = initModule.logger,
             sessionEnvelopeSource = SessionEnvelopeSourceImpl(

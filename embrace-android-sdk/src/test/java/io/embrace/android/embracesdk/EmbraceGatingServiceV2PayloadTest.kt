@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
@@ -32,6 +33,7 @@ internal class EmbraceGatingServiceV2PayloadTest {
 
     private lateinit var gatingService: EmbraceGatingService
     private lateinit var configService: FakeConfigService
+    private lateinit var logMessageService: FakeLogMessageService
     private lateinit var sessionBehavior: SessionBehavior
     private var cfg: RemoteConfig? = RemoteConfig()
 
@@ -39,7 +41,8 @@ internal class EmbraceGatingServiceV2PayloadTest {
     fun setUp() {
         sessionBehavior = fakeSessionBehavior { cfg }
         configService = FakeConfigService(sessionBehavior = fakeSessionBehavior { cfg })
-        gatingService = EmbraceGatingService(configService, EmbLoggerImpl())
+        logMessageService = FakeLogMessageService()
+        gatingService = EmbraceGatingService(configService, logMessageService, EmbLoggerImpl())
     }
 
     @Test
@@ -54,11 +57,8 @@ internal class EmbraceGatingServiceV2PayloadTest {
             setOf(),
             setOf(SessionGatingKeys.FULL_SESSION_ERROR_LOGS)
         )
-        val sessionMessage = SessionMessage(
-            fakeSession().copy(
-                errorLogIds = listOf("id1"),
-            )
-        )
+        logMessageService.errorLogIds = listOf("id1")
+        val sessionMessage = SessionMessage(fakeSession())
         // result shouldn't be sanitized.
         val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
         assertNotNull(checkNotNull(result.metadata).personas)

@@ -32,21 +32,19 @@ internal class SessionModuleImpl(
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
-    dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadModule: PayloadModule,
-    dataCaptureServiceModule: DataCaptureServiceModule
+    dataCaptureServiceModule: DataCaptureServiceModule,
+    dataContainerModule: DataContainerModule,
+    customerLogModule: CustomerLogModule
 ) : SessionModule {
 
     override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             essentialServiceModule.gatingService,
             payloadModule.sessionEnvelopeSource,
-            dataContainerModule.eventService,
-            customerLogModule.logMessageService,
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan,
             initModule.logger
@@ -106,7 +104,8 @@ internal class SessionModuleImpl(
         SessionSpanAttrPopulator(
             openTelemetryModule.currentSessionSpan,
             dataContainerModule.eventService,
-            dataCaptureServiceModule.startupService
+            dataCaptureServiceModule.startupService,
+            customerLogModule.logMessageService
         )
     }
 

@@ -10,10 +10,7 @@ import org.junit.Test
 internal class SessionSanitizerTest {
 
     private val session = fakeSession().copy(
-        terminationTime = 100L,
-        infoLogIds = listOf("infoLog"),
-        warningLogIds = listOf("warningLog"),
-        eventIds = listOf("eventId")
+        terminationTime = 100L
     )
 
     @Test
@@ -32,9 +29,6 @@ internal class SessionSanitizerTest {
         val result = SessionSanitizer(session, components).sanitize()
 
         assertNotNull(result.terminationTime)
-        assertNotNull(result.infoLogIds)
-        assertNotNull(result.warningLogIds)
-        assertNotNull(result.eventIds)
     }
 
     @Test
@@ -44,8 +38,5 @@ internal class SessionSanitizerTest {
         val result = SessionSanitizer(session, components).sanitize()
 
         assertNull(result.terminationTime)
-        assertNull(result.infoLogIds)
-        assertNull(result.warningLogIds)
-        assertNull(result.eventIds)
     }
 }

@@ -3,9 +3,7 @@ package io.embrace.android.embracesdk.session.message
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -39,8 +37,6 @@ internal class PayloadMessageCollatorImplTest {
         collator = PayloadMessageCollatorImpl(
             gatingService = gatingService,
             preferencesService = FakePreferenceService(),
-            eventService = FakeEventService(),
-            logMessageService = FakeLogMessageService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
             logger = initModule.logger,
             sessionEnvelopeSource = sessionEnvelopeSource
@@ -145,6 +141,5 @@ internal class PayloadMessageCollatorImplTest {
     private fun Session.verifyFinalFieldsPopulated() {
         assertEquals(15000000000L, endTime)
         assertEquals(15000000000L, lastHeartbeatTime)
-        assertNotNull(eventIds)
     }
 }

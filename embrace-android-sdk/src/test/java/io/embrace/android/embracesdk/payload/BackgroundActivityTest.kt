@@ -14,11 +14,7 @@ internal class BackgroundActivityTest {
         sessionId = "fake-session-id",
         startTime = 123456789L,
         endTime = 987654321L,
-        lastHeartbeatTime = 123456780L,
-        eventIds = listOf("fake-event-id"),
-        infoLogIds = listOf("fake-info-id"),
-        warningLogIds = listOf("fake-warn-id"),
-        errorLogIds = listOf("fake-err-id")
+        lastHeartbeatTime = 123456780L
     )
 
     @Test
@@ -36,10 +32,6 @@ internal class BackgroundActivityTest {
             assertEquals(123456789L, startTime)
             assertEquals(987654321L, endTime)
             assertEquals(123456780L, lastHeartbeatTime)
-            assertEquals(listOf("fake-event-id"), eventIds)
-            assertEquals(listOf("fake-info-id"), infoLogIds)
-            assertEquals(listOf("fake-warn-id"), warningLogIds)
-            assertEquals(listOf("fake-err-id"), errorLogIds)
         }
     }
 

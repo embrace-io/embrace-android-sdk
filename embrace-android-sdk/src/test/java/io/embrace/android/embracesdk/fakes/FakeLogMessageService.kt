@@ -24,6 +24,7 @@ internal class FakeLogMessageService : LogMessageService {
 
     val loggedMessages = mutableListOf<LogData>()
     val networkCalls = mutableListOf<NetworkCapturedCall>()
+    var errorLogIds = listOf<String>()
 
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
         networkCaptureCall?.let(networkCalls::add)
@@ -68,7 +69,7 @@ internal class FakeLogMessageService : LogMessageService {
     }
 
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
+        return errorLogIds
     }
 
     override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {

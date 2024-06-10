@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
+import io.embrace.android.embracesdk.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
@@ -51,6 +52,7 @@ internal class StatefulSessionTest {
             val attrs = checkNotNull(first.findSessionSpan().attributes)
             assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(embSessionStartType.name))
             assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(embSessionEndType.name))
+            assertEquals("0", attrs.findAttributeValue(embErrorLogCount.name))
 
             // verify second session
             val second = messages[1]

@@ -2,17 +2,5 @@
   "id": "fake-session-id",
   "st": 123456789,
   "et": 987654321,
-  "ht": 123456780,
-  "ss": [
-    "fake-event-id"
-  ],
-  "il": [
-    "fake-info-id"
-  ],
-  "wl": [
-    "fake-warn-id"
-  ],
-  "el": [
-    "fake-err-id"
-  ]
+  "ht": 123456780
 }

@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -11,7 +9,6 @@ import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 /**
@@ -20,8 +17,6 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 internal class PayloadMessageCollatorImpl(
     private val gatingService: GatingService,
     private val sessionEnvelopeSource: SessionEnvelopeSource,
-    private val eventService: EventService,
-    private val logMessageService: LogMessageService,
     private val preferencesService: PreferencesService,
     private val currentSessionSpan: CurrentSessionSpan,
     private val logger: EmbLogger,
@@ -54,12 +49,6 @@ internal class PayloadMessageCollatorImpl(
             val base = buildFinalBackgroundActivity(newParams)
 
             val endSession = base.copy(
-                networkLogIds = captureDataSafely(logger) {
-                    logMessageService.findNetworkLogIds(
-                        initial.startTime,
-                        endTime
-                    )
-                },
                 terminationTime = terminationTime,
                 endTime = endTimeVal
             )
@@ -105,9 +94,6 @@ internal class PayloadMessageCollatorImpl(
     ): Session = with(params) {
         return initial.toSession().copy(
             endTime = endTime,
-            eventIds = captureDataSafely(logger) {
-                eventService.findEventIdsForSession()
-            },
             lastHeartbeatTime = endTime
         )
     }

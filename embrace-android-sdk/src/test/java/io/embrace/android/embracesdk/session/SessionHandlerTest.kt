@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.local.LocalConfig
@@ -63,7 +62,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -73,7 +71,6 @@ internal class SessionHandlerTest {
         private val eventService: EventService = FakeEventService()
         private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
-        private val internalErrorService = EmbraceInternalErrorService(clock)
         private const val NOW = 123L
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
@@ -153,7 +150,6 @@ internal class SessionHandlerTest {
             metadataService,
             eventService,
             logMessageService,
-            internalErrorService,
             performanceInfoService,
             webViewService,
             null,
@@ -247,7 +243,6 @@ internal class SessionHandlerTest {
             assertEquals(0, infoLogsAttemptedToSend)
             assertEquals(0, warnLogsAttemptedToSend)
             assertEquals(0, errorLogsAttemptedToSend)
-            assertNull(exceptionError)
             assertEquals(NOW, lastHeartbeatTime)
             assertEquals(sessionProperties.get(), properties)
             assertEquals(Session.LifeEventType.STATE, endType)

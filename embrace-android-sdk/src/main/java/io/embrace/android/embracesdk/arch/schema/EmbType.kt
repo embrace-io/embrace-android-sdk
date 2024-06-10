@@ -57,6 +57,8 @@ internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         internal object Exception : System("exception")
 
+        internal object InternalError : System("internal")
+
         internal object FlutterException : System("flutter_exception") {
             /**
              * Attribute name for the exception context in a log representing an exception

@@ -192,7 +192,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(EssentialServiceModule::class) {
-                        initModule.internalErrorService.configService = essentialServiceModule.configService
                         serviceRegistry.registerServices(
                             essentialServiceModule.processStateService,
                             essentialServiceModule.metadataService,
@@ -227,6 +226,7 @@ internal class ModuleInitBootstrapper(
                             anrModule
                         )
                     }
+                    initModule.internalErrorService.internalErrorDataSource = { dataSourceModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(

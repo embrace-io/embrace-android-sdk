@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.ViewLocalConfig
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findSpanAttribute
-import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert
@@ -45,7 +45,7 @@ internal class ActivityFeatureTest {
                 startTimeMs = harness.overriddenClock.now()
             })
 
-            val viewSpans = message.findSpansOfType(EmbType.Ux.View)
+            val viewSpans = message.findSpanSnapshotsOfType(EmbType.Ux.View)
             Assert.assertEquals(1, viewSpans.size)
 
             val span1 = viewSpans[0]
@@ -53,7 +53,6 @@ internal class ActivityFeatureTest {
             with(span1) {
                 Assert.assertEquals("android.app.Activity", findSpanAttribute("view.name"))
                 Assert.assertEquals(startTimeMs, startTimeNanos.nanosToMillis())
-                Assert.assertEquals(startTimeMs + 30000L, endTimeNanos.nanosToMillis())
             }
         }
     }

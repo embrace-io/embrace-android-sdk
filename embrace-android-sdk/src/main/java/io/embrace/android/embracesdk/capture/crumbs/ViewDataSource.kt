@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
@@ -66,21 +65,6 @@ internal class ViewDataSource(
             viewSpans.remove(name)?.stop()
         }
     )
-
-    /**
-     * Called when the activity is closed (and therefore all views are assumed to close).
-     */
-    fun onViewClose() {
-        viewSpans.forEach { (_, span) ->
-            captureSpanData(
-                countsTowardsLimits = false,
-                inputValidation = NoInputValidation,
-                captureAction = {
-                    span.stop()
-                }
-            )
-        }
-    }
 
     override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
         StartSpanData(

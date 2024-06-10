@@ -18,8 +18,7 @@ internal class BackgroundActivityTest {
         eventIds = listOf("fake-event-id"),
         infoLogIds = listOf("fake-info-id"),
         warningLogIds = listOf("fake-warn-id"),
-        errorLogIds = listOf("fake-err-id"),
-        crashReportId = "fake-crash-id"
+        errorLogIds = listOf("fake-err-id")
     )
 
     @Test
@@ -41,7 +40,6 @@ internal class BackgroundActivityTest {
             assertEquals(listOf("fake-info-id"), infoLogIds)
             assertEquals(listOf("fake-warn-id"), warningLogIds)
             assertEquals(listOf("fake-err-id"), errorLogIds)
-            assertEquals("fake-crash-id", crashReportId)
         }
     }
 

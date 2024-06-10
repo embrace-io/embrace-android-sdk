@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
@@ -102,8 +103,9 @@ internal class SessionOrchestratorTest {
         orchestrator.onForeground(true, foregroundTime)
         assertEquals(2, memoryCleanerService.callCount)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
+        val payload = getOnlySentPayload()
         validateSession(
-            sentSession = getOnlySentBackgroundActivity(),
+            sentSession = payload.session,
             endTimeMs = foregroundTime - 1,
             endType = Session.LifeEventType.BKGND_STATE,
             expectedSessionId = expectedSessionId
@@ -118,8 +120,9 @@ internal class SessionOrchestratorTest {
         val backgroundTime = clock.now()
         orchestrator.onBackground(backgroundTime)
         assertEquals(2, memoryCleanerService.callCount)
+        val payload = getOnlySentPayload()
         validateSession(
-            sentSession = getOnlySentSession(),
+            sentSession = payload.session,
             endTimeMs = backgroundTime - 1,
             endType = Session.LifeEventType.STATE,
             expectedSessionId = expectedSessionId
@@ -185,8 +188,9 @@ internal class SessionOrchestratorTest {
         val endTimeMs = clock.now()
         orchestrator.endSessionWithManual(true)
         assertEquals(2, memoryCleanerService.callCount)
+        val payload = getOnlySentPayload()
         validateSession(
-            sentSession = getOnlySentSession(),
+            sentSession = payload.session,
             endTimeMs = endTimeMs - 10000,
             endType = Session.LifeEventType.MANUAL,
             expectedSessionId = expectedSessionId
@@ -282,8 +286,7 @@ internal class SessionOrchestratorTest {
         )
         createOrchestrator(true)
         orchestrator.endSessionWithCrash("crashId")
-        val sentBackgroundActivity = getOnlySentBackgroundActivity()
-        assertEquals("crashId", sentBackgroundActivity.crashReportId)
+        assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
     }
 
     @Test
@@ -294,8 +297,7 @@ internal class SessionOrchestratorTest {
         )
         createOrchestrator(false)
         orchestrator.endSessionWithCrash("crashId")
-        val sentSession = getOnlySentSession()
-        assertEquals("crashId", sentSession.crashReportId)
+        assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
     }
 
     @Test
@@ -439,7 +441,5 @@ internal class SessionOrchestratorTest {
         assertEquals(endTimeMs, checkNotNull(currentSessionSpan.sessionSpan).startEpochNanos.nanosToMillis())
     }
 
-    private fun getOnlySentSession() = checkNotNull(deliveryService.sentSessionMessages.single().first.session)
-
-    private fun getOnlySentBackgroundActivity() = checkNotNull(deliveryService.sentSessionMessages.single().first.session)
+    private fun getOnlySentPayload() = checkNotNull(deliveryService.sentSessionMessages.single().first)
 }

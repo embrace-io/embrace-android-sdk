@@ -25,11 +25,15 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -135,7 +139,7 @@ internal class EmbraceDeliveryServiceTest {
         assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         val sentSession = apiService.sessionRequests.single()
-        assertEquals(2, sentSession.data?.spans?.size)
+        assertEquals(3, sentSession.data?.spans?.size)
         assertEquals(0, sentSession.data?.spanSnapshots?.size)
         val snapshot = checkNotNull(sessionWithSnapshot.data?.spanSnapshots).single()
         val span = sentSession.data?.spans?.single { it.spanId == snapshot.spanId }
@@ -220,14 +224,40 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `crash during sending of cache session should preserve conversion of failed snapshot`() {
         assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
-        assertEquals(1, sessionWithSnapshot.data?.spans?.size)
+        assertEquals(2, sessionWithSnapshot.data?.spans?.size)
         assertEquals(1, sessionWithSnapshot.data?.spanSnapshots?.size)
         apiService.throwExceptionSendSession = true
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())
         val transformedSession =
             checkNotNull(cacheService.loadObject(sessionWithSnapshotFileName, SessionMessage::class.java))
-        assertEquals(2, transformedSession.data?.spans?.size)
+        assertEquals(3, transformedSession.data?.spans?.size)
+        assertEquals(0, transformedSession.data?.spanSnapshots?.size)
+    }
+
+    @Test
+    fun `crash ID is added to previous session`() {
+        assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
+        apiService.throwExceptionSendSession = true
+        fakeNativeCrashService.data = NativeCrashData(
+            "my-crash-id",
+            sessionWithSnapshot.session.sessionId,
+            0L,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
+        assertTrue(apiService.sessionRequests.isEmpty())
+        val transformedSession =
+            checkNotNull(cacheService.loadObject(sessionWithSnapshotFileName, SessionMessage::class.java))
+        val attrs = checkNotNull(transformedSession.getSessionSpan()?.attributes)
+        assertEquals("my-crash-id", attrs.findAttributeValue(embCrashId.name))
+        assertEquals(3, transformedSession.data?.spans?.size)
         assertEquals(0, transformedSession.data?.spanSnapshots?.size)
     }
 

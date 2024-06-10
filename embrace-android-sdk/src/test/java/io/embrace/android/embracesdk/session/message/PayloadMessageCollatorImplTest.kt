@@ -145,7 +145,6 @@ internal class PayloadMessageCollatorImplTest {
     private fun Session.verifyFinalFieldsPopulated() {
         assertEquals(15000000000L, endTime)
         assertEquals(15000000000L, lastHeartbeatTime)
-        assertEquals("crashId", crashReportId)
         assertNotNull(eventIds)
     }
 }

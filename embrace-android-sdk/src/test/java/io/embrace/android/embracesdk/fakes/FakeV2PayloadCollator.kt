@@ -64,8 +64,7 @@ internal class FakeV2PayloadCollator(
     ): Session = with(params) {
         return initial.toSession().copy(
             endTime = endTime,
-            lastHeartbeatTime = endTime,
-            crashReportId = crashId
+            lastHeartbeatTime = endTime
         )
     }
 

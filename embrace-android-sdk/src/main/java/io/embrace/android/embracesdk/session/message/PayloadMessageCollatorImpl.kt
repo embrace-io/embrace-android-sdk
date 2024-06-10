@@ -108,8 +108,7 @@ internal class PayloadMessageCollatorImpl(
             eventIds = captureDataSafely(logger) {
                 eventService.findEventIdsForSession()
             },
-            lastHeartbeatTime = endTime,
-            crashReportId = crashId
+            lastHeartbeatTime = endTime
         )
     }
 

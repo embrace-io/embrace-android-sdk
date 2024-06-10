@@ -46,10 +46,7 @@ internal data class Session @JvmOverloads internal constructor(
     val errorLogIds: List<String>? = null,
 
     @Json(name = "nc")
-    val networkLogIds: List<String>? = null,
-
-    @Json(name = "ri")
-    val crashReportId: String? = null
+    val networkLogIds: List<String>? = null
 ) {
 
     /**

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
@@ -12,12 +11,13 @@ import org.junit.Test
 
 internal class SessionSanitizerFacadeTest {
 
-    private val session = fakeSession().copy(
-        terminationTime = 100L
-    )
+    private val base = fakeSessionMessage()
 
-    private val sessionMessage = fakeSessionMessage().copy(
-        session = session,
+    private val sessionMessage = base.copy(
+        session = base.session.copy(
+            endTime = null,
+            terminationTime = 100L
+        ),
         metadata = EnvelopeMetadata(
             email = "example@embrace.com",
             personas = setOf("personas")

@@ -98,35 +98,27 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test on foreground call after starting in background`() {
         createOrchestrator(true)
-        val expectedSessionId = sessionIdTracker.sessionId
         clock.tick()
         val foregroundTime = clock.now()
         orchestrator.onForeground(true, foregroundTime)
         assertEquals(2, memoryCleanerService.callCount)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
-        val payload = getOnlySentPayload()
         validateSession(
-            sentSession = payload.session,
             endTimeMs = foregroundTime - 1,
-            endType = Session.LifeEventType.BKGND_STATE,
-            expectedSessionId = expectedSessionId
+            endType = Session.LifeEventType.BKGND_STATE
         )
     }
 
     @Test
     fun `test on background call after starting in foreground`() {
         createOrchestrator(false)
-        val expectedSessionId = sessionIdTracker.sessionId
         clock.tick()
         val backgroundTime = clock.now()
         orchestrator.onBackground(backgroundTime)
         assertEquals(2, memoryCleanerService.callCount)
-        val payload = getOnlySentPayload()
         validateSession(
-            sentSession = payload.session,
             endTimeMs = backgroundTime - 1,
-            endType = Session.LifeEventType.STATE,
-            expectedSessionId = expectedSessionId
+            endType = Session.LifeEventType.STATE
         )
     }
 
@@ -185,16 +177,12 @@ internal class SessionOrchestratorTest {
     fun `end session with manual in foreground`() {
         createOrchestrator(false)
         clock.tick(10000)
-        val expectedSessionId = sessionIdTracker.sessionId
         val endTimeMs = clock.now()
         orchestrator.endSessionWithManual(true)
         assertEquals(2, memoryCleanerService.callCount)
-        val payload = getOnlySentPayload()
         validateSession(
-            sentSession = payload.session,
             endTimeMs = endTimeMs - 10000,
-            endType = Session.LifeEventType.MANUAL,
-            expectedSessionId = expectedSessionId
+            endType = Session.LifeEventType.MANUAL
         )
     }
 
@@ -430,17 +418,10 @@ internal class SessionOrchestratorTest {
     }
 
     private fun validateSession(
-        sentSession: Session,
         endTimeMs: Long,
-        endType: Session.LifeEventType,
-        expectedSessionId: String?
+        endType: Session.LifeEventType
     ) {
-        with(sentSession) {
-            assertEquals(endType, endType)
-            assertEquals(expectedSessionId, sessionId)
-        }
+        assertEquals(endType, endType)
         assertEquals(endTimeMs, checkNotNull(currentSessionSpan.sessionSpan).startEpochNanos.nanosToMillis())
     }
-
-    private fun getOnlySentPayload() = checkNotNull(deliveryService.sentSessionMessages.single().first)
 }

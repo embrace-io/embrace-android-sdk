@@ -2,11 +2,14 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.Companion.PENDING_API_CALLS_FILE_NAME
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionId
+import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -44,8 +47,9 @@ internal class EmbraceDeliveryCacheManager(
             if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
                 deleteOldestSessions()
             }
-            val sessionId = sessionMessage.session.sessionId
-            val sessionStartTimeMs = sessionMessage.session.startTime
+            val span = sessionMessage.getSessionSpan()
+            val sessionId = sessionMessage.getSessionId() ?: return
+            val sessionStartTimeMs = span?.startTimeNanos?.nanosToMillis() ?: return
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
 

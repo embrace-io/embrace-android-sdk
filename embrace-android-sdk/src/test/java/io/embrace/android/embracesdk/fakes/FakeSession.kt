@@ -2,9 +2,11 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fixtures.testSpan
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -26,11 +28,13 @@ internal fun fakeSessionMessage(
     endMs: Long = 161000400000L
 ): SessionMessage {
     val sessionSpan = Span(
+        startTimeNanos = startMs.millisToNanos(),
         attributes = listOf(
-            Attribute("emb.type", EmbType.Ux.Session.value)
+            Attribute("emb.type", EmbType.Ux.Session.value),
+            Attribute(embSessionId.name, sessionId)
         )
     )
-    val session = Session(sessionId, startMs, endMs)
+    val session = Session(endMs)
     val spans = listOf(testSpan, sessionSpan)
     val spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot())
 
@@ -42,14 +46,6 @@ internal fun fakeSessionMessage(
         )
     )
 }
-
-internal fun fakeSession(
-    sessionId: String = "fakeSessionId",
-    startMs: Long = 160000000000L
-): Session = Session(
-    sessionId = sessionId,
-    startTime = startMs
-)
 
 internal fun SessionMessage.mutateSessionSpan(action: (original: Span) -> Span): SessionMessage {
     val spans = checkNotNull(data).spans

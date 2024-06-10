@@ -2,11 +2,16 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionSpan
 
 /**
  * Finds the first Span Event matching the given [TelemetryType]
@@ -46,6 +51,24 @@ internal fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
  * Returns the Session Span
  */
 internal fun SessionMessage.findSessionSpan(): Span = findSpanOfType(EmbType.Ux.Session)
+
+internal fun SessionMessage.getSessionId(): String {
+    val sessionSpan = checkNotNull(getSessionSpan()) {
+        "No session span found in session message"
+    }
+    return checkNotNull(sessionSpan.attributes?.findAttributeValue(embSessionId.name)) {
+        "No session id found in session message"
+    }
+}
+
+internal fun SessionMessage.getStartTime(): Long {
+    val sessionSpan = checkNotNull(getSessionSpan()) {
+        "No session span found in session message"
+    }
+    return checkNotNull(sessionSpan.startTimeNanos?.nanosToMillis()) {
+        "No start time found in session message"
+    }
+}
 
 /**
  * Finds the span matching the given [TelemetryType].

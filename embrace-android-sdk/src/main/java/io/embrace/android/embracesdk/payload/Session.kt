@@ -10,18 +10,6 @@ import com.squareup.moshi.JsonClass
 internal data class Session @JvmOverloads internal constructor(
 
     /**
-     * A unique ID which identifies the session.
-     */
-    @Json(name = "id")
-    val sessionId: String,
-
-    /**
-     * The time that the session started.
-     */
-    @Json(name = "st")
-    val startTime: Long,
-
-    /**
      * The time that the session ended.
      */
     @Json(name = "et")

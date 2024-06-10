@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.payload.Session.LifeEventType
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -57,7 +58,7 @@ internal class StatefulSessionTest {
             // verify second session
             val second = messages[1]
             verifySessionHappened(second)
-            assertNotEquals(first.session.sessionId, second.session.sessionId)
+            assertNotEquals(first.getSessionId(), second.getSessionId())
         }
     }
 

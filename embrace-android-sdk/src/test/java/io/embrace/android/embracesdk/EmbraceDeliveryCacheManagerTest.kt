@@ -133,12 +133,12 @@ internal class EmbraceDeliveryCacheManagerTest {
         every { cacheService.writeSession(any(), eq(testSessionMessageOneMinuteLater)) } throws Exception()
         deliveryCacheManager.saveSession(testSessionMessage, PERIODIC_CACHE)
         val original = ByteArrayOutputStream()
-        original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.session.sessionId)))
+        original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.getSessionId())))
 
         deliveryCacheManager.saveSession(testSessionMessageOneMinuteLater, PERIODIC_CACHE)
 
         val secondLoad = ByteArrayOutputStream()
-        secondLoad.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.session.sessionId)))
+        secondLoad.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.getSessionId())))
 
         assertArrayEquals(original.toByteArray(), secondLoad.toByteArray())
     }
@@ -177,15 +177,15 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `read cached sessions`() {
         cacheService.writeSession(
             CachedSession.create("session1", clockInit - 300000, false).filename,
-            testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session1", startTime = clockInit - 300000))
+            fakeSessionMessage("session1", clockInit - 300000)
         )
         cacheService.writeSession(
             CachedSession.create("session2", clockInit - 360000, false).filename,
-            testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session2", startTime = clockInit - 360000))
+            fakeSessionMessage("session2", clockInit - 360000)
         )
         cacheService.writeSession(
             CachedSession.create("session3", clockInit - 420000, false).filename,
-            testSessionMessage.copy(session = testSessionMessage.session.copy(sessionId = "session3", startTime = clockInit - 420000))
+            fakeSessionMessage("session3", clockInit - 420000)
         )
         assertEquals(
             setOf("session1", "session2", "session3"),

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
-import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
 import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
@@ -62,7 +61,7 @@ internal class FakeV2PayloadCollator(
     private fun buildFinalBackgroundActivity(
         params: FinalEnvelopeParams
     ): Session = with(params) {
-        return initial.toSession().copy(
+        return Session(
             endTime = endTime,
             lastHeartbeatTime = endTime
         )

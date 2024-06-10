@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import com.squareup.moshi.Types
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionId
+import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FileNotFoundException
@@ -123,8 +126,10 @@ internal class EmbraceCacheService(
                 val previousSdkSession = loadObject(filename, SessionMessage::class.java)
                 previousSdkSession?.also { sessionMessage ->
                     runCatching {
-                        val session = sessionMessage.session
-                        val properSessionFilename = CachedSession.create(session.sessionId, session.startTime, false).filename
+                        val span = sessionMessage.getSessionSpan() ?: return@runCatching
+                        val id = sessionMessage.getSessionId() ?: return@runCatching
+                        val startTime = span.startTimeNanos?.nanosToMillis() ?: return@runCatching
+                        val properSessionFilename = CachedSession.create(id, startTime, false).filename
                         if (!sessionFileNames.contains(properSessionFilename)) {
                             replaceFile(properSessionFilename, filename)
                             properSessionFileIds.add(properSessionFilename)

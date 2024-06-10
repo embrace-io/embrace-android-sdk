@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
-import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
@@ -92,7 +91,7 @@ internal class PayloadMessageCollatorImpl(
     private fun buildFinalBackgroundActivity(
         params: FinalEnvelopeParams
     ): Session = with(params) {
-        return initial.toSession().copy(
+        return Session(
             endTime = endTime,
             lastHeartbeatTime = endTime
         )

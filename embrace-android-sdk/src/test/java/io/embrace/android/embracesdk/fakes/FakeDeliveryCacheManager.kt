@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
@@ -24,7 +25,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun loadSessionAsAction(sessionId: String): SerializationAction? {
-        val message = cachedSessions.singleOrNull { it.session.sessionId == sessionId } ?: return null
+        val message = cachedSessions.singleOrNull { it.getSessionId() == sessionId } ?: return null
         return { stream ->
             ConditionalGzipOutputStream(stream).use {
                 serializer.toJson(message, SessionMessage::class.java, it)
@@ -37,7 +38,7 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
     }
 
     override fun getAllCachedSessionIds(): List<CachedSession> {
-        return cachedSessions.map { CachedSession.create(it.session.sessionId, 0, false) }
+        return cachedSessions.map { CachedSession.create(it.getSessionId(), 0, false) }
     }
 
     override fun saveCrash(crash: EventMessage) {

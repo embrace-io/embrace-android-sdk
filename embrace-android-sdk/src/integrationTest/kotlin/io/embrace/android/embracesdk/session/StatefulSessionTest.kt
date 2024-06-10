@@ -5,11 +5,10 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
-import io.embrace.android.embracesdk.payload.Session.LifeEventType
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.verifySessionHappened

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.Session.LifeEventType
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState

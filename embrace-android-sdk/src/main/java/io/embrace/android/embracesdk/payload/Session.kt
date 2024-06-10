@@ -20,40 +20,4 @@ internal data class Session @JvmOverloads internal constructor(
 
     @Json(name = "tt")
     val terminationTime: Long? = null
-) {
-
-    /**
-     * Enum to discriminate the different ways a session can start / end
-     */
-    enum class LifeEventType {
-
-        /* Session values */
-
-        @Json(name = "s")
-        STATE,
-
-        @Json(name = "m")
-        MANUAL,
-
-        /* Background activity values */
-
-        @Json(name = "bs")
-        BKGND_STATE,
-
-        @Json(name = "bm")
-        BKGND_MANUAL
-    }
-
-    companion object {
-
-        /**
-         * Signals to the API that the application was in the foreground.
-         */
-        internal const val APPLICATION_STATE_FOREGROUND = "foreground"
-
-        /**
-         * Signals to the API that this is a background session.
-         */
-        internal const val APPLICATION_STATE_BACKGROUND = "background"
-    }
-}
+)

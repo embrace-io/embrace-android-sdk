@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
@@ -17,10 +18,10 @@ internal class FakeV2PayloadCollator(
 
     override fun buildInitialSession(params: InitialEnvelopeParams) = with(params) {
         val sessionNumber = when (appState) {
-            Session.APPLICATION_STATE_FOREGROUND -> {
+            ApplicationState.FOREGROUND -> {
                 sessionCount.incrementAndGet()
             }
-            Session.APPLICATION_STATE_BACKGROUND -> {
+            ApplicationState.BACKGROUND -> {
                 baCount.incrementAndGet()
             }
             else -> {

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.ApplicationState
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
@@ -9,10 +10,10 @@ import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
  */
 internal sealed class InitialEnvelopeParams(
     val coldStart: Boolean,
-    val startType: Session.LifeEventType,
+    val startType: LifeEventType,
     val startTime: Long
 ) {
-    abstract val appState: String
+    abstract val appState: ApplicationState
     abstract fun getSessionNumber(service: PreferencesService): Int
     abstract fun getProperties(service: SessionPropertiesService): Map<String, String>?
 
@@ -21,11 +22,11 @@ internal sealed class InitialEnvelopeParams(
      */
     internal class SessionParams(
         coldStart: Boolean,
-        startType: Session.LifeEventType,
+        startType: LifeEventType,
         startTime: Long
     ) : InitialEnvelopeParams(coldStart, startType, startTime) {
 
-        override val appState: String = Session.APPLICATION_STATE_FOREGROUND
+        override val appState = ApplicationState.FOREGROUND
         override fun getSessionNumber(service: PreferencesService): Int =
             service.incrementAndGetSessionNumber()
 
@@ -38,11 +39,11 @@ internal sealed class InitialEnvelopeParams(
      */
     internal class BackgroundActivityParams(
         coldStart: Boolean,
-        startType: Session.LifeEventType,
+        startType: LifeEventType,
         startTime: Long
     ) : InitialEnvelopeParams(coldStart, startType, startTime) {
 
-        override val appState: String = Session.APPLICATION_STATE_BACKGROUND
+        override val appState = ApplicationState.BACKGROUND
         override fun getSessionNumber(service: PreferencesService): Int =
             service.incrementAndGetBackgroundActivityNumber()
 

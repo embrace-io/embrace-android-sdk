@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
@@ -48,7 +49,7 @@ internal class PayloadMessageCollatorImplTest {
         val msg = collator.buildInitialSession(
             InitialEnvelopeParams.BackgroundActivityParams(
                 false,
-                Session.LifeEventType.BKGND_STATE,
+                LifeEventType.BKGND_STATE,
                 5
             )
         )
@@ -60,7 +61,7 @@ internal class PayloadMessageCollatorImplTest {
         val msg = collator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 false,
-                Session.LifeEventType.STATE,
+                LifeEventType.STATE,
                 5
             )
         )
@@ -73,7 +74,7 @@ internal class PayloadMessageCollatorImplTest {
         val startMsg = collator.buildInitialSession(
             InitialEnvelopeParams.BackgroundActivityParams(
                 false,
-                Session.LifeEventType.BKGND_STATE,
+                LifeEventType.BKGND_STATE,
                 5
             )
         )
@@ -84,7 +85,7 @@ internal class PayloadMessageCollatorImplTest {
             FinalEnvelopeParams.BackgroundActivityParams(
                 startMsg,
                 15000000000,
-                Session.LifeEventType.BKGND_STATE,
+                LifeEventType.BKGND_STATE,
                 SessionSnapshotType.NORMAL_END,
                 initModule.logger,
                 true,
@@ -101,7 +102,7 @@ internal class PayloadMessageCollatorImplTest {
         val startMsg = collator.buildInitialSession(
             InitialEnvelopeParams.SessionParams(
                 false,
-                Session.LifeEventType.STATE,
+                LifeEventType.STATE,
                 5
             )
         )
@@ -112,7 +113,7 @@ internal class PayloadMessageCollatorImplTest {
             FinalEnvelopeParams.SessionParams(
                 startMsg,
                 15000000000,
-                Session.LifeEventType.STATE,
+                LifeEventType.STATE,
                 SessionSnapshotType.NORMAL_END,
                 initModule.logger,
                 true,

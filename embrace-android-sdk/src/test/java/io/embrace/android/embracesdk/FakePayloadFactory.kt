@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
@@ -68,7 +68,7 @@ internal class FakePayloadFactory : PayloadFactory {
 
     private fun startBackgroundActivityWithState(timestamp: Long): SessionZygote {
         startBaTimestamps.add(timestamp)
-        return fakeSessionZygote().copy(appState = Session.APPLICATION_STATE_BACKGROUND)
+        return fakeSessionZygote().copy(appState = ApplicationState.BACKGROUND)
     }
 
     private fun endBackgroundActivityWithState(timestamp: Long): SessionMessage {

@@ -23,7 +23,7 @@ internal data class SessionZygote(
     /**
      * Application state for this session (foreground or background)
      */
-    val appState: String,
+    val appState: ApplicationState,
 
     /**
      * Whether the session is a cold start or not.
@@ -33,5 +33,5 @@ internal data class SessionZygote(
     /**
      * The type of start event that triggered this session.
      */
-    val startType: Session.LifeEventType
+    val startType: LifeEventType
 )

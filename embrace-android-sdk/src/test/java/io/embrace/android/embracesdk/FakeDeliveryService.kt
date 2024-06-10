@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.opentelemetry.embState
+import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -74,26 +74,17 @@ internal open class FakeDeliveryService : DeliveryService {
     }
 
     fun getSentSessions(): List<SessionMessage> {
-        return sentSessionMessages.filter { it.first.findAppState() == Session.APPLICATION_STATE_FOREGROUND }.map { it.first }
+        return sentSessionMessages.filter { it.first.findAppState() == ApplicationState.FOREGROUND }.map { it.first }
     }
 
     fun getSentBackgroundActivities(): List<SessionMessage> {
-        return sentSessionMessages.filter { it.first.findAppState() == Session.APPLICATION_STATE_BACKGROUND }.map { it.first }
+        return sentSessionMessages.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
     }
 
-    fun getSavedSessions(): List<SessionMessage> {
-        return savedSessionMessages.filter {
-            it.first.findAppState() == Session.APPLICATION_STATE_FOREGROUND
-        }.map { it.first }
+    private fun SessionMessage.findAppState(): ApplicationState {
+        val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.toUpperCase()
+        return ApplicationState.valueOf(checkNotNull(value))
     }
-
-    fun getSavedBackgroundActivities(): List<SessionMessage> {
-        return savedSessionMessages.filter {
-            it.first.findAppState() == Session.APPLICATION_STATE_BACKGROUND
-        }.map { it.first }
-    }
-
-    private fun SessionMessage.findAppState() = findSessionSpan().attributes?.findAttributeValue(embState.name)
 
     fun getLastSentSession(): SessionMessage? {
         return getSentSessions().lastOrNull()
@@ -104,10 +95,14 @@ internal open class FakeDeliveryService : DeliveryService {
     }
 
     fun getLastSavedSession(): SessionMessage? {
-        return getSavedSessions().lastOrNull()
+        return savedSessionMessages.map { it.first }.lastOrNull {
+            it.findAppState() == ApplicationState.FOREGROUND
+        }
     }
 
     fun getLastSavedBackgroundActivity(): SessionMessage? {
-        return getSavedBackgroundActivities().lastOrNull()
+        return savedSessionMessages.map { it.first }.lastOrNull {
+            it.findAppState() == ApplicationState.BACKGROUND
+        }
     }
 }

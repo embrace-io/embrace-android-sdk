@@ -7,8 +7,9 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.payload.ApplicationState
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.payload.getSessionSpan
@@ -17,9 +18,9 @@ internal fun fakeSessionZygote() = SessionZygote(
     sessionId = "fakeSessionId",
     startTime = 160000000000L,
     number = 1,
-    appState = APPLICATION_STATE_FOREGROUND,
+    appState = ApplicationState.FOREGROUND,
     isColdStart = true,
-    startType = Session.LifeEventType.STATE
+    startType = LifeEventType.STATE
 )
 
 internal fun fakeSessionMessage(

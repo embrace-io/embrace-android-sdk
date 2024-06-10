@@ -26,11 +26,6 @@ internal class PayloadMessageCollatorImplTest {
     private lateinit var collator: PayloadMessageCollatorImpl
     private lateinit var gatingService: FakeGatingService
 
-    private enum class PayloadType {
-        BACKGROUND_ACTIVITY,
-        SESSION
-    }
-
     @Before
     fun setUp() {
         initModule = FakeInitModule()
@@ -100,7 +95,7 @@ internal class PayloadMessageCollatorImplTest {
                 "crashId"
             )
         )
-        payload.verifyFinalFieldsPopulated(PayloadType.BACKGROUND_ACTIVITY)
+        payload.verifyFinalFieldsPopulated()
         assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
@@ -128,20 +123,18 @@ internal class PayloadMessageCollatorImplTest {
                 "crashId",
             )
         )
-        payload.verifyFinalFieldsPopulated(PayloadType.SESSION)
+        payload.verifyFinalFieldsPopulated()
         assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
-    private fun SessionMessage.verifyFinalFieldsPopulated(
-        payloadType: PayloadType
-    ) {
+    private fun SessionMessage.verifyFinalFieldsPopulated() {
         assertNotNull(resource)
         assertNotNull(metadata)
         assertNotNull(data)
         assertNotNull(newVersion)
         assertNotNull(type)
         session.verifyInitialFieldsPopulated()
-        session.verifyFinalFieldsPopulated(payloadType)
+        session.verifyFinalFieldsPopulated()
     }
 
     private fun Session.verifyInitialFieldsPopulated() {
@@ -149,13 +142,8 @@ internal class PayloadMessageCollatorImplTest {
         assertEquals(5L, startTime)
     }
 
-    private fun Session.verifyFinalFieldsPopulated(payloadType: PayloadType) {
-        val expectedEndType = when (payloadType) {
-            PayloadType.BACKGROUND_ACTIVITY -> Session.LifeEventType.BKGND_STATE
-            PayloadType.SESSION -> Session.LifeEventType.STATE
-        }
+    private fun Session.verifyFinalFieldsPopulated() {
         assertEquals(15000000000L, endTime)
-        assertEquals(expectedEndType, endType)
         assertEquals(15000000000L, lastHeartbeatTime)
         assertEquals("crashId", crashReportId)
         assertNotNull(eventIds)

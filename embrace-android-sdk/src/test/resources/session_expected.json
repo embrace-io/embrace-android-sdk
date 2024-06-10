@@ -19,6 +19,5 @@
   "nc": [
     "fake-network-id"
   ],
-  "ri": "fake-crash-id",
-  "em": "s"
+  "ri": "fake-crash-id"
 }

@@ -19,8 +19,7 @@ internal class BackgroundActivityTest {
         infoLogIds = listOf("fake-info-id"),
         warningLogIds = listOf("fake-warn-id"),
         errorLogIds = listOf("fake-err-id"),
-        crashReportId = "fake-crash-id",
-        endType = Session.LifeEventType.BKGND_STATE
+        crashReportId = "fake-crash-id"
     )
 
     @Test
@@ -43,7 +42,6 @@ internal class BackgroundActivityTest {
             assertEquals(listOf("fake-warn-id"), warningLogIds)
             assertEquals(listOf("fake-err-id"), errorLogIds)
             assertEquals("fake-crash-id", crashReportId)
-            assertEquals(Session.LifeEventType.BKGND_STATE, endType)
         }
     }
 

@@ -15,6 +15,5 @@
   "el": [
     "fake-err-id"
   ],
-  "ri": "fake-crash-id",
-  "em": "bs"
+  "ri": "fake-crash-id"
 }

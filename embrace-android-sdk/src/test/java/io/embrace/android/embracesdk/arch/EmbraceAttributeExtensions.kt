@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.arch
 
 import io.embrace.android.embracesdk.arch.destination.LogEventData
+import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
@@ -94,25 +95,16 @@ internal fun Span.assertSuccessful() {
 }
 
 /**
- * Assert [StartSpanData] is of type [telemetryType]
+ * Assert [SpanEventData] is of type [telemetryType]
  */
-internal fun StartSpanData.assertIsType(telemetryType: TelemetryType) = assertHasEmbraceAttribute(telemetryType)
+internal fun SpanEventData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
- * Assert [StartSpanData] has the [FixedAttribute] defined by [fixedAttribute]
+ * Assert [StartSpanData] is of type [telemetryType]
  */
-internal fun StartSpanData.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
-    assertEquals(fixedAttribute.value, schemaType.attributes()[fixedAttribute.key.name])
-}
+internal fun StartSpanData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
  * Assert [LogEventData] is of type [telemetryType]
  */
-internal fun LogEventData.assertIsType(telemetryType: TelemetryType) = assertHasEmbraceAttribute(telemetryType)
-
-/**
- * Assert [LogEventData] has the [FixedAttribute] defined by [fixedAttribute]
- */
-internal fun LogEventData.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
-    assertEquals(fixedAttribute.value, schemaType.attributes()[fixedAttribute.key.name])
-}
+internal fun LogEventData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)

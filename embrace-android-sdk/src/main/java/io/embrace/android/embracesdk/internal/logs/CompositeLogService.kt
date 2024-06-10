@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
@@ -74,8 +75,7 @@ internal class CompositeLogService(
                 )
             } else {
                 val stacktrace = if (stackTraceElements != null) {
-                    val stackString = stackTraceElements.map(StackTraceElement::toString).take(200).toList()
-                    serializer.toJson(stackString, List::class.java)
+                    serializer.truncatedStacktrace(stackTraceElements)
                 } else {
                     customStackTrace
                 }

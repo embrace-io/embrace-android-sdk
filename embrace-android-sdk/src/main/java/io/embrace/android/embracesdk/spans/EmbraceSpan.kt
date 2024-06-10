@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.spans
 
 import io.embrace.android.embracesdk.annotation.BetaApi
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.SpanContext
 
 /**
  * Represents a Span that can be started and stopped with the appropriate [ErrorCode] if applicable. This wraps the OpenTelemetry Span
@@ -8,6 +10,11 @@ import io.embrace.android.embracesdk.annotation.BetaApi
  */
 @BetaApi
 public interface EmbraceSpan {
+    /**
+     * The [SpanContext] for this [EmbraceSpan] instance. This is null if the span has not been started.
+     */
+    public val spanContext: SpanContext?
+
     /**
      * ID of the Trace that this Span belongs to. The format adheres to the OpenTelemetry standard for Trace IDs
      */
@@ -76,6 +83,16 @@ public interface EmbraceSpan {
     ): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
 
     /**
+     * Add an [EmbraceSpanEvent] with the given [name] and [timestampMs]. Optionally, a set of attributes associated with the event can
+     * be passed in. Returns false if the Event was definitely not successfully added. Returns true if the validation at the Embrace
+     * level has passed and the call to add the Event at the OpenTelemetry level was successful.
+     */
+    public fun addEvent(
+        name: String,
+        timestampMs: Long?,
+    ): Boolean = addEvent(name = name, timestampMs = timestampMs, attributes = null)
+
+    /**
      * Add an [EmbraceSpanEvent] with the given [name]. If [timestampMs] is null, the current time will be used. Optionally, the specific
      * time of the event and a set of attributes can be passed in associated with the event. Returns false if the Event was definitely not
      * successfully added. Returns true if the validation at the Embrace level has passed and the call to add the Event at the
@@ -88,8 +105,26 @@ public interface EmbraceSpan {
     ): Boolean
 
     /**
+     * Record the given [Throwable] as a Span Event at the current time. Returns false if event was definitely not recorded. Returns true
+     * if the validation at the Embrace level has passed and the call to add the Event at the OpenTelemetry level was successful.
+     */
+    public fun recordException(exception: Throwable): Boolean = recordException(exception, null)
+
+    /**
+     * Record the given [Throwable] as a Span Event at the current with the given set of [Attributes]. Returns false if event was
+     * definitely not recorded. Returns true if the validation at the Embrace level has passed and the call to add the Event at the
+     * OpenTelemetry level was successful.
+     */
+    public fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean
+
+    /**
      * Add the given key-value pair as an Attribute to the Event. Returns false if the Attribute was definitely not added. Returns true
      * if the validation at the Embrace Level has passed and the call to add the Attribute at the OpenTelemetry level was successful.
      */
     public fun addAttribute(key: String, value: String): Boolean
+
+    /**
+     * Update the name of the span. Returns false if the update was not successful, like when it has already been stopped
+     */
+    public fun updateName(newName: String): Boolean
 }

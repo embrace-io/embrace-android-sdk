@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
+import io.opentelemetry.api.trace.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -31,6 +32,7 @@ internal class CurrentSessionSpanImplTests {
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var spanService: SpanService
+    private lateinit var tracer: Tracer
     private val clock = FakeClock(1000L)
 
     @Before
@@ -39,6 +41,7 @@ internal class CurrentSessionSpanImplTests {
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        tracer = initModule.openTelemetryModule.tracer
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
     }
@@ -54,6 +57,45 @@ internal class CurrentSessionSpanImplTests {
             assertNotNull(spanService.createSpan(name = "spanzzz$it", internal = false))
         }
         assertNull(spanService.createSpan(name = "failed-span", internal = false))
+    }
+
+    @Test
+    fun `check trace limited applied to spans created with span builder`() {
+        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+            assertNotNull(
+                spanService.createSpan(
+                    embraceSpanBuilder = tracer.embraceSpanBuilder(
+                        name = "external-span",
+                        type = EmbType.Performance.Default,
+                        parent = null,
+                        internal = false,
+                        private = false,
+                    )
+                )
+            )
+        }
+        assertNull(
+            spanService.createSpan(
+                embraceSpanBuilder = tracer.embraceSpanBuilder(
+                    name = "external-span",
+                    type = EmbType.Performance.Default,
+                    parent = null,
+                    internal = false,
+                    private = false,
+                )
+            )
+        )
+        assertNotNull(
+            spanService.createSpan(
+                embraceSpanBuilder = tracer.embraceSpanBuilder(
+                    name = "internal-span",
+                    type = EmbType.Performance.Default,
+                    parent = null,
+                    internal = true,
+                    private = false,
+                )
+            )
+        )
     }
 
     @Test

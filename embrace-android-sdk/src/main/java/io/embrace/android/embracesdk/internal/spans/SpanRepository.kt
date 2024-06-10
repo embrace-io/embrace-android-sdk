@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class SpanRepository {
     private val activeSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
-    private val completedSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
+    private val completedSpans: MutableMap<String, PersistableEmbraceSpan> = mutableMapOf()
     private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
 
     /**
@@ -62,13 +62,15 @@ internal class SpanRepository {
     /**
      * Get a list of completed spans that are being tracked.
      */
-    fun getCompletedSpans(): List<EmbraceSpan> = synchronized(spanIdsInProcess) { completedSpans.values.toList() }
+    fun getCompletedSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
+        completedSpans.values.toList()
+    }
 
     /**
      * Stop the existing active spans and mark them as failed
      */
     fun failActiveSpans(failureTimeMs: Long) {
-        getActiveSpans().filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }.forEach { span ->
+        getActiveSpans().filterNot { it.hasFixedAttribute(EmbType.Ux.Session) }.forEach { span ->
             span.stop(ErrorCode.FAILURE, failureTimeMs)
         }
     }

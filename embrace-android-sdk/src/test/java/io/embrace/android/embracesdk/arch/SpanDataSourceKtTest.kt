@@ -21,7 +21,7 @@ internal class SpanDataSourceKtTest {
             embraceSpanFactory = EmbraceSpanFactoryImpl(
                 tracer = initModule.openTelemetryModule.tracer,
                 openTelemetryClock = initModule.openTelemetryClock,
-                spanRepository = initModule.openTelemetryModule.spanRepository
+                spanRepository = initModule.openTelemetryModule.spanRepository,
             )
         )
         service.initializeService(1500000000000)

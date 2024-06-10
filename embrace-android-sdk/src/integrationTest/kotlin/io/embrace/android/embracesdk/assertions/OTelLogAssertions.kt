@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.assertions
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
 import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
@@ -38,8 +39,7 @@ internal fun assertOtelLogReceived(
             assertAttribute(log, exceptionMessage.key, expectedExceptionMessage)
         }
         expectedStacktrace?.let {
-            val stackString = it.map(StackTraceElement::toString).take(200).toList()
-            val serializedStack = EmbraceSerializer().toJson(stackString, List::class.java)
+            val serializedStack = EmbraceSerializer().truncatedStacktrace(it.toTypedArray())
             assertAttribute(log, exceptionStacktrace.key, serializedStack)
         }
         expectedProperties?.forEach { (key, value) ->

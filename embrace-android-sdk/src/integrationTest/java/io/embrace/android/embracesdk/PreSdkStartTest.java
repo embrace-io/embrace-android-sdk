@@ -24,15 +24,12 @@ public class PreSdkStartTest {
     public void testStartWithNullContext() {
         embrace.start(null);
         embrace.start(null, Embrace.AppFramework.NATIVE);
-        embrace.start(null, true);
-        embrace.start(null, false, Embrace.AppFramework.NATIVE);
         assertFalse(embrace.isStarted());
     }
 
     @Test
     public void testStartWithNullAppFramework() {
         Context context = testRule.harness.getOverriddenCoreModule().getContext();
-        embrace.start(context, false, null);
         embrace.start(context, null);
         assertFalse(embrace.isStarted());
     }

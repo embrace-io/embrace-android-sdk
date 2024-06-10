@@ -67,7 +67,7 @@ internal fun Tracer.embraceSpanBuilder(
     telemetryType = type,
     internal = internal,
     private = private,
-    parent = parent,
+    parentSpan = parent,
 )
 
 /**
@@ -118,6 +118,13 @@ internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null)
     }
 
     return this
+}
+
+/**
+ * Returns the attributes as a new Map<String, String>
+ */
+internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
+    it.key.key.toString() to it.value.toString()
 }
 
 /**

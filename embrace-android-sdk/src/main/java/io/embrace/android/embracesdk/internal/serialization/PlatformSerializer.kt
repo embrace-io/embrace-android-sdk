@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.serialization
 
+import io.embrace.android.embracesdk.internal.utils.truncate
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.ParameterizedType
@@ -19,3 +20,8 @@ internal interface PlatformSerializer {
     fun <T> fromJson(inputStream: InputStream, clz: Class<T>): T
     fun <T> fromJson(inputStream: InputStream, type: Type): T
 }
+
+/**
+ * Return the first 200 elements of [elements] as a JSON-encoded string
+ */
+internal fun PlatformSerializer.truncatedStacktrace(elements: Array<StackTraceElement>) = toJson(elements.truncate(), List::class.java)

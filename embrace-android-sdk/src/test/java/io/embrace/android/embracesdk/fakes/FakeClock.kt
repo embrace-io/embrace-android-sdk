@@ -11,9 +11,9 @@ internal class FakeClock(
         this.currentTime = currentTime
     }
 
-    @JvmOverloads
-    fun tick(millis: Long = 1) {
+    fun tick(millis: Long = 1): Long {
         currentTime += millis
+        return currentTime
     }
 
     fun tickSecond() = tick(1000)

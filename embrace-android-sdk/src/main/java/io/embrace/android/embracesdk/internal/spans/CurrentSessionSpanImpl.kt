@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
@@ -70,7 +69,7 @@ internal class CurrentSessionSpanImpl(
     }
 
     override fun getSessionId(): String {
-        return sessionSpan.get()?.getAttribute(embSessionId) ?: ""
+        return sessionSpan.get()?.getSystemAttribute(embSessionId) ?: ""
     }
 
     override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
@@ -91,7 +90,7 @@ internal class CurrentSessionSpanImpl(
             } else {
                 val crashTime = openTelemetryClock.now().nanosToMillis()
                 spanRepository.failActiveSpans(crashTime)
-                endingSessionSpan.setFixedAttribute(appTerminationCause)
+                endingSessionSpan.setSystemAttribute(appTerminationCause.key, appTerminationCause.value)
                 endingSessionSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = crashTime)
             }
             return spanSink.flushSpans()
@@ -104,7 +103,7 @@ internal class CurrentSessionSpanImpl(
         return currentSession.addEvent(
             event.schemaType.fixedObjectName.toEmbraceObjectName(),
             event.spanStartTimeMs,
-            event.schemaType.attributes()
+            event.schemaType.attributes() + event.schemaType.telemetryType.toEmbraceKeyValuePair()
         )
     }
 
@@ -136,7 +135,7 @@ internal class CurrentSessionSpanImpl(
             private = false
         ).apply {
             start(startTimeMs = startTimeMs)
-            addAttribute(embSessionId.name, Uuid.getEmbUuid())
+            setSystemAttribute(embSessionId, Uuid.getEmbUuid())
         }
     }
 }

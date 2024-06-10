@@ -52,7 +52,6 @@ internal class WebViewUrlDataSourceTest {
             Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             Assert.assertEquals(
                 mapOf(
-                    EmbType.Ux.WebView.toEmbraceKeyValuePair(),
                     "webview.url" to "http://www.google.com?query=123"
                 ),
                 schemaType.attributes()
@@ -88,7 +87,6 @@ internal class WebViewUrlDataSourceTest {
             Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             Assert.assertEquals(
                 mapOf(
-                    EmbType.Ux.WebView.toEmbraceKeyValuePair(),
                     "webview.url" to "http://www.google.com"
                 ),
                 schemaType.attributes()

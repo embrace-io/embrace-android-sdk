@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.isValidName
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -42,6 +43,17 @@ internal class SpanServiceImpl(
                 private = private,
                 parent = parent
             )
+        } else {
+            null
+        }
+    }
+
+    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
+        return if (
+            inputsValid(embraceSpanBuilder.spanName) &&
+            currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
+        ) {
+            embraceSpanFactory.create(embraceSpanBuilder)
         } else {
             null
         }
@@ -121,10 +133,11 @@ internal class SpanServiceImpl(
         name: String,
         events: List<EmbraceSpanEvent>? = null,
         attributes: Map<String, String>? = null
-    ) = name.isNotBlank() &&
-        name.length <= EmbraceSpanImpl.MAX_NAME_LENGTH &&
-        (events == null || events.size <= EmbraceSpanImpl.MAX_EVENT_COUNT) &&
-        (attributes == null || attributes.size <= EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT)
+    ): Boolean {
+        return name.isValidName() &&
+            ((events == null) || (events.size <= EmbraceSpanImpl.MAX_EVENT_COUNT)) &&
+            ((attributes == null) || (attributes.size <= EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT))
+    }
 
     companion object {
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500

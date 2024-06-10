@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.opentelemetry.embSequenceId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.ContextKey
 
 internal val testSpan = EmbraceSpanData(
     traceId = "19bb482ec1c7e6b2f10fb89e0ccc85fa",
@@ -52,6 +53,8 @@ internal val testSpanSnapshot = Span(
     events = emptyList(),
     attributes = emptyList()
 )
+
+internal val fakeContextKey = ContextKey.named<String>("fake-context-key")
 
 private fun createMapOfSize(size: Int): Map<String, String> {
     val mutableMap = mutableMapOf<String, String>()

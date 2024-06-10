@@ -52,7 +52,7 @@ internal class SpanServiceImplTest {
             embraceSpanFactory = EmbraceSpanFactoryImpl(
                 tracer = initModule.openTelemetryModule.tracer,
                 openTelemetryClock = initModule.openTelemetryClock,
-                spanRepository = initModule.openTelemetryModule.spanRepository
+                spanRepository = initModule.openTelemetryModule.spanRepository,
             )
         )
         spansService.initializeService(initModule.clock.now())

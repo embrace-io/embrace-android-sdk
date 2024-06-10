@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
+import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
@@ -34,13 +35,10 @@ internal class BreadcrumbDataSourceTest {
     fun `add breadcrumb`() {
         source.logCustom("Hello, world!", 15000000000)
         with(writer.addedEvents.single()) {
-            assertEquals(EmbType.System.Breadcrumb, schemaType.telemetryType)
+            assertIsType(EmbType.System.Breadcrumb)
             assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
             assertEquals(
-                mapOf(
-                    EmbType.System.Breadcrumb.toEmbraceKeyValuePair(),
-                    "message" to "Hello, world!"
-                ),
+                mapOf("message" to "Hello, world!"),
                 schemaType.attributes()
             )
         }

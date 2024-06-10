@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
-import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
@@ -38,7 +37,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
@@ -70,7 +68,6 @@ internal class SessionHandlerTest {
 
     private val initial = fakeSessionZygote().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
-    private lateinit var activeSession: Session
 
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
@@ -98,7 +95,6 @@ internal class SessionHandlerTest {
         scheduledWorker = ScheduledWorker(executorService)
         logger = EmbLoggerImpl()
         clock.setCurrentTime(NOW)
-        activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
         ndkService = FakeNdkService()
         metadataService = FakeMetadataService()
@@ -182,11 +178,7 @@ internal class SessionHandlerTest {
         startFakeSession()
 
         val crashId = "crash-id"
-        val startTime = 120L
         val sdkStartupDuration = 2L
-        activeSession = fakeSession().copy(
-            startTime = startTime
-        )
 
         val msg = payloadFactory.endPayloadWithCrash(
             ProcessState.FOREGROUND,

@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.serialization
 
 import com.squareup.moshi.Types
-import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.fakes.fakeSessionMessage
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -25,20 +24,20 @@ internal class EmbraceSerializerTest {
     fun testLoadObject() {
         val stream = serializer.toJson(payload).byteInputStream()
         val result = serializer.fromJson(stream, SessionMessage::class.java)
-        assertEquals("fakeSessionId", result.session.sessionId)
+        assertEquals("fakeSessionId", result.getSessionId())
     }
 
     @Test
     fun testLoadListOfObjects() {
-        val session1 = fakeSession(sessionId = "session1")
-        val session2 = fakeSession(sessionId = "session2")
+        val session1 = fakeSessionMessage(sessionId = "session1")
+        val session2 = fakeSessionMessage(sessionId = "session2")
         val listOfObjects = listOf(session1, session2)
-        val type = Types.newParameterizedType(List::class.java, Session::class.java)
+        val type = Types.newParameterizedType(List::class.java, SessionMessage::class.java)
         val stream = serializer.toJson(listOfObjects, type).byteInputStream()
-        val result = serializer.fromJson(stream, type) as List<Session>
+        val result = serializer.fromJson(stream, type) as List<SessionMessage>
         assertEquals(2, result.size)
-        assertEquals(session1, result[0])
-        assertEquals(session2, result[1])
+        assertEquals(session1.getSessionId(), result[0].getSessionId())
+        assertEquals(session2.getSessionId(), result[1].getSessionId())
     }
 
     @Test

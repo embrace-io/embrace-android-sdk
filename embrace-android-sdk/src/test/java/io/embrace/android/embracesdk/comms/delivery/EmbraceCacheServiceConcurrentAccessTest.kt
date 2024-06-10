@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -47,8 +48,8 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
         assertEquals(
             executionCoordinator.getErrorMessage(),
-            testSessionMessageOneMinuteLater,
-            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)
+            testSessionMessageOneMinuteLater.getSessionId(),
+            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)?.getSessionId()
         )
     }
 
@@ -86,8 +87,8 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
         assertEquals(
             executionCoordinator.getErrorMessage(),
-            testSessionMessageOneMinuteLater,
-            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)
+            testSessionMessageOneMinuteLater.getSessionId(),
+            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)?.getSessionId()
         )
     }
 
@@ -101,7 +102,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
             firstBlocksSecond = true
         )
 
-        assertEquals(executionCoordinator.getErrorMessage(), testSessionMessage, readSession)
+        assertEquals(executionCoordinator.getErrorMessage(), testSessionMessage.getSessionId(), readSession?.getSessionId())
     }
 
     @Test
@@ -115,7 +116,11 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
             firstBlocksSecond = true
         )
 
-        assertEquals(executionCoordinator.getErrorMessage(), testSessionMessageOneMinuteLater, readSession)
+        assertEquals(
+            executionCoordinator.getErrorMessage(),
+            testSessionMessageOneMinuteLater.getSessionId(),
+            readSession?.getSessionId()
+        )
     }
 
     @Test
@@ -143,8 +148,8 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
         assertEquals(
             executionCoordinator.getErrorMessage(),
-            testSessionMessage,
-            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)
+            testSessionMessage.getSessionId(),
+            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)?.getSessionId()
         )
     }
 

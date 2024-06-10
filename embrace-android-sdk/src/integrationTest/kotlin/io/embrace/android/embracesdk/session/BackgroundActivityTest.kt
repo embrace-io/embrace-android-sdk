@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.verifyBgActivityMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -32,7 +33,7 @@ internal class BackgroundActivityTest {
             harness.recordSession()
 
             // filter out dupes from overwritten saves
-            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.session.sessionId }
+            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.getSessionId() }
             assertEquals(2, bgActivities.size)
 
             // verify first bg activity
@@ -48,7 +49,7 @@ internal class BackgroundActivityTest {
             assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
 
             // ID should be different for each
-            assertNotEquals(first.session.sessionId, second.session.sessionId)
+            assertNotEquals(first.getSessionId(), second.getSessionId())
         }
     }
 }

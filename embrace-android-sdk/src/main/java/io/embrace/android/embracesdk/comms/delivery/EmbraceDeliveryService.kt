@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.api.ApiService
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.getSessionId
 import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -46,7 +48,7 @@ internal class EmbraceDeliveryService(
         }
 
         try {
-            val sessionId = sessionMessage.session.sessionId
+            val sessionId = sessionMessage.getSessionId() ?: return
             val action = cacheManager.loadSessionAsAction(sessionId) ?: { stream ->
                 // fallback if initial caching failed for whatever reason, so we don't drop
                 // the data
@@ -57,7 +59,7 @@ internal class EmbraceDeliveryService(
             val future = apiService.sendSession(action) { successful ->
                 if (!successful) {
                     val message =
-                        "Session deleted without request being sent: ID $sessionId, timestamp ${sessionMessage.session.startTime}"
+                        "Session deleted without request being sent: ID $sessionId"
                     logger.logWarning(message, SessionPurgeException(message))
                 }
                 cacheManager.deleteSession(sessionId)
@@ -190,7 +192,8 @@ internal class EmbraceDeliveryService(
         sessionMessage.session.endTime
             ?: sessionMessage.session.terminationTime
             ?: sessionMessage.session.lastHeartbeatTime
-            ?: sessionMessage.session.startTime
+            ?: sessionMessage.getSessionSpan()?.startTimeNanos?.nanosToMillis()
+            ?: -1
 
     override fun sendMoment(eventMessage: EventMessage) {
         apiService.sendEvent(eventMessage)

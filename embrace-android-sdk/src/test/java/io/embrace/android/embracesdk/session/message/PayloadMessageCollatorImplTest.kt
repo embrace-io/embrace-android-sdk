@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.SessionZygote.Companion.toSession
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -52,7 +52,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        msg.toSession().verifyInitialFieldsPopulated()
+        msg.verifyInitialFieldsPopulated()
     }
 
     @Test
@@ -64,7 +64,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        msg.toSession().verifyInitialFieldsPopulated()
+        msg.verifyInitialFieldsPopulated()
     }
 
     @Test
@@ -77,7 +77,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        startMsg.toSession().verifyInitialFieldsPopulated()
+        startMsg.verifyInitialFieldsPopulated()
 
         // create session
         val payload = collator.buildFinalBackgroundActivityMessage(
@@ -105,7 +105,7 @@ internal class PayloadMessageCollatorImplTest {
                 5
             )
         )
-        startMsg.toSession().verifyInitialFieldsPopulated()
+        startMsg.verifyInitialFieldsPopulated()
 
         // create session
         val payload = collator.buildFinalSessionMessage(
@@ -129,11 +129,10 @@ internal class PayloadMessageCollatorImplTest {
         assertNotNull(data)
         assertNotNull(newVersion)
         assertNotNull(type)
-        session.verifyInitialFieldsPopulated()
         session.verifyFinalFieldsPopulated()
     }
 
-    private fun Session.verifyInitialFieldsPopulated() {
+    private fun SessionZygote.verifyInitialFieldsPopulated() {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
     }

@@ -34,12 +34,4 @@ internal data class SessionZygote(
      * The type of start event that triggered this session.
      */
     val startType: Session.LifeEventType
-) {
-
-    companion object {
-        fun SessionZygote.toSession() = Session(
-            sessionId = sessionId,
-            startTime = startTime
-        )
-    }
-}
+)

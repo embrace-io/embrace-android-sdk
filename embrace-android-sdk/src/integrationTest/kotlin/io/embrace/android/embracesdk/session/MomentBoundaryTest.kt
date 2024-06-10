@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.getSessionId
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -42,19 +43,19 @@ internal class MomentBoundaryTest {
 
             assertEquals("_startup", startMoment.event.name)
             assertEquals(EventType.START, startMoment.event.type)
-            assertEquals(message.session.sessionId, startMoment.event.sessionId)
+            assertEquals(message.getSessionId(), startMoment.event.sessionId)
 
             assertEquals("_startup", endMoment.event.name)
             assertEquals(EventType.END, endMoment.event.type)
-            assertEquals(message.session.sessionId, endMoment.event.sessionId)
+            assertEquals(message.getSessionId(), endMoment.event.sessionId)
 
             assertEquals(MOMENT_NAME, myStartMoment.event.name)
             assertEquals(EventType.START, myStartMoment.event.type)
-            assertEquals(message.session.sessionId, myStartMoment.event.sessionId)
+            assertEquals(message.getSessionId(), myStartMoment.event.sessionId)
 
             assertEquals(MOMENT_NAME, myEndMoment.event.name)
             assertEquals(EventType.END, myEndMoment.event.type)
-            assertEquals(message.session.sessionId, myEndMoment.event.sessionId)
+            assertEquals(message.getSessionId(), myEndMoment.event.sessionId)
         }
     }
 
@@ -80,19 +81,19 @@ internal class MomentBoundaryTest {
 
             assertEquals("_startup", startMoment.event.name)
             assertEquals(EventType.START, startMoment.event.type)
-            assertEquals(firstMessage.session.sessionId, startMoment.event.sessionId)
+            assertEquals(firstMessage.getSessionId(), startMoment.event.sessionId)
 
             assertEquals(MOMENT_NAME, myStartMoment.event.name)
             assertEquals(EventType.START, myStartMoment.event.type)
-            assertEquals(firstMessage.session.sessionId, myStartMoment.event.sessionId)
+            assertEquals(firstMessage.getSessionId(), myStartMoment.event.sessionId)
 
             assertEquals("_startup", endMoment.event.name)
             assertEquals(EventType.END, endMoment.event.type)
-            assertEquals(secondMessage.session.sessionId, endMoment.event.sessionId)
+            assertEquals(secondMessage.getSessionId(), endMoment.event.sessionId)
 
             assertEquals(MOMENT_NAME, myEndMoment.event.name)
             assertEquals(EventType.END, myEndMoment.event.type)
-            assertEquals(secondMessage.session.sessionId, myEndMoment.event.sessionId)
+            assertEquals(secondMessage.getSessionId(), myEndMoment.event.sessionId)
         }
     }
 

@@ -7,7 +7,9 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
 
 /**
  * The session message, containing the session itself, as well as performance information about the
@@ -46,4 +48,8 @@ internal data class SessionMessage @JvmOverloads internal constructor(
 
 internal fun SessionMessage.getSessionSpan(): Span? {
     return data?.spans?.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) }
+}
+
+internal fun SessionMessage.getSessionId(): String? {
+    return getSessionSpan()?.attributes?.findAttributeValue(embSessionId.name)
 }

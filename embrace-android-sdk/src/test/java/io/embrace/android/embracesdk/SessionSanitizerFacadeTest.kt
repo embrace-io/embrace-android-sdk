@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -16,7 +16,7 @@ internal class SessionSanitizerFacadeTest {
         terminationTime = 100L
     )
 
-    private val sessionMessage = SessionMessage(
+    private val sessionMessage = fakeSessionMessage().copy(
         session = session,
         metadata = EnvelopeMetadata(
             email = "example@embrace.com",

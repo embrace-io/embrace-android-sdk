@@ -70,7 +70,7 @@ internal class SessionHandlerTest {
 
     private val initial = fakeSessionZygote().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
-    private var activeSession: Session = fakeSession()
+    private lateinit var activeSession: Session
 
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService

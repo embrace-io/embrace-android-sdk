@@ -49,12 +49,12 @@ internal class FakeV2PayloadCollator(
             terminationTime = terminationTime,
             endTime = endTimeVal
         )
-        return buildWrapperEnvelope(endSession)
+        return SessionMessage(session = endSession)
     }
 
     override fun buildFinalBackgroundActivityMessage(
         params: FinalEnvelopeParams.BackgroundActivityParams
-    ): SessionMessage = buildWrapperEnvelope(buildFinalBackgroundActivity(params))
+    ): SessionMessage = SessionMessage(session = buildFinalBackgroundActivity(params))
 
     /**
      * Creates a background activity stop message.
@@ -67,6 +67,4 @@ internal class FakeV2PayloadCollator(
             lastHeartbeatTime = endTime
         )
     }
-
-    private fun buildWrapperEnvelope(finalPayload: Session) = SessionMessage(session = finalPayload)
 }

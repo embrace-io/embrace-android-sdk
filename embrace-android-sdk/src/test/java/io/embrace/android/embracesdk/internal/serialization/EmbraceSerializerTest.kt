@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.serialization
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertEquals
@@ -11,8 +12,7 @@ import java.io.ByteArrayOutputStream
 
 internal class EmbraceSerializerTest {
     private val serializer = EmbraceSerializer()
-    private val session: Session = fakeSession()
-    private val payload: SessionMessage = SessionMessage(session)
+    private val payload: SessionMessage = fakeSessionMessage()
 
     @Test
     fun testWriteToFile() {

@@ -52,6 +52,6 @@ internal interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
 }
 
-internal fun Context.getParentSpan(): PersistableEmbraceSpan? = get(embraceSpanContextKey)
+internal fun Context.getEmbraceSpan(): PersistableEmbraceSpan? = get(embraceSpanContextKey)
 
 private val embraceSpanContextKey = ContextKey.named<PersistableEmbraceSpan>("embrace-span-key")

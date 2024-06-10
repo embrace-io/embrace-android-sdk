@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
-import io.embrace.android.embracesdk.spans.getParentSpan
+import io.embrace.android.embracesdk.spans.getEmbraceSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind
@@ -68,7 +68,7 @@ internal class EmbraceSpanBuilder(
         customAttributes[key] = value
     }
 
-    fun getParentSpan(): EmbraceSpan? = parentContext.getParentSpan()
+    fun getParentSpan(): EmbraceSpan? = parentContext.getEmbraceSpan()
 
     fun setParentContext(context: Context) {
         parentContext = context

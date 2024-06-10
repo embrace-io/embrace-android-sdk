@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.session.message
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.captureDataSafely
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 internal sealed class FinalEnvelopeParams(
     val initial: SessionZygote,
     val endTime: Long,
-    val lifeEventType: Session.LifeEventType?,
+    val lifeEventType: LifeEventType?,
     crashId: String?,
     val endType: SessionSnapshotType,
     val isCacheAttempt: Boolean,
@@ -39,7 +39,7 @@ internal sealed class FinalEnvelopeParams(
     internal class BackgroundActivityParams(
         initial: SessionZygote,
         endTime: Long,
-        lifeEventType: Session.LifeEventType?,
+        lifeEventType: LifeEventType?,
         endType: SessionSnapshotType,
         logger: EmbLogger,
         captureSpans: Boolean = true,
@@ -66,7 +66,7 @@ internal sealed class FinalEnvelopeParams(
     internal class SessionParams(
         initial: SessionZygote,
         endTime: Long,
-        lifeEventType: Session.LifeEventType?,
+        lifeEventType: LifeEventType?,
         endType: SessionSnapshotType,
         logger: EmbLogger,
         captureSpans: Boolean = true,

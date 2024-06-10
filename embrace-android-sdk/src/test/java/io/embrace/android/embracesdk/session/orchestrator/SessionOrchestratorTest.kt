@@ -28,7 +28,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
-import io.embrace.android.embracesdk.payload.Session
+import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
@@ -105,7 +105,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
             endTimeMs = foregroundTime - 1,
-            endType = Session.LifeEventType.BKGND_STATE
+            endType = LifeEventType.BKGND_STATE
         )
     }
 
@@ -118,7 +118,7 @@ internal class SessionOrchestratorTest {
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             endTimeMs = backgroundTime - 1,
-            endType = Session.LifeEventType.STATE
+            endType = LifeEventType.STATE
         )
     }
 
@@ -182,7 +182,7 @@ internal class SessionOrchestratorTest {
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
             endTimeMs = endTimeMs - 10000,
-            endType = Session.LifeEventType.MANUAL
+            endType = LifeEventType.MANUAL
         )
     }
 
@@ -419,7 +419,7 @@ internal class SessionOrchestratorTest {
 
     private fun validateSession(
         endTimeMs: Long,
-        endType: Session.LifeEventType
+        endType: LifeEventType
     ) {
         assertEquals(endType, endType)
         assertEquals(endTimeMs, checkNotNull(currentSessionSpan.sessionSpan).startEpochNanos.nanosToMillis())

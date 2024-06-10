@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage
 import io.embrace.android.embracesdk.fixtures.testSessionMessage2
 import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
@@ -133,19 +134,19 @@ internal class EmbraceCacheServiceTest {
 
     @Test
     fun `test loadObject with non-existent file returns null`() {
-        assertNull(service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java))
+        assertNull(service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, SessionMessage::class.java))
     }
 
     @Test
     fun `test loadObject with malformed file returns null`() {
-        val myObject1 = fakeSession()
-        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, Session::class.java)
+        val myObject1 = fakeSessionMessage()
+        service.cacheObject(CUSTOM_OBJECT_1_FILE_NAME, myObject1, SessionMessage::class.java)
 
         val children = checkNotNull(storageManager.filesDirectory.listFiles())
         val file = children.single()
         file.writeText("malformed content")
 
-        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, Session::class.java)
+        val loadedObject = service.loadObject(CUSTOM_OBJECT_1_FILE_NAME, SessionMessage::class.java)
         assertNull(loadedObject)
     }
 

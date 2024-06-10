@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
+import io.embrace.android.embracesdk.fakes.fakeSessionMessage
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
-import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
 import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
@@ -73,19 +73,19 @@ internal class FakePayloadFactory : PayloadFactory {
 
     private fun endBackgroundActivityWithState(timestamp: Long): SessionMessage {
         endBaTimestamps.add(timestamp)
-        return fakeBackgroundActivityMessage()
+        return fakeSessionMessage()
     }
 
     private fun endBackgroundActivityWithCrash(
         crashId: String
     ): SessionMessage {
         this.baCrashId = crashId
-        return fakeBackgroundActivityMessage()
+        return fakeSessionMessage()
     }
 
     private fun snapshotBackgroundActivity(): SessionMessage {
         snapshotBaCount++
-        return fakeBackgroundActivityMessage()
+        return fakeSessionMessage()
     }
 
     private fun startSessionWithState(timestamp: Long): SessionZygote {
@@ -103,7 +103,7 @@ internal class FakePayloadFactory : PayloadFactory {
     private fun endSessionWithState(timestamp: Long): SessionMessage {
         endSessionTimestamps.add(timestamp)
         activeSession = null
-        return fakeV1SessionMessage()
+        return fakeSessionMessage()
     }
 
     var crashId: String? = null
@@ -111,13 +111,13 @@ internal class FakePayloadFactory : PayloadFactory {
     private fun endSessionWithCrash(crashId: String): SessionMessage {
         this.crashId = crashId
         activeSession = null
-        return fakeV1SessionMessage()
+        return fakeSessionMessage()
     }
 
     override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): SessionMessage {
         manualSessionEndCount++
         activeSession = null
-        return fakeV1SessionMessage()
+        return fakeSessionMessage()
     }
 
     private fun snapshotSession(): SessionMessage? {

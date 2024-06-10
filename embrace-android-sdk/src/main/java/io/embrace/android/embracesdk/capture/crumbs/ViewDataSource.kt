@@ -32,12 +32,14 @@ internal class ViewDataSource(
     private val viewSpans: LinkedHashMap<String, EmbraceSpan> = LinkedHashMap()
 
     /**
-     * Called when a view is started.
+     * Called when a view is started. If a view with the same name is already running, it will be ended.
      */
     fun startView(name: String?): Boolean = captureSpanData(
         countsTowardsLimits = true,
         inputValidation = { !name.isNullOrEmpty() },
         captureAction = {
+            viewSpans[name]?.stop() // End the last view if it exists.
+
             val crumb = FragmentBreadcrumb(checkNotNull(name), clock.now())
             startSpanCapture(crumb, ::toStartSpanData)?.apply {
                 viewSpans[name] = this

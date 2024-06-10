@@ -13,9 +13,7 @@ internal class SessionSanitizerTest {
         terminationTime = 100L,
         infoLogIds = listOf("infoLog"),
         warningLogIds = listOf("warningLog"),
-        eventIds = listOf("eventId"),
-        startupDuration = 100L,
-        startupThreshold = 500L
+        eventIds = listOf("eventId")
     )
 
     @Test
@@ -37,8 +35,6 @@ internal class SessionSanitizerTest {
         assertNotNull(result.infoLogIds)
         assertNotNull(result.warningLogIds)
         assertNotNull(result.eventIds)
-        assertNotNull(result.startupDuration)
-        assertNotNull(result.startupThreshold)
     }
 
     @Test
@@ -51,7 +47,5 @@ internal class SessionSanitizerTest {
         assertNull(result.infoLogIds)
         assertNull(result.warningLogIds)
         assertNull(result.eventIds)
-        assertNull(result.startupDuration)
-        assertNull(result.startupThreshold)
     }
 }

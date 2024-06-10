@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOGS_INFO
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.LOGS_WARN
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_MOMENTS
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_USER_TERMINATION
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.STARTUP_MOMENT
 import io.embrace.android.embracesdk.payload.Session
 
 internal class SessionSanitizer(
@@ -30,21 +29,11 @@ internal class SessionSanitizer(
             !shouldSendMoment() -> null
             else -> session.eventIds
         }
-        val startupDuration = when {
-            !shouldSendStartupMoment() -> null
-            else -> session.startupDuration
-        }
-        val startupThreshold = when {
-            !shouldSendStartupMoment() -> null
-            else -> session.startupThreshold
-        }
         return session.copy(
             terminationTime = terminationTime,
             infoLogIds = infoLogIds,
             warningLogIds = warnLogIds,
-            eventIds = eventIds,
-            startupDuration = startupDuration,
-            startupThreshold = startupThreshold
+            eventIds = eventIds
         )
     }
 
@@ -59,7 +48,4 @@ internal class SessionSanitizer(
 
     private fun shouldSendWarnLog() =
         enabledComponents.contains(LOGS_WARN)
-
-    private fun shouldSendStartupMoment() =
-        enabledComponents.contains(STARTUP_MOMENT)
 }

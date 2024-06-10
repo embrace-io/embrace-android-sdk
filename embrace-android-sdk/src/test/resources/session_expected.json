@@ -20,8 +20,5 @@
     "fake-network-id"
   ],
   "ri": "fake-crash-id",
-  "em": "s",
-  "sd": 1223,
-  "sdt": 5000,
-  "si": 109
+  "em": "s"
 }

@@ -21,10 +21,7 @@ internal class SessionTest {
         errorLogIds = listOf("fake-err-id"),
         networkLogIds = listOf("fake-network-id"),
         crashReportId = "fake-crash-id",
-        endType = LifeEventType.STATE,
-        startupDuration = 1223,
-        startupThreshold = 5000,
-        sdkStartupDuration = 109
+        endType = LifeEventType.STATE
     )
 
     @Test
@@ -50,9 +47,6 @@ internal class SessionTest {
             assertEquals(listOf("fake-network-id"), networkLogIds)
             assertEquals("fake-crash-id", crashReportId)
             assertEquals(LifeEventType.STATE, endType)
-            assertEquals(1223L, startupDuration)
-            assertEquals(5000L, startupThreshold)
-            assertEquals(109L, sdkStartupDuration)
         }
     }
 

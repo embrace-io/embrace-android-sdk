@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.GatingService
@@ -25,7 +24,6 @@ internal class PayloadMessageCollatorImpl(
     private val logMessageService: LogMessageService,
     private val preferencesService: PreferencesService,
     private val currentSessionSpan: CurrentSessionSpan,
-    private val startupService: StartupService,
     private val logger: EmbLogger,
 ) : PayloadMessageCollator {
 
@@ -54,7 +52,6 @@ internal class PayloadMessageCollatorImpl(
         )
         val obj = with(newParams) {
             val base = buildFinalBackgroundActivity(newParams)
-            val startupInfo = getStartupEventInfo(eventService)
 
             val endSession = base.copy(
                 networkLogIds = captureDataSafely(logger) {
@@ -64,10 +61,7 @@ internal class PayloadMessageCollatorImpl(
                     )
                 },
                 terminationTime = terminationTime,
-                endTime = endTimeVal,
-                sdkStartupDuration = startupService.getSdkStartupDuration(initial.isColdStart),
-                startupDuration = startupInfo?.duration,
-                startupThreshold = startupInfo?.threshold
+                endTime = endTimeVal
             )
             val envelope = buildWrapperEnvelope(endSession)
             gatingService.gateSessionMessage(envelope)

@@ -11,16 +11,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.opentelemetry.embCleanExit
-import io.embrace.android.embracesdk.opentelemetry.embColdStart
-import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.opentelemetry.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
-import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
-import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
-import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.embTerminated
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
@@ -29,7 +21,6 @@ import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.message.PayloadFactory
-import java.util.Locale
 
 internal class SessionOrchestratorImpl(
     processStateService: ProcessStateService,
@@ -43,6 +34,7 @@ internal class SessionOrchestratorImpl(
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
+    private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
     private val logger: EmbLogger
 ) : SessionOrchestrator {
 
@@ -194,7 +186,7 @@ internal class SessionOrchestratorImpl(
             // second, end the current session or background activity, if either exist.
             val initial = activeSession
             if (initial != null) {
-                populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId)
+                sessionSpanAttrPopulator.populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId, initial.isColdStart)
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
@@ -207,7 +199,7 @@ internal class SessionOrchestratorImpl(
             activeSession = newState
             val sessionId = newState?.sessionId
             sessionIdTracker.setActiveSessionId(sessionId, inForeground)
-            newState?.let(::populateSessionSpanStartAttrs)
+            newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
 
             // initiate periodic caching of the payload if required
             if (transitionType != TransitionType.CRASH && newState != null) {
@@ -235,31 +227,6 @@ internal class SessionOrchestratorImpl(
 
             // et voila! a new session is born
             boundaryDelegate.onSessionStarted(timestamp)
-        }
-    }
-
-    private fun populateSessionSpanStartAttrs(session: SessionZygote) {
-        with(sessionSpanWriter) {
-            addCustomAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
-            addCustomAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
-            addCustomAttribute(SpanAttributeData(embState.name, session.appState))
-            addCustomAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
-            session.startType.toString().toLowerCase(Locale.US).let {
-                addCustomAttribute(SpanAttributeData(embSessionStartType.name, it))
-            }
-        }
-    }
-
-    private fun populateSessionSpanEndAttrs(endType: Session.LifeEventType?, crashId: String?) {
-        with(sessionSpanWriter) {
-            addCustomAttribute(SpanAttributeData(embCleanExit.name, true.toString()))
-            addCustomAttribute(SpanAttributeData(embTerminated.name, false.toString()))
-            crashId?.let {
-                addCustomAttribute(SpanAttributeData(embCrashId.name, crashId))
-            }
-            endType?.toString()?.toLowerCase(Locale.US)?.let {
-                addCustomAttribute(SpanAttributeData(embSessionEndType.name, it))
-            }
         }
     }
 

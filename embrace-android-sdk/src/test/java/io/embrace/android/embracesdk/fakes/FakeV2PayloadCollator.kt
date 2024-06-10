@@ -47,10 +47,7 @@ internal class FakeV2PayloadCollator(
     ): SessionMessage = with(params) {
         val endSession = buildFinalBackgroundActivity(params).copy(
             terminationTime = terminationTime,
-            endTime = endTimeVal,
-            sdkStartupDuration = if (initial.isColdStart) 100L else null,
-            startupDuration = if (initial.isColdStart) 1000L else null,
-            startupThreshold = if (initial.isColdStart) 5000L else null,
+            endTime = endTimeVal
         )
         return buildWrapperEnvelope(endSession)
     }

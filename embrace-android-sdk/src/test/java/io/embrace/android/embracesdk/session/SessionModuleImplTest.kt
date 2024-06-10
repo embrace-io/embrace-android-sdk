@@ -56,11 +56,11 @@ internal class SessionModuleImplTest {
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
-            FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule()
+            FakePayloadModule(),
+            FakeDataCaptureServiceModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)
@@ -93,11 +93,11 @@ internal class SessionModuleImplTest {
             FakeNativeModule(),
             FakeDataContainerModule(),
             FakeDeliveryModule(),
-            FakeDataCaptureServiceModule(),
             FakeCustomerLogModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule()
+            FakePayloadModule(),
+            FakeDataCaptureServiceModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)

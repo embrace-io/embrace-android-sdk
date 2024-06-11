@@ -18,26 +18,18 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
  * only OTel logs, this class can be removed.
  */
 internal class CompositeLogService(
-    private val v1LogService: Provider<LogMessageService>,
     private val v2LogService: Provider<LogService>,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val logger: EmbLogger,
     private val serializer: EmbraceSerializer
 ) : LogMessageService {
 
-    private val useV2LogService: Boolean
-        get() = true // TODO: simplify log service
-
     private val baseLogService: BaseLogService
-        get() = if (useV2LogService) v2LogService() else v1LogService()
+        get() = v2LogService()
 
     override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
-        if (useV2LogService) {
-            networkCaptureCall?.let {
-                networkCaptureDataSource().logNetworkCapturedCall(it)
-            }
-        } else {
-            v1LogService().logNetwork(networkCaptureCall)
+        networkCaptureCall?.let {
+            networkCaptureDataSource().logNetworkCapturedCall(it)
         }
     }
 
@@ -56,66 +48,51 @@ internal class CompositeLogService(
     ) {
         // When LogMessageService is removed, the cascade calling of event-based logMessage()
         // in EmbraceImpl can be replaced with different calls to LogService
-        if (useV2LogService) {
-            // Currently, any call to this log method can only have an event type of INFO_LOG,
-            // WARNING_LOG, or ERROR_LOG, since it is taken from the fromSeverity() method
-            // in EventType.
-            if (type.getSeverity() == null) {
-                logger.logError("Invalid event type for log: $type")
-                return
+
+        // Currently, any call to this log method can only have an event type of INFO_LOG,
+        // WARNING_LOG, or ERROR_LOG, since it is taken from the fromSeverity() method
+        // in EventType.
+        if (type.getSeverity() == null) {
+            logger.logError("Invalid event type for log: $type")
+            return
+        }
+        val severity = type.getSeverity() ?: Severity.INFO
+        if (logExceptionType == LogExceptionType.NONE) {
+            v2LogService().log(
+                message,
+                severity,
+                properties
+            )
+        } else {
+            val stacktrace = if (stackTraceElements != null) {
+                serializer.truncatedStacktrace(stackTraceElements)
+            } else {
+                customStackTrace
             }
-            val severity = type.getSeverity() ?: Severity.INFO
-            if (logExceptionType == LogExceptionType.NONE) {
-                v2LogService().log(
-                    message,
-                    severity,
-                    properties
+            if (framework == Embrace.AppFramework.FLUTTER) {
+                v2LogService().logFlutterException(
+                    message = message,
+                    severity = severity,
+                    logExceptionType = logExceptionType,
+                    properties = properties,
+                    stackTrace = stacktrace,
+                    exceptionName = exceptionName,
+                    exceptionMessage = exceptionMessage,
+                    context = context,
+                    library = library
                 )
             } else {
-                val stacktrace = if (stackTraceElements != null) {
-                    serializer.truncatedStacktrace(stackTraceElements)
-                } else {
-                    customStackTrace
-                }
-                if (framework == Embrace.AppFramework.FLUTTER) {
-                    v2LogService().logFlutterException(
-                        message = message,
-                        severity = severity,
-                        logExceptionType = logExceptionType,
-                        properties = properties,
-                        stackTrace = stacktrace,
-                        exceptionName = exceptionName,
-                        exceptionMessage = exceptionMessage,
-                        context = context,
-                        library = library
-                    )
-                } else {
-                    v2LogService().logException(
-                        message = message,
-                        severity = severity,
-                        logExceptionType = logExceptionType,
-                        properties = properties,
-                        stackTrace = stacktrace,
-                        framework = framework,
-                        exceptionName = exceptionName,
-                        exceptionMessage = exceptionMessage
-                    )
-                }
+                v2LogService().logException(
+                    message = message,
+                    severity = severity,
+                    logExceptionType = logExceptionType,
+                    properties = properties,
+                    stackTrace = stacktrace,
+                    framework = framework,
+                    exceptionName = exceptionName,
+                    exceptionMessage = exceptionMessage
+                )
             }
-        } else {
-            v1LogService().log(
-                message = message,
-                type = type,
-                logExceptionType = logExceptionType,
-                properties = properties,
-                stackTraceElements = stackTraceElements,
-                customStackTrace = customStackTrace,
-                framework = framework,
-                context = context,
-                library = library,
-                exceptionName = exceptionName,
-                exceptionMessage = exceptionMessage
-            )
         }
     }
 
@@ -133,7 +110,7 @@ internal class CompositeLogService(
 
     override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
         // Network logs are still always handled by the v1 LogMessageService
-        return v1LogService().findNetworkLogIds(startTime, endTime)
+        return emptyList()
     }
 
     override fun getInfoLogsAttemptedToSend(): Int {

@@ -1,19 +1,14 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.system.mockBundle
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -26,12 +21,6 @@ internal class PushNotificationCaptureServiceTest {
     companion object {
         private val logger: EmbLogger = EmbLoggerImpl()
         private val mockBundle: Bundle = mockBundle()
-        private val mockIntent: Intent = mockk {
-            every { extras } returns mockBundle
-        }
-        private val mockActivity: Activity = mockk {
-            every { intent } returns mockIntent
-        }
     }
 
     @Before
@@ -45,98 +34,6 @@ internal class PushNotificationCaptureServiceTest {
             breadcrumbService,
             logger
         )
-    }
-
-    @Test
-    fun `verify log push notification successfully`() {
-        val title = "title"
-        val body = "body"
-        val from = "from"
-        val id = "id"
-        val notificationPriority = 1
-        val messageDeliveredPriority = 1
-        val type = PushNotificationBreadcrumb.NotificationType.NOTIFICATION
-
-        pushNotificationCaptureService.logPushNotification(
-            title,
-            body,
-            from,
-            id,
-            notificationPriority,
-            messageDeliveredPriority,
-            type
-        )
-        val crumb = breadcrumbService.pushNotifications.single()
-        assertEquals(title, crumb.title)
-        assertEquals(body, crumb.body)
-        assertEquals(from, crumb.from)
-        assertEquals(id, crumb.id)
-        assertEquals(notificationPriority, crumb.priority)
-    }
-
-    @Test
-    fun `verify onActivityCreated for a push notification intent with no user data`() {
-        // these are needed so to identify this is a push notification
-        val fromKey = "from"
-        val messageIdKey = "google.message_id"
-        val deliveredPriorityKey = "google.delivered_priority"
-
-        val bundleData = mapOf(
-            fromKey to "123",
-            messageIdKey to "456",
-            deliveredPriorityKey to "normal"
-        )
-        every { mockBundle.keySet() } returns bundleData.keys
-        every { mockBundle.getString(fromKey) } returns bundleData[fromKey]
-        every { mockBundle.getString(messageIdKey) } returns bundleData[messageIdKey]
-        every { mockBundle.getString(deliveredPriorityKey) } returns bundleData[deliveredPriorityKey]
-
-        pushNotificationCaptureService.onActivityCreated(mockActivity, mockBundle)
-
-        val crumb = breadcrumbService.pushNotifications.single()
-        assertNull(crumb.title)
-        assertNull(crumb.body)
-        assertEquals("123", crumb.from)
-        assertEquals("456", crumb.id)
-    }
-
-    @Test
-    fun `verify onActivityCreated for a push notification intent with user data`() {
-        // these are needed so to identify this is a push notification
-        val fromKey = "from"
-        val messageIdKey = "google.message_id"
-        val deliveredPriorityKey = "google.delivered_priority"
-        val userDefinedKey = "user-defined"
-
-        val bundleData = mapOf(
-            fromKey to "123",
-            messageIdKey to "456",
-            deliveredPriorityKey to "normal",
-            userDefinedKey to "custom-value"
-        )
-        every { mockBundle.keySet() } returns bundleData.keys
-        every { mockBundle.getString(fromKey) } returns bundleData[fromKey]
-        every { mockBundle.getString(messageIdKey) } returns bundleData[messageIdKey]
-        every { mockBundle.getString(deliveredPriorityKey) } returns bundleData[deliveredPriorityKey]
-        every { mockBundle.getString(userDefinedKey) } returns bundleData[userDefinedKey]
-
-        pushNotificationCaptureService.onActivityCreated(mockActivity, mockBundle)
-
-        val crumb = breadcrumbService.pushNotifications.single()
-        assertNull(crumb.title)
-        assertNull(crumb.body)
-        assertEquals("123", crumb.from)
-        assertEquals("456", crumb.id)
-    }
-
-    @Test
-    fun `verify onActivityCreated that is not coming from push notification`() {
-        // empty key set so this is not a push notification intent
-        every { mockBundle.keySet() } returns emptySet()
-
-        pushNotificationCaptureService.onActivityCreated(mockActivity, mockBundle)
-
-        assertTrue(breadcrumbService.pushNotifications.isEmpty())
     }
 
     @Test

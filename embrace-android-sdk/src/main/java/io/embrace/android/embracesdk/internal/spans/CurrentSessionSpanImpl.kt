@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -112,6 +113,15 @@ internal class CurrentSessionSpanImpl(
             event.schemaType.fixedObjectName.toEmbraceObjectName(),
             event.spanStartTimeMs,
             event.schemaType.attributes() + event.schemaType.telemetryType.toEmbraceKeyValuePair()
+        )
+    }
+
+    override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+        val currentSession = sessionSpan.get() ?: return false
+        return currentSession.addEvent(
+            schemaType.fixedObjectName.toEmbraceObjectName(),
+            startTimeMs,
+            schemaType.attributes() + schemaType.telemetryType.toEmbraceKeyValuePair()
         )
     }
 

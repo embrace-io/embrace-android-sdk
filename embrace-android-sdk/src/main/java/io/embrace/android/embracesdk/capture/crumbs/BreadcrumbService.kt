@@ -1,28 +1,12 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import io.embrace.android.embracesdk.payload.Breadcrumbs
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
-import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
+import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
+import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 /**
  * Service which stores breadcrumbs for the application.
  */
 internal interface BreadcrumbService {
-
-    /**
-     * Gets all breadcrumbs within the specified time window. If the number of elements exceeds the
-     * limit for each breadcrumb type, only the latest will be returned.
-     *
-     * @return the breadcrumbs
-     */
-    fun getBreadcrumbs(): Breadcrumbs
-
-    /**
-     * Gets all breacrumbs and clear the lists
-     *
-     * @return the breadcrumbs
-     */
-    fun flushBreadcrumbs(): Breadcrumbs
 
     /**
      * Registers a view breadcrumb.
@@ -63,7 +47,7 @@ internal interface BreadcrumbService {
         point: Pair<Float?, Float?>,
         element: String,
         timestamp: Long,
-        type: TapBreadcrumbType
+        type: TapBreadcrumb.TapBreadcrumbType
     )
 
     /**
@@ -117,6 +101,6 @@ internal interface BreadcrumbService {
         id: String?,
         notificationPriority: Int?,
         messageDeliveredPriority: Int,
-        type: NotificationType
+        type: PushNotificationBreadcrumb.NotificationType
     )
 }

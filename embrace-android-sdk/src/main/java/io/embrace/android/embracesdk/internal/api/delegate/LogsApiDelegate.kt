@@ -183,7 +183,7 @@ internal class LogsApiDelegate(
             if (hasData == null || isNotification == null || messageDeliveredPriority == null) {
                 return
             }
-            val type = PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor(hasData, isNotification)
+            val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
             pushNotificationService?.logPushNotification(title, body, topic, id, notificationPriority, messageDeliveredPriority, type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }

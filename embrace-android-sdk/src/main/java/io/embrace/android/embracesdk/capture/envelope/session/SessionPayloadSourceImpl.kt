@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class SessionPayloadSourceImpl(
-    private val internalErrorService: InternalErrorService,
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -34,7 +32,6 @@ internal class SessionPayloadSourceImpl(
 
     override fun getSessionPayload(endType: SessionSnapshotType, crashId: String?): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
-        val internalErrors = captureDataSafely(logger) { internalErrorService.getCapturedData()?.toNewPayload() }
 
         // future: convert webview service to use OtelMapper pattern or data source directly.
         webViewServiceProvider().loadDataIntoSession()
@@ -46,7 +43,6 @@ internal class SessionPayloadSourceImpl(
         return SessionPayload(
             spans = spans,
             spanSnapshots = snapshots,
-            internalError = internalErrors,
             sharedLibSymbolMapping = sharedLibSymbolMapping
         )
     }

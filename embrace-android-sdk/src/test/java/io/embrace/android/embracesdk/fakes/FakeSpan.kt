@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.spans.getParentSpan
+import io.embrace.android.embracesdk.spans.getEmbraceSpan
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -17,11 +17,15 @@ internal class FakeSpan(
 
     private val spanContext: SpanContext =
         SpanContext.create(
-            fakeSpanBuilder.parentContext.getParentSpan()?.traceId ?: IdGenerator.random().generateTraceId(),
+            fakeSpanBuilder.parentContext.getEmbraceSpan()?.traceId ?: IdGenerator.random().generateTraceId(),
             IdGenerator.random().generateSpanId(),
             TraceFlags.getDefault(),
             TraceState.getDefault()
         )
+
+    private var isRecording = true
+    private var status: StatusCode = StatusCode.UNSET
+    private var statusDescription: String = ""
 
     override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): Span {
         TODO("Not yet implemented")
@@ -36,7 +40,9 @@ internal class FakeSpan(
     }
 
     override fun setStatus(statusCode: StatusCode, description: String): Span {
-        TODO("Not yet implemented")
+        status = statusCode
+        statusDescription = description
+        return this
     }
 
     override fun recordException(exception: Throwable, additionalAttributes: Attributes): Span {
@@ -48,16 +54,12 @@ internal class FakeSpan(
     }
 
     override fun end() {
-        TODO("Not yet implemented")
+        isRecording = false
     }
 
-    override fun end(timestamp: Long, unit: TimeUnit) {
-        TODO("Not yet implemented")
-    }
+    override fun end(timestamp: Long, unit: TimeUnit) = end()
 
     override fun getSpanContext(): SpanContext = spanContext
 
-    override fun isRecording(): Boolean {
-        TODO("Not yet implemented")
-    }
+    override fun isRecording(): Boolean = isRecording
 }

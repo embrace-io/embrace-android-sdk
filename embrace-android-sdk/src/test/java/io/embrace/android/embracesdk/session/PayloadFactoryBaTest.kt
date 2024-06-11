@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -55,7 +53,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var activityService: FakeProcessStateService
     private lateinit var userService: UserService
-    private lateinit var internalErrorService: InternalErrorService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
@@ -73,7 +70,6 @@ internal class PayloadFactoryBaTest {
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
-        internalErrorService = FakeInternalErrorService()
         deliveryService = FakeDeliveryService()
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
@@ -160,7 +156,6 @@ internal class PayloadFactoryBaTest {
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = SessionPayloadSourceImpl(
-                internalErrorService,
                 null,
                 spanSink,
                 currentSessionSpan,

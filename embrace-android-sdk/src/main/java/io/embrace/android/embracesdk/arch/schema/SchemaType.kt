@@ -347,4 +347,15 @@ internal sealed class SchemaType(
             "status" to status.toString()
         )
     }
+
+    internal class InternalError(throwable: Throwable) : SchemaType(
+        telemetryType = EmbType.System.InternalError,
+        fixedObjectName = "internal-error"
+    ) {
+        override val schemaAttributes = mapOf(
+            "exception.type" to throwable.javaClass.name,
+            "exception.stacktrace" to throwable.stackTrace.joinToString("\n", transform = StackTraceElement::toString),
+            "exception.message" to (throwable.message ?: "")
+        )
+    }
 }

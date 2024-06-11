@@ -43,6 +43,7 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.rnActionDataSource)
         assertNotNull(module.thermalStateDataSource)
         assertNotNull(module.webViewDataSource)
-        assertEquals(14, module.getDataSources().size)
+        assertNotNull(module.internalErrorDataSource)
+        assertEquals(15, module.getDataSources().size)
     }
 }

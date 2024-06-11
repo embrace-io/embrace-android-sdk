@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.capture.internal.errors.EmbraceInternalErrorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -59,7 +58,6 @@ internal class SessionHandlerTest {
 
     companion object {
         private val clock = FakeClock()
-        private val internalErrorService = EmbraceInternalErrorService(clock)
         private const val NOW = 123L
         private var sessionNumber = 5
         private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
@@ -137,7 +135,6 @@ internal class SessionHandlerTest {
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
                 sessionPayloadSource = SessionPayloadSourceImpl(
-                    internalErrorService,
                     null,
                     spanSink,
                     currentSessionSpan,

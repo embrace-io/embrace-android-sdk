@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.capture.envelope.session
 
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
@@ -14,7 +12,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.LegacyExceptionError
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -32,11 +29,6 @@ internal class SessionPayloadSourceImplTest {
 
     @Before
     fun setUp() {
-        val errorService = FakeInternalErrorService().apply {
-            data = LegacyExceptionError().apply {
-                addException(RuntimeException(), FakeClock())
-            }
-        }
         sink = SpanSinkImpl().apply {
             storeCompletedSpans(listOf(cacheSpan))
         }
@@ -47,7 +39,6 @@ internal class SessionPayloadSourceImplTest {
         spanRepository = SpanRepository()
         spanRepository.trackStartedSpan(activeSpan)
         impl = SessionPayloadSourceImpl(
-            errorService,
             FakeNativeThreadSamplerService(),
             sink,
             currentSessionSpan,
@@ -83,8 +74,6 @@ internal class SessionPayloadSourceImplTest {
     }
 
     private fun assertPayloadPopulated(payload: SessionPayload) {
-        val err = checkNotNull(payload.internalError)
-        assertEquals(1, err.count)
         assertEquals(mapOf("armeabi-v7a" to "my-symbols"), payload.sharedLibSymbolMapping)
         val snapshots = checkNotNull(payload.spanSnapshots)
         assertEquals(1, snapshots.size)

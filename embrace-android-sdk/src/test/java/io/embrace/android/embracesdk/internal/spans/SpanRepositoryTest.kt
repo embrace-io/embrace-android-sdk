@@ -100,12 +100,12 @@ internal class SpanRepositoryTest {
         repository.trackStartedSpan(startedSpan)
 
         assertSame(startedSpan, repository.getActiveSpans().single())
-        assertFalse(startedSpan.stopped)
+        assertTrue(startedSpan.isRecording)
         assertNull(startedSpan.errorCode)
 
         repository.failActiveSpans(100L)
 
-        assertTrue(startedSpan.stopped)
+        assertFalse(startedSpan.isRecording)
         assertEquals(ErrorCode.FAILURE, startedSpan.errorCode)
     }
 }

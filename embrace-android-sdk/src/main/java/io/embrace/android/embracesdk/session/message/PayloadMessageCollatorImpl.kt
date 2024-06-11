@@ -29,9 +29,11 @@ internal class PayloadMessageCollatorImpl(
     }
 
     override fun buildFinalSessionMessage(params: FinalEnvelopeParams): SessionMessage {
-        val obj = gatingService.gateSessionMessage(SessionMessage())
-        val envelope = gatingService.gateSessionEnvelope(obj, sessionEnvelopeSource.getEnvelope(params.endType, params.crashId))
-        return obj.copy(
+        val envelope = gatingService.gateSessionEnvelope(
+            params.crashId != null,
+            sessionEnvelopeSource.getEnvelope(params.endType, params.crashId)
+        )
+        return SessionMessage(
             // future work: make legacy fields null here.
             resource = envelope.resource,
             metadata = envelope.metadata,

@@ -10,14 +10,15 @@ import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbSpan(
     private val embraceSpan: EmbraceSpan,
     private val clock: Clock
 ) : Span {
 
-    private var spanStatus: StatusCode = StatusCode.UNSET
-    private var spanStatusDescription: String? = null
+    private val pendingStatus: AtomicReference<StatusCode> = AtomicReference(StatusCode.UNSET)
+    private var pendingStatusDescription: String? = null
 
     override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): Span {
         embraceSpan.addAttribute(key = key.key, value = value.toString())
@@ -41,8 +42,14 @@ internal class EmbSpan(
     }
 
     override fun setStatus(statusCode: StatusCode, description: String): Span {
-        spanStatus = statusCode
-        spanStatusDescription = description
+        if (isRecording) {
+            synchronized(pendingStatus) {
+                if (isRecording) {
+                    pendingStatus.set(statusCode)
+                    pendingStatusDescription = description
+                }
+            }
+        }
         return this
     }
 
@@ -63,13 +70,18 @@ internal class EmbSpan(
      * the underlying span is set to [StatusCode.OK] automatically if this is called before [setStatus] is called.
      */
     override fun end(timestamp: Long, unit: TimeUnit) {
-        val endTimeMs = unit.toMillis(timestamp)
-        when (spanStatus) {
-            StatusCode.ERROR -> {
-                embraceSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = endTimeMs)
-            }
-            else -> {
-                embraceSpan.stop(endTimeMs = endTimeMs)
+        if (isRecording) {
+            val endTimeMs = unit.toMillis(timestamp)
+            synchronized(pendingStatus) {
+                when (pendingStatus.get()) {
+                    StatusCode.ERROR -> {
+                        embraceSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = endTimeMs)
+                    }
+
+                    else -> {
+                        embraceSpan.stop(endTimeMs = endTimeMs)
+                    }
+                }
             }
         }
     }

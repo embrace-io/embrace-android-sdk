@@ -78,6 +78,20 @@ internal class EmbSpanTest {
     }
 
     @Test
+    fun `status can only be set on a span that is recording`() {
+        with(embSpan) {
+            end()
+            setStatus(StatusCode.ERROR, "error")
+            end()
+        }
+
+        with(fakeEmbraceSpan) {
+            assertEquals(status, Span.Status.OK)
+            assertFalse(attributes.hasFixedAttribute(ErrorCodeAttribute.Failure))
+        }
+    }
+
+    @Test
     fun `check adding events`() {
         val attributesBuilder =
             Attributes

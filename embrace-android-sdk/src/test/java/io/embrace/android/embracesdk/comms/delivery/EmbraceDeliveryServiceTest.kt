@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeCachedSessionMessageWithHeartbeatTime
 import io.embrace.android.embracesdk.fakes.fakeCachedSessionMessageWithTerminationTime
 import io.embrace.android.embracesdk.fakes.fakeSessionMessage
+import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.getStartTime
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -141,7 +142,7 @@ internal class EmbraceDeliveryServiceTest {
         assertEmbraceSpanData(
             span = span,
             expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
-            expectedEndTimeMs = checkNotNull(sessionWithSnapshot.session.endTime),
+            expectedEndTimeMs = checkNotNull(sessionWithSnapshot.findSessionSpan().endTimeNanos?.nanosToMillis()),
             expectedParentId = SpanId.getInvalid(),
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
@@ -164,7 +165,7 @@ internal class EmbraceDeliveryServiceTest {
             assertEmbraceSpanData(
                 span = span,
                 expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
-                expectedEndTimeMs = checkNotNull(sessionWithTerminationTime.session.terminationTime),
+                expectedEndTimeMs = checkNotNull(sessionWithSnapshot.findSessionSpan().endTimeNanos?.nanosToMillis()),
                 expectedParentId = SpanId.getInvalid(),
                 expectedErrorCode = ErrorCode.FAILURE,
                 expectedCustomAttributes = mapOf(
@@ -178,7 +179,7 @@ internal class EmbraceDeliveryServiceTest {
             assertEmbraceSpanData(
                 span = span,
                 expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
-                expectedEndTimeMs = checkNotNull(sessionWithLastHeartbeatTime.session.lastHeartbeatTime),
+                expectedEndTimeMs = checkNotNull(sessionWithSnapshot.findSessionSpan().endTimeNanos?.nanosToMillis()),
                 expectedParentId = SpanId.getInvalid(),
                 expectedErrorCode = ErrorCode.FAILURE,
                 expectedCustomAttributes = mapOf(

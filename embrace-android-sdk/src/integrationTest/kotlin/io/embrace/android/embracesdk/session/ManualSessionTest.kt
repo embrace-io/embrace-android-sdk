@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -44,8 +43,6 @@ internal class ManualSessionTest {
             assertEquals(2, messages.size)
             val stateSession = messages[0] // started via state, ended manually
             val manualSession = messages[1] // started manually, ended via state
-            verifySessionHappened(stateSession)
-            verifySessionHappened(manualSession)
 
             val stateAttrs = checkNotNull(stateSession.findSessionSpan().attributes)
             assertEquals("1", stateAttrs.findAttributeValue(embSessionNumber.name))
@@ -67,7 +64,6 @@ internal class ManualSessionTest {
             }
             val messages = harness.getSentSessions()
             assertEquals(1, messages.size)
-            verifySessionHappened(messages[0])
         }
     }
 
@@ -82,7 +78,6 @@ internal class ManualSessionTest {
                 embrace.endSession()
             }
             val message = harness.getSentSessions().single()
-            verifySessionHappened(message)
             val attrs = checkNotNull(message.findSessionSpan().attributes)
             assertEquals("1", attrs.findAttributeValue(embSessionNumber.name))
         }

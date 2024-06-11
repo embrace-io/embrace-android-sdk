@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.verifyBgActivityMessage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -38,13 +37,11 @@ internal class BackgroundActivityTest {
 
             // verify first bg activity
             val first = bgActivities[0]
-            verifyBgActivityMessage(first)
             val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
             assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
 
             // verify second bg activity
             val second = bgActivities[1]
-            verifyBgActivityMessage(second)
             val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
             assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
 

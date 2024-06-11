@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSou
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -44,16 +43,7 @@ internal class PayloadMessageCollatorImpl(
             captureSpans = false,
             logger = logger
         )
-        val obj = with(newParams) {
-            val base = buildFinalBackgroundActivity(newParams)
-
-            val endSession = base.copy(
-                terminationTime = terminationTime,
-                endTime = endTimeVal
-            )
-            val envelope = buildWrapperEnvelope(endSession)
-            gatingService.gateSessionMessage(envelope)
-        }
+        val obj = gatingService.gateSessionMessage(SessionMessage())
         return obj.convertToV2Payload(newParams.endType, newParams.crashId)
     }
 
@@ -67,9 +57,7 @@ internal class PayloadMessageCollatorImpl(
             captureSpans = false,
             logger = logger
         )
-        val msg = buildFinalBackgroundActivity(newParams)
-        val envelope = buildWrapperEnvelope(msg)
-        val obj = gatingService.gateSessionMessage(envelope)
+        val obj = gatingService.gateSessionMessage(SessionMessage())
         return obj.convertToV2Payload(newParams.endType, newParams.crashId)
     }
 
@@ -84,18 +72,4 @@ internal class PayloadMessageCollatorImpl(
             type = envelope.type
         )
     }
-
-    /**
-     * Creates a background activity stop message.
-     */
-    private fun buildFinalBackgroundActivity(
-        params: FinalEnvelopeParams
-    ): Session = with(params) {
-        return Session(
-            endTime = endTime,
-            lastHeartbeatTime = endTime
-        )
-    }
-
-    private fun buildWrapperEnvelope(finalPayload: Session) = SessionMessage(session = finalPayload)
 }

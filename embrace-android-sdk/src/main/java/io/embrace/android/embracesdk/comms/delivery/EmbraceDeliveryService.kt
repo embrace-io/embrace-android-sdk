@@ -189,11 +189,7 @@ internal class EmbraceDeliveryService(
     }
 
     private fun getFailedSpanEndTimeMs(sessionMessage: SessionMessage) =
-        sessionMessage.session.endTime
-            ?: sessionMessage.session.terminationTime
-            ?: sessionMessage.session.lastHeartbeatTime
-            ?: sessionMessage.getSessionSpan()?.startTimeNanos?.nanosToMillis()
-            ?: -1
+        sessionMessage.getSessionSpan()?.endTimeNanos?.nanosToMillis() ?: -1
 
     override fun sendMoment(eventMessage: EventMessage) {
         apiService.sendEvent(eventMessage)

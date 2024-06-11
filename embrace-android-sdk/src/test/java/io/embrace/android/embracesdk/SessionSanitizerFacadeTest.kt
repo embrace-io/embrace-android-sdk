@@ -14,10 +14,6 @@ internal class SessionSanitizerFacadeTest {
     private val base = fakeSessionMessage()
 
     private val sessionMessage = base.copy(
-        session = base.session.copy(
-            endTime = null,
-            terminationTime = 100L
-        ),
         metadata = EnvelopeMetadata(
             email = "example@embrace.com",
             personas = setOf("personas")
@@ -52,10 +48,7 @@ internal class SessionSanitizerFacadeTest {
     fun `test if it keeps all event message components`() {
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, enabledComponents).getSanitizedMessage()
-
         assertNotNull(sanitizedMessage.metadata?.personas)
-
-        assertNotNull(sanitizedMessage.session.terminationTime)
         assertNotNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
 
@@ -64,10 +57,7 @@ internal class SessionSanitizerFacadeTest {
         // uses an empty set for enabled components
         val sanitizedMessage =
             SessionSanitizerFacade(sessionMessage, setOf()).getSanitizedMessage()
-
         assertNull(sanitizedMessage.metadata?.personas)
-
-        assertNull(sanitizedMessage.session.terminationTime)
         assertNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
 }

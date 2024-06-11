@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.payload.getSessionSpan
@@ -30,17 +29,16 @@ internal fun fakeSessionMessage(
 ): SessionMessage {
     val sessionSpan = Span(
         startTimeNanos = startMs.millisToNanos(),
+        endTimeNanos = endMs.millisToNanos(),
         attributes = listOf(
             Attribute("emb.type", EmbType.Ux.Session.value),
             Attribute(embSessionId.name, sessionId)
         )
     )
-    val session = Session(endMs)
     val spans = listOf(testSpan, sessionSpan)
     val spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot())
 
     return SessionMessage(
-        session = session,
         data = SessionPayload(
             spans = spans,
             spanSnapshots = spanSnapshots
@@ -59,21 +57,9 @@ internal fun SessionMessage.mutateSessionSpan(action: (original: Span) -> Span):
 }
 
 internal fun fakeCachedSessionMessageWithTerminationTime(): SessionMessage {
-    val base = fakeSessionMessage(sessionId = "fakeSessionWithTerminationTime")
-    return base.copy(
-        session = base.session.copy(
-            endTime = null,
-            terminationTime = 161000500000L
-        )
-    )
+    return fakeSessionMessage(sessionId = "fakeSessionWithTerminationTime")
 }
 
 internal fun fakeCachedSessionMessageWithHeartbeatTime(): SessionMessage {
-    val base = fakeSessionMessage(sessionId = "fakeSessionWithHeartbeat")
-    return base.copy(
-        session = base.session.copy(
-            endTime = null,
-            lastHeartbeatTime = 161000500000L
-        )
-    )
+    return fakeSessionMessage(sessionId = "fakeSessionWithHeartbeat")
 }

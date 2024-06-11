@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.payload.ApplicationState
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
@@ -44,27 +43,9 @@ internal class FakeV2PayloadCollator(
      */
     override fun buildFinalSessionMessage(
         params: FinalEnvelopeParams.SessionParams
-    ): SessionMessage = with(params) {
-        val endSession = buildFinalBackgroundActivity(params).copy(
-            terminationTime = terminationTime,
-            endTime = endTimeVal
-        )
-        return SessionMessage(session = endSession)
-    }
+    ): SessionMessage = SessionMessage()
 
     override fun buildFinalBackgroundActivityMessage(
         params: FinalEnvelopeParams.BackgroundActivityParams
-    ): SessionMessage = SessionMessage(session = buildFinalBackgroundActivity(params))
-
-    /**
-     * Creates a background activity stop message.
-     */
-    private fun buildFinalBackgroundActivity(
-        params: FinalEnvelopeParams
-    ): Session = with(params) {
-        return Session(
-            endTime = endTime,
-            lastHeartbeatTime = endTime
-        )
-    }
+    ): SessionMessage = SessionMessage()
 }

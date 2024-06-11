@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivit
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
-import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiService
@@ -50,7 +48,6 @@ internal class FakeEssentialServiceModule(
     override val configService: ConfigService = FakeConfigService(),
     override val memoryCleanerService: MemoryCleanerService = FakeMemoryCleanerService(),
     override val gatingService: GatingService = FakeGatingService(),
-    override val orientationService: OrientationService = NoOpOrientationService(),
     override val apiClient: ApiClient = FakeApiClient(),
     override val userService: UserService = FakeUserService(),
     override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(EmbLoggerImpl()),

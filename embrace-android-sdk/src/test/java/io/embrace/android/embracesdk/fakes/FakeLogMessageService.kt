@@ -60,36 +60,8 @@ internal class FakeLogMessageService : LogMessageService {
         )
     }
 
-    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
-    }
-
-    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
-    }
-
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return errorLogIds
-    }
-
-    override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
-        return emptyList()
-    }
-
-    override fun getInfoLogsAttemptedToSend(): Int {
-        return 0
-    }
-
-    override fun getWarnLogsAttemptedToSend(): Int {
-        return 0
-    }
-
-    override fun getErrorLogsAttemptedToSend(): Int {
-        return 0
-    }
-
-    override fun getUnhandledExceptionsSent(): Int {
-        return 0
     }
 
     override fun cleanCollections() {

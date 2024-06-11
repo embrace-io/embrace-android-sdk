@@ -42,31 +42,7 @@ internal class FakeLogService : LogService {
         flutterExceptions.add(message)
     }
 
-    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        TODO("Not yet implemented")
-    }
-
-    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        TODO("Not yet implemented")
-    }
-
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
-        TODO("Not yet implemented")
-    }
-
-    override fun getInfoLogsAttemptedToSend(): Int {
-        TODO("Not yet implemented")
-    }
-
-    override fun getWarnLogsAttemptedToSend(): Int {
-        TODO("Not yet implemented")
-    }
-
-    override fun getErrorLogsAttemptedToSend(): Int {
-        TODO("Not yet implemented")
-    }
-
-    override fun getUnhandledExceptionsSent(): Int {
         TODO("Not yet implemented")
     }
 

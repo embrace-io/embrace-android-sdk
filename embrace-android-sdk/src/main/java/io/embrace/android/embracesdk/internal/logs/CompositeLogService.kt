@@ -96,37 +96,8 @@ internal class CompositeLogService(
         }
     }
 
-    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        return baseLogService.findInfoLogIds(startTime, endTime)
-    }
-
-    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        return baseLogService.findWarningLogIds(startTime, endTime)
-    }
-
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return baseLogService.findErrorLogIds(startTime, endTime)
-    }
-
-    override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
-        // Network logs are still always handled by the v1 LogMessageService
-        return emptyList()
-    }
-
-    override fun getInfoLogsAttemptedToSend(): Int {
-        return baseLogService.getInfoLogsAttemptedToSend()
-    }
-
-    override fun getWarnLogsAttemptedToSend(): Int {
-        return baseLogService.getWarnLogsAttemptedToSend()
-    }
-
-    override fun getErrorLogsAttemptedToSend(): Int {
-        return baseLogService.getErrorLogsAttemptedToSend()
-    }
-
-    override fun getUnhandledExceptionsSent(): Int {
-        return baseLogService.getUnhandledExceptionsSent()
     }
 
     override fun cleanCollections() {

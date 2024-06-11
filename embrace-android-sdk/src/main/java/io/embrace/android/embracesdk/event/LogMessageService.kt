@@ -44,13 +44,4 @@ internal interface LogMessageService : BaseLogService {
         exceptionName: String?,
         exceptionMessage: String?
     )
-
-    /**
-     * Finds all IDs of log network events within the given time window.
-     *
-     * @param startTime the beginning of the time window
-     * @param endTime   the end of the time window
-     * @return the list of log IDs within the specified range
-     */
-    fun findNetworkLogIds(startTime: Long, endTime: Long): List<String>
 }

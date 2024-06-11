@@ -174,12 +174,6 @@ internal class EmbraceLogMessageServiceTest {
         assertNotNull(third.event.sessionId)
         third.event.screenshotTaken?.let { assertFalse(it) }
         assertEquals(LogExceptionType.NONE.value, third.event.logExceptionType)
-
-        // verify sent counts
-        assertEquals(1, logMessageService.getInfoLogsAttemptedToSend())
-        assertEquals(1, logMessageService.getWarnLogsAttemptedToSend())
-        assertEquals(1, logMessageService.getErrorLogsAttemptedToSend())
-        assertEquals(0, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
@@ -227,8 +221,6 @@ internal class EmbraceLogMessageServiceTest {
         assertEquals("session-123", message.sessionId)
         assertNotNull(message.appInfo)
         assertNotNull(message.networkCaptureCall)
-
-        assertEquals(1, logMessageService.findNetworkLogIds(0, clock.now()).size)
     }
 
     @Test
@@ -237,7 +229,6 @@ internal class EmbraceLogMessageServiceTest {
         logMessageService.logNetwork(null)
 
         assertNull(deliveryService.lastSentNetworkCall)
-        assertEquals(0, logMessageService.findNetworkLogIds(0, clock.now()).size)
     }
 
     @Test
@@ -287,13 +278,7 @@ internal class EmbraceLogMessageServiceTest {
             simpleLog("Test warning $k", EventType.WARNING_LOG, null)
             simpleLog("Test error $k", EventType.ERROR_LOG, null)
         }
-
-        assertEquals(100, logMessageService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logMessageService.getInfoLogsAttemptedToSend())
-        assertEquals(100, logMessageService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logMessageService.getWarnLogsAttemptedToSend())
         assertEquals(250, logMessageService.findErrorLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logMessageService.getErrorLogsAttemptedToSend())
     }
 
     @Test
@@ -318,8 +303,6 @@ internal class EmbraceLogMessageServiceTest {
         assertEquals("Unity".repeat(1000), message.event.name) // log limit higher on unity
         assertEquals("my stacktrace", message.stacktraces?.unityStacktrace)
         assertEquals(LogExceptionType.HANDLED.value, message.event.logExceptionType)
-
-        assertEquals(0, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
@@ -344,8 +327,6 @@ internal class EmbraceLogMessageServiceTest {
         assertTrue(message.event.name == "Unity".repeat(1000)) // log limit higher on unity
         assertTrue(message.stacktraces?.unityStacktrace == "my stacktrace")
         assertEquals(LogExceptionType.UNHANDLED.value, message.event.logExceptionType)
-
-        assertEquals(1, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test
@@ -373,7 +354,6 @@ internal class EmbraceLogMessageServiceTest {
         assertEquals("my stacktrace", msg.stacktraces?.flutterStacktrace)
         assertEquals("dart context", msg.stacktraces?.context)
         assertEquals("dart library", msg.stacktraces?.library)
-        assertEquals(1, logMessageService.getUnhandledExceptionsSent())
     }
 
     @Test

@@ -150,34 +150,9 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun getInfoLogsAttemptedToSend(): Int {
-        return logCounters.getValue(Severity.INFO).getCount()
-    }
-
-    override fun getWarnLogsAttemptedToSend(): Int {
-        return logCounters.getValue(Severity.WARNING).getCount()
-    }
-
-    override fun getErrorLogsAttemptedToSend(): Int {
-        return logCounters.getValue(Severity.ERROR).getCount()
-    }
-
-    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        return logCounters.getValue(Severity.INFO).findLogIds(startTime, endTime)
-    }
-
-    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        return logCounters.getValue(Severity.WARNING).findLogIds(startTime, endTime)
-    }
-
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return logCounters.getValue(Severity.ERROR).findLogIds(startTime, endTime)
     }
-
-    override fun getUnhandledExceptionsSent(): Int {
-        return unhandledExceptionsCount
-    }
-
     override fun cleanCollections() {
         logCounters.forEach { it.value.clear() }
     }

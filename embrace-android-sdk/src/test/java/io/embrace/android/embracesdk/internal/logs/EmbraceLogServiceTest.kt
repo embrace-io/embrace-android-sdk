@@ -137,7 +137,6 @@ internal class EmbraceLogServiceTest {
         )
 
         val log = logWriter.logEvents.single()
-        assertEquals(0, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
@@ -166,7 +165,6 @@ internal class EmbraceLogServiceTest {
         )
 
         val log = logWriter.logEvents.single()
-        assertEquals(0, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
@@ -196,7 +194,6 @@ internal class EmbraceLogServiceTest {
         )
 
         val log = logWriter.logEvents.single()
-        assertEquals(1, logService.getUnhandledExceptionsSent())
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
@@ -242,12 +239,7 @@ internal class EmbraceLogServiceTest {
             logService.log("Test error $k", Severity.ERROR, null)
         }
 
-        assertEquals(100, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logService.getInfoLogsAttemptedToSend())
-        assertEquals(100, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logService.getWarnLogsAttemptedToSend())
         assertEquals(250, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logService.getErrorLogsAttemptedToSend())
     }
 
     @Test
@@ -268,12 +260,7 @@ internal class EmbraceLogServiceTest {
             logService.log("Test error $k", Severity.ERROR, null)
         }
 
-        assertEquals(50, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logService.getInfoLogsAttemptedToSend())
-        assertEquals(110, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logService.getWarnLogsAttemptedToSend())
         assertEquals(150, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(500, logService.getErrorLogsAttemptedToSend())
     }
 
     @Test
@@ -325,7 +312,6 @@ internal class EmbraceLogServiceTest {
         assertEquals(null, log.schemaType.attributes()[exceptionType.key])
         assertEquals(null, log.schemaType.attributes()[exceptionMessage.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
-        assertEquals(0, logService.getUnhandledExceptionsSent())
     }
 
     @Test
@@ -336,21 +322,11 @@ internal class EmbraceLogServiceTest {
             logService.log("Test warning $k", Severity.WARNING, null)
             logService.log("Test error $k", Severity.ERROR, null)
         }
-        assertEquals(10, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(10, logService.getInfoLogsAttemptedToSend())
-        assertEquals(10, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(10, logService.getWarnLogsAttemptedToSend())
         assertEquals(10, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(10, logService.getErrorLogsAttemptedToSend())
 
         logService.cleanCollections()
 
-        assertEquals(0, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(0, logService.getInfoLogsAttemptedToSend())
-        assertEquals(0, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(0, logService.getWarnLogsAttemptedToSend())
         assertEquals(0, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(0, logService.getErrorLogsAttemptedToSend())
     }
 
     // If the session components are null, no gating should be applied
@@ -363,10 +339,6 @@ internal class EmbraceLogServiceTest {
         logService.log("Test warning log", Severity.WARNING, null)
 
         assertEquals(2, logWriter.logEvents.size)
-        assertEquals(1, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(1, logService.getInfoLogsAttemptedToSend())
-        assertEquals(1, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(1, logService.getWarnLogsAttemptedToSend())
     }
 
     // If the session components exists, only keys present should be allowed to be sent
@@ -381,8 +353,6 @@ internal class EmbraceLogServiceTest {
         logService.log("Test warning log", Severity.WARNING, null)
 
         assertEquals(0, logWriter.logEvents.size)
-        assertEquals(0, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(0, logService.getInfoLogsAttemptedToSend())
     }
 
     // If the session components exists, only keys present should be allowed to be sent
@@ -397,10 +367,6 @@ internal class EmbraceLogServiceTest {
         logService.log("Test warning log", Severity.WARNING, null)
 
         assertEquals(2, logWriter.logEvents.size)
-        assertEquals(1, logService.findInfoLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(1, logService.getInfoLogsAttemptedToSend())
-        assertEquals(1, logService.findWarningLogIds(0L, Long.MAX_VALUE).size)
-        assertEquals(1, logService.getWarnLogsAttemptedToSend())
     }
 
     private fun getLogService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {

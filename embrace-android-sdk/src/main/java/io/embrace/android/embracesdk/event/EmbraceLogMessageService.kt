@@ -54,10 +54,7 @@ internal class EmbraceLogMessageService(
     private val logsErrorCount = AtomicInteger(0)
     private val logsWarnCount = AtomicInteger(0)
     private val unhandledExceptionCount = AtomicInteger(0)
-    private val infoLogIdsCache = CacheableValue<List<String>> { infoLogIds.size }
-    private val warningLogIdsCache = CacheableValue<List<String>> { warningLogIds.size }
     private val errorLogIdsCache = CacheableValue<List<String>> { errorLogIds.size }
-    private val networkLogIdsCache = CacheableValue<List<String>> { networkLogIds.size }
 
     constructor(
         metadataService: MetadataService,
@@ -237,20 +234,8 @@ internal class EmbraceLogMessageService(
         }
     }
 
-    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        return findLogIds(startTime, endTime, infoLogIdsCache, infoLogIds)
-    }
-
-    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        return findLogIds(startTime, endTime, warningLogIdsCache, warningLogIds)
-    }
-
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return findLogIds(startTime, endTime, errorLogIdsCache, errorLogIds)
-    }
-
-    override fun findNetworkLogIds(startTime: Long, endTime: Long): List<String> {
-        return findLogIds(startTime, endTime, networkLogIdsCache, networkLogIds)
     }
 
     private fun findLogIds(
@@ -260,16 +245,6 @@ internal class EmbraceLogMessageService(
         logIds: NavigableMap<Long, String>
     ): List<String> {
         return cache.value { ArrayList(logIds.subMap(startTime, endTime).values) }
-    }
-
-    override fun getInfoLogsAttemptedToSend(): Int = logsInfoCount.get()
-
-    override fun getWarnLogsAttemptedToSend(): Int = logsWarnCount.get()
-
-    override fun getErrorLogsAttemptedToSend(): Int = logsErrorCount.get()
-
-    override fun getUnhandledExceptionsSent(): Int {
-        return unhandledExceptionCount.get()
     }
 
     private fun processLogMessage(

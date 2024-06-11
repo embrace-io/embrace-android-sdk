@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
-import io.embrace.android.embracesdk.fakes.fakeNetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
@@ -24,7 +23,6 @@ internal class CompositeLogServiceTest {
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
         compositeLogService = CompositeLogService(
             v2LogService = { v2LogService },
-            networkCaptureDataSource = { networkCaptureDataSource },
             logger = EmbLoggerImpl(),
             serializer = EmbraceSerializer()
         )
@@ -34,14 +32,6 @@ internal class CompositeLogServiceTest {
     fun `default logs to v2`() {
         logEmbraceLog()
         assertEquals(1, v2LogService.logs.size)
-    }
-
-    @Test
-    fun testNetworkCaptureV2() {
-        compositeLogService.logNetwork(
-            fakeNetworkCapturedCall()
-        )
-        assertEquals(1, networkCaptureDataSource.loggedCalls.size)
     }
 
     @Test

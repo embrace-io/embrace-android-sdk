@@ -4,19 +4,11 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.logs.BaseLogService
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 /**
  * Logs messages remotely, so that they can be viewed as events during a user's session.
  */
 internal interface LogMessageService : BaseLogService {
-
-    /**
-     * Creates a network event.
-     *
-     * @param networkCaptureCall the captured network information
-     */
-    fun logNetwork(networkCaptureCall: NetworkCapturedCall?)
 
     /**
      * Creates a remote log.

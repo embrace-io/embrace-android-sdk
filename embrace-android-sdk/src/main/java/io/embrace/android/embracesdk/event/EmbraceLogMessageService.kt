@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.event
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
@@ -17,13 +16,10 @@ import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.Stacktraces
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
-import java.sql.Timestamp
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -42,7 +38,6 @@ internal class EmbraceLogMessageService(
     private val clock: Clock,
     private val backgroundWorker: BackgroundWorker,
     private val gatingService: GatingService,
-    private val networkConnectivityService: NetworkConnectivityService
 ) : LogMessageService {
 
     private val lock = Any()
@@ -66,7 +61,6 @@ internal class EmbraceLogMessageService(
         logger: EmbLogger,
         clock: Clock,
         sessionGatingService: GatingService,
-        networkConnectivityService: NetworkConnectivityService,
         backgroundWorker: BackgroundWorker
     ) : this(
         metadataService,
@@ -78,39 +72,8 @@ internal class EmbraceLogMessageService(
         logger,
         clock,
         backgroundWorker,
-        sessionGatingService,
-        networkConnectivityService
+        sessionGatingService
     )
-
-    override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
-        val networkEventTimestamp = clock.now()
-        if (networkCaptureCall == null) {
-            logger.logDebug("NetworkCaptureCall is null, nothing to log")
-            return
-        }
-        try {
-            backgroundWorker.submit {
-                synchronized(lock) {
-                    val id = getEmbUuid()
-                    networkLogIds[networkEventTimestamp] = id
-                    val sessionId = sessionIdTracker.getActiveSessionId()
-                    val networkEvent = NetworkEvent(
-                        metadataService.getAppId(),
-                        metadataService.getAppInfo(),
-                        metadataService.getDeviceId(),
-                        id,
-                        networkCaptureCall,
-                        Timestamp(networkEventTimestamp).toString(),
-                        networkConnectivityService.ipAddress,
-                        sessionId
-                    )
-                    deliveryService.sendNetworkCall(networkEvent)
-                }
-            }
-        } catch (ex: Exception) {
-            logger.logInfo("Failed to log network call using Embrace SDK.", ex)
-        }
-    }
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod", "LongParameterList")
     override fun log(

@@ -26,10 +26,6 @@ internal class FakeLogMessageService : LogMessageService {
     val networkCalls = mutableListOf<NetworkCapturedCall>()
     var errorLogIds = listOf<String>()
 
-    override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
-        networkCaptureCall?.let(networkCalls::add)
-    }
-
     override fun log(
         message: String,
         type: EventType,

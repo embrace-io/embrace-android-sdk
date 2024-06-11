@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 /**
  * Allows to switch between the current service that sends Embrace logs as Events and the new one
@@ -19,19 +17,12 @@ import io.embrace.android.embracesdk.payload.NetworkCapturedCall
  */
 internal class CompositeLogService(
     private val v2LogService: Provider<LogService>,
-    private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val logger: EmbLogger,
     private val serializer: EmbraceSerializer
 ) : LogMessageService {
 
     private val baseLogService: BaseLogService
         get() = v2LogService()
-
-    override fun logNetwork(networkCaptureCall: NetworkCapturedCall?) {
-        networkCaptureCall?.let {
-            networkCaptureDataSource().logNetworkCapturedCall(it)
-        }
-    }
 
     override fun log(
         message: String,

@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
@@ -31,12 +31,12 @@ import org.junit.Test
 internal class EmbraceNetworkCaptureServiceTest {
 
     private lateinit var preferenceService: FakePreferenceService
+    private lateinit var networkCaptureDataSource: FakeNetworkCaptureDataSource
 
     companion object {
         private var cfg: RemoteConfig = RemoteConfig()
         private val metadataService: FakeMetadataService = FakeMetadataService()
         private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
-        private lateinit var logMessageService: FakeLogMessageService
         private val configService: FakeConfigService = FakeConfigService(
             networkBehavior = fakeNetworkBehavior { cfg },
             sdkEndpointBehavior = fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
@@ -82,7 +82,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun setUp() {
         clearAllMocks()
         preferenceService = FakePreferenceService()
-        logMessageService = FakeLogMessageService()
+        networkCaptureDataSource = FakeNetworkCaptureDataSource()
         sessionIdTracker.setActiveSessionId("session-123", true)
     }
 
@@ -182,7 +182,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             2000,
             networkCaptureData
         )
-        assertEquals(0, logMessageService.networkCalls.size)
+        assertEquals(0, networkCaptureDataSource.loggedCalls.size)
 
         // duration = 6000ms should be captured
         service.logNetworkCapturedData(
@@ -193,7 +193,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             6000,
             networkCaptureData
         )
-        assertEquals(1, logMessageService.networkCalls.size)
+        assertEquals(1, networkCaptureDataSource.loggedCalls.size)
     }
 
     @Test
@@ -210,7 +210,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             2000,
             networkCaptureData
         )
-        assertEquals(1, logMessageService.networkCalls.size)
+        assertEquals(1, networkCaptureDataSource.loggedCalls.size)
 
         service.logNetworkCapturedData(
             "https://embrace.io/changelog",
@@ -220,7 +220,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             2000,
             networkCaptureData
         )
-        assertEquals(2, logMessageService.networkCalls.size)
+        assertEquals(2, networkCaptureDataSource.loggedCalls.size)
 
         service.logNetworkCapturedData(
             "https://embrace.io/changelog",
@@ -230,14 +230,14 @@ internal class EmbraceNetworkCaptureServiceTest {
             2000,
             networkCaptureData
         )
-        assertEquals(2, logMessageService.networkCalls.size)
+        assertEquals(2, networkCaptureDataSource.loggedCalls.size)
     }
 
     private fun getService() = EmbraceNetworkCaptureService(
         metadataService,
         sessionIdTracker,
         preferenceService,
-        logMessageService,
+        { networkCaptureDataSource },
         configService,
         EmbraceSerializer(),
         EmbLoggerImpl()

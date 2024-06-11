@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks
@@ -127,8 +125,7 @@ internal class EmbraceLogMessageServiceTest {
             logcat,
             clock,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            gatingService,
-            FakeNetworkConnectivityService()
+            gatingService
         )
     }
 
@@ -207,28 +204,6 @@ internal class EmbraceLogMessageServiceTest {
         assertNotNull(message.event.sessionId)
         assertNotNull(message.event.logExceptionType)
         assertEquals(LogExceptionType.NONE.value, message.event.logExceptionType)
-    }
-
-    @Test
-    fun testLogNetwork() {
-        val networkCaptureCall = NetworkCapturedCall()
-
-        logMessageService = getLogMessageService()
-        logMessageService.logNetwork(networkCaptureCall)
-
-        val message = checkNotNull(deliveryService.lastSentNetworkCall)
-        assertEquals("appId", message.appId)
-        assertEquals("session-123", message.sessionId)
-        assertNotNull(message.appInfo)
-        assertNotNull(message.networkCaptureCall)
-    }
-
-    @Test
-    fun `testLogNetwork with no info`() {
-        logMessageService = getLogMessageService()
-        logMessageService.logNetwork(null)
-
-        assertNull(deliveryService.lastSentNetworkCall)
     }
 
     @Test

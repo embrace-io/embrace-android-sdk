@@ -43,7 +43,7 @@ internal class CustomerLogModuleImpl(
             essentialServiceModule.metadataService,
             essentialServiceModule.sessionIdTracker,
             androidServicesModule.preferencesService,
-            logMessageService,
+            { networkCaptureDataSource },
             essentialServiceModule.configService,
             initModule.jsonSerializer,
             initModule.logger
@@ -87,7 +87,6 @@ internal class CustomerLogModuleImpl(
     override val logMessageService: LogMessageService by singleton {
         CompositeLogService(
             { v2LogService },
-            { networkCaptureDataSource },
             initModule.logger,
             initModule.jsonSerializer
         )

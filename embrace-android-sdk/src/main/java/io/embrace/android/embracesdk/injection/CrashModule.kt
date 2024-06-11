@@ -1,10 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.capture.crash.CompositeCrashService
-import io.embrace.android.embracesdk.capture.crash.CrashDataSource
 import io.embrace.android.embracesdk.capture.crash.CrashDataSourceImpl
 import io.embrace.android.embracesdk.capture.crash.CrashService
-import io.embrace.android.embracesdk.capture.crash.EmbraceCrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
@@ -28,11 +25,9 @@ internal class CrashModuleImpl(
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    dataContainerModule: DataContainerModule,
     androidServicesModule: AndroidServicesModule,
     logModule: CustomerLogModule
 ) : CrashModule {
@@ -44,27 +39,7 @@ internal class CrashModuleImpl(
         CrashFileMarkerImpl(markerFile, initModule.logger)
     }
 
-    private val legacyCrashService: CrashService by singleton {
-        EmbraceCrashService(
-            logModule.logOrchestrator,
-            sessionModule.sessionOrchestrator,
-            sessionModule.sessionPropertiesService,
-            essentialServiceModule.metadataService,
-            essentialServiceModule.sessionIdTracker,
-            deliveryModule.deliveryService,
-            essentialServiceModule.userService,
-            dataContainerModule.eventService,
-            anrModule.anrService,
-            nativeModule.ndkService,
-            essentialServiceModule.gatingService,
-            androidServicesModule.preferencesService,
-            crashMarker,
-            initModule.clock,
-            initModule.logger
-        )
-    }
-
-    private val crashDataSource: CrashDataSource by singleton {
+    override val crashService: CrashService by singleton {
         CrashDataSourceImpl(
             logModule.logOrchestrator,
             sessionModule.sessionOrchestrator,
@@ -77,15 +52,6 @@ internal class CrashModuleImpl(
             essentialServiceModule.configService,
             initModule.jsonSerializer,
             initModule.logger,
-        )
-    }
-
-    override val crashService: CrashService by singleton {
-        CompositeCrashService(
-            { legacyCrashService },
-            { crashDataSource },
-            essentialServiceModule.configService,
-            initModule.logger
         )
     }
 

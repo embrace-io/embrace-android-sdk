@@ -211,11 +211,9 @@ internal typealias CrashModuleSupplier = (
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    dataContainerModule: DataContainerModule,
     androidServicesModule: AndroidServicesModule,
     logModule: CustomerLogModule,
 ) -> CrashModule

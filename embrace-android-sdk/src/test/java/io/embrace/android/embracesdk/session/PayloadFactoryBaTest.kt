@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
-import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -80,8 +79,7 @@ internal class PayloadFactoryBaTest {
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true,
-            oTelBehavior = fakeV2OtelBehavior()
+            backgroundActivityCaptureEnabled = true
         )
         configService.updateListeners()
         val otelCfg = OpenTelemetryConfiguration(

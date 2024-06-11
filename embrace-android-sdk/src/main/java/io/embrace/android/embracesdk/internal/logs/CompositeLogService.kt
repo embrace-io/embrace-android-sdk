@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
@@ -22,13 +21,12 @@ internal class CompositeLogService(
     private val v1LogService: Provider<LogMessageService>,
     private val v2LogService: Provider<LogService>,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
-    private val configService: ConfigService,
     private val logger: EmbLogger,
     private val serializer: EmbraceSerializer
 ) : LogMessageService {
 
     private val useV2LogService: Boolean
-        get() = configService.oTelBehavior.isStableEnabled()
+        get() = true // TODO: simplify log service
 
     private val baseLogService: BaseLogService
         get() = if (useV2LogService) v2LogService() else v1LogService()

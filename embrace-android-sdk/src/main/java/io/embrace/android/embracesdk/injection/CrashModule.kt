@@ -67,7 +67,7 @@ internal class CrashModuleImpl(
     override val nativeCrashService: NativeCrashService by singleton {
         if (!essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
             NoopNativeCrashService()
-        } else if (essentialServiceModule.configService.oTelBehavior.isBetaEnabled()) {
+        } else {
             NativeCrashDataSourceImpl(
                 sessionProperties = essentialServiceModule.sessionProperties,
                 ndkService = nativeModule.ndkService,
@@ -77,8 +77,6 @@ internal class CrashModuleImpl(
                 serializer = initModule.jsonSerializer,
                 logger = initModule.logger,
             )
-        } else {
-            nativeModule.ndkService
         }
     }
 }

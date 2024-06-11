@@ -106,7 +106,6 @@ internal class CustomerLogModuleImpl(
             { v1LogService },
             { v2LogService },
             { networkCaptureDataSource },
-            essentialServiceModule.configService,
             initModule.logger,
             initModule.jsonSerializer
         )

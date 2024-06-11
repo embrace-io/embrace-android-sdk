@@ -2,9 +2,6 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.recordSession
@@ -56,7 +53,12 @@ internal class UserFeaturesTest {
         }
     }
 
-    private fun SessionMessage.assertUserInfo(preferencesService: PreferencesService, userId: String?, userName: String?, email: String?) {
+    private fun SessionMessage.assertUserInfo(
+        preferencesService: PreferencesService,
+        userId: String?,
+        userName: String?,
+        email: String?
+    ) {
         assertEquals(userId, checkNotNull(metadata).userId)
         assertEquals(userId, preferencesService.userIdentifier)
         assertEquals(userName, metadata.username)

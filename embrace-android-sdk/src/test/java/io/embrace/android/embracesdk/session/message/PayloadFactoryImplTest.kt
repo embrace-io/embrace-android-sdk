@@ -34,7 +34,6 @@ internal class PayloadFactoryImplTest {
             gatingService = FakeGatingService(),
             preferencesService = FakePreferenceService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            logger = initModule.logger,
             sessionEnvelopeSource = SessionEnvelopeSourceImpl(
                 FakeEnvelopeMetadataSource(),
                 FakeEnvelopeResourceSource(),

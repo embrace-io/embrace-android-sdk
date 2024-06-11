@@ -41,11 +41,5 @@ internal class FakeV2PayloadCollator(
      * Builds a fully populated session message. This can be sent to the backend (or stored
      * on disk).
      */
-    override fun buildFinalSessionMessage(
-        params: FinalEnvelopeParams.SessionParams
-    ): SessionMessage = SessionMessage()
-
-    override fun buildFinalBackgroundActivityMessage(
-        params: FinalEnvelopeParams.BackgroundActivityParams
-    ): SessionMessage = SessionMessage()
+    override fun buildFinalSessionMessage(params: FinalEnvelopeParams) = SessionMessage()
 }

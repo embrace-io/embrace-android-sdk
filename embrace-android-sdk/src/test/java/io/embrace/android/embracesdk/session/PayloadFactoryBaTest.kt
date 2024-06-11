@@ -171,8 +171,7 @@ internal class PayloadFactoryBaTest {
             gatingService,
             sessionEnvelopeSource,
             preferencesService,
-            currentSessionSpan,
-            logger
+            currentSessionSpan
         )
         return PayloadFactoryImpl(collator, configService, logger).apply {
             if (createInitialSession) {

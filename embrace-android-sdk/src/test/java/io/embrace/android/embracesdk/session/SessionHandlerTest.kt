@@ -146,8 +146,7 @@ internal class SessionHandlerTest {
                 )
             ),
             preferencesService,
-            currentSessionSpan,
-            logger,
+            currentSessionSpan
         )
         payloadFactory = PayloadFactoryImpl(collator, configService, logger)
     }

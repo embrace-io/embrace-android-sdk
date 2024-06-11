@@ -34,6 +34,8 @@ internal class SessionSpanAttrPopulator(
             addCustomAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
             addCustomAttribute(SpanAttributeData(embState.name, session.appState.name.toLowerCase(Locale.US)))
             addCustomAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
+            addCustomAttribute(SpanAttributeData(embTerminated.name, true.toString()))
+
             session.startType.toString().toLowerCase(Locale.US).let {
                 addCustomAttribute(SpanAttributeData(embSessionStartType.name, it))
             }

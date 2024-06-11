@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.arch.datasource
 
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
-import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -34,14 +32,6 @@ internal interface SpanDataSource : DataSource<SpanService> {
         inputValidation: () -> Boolean,
         captureAction: SpanService.() -> Unit
     ): Boolean
-}
-
-/**
- * Starts a span using the given [SpanEventData].
- */
-internal fun <T> SpanService.startSpanCapture(obj: T, mapper: T.() -> StartSpanData): EmbraceSpan? {
-    val data = obj.mapper()
-    return startSpanCapture(data.schemaType, data.spanStartTimeMs)
 }
 
 internal fun SpanService.startSpanCapture(schemaType: SchemaType, startTimeMs: Long): PersistableEmbraceSpan? {

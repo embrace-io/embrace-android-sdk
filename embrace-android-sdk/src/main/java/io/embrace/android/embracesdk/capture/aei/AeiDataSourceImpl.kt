@@ -6,6 +6,7 @@ import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
@@ -192,7 +193,7 @@ internal class AeiDataSourceImpl(
     private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
         appExitInfoWithTraces.forEach { data ->
             alterSessionSpan(
-                inputValidation = { true },
+                inputValidation = NoInputValidation,
                 captureAction = {
                     val blob = BlobMessage(
                         metadataService.getAppInfo(),

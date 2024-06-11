@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.capture.session
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
@@ -22,7 +23,7 @@ internal class SessionPropertiesDataSource(
      */
     fun addProperty(key: String, value: String): Boolean =
         alterSessionSpan(
-            inputValidation = { true },
+            inputValidation = NoInputValidation,
             captureAction = {
                 addAttribute(key, value)
             }
@@ -30,7 +31,7 @@ internal class SessionPropertiesDataSource(
 
     fun addProperties(properties: Map<String, String>): Boolean =
         alterSessionSpan(
-            inputValidation = { true },
+            inputValidation = NoInputValidation,
             captureAction = {
                 properties.forEach { property ->
                     addAttribute(property.key, property.value)
@@ -41,7 +42,7 @@ internal class SessionPropertiesDataSource(
     fun removeProperty(key: String): Boolean {
         var success = false
         alterSessionSpan(
-            inputValidation = { true },
+            inputValidation = NoInputValidation,
             captureAction = {
                 success = removeCustomAttribute(key.toSessionPropertyAttributeName())
             }

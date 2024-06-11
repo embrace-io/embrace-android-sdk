@@ -47,3 +47,19 @@ internal class FakeNetworkConnectivityService(
         private const val defaultIpAddress = "220.1.1.1"
     }
 }
+
+internal class NoOpNetworkConnectivityService : NetworkConnectivityService {
+    override fun close() {}
+
+    override fun networkStatusOnSessionStarted(startTime: Long) {}
+
+    override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {}
+
+    override fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener) {}
+
+    override fun getCurrentNetworkStatus(): NetworkStatus {
+        return NetworkStatus.UNKNOWN
+    }
+
+    override val ipAddress: String? = null
+}

@@ -10,14 +10,12 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -146,7 +144,10 @@ internal class IntegrationTestRule(
         val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),
         val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
-        val overriddenCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework, logger = overriddenInitModule.logger),
+        val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
+            appFramework = appFramework,
+            logger = overriddenInitModule.logger
+        ),
         val overriddenWorkerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(overriddenInitModule),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
@@ -179,16 +180,8 @@ internal class IntegrationTestRule(
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             ),
-        val fakeAnrModule: AnrModule = FakeAnrModule(),
-        val useV2Payload: Boolean = true
+        val fakeAnrModule: AnrModule = FakeAnrModule()
     ) {
-        init {
-            if (useV2Payload) {
-                overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-                    RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
-                }
-            }
-        }
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)
         }

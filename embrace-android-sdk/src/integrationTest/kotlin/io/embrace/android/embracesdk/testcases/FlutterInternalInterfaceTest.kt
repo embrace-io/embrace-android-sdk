@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
@@ -40,7 +39,10 @@ internal class FlutterInternalInterfaceTest {
             appFramework = Embrace.AppFramework.FLUTTER,
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.REMOTE_LOGGING)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(
+                fakeInitModule = fakeInitModule,
+                name = WorkerName.REMOTE_LOGGING
+            )
         )
     }
 

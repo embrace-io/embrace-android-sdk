@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.config.behavior.OTelBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
@@ -94,11 +93,6 @@ internal interface ConfigService : Closeable {
      * How the network span forwarding feature should behave
      */
     val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
-
-    /**
-     * Provides whether the SDK should enable different payloads in OTel format.
-     */
-    val oTelBehavior: OTelBehavior
 
     /**
      * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the

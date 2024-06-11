@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
-import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -117,8 +116,7 @@ internal class SessionHandlerTest {
             ),
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior(
                 remoteCfg = { remoteConfig }
-            ),
-            oTelBehavior = fakeV2OtelBehavior()
+            )
         )
         gatingService = FakeGatingService(configService = configService)
         preferencesService = FakePreferenceService()

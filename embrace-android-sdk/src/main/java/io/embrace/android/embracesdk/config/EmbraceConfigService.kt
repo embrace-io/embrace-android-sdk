@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.config.behavior.OTelBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
@@ -153,12 +152,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
 
     override val webViewVitalsBehavior: WebViewVitalsBehavior =
         WebViewVitalsBehavior(
-            thresholdCheck = thresholdCheck,
-            remoteSupplier = remoteSupplier
-        )
-
-    override val oTelBehavior: OTelBehavior =
-        OTelBehavior(
             thresholdCheck = thresholdCheck,
             remoteSupplier = remoteSupplier
         )

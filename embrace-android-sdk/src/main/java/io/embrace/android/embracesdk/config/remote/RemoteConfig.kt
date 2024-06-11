@@ -116,10 +116,4 @@ internal data class RemoteConfig(
      */
     @Json(name = "pct_defer_service_init")
     val pctDeferServiceInitEnabled: Float? = null,
-
-    /**
-     * Settings defining the OTel configuration.
-     */
-    @Json(name = "otel_config")
-    val oTelConfig: OTelRemoteConfig? = null
 )

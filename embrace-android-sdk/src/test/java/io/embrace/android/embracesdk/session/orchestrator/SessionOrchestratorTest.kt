@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.fakes.fakeV2OtelBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -68,7 +67,7 @@ internal class SessionOrchestratorTest {
     fun setUp() {
         clock = FakeClock()
         logger = EmbLoggerImpl()
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true, oTelBehavior = fakeV2OtelBehavior())
+        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
     }
 
     @Test
@@ -127,7 +126,10 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         clock.tick()
         baCacheExecutor.runCurrentlyBlocked()
-        assertEquals(SessionSnapshotType.PERIODIC_CACHE, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(
+            SessionSnapshotType.PERIODIC_CACHE,
+            checkNotNull(deliveryService.savedSessionMessages.last().second)
+        )
         assertEquals(1, deliveryService.savedSessionMessages.size)
         orchestrator.onForeground(true, clock.now())
         clock.tick()
@@ -153,7 +155,10 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(SessionSnapshotType.PERIODIC_CACHE, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(
+            SessionSnapshotType.PERIODIC_CACHE,
+            checkNotNull(deliveryService.savedSessionMessages.last().second)
+        )
         assertEquals(1, deliveryService.savedSessionMessages.size)
         orchestrator.onBackground(clock.now())
         clock.tick()
@@ -204,8 +209,7 @@ internal class SessionOrchestratorTest {
                         isEnabled = true
                     ),
                 )
-            },
-            oTelBehavior = fakeV2OtelBehavior()
+            }
         )
         createOrchestrator(false)
 
@@ -219,9 +223,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually clears user info`() {
-        configService = FakeConfigService(
-            oTelBehavior = fakeV2OtelBehavior()
-        )
+        configService = FakeConfigService()
         createOrchestrator(false)
         clock.tick(10000)
 
@@ -232,9 +234,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually above time threshold succeeds`() {
-        configService = FakeConfigService(
-            oTelBehavior = fakeV2OtelBehavior()
-        )
+        configService = FakeConfigService()
         createOrchestrator(false)
         clock.tick(10000)
         assertEquals(1, payloadCollator.sessionCount.get())
@@ -245,9 +245,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually below time threshold fails`() {
-        configService = FakeConfigService(
-            oTelBehavior = fakeV2OtelBehavior()
-        )
+        configService = FakeConfigService()
         createOrchestrator(false)
         clock.tick(1000)
 
@@ -258,9 +256,7 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `ending session manually when no session exists doesn not start a new session`() {
-        configService = FakeConfigService(
-            oTelBehavior = fakeV2OtelBehavior()
-        )
+        configService = FakeConfigService()
         createOrchestrator(true)
         clock.tick(1000)
         orchestrator.endSessionWithManual(true)
@@ -271,7 +267,6 @@ internal class SessionOrchestratorTest {
     fun `end with crash in background`() {
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
-            oTelBehavior = fakeV2OtelBehavior()
         )
         createOrchestrator(true)
         orchestrator.endSessionWithCrash("crashId")
@@ -282,7 +277,6 @@ internal class SessionOrchestratorTest {
     fun `end with crash in foreground`() {
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
-            oTelBehavior = fakeV2OtelBehavior()
         )
         createOrchestrator(false)
         orchestrator.endSessionWithCrash("crashId")
@@ -378,7 +372,8 @@ internal class SessionOrchestratorTest {
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
-        periodicBackgroundActivityCacher = PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
+        periodicBackgroundActivityCacher =
+            PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
         fakeDataSource = FakeDataSource(mockContext())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             listOf(
@@ -410,7 +405,12 @@ internal class SessionOrchestratorTest {
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
             currentSessionSpan,
-            SessionSpanAttrPopulator(currentSessionSpan, FakeEventService(), FakeStartupService(), FakeLogMessageService()),
+            SessionSpanAttrPopulator(
+                currentSessionSpan,
+                FakeEventService(),
+                FakeStartupService(),
+                FakeLogMessageService()
+            ),
             logger
         )
         orchestratorStartTimeMs = clock.now()

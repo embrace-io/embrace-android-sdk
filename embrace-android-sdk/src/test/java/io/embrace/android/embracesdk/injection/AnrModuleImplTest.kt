@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.anr.NoOpAnrService
-import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
 import io.embrace.android.embracesdk.config.local.AutomaticDataCaptureLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -39,7 +38,6 @@ internal class AnrModuleImplTest {
         )
         assertNotNull(module.anrService)
         assertNotNull(module.anrOtelMapper)
-        assertNotNull(module.responsivenessMonitorService)
     }
 
     @Test
@@ -53,7 +51,6 @@ internal class AnrModuleImplTest {
             FakeOpenTelemetryModule()
         )
         assertTrue(module.anrService is NoOpAnrService)
-        assertTrue(module.responsivenessMonitorService is NoOpResponsivenessMonitorService)
         assertNotNull(module.anrOtelMapper)
     }
 

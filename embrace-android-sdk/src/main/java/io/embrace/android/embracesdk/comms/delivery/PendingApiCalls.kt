@@ -87,7 +87,6 @@ internal class PendingApiCalls(
     private fun Endpoint.getMaxPendingApiCalls(): Int {
         return when (this) {
             Endpoint.EVENTS -> 100
-            Endpoint.BLOBS -> 50
             Endpoint.LOGGING -> 100
             Endpoint.LOGS -> 10
             Endpoint.NETWORK -> 50

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.payload.SessionMessage
@@ -29,7 +28,6 @@ internal class FakeApiService : ApiService {
     val networkCallRequests = mutableListOf<NetworkEvent>()
     val eventRequests = mutableListOf<EventMessage>()
     val crashRequests = mutableListOf<EventMessage>()
-    val blobRequests = mutableListOf<BlobMessage>()
     val sessionRequests = mutableListOf<SessionMessage>()
     var futureGetCount: Int = 0
 
@@ -64,10 +62,6 @@ internal class FakeApiService : ApiService {
     override fun sendCrash(crash: EventMessage): Future<*> {
         crashRequests.add(crash)
         return ObservableFutureTask { }
-    }
-
-    override fun sendAEIBlob(blobMessage: BlobMessage) {
-        blobRequests.add(blobMessage)
     }
 
     override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {

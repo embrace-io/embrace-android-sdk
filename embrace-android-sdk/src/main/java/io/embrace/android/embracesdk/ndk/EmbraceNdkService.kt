@@ -512,7 +512,6 @@ internal class EmbraceNdkService(
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val nativeCrashMessageEvent = EventMessage(
             nativeCrashEvent,
-            null,
             metadata?.deviceInfo,
             metadata?.appInfo,
             metadata?.userInfo,

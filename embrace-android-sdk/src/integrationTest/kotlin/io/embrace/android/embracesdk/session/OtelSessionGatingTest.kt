@@ -44,28 +44,19 @@ internal class OtelSessionGatingTest {
         sessionComponents = setOf()
     )
 
-    private val gatingService = EmbraceGatingService(
-        FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
-                RemoteConfig(sessionConfig = gatingConfig)
-            },
-        ),
-        FakeLogMessageService(),
-        EmbLoggerImpl()
-    )
-
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         Harness(
-            overriddenDeliveryModule = FakeDeliveryModule(
-                deliveryService = GatedDeliveryService(gatingService)
+            overriddenConfigService = FakeConfigService(
+                sessionBehavior = fakeSessionBehavior(remoteCfg = { RemoteConfig(sessionConfig = gatingConfig) })
             )
         )
     }
 
     @Before
     fun setUp() {
+        testRule.harness.overriddenConfigService.sessionBehavior
         assertTrue(testRule.harness.getSentSessions().isEmpty())
     }
 
@@ -132,22 +123,5 @@ internal class OtelSessionGatingTest {
             harness.overriddenClock.tick(10000) // enough to trigger new session
             action()
         }
-    }
-
-    /**
-     * Wraps a fake delivery service around the [GatingService] so we can assert against
-     * gating behavior.
-     */
-    private class GatedDeliveryService(
-        private val gatingService: GatingService,
-    ) : FakeDeliveryService() {
-
-        override fun sendSession(
-            sessionMessage: SessionMessage,
-            snapshotType: SessionSnapshotType
-        ) = super.sendSession(
-            gatingService.gateSessionMessage(sessionMessage),
-            snapshotType
-        )
     }
 }

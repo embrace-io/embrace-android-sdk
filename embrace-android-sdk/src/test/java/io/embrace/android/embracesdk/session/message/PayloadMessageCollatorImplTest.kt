@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.payload.Session
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
@@ -130,16 +129,10 @@ internal class PayloadMessageCollatorImplTest {
         assertNotNull(data)
         assertNotNull(newVersion)
         assertNotNull(type)
-        session.verifyFinalFieldsPopulated()
     }
 
     private fun SessionZygote.verifyInitialFieldsPopulated() {
         assertNotNull(sessionId)
         assertEquals(5L, startTime)
-    }
-
-    private fun Session.verifyFinalFieldsPopulated() {
-        assertEquals(15000000000L, endTime)
-        assertEquals(15000000000L, lastHeartbeatTime)
     }
 }

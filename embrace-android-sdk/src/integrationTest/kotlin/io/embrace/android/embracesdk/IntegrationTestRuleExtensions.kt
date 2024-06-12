@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.SessionMessage
 import org.json.JSONObject
 import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.robolectric.Robolectric
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
@@ -202,22 +200,6 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: Provider<T>, waitTim
     }
 
     throw TimeoutException("Timeout period elapsed before condition met")
-}
-
-internal fun verifySessionHappened(message: SessionMessage) {
-    verifySessionMessage(message)
-}
-
-internal fun verifySessionMessage(sessionMessage: SessionMessage) {
-    assertNotNull(sessionMessage.session)
-}
-
-internal fun verifyBgActivityHappened(message: SessionMessage) {
-    verifyBgActivityMessage(message)
-}
-
-internal fun verifyBgActivityMessage(message: SessionMessage) {
-    assertNotNull(message.session)
 }
 
 private const val CHECK_INTERVAL_MS: Int = 10

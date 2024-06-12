@@ -46,7 +46,6 @@ import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -166,33 +165,6 @@ internal class SessionHandlerTest {
         payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true)
 
         assertEquals(1, preferencesService.incrementAndGetSessionNumberCount)
-    }
-
-    @Test
-    fun `onCrash ended session successfully`() {
-        startFakeSession()
-
-        val crashId = "crash-id"
-        val sdkStartupDuration = 2L
-
-        val msg = payloadFactory.endPayloadWithCrash(
-            ProcessState.FOREGROUND,
-            clock.now(),
-            initial,
-            crashId
-        )
-        val session = checkNotNull(msg).session
-
-        // when crashing, the following calls should not be made, this is because since we're
-        // about to crash we can save some time on not doing these //
-        assertEquals(0, memoryCleanerService.callCount)
-        verify(exactly = 0) { sessionProperties.clearTemporary() }
-
-        with(session) {
-            assertEquals(NOW, lastHeartbeatTime)
-            assertEquals(NOW, endTime)
-            assertEquals(sdkStartupDuration, sdkStartupDuration)
-        }
     }
 
     @Test

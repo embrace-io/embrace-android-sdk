@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.verifySessionHappened
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -77,7 +76,6 @@ internal class OtelSessionGatingTest {
         with(testRule) {
             simulateSession()
             val payload = harness.getSentSessions().single()
-            verifySessionHappened(payload)
             assertSessionGating(payload, gated = false)
         }
     }
@@ -95,7 +93,6 @@ internal class OtelSessionGatingTest {
         with(testRule) {
             simulateSession()
             val payload = harness.getSentSessions().single()
-            verifySessionHappened(payload)
             assertSessionGating(payload, gated = true)
         }
     }

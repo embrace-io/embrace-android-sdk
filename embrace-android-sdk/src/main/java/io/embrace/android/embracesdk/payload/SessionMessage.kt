@@ -16,20 +16,7 @@ import io.embrace.android.embracesdk.opentelemetry.embSessionId
  * device which occurred during the session.
  */
 @JsonClass(generateAdapter = true)
-internal data class SessionMessage @JvmOverloads internal constructor(
-
-    /**
-     * The session information.
-     */
-    @Json(name = "s")
-    val session: Session,
-
-    /*
-     * Values below this point are copied temporarily from [Envelope]. Eventually we will migrate
-     * everything to use [Envelope] and [SessionPayload] and remove this class,
-     * but we'll keep it for now for backwards compat.
-     */
-
+internal data class SessionMessage(
     @Json(name = "resource")
     val resource: EnvelopeResource? = null,
 

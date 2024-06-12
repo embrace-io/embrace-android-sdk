@@ -19,6 +19,5 @@ internal class DataContainerModuleImplTest {
             0
         )
         assertNotNull(module.eventService)
-        assertNotNull(module.performanceInfoService)
     }
 }

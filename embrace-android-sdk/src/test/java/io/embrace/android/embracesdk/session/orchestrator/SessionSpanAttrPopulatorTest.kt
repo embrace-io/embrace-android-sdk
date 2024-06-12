@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session.orchestrator
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.LifeEventType
@@ -24,7 +25,8 @@ internal class SessionSpanAttrPopulatorTest {
             writer,
             FakeEventService(),
             FakeStartupService(),
-            FakeLogMessageService()
+            FakeLogMessageService(),
+            FakeMetadataService()
         )
     }
 
@@ -54,7 +56,8 @@ internal class SessionSpanAttrPopulatorTest {
             "emb.terminated" to "false",
             "emb.crash_id" to "crashId",
             "emb.session_end_type" to "state",
-            "emb.error_log_count" to "0"
+            "emb.error_log_count" to "0",
+            "emb.disk_free_bytes" to "500000000"
         )
         assertEquals(expected, attrs)
     }

@@ -50,6 +50,7 @@ internal class EnvelopeResourceSourceImpl(
             osCode = device.systemInfo.androidOsApiLevel,
             screenResolution = device.screenResolution,
             numCores = device.numberOfCores,
+            diskSpace = metadataService.getDeviceInfo().internalStorageTotalCapacity
         )
     }
 

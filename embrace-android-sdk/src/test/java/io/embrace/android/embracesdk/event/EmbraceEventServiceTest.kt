@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.event
 
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -13,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -58,7 +56,6 @@ internal class EmbraceEventServiceTest {
         private lateinit var metadataService: MetadataService
         private lateinit var sessionIdTracker: FakeSessionIdTracker
         private lateinit var preferenceService: PreferencesService
-        private lateinit var performanceInfoService: PerformanceInfoService
         private lateinit var userService: UserService
         private lateinit var processStateService: ProcessStateService
         private lateinit var logger: EmbLogger
@@ -69,7 +66,6 @@ internal class EmbraceEventServiceTest {
             metadataService = FakeMetadataService()
             sessionIdTracker = FakeSessionIdTracker()
             preferenceService = FakePreferenceService()
-            performanceInfoService = FakePerformanceInfoService()
             processStateService = FakeProcessStateService()
             logger = EmbLoggerImpl()
             userService = EmbraceUserService(
@@ -116,7 +112,6 @@ internal class EmbraceEventServiceTest {
             sessionIdTracker = sessionIdTracker,
             configService = configService,
             userService = userService,
-            performanceInfoService = performanceInfoService,
             deliveryService = deliveryService,
             logger = logger,
             clock = fakeClock,
@@ -128,7 +123,6 @@ internal class EmbraceEventServiceTest {
             configService,
             metadataService,
             sessionIdTracker,
-            performanceInfoService,
             userService,
             sessionProperties,
             logger,

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.fakePerformanceInfo
 import io.embrace.android.embracesdk.gating.EventSanitizerFacade
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.payload.AppInfo
@@ -30,14 +29,11 @@ internal class EventSanitizerFacadeTest {
         email = "example@embrace.com"
     )
 
-    private val performanceInfo = fakePerformanceInfo()
-
     private val eventMessage = EventMessage(
         event = event,
         userInfo = userInfo,
         appInfo = AppInfo(),
-        deviceInfo = DeviceInfo(),
-        performanceInfo = performanceInfo
+        deviceInfo = DeviceInfo()
     )
 
     private val enabledComponents = setOf(
@@ -58,7 +54,6 @@ internal class EventSanitizerFacadeTest {
         assertNotNull(sanitizedMessage.event.customProperties)
         assertNotNull(sanitizedMessage.event.sessionProperties)
         assertNotNull(checkNotNull(sanitizedMessage.userInfo).personas)
-        assertNotNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)
         assertNotNull(sanitizedMessage.deviceInfo)
@@ -73,7 +68,6 @@ internal class EventSanitizerFacadeTest {
         assertNull(sanitizedMessage.event.customProperties)
         assertNull(sanitizedMessage.event.sessionProperties)
         assertNull(checkNotNull(sanitizedMessage.userInfo).personas)
-        assertNull(sanitizedMessage.performanceInfo?.diskUsage)
 
         assertNotNull(sanitizedMessage.appInfo)
         assertNotNull(sanitizedMessage.deviceInfo)

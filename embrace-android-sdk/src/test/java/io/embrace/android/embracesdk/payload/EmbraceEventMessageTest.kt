@@ -26,9 +26,6 @@ internal class EmbraceEventMessageTest {
 
     private val eventMessage = EventMessage(
         event = eventComplete,
-        performanceInfo = PerformanceInfo(
-            diskUsage = DiskUsage(appDiskUsage = null, deviceDiskFree = 3862863872L)
-        ),
         userInfo = UserInfo(personas = setOf("first_day")),
         version = 13
     )
@@ -51,7 +48,6 @@ internal class EmbraceEventMessageTest {
         assertEquals("messageId", obj.event.messageId)
 
         assertEquals(13, obj.version)
-        assertEquals(3862863872L, obj.performanceInfo?.diskUsage?.deviceDiskFree)
         assertEquals(1, obj.userInfo?.personas?.size)
     }
 }

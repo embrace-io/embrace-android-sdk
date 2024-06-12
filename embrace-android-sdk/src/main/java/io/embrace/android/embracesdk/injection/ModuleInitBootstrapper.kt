@@ -387,7 +387,6 @@ internal class ModuleInitBootstrapper(
 
                     postInit(NativeModule::class) {
                         serviceRegistry.registerServices(
-                            dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
                         )
                     }

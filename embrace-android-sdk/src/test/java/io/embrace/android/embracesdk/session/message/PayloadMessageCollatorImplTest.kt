@@ -8,9 +8,10 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
@@ -83,7 +84,7 @@ internal class PayloadMessageCollatorImplTest {
         startMsg.verifyInitialFieldsPopulated()
 
         // create session
-        val payload = collator.buildFinalSessionMessage(
+        val payload = collator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 startMsg,
                 SessionSnapshotType.NORMAL_END,
@@ -109,7 +110,7 @@ internal class PayloadMessageCollatorImplTest {
         startMsg.verifyInitialFieldsPopulated()
 
         // create session
-        val payload = collator.buildFinalSessionMessage(
+        val payload = collator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 startMsg,
                 SessionSnapshotType.NORMAL_END,
@@ -121,11 +122,11 @@ internal class PayloadMessageCollatorImplTest {
         assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
-    private fun SessionMessage.verifyFinalFieldsPopulated() {
+    private fun Envelope<SessionPayload>.verifyFinalFieldsPopulated() {
         assertNotNull(resource)
         assertNotNull(metadata)
         assertNotNull(data)
-        assertNotNull(newVersion)
+        assertNotNull(version)
         assertNotNull(type)
     }
 

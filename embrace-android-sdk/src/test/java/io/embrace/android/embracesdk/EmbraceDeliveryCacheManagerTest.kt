@@ -11,12 +11,12 @@ import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
-import io.embrace.android.embracesdk.fixtures.testSessionMessage
-import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
+import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
+import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
+import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
@@ -81,31 +81,31 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `serializing current session successfully`() {
-        val sessionMessage = fakeSessionMessage(
+        val envelope = fakeSessionEnvelope(
             sessionId = "test_cache",
             startMs = fakeClock.now()
         )
-        deliveryCacheManager.saveSession(sessionMessage, NORMAL_END)
+        deliveryCacheManager.saveSession(envelope, NORMAL_END)
         assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
     fun `cache periodic session successful`() {
-        val sessionMessage = fakeSessionMessage(
+        val envelope = fakeSessionEnvelope(
             sessionId = "test_cache",
             startMs = fakeClock.now()
         )
-        deliveryCacheManager.saveSession(sessionMessage, PERIODIC_CACHE)
+        deliveryCacheManager.saveSession(envelope, PERIODIC_CACHE)
         assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
     @Test
     fun `cache session on crash successful`() {
-        val sessionMessage = fakeSessionMessage(
+        val envelope = fakeSessionEnvelope(
             sessionId = "test_cache",
             startMs = fakeClock.now()
         )
-        deliveryCacheManager.saveSession(sessionMessage, JVM_CRASH)
+        deliveryCacheManager.saveSession(envelope, JVM_CRASH)
         assertNotNull(deliveryCacheManager.loadSessionAsAction("test_cache"))
     }
 
@@ -119,7 +119,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         every { cacheService.writeSession(any(), any()) } throws Exception()
 
         deliveryCacheManager.saveSession(
-            fakeSessionMessage(
+            fakeSessionEnvelope(
                 sessionId = "exception_session",
                 startMs = fakeClock.now()
             ),
@@ -130,15 +130,15 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `return serialized current session even if cache fails`() {
-        every { cacheService.writeSession(any(), eq(testSessionMessageOneMinuteLater)) } throws Exception()
-        deliveryCacheManager.saveSession(testSessionMessage, PERIODIC_CACHE)
+        every { cacheService.writeSession(any(), eq(testSessionEnvelopeOneMinuteLater)) } throws Exception()
+        deliveryCacheManager.saveSession(testSessionEnvelope, PERIODIC_CACHE)
         val original = ByteArrayOutputStream()
-        original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.getSessionId())))
+        original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionEnvelope.getSessionId())))
 
-        deliveryCacheManager.saveSession(testSessionMessageOneMinuteLater, PERIODIC_CACHE)
+        deliveryCacheManager.saveSession(testSessionEnvelopeOneMinuteLater, PERIODIC_CACHE)
 
         val secondLoad = ByteArrayOutputStream()
-        secondLoad.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionMessage.getSessionId())))
+        secondLoad.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionEnvelope.getSessionId())))
 
         assertArrayEquals(original.toByteArray(), secondLoad.toByteArray())
     }
@@ -147,7 +147,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `remove cached session successfully`() {
         assertNull(deliveryCacheManager.loadSessionAsAction("test_remove"))
 
-        val session = fakeSessionMessage(
+        val session = fakeSessionEnvelope(
             sessionId = "test_remove",
             startMs = fakeClock.now()
         )
@@ -163,7 +163,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         every { cacheService.deleteFile(any()) } throws Exception()
 
         deliveryCacheManager.saveSession(
-            fakeSessionMessage(
+            fakeSessionEnvelope(
                 sessionId = "test_delete_exception",
                 startMs = fakeClock.now()
             ),
@@ -177,15 +177,15 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `read cached sessions`() {
         cacheService.writeSession(
             CachedSession.create("session1", clockInit - 300000, false).filename,
-            fakeSessionMessage("session1", clockInit - 300000)
+            fakeSessionEnvelope("session1", clockInit - 300000)
         )
         cacheService.writeSession(
             CachedSession.create("session2", clockInit - 360000, false).filename,
-            fakeSessionMessage("session2", clockInit - 360000)
+            fakeSessionEnvelope("session2", clockInit - 360000)
         )
         cacheService.writeSession(
             CachedSession.create("session3", clockInit - 420000, false).filename,
-            fakeSessionMessage("session3", clockInit - 420000)
+            fakeSessionEnvelope("session3", clockInit - 420000)
         )
         assertEquals(
             setOf("session1", "session2", "session3"),
@@ -195,10 +195,10 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `malformed file names do not trigger an exception`() {
-        cacheService.writeSession("$prefix.session1.json", testSessionMessage)
-        cacheService.writeSession("$prefix.$clockInit.json", testSessionMessage)
-        cacheService.writeSession("$prefix..json", testSessionMessage)
-        cacheService.writeSession("$prefix.session1.$clockInit.json", testSessionMessage)
+        cacheService.writeSession("$prefix.session1.json", testSessionEnvelope)
+        cacheService.writeSession("$prefix.$clockInit.json", testSessionEnvelope)
+        cacheService.writeSession("$prefix..json", testSessionEnvelope)
+        cacheService.writeSession("$prefix.session1.$clockInit.json", testSessionEnvelope)
 
         assertTrue(deliveryCacheManager.getAllCachedSessionIds().isEmpty())
     }
@@ -207,7 +207,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `amount of cached sessions in file is limited`() {
         repeat(100) { i ->
             deliveryCacheManager.saveSession(
-                fakeSessionMessage(
+                fakeSessionEnvelope(
                     sessionId = "test$i",
                     startMs = fakeClock.now()
                 ),
@@ -230,13 +230,13 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `check for a session saved in previous versions of the SDK will return and the original file will be deleted`() {
-        val session = testSessionMessage
+        val session = testSessionEnvelope
         cacheService.writeSession("last_session.json", session)
 
         val allSessions = deliveryCacheManager.getAllCachedSessionIds()
         assertEquals(1, allSessions.size)
         assertNotNull(deliveryCacheManager.loadSessionAsAction(allSessions[0].sessionId))
-        assertNull(cacheService.loadObject("last_session.json", SessionMessage::class.java))
+        assertNull(cacheService.loadObject("last_session.json", Envelope.sessionEnvelopeType))
     }
 
     @Test

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeStorageService
-import io.embrace.android.embracesdk.fixtures.testSessionMessage
+import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
@@ -56,7 +56,7 @@ internal class EmbraceDeliveryCacheCurrentAccessTest {
     }
 
     fun `session always replaced after the first write`() {
-        val sessionMessage = testSessionMessage
+        val envelope = testSessionEnvelope
         val iterations = 10
         val latch = CountDownLatch(iterations)
         val savesDoneLatch = CountDownLatch(iterations)
@@ -66,7 +66,7 @@ internal class EmbraceDeliveryCacheCurrentAccessTest {
                 latch.countDown()
                 // Running with a snapshot type that will do the save on the current thread
                 // Any other type would serially run the writes on the same thread so we can never get into the race condition being tested
-                deliveryCacheManager.saveSession(sessionMessage, SessionSnapshotType.JVM_CRASH)
+                deliveryCacheManager.saveSession(envelope, SessionSnapshotType.JVM_CRASH)
                 savesDoneLatch.countDown()
             }
         }

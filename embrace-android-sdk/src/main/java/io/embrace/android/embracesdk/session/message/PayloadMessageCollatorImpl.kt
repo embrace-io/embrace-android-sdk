@@ -2,8 +2,9 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.gating.GatingService
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.prefs.PreferencesService
 
@@ -28,17 +29,17 @@ internal class PayloadMessageCollatorImpl(
         )
     }
 
-    override fun buildFinalSessionMessage(params: FinalEnvelopeParams): SessionMessage {
+    override fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPayload> {
         val envelope = gatingService.gateSessionEnvelope(
             params.crashId != null,
             sessionEnvelopeSource.getEnvelope(params.endType, params.crashId)
         )
-        return SessionMessage(
+        return Envelope<SessionPayload>(
             // future work: make legacy fields null here.
             resource = envelope.resource,
             metadata = envelope.metadata,
             data = envelope.data,
-            newVersion = envelope.version,
+            version = envelope.version,
             type = envelope.type
         )
     }

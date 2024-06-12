@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
-import io.embrace.android.embracesdk.payload.getSessionSpan
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import org.junit.Assert.assertEquals

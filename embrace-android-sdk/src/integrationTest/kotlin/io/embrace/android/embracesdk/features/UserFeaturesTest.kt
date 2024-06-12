@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -53,7 +54,7 @@ internal class UserFeaturesTest {
         }
     }
 
-    private fun SessionMessage.assertUserInfo(
+    private fun Envelope<SessionPayload>.assertUserInfo(
         preferencesService: PreferencesService,
         userId: String?,
         userName: String?,

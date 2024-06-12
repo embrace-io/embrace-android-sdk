@@ -2,15 +2,17 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.payload.SessionMessage
+import java.lang.reflect.Type
 
 internal class FakeCacheService : CacheService {
-    override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
+    override fun <T> cacheObject(name: String, objectToCache: T, type: Type) {
         TODO("Not yet implemented")
     }
 
-    override fun <T> loadObject(name: String, clazz: Class<T>): T? {
+    override fun <T> loadObject(name: String, type: Type): T? {
         TODO("Not yet implemented")
     }
 
@@ -34,11 +36,11 @@ internal class FakeCacheService : CacheService {
         TODO("Not yet implemented")
     }
 
-    override fun writeSession(name: String, sessionMessage: SessionMessage) {
+    override fun writeSession(name: String, envelope: Envelope<SessionPayload>) {
         TODO("Not yet implemented")
     }
 
-    override fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+    override fun transformSession(name: String, transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>) {
         TODO("Not yet implemented")
     }
 }

@@ -3,15 +3,14 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
-import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.getSessionSpan
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 
 /**
  * Finds the first Span Event matching the given [TelemetryType]
@@ -50,9 +49,9 @@ internal fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
 /**
  * Returns the Session Span
  */
-internal fun SessionMessage.findSessionSpan(): Span = findSpanOfType(EmbType.Ux.Session)
+internal fun Envelope<SessionPayload>.findSessionSpan(): Span = findSpanOfType(EmbType.Ux.Session)
 
-internal fun SessionMessage.getSessionId(): String {
+internal fun Envelope<SessionPayload>.getSessionId(): String {
     val sessionSpan = checkNotNull(getSessionSpan()) {
         "No session span found in session message"
     }
@@ -61,7 +60,7 @@ internal fun SessionMessage.getSessionId(): String {
     }
 }
 
-internal fun SessionMessage.getStartTime(): Long {
+internal fun Envelope<SessionPayload>.getStartTime(): Long {
     val sessionSpan = checkNotNull(getSessionSpan()) {
         "No session span found in session message"
     }
@@ -73,15 +72,15 @@ internal fun SessionMessage.getStartTime(): Long {
 /**
  * Finds the span matching the given [TelemetryType].
  */
-internal fun SessionMessage.findSpanOfType(telemetryType: TelemetryType): Span {
+internal fun Envelope<SessionPayload>.findSpanOfType(telemetryType: TelemetryType): Span {
     return findSpansOfType(telemetryType).single()
 }
 
 /**
  * Finds the span matching the given [TelemetryType].
  */
-internal fun SessionMessage.findSpansOfType(telemetryType: TelemetryType): List<Span> {
-    val spans = checkNotNull(data?.spans) {
+internal fun Envelope<SessionPayload>.findSpansOfType(telemetryType: TelemetryType): List<Span> {
+    val spans = checkNotNull(data.spans) {
         "No spans found in session message"
     }
     return checkNotNull(spans.filter { it.hasFixedAttribute(telemetryType) }) {
@@ -92,8 +91,8 @@ internal fun SessionMessage.findSpansOfType(telemetryType: TelemetryType): List<
 /**
  * Finds the span matching the given [TelemetryType].
  */
-internal fun SessionMessage.findSpansByName(name: String): List<Span> {
-    val spans = checkNotNull(data?.spans) {
+internal fun Envelope<SessionPayload>.findSpansByName(name: String): List<Span> {
+    val spans = checkNotNull(data.spans) {
         "No spans found in session message"
     }
     return checkNotNull(spans.filter { it.name == name }) {
@@ -104,12 +103,12 @@ internal fun SessionMessage.findSpansByName(name: String): List<Span> {
 /**
  * Returns true if a span exists with the given [TelemetryType].
  */
-internal fun SessionMessage.hasSpanOfType(telemetryType: TelemetryType): Boolean {
+internal fun Envelope<SessionPayload>.hasSpanOfType(telemetryType: TelemetryType): Boolean {
     return findSpansOfType(telemetryType).isNotEmpty()
 }
 
-internal fun SessionMessage.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<Span> {
-    val snapshots = checkNotNull(data?.spanSnapshots) {
+internal fun Envelope<SessionPayload>.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<Span> {
+    val snapshots = checkNotNull(data.spanSnapshots) {
         "No span snapshots found in session message"
     }
     return checkNotNull(snapshots.filter { it.hasFixedAttribute(telemetryType) }) {

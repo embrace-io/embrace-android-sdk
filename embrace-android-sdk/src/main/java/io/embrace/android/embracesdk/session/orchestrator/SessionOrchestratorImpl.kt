@@ -9,11 +9,12 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.opentelemetry.embTerminated
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
@@ -159,7 +160,7 @@ internal class SessionOrchestratorImpl(
     private fun transitionState(
         transitionType: TransitionType,
         timestamp: Long,
-        oldSessionAction: ((initial: SessionZygote) -> SessionMessage?)? = null,
+        oldSessionAction: ((initial: SessionZygote) -> Envelope<SessionPayload>?)? = null,
         newSessionAction: (Provider<SessionZygote?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
@@ -230,8 +231,8 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun processEndMessage(endMessage: SessionMessage?, transitionType: TransitionType) {
-        endMessage?.let {
+    private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
+        envelope?.let {
             val type = when (transitionType) {
                 TransitionType.CRASH -> SessionSnapshotType.JVM_CRASH
                 else -> SessionSnapshotType.NORMAL_END

@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getLastSavedSession
-import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.recordSession
@@ -48,7 +46,7 @@ internal class PeriodicSessionCacheTest {
                 executor.runCurrentlyBlocked()
                 embrace.addSessionProperty("Test", "Test", true)
 
-                val endMessage = checkNotNull(deliveryService.savedSessionMessages.last().first)
+                val endMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
                 val span = endMessage.findSpanSnapshotsOfType(EmbType.Ux.Session).single()
                 val attrs = checkNotNull(span.attributes)
                 assertEquals(false, attrs.findAttributeValue("emb.clean_exit").toBoolean())
@@ -58,7 +56,7 @@ internal class PeriodicSessionCacheTest {
                 // trigger another periodic cache
                 executor.moveForwardAndRunBlocked(2000)
 
-                val nextMessage = checkNotNull(deliveryService.savedSessionMessages.last().first)
+                val nextMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
                 val nextSpan = nextMessage.findSpanSnapshotsOfType(EmbType.Ux.Session).single()
                 val nextAttrs = checkNotNull(nextSpan.attributes)
                 assertEquals(false, nextAttrs.findAttributeValue("emb.clean_exit").toBoolean())
@@ -66,7 +64,7 @@ internal class PeriodicSessionCacheTest {
                 assertEquals("Test", nextSpan.getSessionProperty("Test"))
             }
 
-            val endMessage = checkNotNull(deliveryService.savedSessionMessages.last().first)
+            val endMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
             val span = endMessage.findSessionSpan()
             val attrs = checkNotNull(span.attributes)
             assertEquals(true, attrs.findAttributeValue("emb.clean_exit").toBoolean())

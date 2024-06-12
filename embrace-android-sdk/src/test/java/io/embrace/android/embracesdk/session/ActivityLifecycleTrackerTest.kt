@@ -7,7 +7,6 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeOrientationService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
@@ -31,7 +30,6 @@ import org.junit.Test
 internal class ActivityLifecycleTrackerTest {
 
     private lateinit var activityLifecycleTracker: ActivityLifecycleTracker
-    private lateinit var orientationService: FakeOrientationService
 
     companion object {
         private lateinit var mockLooper: Looper
@@ -66,10 +64,8 @@ internal class ActivityLifecycleTrackerTest {
             staticMocks = false
         )
 
-        orientationService = FakeOrientationService()
         activityLifecycleTracker = ActivityLifecycleTracker(
             application,
-            orientationService,
             EmbLoggerImpl()
         )
     }
@@ -99,7 +95,6 @@ internal class ActivityLifecycleTrackerTest {
         activityLifecycleTracker.onActivityCreated(mockActivity, bundle)
 
         assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
-        assertEquals(orientation, orientationService.changes.single())
         verify { mockActivityLifecycleListener.onActivityCreated(mockActivity, bundle) }
     }
 

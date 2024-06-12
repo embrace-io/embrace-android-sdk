@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
-import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.config.EmbraceConfigService
@@ -55,7 +54,6 @@ internal class EssentialServiceModuleImplTest {
         ) { null }
 
         assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
-        assertTrue(module.orientationService is NoOpOrientationService)
         assertTrue(module.processStateService is EmbraceProcessStateService)
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.urlBuilder)

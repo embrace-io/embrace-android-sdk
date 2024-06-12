@@ -11,11 +11,7 @@ internal class FakePayloadCollator : PayloadMessageCollator {
         TODO("Not yet implemented")
     }
 
-    override fun buildFinalSessionMessage(params: FinalEnvelopeParams.SessionParams): SessionMessage {
-        TODO("Not yet implemented")
-    }
-
-    override fun buildFinalBackgroundActivityMessage(params: FinalEnvelopeParams.BackgroundActivityParams): SessionMessage {
+    override fun buildFinalSessionMessage(params: FinalEnvelopeParams): SessionMessage {
         TODO("Not yet implemented")
     }
 }

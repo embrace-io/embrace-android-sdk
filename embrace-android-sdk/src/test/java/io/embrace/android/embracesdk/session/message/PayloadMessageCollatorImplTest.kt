@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
@@ -38,7 +39,6 @@ internal class PayloadMessageCollatorImplTest {
             gatingService = gatingService,
             preferencesService = FakePreferenceService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            logger = initModule.logger,
             sessionEnvelopeSource = sessionEnvelopeSource
         )
     }
@@ -46,10 +46,11 @@ internal class PayloadMessageCollatorImplTest {
     @Test
     fun `create background activity initial message`() {
         val msg = collator.buildInitialSession(
-            InitialEnvelopeParams.BackgroundActivityParams(
+            InitialEnvelopeParams(
                 false,
                 LifeEventType.BKGND_STATE,
-                5
+                5,
+                ApplicationState.BACKGROUND
             )
         )
         msg.verifyInitialFieldsPopulated()
@@ -58,10 +59,11 @@ internal class PayloadMessageCollatorImplTest {
     @Test
     fun `create session initial message`() {
         val msg = collator.buildInitialSession(
-            InitialEnvelopeParams.SessionParams(
+            InitialEnvelopeParams(
                 false,
                 LifeEventType.STATE,
-                5
+                5,
+                ApplicationState.FOREGROUND
             )
         )
         msg.verifyInitialFieldsPopulated()
@@ -71,23 +73,21 @@ internal class PayloadMessageCollatorImplTest {
     fun `create background activity end message`() {
         // create start message
         val startMsg = collator.buildInitialSession(
-            InitialEnvelopeParams.BackgroundActivityParams(
+            InitialEnvelopeParams(
                 false,
                 LifeEventType.BKGND_STATE,
-                5
+                5,
+                ApplicationState.BACKGROUND
             )
         )
         startMsg.verifyInitialFieldsPopulated()
 
         // create session
-        val payload = collator.buildFinalBackgroundActivityMessage(
-            FinalEnvelopeParams.BackgroundActivityParams(
+        val payload = collator.buildFinalSessionMessage(
+            FinalEnvelopeParams(
                 startMsg,
-                15000000000,
-                LifeEventType.BKGND_STATE,
                 SessionSnapshotType.NORMAL_END,
                 initModule.logger,
-                true,
                 "crashId"
             )
         )
@@ -99,23 +99,21 @@ internal class PayloadMessageCollatorImplTest {
     fun `create session end message`() {
         // create start message
         val startMsg = collator.buildInitialSession(
-            InitialEnvelopeParams.SessionParams(
+            InitialEnvelopeParams(
                 false,
                 LifeEventType.STATE,
-                5
+                5,
+                ApplicationState.FOREGROUND
             )
         )
         startMsg.verifyInitialFieldsPopulated()
 
         // create session
         val payload = collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
+            FinalEnvelopeParams(
                 startMsg,
-                15000000000,
-                LifeEventType.STATE,
                 SessionSnapshotType.NORMAL_END,
                 initModule.logger,
-                true,
                 "crashId",
             )
         )

@@ -46,8 +46,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.gatingService,
             payloadModule.sessionEnvelopeSource,
             androidServicesModule.preferencesService,
-            openTelemetryModule.currentSessionSpan,
-            initModule.logger
+            openTelemetryModule.currentSessionSpan
         )
     }
 

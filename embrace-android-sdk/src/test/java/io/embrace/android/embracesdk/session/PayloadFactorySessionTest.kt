@@ -165,8 +165,7 @@ internal class PayloadFactorySessionTest {
             gatingService,
             sessionEnvelopeSource,
             preferencesService,
-            currentSessionSpan,
-            logger
+            currentSessionSpan
         )
         service = PayloadFactoryImpl(collator, FakeConfigService(), logger)
     }

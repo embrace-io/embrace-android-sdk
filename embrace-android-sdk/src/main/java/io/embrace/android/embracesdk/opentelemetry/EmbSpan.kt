@@ -1,19 +1,21 @@
 package io.embrace.android.embracesdk.opentelemetry
 
 import io.embrace.android.embracesdk.internal.spans.toStringMap
-import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Context
+import io.opentelemetry.context.Scope
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbSpan(
-    private val embraceSpan: EmbraceSpan,
+    private val embraceSpan: PersistableEmbraceSpan,
     private val clock: Clock
 ) : Span {
 
@@ -89,4 +91,6 @@ internal class EmbSpan(
     override fun getSpanContext(): SpanContext = embraceSpan.spanContext ?: SpanContext.getInvalid()
 
     override fun isRecording(): Boolean = embraceSpan.isRecording
+
+    override fun makeCurrent(): Scope = Context.current().with(this).with(embraceSpan).makeCurrent()
 }

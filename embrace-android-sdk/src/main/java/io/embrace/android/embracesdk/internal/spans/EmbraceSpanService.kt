@@ -52,7 +52,9 @@ internal class EmbraceSpanService(
     ): PersistableEmbraceSpan? =
         currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal, private = private)
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): EmbraceSpan? = currentDelegate.createSpan(embraceSpanBuilder)
+    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? = currentDelegate.createSpan(
+        embraceSpanBuilder
+    )
 
     override fun <T> recordSpan(
         name: String,

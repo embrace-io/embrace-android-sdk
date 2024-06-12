@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.MomentsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.api.OtelExporterApi
+import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
@@ -26,7 +26,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.OtelExporterApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
@@ -58,8 +58,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
         ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
-    private val otelExporterApiDelegate: OtelExporterApiDelegate =
-        OtelExporterApiDelegate(bootstrapper, sdkCallChecker),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker),
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
     private val webviewApiDelegate: WebViewApiDelegate = WebViewApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
@@ -70,7 +69,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
     ViewTrackingApi by viewTrackingApiDelegate,
     SdkStateApi by sdkStateApiDelegate,
-    OtelExporterApi by otelExporterApiDelegate,
+    OTelApi by otelApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     WebViewApi by webviewApiDelegate {
 

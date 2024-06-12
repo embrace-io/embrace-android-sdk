@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -129,7 +130,7 @@ internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.ass
  * Populate an [AttributesBuilder] with String key-value pairs from a [Map]
  */
 internal fun AttributesBuilder.fromMap(attributes: Map<String, String>): AttributesBuilder {
-    attributes.filter { EmbraceSpanImpl.attributeValid(it.key, it.value) }.forEach {
+    attributes.filter { EmbraceSpanImpl.attributeValid(it.key, it.value) || it.key.isValidLongValueAttribute() }.forEach {
         put(it.key, it.value)
     }
     return this
@@ -192,3 +193,7 @@ internal fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity =
     io.embrace.android.embracesdk.Severity.WARNING -> Severity.WARN
     io.embrace.android.embracesdk.Severity.ERROR -> Severity.ERROR
 }
+
+internal fun String.isValidLongValueAttribute() = longValueAttributes.contains(this)
+
+internal val longValueAttributes = setOf(exceptionStacktrace.key)

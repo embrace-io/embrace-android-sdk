@@ -31,7 +31,7 @@ internal class UninitializedSdkSpanService : SpanService {
         private: Boolean
     ): PersistableEmbraceSpan? = null
 
-    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): EmbraceSpan? = null
+    override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? = null
 
     override fun <T> recordSpan(
         name: String,

@@ -10,11 +10,14 @@ import io.opentelemetry.api.common.AttributeKey
  */
 
 internal val androidApiLevel: AttributeKey<String> = AttributeKey.stringKey("android.os.api_level")
-internal val androidState: AttributeKey<String> = AttributeKey.stringKey("android.state")
 
 internal val deviceManufacturer: AttributeKey<String> = AttributeKey.stringKey("device.manufacturer")
 internal val deviceModelIdentifier: AttributeKey<String> = AttributeKey.stringKey("os.model.identifier")
 internal val deviceModelName: AttributeKey<String> = AttributeKey.stringKey("os.model.name")
+
+internal val exceptionMessage: AttributeKey<String> = AttributeKey.stringKey("exception.message")
+internal val exceptionStacktrace: AttributeKey<String> = AttributeKey.stringKey("exception.stacktrace")
+internal val exceptionType: AttributeKey<String> = AttributeKey.stringKey("exception.type")
 
 internal val logRecordUid: AttributeKey<String> = AttributeKey.stringKey("log.record.uid")
 
@@ -26,6 +29,5 @@ internal val osBuildId: AttributeKey<String> = AttributeKey.stringKey("os.build_
 internal val serviceName: AttributeKey<String> = AttributeKey.stringKey("service.name")
 internal val serviceVersion: AttributeKey<String> = AttributeKey.stringKey("service.version")
 
-internal val exceptionMessage: AttributeKey<String> = AttributeKey.stringKey("exception.message")
-internal val exceptionStacktrace: AttributeKey<String> = AttributeKey.stringKey("exception.stacktrace")
-internal val exceptionType: AttributeKey<String> = AttributeKey.stringKey("exception.type")
+internal val telemetryDistroName: AttributeKey<String> = AttributeKey.stringKey("telemetry.distro.name")
+internal val telemetryDistroVersion: AttributeKey<String> = AttributeKey.stringKey("telemetry.distro.version")

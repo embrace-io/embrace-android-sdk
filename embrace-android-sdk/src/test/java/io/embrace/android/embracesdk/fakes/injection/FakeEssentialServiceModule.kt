@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -28,6 +27,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule

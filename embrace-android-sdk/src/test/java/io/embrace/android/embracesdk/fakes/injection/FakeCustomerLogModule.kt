@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.event.EmbraceLogMessageService
 import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -15,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.injection.CustomerLogModule
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator

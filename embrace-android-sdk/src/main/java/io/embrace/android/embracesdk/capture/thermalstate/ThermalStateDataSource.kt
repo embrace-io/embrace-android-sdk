@@ -6,8 +6,6 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
-import io.embrace.android.embracesdk.arch.destination.StartSpanData
-import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.Systrace
@@ -27,7 +25,7 @@ internal class ThermalStateDataSource(
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     powerManagerProvider: Provider<PowerManager?>
-) : StartSpanMapper<ThermalState>, SpanDataSourceImpl(
+) : SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES }
@@ -95,22 +93,10 @@ internal class ThermalStateDataSource(
             countsTowardsLimits = true,
             inputValidation = NoInputValidation
         ) {
-            startSpanCapture(ThermalState(status, timestamp), ::toStartSpanData)
+            startSpanCapture(SchemaType.ThermalState(status), timestamp)
                 .apply {
                     span = this
                 }
         }
     }
-
-    override fun toStartSpanData(obj: ThermalState): StartSpanData {
-        return StartSpanData(
-            schemaType = SchemaType.ThermalState(obj.status),
-            spanStartTimeMs = obj.timestamp
-        )
-    }
 }
-
-internal data class ThermalState(
-    val status: Int,
-    val timestamp: Long
-)

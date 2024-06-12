@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.anr.sigquit
 import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
-import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
@@ -20,7 +18,7 @@ internal class SigquitDataSource(
     private val anrBehavior: AnrBehavior,
     private val logger: EmbLogger,
     writer: SessionSpanWriter
-) : SpanEventMapper<Long>, DataSourceImpl<SessionSpanWriter>(
+) : DataSourceImpl<SessionSpanWriter>(
     writer,
     logger,
     UpToLimitStrategy { 50 }
@@ -34,19 +32,13 @@ internal class SigquitDataSource(
         }
     }
 
-    fun saveGoogleAnr(timestamp: Long) {
+    fun saveSigquit(timestamp: Long) {
         if (anrBehavior.isGoogleAnrCaptureEnabled()) {
-            writeGoogleAnrSpanEvent(timestamp)
+            alterSessionSpan(NoInputValidation) {
+                addEvent(SchemaType.Sigquit, timestamp)
+            }
         }
     }
-
-    private fun writeGoogleAnrSpanEvent(time: Long) {
-        alterSessionSpan(NoInputValidation) {
-            addEvent(time, ::toSpanEventData)
-        }
-    }
-
-    override fun toSpanEventData(obj: Long): SpanEventData = SpanEventData(SchemaType.Sigquit, obj)
 
     private fun install(googleThreadId: Int): Int {
         return try {

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
@@ -34,7 +35,7 @@ internal class WebViewDataSource(
             writer.removeEvents(EmbType.System.WebViewInfo)
             webViewInfoList.forEach { webViewInfo ->
                 alterSessionSpan(
-                    inputValidation = { true },
+                    inputValidation = NoInputValidation,
                     captureAction = {
                         addEvent(webViewInfo, ::toSpanEventData)
                     },

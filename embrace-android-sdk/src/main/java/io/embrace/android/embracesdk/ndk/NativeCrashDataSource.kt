@@ -4,7 +4,6 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.datasource.LogDataSource
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashErrors
@@ -59,13 +58,7 @@ internal class NativeCrashDataSourceImpl(
         crashAttributes.setAttribute(embNativeCrashSymbols, nativeSymbolsJson)
         crashAttributes.setAttribute(embNativeCrashUnwindError, nativeCrash.unwindError.toString())
 
-        val logEventData = LogEventData(
-            schemaType = SchemaType.NativeCrash(crashAttributes),
-            message = "",
-            severity = Severity.ERROR,
-        )
-
-        logWriter.addLog(logEventData)
+        logWriter.addLog(SchemaType.NativeCrash(crashAttributes), Severity.ERROR, "")
     }
 
     companion object {

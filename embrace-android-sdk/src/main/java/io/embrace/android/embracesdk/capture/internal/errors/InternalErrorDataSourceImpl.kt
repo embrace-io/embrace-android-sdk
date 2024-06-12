@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.internal.errors
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
-import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
@@ -24,10 +23,8 @@ internal class InternalErrorDataSourceImpl(
 
     override fun handleInternalError(throwable: Throwable) {
         alterSessionSpan(NoInputValidation) {
-            this.addLog(throwable, true) {
-                val schemaType = SchemaType.InternalError(throwable)
-                LogEventData(schemaType, Severity.ERROR, "")
-            }
+            val schemaType = SchemaType.InternalError(throwable)
+            addLog(schemaType, Severity.ERROR, "", true)
         }
     }
 }

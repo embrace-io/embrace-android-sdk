@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
@@ -24,11 +23,6 @@ internal class FakeCurrentSessionSpan(
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
         sessionSpan = newSessionSpan(sdkInitStartTimeMs)
-    }
-
-    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
-        addedEvents.add(obj.mapper())
-        return true
     }
 
     override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {

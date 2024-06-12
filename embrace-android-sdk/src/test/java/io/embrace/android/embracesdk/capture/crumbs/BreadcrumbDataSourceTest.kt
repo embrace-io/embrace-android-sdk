@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -36,7 +35,7 @@ internal class BreadcrumbDataSourceTest {
         source.logCustom("Hello, world!", 15000000000)
         with(writer.addedEvents.single()) {
             assertIsType(EmbType.System.Breadcrumb)
-            assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
+            assertEquals(15000000000, spanStartTimeMs)
             assertEquals(
                 mapOf("message" to "Hello, world!"),
                 schemaType.attributes()

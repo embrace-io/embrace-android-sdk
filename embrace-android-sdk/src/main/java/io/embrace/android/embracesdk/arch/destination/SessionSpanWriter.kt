@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.arch.destination
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
@@ -19,6 +20,8 @@ internal interface SessionSpanWriter {
      * Returns true if the event was added, otherwise false.
      */
     fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean
+
+    fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
 
     /**
      * Remove all events with the given [EmbType].

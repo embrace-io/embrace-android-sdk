@@ -3,15 +3,12 @@ package io.embrace.android.embracesdk.capture.crumbs
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
-import io.embrace.android.embracesdk.arch.destination.StartSpanData
-import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.FragmentBreadcrumb
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -26,8 +23,7 @@ internal class ViewDataSource(
     spanService,
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getFragmentBreadcrumbLimit() }
-),
-    StartSpanMapper<FragmentBreadcrumb> {
+) {
 
     private val viewSpans: LinkedHashMap<String, EmbraceSpan> = LinkedHashMap()
 
@@ -40,8 +36,7 @@ internal class ViewDataSource(
         captureAction = {
             viewSpans[name]?.stop() // End the last view if it exists.
 
-            val crumb = FragmentBreadcrumb(checkNotNull(name), clock.now())
-            startSpanCapture(crumb, ::toStartSpanData)?.apply {
+            startSpanCapture(SchemaType.View(checkNotNull(name)), clock.now())?.apply {
                 viewSpans[name] = this
             }
         }
@@ -80,12 +75,5 @@ internal class ViewDataSource(
                 }
             )
         }
-    }
-
-    override fun toStartSpanData(obj: FragmentBreadcrumb): StartSpanData = with(obj) {
-        StartSpanData(
-            schemaType = SchemaType.View(name),
-            spanStartTimeMs = start,
-        )
     }
 }

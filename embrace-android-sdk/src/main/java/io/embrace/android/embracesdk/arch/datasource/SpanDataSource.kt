@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.destination.StartSpanData
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 /**
  * A [DataSource] that adds or alters a new span on the [SpansService]
@@ -39,12 +41,16 @@ internal interface SpanDataSource : DataSource<SpanService> {
  */
 internal fun <T> SpanService.startSpanCapture(obj: T, mapper: T.() -> StartSpanData): EmbraceSpan? {
     val data = obj.mapper()
+    return startSpanCapture(data.schemaType, data.spanStartTimeMs)
+}
+
+internal fun SpanService.startSpanCapture(schemaType: SchemaType, startTimeMs: Long): PersistableEmbraceSpan? {
     return startSpan(
-        name = data.schemaType.fixedObjectName,
-        startTimeMs = data.spanStartTimeMs,
-        type = data.schemaType.telemetryType
+        name = schemaType.fixedObjectName,
+        startTimeMs = startTimeMs,
+        type = schemaType.telemetryType
     )?.apply {
-        data.schemaType.attributes().forEach {
+        schemaType.attributes().forEach {
             addAttribute(it.key, it.value)
         }
     }

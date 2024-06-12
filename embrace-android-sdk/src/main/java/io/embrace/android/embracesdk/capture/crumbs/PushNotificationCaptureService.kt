@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.os.Bundle
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
+import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 
 /**
@@ -77,7 +77,7 @@ internal class PushNotificationCaptureService(
         id: String?,
         notificationPriority: Int?,
         messageDeliveredPriority: Int,
-        type: NotificationType
+        type: PushNotificationBreadcrumb.NotificationType
     ) {
         breadCrumbService.logPushNotification(
             title,
@@ -120,7 +120,7 @@ internal class PushNotificationCaptureService(
         }
     }
 
-    private fun determineNotificationType(bundle: Bundle): NotificationType {
+    private fun determineNotificationType(bundle: Bundle): PushNotificationBreadcrumb.NotificationType {
         val hasData = extractDeveloperDefinedPayload(bundle).isNotEmpty()
 
         // whenever we come through this flow of push notification, we know certainly that it has
@@ -129,9 +129,9 @@ internal class PushNotificationCaptureService(
         // FirebaseSwazzledHooks._onMessageReceived instead. Now it is a matter of determining if
         // it's a notification only or notification + data.
         return if (hasData) {
-            NotificationType.NOTIFICATION_AND_DATA
+            PushNotificationBreadcrumb.NotificationType.NOTIFICATION_AND_DATA
         } else {
-            NotificationType.NOTIFICATION
+            PushNotificationBreadcrumb.NotificationType.NOTIFICATION
         }
     }
 

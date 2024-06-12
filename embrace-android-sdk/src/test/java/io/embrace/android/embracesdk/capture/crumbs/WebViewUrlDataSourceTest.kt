@@ -7,9 +7,8 @@ import io.embrace.android.embracesdk.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -48,9 +47,9 @@ internal class WebViewUrlDataSourceTest {
             15000000000
         )
         with(writer.addedEvents.single()) {
-            Assert.assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
-            Assert.assertEquals(
+            assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
+            assertEquals(15000000000, spanStartTimeMs)
+            assertEquals(
                 mapOf(
                     "webview.url" to "http://www.google.com?query=123"
                 ),
@@ -83,9 +82,9 @@ internal class WebViewUrlDataSourceTest {
             15000000000
         )
         with(writer.addedEvents.single()) {
-            Assert.assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
-            Assert.assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
-            Assert.assertEquals(
+            assertEquals(EmbType.Ux.WebView, schemaType.telemetryType)
+            assertEquals(15000000000, spanStartTimeMs)
+            assertEquals(
                 mapOf(
                     "webview.url" to "http://www.google.com"
                 ),
@@ -119,6 +118,6 @@ internal class WebViewUrlDataSourceTest {
                 15000000000
             )
         }
-        Assert.assertEquals(100, writer.addedEvents.size)
+        assertEquals(100, writer.addedEvents.size)
     }
 }

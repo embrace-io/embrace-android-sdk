@@ -62,10 +62,10 @@ internal class BreadcrumbBehavior(
         local?.webViewConfig?.captureQueryParams ?: WEB_VIEW_QUERY_PARAMS_CAPTURE_DEFAULT
 
     fun isCaptureFcmPiiDataEnabled(): Boolean {
-        try {
-            return local?.captureFcmPiiData ?: false
+        return try {
+            local?.captureFcmPiiData ?: false
         } catch (ex: Exception) {
-            return false
+            false
         }
     }
 }

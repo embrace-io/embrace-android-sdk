@@ -106,11 +106,8 @@ internal class PushNotificationTest {
         assertEquals(
             mapOf(
                 EmbType.System.PushNotification.toEmbraceKeyValuePair(),
-                "notification.title" to "",
                 "notification.type" to type,
-                "notification.body" to "",
                 "notification.id" to "id",
-                "notification.from" to "",
                 "notification.priority" to "1"
             ),
             event.attributes?.toMap()

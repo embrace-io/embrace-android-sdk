@@ -3,12 +3,17 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.payload.Interval
 
 internal class FakeNetworkConnectivityService(
     initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
     override var ipAddress: String = defaultIpAddress
-) : FakeDataCaptureService<Interval>(), NetworkConnectivityService {
+) : FakeDataCaptureService<FakeNetworkConnectivityService.Interval>(), NetworkConnectivityService {
+
+    internal data class Interval(
+        val startTime: Long,
+        val endTime: Long,
+        val value: String? = null
+    )
 
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
     var networkStatus: NetworkStatus = initialNetworkStatus

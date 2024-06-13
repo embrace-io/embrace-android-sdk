@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -40,7 +39,6 @@ internal class BlockedThreadDetector(
     private val logger: EmbLogger,
     private val anrMonitorThread: AtomicReference<Thread>
 ) {
-    private val heartbeatResponseMonitor = ResponsivenessMonitor(clock = clock, name = "heartbeatResponse")
 
     /**
      * Called when the target thread process the message. This indicates that the target thread is
@@ -52,7 +50,6 @@ internal class BlockedThreadDetector(
     fun onTargetThreadResponse(timestamp: Long) {
         enforceThread(anrMonitorThread)
         state.lastTargetThreadResponseMs = timestamp
-        heartbeatResponseMonitor.ping()
 
         if (isDebuggerEnabled()) {
             return
@@ -96,12 +93,6 @@ internal class BlockedThreadDetector(
         }
         state.lastMonitorThreadResponseMs = clock.now()
     }
-
-    fun resetResponsivenessMonitor() {
-        heartbeatResponseMonitor.reset()
-    }
-
-    fun responsivenessMonitorSnapshot(): ResponsivenessSnapshot = heartbeatResponseMonitor.snapshot()
 
     /**
      * Decides whether we should attempt an ANR sample or not. In ordinary conditions this

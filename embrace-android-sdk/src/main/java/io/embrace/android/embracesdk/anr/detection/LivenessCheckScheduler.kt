@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.ResponsivenessSnapshot
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -46,7 +45,6 @@ internal class LivenessCheckScheduler internal constructor(
         }
         get() = blockedThreadDetector.listener
 
-    private val heartbeatSendMonitor = ResponsivenessMonitor(clock = clock, name = "heartbeatSend")
     private var intervalMs: Long = configService.anrBehavior.getSamplingIntervalMs()
     private var monitorFuture: ScheduledFuture<*>? = null
 
@@ -62,7 +60,6 @@ internal class LivenessCheckScheduler internal constructor(
         enforceThread(anrMonitorThread)
         if (!state.started.getAndSet(true)) {
             logger.logInfo("Start ANR detection...")
-            resetResponsivenessMonitors()
             scheduleRegularHeartbeats()
         }
     }
@@ -78,14 +75,6 @@ internal class LivenessCheckScheduler internal constructor(
             }
         }
     }
-
-    fun resetResponsivenessMonitors() {
-        heartbeatSendMonitor.reset()
-        blockedThreadDetector.resetResponsivenessMonitor()
-    }
-
-    fun responsivenessMonitorSnapshots(): List<ResponsivenessSnapshot> =
-        listOf(heartbeatSendMonitor.snapshot(), blockedThreadDetector.responsivenessMonitorSnapshot())
 
     @Suppress("DEPRECATION")
     private fun scheduleRegularHeartbeats() {
@@ -130,7 +119,6 @@ internal class LivenessCheckScheduler internal constructor(
         enforceThread(anrMonitorThread)
 
         try {
-            heartbeatSendMonitor.ping()
             with(configService.anrBehavior.getMonitorThreadPriority()) {
                 android.os.Process.setThreadPriority(this)
             }

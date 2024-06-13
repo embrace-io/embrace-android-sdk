@@ -216,7 +216,6 @@ internal class EmbraceLogMessageService(
                 // Build event message
                 val eventMessage = EventMessage(
                     event,
-                    null,
                     metadataService.getDeviceInfo(),
                     metadataService.getAppInfo(),
                     logUserInfo,

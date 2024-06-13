@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import java.util.concurrent.Future
@@ -44,14 +43,6 @@ internal interface ApiService {
      * @param logEnvelope containing the logs
      */
     fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
-
-    /**
-     * Sends an Application Exit Info (AEI) blob message to the API.
-     *
-     * @param blobMessage the blob message containing the AEI data
-     * @return a future containing the response body from the server
-     */
-    fun sendAEIBlob(blobMessage: BlobMessage)
 
     /**
      * Sends a network event to the API.

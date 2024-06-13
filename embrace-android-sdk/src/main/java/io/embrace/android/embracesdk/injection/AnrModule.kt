@@ -11,9 +11,6 @@ import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.anr.sigquit.AnrThreadIdDelegate
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
-import io.embrace.android.embracesdk.capture.monitor.EmbraceResponsivenessMonitorService
-import io.embrace.android.embracesdk.capture.monitor.NoOpResponsivenessMonitorService
-import io.embrace.android.embracesdk.capture.monitor.ResponsivenessMonitorService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -22,7 +19,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 internal interface AnrModule {
     val anrService: AnrService
     val anrOtelMapper: AnrOtelMapper
-    val responsivenessMonitorService: ResponsivenessMonitorService
     val sigquitDataSource: SigquitDataSource
 }
 
@@ -57,16 +53,6 @@ internal class AnrModuleImpl(
 
     override val anrOtelMapper: AnrOtelMapper by singleton {
         AnrOtelMapper(anrService, initModule.clock)
-    }
-
-    override val responsivenessMonitorService: ResponsivenessMonitorService by singleton {
-        if (configService.autoDataCaptureBehavior.isAnrServiceEnabled() && !ApkToolsConfig.IS_ANR_MONITORING_DISABLED) {
-            EmbraceResponsivenessMonitorService(
-                livenessCheckScheduler = livenessCheckScheduler
-            )
-        } else {
-            NoOpResponsivenessMonitorService()
-        }
     }
 
     override val sigquitDataSource: SigquitDataSource by singleton {

@@ -11,18 +11,13 @@ import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppExitInfoData
-import io.embrace.android.embracesdk.payload.BlobMessage
-import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.IOException
 import java.util.concurrent.Future
@@ -34,9 +29,6 @@ internal class AeiDataSourceImpl(
     private val appExitInfoBehavior: AppExitInfoBehavior,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
-    private val metadataService: MetadataService,
-    private val sessionIdTracker: SessionIdTracker,
-    private val userService: UserService,
     logWriter: LogWriter,
     private val logger: EmbLogger,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker,
@@ -193,17 +185,8 @@ internal class AeiDataSourceImpl(
             alterSessionSpan(
                 inputValidation = NoInputValidation,
                 captureAction = {
-                    val blob = BlobMessage(
-                        metadataService.getAppInfo(),
-                        listOf(data),
-                        metadataService.getDeviceInfo(),
-                        BlobSession(sessionIdTracker.getActiveSessionId()),
-                        userService.getUserInfo()
-                    )
-
-                    val message: AppExitInfoData = blob.applicationExits.single()
-                    val schemaType = SchemaType.AeiLog(message)
-                    addLog(schemaType, Severity.INFO, message.trace ?: "")
+                    val schemaType = SchemaType.AeiLog(data)
+                    addLog(schemaType, Severity.INFO, data.trace ?: "")
                 }
             )
         }

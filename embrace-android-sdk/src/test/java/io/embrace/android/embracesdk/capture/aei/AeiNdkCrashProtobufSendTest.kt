@@ -8,10 +8,7 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -137,8 +134,6 @@ internal class AeiNdkCrashProtobufSendTest {
             stream,
             reason
         )
-        val metadataService = FakeMetadataService()
-        val sessionIdTracker = FakeSessionIdTracker()
         val logWriter = FakeLogWriter()
         AeiDataSourceImpl(
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
@@ -149,9 +144,6 @@ internal class AeiNdkCrashProtobufSendTest {
             }),
             activityManager,
             FakePreferenceService(),
-            metadataService,
-            sessionIdTracker,
-            FakeUserService(),
             logWriter,
             EmbLoggerImpl(),
             VersionChecker { ndkTraceFile }

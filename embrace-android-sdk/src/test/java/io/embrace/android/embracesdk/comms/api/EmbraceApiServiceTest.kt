@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
@@ -172,18 +171,6 @@ internal class EmbraceApiServiceTest {
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/logging",
             expectedLogId = "el:message-id",
             expectedPayload = getExpectedPayloadSerialized(event)
-        )
-    }
-
-    @Test
-    fun `send application exit info request is as expected`() {
-        fakeApiClient.queueResponse(successfulPostResponse)
-        val blob = BlobMessage()
-        apiService.sendAEIBlob(blob)
-
-        verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/blobs",
-            expectedPayload = getExpectedPayloadSerialized(blob)
         )
     }
 

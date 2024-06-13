@@ -516,7 +516,6 @@ internal class EmbraceNdkService(
             metadata?.appInfo,
             metadata?.userInfo,
             null,
-            null,
             ApiClient.MESSAGE_VERSION,
             nativeCrash.getCrash(nativeCrashNumber)
         )

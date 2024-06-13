@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.event
 
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
@@ -37,7 +36,6 @@ internal class EmbraceEventService(
     private val configService: ConfigService,
     metadataService: MetadataService,
     sessionIdTracker: SessionIdTracker,
-    performanceInfoService: PerformanceInfoService,
     userService: UserService,
     private val sessionProperties: EmbraceSessionProperties,
     private val logger: EmbLogger,
@@ -69,7 +67,6 @@ internal class EmbraceEventService(
             sessionIdTracker,
             configService,
             userService,
-            performanceInfoService,
             deliveryService,
             logger,
             clock,

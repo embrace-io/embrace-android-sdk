@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -409,7 +410,8 @@ internal class SessionOrchestratorTest {
                 currentSessionSpan,
                 FakeEventService(),
                 FakeStartupService(),
-                FakeLogMessageService()
+                FakeLogMessageService(),
+                FakeMetadataService()
             ),
             logger
         )

@@ -42,7 +42,7 @@ internal class V2SessionApiTest {
             validatePayloadAgainstGoldenFile(message, "v2_session_expected.json")
 
             // validate snapshots separately, as the JSON diff is tricky to debug
-            val snapshots = checkNotNull(message.data?.spanSnapshots)
+            val snapshots = checkNotNull(message.data.spanSnapshots)
             assertEquals(2, snapshots.size)
 
             // validate network status span
@@ -66,7 +66,8 @@ internal class V2SessionApiTest {
                 "emb.heartbeat_time_unix_nano" to "${startTime.millisToNanos()}",
                 "emb.session_number" to "1",
                 "emb.type" to "ux.session",
-                "emb.error_log_count" to "0"
+                "emb.error_log_count" to "0",
+                "emb.disk_free_bytes" to "0",
             )
             assertEquals(expected, attrs)
         }

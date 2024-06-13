@@ -18,9 +18,6 @@ internal data class EventMessage(
     @Json(name = "u")
     val userInfo: UserInfo? = null,
 
-    @Json(name = "p")
-    val performanceInfo: PerformanceInfo? = null,
-
     @Json(name = "sk")
     val stacktraces: Stacktraces? = null,
 

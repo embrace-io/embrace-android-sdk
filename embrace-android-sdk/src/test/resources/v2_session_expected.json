@@ -32,7 +32,8 @@
     "os_version": "__EMBRACE_TEST_IGNORE__",
     "os_code": "__EMBRACE_TEST_IGNORE__",
     "screen_resolution": "__EMBRACE_TEST_IGNORE__",
-    "num_cores": "__EMBRACE_TEST_IGNORE__"
+    "num_cores": "__EMBRACE_TEST_IGNORE__",
+    "disk_space": "__EMBRACE_TEST_IGNORE__"
   },
   "s": "__EMBRACE_TEST_IGNORE__",
   "type": "session",

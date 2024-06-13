@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.event.LogMessageService
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.opentelemetry.embErrorLogCount
+import io.embrace.android.embracesdk.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.opentelemetry.embSdkStartupDuration
 import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
@@ -25,7 +27,8 @@ internal class SessionSpanAttrPopulator(
     private val sessionSpanWriter: SessionSpanWriter,
     private val eventService: EventService,
     private val startupService: StartupService,
-    private val logMessageService: LogMessageService
+    private val logMessageService: LogMessageService,
+    private val metadataService: MetadataService
 ) {
 
     fun populateSessionSpanStartAttrs(session: SessionZygote) {
@@ -67,6 +70,9 @@ internal class SessionSpanAttrPopulator(
 
             val logCount = logMessageService.findErrorLogIds(0, Long.MAX_VALUE).size
             addCustomAttribute(SpanAttributeData(embErrorLogCount.name, logCount.toString()))
+
+            val free = metadataService.getDiskUsage()?.deviceDiskFree
+            addCustomAttribute(SpanAttributeData(embFreeDiskBytes.name, free.toString()))
         }
     }
 }

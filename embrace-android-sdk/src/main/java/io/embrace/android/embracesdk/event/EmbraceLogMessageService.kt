@@ -219,7 +219,6 @@ internal class EmbraceLogMessageService(
                     metadataService.getDeviceInfo(),
                     metadataService.getAppInfo(),
                     logUserInfo,
-                    null,
                     stacktraces,
                     ApiClient.MESSAGE_VERSION,
                     null

@@ -97,3 +97,8 @@ internal val embSdkStartupDuration = EmbraceAttributeKey("sdk_startup_duration")
  * Attribute name that identifies the error log count in a session
  */
 internal val embErrorLogCount = EmbraceAttributeKey("error_log_count")
+
+/**
+ * Attribute name that identifies the number of free bytes on disk
+ */
+internal val embFreeDiskBytes = EmbraceAttributeKey("disk_free_bytes")

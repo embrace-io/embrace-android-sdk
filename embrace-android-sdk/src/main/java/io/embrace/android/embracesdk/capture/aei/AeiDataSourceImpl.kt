@@ -7,8 +7,6 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
-import io.embrace.android.embracesdk.arch.destination.LogEventData
-import io.embrace.android.embracesdk.arch.destination.LogEventMapper
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
@@ -42,7 +40,7 @@ internal class AeiDataSourceImpl(
     logWriter: LogWriter,
     private val logger: EmbLogger,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker,
-) : AeiDataSource, LogEventMapper<BlobMessage>, LogDataSourceImpl(
+) : AeiDataSource, LogDataSourceImpl(
     logWriter,
     logger,
     limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
@@ -202,20 +200,13 @@ internal class AeiDataSourceImpl(
                         BlobSession(sessionIdTracker.getActiveSessionId()),
                         userService.getUserInfo()
                     )
-                    addLog(blob, mapper = ::toLogEventData)
+
+                    val message: AppExitInfoData = blob.applicationExits.single()
+                    val schemaType = SchemaType.AeiLog(message)
+                    addLog(schemaType, Severity.INFO, message.trace ?: "")
                 }
             )
         }
-    }
-
-    override fun toLogEventData(obj: BlobMessage): LogEventData {
-        val message: AppExitInfoData = obj.applicationExits.single()
-        val schemaType = SchemaType.AeiLog(message)
-        return LogEventData(
-            schemaType = schemaType,
-            severity = Severity.INFO,
-            message = message.trace ?: ""
-        )
     }
 
     private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {

@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVital
 import io.embrace.android.embracesdk.payload.WebVitalType
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
 
@@ -46,16 +45,6 @@ internal class WebViewDataSourceTest {
         assertEquals(2, writer.addedEvents.count { it.schemaType.fixedObjectName == "webview-info" })
         assertEquals("https://example1.com", writer.addedEvents[0].schemaType.attributes()["emb.webview_info.url"])
         assertEquals("https://example2.com", writer.addedEvents[1].schemaType.attributes()["emb.webview_info.url"])
-    }
-
-    @Test
-    fun `test mapping from WebViewInfo to SpanEventData`() {
-        val webViewInfo = getWebViewInfo("https://example.com")
-        val spanEventData = dataSource.toSpanEventData(webViewInfo)
-        assertEquals("https://example.com", spanEventData.schemaType.attributes()["emb.webview_info.url"])
-        assertNotNull(spanEventData.schemaType.attributes()["emb.webview_info.web_vitals"])
-        assertEquals("tag", spanEventData.schemaType.attributes()["emb.webview_info.tag"])
-        assertEquals(webViewInfo.startTime * 1000000, spanEventData.spanStartTimeMs)
     }
 
     private fun getWebViewInfo(url: String): WebViewInfo {

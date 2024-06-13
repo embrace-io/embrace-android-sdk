@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.arch.destination
+package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 

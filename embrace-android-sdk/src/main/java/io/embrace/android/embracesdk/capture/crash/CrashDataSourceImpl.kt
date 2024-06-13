@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.crash
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.EmbType
@@ -122,13 +121,7 @@ internal class CrashDataSourceImpl(
                 )
             }
 
-            val logEventData = LogEventData(
-                schemaType = getSchemaType(crashAttributes),
-                message = "",
-                severity = Severity.ERROR,
-            )
-
-            logWriter.addLog(logEventData)
+            logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR, "")
 
             // Attempt to send any logs that are still waiting in the sink
             logOrchestrator.flush(true)

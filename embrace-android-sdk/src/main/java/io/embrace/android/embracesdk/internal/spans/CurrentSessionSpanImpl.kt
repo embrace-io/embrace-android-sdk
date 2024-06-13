@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
@@ -104,16 +103,6 @@ internal class CurrentSessionSpanImpl(
                 emptyList()
             }
         }
-    }
-
-    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
-        val currentSession = sessionSpan.get() ?: return false
-        val event = obj.mapper()
-        return currentSession.addEvent(
-            event.schemaType.fixedObjectName.toEmbraceObjectName(),
-            event.spanStartTimeMs,
-            event.schemaType.attributes() + event.schemaType.telemetryType.toEmbraceKeyValuePair()
-        )
     }
 
     override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {

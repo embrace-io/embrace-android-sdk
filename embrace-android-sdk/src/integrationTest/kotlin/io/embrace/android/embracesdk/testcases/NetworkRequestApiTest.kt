@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -263,12 +264,20 @@ internal class NetworkRequestApiTest {
                     assertEquals(expectedRequest.bytesReceived.toString(), this.attributes["http.response.body.size"])
                     assertEquals(null, this.attributes["error.type"])
                     assertEquals(null, this.attributes["error.message"])
+                    val statusCode = expectedRequest.responseCode
+                    val expectedStatus = if (statusCode != null && statusCode >= 200 && statusCode < 400) {
+                        StatusCode.OK
+                    } else {
+                        StatusCode.ERROR
+                    }
+                    assertEquals(expectedStatus, status)
                 } else {
                     assertEquals(null, this.attributes["http.response.status_code"])
                     assertEquals(null, this.attributes["http.request.body.size"])
                     assertEquals(null, this.attributes["http.response.body.size"])
                     assertEquals(expectedRequest.errorType, this.attributes["error.type"])
                     assertEquals(expectedRequest.errorMessage, this.attributes["error.message"])
+                    assertEquals(StatusCode.ERROR, status)
                 }
             }
         }

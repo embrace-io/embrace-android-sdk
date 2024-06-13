@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
+import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
@@ -60,11 +61,17 @@ internal class EmbraceNetworkLoggingService(
             val strippedUrl = stripUrl(networkRequest.url)
 
             val networkRequestSchemaType = SchemaType.NetworkRequest(networkRequest)
+            val statusCode = networkRequest.responseCode
+            val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
+                ErrorCode.FAILURE
+            } else {
+                null
+            }
             spanService.recordCompletedSpan(
                 name = "${networkRequest.httpMethod} ${getUrlPath(strippedUrl)}",
                 startTimeMs = networkRequest.startTime,
                 endTimeMs = networkRequest.endTime,
-                errorCode = null,
+                errorCode = errorCode,
                 parent = null,
                 attributes = networkRequestSchemaType.attributes(),
                 type = EmbType.Performance.Network,

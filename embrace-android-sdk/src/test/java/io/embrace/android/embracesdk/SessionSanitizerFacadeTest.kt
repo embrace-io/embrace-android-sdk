@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -11,9 +11,9 @@ import org.junit.Test
 
 internal class SessionSanitizerFacadeTest {
 
-    private val base = fakeSessionMessage()
+    private val base = fakeSessionEnvelope()
 
-    private val sessionMessage = base.copy(
+    private val envelope = base.copy(
         metadata = EnvelopeMetadata(
             email = "example@embrace.com",
             personas = setOf("personas")
@@ -47,7 +47,7 @@ internal class SessionSanitizerFacadeTest {
     @Test
     fun `test if it keeps all event message components`() {
         val sanitizedMessage =
-            SessionSanitizerFacade(sessionMessage, enabledComponents).getSanitizedMessage()
+            SessionSanitizerFacade(envelope, enabledComponents).getSanitizedMessage()
         assertNotNull(sanitizedMessage.metadata?.personas)
         assertNotNull(sanitizedMessage.resource?.diskTotalCapacity)
     }
@@ -56,7 +56,7 @@ internal class SessionSanitizerFacadeTest {
     fun `test if it sanitizes event message components`() {
         // uses an empty set for enabled components
         val sanitizedMessage =
-            SessionSanitizerFacade(sessionMessage, setOf()).getSanitizedMessage()
+            SessionSanitizerFacade(envelope, setOf()).getSanitizedMessage()
         assertNull(sanitizedMessage.metadata?.personas)
         assertNull(sanitizedMessage.resource?.diskTotalCapacity)
     }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.payload.SessionZygote
 
 internal interface PayloadMessageCollator {
@@ -14,5 +15,5 @@ internal interface PayloadMessageCollator {
     /**
      * Builds a fully populated payload.
      */
-    fun buildFinalSessionMessage(params: FinalEnvelopeParams): SessionMessage
+    fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPayload>
 }

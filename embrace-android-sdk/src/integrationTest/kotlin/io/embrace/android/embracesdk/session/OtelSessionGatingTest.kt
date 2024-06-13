@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.arch.schema.EmbType
@@ -9,22 +8,17 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.gating.EmbraceGatingService
-import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -89,7 +83,7 @@ internal class OtelSessionGatingTest {
     }
 
     private fun assertSessionGating(
-        payload: SessionMessage,
+        payload: Envelope<SessionPayload>,
         gated: Boolean
     ) {
         val sessionSpan = payload.findSessionSpan()

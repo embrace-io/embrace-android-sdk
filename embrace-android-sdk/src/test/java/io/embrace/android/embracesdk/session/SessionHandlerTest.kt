@@ -28,6 +28,8 @@ import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
@@ -35,7 +37,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
@@ -175,7 +176,7 @@ internal class SessionHandlerTest {
         }
         clock.tick(30000)
         val msg = payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, 10L, initial)
-        assertSpanInSessionMessage(msg)
+        assertSpanInSessionEnvelope(msg)
     }
 
     @Test
@@ -199,7 +200,7 @@ internal class SessionHandlerTest {
             initial,
             "fakeCrashId"
         )
-        assertSpanInSessionMessage(msg)
+        assertSpanInSessionEnvelope(msg)
     }
 
     @Test
@@ -215,7 +216,7 @@ internal class SessionHandlerTest {
         assertEquals(1, spanSink.completedSpans().size)
 
         clock.tick(15000L)
-        val sessionMessage =
+        val envelope =
             checkNotNull(
                 payloadFactory.endPayloadWithState(
                     ProcessState.FOREGROUND,
@@ -223,7 +224,7 @@ internal class SessionHandlerTest {
                     initial
                 )
             )
-        val spans = checkNotNull(sessionMessage.data?.spans)
+        val spans = checkNotNull(envelope.data.spans)
         assertEquals(2, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -247,9 +248,9 @@ internal class SessionHandlerTest {
         spanService.initializeService(startTimeMillis)
     }
 
-    private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
-        assertNotNull(sessionMessage)
-        val spans = checkNotNull(sessionMessage?.data?.spans)
+    private fun assertSpanInSessionEnvelope(envelope: Envelope<SessionPayload>?) {
+        assertNotNull(envelope)
+        val spans = checkNotNull(envelope?.data?.spans)
         assertEquals(2, spans.size)
         val expectedSpans = listOf("emb-test-span", "emb-session")
         assertEquals(expectedSpans, spans.map(Span::name))

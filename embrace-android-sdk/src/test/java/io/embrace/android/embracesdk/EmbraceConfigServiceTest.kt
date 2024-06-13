@@ -98,7 +98,7 @@ internal class EmbraceConfigServiceTest {
         every { mockApiService.getConfig() } returns remoteConfig
         fakePreferenceService = FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
         every {
-            mockCacheService.loadObject("config.json", RemoteConfig::class.java)
+            mockCacheService.loadObject<RemoteConfig>("config.json", RemoteConfig::class.java)
         } returns fakeCachedConfig
         worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
         service = createService(worker = worker)

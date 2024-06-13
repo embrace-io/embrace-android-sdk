@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
@@ -11,7 +12,7 @@ internal class FakePayloadCollator : PayloadMessageCollator {
         TODO("Not yet implemented")
     }
 
-    override fun buildFinalSessionMessage(params: FinalEnvelopeParams): SessionMessage {
+    override fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPayload> {
         TODO("Not yet implemented")
     }
 }

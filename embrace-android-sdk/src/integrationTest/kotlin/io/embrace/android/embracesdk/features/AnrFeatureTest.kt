@@ -11,16 +11,17 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.injection.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.worker.WorkerName
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.atomic.AtomicReference
 
 private const val START_TIME_MS = 10000000000L
 private const val INTERVAL_MS = 100L
@@ -224,5 +225,5 @@ internal class AnrFeatureTest {
         }
     }
 
-    private fun SessionMessage.findAnrSpans() = checkNotNull(data?.spans?.filter { it.name == SPAN_NAME })
+    private fun Envelope<SessionPayload>.findAnrSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
 }

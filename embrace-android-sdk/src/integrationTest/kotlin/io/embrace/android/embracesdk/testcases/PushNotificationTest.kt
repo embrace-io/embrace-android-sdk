@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -99,7 +100,7 @@ internal class PushNotificationTest {
         }
     }
 
-    private fun SessionMessage.assertNotification(type: String) {
+    private fun Envelope<SessionPayload>.assertNotification(type: String) {
         val sessionSpan = findSessionSpan()
         val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
         assertTrue(checkNotNull(event.timestampNanos) > 0)

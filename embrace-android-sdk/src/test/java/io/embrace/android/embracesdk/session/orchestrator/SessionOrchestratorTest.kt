@@ -78,7 +78,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
-        assertEquals(0, deliveryService.sentSessionMessages.size)
+        assertEquals(0, deliveryService.sentSessionEnvelopes.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -90,7 +90,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
-        assertEquals(0, deliveryService.sentSessionMessages.size)
+        assertEquals(0, deliveryService.sentSessionEnvelopes.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -128,14 +128,14 @@ internal class SessionOrchestratorTest {
         baCacheExecutor.runCurrentlyBlocked()
         assertEquals(
             SessionSnapshotType.PERIODIC_CACHE,
-            checkNotNull(deliveryService.savedSessionMessages.last().second)
+            checkNotNull(deliveryService.savedSessionEnvelopes.last().second)
         )
-        assertEquals(1, deliveryService.savedSessionMessages.size)
+        assertEquals(1, deliveryService.savedSessionEnvelopes.size)
         orchestrator.onForeground(true, clock.now())
         clock.tick()
         orchestrator.onBackground(clock.now())
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
-        assertEquals(3, deliveryService.savedSessionMessages.size)
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
+        assertEquals(3, deliveryService.savedSessionEnvelopes.size)
     }
 
     @Test
@@ -144,10 +144,10 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onForeground(true, clock.now())
         clock.tick()
-        assertEquals(1, deliveryService.savedSessionMessages.count())
+        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
         baCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, deliveryService.savedSessionMessages.count())
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
     }
 
     @Test
@@ -157,13 +157,13 @@ internal class SessionOrchestratorTest {
         sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(
             SessionSnapshotType.PERIODIC_CACHE,
-            checkNotNull(deliveryService.savedSessionMessages.last().second)
+            checkNotNull(deliveryService.savedSessionEnvelopes.last().second)
         )
-        assertEquals(1, deliveryService.savedSessionMessages.size)
+        assertEquals(1, deliveryService.savedSessionEnvelopes.size)
         orchestrator.onBackground(clock.now())
         clock.tick()
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
-        assertEquals(2, deliveryService.savedSessionMessages.size)
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
+        assertEquals(2, deliveryService.savedSessionEnvelopes.size)
     }
 
     @Test
@@ -172,10 +172,10 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onBackground(clock.now())
         clock.tick()
-        assertEquals(1, deliveryService.savedSessionMessages.count())
+        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, deliveryService.savedSessionMessages.count())
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionMessages.last().second))
+        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
+        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
     }
 
     @Test
@@ -240,7 +240,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(true)
         assertEquals(2, payloadCollator.sessionCount.get())
-        assertNotNull(deliveryService.sentSessionMessages.last().first)
+        assertNotNull(deliveryService.sentSessionEnvelopes.last().first)
     }
 
     @Test
@@ -286,16 +286,16 @@ internal class SessionOrchestratorTest {
     @Test
     fun `periodic caching started with initial session`() {
         createOrchestrator(false)
-        assertEquals(0, deliveryService.savedSessionMessages.size)
+        assertEquals(0, deliveryService.savedSessionEnvelopes.size)
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, deliveryService.savedSessionMessages.size)
+        assertEquals(1, deliveryService.savedSessionEnvelopes.size)
     }
 
     @Test
     fun `test session span cold start`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, clock.now())
-        checkNotNull(deliveryService.sentSessionMessages.last().first)
+        checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
     }
 
     @Test
@@ -303,7 +303,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.onBackground(orchestratorStartTimeMs)
-        checkNotNull(deliveryService.sentSessionMessages.last().first)
+        checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
     }
 
     @Test
@@ -311,7 +311,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.endSessionWithCrash("my-crash-id")
-        checkNotNull(deliveryService.sentSessionMessages.last().first)
+        checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
     }
 
     @Test

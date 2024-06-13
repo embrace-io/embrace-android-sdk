@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.comms.api.CachedConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import io.embrace.android.embracesdk.payload.SessionMessage
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.concurrent.Callable
@@ -28,7 +28,7 @@ internal class FakeApiService : ApiService {
     val networkCallRequests = mutableListOf<NetworkEvent>()
     val eventRequests = mutableListOf<EventMessage>()
     val crashRequests = mutableListOf<EventMessage>()
-    val sessionRequests = mutableListOf<SessionMessage>()
+    val sessionRequests = mutableListOf<Envelope<SessionPayload>>()
     var futureGetCount: Int = 0
 
     override fun getConfig(): RemoteConfig? {
@@ -70,15 +70,15 @@ internal class FakeApiService : ApiService {
         }
         val stream = ByteArrayOutputStream()
         action(stream)
-        val obj = readBodyAsSessionMessage(stream.toByteArray().inputStream())
+        val obj = readBodyAsSessionEnvelope(stream.toByteArray().inputStream())
         sessionRequests.add(obj)
         onFinish?.invoke(true)
         return ObservableFutureTask { }
     }
 
-    private fun readBodyAsSessionMessage(inputStream: InputStream): SessionMessage {
+    private fun readBodyAsSessionEnvelope(inputStream: InputStream): Envelope<SessionPayload> {
         return GZIPInputStream(inputStream).use {
-            serializer.fromJson(it, SessionMessage::class.java)
+            serializer.fromJson(it, Envelope.sessionEnvelopeType)
         }
     }
 

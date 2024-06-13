@@ -6,22 +6,24 @@ import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputS
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.getSessionId
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.getSessionId
-import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
+import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 
 internal class EmbraceDeliveryService(
@@ -41,21 +43,22 @@ internal class EmbraceDeliveryService(
      * Caches a generated session message, with performance information generated up to the current
      * point.
      */
-    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
-        cacheManager.saveSession(sessionMessage, snapshotType)
+    override fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType) {
+        cacheManager.saveSession(envelope, snapshotType)
         if (snapshotType == SessionSnapshotType.PERIODIC_CACHE) {
             return
         }
 
         try {
-            val sessionId = sessionMessage.getSessionId() ?: return
-            val action = cacheManager.loadSessionAsAction(sessionId) ?: { stream ->
-                // fallback if initial caching failed for whatever reason, so we don't drop
-                // the data
-                ConditionalGzipOutputStream(stream).use {
-                    serializer.toJson(sessionMessage, SessionMessage::class.java, it)
+            val sessionId = envelope.getSessionId() ?: return
+            val action: SerializationAction = cacheManager.loadSessionAsAction(sessionId)
+                ?: { stream: OutputStream ->
+                    // fallback if initial caching failed for whatever reason, so we don't drop
+                    // the data
+                    ConditionalGzipOutputStream(stream).use<ConditionalGzipOutputStream, Unit> {
+                        serializer.toJson(envelope, Envelope.sessionEnvelopeType)
+                    }
                 }
-            }
             val future = apiService.sendSession(action) { successful ->
                 if (!successful) {
                     val message =
@@ -114,14 +117,14 @@ internal class EmbraceDeliveryService(
 
             allSessions.map { it.sessionId }.forEach { sessionId ->
                 cacheManager.transformSession(sessionId = sessionId) {
-                    val completedSpanIds = data?.spans?.map { it.spanId }?.toSet() ?: emptySet()
-                    val spansToFail = data?.spanSnapshots
+                    val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
+                    val spansToFail = data.spanSnapshots
                         ?.filterNot { completedSpanIds.contains(it.spanId) }
                         ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
                         ?: emptyList()
-                    val completedSpans = (data?.spans ?: emptyList()) + spansToFail
+                    val completedSpans = (data.spans ?: emptyList()) + spansToFail
                     copy(
-                        data = data?.copy(
+                        data = data.copy(
                             spans = completedSpans,
                             spanSnapshots = emptyList(),
                         )
@@ -152,8 +155,8 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    private fun SessionMessage.attachCrashToSession(nativeCrashData: NativeCrashData): SessionMessage {
-        val spans = data?.spans ?: return this
+    private fun Envelope<SessionPayload>.attachCrashToSession(nativeCrashData: NativeCrashData): Envelope<SessionPayload> {
+        val spans = data.spans ?: return this
         val sessionSpan = getSessionSpan() ?: return this
 
         val alteredSessionSpan = sessionSpan.copy(
@@ -188,8 +191,8 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    private fun getFailedSpanEndTimeMs(sessionMessage: SessionMessage) =
-        sessionMessage.getSessionSpan()?.endTimeNanos?.nanosToMillis() ?: -1
+    private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPayload>) =
+        envelope.getSessionSpan()?.endTimeNanos?.nanosToMillis() ?: -1
 
     override fun sendMoment(eventMessage: EventMessage) {
         apiService.sendEvent(eventMessage)

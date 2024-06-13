@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -50,11 +51,11 @@ internal class PersonaFeaturesTest {
         }
     }
 
-    private fun SessionMessage.assertPersonaExists(persona: String) = assertPersona(true, this, persona)
+    private fun Envelope<SessionPayload>.assertPersonaExists(persona: String) = assertPersona(true, this, persona)
 
-    private fun SessionMessage.assertPersonaDoesNotExist(persona: String) = assertPersona(false, this, persona)
+    private fun Envelope<SessionPayload>.assertPersonaDoesNotExist(persona: String) = assertPersona(false, this, persona)
 
-    private fun assertPersona(exists: Boolean, session: SessionMessage, persona: String) {
+    private fun assertPersona(exists: Boolean, session: Envelope<SessionPayload>, persona: String) {
         val personas = checkNotNull(session.metadata).personas
         assertEquals(exists, personas?.find { it == persona } != null)
         assertEquals(

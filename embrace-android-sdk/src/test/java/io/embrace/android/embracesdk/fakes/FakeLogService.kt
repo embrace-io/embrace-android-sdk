@@ -5,9 +5,21 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.logs.LogService
 
 internal class FakeLogService : LogService {
+    internal class LogData(
+        val message: String,
+        val type: EventType,
+        val logExceptionType: LogExceptionType,
+        val properties: Map<String, Any>?,
+        val stackTraceElements: Array<StackTraceElement>?,
+        val customStackTrace: String?,
+        val context: String?,
+        val library: String?,
+        val exceptionName: String?,
+        val exceptionMessage: String?
+    )
 
     val logs = mutableListOf<String>()
-    val loggedMessages = mutableListOf<FakeLogMessageService.LogData>()
+    val loggedMessages = mutableListOf<LogData>()
     var errorLogIds = listOf<String>()
 
     override fun log(
@@ -23,7 +35,7 @@ internal class FakeLogService : LogService {
         exceptionMessage: String?
     ) {
         loggedMessages.add(
-            FakeLogMessageService.LogData(
+            LogData(
                 message = message,
                 type = type,
                 logExceptionType = logExceptionType,

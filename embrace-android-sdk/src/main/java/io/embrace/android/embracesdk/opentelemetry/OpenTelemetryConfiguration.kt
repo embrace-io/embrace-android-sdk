@@ -13,6 +13,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
 
 internal class OpenTelemetryConfiguration(
     spanSink: SpanSink,
@@ -23,7 +24,7 @@ internal class OpenTelemetryConfiguration(
     val embraceSdkName = BuildConfig.LIBRARY_PACKAGE_NAME
     val embraceSdkVersion = BuildConfig.VERSION_NAME
     val resource: Resource = Resource.getDefault().toBuilder()
-        .put(serviceName, embraceSdkName)
+        .put(ServiceIncubatingAttributes.SERVICE_NAME, embraceSdkName)
         .put(serviceVersion, embraceSdkVersion)
         .put(osName, systemInfo.osName)
         .put(osVersion, systemInfo.osVersion)

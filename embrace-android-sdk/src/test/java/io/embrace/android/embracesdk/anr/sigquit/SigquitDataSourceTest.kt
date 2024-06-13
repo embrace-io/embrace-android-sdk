@@ -33,16 +33,12 @@ internal class SigquitDataSourceTest {
     @Test
     fun `test save google anr`() {
         assertEquals(0, sessionSpan.addedEvents.size)
-        dataSource.saveGoogleAnr(100)
+        dataSource.saveSigquit(100)
         config = config.copy(googlePctEnabled = 100)
-        dataSource.saveGoogleAnr(200)
+        dataSource.saveSigquit(200)
         assertEquals(1, sessionSpan.addedEvents.size)
-    }
-
-    @Test
-    fun `test span event mapping`() {
-        val data = dataSource.toSpanEventData(100)
-        assertEquals(100, data.spanStartTimeMs)
-        assertEquals(SchemaType.Sigquit, data.schemaType)
+        val event = sessionSpan.addedEvents.single()
+        assertEquals(SchemaType.Sigquit, event.schemaType)
+        assertEquals(200, event.spanStartTimeMs)
     }
 }

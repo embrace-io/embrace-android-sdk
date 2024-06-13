@@ -1,44 +1,43 @@
 package io.embrace.android.embracesdk.gating
 
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 internal class SessionSanitizerFacade(
-    private val sessionMessage: SessionMessage,
+    private val envelope: Envelope<SessionPayload>,
     private val components: Set<String>
 ) {
 
-    fun getSanitizedMessage(): SessionMessage {
-        val sanitizedSession = SessionSanitizer(sessionMessage.session, components).sanitize()
-        val sanitizedSpans = SpanSanitizer(sessionMessage.data?.spans, components).sanitize()
+    fun getSanitizedMessage(): Envelope<SessionPayload> {
+        val sanitizedSpans = SpanSanitizer(envelope.data.spans, components).sanitize()
 
-        return sessionMessage.copy(
-            session = sanitizedSession,
+        return envelope.copy(
             metadata = sanitizeMetadata(components),
             resource = sanitizeResource(components),
-            data = sessionMessage.data?.copy(spans = sanitizedSpans)
+            data = envelope.data.copy(spans = sanitizedSpans)
         )
     }
 
     private fun sanitizeMetadata(enabledComponents: Set<String>): EnvelopeMetadata {
-        if (sessionMessage.metadata == null) {
+        if (envelope.metadata == null) {
             return EnvelopeMetadata()
         }
         if (!shouldSendUserPersonas(enabledComponents)) {
-            return sessionMessage.metadata.copy(personas = null)
+            return envelope.metadata.copy(personas = null)
         }
-        return sessionMessage.metadata
+        return envelope.metadata
     }
 
     private fun sanitizeResource(enabledComponents: Set<String>): EnvelopeResource {
-        if (sessionMessage.resource == null) {
+        if (envelope.resource == null) {
             return EnvelopeResource()
         }
         if (!shouldSendCurrentDiskUsage(enabledComponents)) {
-            return sessionMessage.resource.copy(diskTotalCapacity = null)
+            return envelope.resource.copy(diskTotalCapacity = null)
         }
-        return sessionMessage.resource
+        return envelope.resource
     }
 
     private fun shouldSendCurrentDiskUsage(enabledComponents: Set<String>) =

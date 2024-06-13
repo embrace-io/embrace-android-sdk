@@ -8,7 +8,7 @@ import java.io.Closeable
 
 internal class ComponentCallbackService(
     private val application: Application,
-    private val memoryService: MemoryService,
+    private val memoryService: MemoryService?,
     private val logger: EmbLogger
 ) : ComponentCallbacks2, Closeable {
 
@@ -25,7 +25,7 @@ internal class ComponentCallbackService(
     override fun onTrimMemory(trimLevel: Int) {
         if (trimLevel == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             try {
-                memoryService.onMemoryWarning()
+                memoryService?.onMemoryWarning()
             } catch (ex: Exception) {
                 logger.logWarning(
                     "Failed to handle onTrimMemory (low memory) event",

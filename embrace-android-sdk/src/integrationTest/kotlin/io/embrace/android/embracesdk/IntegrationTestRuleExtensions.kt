@@ -5,13 +5,11 @@ import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorServic
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.SessionMessage
 import org.json.JSONObject
 import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.robolectric.Robolectric
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
@@ -96,30 +94,30 @@ internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int
 }
 
 /**
- * Returns a list of [SessionMessage] that were sent by the SDK since startup.
+ * Returns a list of session that were sent by the SDK since startup.
  */
-internal fun IntegrationTestRule.Harness.getSentSessions(): List<SessionMessage> {
+internal fun IntegrationTestRule.Harness.getSentSessions(): List<Envelope<SessionPayload>> {
     return overriddenDeliveryModule.deliveryService.getSentSessions()
 }
 
 /**
  * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
  */
-internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<SessionMessage> {
+internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
     return overriddenDeliveryModule.deliveryService.getSentBackgroundActivities()
 }
 
 /**
- * Returns the last [SessionMessage] that was saved by the SDK.
+ * Returns the last session that was saved by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSavedSession(): SessionMessage? {
+internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<SessionPayload>? {
     return overriddenDeliveryModule.deliveryService.getLastSavedSession()
 }
 
 /**
- * Returns the last [SessionMessage] that was sent by the SDK.
+ * Returns the last session that was sent by the SDK.
  */
-internal fun IntegrationTestRule.Harness.getLastSentSession(): SessionMessage? {
+internal fun IntegrationTestRule.Harness.getLastSentSession(): Envelope<SessionPayload>? {
     return getSentSessions().lastOrNull()
 }
 
@@ -136,7 +134,7 @@ internal fun IntegrationTestRule.Harness.getLastSentSession(): SessionMessage? {
 internal fun IntegrationTestRule.Harness.recordSession(
     simulateAppStartup: Boolean = false,
     action: () -> Unit = {}
-): SessionMessage? {
+): Envelope<SessionPayload>? {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
     val activityController =
@@ -167,7 +165,7 @@ internal fun <T> IntegrationTestRule.validatePayloadAgainstGoldenFile(
     goldenFileName: String
 ) {
     try {
-        val observedJson = harness.overriddenInitModule.jsonSerializer.toJson(payload)
+        val observedJson = harness.overriddenInitModule.jsonSerializer.toJson(payload, Envelope.sessionEnvelopeType)
         val expectedJson = ResourceReader.readResourceAsText(goldenFileName)
         val result = JsonComparator.compare(JSONObject(expectedJson), JSONObject(observedJson))
 
@@ -202,22 +200,6 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: Provider<T>, waitTim
     }
 
     throw TimeoutException("Timeout period elapsed before condition met")
-}
-
-internal fun verifySessionHappened(message: SessionMessage) {
-    verifySessionMessage(message)
-}
-
-internal fun verifySessionMessage(sessionMessage: SessionMessage) {
-    assertNotNull(sessionMessage.session)
-}
-
-internal fun verifyBgActivityHappened(message: SessionMessage) {
-    verifyBgActivityMessage(message)
-}
-
-internal fun verifyBgActivityMessage(message: SessionMessage) {
-    assertNotNull(message.session)
 }
 
 private const val CHECK_INTERVAL_MS: Int = 10

@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.api.EmbraceApi;
 import io.embrace.android.embracesdk.internal.api.LogsApi;
 import io.embrace.android.embracesdk.internal.api.MomentsApi;
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi;
+import io.embrace.android.embracesdk.internal.api.OTelApi;
 import io.embrace.android.embracesdk.internal.api.SdkStateApi;
 import io.embrace.android.embracesdk.internal.api.SessionApi;
 import io.embrace.android.embracesdk.internal.api.UserApi;
@@ -26,6 +27,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
 import io.embrace.android.embracesdk.spans.TracingApi;
+import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.jvm.functions.Function0;
@@ -38,15 +40,16 @@ import kotlin.jvm.functions.Function0;
 @SuppressLint("EmbracePublicApiPackageRule")
 @SuppressWarnings("unused")
 public final class Embrace implements
-        LogsApi,
-        MomentsApi,
-        NetworkRequestApi,
-        SessionApi,
-        UserApi,
-        TracingApi,
-        EmbraceApi,
-        EmbraceAndroidApi,
-        SdkStateApi {
+    LogsApi,
+    MomentsApi,
+    NetworkRequestApi,
+    SessionApi,
+    UserApi,
+    TracingApi,
+    EmbraceApi,
+    EmbraceAndroidApi,
+    SdkStateApi,
+    OTelApi {
 
     /**
      * Singleton instance of the Embrace SDK.
@@ -575,6 +578,23 @@ public final class Embrace implements
         }
     }
 
+    @NonNull
+    @Override
+    public Tracer getTracer() {
+        return impl.getTracer(null, null);
+    }
+
+    @NonNull
+    @Override
+    public Tracer getTracer(@Nullable String instrumentationModuleName) {
+        return impl.getTracer(instrumentationModuleName, null);
+    }
+    @NonNull
+    @Override
+    public Tracer getTracer(@Nullable String instrumentationModuleName, @Nullable String instrumentationModuleVersion) {
+        return impl.getTracer(instrumentationModuleName, instrumentationModuleVersion);
+    }
+
     /**
      * Adds a [LogRecordExporter] to the open telemetry logger.
      *
@@ -598,14 +618,14 @@ public final class Embrace implements
                                     @NonNull Boolean hasData) {
         if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
             impl.logPushNotification(
-                    title,
-                    body,
-                    topic,
-                    id,
-                    notificationPriority,
-                    messageDeliveredPriority,
-                    isNotification,
-                    hasData
+                title,
+                body,
+                topic,
+                id,
+                notificationPriority,
+                messageDeliveredPriority,
+                isNotification,
+                hasData
             );
         }
     }

@@ -1,14 +1,12 @@
 package io.embrace.android.embracesdk.capture.webview
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
-import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -26,37 +24,33 @@ internal class WebViewDataSource(
     destination = writer,
     logger = logger,
     limitStrategy = UpToLimitStrategy(webViewVitalsBehavior::getMaxWebViewVitals),
-),
-    SpanEventMapper<WebViewInfo> {
+) {
 
     fun loadDataIntoSession(webViewInfoList: List<WebViewInfo>) {
         try {
             writer.removeEvents(EmbType.System.WebViewInfo)
             webViewInfoList.forEach { webViewInfo ->
                 alterSessionSpan(
-                    inputValidation = { true },
+                    inputValidation = NoInputValidation,
                     captureAction = {
-                        addEvent(webViewInfo, ::toSpanEventData)
+                        val webVitalsString = serializer
+                            .toJson(webViewInfo.webVitals, List::class.java)
+                            .toByteArray()
+                            .toUTF8String()
+
+                        addEvent(
+                            SchemaType.WebViewInfo(
+                                url = webViewInfo.url,
+                                webVitals = webVitalsString,
+                                tag = webViewInfo.tag
+                            ),
+                            webViewInfo.startTime
+                        )
                     },
                 )
             }
         } catch (ex: Exception) {
             logger.logError("Failed to capture WebViewInfo", ex)
         }
-    }
-
-    override fun toSpanEventData(obj: WebViewInfo): SpanEventData {
-        val webVitalsString = serializer
-            .toJson(obj.webVitals, List::class.java)
-            .toByteArray()
-            .toUTF8String()
-        return SpanEventData(
-            SchemaType.WebViewInfo(
-                url = obj.url,
-                webVitals = webVitalsString,
-                tag = obj.tag
-            ),
-            obj.startTime.millisToNanos()
-        )
     }
 }

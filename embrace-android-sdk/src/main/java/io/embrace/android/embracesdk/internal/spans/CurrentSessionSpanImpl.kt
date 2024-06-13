@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -105,13 +105,12 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
+    override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         val currentSession = sessionSpan.get() ?: return false
-        val event = obj.mapper()
         return currentSession.addEvent(
-            event.schemaType.fixedObjectName.toEmbraceObjectName(),
-            event.spanStartTimeMs,
-            event.schemaType.attributes() + event.schemaType.telemetryType.toEmbraceKeyValuePair()
+            schemaType.fixedObjectName.toEmbraceObjectName(),
+            startTimeMs,
+            schemaType.attributes() + schemaType.telemetryType.toEmbraceKeyValuePair()
         )
     }
 

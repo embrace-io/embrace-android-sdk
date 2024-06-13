@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -231,7 +231,7 @@ internal class NetworkRequestApiTest {
 
             val session = checkNotNull(testRule.harness.getLastSentSession())
 
-            val spans = checkNotNull(session.data?.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
+            val spans = checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${spans.size}",
                 2,
@@ -267,12 +267,20 @@ internal class NetworkRequestApiTest {
                     assertEquals(expectedRequest.bytesReceived.toString(), attrs.findAttributeValue("http.response.body.size"))
                     assertEquals(null, attrs.findAttributeValue("error.type"))
                     assertEquals(null, attrs.findAttributeValue("error.message"))
+                    val statusCode = expectedRequest.responseCode
+                    val expectedStatus = if (statusCode != null && statusCode >= 200 && statusCode < 400) {
+                        Span.Status.OK
+                    } else {
+                        Span.Status.ERROR
+                    }
+                    assertEquals(expectedStatus, status)
                 } else {
                     assertEquals(null, attrs.findAttributeValue("http.response.status_code"))
                     assertEquals(null, attrs.findAttributeValue("http.request.body.size"))
                     assertEquals(null, attrs.findAttributeValue("http.response.body.size"))
                     assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
                     assertEquals(expectedRequest.errorMessage, attrs.findAttributeValue("error.message"))
+                    assertEquals(Span.Status.ERROR, status)
                 }
             }
         }
@@ -281,7 +289,7 @@ internal class NetworkRequestApiTest {
     private fun validateAndReturnExpectedNetworkSpan(): Span {
         val session = checkNotNull(testRule.harness.getLastSentSession())
 
-        val unfilteredSpans = checkNotNull(session.data?.spans)
+        val unfilteredSpans = checkNotNull(session.data.spans)
         val spans = checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue("http.request.method") != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",

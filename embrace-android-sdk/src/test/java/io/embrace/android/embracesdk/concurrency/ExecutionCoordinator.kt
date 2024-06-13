@@ -31,9 +31,10 @@ internal class ExecutionCoordinator(
         firstBlocksSecond: Boolean,
         firstOperationFails: Boolean = false
     ) {
+        val completionSteps = if (firstBlocksSecond) 3 else 2
         var blockId: Int? = null
         var firstOperationUnblocked: Boolean? = null
-        val completionLatch = CountDownLatch(2)
+        val completionLatch = CountDownLatch(completionSteps)
         val queueSecondOperationLatch = CountDownLatch(1)
         val unblockFirstOperationLatch = CountDownLatch(1)
 
@@ -54,6 +55,7 @@ internal class ExecutionCoordinator(
             unblockingThread.submit {
                 unblockFirstOperationLatch.await(1, TimeUnit.SECONDS)
                 firstOperationUnblocked = executionModifiers.unblockOperation(checkNotNull(blockId))
+                completionLatch.countDown()
             }
 
             if (firstBlocksSecond) {

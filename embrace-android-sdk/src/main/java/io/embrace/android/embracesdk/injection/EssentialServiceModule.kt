@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
-import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
@@ -53,7 +51,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
  */
 internal interface EssentialServiceModule {
     val memoryCleanerService: MemoryCleanerService
-    val orientationService: OrientationService
     val processStateService: ProcessStateService
     val activityLifecycleTracker: ActivityTracker
     val metadataService: MetadataService
@@ -145,11 +142,6 @@ internal class EssentialServiceModuleImpl(
         EmbraceMemoryCleanerService(logger = initModule.logger)
     }
 
-    override val orientationService: OrientationService by singleton {
-        // Embrace is not processing orientation changes on this moment, so return no-op service.
-        NoOpOrientationService()
-    }
-
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
             EmbraceProcessStateService(initModule.clock, initModule.logger)
@@ -157,7 +149,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
-        ActivityLifecycleTracker(coreModule.application, orientationService, initModule.logger)
+        ActivityLifecycleTracker(coreModule.application, initModule.logger)
     }
 
     override val configService: ConfigService by singleton {

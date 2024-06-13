@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.capture.crumbs.PushNotificationCaptureServi
 import io.embrace.android.embracesdk.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
 import io.embrace.android.embracesdk.capture.memory.MemoryService
-import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.startup.StartupService
@@ -36,7 +35,7 @@ internal interface DataCaptureServiceModule {
     /**
      * Captures memory events
      */
-    val memoryService: MemoryService
+    val memoryService: MemoryService?
 
     /**
      * Captures information from webviews
@@ -75,11 +74,11 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     private val configService = essentialServiceModule.configService
 
-    override val memoryService: MemoryService by singleton {
+    override val memoryService: MemoryService? by singleton {
         if (configService.autoDataCaptureBehavior.isMemoryServiceEnabled()) {
             EmbraceMemoryService(initModule.clock) { dataSourceModule }
         } else {
-            NoOpMemoryService()
+            null
         }
     }
 

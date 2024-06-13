@@ -3,15 +3,17 @@ package io.embrace.android.embracesdk.comms.delivery
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.getSessionId
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.getSessionId
-import io.embrace.android.embracesdk.payload.getSessionSpan
 import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FileNotFoundException
+import java.lang.reflect.Type
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -67,17 +69,17 @@ internal class EmbraceCacheService(
         }
     }
 
-    override fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>) {
+    override fun <T> cacheObject(name: String, objectToCache: T, type: Type) {
         safeFileWrite(name) { tempFile ->
-            serializer.toJson(objectToCache, clazz, tempFile.outputStream())
+            serializer.toJson(objectToCache, type, tempFile.outputStream())
         }
     }
 
-    override fun <T> loadObject(name: String, clazz: Class<T>): T? {
+    override fun <T> loadObject(name: String, type: Type): T? {
         findLock(name).read {
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
             try {
-                return serializer.fromJson(file.inputStream(), clazz)
+                return serializer.fromJson(file.inputStream(), type)
             } catch (ex: FileNotFoundException) {
                 logger.logInfo("Cache file cannot be found " + file.path)
             } catch (ex: Exception) {
@@ -123,11 +125,11 @@ internal class EmbraceCacheService(
                     logger.logWarning("Temporary session file for $filename not deleted on startup")
                 }
             } else if (filename == OLD_VERSION_FILE_NAME) {
-                val previousSdkSession = loadObject(filename, SessionMessage::class.java)
-                previousSdkSession?.also { sessionMessage ->
+                val previousSdkSession = loadObject<Envelope<SessionPayload>>(filename, Envelope.sessionEnvelopeType)
+                previousSdkSession?.also { envelope ->
                     runCatching {
-                        val span = sessionMessage.getSessionSpan() ?: return@runCatching
-                        val id = sessionMessage.getSessionId() ?: return@runCatching
+                        val span = envelope.getSessionSpan() ?: return@runCatching
+                        val id = envelope.getSessionId() ?: return@runCatching
                         val startTime = span.startTimeNanos?.nanosToMillis() ?: return@runCatching
                         val properSessionFilename = CachedSession.create(id, startTime, false).filename
                         if (!sessionFileNames.contains(properSessionFilename)) {
@@ -167,15 +169,15 @@ internal class EmbraceCacheService(
         }
     }
 
-    override fun writeSession(name: String, sessionMessage: SessionMessage) {
-        cacheObject(name, sessionMessage, SessionMessage::class.java)
+    override fun writeSession(name: String, envelope: Envelope<SessionPayload>) {
+        cacheObject(name, envelope, Envelope.sessionEnvelopeType)
     }
 
-    override fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage) {
+    override fun transformSession(name: String, transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>) {
         findLock(name).write {
             try {
-                val sessionMessage = loadObject(name, SessionMessage::class.java) ?: return@write
-                val newMessage = transformer(sessionMessage)
+                val envelope = loadObject<Envelope<SessionPayload>>(name, Envelope.sessionEnvelopeType) ?: return@write
+                val newMessage = transformer(envelope)
                 writeSession(name, newMessage)
             } catch (ex: Exception) {
                 logger.logError("Failed to transform session object ", ex)

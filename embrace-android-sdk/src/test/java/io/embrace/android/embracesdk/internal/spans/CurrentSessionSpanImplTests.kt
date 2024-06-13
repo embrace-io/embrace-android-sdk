@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
@@ -41,7 +40,7 @@ internal class CurrentSessionSpanImplTests {
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-        tracer = initModule.openTelemetryModule.tracer
+        tracer = initModule.openTelemetryModule.sdkTracer
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
     }
@@ -274,9 +273,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add event forwarded to span`() {
-        currentSessionSpan.addEvent("test-event") {
-            SpanEventData(SchemaType.Breadcrumb(this), 1000L)
-        }
+        currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L)
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)
 

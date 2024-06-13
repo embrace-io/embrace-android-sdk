@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
-import io.embrace.android.embracesdk.capture.memory.NoOpMemoryService
 import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.config.local.AutomaticDataCaptureLocalConfig
@@ -21,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -63,7 +63,7 @@ internal class DataCaptureServiceModuleImplTest {
             fakeDataSourceModule()
         )
 
-        assertTrue(module.memoryService is NoOpMemoryService)
+        assertNull(module.memoryService)
     }
 
     private fun createEnabledBehavior(): FakeEssentialServiceModule {

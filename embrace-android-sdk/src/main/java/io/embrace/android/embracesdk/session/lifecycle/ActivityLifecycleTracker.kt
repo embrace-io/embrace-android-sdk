@@ -5,7 +5,6 @@ import android.app.Application
 import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
@@ -16,7 +15,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 internal class ActivityLifecycleTracker(
     private val application: Application,
-    private val orientationService: OrientationService,
     private val logger: EmbLogger
 ) : ActivityTracker {
 
@@ -59,23 +57,8 @@ internal class ActivityLifecycleTracker(
             return foregroundActivity
         }
 
-    /**
-     * This method will update the current activity orientation.
-     *
-     * @param activity the activity involved in the tracking orientation process.
-     */
-    private fun updateOrientationWithActivity(activity: Activity) {
-        try {
-            orientationService.onOrientationChanged(activity.resources.configuration.orientation)
-        } catch (ex: Exception) {
-            logger.logWarning("Failed to register an orientation change")
-            logger.trackInternalError(InternalErrorType.ORIENTATION_CAPTURE_FAIL, ex)
-        }
-    }
-
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         updateStateWithActivity(activity)
-        updateOrientationWithActivity(activity)
         stream(listeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityCreated(activity, bundle)

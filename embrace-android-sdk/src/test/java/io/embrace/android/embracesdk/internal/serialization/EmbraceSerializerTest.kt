@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.internal.serialization
 
 import com.squareup.moshi.Types
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,30 +12,30 @@ import java.io.ByteArrayOutputStream
 
 internal class EmbraceSerializerTest {
     private val serializer = EmbraceSerializer()
-    private val payload: SessionMessage = fakeSessionMessage()
+    private val payload: Envelope<SessionPayload> = fakeSessionEnvelope()
 
     @Test
     fun testWriteToFile() {
         val stream = ByteArrayOutputStream()
-        serializer.toJson(payload, SessionMessage::class.java, stream)
+        serializer.toJson(payload, Envelope.sessionEnvelopeType, stream)
         assertTrue(stream.toByteArray().isNotEmpty())
     }
 
     @Test
     fun testLoadObject() {
-        val stream = serializer.toJson(payload).byteInputStream()
-        val result = serializer.fromJson(stream, SessionMessage::class.java)
+        val stream = serializer.toJson(payload, Envelope.sessionEnvelopeType).byteInputStream()
+        val result = serializer.fromJson<Envelope<SessionPayload>>(stream, Envelope.sessionEnvelopeType)
         assertEquals("fakeSessionId", result.getSessionId())
     }
 
     @Test
     fun testLoadListOfObjects() {
-        val session1 = fakeSessionMessage(sessionId = "session1")
-        val session2 = fakeSessionMessage(sessionId = "session2")
+        val session1 = fakeSessionEnvelope(sessionId = "session1")
+        val session2 = fakeSessionEnvelope(sessionId = "session2")
         val listOfObjects = listOf(session1, session2)
-        val type = Types.newParameterizedType(List::class.java, SessionMessage::class.java)
+        val type = Types.newParameterizedType(List::class.java, Envelope.sessionEnvelopeType)
         val stream = serializer.toJson(listOfObjects, type).byteInputStream()
-        val result = serializer.fromJson(stream, type) as List<SessionMessage>
+        val result = serializer.fromJson(stream, type) as List<Envelope<SessionPayload>>
         assertEquals(2, result.size)
         assertEquals(session1.getSessionId(), result[0].getSessionId())
         assertEquals(session2.getSessionId(), result[1].getSessionId())

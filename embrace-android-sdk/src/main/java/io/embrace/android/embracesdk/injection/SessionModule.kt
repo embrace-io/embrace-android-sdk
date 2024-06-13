@@ -46,8 +46,7 @@ internal class SessionModuleImpl(
             essentialServiceModule.gatingService,
             payloadModule.sessionEnvelopeSource,
             androidServicesModule.preferencesService,
-            openTelemetryModule.currentSessionSpan,
-            initModule.logger
+            openTelemetryModule.currentSessionSpan
         )
     }
 
@@ -105,7 +104,8 @@ internal class SessionModuleImpl(
             openTelemetryModule.currentSessionSpan,
             dataContainerModule.eventService,
             dataCaptureServiceModule.startupService,
-            customerLogModule.logService
+            customerLogModule.logService,
+            essentialServiceModule.metadataService
         )
     }
 

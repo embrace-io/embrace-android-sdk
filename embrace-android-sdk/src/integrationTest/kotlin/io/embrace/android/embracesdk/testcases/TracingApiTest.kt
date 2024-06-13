@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -63,7 +62,7 @@ internal class TracingApiTest {
             embrace.addSpanExporter(spanExporter)
             startSdk(context = harness.overriddenCoreModule.context)
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            val sessionMessage = harness.recordSession {
+            val envelope = harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                 assertTrue(parentSpan.start(startTimeMs = harness.overriddenClock.now() - 1L))
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
@@ -133,7 +132,7 @@ internal class TracingApiTest {
             }
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionEndTime = harness.overriddenClock.now()
-            val session = checkNotNull(sessionMessage)
+            val session = checkNotNull(envelope)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(session.data?.spans) +
                 harness.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
@@ -239,7 +238,7 @@ internal class TracingApiTest {
                 private = false
             )
 
-            val snapshots = checkNotNull(sessionMessage.data?.spanSnapshots).associateBy { it.name }
+            val snapshots = checkNotNull(envelope.data?.spanSnapshots).associateBy { it.name }
             val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
             unendingSpanSnapshot.assertIsTypePerformance()
             assertEmbraceSpanData(

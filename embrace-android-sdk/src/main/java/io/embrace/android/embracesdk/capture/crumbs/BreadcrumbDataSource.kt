@@ -2,14 +2,10 @@ package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
-import io.embrace.android.embracesdk.arch.destination.SpanEventMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.CustomBreadcrumb
 
 /**
  * Captures breadcrumbs.
@@ -22,8 +18,7 @@ internal class BreadcrumbDataSource(
     destination = writer,
     logger = logger,
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
-),
-    SpanEventMapper<CustomBreadcrumb> {
+) {
 
     fun logCustom(message: String, timestamp: Long) {
         alterSessionSpan(
@@ -31,16 +26,24 @@ internal class BreadcrumbDataSource(
                 message.isNotEmpty()
             },
             captureAction = {
-                val crumb = CustomBreadcrumb(message, timestamp)
-                addEvent(crumb, ::toSpanEventData)
+                val sanitizedMessage = ellipsizeBreadcrumbMessage(message)
+                addEvent(SchemaType.Breadcrumb(sanitizedMessage ?: ""), timestamp)
             }
         )
     }
 
-    override fun toSpanEventData(obj: CustomBreadcrumb): SpanEventData {
-        return SpanEventData(
-            SchemaType.Breadcrumb(obj.message ?: ""),
-            obj.timestamp.millisToNanos()
-        )
+    private fun ellipsizeBreadcrumbMessage(input: String?): String? {
+        return if (input == null || input.length < BREADCRUMB_MESSAGE_MAX_LENGTH) {
+            input
+        } else {
+            input.substring(
+                0,
+                BREADCRUMB_MESSAGE_MAX_LENGTH - 3
+            ) + "..."
+        }
+    }
+
+    companion object {
+        private const val BREADCRUMB_MESSAGE_MAX_LENGTH = 256
     }
 }

@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -51,7 +50,6 @@ internal class EventHandlerTest {
     companion object {
         private lateinit var deliveryService: FakeDeliveryService
         private lateinit var configService: ConfigService
-        private lateinit var performanceService: FakePerformanceInfoService
         private lateinit var userService: UserService
         private lateinit var gatingService: GatingService
         private lateinit var sessionProperties: EmbraceSessionProperties
@@ -67,7 +65,6 @@ internal class EventHandlerTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            performanceService = FakePerformanceInfoService()
             userService = FakeUserService()
             gatingService = FakeGatingService()
             logger = EmbLoggerImpl()
@@ -98,7 +95,6 @@ internal class EventHandlerTest {
             sessionIdTracker,
             configService,
             userService,
-            performanceService,
             deliveryService,
             logger,
             clock,
@@ -198,8 +194,7 @@ internal class EventHandlerTest {
 
         val builtEndEventMessage = EventMessage(
             event = builtEndEvent,
-            userInfo = userInfo,
-            performanceInfo = performanceService.performanceInfo
+            userInfo = userInfo
         )
 
         val result = eventHandler.onEventEnded(
@@ -246,8 +241,7 @@ internal class EventHandlerTest {
         )
         val builtEndEventMessage = EventMessage(
             event = endEvent,
-            userInfo = userInfo,
-            performanceInfo = performanceService.performanceInfo
+            userInfo = userInfo
         )
         cfg = createGatingConfig(setOf("s_mts"))
 

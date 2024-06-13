@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.event
 
 import io.embrace.android.embracesdk.EventType
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
@@ -30,7 +29,6 @@ internal class EventHandler(
     private val sessionIdTracker: SessionIdTracker,
     private val configService: ConfigService,
     private val userService: UserService,
-    private val performanceInfoService: PerformanceInfoService,
     private val deliveryService: DeliveryService,
     private val logger: EmbLogger,
     private val clock: Clock,
@@ -99,7 +97,7 @@ internal class EventHandler(
             sessionProperties,
             eventProperties
         )
-        val endEventMessage = buildEndEventMessage(endEvent, startTime, endTime)
+        val endEventMessage = buildEndEventMessage(endEvent)
 
         if (shouldSendMoment(event.name)) {
             deliveryService.sendMoment(endEventMessage)
@@ -131,10 +129,9 @@ internal class EventHandler(
             originEvent.lateThreshold
         )
 
-    private fun buildEndEventMessage(event: Event, startTime: Long, endTime: Long) =
+    private fun buildEndEventMessage(event: Event) =
         EventMessage(
             event = event,
-            performanceInfo = performanceInfoService.getPerformanceInfo(startTime, endTime, false),
             userInfo = userService.getUserInfo()
         )
 

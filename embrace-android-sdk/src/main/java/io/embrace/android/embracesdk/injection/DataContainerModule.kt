@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.capture.EmbracePerformanceInfoService
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
@@ -11,7 +9,6 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
  * a span, an Event, PerformanceInfo, etc.
  */
 internal interface DataContainerModule {
-    val performanceInfoService: PerformanceInfoService
     val eventService: EventService
 }
 
@@ -23,13 +20,6 @@ internal class DataContainerModuleImpl(
     sdkStartTimeMs: Long
 ) : DataContainerModule {
 
-    override val performanceInfoService: PerformanceInfoService by singleton {
-        EmbracePerformanceInfoService(
-            essentialServiceModule.metadataService,
-            initModule.logger
-        )
-    }
-
     override val eventService: EventService by singleton {
         EmbraceEventService(
             sdkStartTimeMs,
@@ -37,7 +27,6 @@ internal class DataContainerModuleImpl(
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
             essentialServiceModule.sessionIdTracker,
-            performanceInfoService,
             essentialServiceModule.userService,
             essentialServiceModule.sessionProperties,
             initModule.logger,

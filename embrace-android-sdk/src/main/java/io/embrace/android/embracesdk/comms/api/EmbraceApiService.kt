@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -138,10 +137,6 @@ internal class EmbraceApiService(
             }
         }
         pendingApiCallsSender.savePendingApiCall(request, action, sync = true)
-    }
-
-    override fun sendAEIBlob(blobMessage: BlobMessage) {
-        post(blobMessage, mapper::aeiBlobRequest)
     }
 
     override fun sendNetworkCall(networkEvent: NetworkEvent) {

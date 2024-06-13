@@ -267,8 +267,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(AnrModule::class) {
                         serviceRegistry.registerServices(
-                            anrModule.anrService,
-                            anrModule.responsivenessMonitorService
+                            anrModule.anrService
                         )
 
                         // set callbacks and pass in non-placeholder config.
@@ -388,7 +387,6 @@ internal class ModuleInitBootstrapper(
 
                     postInit(NativeModule::class) {
                         serviceRegistry.registerServices(
-                            dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
                         )
                     }

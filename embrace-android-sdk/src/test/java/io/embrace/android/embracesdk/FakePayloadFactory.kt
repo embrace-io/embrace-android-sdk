@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.fakes.fakeSessionMessage
+import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.payload.ApplicationState
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
@@ -36,7 +37,7 @@ internal class FakePayloadFactory : PayloadFactory {
         state: ProcessState,
         timestamp: Long,
         initial: SessionZygote
-    ): SessionMessage {
+    ): Envelope<SessionPayload> {
         return when (state) {
             ProcessState.FOREGROUND -> endSessionWithState(timestamp)
             ProcessState.BACKGROUND -> endBackgroundActivityWithState(timestamp)
@@ -48,7 +49,7 @@ internal class FakePayloadFactory : PayloadFactory {
         timestamp: Long,
         initial: SessionZygote,
         crashId: String
-    ): SessionMessage {
+    ): Envelope<SessionPayload> {
         return when (state) {
             ProcessState.FOREGROUND -> endSessionWithCrash(crashId)
             ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(crashId)
@@ -59,7 +60,7 @@ internal class FakePayloadFactory : PayloadFactory {
         state: ProcessState,
         timestamp: Long,
         initial: SessionZygote
-    ): SessionMessage? {
+    ): Envelope<SessionPayload>? {
         return when (state) {
             ProcessState.FOREGROUND -> snapshotSession()
             ProcessState.BACKGROUND -> snapshotBackgroundActivity()
@@ -71,21 +72,21 @@ internal class FakePayloadFactory : PayloadFactory {
         return fakeSessionZygote().copy(appState = ApplicationState.BACKGROUND)
     }
 
-    private fun endBackgroundActivityWithState(timestamp: Long): SessionMessage {
+    private fun endBackgroundActivityWithState(timestamp: Long): Envelope<SessionPayload> {
         endBaTimestamps.add(timestamp)
-        return fakeSessionMessage()
+        return fakeSessionEnvelope()
     }
 
     private fun endBackgroundActivityWithCrash(
         crashId: String
-    ): SessionMessage {
+    ): Envelope<SessionPayload> {
         this.baCrashId = crashId
-        return fakeSessionMessage()
+        return fakeSessionEnvelope()
     }
 
-    private fun snapshotBackgroundActivity(): SessionMessage {
+    private fun snapshotBackgroundActivity(): Envelope<SessionPayload> {
         snapshotBaCount++
-        return fakeSessionMessage()
+        return fakeSessionEnvelope()
     }
 
     private fun startSessionWithState(timestamp: Long): SessionZygote {
@@ -100,27 +101,27 @@ internal class FakePayloadFactory : PayloadFactory {
         return checkNotNull(activeSession)
     }
 
-    private fun endSessionWithState(timestamp: Long): SessionMessage {
+    private fun endSessionWithState(timestamp: Long): Envelope<SessionPayload> {
         endSessionTimestamps.add(timestamp)
         activeSession = null
-        return fakeSessionMessage()
+        return fakeSessionEnvelope()
     }
 
     var crashId: String? = null
 
-    private fun endSessionWithCrash(crashId: String): SessionMessage {
+    private fun endSessionWithCrash(crashId: String): Envelope<SessionPayload> {
         this.crashId = crashId
         activeSession = null
-        return fakeSessionMessage()
+        return fakeSessionEnvelope()
     }
 
-    override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): SessionMessage {
+    override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload> {
         manualSessionEndCount++
         activeSession = null
-        return fakeSessionMessage()
+        return fakeSessionEnvelope()
     }
 
-    private fun snapshotSession(): SessionMessage? {
+    private fun snapshotSession(): Envelope<SessionPayload>? {
         snapshotSessionCount++
         return null
     }

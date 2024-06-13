@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
@@ -263,13 +262,7 @@ internal class EmbraceLogService(
             return
         }
 
-        val logEventData = LogEventData(
-            schemaType = schemaProvider(attributes),
-            message = trimToMaxLength(message),
-            severity = severity,
-        )
-
-        logWriter.addLog(logEventData)
+        logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
     }
 
     /**

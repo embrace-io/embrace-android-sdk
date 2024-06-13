@@ -27,8 +27,10 @@ internal class OpenTelemetryConfigurationTest {
             processIdentifier = "fakeProcessIdentifier"
         )
 
-        assertEquals(configuration.embraceServiceName, configuration.resource.getAttribute(serviceName))
-        assertEquals(configuration.embraceVersionName, configuration.resource.getAttribute(serviceVersion))
+        assertEquals(configuration.embraceSdkName, configuration.resource.getAttribute(serviceName))
+        assertEquals(configuration.embraceSdkVersion, configuration.resource.getAttribute(serviceVersion))
+        assertEquals(configuration.embraceSdkName, configuration.resource.getAttribute(telemetryDistroName))
+        assertEquals(configuration.embraceSdkVersion, configuration.resource.getAttribute(telemetryDistroVersion))
         assertEquals(systemInfo.osName, configuration.resource.getAttribute(osName))
         assertEquals(systemInfo.osVersion, configuration.resource.getAttribute(osVersion))
         assertEquals(systemInfo.osType, configuration.resource.getAttribute(osType))

@@ -6,24 +6,18 @@ import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.arch.destination.LogEventData
-import io.embrace.android.embracesdk.arch.destination.LogEventMapper
+import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppExitInfoData
-import io.embrace.android.embracesdk.payload.BlobMessage
-import io.embrace.android.embracesdk.payload.BlobSession
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.IOException
 import java.util.concurrent.Future
@@ -35,13 +29,10 @@ internal class AeiDataSourceImpl(
     private val appExitInfoBehavior: AppExitInfoBehavior,
     private val activityManager: ActivityManager?,
     private val preferencesService: PreferencesService,
-    private val metadataService: MetadataService,
-    private val sessionIdTracker: SessionIdTracker,
-    private val userService: UserService,
     logWriter: LogWriter,
     private val logger: EmbLogger,
     private val buildVersionChecker: VersionChecker = BuildVersionChecker,
-) : AeiDataSource, LogEventMapper<BlobMessage>, LogDataSourceImpl(
+) : AeiDataSource, LogDataSourceImpl(
     logWriter,
     logger,
     limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
@@ -192,29 +183,13 @@ internal class AeiDataSourceImpl(
     private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
         appExitInfoWithTraces.forEach { data ->
             alterSessionSpan(
-                inputValidation = { true },
+                inputValidation = NoInputValidation,
                 captureAction = {
-                    val blob = BlobMessage(
-                        metadataService.getAppInfo(),
-                        listOf(data),
-                        metadataService.getDeviceInfo(),
-                        BlobSession(sessionIdTracker.getActiveSessionId()),
-                        userService.getUserInfo()
-                    )
-                    addLog(blob, mapper = ::toLogEventData)
+                    val schemaType = SchemaType.AeiLog(data)
+                    addLog(schemaType, Severity.INFO, data.trace ?: "")
                 }
             )
         }
-    }
-
-    override fun toLogEventData(obj: BlobMessage): LogEventData {
-        val message: AppExitInfoData = obj.applicationExits.single()
-        val schemaType = SchemaType.AeiLog(message)
-        return LogEventData(
-            schemaType = schemaType,
-            severity = Severity.INFO,
-            message = message.trace ?: ""
-        )
     }
 
     private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {

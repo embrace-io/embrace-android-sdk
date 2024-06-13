@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.opentelemetry.TracerKey
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder
@@ -9,7 +10,8 @@ import io.opentelemetry.context.Context
 import java.util.concurrent.TimeUnit
 
 internal class FakeSpanBuilder(
-    val spanName: String
+    val spanName: String,
+    val tracerKey: TracerKey = TracerKey("fake-scope")
 ) : SpanBuilder {
 
     var spanKind: SpanKind? = null

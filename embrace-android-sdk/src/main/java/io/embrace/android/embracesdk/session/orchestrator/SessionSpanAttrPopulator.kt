@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.logs.LogService
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.opentelemetry.embErrorLogCount
+import io.embrace.android.embracesdk.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.opentelemetry.embSdkStartupDuration
 import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
@@ -25,7 +27,8 @@ internal class SessionSpanAttrPopulator(
     private val sessionSpanWriter: SessionSpanWriter,
     private val eventService: EventService,
     private val startupService: StartupService,
-    private val logService: LogService
+    private val logService: LogService,
+    private val metadataService: MetadataService
 ) {
 
     fun populateSessionSpanStartAttrs(session: SessionZygote) {
@@ -34,6 +37,8 @@ internal class SessionSpanAttrPopulator(
             addCustomAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
             addCustomAttribute(SpanAttributeData(embState.name, session.appState.name.toLowerCase(Locale.US)))
             addCustomAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
+            addCustomAttribute(SpanAttributeData(embTerminated.name, true.toString()))
+
             session.startType.toString().toLowerCase(Locale.US).let {
                 addCustomAttribute(SpanAttributeData(embSessionStartType.name, it))
             }
@@ -57,7 +62,10 @@ internal class SessionSpanAttrPopulator(
             }
             startupInfo?.let { info ->
                 addCustomAttribute(
-                    SpanAttributeData(embSdkStartupDuration.name, startupService.getSdkStartupDuration(coldStart).toString())
+                    SpanAttributeData(
+                        embSdkStartupDuration.name,
+                        startupService.getSdkStartupDuration(coldStart).toString()
+                    )
                 )
                 addCustomAttribute(SpanAttributeData(embSessionStartupDuration.name, info.duration.toString()))
                 addCustomAttribute(SpanAttributeData(embSessionStartupThreshold.name, info.threshold.toString()))
@@ -65,6 +73,9 @@ internal class SessionSpanAttrPopulator(
 
             val logCount = logService.findErrorLogIds(0, Long.MAX_VALUE).size
             addCustomAttribute(SpanAttributeData(embErrorLogCount.name, logCount.toString()))
+
+            val free = metadataService.getDiskUsage()?.deviceDiskFree
+            addCustomAttribute(SpanAttributeData(embFreeDiskBytes.name, free.toString()))
         }
     }
 }

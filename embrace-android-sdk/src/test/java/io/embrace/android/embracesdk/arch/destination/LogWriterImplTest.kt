@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.logRecordUid
-import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.logs.Severity
 import org.junit.Assert.assertEquals
@@ -41,38 +40,18 @@ internal class LogWriterImplTest {
     }
 
     @Test
-    fun `check no-op if mapper function required`() {
-        val aeiInfo = AppExitInfoData(
-            sessionId = "fakeSessionid",
-            sessionIdError = null,
-            importance = null,
-            pss = null,
-            reason = null,
-            rss = null,
-            status = null,
-            timestamp = null,
-            trace = null,
-            description = null,
-            traceStatus = null
-        )
-        logWriterImpl.addLog(aeiInfo)
-        assertEquals(0, logger.builders.size)
-    }
-
-    @Test
     fun `check expected values added to every OTel log`() {
         sessionIdTracker.setActiveSessionId("session-id", true)
-        val logEventData = LogEventData(
+        logWriterImpl.addLog(
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
                     configService = FakeConfigService(),
-                    customAttributes = mapOf(PrivateSpan.toEmbraceKeyValuePair())
+                    customAttributes = mapOf<String, String>(PrivateSpan.toEmbraceKeyValuePair())
                 )
             ),
             severity = io.embrace.android.embracesdk.Severity.ERROR,
             message = "test"
         )
-        logWriterImpl.addLog(logEventData)
         with(logger.builders.single()) {
             assertEquals("test", body)
             assertEquals(Severity.ERROR, severity)
@@ -86,20 +65,29 @@ internal class LogWriterImplTest {
 
     @Test
     fun `check that private value is set`() {
-        val logEventData = LogEventData(
+        logWriterImpl.addLog(
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
                     configService = FakeConfigService()
                 )
             ),
             severity = io.embrace.android.embracesdk.Severity.ERROR,
-            message = "test"
+            message = "test",
+            isPrivate = true
         )
-        logWriterImpl.addLog(logEventData, isPrivate = true)
         with(logger.builders.single()) {
             assertTrue(attributes.hasFixedAttribute(PrivateSpan))
         }
-        logWriterImpl.addLog(logEventData, isPrivate = false)
+        logWriterImpl.addLog(
+            schemaType = SchemaType.Log(
+                TelemetryAttributes(
+                    configService = FakeConfigService()
+                )
+            ),
+            severity = io.embrace.android.embracesdk.Severity.ERROR,
+            message = "test",
+            isPrivate = false
+        )
         with(logger.builders.last()) {
             assertFalse(attributes.hasFixedAttribute(PrivateSpan))
         }

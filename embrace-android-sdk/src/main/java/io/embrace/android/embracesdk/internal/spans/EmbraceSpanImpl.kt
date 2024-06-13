@@ -67,75 +67,81 @@ internal class EmbraceSpanImpl(
         get() = startedSpan.get()?.isRecording == true
 
     override fun start(startTimeMs: Long?): Boolean {
-        return if (spanStarted()) {
-            false
-        } else {
-            var successful: Boolean
-            val attemptedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis()
-                ?: spanBuilder.startTimeMs
-                ?: openTelemetryClock.now().nanosToMillis()
-
-            synchronized(startedSpan) {
-                startedSpan.set(spanBuilder.startSpan(attemptedStartTimeMs))
-                successful = spanStarted()
-            }
-            if (successful) {
-                updatedName?.let { newName ->
-                    startedSpan.get()?.updateName(newName)
-                }
-
-                spanStartTimeMs = attemptedStartTimeMs
-                spanRepository.trackStartedSpan(this)
-            }
-            return successful
+        if (spanStarted()) {
+            return false
         }
+
+        val attemptedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis()
+            ?: spanBuilder.startTimeMs
+            ?: openTelemetryClock.now().nanosToMillis()
+
+        synchronized(startedSpan) {
+            val newSpan = spanBuilder.startSpan(attemptedStartTimeMs)
+            if (newSpan.isRecording) {
+                startedSpan.set(newSpan)
+            } else {
+                return false
+            }
+
+            spanRepository.trackStartedSpan(this)
+            updatedName?.let { newName ->
+                newSpan.updateName(newName)
+            }
+            spanStartTimeMs = attemptedStartTimeMs
+        }
+
+        return true
     }
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
-        return if (!isRecording) {
-            false
-        } else {
-            var successful = false
-            val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
-
-            synchronized(startedSpan) {
-                startedSpan.get()?.let { spanToStop ->
-                    systemAttributes.forEach { systemAttribute ->
-                        spanToStop.setEmbraceAttribute(systemAttribute.key, systemAttribute.value)
-                    }
-                    customAttributes.forEach { attribute ->
-                        spanToStop.setAttribute(attribute.key, attribute.value)
-                    }
-
-                    events.forEach { event ->
-                        val eventAttributes = if (event.attributes.isNotEmpty()) {
-                            Attributes.builder().fromMap(event.attributes).build()
-                        } else {
-                            Attributes.empty()
-                        }
-
-                        spanToStop.addEvent(
-                            event.name,
-                            eventAttributes,
-                            event.timestampNanos,
-                            TimeUnit.NANOSECONDS
-                        )
-                    }
-                    spanToStop.endSpan(errorCode, attemptedEndTimeMs)
-                    successful = !isRecording
-                }
-            }
-            if (successful) {
-                status = if (errorCode != null) {
-                    Span.Status.ERROR
-                } else {
-                    Span.Status.OK
-                }
-                spanEndTimeMs = attemptedEndTimeMs
-                spanId?.let { spanRepository.trackedSpanStopped(it) }
-            }
-            return successful
+        if (!isRecording) {
+            return false
         }
+        var successful = false
+        val attemptedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis()
+
+        synchronized(startedSpan) {
+            if (!isRecording) {
+                return false
+            }
+
+            startedSpan.get()?.let { spanToStop ->
+                systemAttributes.forEach { systemAttribute ->
+                    spanToStop.setEmbraceAttribute(systemAttribute.key, systemAttribute.value)
+                }
+                customAttributes.forEach { attribute ->
+                    spanToStop.setAttribute(attribute.key, attribute.value)
+                }
+
+                events.forEach { event ->
+                    val eventAttributes = if (event.attributes.isNotEmpty()) {
+                        Attributes.builder().fromMap(event.attributes).build()
+                    } else {
+                        Attributes.empty()
+                    }
+
+                    spanToStop.addEvent(
+                        event.name,
+                        eventAttributes,
+                        event.timestampNanos,
+                        TimeUnit.NANOSECONDS
+                    )
+                }
+                spanToStop.endSpan(errorCode, attemptedEndTimeMs)
+                successful = !isRecording
+                if (successful) {
+                    spanId?.let { spanRepository.trackedSpanStopped(it) }
+                    status = if (errorCode != null) {
+                        Span.Status.ERROR
+                    } else {
+                        Span.Status.OK
+                    }
+                    spanEndTimeMs = attemptedEndTimeMs
+                }
+            }
+        }
+
+        return successful
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =

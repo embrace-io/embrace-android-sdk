@@ -30,7 +30,7 @@ internal class OpenTelemetrySdk(
 
     val sdkTracer: Tracer by lazy {
         Systrace.traceSynchronous("otel-tracer-init") {
-            sdk.getTracer(configuration.embraceServiceName, configuration.embraceVersionName)
+            sdk.getTracer(configuration.embraceSdkName, configuration.embraceSdkVersion)
         }
     }
 
@@ -55,7 +55,7 @@ internal class OpenTelemetrySdk(
 
     private val logger: Logger by lazy {
         Systrace.traceSynchronous("otel-logger-init") {
-            sdk.logsBridge.loggerBuilder(configuration.embraceServiceName).build()
+            sdk.logsBridge.loggerBuilder(configuration.embraceSdkName).build()
         }
     }
 }

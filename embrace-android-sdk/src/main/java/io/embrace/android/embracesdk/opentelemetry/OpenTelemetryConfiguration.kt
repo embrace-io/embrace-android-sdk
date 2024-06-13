@@ -20,11 +20,11 @@ internal class OpenTelemetryConfiguration(
     systemInfo: SystemInfo,
     processIdentifier: String
 ) {
-    val embraceServiceName = BuildConfig.LIBRARY_PACKAGE_NAME
-    val embraceVersionName = BuildConfig.VERSION_NAME
+    val embraceSdkName = BuildConfig.LIBRARY_PACKAGE_NAME
+    val embraceSdkVersion = BuildConfig.VERSION_NAME
     val resource: Resource = Resource.getDefault().toBuilder()
-        .put(serviceName, embraceServiceName)
-        .put(serviceVersion, embraceVersionName)
+        .put(serviceName, embraceSdkName)
+        .put(serviceVersion, embraceSdkVersion)
         .put(osName, systemInfo.osName)
         .put(osVersion, systemInfo.osVersion)
         .put(osType, systemInfo.osType)
@@ -33,6 +33,8 @@ internal class OpenTelemetryConfiguration(
         .put(deviceManufacturer, systemInfo.deviceManufacturer)
         .put(deviceModelIdentifier, systemInfo.deviceModel)
         .put(deviceModelName, systemInfo.deviceModel)
+        .put(telemetryDistroName, embraceSdkName)
+        .put(telemetryDistroVersion, embraceSdkVersion)
         .build()
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()

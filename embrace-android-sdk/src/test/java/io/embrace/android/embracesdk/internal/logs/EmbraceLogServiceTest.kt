@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
@@ -100,21 +99,18 @@ internal class EmbraceLogServiceTest {
             message = "Hello world",
             type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
             properties = props
         )
         logService.log(
             message = "Warning world",
             type = EventType.WARNING_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
             properties = props
         )
         logService.log(
             message = "Hello errors",
             type = EventType.ERROR_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
             properties = props
         )
 
@@ -150,7 +146,6 @@ internal class EmbraceLogServiceTest {
             message = "Hello world",
             type = EventType.WARNING_LOG,
             logExceptionType = LogExceptionType.HANDLED,
-            framework = AppFramework.NATIVE,
             properties = null,
             stackTraceElements = exception.stackTrace,
             exceptionName = exception.javaClass.simpleName,
@@ -173,7 +168,7 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testFlutterExceptionLog() {
-        val logService = getLogService()
+        val logService = getLogService(appFramework = AppFramework.FLUTTER)
         val exception = NullPointerException("exception message")
 
         logService.log(
@@ -183,7 +178,6 @@ internal class EmbraceLogServiceTest {
             properties = null,
             stackTraceElements = exception.stackTrace,
             customStackTrace = null,
-            framework = AppFramework.FLUTTER,
             context = "context",
             library = "library",
             exceptionName = exception.javaClass.simpleName,
@@ -218,7 +212,6 @@ internal class EmbraceLogServiceTest {
             properties = null,
             stackTraceElements = exception.stackTrace,
             customStackTrace = null,
-            framework = AppFramework.UNITY,
             exceptionName = exception.javaClass.simpleName,
             exceptionMessage = exception.message,
         )
@@ -245,8 +238,7 @@ internal class EmbraceLogServiceTest {
         logService.log(
             message = "Hello world",
             type = EventType.INFO_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE
+            logExceptionType = LogExceptionType.NONE
         )
 
         val log = logWriter.logEvents.single()
@@ -262,7 +254,6 @@ internal class EmbraceLogServiceTest {
             message = "Hello world",
             type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
             properties = props
         )
 
@@ -282,19 +273,16 @@ internal class EmbraceLogServiceTest {
                 message = "Test info $k",
                 type = EventType.INFO_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
             logService.log(
                 message = "Test warning $k",
                 type = EventType.WARNING_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
             logService.log(
                 message = "Test error $k",
                 type = EventType.ERROR_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
         }
 
@@ -318,19 +306,16 @@ internal class EmbraceLogServiceTest {
                 message = "Test info $k",
                 type = EventType.INFO_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
             logService.log(
                 message = "Test warning $k",
                 type = EventType.WARNING_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
             logService.log(
                 message = "Test error $k",
                 type = EventType.ERROR_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
         }
 
@@ -344,7 +329,6 @@ internal class EmbraceLogServiceTest {
             message = "Hi".repeat(65),
             type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
         )
 
         val log = logWriter.logEvents.single()
@@ -365,7 +349,6 @@ internal class EmbraceLogServiceTest {
             message = "Hi".repeat(50),
             type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
         )
 
         val log = logWriter.logEvents.single()
@@ -381,7 +364,6 @@ internal class EmbraceLogServiceTest {
             type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.HANDLED,
             customStackTrace = "my stacktrace",
-            framework = AppFramework.UNITY
         )
 
         val log = logWriter.logEvents.single()
@@ -403,19 +385,16 @@ internal class EmbraceLogServiceTest {
                 message = "Test info $k",
                 type = EventType.INFO_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
             logService.log(
                 message = "Test warning $k",
                 type = EventType.WARNING_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
             logService.log(
                 message = "Test error $k",
                 type = EventType.ERROR_LOG,
                 logExceptionType = LogExceptionType.NONE,
-                framework = AppFramework.NATIVE,
             )
         }
         assertEquals(10, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
@@ -435,13 +414,11 @@ internal class EmbraceLogServiceTest {
             message = "Test info log",
             type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
         )
         logService.log(
             message = "Test warning log",
             type = EventType.WARNING_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
+            logExceptionType = LogExceptionType.NONE
         )
 
         assertEquals(2, logWriter.logEvents.size)
@@ -458,14 +435,12 @@ internal class EmbraceLogServiceTest {
         logService.log(
             message = "Test info log",
             type = EventType.INFO_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
+            logExceptionType = LogExceptionType.NONE
         )
         logService.log(
             message = "Test warning log",
             type = EventType.WARNING_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
+            logExceptionType = LogExceptionType.NONE
         )
 
         assertEquals(0, logWriter.logEvents.size)
@@ -482,14 +457,12 @@ internal class EmbraceLogServiceTest {
         logService.log(
             message = "Test info log",
             type = EventType.INFO_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
+            logExceptionType = LogExceptionType.NONE
         )
         logService.log(
             message = "Test warning log",
             type = EventType.WARNING_LOG,
-            logExceptionType = LogExceptionType.NONE,
-            framework = AppFramework.NATIVE,
+            logExceptionType = LogExceptionType.NONE
         )
 
         assertEquals(2, logWriter.logEvents.size)
@@ -505,7 +478,6 @@ internal class EmbraceLogServiceTest {
             properties = null,
             stackTraceElements = null,
             customStackTrace = null,
-            framework = Embrace.AppFramework.NATIVE,
             context = null,
             library = null,
             exceptionName = null,

@@ -147,7 +147,6 @@ internal class LogsApiDelegate(
         exceptionMessage: String? = null
     ) {
         if (sdkCallChecker.check("log_message")) {
-            val framework = appFramework ?: return
             try {
                 logMessageService?.log(
                     message,
@@ -156,7 +155,6 @@ internal class LogsApiDelegate(
                     normalizeProperties(properties, logger),
                     stackTraceElements,
                     customStackTrace,
-                    framework,
                     context,
                     library,
                     exceptionName,

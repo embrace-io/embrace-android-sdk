@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.logs.LogService
@@ -18,7 +17,6 @@ internal class FakeLogService : LogService {
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
         customStackTrace: String?,
-        framework: Embrace.AppFramework,
         context: String?,
         library: String?,
         exceptionName: String?,
@@ -32,7 +30,6 @@ internal class FakeLogService : LogService {
                 properties = properties,
                 stackTraceElements = stackTraceElements,
                 customStackTrace = customStackTrace,
-                framework = framework,
                 context = context,
                 library = library,
                 exceptionName = exceptionName,

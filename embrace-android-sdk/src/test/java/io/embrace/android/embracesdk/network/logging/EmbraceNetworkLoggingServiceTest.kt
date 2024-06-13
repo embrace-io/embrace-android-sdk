@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.network.logging
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.utils.at
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -16,7 +18,6 @@ internal class EmbraceNetworkLoggingServiceTest {
     private lateinit var domainCountLimiter: FakeDomainCountLimiter
     private lateinit var networkCaptureService: FakeNetworkCaptureService
     private lateinit var spanService: FakeSpanService
-
     private lateinit var networkLoggingService: EmbraceNetworkLoggingService
 
     @Before
@@ -33,23 +34,68 @@ internal class EmbraceNetworkLoggingServiceTest {
 
     @Test
     fun `multiple network requests are recorded to the span service correctly`() {
-        logNetworkRequest("www.example1.com", 100, 200)
-        logNetworkRequest("www.example2.com", 200, 300)
-        logNetworkRequest("www.example3.com", 300, 400)
-        logNetworkRequest("www.example4.com", 400, 500)
+        logNetworkRequest(
+            url = "www.example1.com",
+            startTime = 100,
+            endTime = 200,
+        )
+        logNetworkRequest(
+            url = "www.example2.com",
+            startTime = 200,
+            endTime = 300,
+            statusCode = 404,
+        )
+        logNetworkRequest(
+            url = "www.example3.com",
+            startTime = 300,
+            endTime = 400,
+            statusCode = 500,
+        )
+        logNetworkRequest(
+            url = "www.example4.com",
+            startTime = 400,
+            endTime = 500,
+            statusCode = 203,
+        )
+        networkLoggingService.logNetworkRequest(
+            EmbraceNetworkRequest.fromIncompleteRequest(
+                "www.example5.com",
+                HttpMethod.GET,
+                600L,
+                650L,
+                "RuntimeException",
+                ""
+            )
+        )
 
-        val spans = spanService
-            .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
-            .mapNotNull { it.snapshot() }
+        val spans = getNetworkSpans()
+        assertEquals(5, spans.size)
 
-        assertEquals(4, spans.size)
-
-        val sortedRequests = spans.sortedBy { it.startTimeNanos }
-        assertEquals("www.example1.com", sortedRequests.at(0)?.attributes?.first { it.key == "url.full" }?.data)
-        assertEquals("www.example2.com", sortedRequests.at(1)?.attributes?.first { it.key == "url.full" }?.data)
-        assertEquals("www.example3.com", sortedRequests.at(2)?.attributes?.first { it.key == "url.full" }?.data)
-        assertEquals("www.example4.com", sortedRequests.at(3)?.attributes?.first { it.key == "url.full" }?.data)
+        val requestSpans = spans.associateBy { it.attributes?.single { attr -> attr.key == "url.full" }?.data }
+        checkNotNull(requestSpans["www.example1.com"]).assertNetworkRequest(
+            expectedStartTimeMs = 100L,
+            expectedEndTimeMs = 200L,
+            expectedStatus = Span.Status.OK
+        )
+        checkNotNull(requestSpans["www.example2.com"]).assertNetworkRequest(
+            expectedStartTimeMs = 200L,
+            expectedEndTimeMs = 300L,
+            expectedStatus = Span.Status.ERROR
+        )
+        checkNotNull(requestSpans["www.example3.com"]).assertNetworkRequest(
+            expectedStartTimeMs = 300L,
+            expectedEndTimeMs = 400L,
+            expectedStatus = Span.Status.ERROR
+        )
+        checkNotNull(requestSpans["www.example4.com"]).assertNetworkRequest(
+            expectedStartTimeMs = 400L,
+            expectedEndTimeMs = 500L,
+        )
+        checkNotNull(requestSpans["www.example5.com"]).assertNetworkRequest(
+            expectedStartTimeMs = 600L,
+            expectedEndTimeMs = 650L,
+            expectedStatus = Span.Status.ERROR
+        )
     }
 
     @Test
@@ -63,14 +109,14 @@ internal class EmbraceNetworkLoggingServiceTest {
             dataCaptureErrorMessage = null
         )
 
-        logNetworkRequest("www.example.com", 100, 200, networkCaptureData)
+        logNetworkRequest(
+            url = "www.example.com",
+            startTime = 100,
+            endTime = 200,
+            networkCaptureData = networkCaptureData
+        )
 
-        // Network request is recorded correctly
-        val spans = spanService
-            .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
-            .mapNotNull { it.snapshot() }
-        assertEquals(1, spans.size)
+        assertEquals(1, getNetworkSpans().size)
 
         // Network captured data is sent to the networkCaptureService
         assertTrue(networkCaptureService.urls.contains("www.example.com"))
@@ -79,26 +125,14 @@ internal class EmbraceNetworkLoggingServiceTest {
     @Test
     fun `network requests are not recorded if the URL domain is invalid`() {
         logNetworkRequest("examplecom", 100, 200)
-
-        val spans = spanService
-            .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
-            .mapNotNull { it.snapshot() }
-
-        assertTrue(spans.isEmpty())
+        assertTrue(getNetworkSpans().isEmpty())
     }
 
     @Test
     fun `network requests are not recorded if the domain count limiter does not allow it`() {
         domainCountLimiter.canLog = false
         logNetworkRequest("www.example.com", 100, 200)
-
-        val spans = spanService
-            .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
-            .mapNotNull { it.snapshot() }
-
-        assertTrue(spans.isEmpty())
+        assertTrue(getNetworkSpans().isEmpty())
     }
 
     @Test
@@ -110,13 +144,14 @@ internal class EmbraceNetworkLoggingServiceTest {
             logNetworkRequest(url = "https://embrace.io", startTime = startTime, endTime = endTime)
         }
 
-        assertEquals(2, spanService.createdSpans.size)
+        assertEquals(2, getNetworkSpans().size)
     }
 
     private fun logNetworkRequest(
         url: String,
         startTime: Long = 100,
         endTime: Long = 200,
+        statusCode: Int = 200,
         networkCaptureData: NetworkCaptureData? = null
     ) {
         networkLoggingService.logNetworkRequest(
@@ -127,11 +162,26 @@ internal class EmbraceNetworkLoggingServiceTest {
                 endTime,
                 100L,
                 1000L,
-                200,
+                statusCode,
                 null,
                 null,
                 networkCaptureData
             )
         )
+    }
+
+    private fun getNetworkSpans() = spanService
+        .createdSpans
+        .filter { it.type == EmbType.Performance.Network }
+        .mapNotNull { it.snapshot() }
+
+    private fun Span.assertNetworkRequest(
+        expectedStartTimeMs: Long,
+        expectedEndTimeMs: Long,
+        expectedStatus: Span.Status = Span.Status.OK
+    ) {
+        assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+        assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
+        assertEquals(expectedStatus, status)
     }
 }

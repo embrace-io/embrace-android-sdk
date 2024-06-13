@@ -81,15 +81,12 @@ internal class CustomerLogModuleImpl(
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,
             initModule.clock,
+            initModule.jsonSerializer
         )
     }
 
     override val logMessageService: LogMessageService by singleton {
-        CompositeLogService(
-            { v2LogService },
-            initModule.logger,
-            initModule.jsonSerializer
-        )
+        CompositeLogService { v2LogService }
     }
 
     override val logOrchestrator: LogOrchestrator by singleton {

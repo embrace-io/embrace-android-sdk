@@ -25,21 +25,18 @@ import io.embrace.android.embracesdk.worker.BackgroundWorker
 internal class FakeCustomerLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
 
-    override val logMessageService: LogMessageService = CompositeLogService(
-        {
-            EmbraceLogService(
-                FakeLogWriter(),
-                FakeConfigService(),
-                Embrace.AppFramework.NATIVE,
-                fakeEmbraceSessionProperties(),
-                BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-                EmbLoggerImpl(),
-                FakeClock(),
-            )
-        },
-        EmbLoggerImpl(),
-        EmbraceSerializer()
-    )
+    override val logMessageService: LogMessageService = CompositeLogService {
+        EmbraceLogService(
+            FakeLogWriter(),
+            FakeConfigService(),
+            Embrace.AppFramework.NATIVE,
+            fakeEmbraceSessionProperties(),
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            EmbLoggerImpl(),
+            FakeClock(),
+            EmbraceSerializer()
+        )
+    }
 ) : CustomerLogModule {
 
     override val networkCaptureService: NetworkCaptureService = FakeNetworkCaptureService()

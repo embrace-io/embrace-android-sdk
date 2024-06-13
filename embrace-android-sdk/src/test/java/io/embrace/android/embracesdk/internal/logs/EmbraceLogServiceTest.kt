@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
@@ -378,6 +379,7 @@ internal class EmbraceLogServiceTest {
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             EmbLoggerImpl(),
             clock,
+            EmbraceSerializer()
         )
     }
 

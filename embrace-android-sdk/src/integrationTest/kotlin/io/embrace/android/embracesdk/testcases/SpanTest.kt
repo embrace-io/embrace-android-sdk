@@ -52,8 +52,8 @@ internal class SpanTest {
                 testSpan.assertHasEmbraceAttribute(embSequenceId, "6")
                 testSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.overriddenInitModule.processIdentifier)
                 testSpan.resource.assertExpectedAttributes(
-                    expectedServiceName = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceServiceName,
-                    expectedServiceVersion = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceVersionName,
+                    expectedServiceName = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
+                    expectedServiceVersion = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
                     systemInfo = harness.overriddenInitModule.systemInfo
                 )
                 val sessionSpan = checkNotNull(exportedSpans["emb-session"])

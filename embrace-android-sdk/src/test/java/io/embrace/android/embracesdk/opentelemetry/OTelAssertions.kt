@@ -14,6 +14,8 @@ internal fun Resource.assertExpectedAttributes(
 ) {
     assertEquals(expectedServiceName, getAttribute(serviceName))
     assertEquals(expectedServiceVersion, getAttribute(serviceVersion))
+    assertEquals(expectedServiceName, getAttribute(telemetryDistroName))
+    assertEquals(expectedServiceVersion, getAttribute(telemetryDistroVersion))
     assertEquals(systemInfo.osName, getAttribute(osName))
     assertEquals(systemInfo.osVersion, getAttribute(osVersion))
     assertEquals(systemInfo.osType, getAttribute(osType))

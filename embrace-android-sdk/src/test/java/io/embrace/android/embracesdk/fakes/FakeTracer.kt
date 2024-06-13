@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.opentelemetry.TracerKey
 import io.opentelemetry.api.trace.Tracer
 
-internal class FakeTracer : Tracer {
-    override fun spanBuilder(spanName: String): FakeSpanBuilder = FakeSpanBuilder(spanName)
+internal class FakeTracer(
+    val tracerKey: TracerKey = TracerKey(instrumentationScopeName = "fake-scope")
+) : Tracer {
+    override fun spanBuilder(spanName: String): FakeSpanBuilder = FakeSpanBuilder(spanName, tracerKey)
 }

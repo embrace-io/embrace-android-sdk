@@ -37,7 +37,7 @@ internal class FakeSpanService : SpanService {
 
     override fun createSpan(
         embraceSpanBuilder: EmbraceSpanBuilder
-    ): EmbraceSpan = FakePersistableEmbraceSpan(
+    ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
         name = embraceSpanBuilder.spanName,
         parentContext = embraceSpanBuilder.parentContext,
         type = embraceSpanBuilder.getFixedAttributes().filterIsInstance<TelemetryType>().single(),

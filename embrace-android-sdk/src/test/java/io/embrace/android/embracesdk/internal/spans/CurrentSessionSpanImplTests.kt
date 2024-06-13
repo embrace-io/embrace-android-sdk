@@ -40,7 +40,7 @@ internal class CurrentSessionSpanImplTests {
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-        tracer = initModule.openTelemetryModule.tracer
+        tracer = initModule.openTelemetryModule.sdkTracer
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
     }

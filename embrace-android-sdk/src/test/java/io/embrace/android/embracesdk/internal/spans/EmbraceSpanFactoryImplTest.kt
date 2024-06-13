@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.opentelemetry.api.trace.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -18,13 +18,13 @@ internal class EmbraceSpanFactoryImplTest {
     private val clock = FakeClock()
     private lateinit var embraceSpanFactory: EmbraceSpanFactoryImpl
     private lateinit var spanRepository: SpanRepository
-    private lateinit var tracer: Tracer
+    private lateinit var tracer: FakeTracer
 
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
-        tracer = initModule.openTelemetryModule.tracer
+        tracer = FakeTracer()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             tracer = tracer,
             openTelemetryClock = initModule.openTelemetryClock,

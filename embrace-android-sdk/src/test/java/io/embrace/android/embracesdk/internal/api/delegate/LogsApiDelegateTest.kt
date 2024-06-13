@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
@@ -22,14 +22,14 @@ import org.junit.runner.RunWith
 internal class LogsApiDelegateTest {
 
     private lateinit var delegate: LogsApiDelegate
-    private lateinit var logMessageService: FakeLogMessageService
+    private lateinit var logService: FakeLogService
     private lateinit var orchestrator: FakeSessionOrchestrator
 
     @Before
     fun setUp() {
-        logMessageService = FakeLogMessageService()
+        logService = FakeLogService()
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            customerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule(logMessageService = logMessageService) }
+            customerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule(logService = logService) }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), Embrace.AppFramework.NATIVE, 0)
         orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
@@ -42,7 +42,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun logInfo() {
         delegate.logInfo("test")
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.NONE, log.logExceptionType)
@@ -51,7 +51,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun logWarning() {
         delegate.logWarning("test")
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.WARNING_LOG, log.type)
         assertEquals(LogExceptionType.NONE, log.logExceptionType)
@@ -60,7 +60,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun logError() {
         delegate.logError("test")
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.ERROR_LOG, log.type)
         assertEquals(LogExceptionType.NONE, log.logExceptionType)
@@ -69,7 +69,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun logMessage() {
         delegate.logMessage("test", Severity.WARNING)
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.WARNING_LOG, log.type)
         assertEquals(LogExceptionType.NONE, log.logExceptionType)
@@ -78,7 +78,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun logException() {
         delegate.logException(RuntimeException("test"))
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.ERROR_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -87,7 +87,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun testLogException() {
         delegate.logException(RuntimeException("test"), Severity.INFO)
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -97,7 +97,7 @@ internal class LogsApiDelegateTest {
     fun testLogException1() {
         val props = mapOf("foo" to "bar")
         delegate.logException(RuntimeException("test"), Severity.INFO, props)
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -108,7 +108,7 @@ internal class LogsApiDelegateTest {
     fun testLogException2() {
         val props = mapOf("foo" to "bar")
         delegate.logException(RuntimeException("test"), Severity.INFO, props, "custom_message")
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("custom_message", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -119,7 +119,7 @@ internal class LogsApiDelegateTest {
     fun logCustomStacktrace() {
         val stacktrace = RuntimeException("test").stackTrace
         delegate.logCustomStacktrace(stacktrace)
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(EventType.ERROR_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -130,7 +130,7 @@ internal class LogsApiDelegateTest {
     fun testLogCustomStacktrace() {
         val stacktrace = RuntimeException("test").stackTrace
         delegate.logCustomStacktrace(stacktrace, Severity.INFO)
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -143,7 +143,7 @@ internal class LogsApiDelegateTest {
         val stacktrace = RuntimeException("test").stackTrace
         delegate.logCustomStacktrace(stacktrace, Severity.INFO, props)
 
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)
@@ -157,7 +157,7 @@ internal class LogsApiDelegateTest {
         val stacktrace = RuntimeException("test").stackTrace
         delegate.logCustomStacktrace(stacktrace, Severity.INFO, props, "my message")
 
-        val log = logMessageService.loggedMessages.single()
+        val log = logService.loggedMessages.single()
         assertEquals("my message", log.message)
         assertEquals(EventType.INFO_LOG, log.type)
         assertEquals(LogExceptionType.HANDLED, log.logExceptionType)

@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
@@ -94,9 +96,27 @@ internal class EmbraceLogServiceTest {
         val logService = getLogService()
 
         val props = mapOf("foo" to "bar")
-        logService.log("Hello world", Severity.INFO, props)
-        logService.log("Warning world", Severity.WARNING, null)
-        logService.log("Hello errors", Severity.ERROR, null)
+        logService.log(
+            message = "Hello world",
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+            properties = props
+        )
+        logService.log(
+            message = "Warning world",
+            type = EventType.WARNING_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+            properties = props
+        )
+        logService.log(
+            message = "Hello errors",
+            type = EventType.ERROR_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+            properties = props
+        )
 
         val logs = logWriter.logEvents
         assertEquals(3, logs.size)
@@ -126,16 +146,19 @@ internal class EmbraceLogServiceTest {
         val logService = getLogService()
         val exception = NullPointerException("exception message")
 
-        logService.logException(
+        logService.log(
             message = "Hello world",
-            severity = Severity.WARNING,
+            type = EventType.WARNING_LOG,
             logExceptionType = LogExceptionType.HANDLED,
-            properties = null,
-            stackTrace = exception.stackTrace.joinToString(", "),
             framework = AppFramework.NATIVE,
+            properties = null,
+            stackTraceElements = exception.stackTrace,
             exceptionName = exception.javaClass.simpleName,
             exceptionMessage = exception.message,
         )
+
+        // this is ugly, but I didn't want to use the serializer
+        val stacktrace = "[\"${exception.stackTrace.joinToString(separator = "\",\"")}\"]"
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
@@ -144,7 +167,7 @@ internal class EmbraceLogServiceTest {
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
         assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
-        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
+        assertEquals(stacktrace, log.schemaType.attributes()[exceptionStacktrace.key])
         log.assertIsType(EmbType.System.Exception)
     }
 
@@ -153,26 +176,31 @@ internal class EmbraceLogServiceTest {
         val logService = getLogService()
         val exception = NullPointerException("exception message")
 
-        logService.logFlutterException(
-            message = "Hello world",
-            severity = Severity.WARNING,
+        logService.log(
+            message = "Dart error",
+            type = EventType.ERROR_LOG,
             logExceptionType = LogExceptionType.HANDLED,
             properties = null,
-            stackTrace = exception.stackTrace.joinToString(", "),
-            exceptionName = exception.javaClass.simpleName,
-            exceptionMessage = exception.message,
+            stackTraceElements = exception.stackTrace,
+            customStackTrace = null,
+            framework = AppFramework.FLUTTER,
             context = "context",
             library = "library",
+            exceptionName = exception.javaClass.simpleName,
+            exceptionMessage = exception.message,
         )
 
+        // this is ugly, but I didn't want to use the serializer
+        val stacktrace = "[\"${exception.stackTrace.joinToString(separator = "\",\"")}\"]"
+
         val log = logWriter.logEvents.single()
-        assertEquals("Hello world", log.message)
-        assertEquals(Severity.WARNING, log.severity)
+        assertEquals("Dart error", log.message)
+        assertEquals(Severity.ERROR, log.severity)
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
         assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
-        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
+        assertEquals(stacktrace, log.schemaType.attributes()[exceptionStacktrace.key])
         assertEquals("context", log.schemaType.attributes()[embFlutterExceptionContext.name])
         assertEquals("library", log.schemaType.attributes()[embFlutterExceptionLibrary.name])
         log.assertIsType(EmbType.System.FlutterException)
@@ -183,23 +211,27 @@ internal class EmbraceLogServiceTest {
         val logService = getLogService()
         val exception = NullPointerException("exception message")
 
-        logService.logException(
+        logService.log(
             message = "Hello world",
-            severity = Severity.WARNING,
+            type = EventType.WARNING_LOG,
             logExceptionType = LogExceptionType.UNHANDLED,
             properties = null,
-            stackTrace = exception.stackTrace.joinToString(", "),
+            stackTraceElements = exception.stackTrace,
+            customStackTrace = null,
             framework = AppFramework.UNITY,
             exceptionName = exception.javaClass.simpleName,
             exceptionMessage = exception.message,
         )
+
+        // this is ugly, but I didn't want to use the serializer
+        val stacktrace = "[\"${exception.stackTrace.joinToString(separator = "\",\"")}\"]"
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARNING, log.severity)
         assertEquals("NullPointerException", log.schemaType.attributes()[exceptionType.key])
         assertEquals("exception message", log.schemaType.attributes()[exceptionMessage.key])
-        assertEquals(exception.stackTrace.joinToString(", "), log.schemaType.attributes()[exceptionStacktrace.key])
+        assertEquals(stacktrace, log.schemaType.attributes()[exceptionStacktrace.key])
         assertNotNull(log.schemaType.attributes()[logRecordUid.key])
         assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         log.assertIsType(EmbType.System.Exception)
@@ -210,7 +242,12 @@ internal class EmbraceLogServiceTest {
         sessionProperties.add("session_prop_1", "session_val_1", false)
         sessionProperties.add("session_prop_2", "session_val_2", false)
         val logService = getLogService()
-        logService.log("Hello world", Severity.INFO, null)
+        logService.log(
+            message = "Hello world",
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE
+        )
 
         val log = logWriter.logEvents.single()
         assertEquals("session_val_1", log.schemaType.attributes().getSessionProperty("session_prop_1"))
@@ -221,7 +258,13 @@ internal class EmbraceLogServiceTest {
     fun `Embrace properties can not be overridden by custom properties`() {
         val logService = getLogService()
         val props = mapOf(logRecordUid.key to "fakeUid")
-        logService.log("Hello world", Severity.INFO, props)
+        logService.log(
+            message = "Hello world",
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+            properties = props
+        )
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
@@ -235,9 +278,24 @@ internal class EmbraceLogServiceTest {
         val logService = getLogService()
 
         repeat(500) { k ->
-            logService.log("Test info $k", Severity.INFO, null)
-            logService.log("Test warning $k", Severity.WARNING, null)
-            logService.log("Test error $k", Severity.ERROR, null)
+            logService.log(
+                message = "Test info $k",
+                type = EventType.INFO_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
+            logService.log(
+                message = "Test warning $k",
+                type = EventType.WARNING_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
+            logService.log(
+                message = "Test error $k",
+                type = EventType.ERROR_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
         }
 
         assertEquals(250, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
@@ -256,9 +314,24 @@ internal class EmbraceLogServiceTest {
         val logService = getLogService()
 
         repeat(500) { k ->
-            logService.log("Test info $k", Severity.INFO, null)
-            logService.log("Test warning $k", Severity.WARNING, null)
-            logService.log("Test error $k", Severity.ERROR, null)
+            logService.log(
+                message = "Test info $k",
+                type = EventType.INFO_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
+            logService.log(
+                message = "Test warning $k",
+                type = EventType.WARNING_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
+            logService.log(
+                message = "Test error $k",
+                type = EventType.ERROR_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
         }
 
         assertEquals(150, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
@@ -266,8 +339,13 @@ internal class EmbraceLogServiceTest {
 
     @Test
     fun testDefaultMaxMessageLength() {
-        val logMessageService = getLogService()
-        logMessageService.log("Hi".repeat(65), Severity.INFO, null)
+        val logService = getLogService()
+        logService.log(
+            message = "Hi".repeat(65),
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
 
         val log = logWriter.logEvents.single()
         Assert.assertTrue(log.message == "Hi".repeat(62) + "H...")
@@ -282,8 +360,13 @@ internal class EmbraceLogServiceTest {
             )
         )
 
-        val logMessageService = getLogService()
-        logMessageService.log("Hi".repeat(50), Severity.INFO, null)
+        val logService = getLogService()
+        logService.log(
+            message = "Hi".repeat(50),
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
 
         val log = logWriter.logEvents.single()
         Assert.assertTrue(log.message == "Hi".repeat(23) + "H...")
@@ -293,15 +376,12 @@ internal class EmbraceLogServiceTest {
     fun testLoggingUnityMessage() {
         val logService = getLogService(appFramework = AppFramework.UNITY)
 
-        logService.logException(
+        logService.log(
             message = "Unity".repeat(1000),
-            severity = Severity.INFO,
+            type = EventType.INFO_LOG,
             logExceptionType = LogExceptionType.HANDLED,
-            properties = null,
-            stackTrace = "my stacktrace",
-            framework = AppFramework.UNITY,
-            exceptionName = null,
-            exceptionMessage = null,
+            customStackTrace = "my stacktrace",
+            framework = AppFramework.UNITY
         )
 
         val log = logWriter.logEvents.single()
@@ -319,9 +399,24 @@ internal class EmbraceLogServiceTest {
     fun testCleanCollections() {
         val logService = getLogService()
         repeat(10) { k ->
-            logService.log("Test info $k", Severity.INFO, null)
-            logService.log("Test warning $k", Severity.WARNING, null)
-            logService.log("Test error $k", Severity.ERROR, null)
+            logService.log(
+                message = "Test info $k",
+                type = EventType.INFO_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
+            logService.log(
+                message = "Test warning $k",
+                type = EventType.WARNING_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
+            logService.log(
+                message = "Test error $k",
+                type = EventType.ERROR_LOG,
+                logExceptionType = LogExceptionType.NONE,
+                framework = AppFramework.NATIVE,
+            )
         }
         assertEquals(10, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
 
@@ -336,8 +431,18 @@ internal class EmbraceLogServiceTest {
         cfg = buildCustomRemoteConfig(null)
         val logService = getLogService()
 
-        logService.log("Test info log", Severity.INFO, null)
-        logService.log("Test warning log", Severity.WARNING, null)
+        logService.log(
+            message = "Test info log",
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
+        logService.log(
+            message = "Test warning log",
+            type = EventType.WARNING_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
 
         assertEquals(2, logWriter.logEvents.size)
     }
@@ -350,8 +455,18 @@ internal class EmbraceLogServiceTest {
         )
         val logService = getLogService()
 
-        logService.log("Test info log", Severity.INFO, null)
-        logService.log("Test warning log", Severity.WARNING, null)
+        logService.log(
+            message = "Test info log",
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
+        logService.log(
+            message = "Test warning log",
+            type = EventType.WARNING_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
 
         assertEquals(0, logWriter.logEvents.size)
     }
@@ -364,10 +479,39 @@ internal class EmbraceLogServiceTest {
         )
         val logService = getLogService()
 
-        logService.log("Test info log", Severity.INFO, null)
-        logService.log("Test warning log", Severity.WARNING, null)
+        logService.log(
+            message = "Test info log",
+            type = EventType.INFO_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
+        logService.log(
+            message = "Test warning log",
+            type = EventType.WARNING_LOG,
+            logExceptionType = LogExceptionType.NONE,
+            framework = AppFramework.NATIVE,
+        )
 
         assertEquals(2, logWriter.logEvents.size)
+    }
+
+    @Test
+    fun testWrongEventType() {
+        // The log service can handle only INFO_LOG, WARNING_LOG and ERROR_LOG event types
+        getLogService().log(
+            message = "simple log",
+            type = EventType.CRASH,
+            logExceptionType = LogExceptionType.HANDLED,
+            properties = null,
+            stackTraceElements = null,
+            customStackTrace = null,
+            framework = Embrace.AppFramework.NATIVE,
+            context = null,
+            library = null,
+            exceptionName = null,
+            exceptionMessage = null
+        )
+        assertEquals(0, logWriter.logEvents.size)
     }
 
     private fun getLogService(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {

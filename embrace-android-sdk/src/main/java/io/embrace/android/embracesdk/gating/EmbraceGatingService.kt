@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.event.LogMessageService
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
+import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.payload.getSessionSpan
  */
 internal class EmbraceGatingService(
     private val configService: ConfigService,
-    private val logMessageService: LogMessageService,
+    private val logService: LogService,
     private val logger: EmbLogger
 ) : GatingService {
 
@@ -87,7 +87,7 @@ internal class EmbraceGatingService(
     }
 
     private fun hasErrorLogs(): Boolean {
-        return logMessageService.findErrorLogIds(0, Long.MAX_VALUE).isNotEmpty() &&
+        return logService.findErrorLogIds(0, Long.MAX_VALUE).isNotEmpty() &&
             configService.sessionBehavior.shouldSendFullForErrorLog()
     }
 

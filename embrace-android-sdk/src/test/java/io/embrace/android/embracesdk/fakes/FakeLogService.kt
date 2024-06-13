@@ -3,14 +3,13 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.logs.LogService
 
 internal class FakeLogService : LogService {
 
     val logs = mutableListOf<String>()
-    val exceptions = mutableListOf<String>()
-    val flutterExceptions = mutableListOf<String>()
+    val loggedMessages = mutableListOf<FakeLogMessageService.LogData>()
+    var errorLogIds = listOf<String>()
 
     override fun log(
         message: String,
@@ -25,54 +24,25 @@ internal class FakeLogService : LogService {
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        if (type.getSeverity() == null) {
-            return
-        }
-
-        if (logExceptionType == LogExceptionType.NONE) {
-            logs.add(message)
-        } else {
-            if (framework == Embrace.AppFramework.FLUTTER) {
-                flutterExceptions.add(message)
-            } else {
-                exceptions.add("$exceptionName $exceptionMessage")
-            }
-        }
-    }
-
-    override fun log(message: String, severity: Severity, properties: Map<String, Any>?) {
-        logs.add(message)
-    }
-
-    override fun logException(
-        message: String,
-        severity: Severity,
-        logExceptionType: LogExceptionType,
-        properties: Map<String, Any>?,
-        stackTrace: String?,
-        framework: Embrace.AppFramework,
-        exceptionName: String?,
-        exceptionMessage: String?
-    ) {
-        exceptions.add("$exceptionName $exceptionMessage $stackTrace")
-    }
-
-    override fun logFlutterException(
-        message: String,
-        severity: Severity,
-        logExceptionType: LogExceptionType,
-        properties: Map<String, Any>?,
-        stackTrace: String?,
-        exceptionName: String?,
-        exceptionMessage: String?,
-        context: String?,
-        library: String?,
-    ) {
-        flutterExceptions.add(message)
+        loggedMessages.add(
+            FakeLogMessageService.LogData(
+                message = message,
+                type = type,
+                logExceptionType = logExceptionType,
+                properties = properties,
+                stackTraceElements = stackTraceElements,
+                customStackTrace = customStackTrace,
+                framework = framework,
+                context = context,
+                library = library,
+                exceptionName = exceptionName,
+                exceptionMessage = exceptionMessage
+            )
+        )
     }
 
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
-        TODO("Not yet implemented")
+        return errorLogIds
     }
 
     override fun cleanCollections() {

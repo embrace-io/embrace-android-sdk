@@ -71,21 +71,6 @@ internal class EmbraceLogService(
 
     override fun log(
         message: String,
-        severity: Severity,
-        properties: Map<String, Any>?,
-    ) {
-        backgroundWorker.submit {
-            addLogEventData(
-                message = message,
-                severity = severity,
-                attributes = createTelemetryAttributes(properties),
-                schemaProvider = ::Log
-            )
-        }
-    }
-
-    override fun log(
-        message: String,
         type: EventType,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
@@ -136,7 +121,6 @@ internal class EmbraceLogService(
                     logExceptionType = logExceptionType,
                     properties = properties,
                     stackTrace = stacktrace,
-                    framework = framework,
                     exceptionName = exceptionName,
                     exceptionMessage = exceptionMessage
                 )
@@ -144,13 +128,27 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun logException(
+    private fun log(
+        message: String,
+        severity: Severity,
+        properties: Map<String, Any>?,
+    ) {
+        backgroundWorker.submit {
+            addLogEventData(
+                message = message,
+                severity = severity,
+                attributes = createTelemetryAttributes(properties),
+                schemaProvider = ::Log
+            )
+        }
+    }
+
+    private fun logException(
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTrace: String?,
-        framework: AppFramework,
         exceptionName: String?,
         exceptionMessage: String?,
     ) {
@@ -177,7 +175,7 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun logFlutterException(
+    private fun logFlutterException(
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,

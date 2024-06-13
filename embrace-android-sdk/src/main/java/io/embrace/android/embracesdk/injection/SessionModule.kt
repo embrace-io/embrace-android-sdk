@@ -105,7 +105,7 @@ internal class SessionModuleImpl(
             openTelemetryModule.currentSessionSpan,
             dataContainerModule.eventService,
             dataCaptureServiceModule.startupService,
-            customerLogModule.logMessageService
+            customerLogModule.logService
         )
     }
 

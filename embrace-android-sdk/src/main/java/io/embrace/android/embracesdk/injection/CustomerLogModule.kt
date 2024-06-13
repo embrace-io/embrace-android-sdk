@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.internal.logs.CompositeLogService
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
@@ -23,7 +21,7 @@ internal interface CustomerLogModule {
     val networkCaptureService: NetworkCaptureService
     val networkCaptureDataSource: NetworkCaptureDataSource
     val networkLoggingService: NetworkLoggingService
-    val logMessageService: LogMessageService
+    val logService: LogService
     val logOrchestrator: LogOrchestrator
 }
 
@@ -72,7 +70,7 @@ internal class CustomerLogModuleImpl(
         )
     }
 
-    private val v2LogService: LogService by singleton {
+    override val logService: LogService by singleton {
         EmbraceLogService(
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
@@ -83,10 +81,6 @@ internal class CustomerLogModuleImpl(
             initModule.clock,
             initModule.jsonSerializer
         )
-    }
-
-    override val logMessageService: LogMessageService by singleton {
-        CompositeLogService { v2LogService }
     }
 
     override val logOrchestrator: LogOrchestrator by singleton {

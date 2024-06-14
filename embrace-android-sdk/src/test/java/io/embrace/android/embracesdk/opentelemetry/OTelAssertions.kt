@@ -5,6 +5,10 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
+import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
+import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
+import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
 import org.junit.Assert.assertEquals
 
 internal fun Resource.assertExpectedAttributes(
@@ -12,18 +16,18 @@ internal fun Resource.assertExpectedAttributes(
     expectedServiceVersion: String,
     systemInfo: SystemInfo
 ) {
-    assertEquals(expectedServiceName, getAttribute(serviceName))
-    assertEquals(expectedServiceVersion, getAttribute(serviceVersion))
+    assertEquals(expectedServiceName, getAttribute(ServiceIncubatingAttributes.SERVICE_NAME))
+    assertEquals(expectedServiceVersion, getAttribute(ServiceIncubatingAttributes.SERVICE_VERSION))
     assertEquals(expectedServiceName, getAttribute(telemetryDistroName))
     assertEquals(expectedServiceVersion, getAttribute(telemetryDistroVersion))
-    assertEquals(systemInfo.osName, getAttribute(osName))
-    assertEquals(systemInfo.osVersion, getAttribute(osVersion))
-    assertEquals(systemInfo.osType, getAttribute(osType))
-    assertEquals(systemInfo.osBuild, getAttribute(osBuildId))
-    assertEquals(systemInfo.androidOsApiLevel, getAttribute(androidApiLevel))
-    assertEquals(systemInfo.deviceManufacturer, getAttribute(deviceManufacturer))
-    assertEquals(systemInfo.deviceModel, getAttribute(deviceModelIdentifier))
-    assertEquals(systemInfo.deviceModel, getAttribute(deviceModelName))
+    assertEquals(systemInfo.osName, getAttribute(OsIncubatingAttributes.OS_NAME))
+    assertEquals(systemInfo.osVersion, getAttribute(OsIncubatingAttributes.OS_VERSION))
+    assertEquals(systemInfo.osType, getAttribute(OsIncubatingAttributes.OS_TYPE))
+    assertEquals(systemInfo.osBuild, getAttribute(OsIncubatingAttributes.OS_BUILD_ID))
+    assertEquals(systemInfo.androidOsApiLevel, getAttribute(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL))
+    assertEquals(systemInfo.deviceManufacturer, getAttribute(DeviceIncubatingAttributes.DEVICE_MANUFACTURER))
+    assertEquals(systemInfo.deviceModel, getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER))
+    assertEquals(systemInfo.deviceModel, getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME))
 }
 
 internal fun SpanData.assertHasEmbraceAttribute(key: EmbraceAttributeKey, value: String) {

@@ -19,12 +19,10 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
-import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -192,7 +190,7 @@ internal class EmbraceLogService(
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
 
-        attributes.setAttribute(logRecordUid, Uuid.getEmbUuid())
+        attributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
         return attributes
     }
@@ -205,9 +203,9 @@ internal class EmbraceLogService(
         message: String?,
     ) {
         attributes.setAttribute(embExceptionHandling, logExceptionType.value)
-        type?.let { attributes.setAttribute(exceptionType, it) }
-        message?.let { attributes.setAttribute(exceptionMessage, it) }
-        stackTrace?.let { attributes.setAttribute(exceptionStacktrace, it) }
+        type?.let { attributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE, it) }
+        message?.let { attributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE, it) }
+        stackTrace?.let { attributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE, it) }
     }
 
     private fun addLogEventData(
@@ -220,7 +218,7 @@ internal class EmbraceLogService(
             return
         }
 
-        val logId = attributes.getAttribute(logRecordUid)
+        val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID)
         if (logId == null || !logCounters.getValue(severity).addIfAllowed(logId)) {
             return
         }

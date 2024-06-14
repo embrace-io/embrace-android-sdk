@@ -5,9 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 
@@ -33,14 +31,14 @@ internal fun assertOtelLogReceived(
         assertEquals(expectedTimeMs * 1000000, log.timeUnixNano)
         expectedType?.let { assertAttribute(log, embExceptionHandling.name, it) }
         expectedExceptionName?.let {
-            assertAttribute(log, exceptionType.key, expectedExceptionName)
+            assertAttribute(log, ExceptionIncubatingAttributes.EXCEPTION_TYPE.key, expectedExceptionName)
         }
         expectedExceptionMessage?.let {
-            assertAttribute(log, exceptionMessage.key, expectedExceptionMessage)
+            assertAttribute(log, ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key, expectedExceptionMessage)
         }
         expectedStacktrace?.let {
             val serializedStack = EmbraceSerializer().truncatedStacktrace(it.toTypedArray())
-            assertAttribute(log, exceptionStacktrace.key, serializedStack)
+            assertAttribute(log, ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key, serializedStack)
         }
         expectedProperties?.forEach { (key, value) ->
             assertAttribute(log, key, value.toString())

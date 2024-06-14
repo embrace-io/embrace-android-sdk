@@ -10,9 +10,6 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
-import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
@@ -22,6 +19,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -160,14 +158,14 @@ internal class EmbraceSpanImpl(
             }
 
             exception.javaClass.canonicalName?.let { type ->
-                eventAttributes[exceptionType.key] = type
+                eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key] = type
             }
 
             exception.message?.let { message ->
-                eventAttributes[exceptionMessage.key] = message
+                eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key] = message
             }
 
-            eventAttributes[exceptionStacktrace.key] = exception.truncatedStacktraceText()
+            eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
                 name = EXCEPTION_EVENT_NAME,

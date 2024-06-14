@@ -7,6 +7,10 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
+import io.opentelemetry.semconv.ErrorAttributes
+import io.opentelemetry.semconv.HttpAttributes
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -211,11 +215,11 @@ internal sealed class SchemaType(
     internal class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
         override val schemaAttributes = mapOf(
             "url.full" to networkRequest.url,
-            "http.request.method" to networkRequest.httpMethod,
-            "http.response.status_code" to networkRequest.responseCode,
-            "http.request.body.size" to networkRequest.bytesSent,
-            "http.response.body.size" to networkRequest.bytesReceived,
-            "error.type" to networkRequest.errorType,
+            HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
+            HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
+            HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
+            HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
+            ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
             "error.message" to networkRequest.errorMessage,
             "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
             "emb.trace_id" to getValidTraceId(networkRequest.traceId),
@@ -353,9 +357,12 @@ internal sealed class SchemaType(
         fixedObjectName = "internal-error"
     ) {
         override val schemaAttributes = mapOf(
-            "exception.type" to throwable.javaClass.name,
-            "exception.stacktrace" to throwable.stackTrace.joinToString("\n", transform = StackTraceElement::toString),
-            "exception.message" to (throwable.message ?: "")
+            ExceptionIncubatingAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
+            ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
+                "\n",
+                transform = StackTraceElement::toString
+            ),
+            ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key to (throwable.message ?: "")
         )
     }
 }

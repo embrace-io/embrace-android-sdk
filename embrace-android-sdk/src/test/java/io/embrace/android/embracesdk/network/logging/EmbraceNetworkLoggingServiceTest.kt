@@ -75,7 +75,6 @@ internal class EmbraceNetworkLoggingServiceTest {
         checkNotNull(requestSpans["www.example1.com"]).assertNetworkRequest(
             expectedStartTimeMs = 100L,
             expectedEndTimeMs = 200L,
-            expectedStatus = Span.Status.OK
         )
         checkNotNull(requestSpans["www.example2.com"]).assertNetworkRequest(
             expectedStartTimeMs = 200L,
@@ -178,7 +177,7 @@ internal class EmbraceNetworkLoggingServiceTest {
     private fun Span.assertNetworkRequest(
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
-        expectedStatus: Span.Status = Span.Status.OK
+        expectedStatus: Span.Status = Span.Status.UNSET
     ) {
         assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
         assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())

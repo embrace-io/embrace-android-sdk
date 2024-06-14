@@ -44,14 +44,12 @@ internal class EmbSpanTest {
         with(fakeEmbraceSpan) {
             assertEquals(fakeClock.now(), spanStartTimeMs)
             assertNull(spanEndTimeMs)
-            assertEquals(status, Span.Status.UNSET)
         }
         val stopTime = fakeClock.tick()
         embSpan.end()
         assertFalse(embSpan.isRecording)
         with(fakeEmbraceSpan) {
             assertEquals(stopTime, spanEndTimeMs)
-            assertEquals(status, Span.Status.OK)
         }
     }
 
@@ -86,7 +84,7 @@ internal class EmbSpanTest {
         }
 
         with(fakeEmbraceSpan) {
-            assertEquals(status, Span.Status.OK)
+            assertEquals(status, Span.Status.UNSET)
             assertFalse(attributes.hasFixedAttribute(ErrorCodeAttribute.Failure))
         }
     }

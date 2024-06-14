@@ -35,7 +35,7 @@ internal class NativeAnrOtelMapper(
                 parentSpanId = SpanId.getInvalid(),
                 name = "emb_native_thread_blockage",
                 startTimeUnixNano = interval.threadBlockedTimestamp?.millisToNanos(),
-                status = Span.Status.OK,
+                status = Span.Status.UNSET,
                 attributes = attrs,
                 events = events
             )

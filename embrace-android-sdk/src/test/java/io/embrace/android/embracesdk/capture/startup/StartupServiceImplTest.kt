@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.capture.startup
 
 import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
+import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -11,7 +12,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -57,7 +57,7 @@ internal class StartupServiceImplTest {
             assertEquals(endTimeMillis, endTimeNanos.nanosToMillis())
             assertIsTypePerformance()
             assertIsPrivateSpan()
-            assertEquals(StatusCode.OK, status)
+            assertSuccessful()
             assertEquals("false", findSpanAttribute("ended-in-foreground"))
             assertEquals("main", findSpanAttribute("thread-name"))
         }

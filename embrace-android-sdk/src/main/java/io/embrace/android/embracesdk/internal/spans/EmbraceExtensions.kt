@@ -103,9 +103,7 @@ internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute):
  * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
  */
 internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null): Span {
-    if (errorCode == null) {
-        setStatus(StatusCode.OK)
-    } else {
+    if (errorCode != null) {
         setStatus(StatusCode.ERROR)
         setFixedAttribute(errorCode.fromErrorCode())
     }

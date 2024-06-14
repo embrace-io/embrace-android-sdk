@@ -17,7 +17,7 @@ internal class BackgroundActivityMessageTest {
     private val userInfo = UserInfo("fake-user-id")
     private val appInfo = AppInfo("fake-app-id")
     private val deviceInfo = DeviceInfo("fake-manufacturer")
-    private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
+    private val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.UNSET))
     private val perfInfo = PerformanceInfo(DiskUsage(1, 2))
 
     private val info = SessionMessage(

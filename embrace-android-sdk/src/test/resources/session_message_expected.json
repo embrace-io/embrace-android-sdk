@@ -32,7 +32,7 @@
       "name": "",
       "start_time_unix_nano": 0,
       "end_time_unix_nano": 0,
-      "status": "OK",
+      "status": "UNSET",
       "events": [],
       "attributes": {}
     }

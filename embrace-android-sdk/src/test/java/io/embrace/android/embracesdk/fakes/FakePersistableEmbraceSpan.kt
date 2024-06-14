@@ -71,12 +71,10 @@ internal class FakePersistableEmbraceSpan(
         if (isRecording) {
             checkNotNull(sdkSpan).endSpan(errorCode, endTimeMs)
             errorCode = code
-            status = if (code == null) {
-                Span.Status.OK
-            } else {
+            if (code != null) {
                 val error = code.fromErrorCode()
                 setSystemAttribute(error.key, error.value)
-                Span.Status.ERROR
+                status = Span.Status.ERROR
             }
             spanEndTimeMs = endTimeMs ?: fakeClock.now()
         }

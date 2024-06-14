@@ -19,14 +19,12 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
-import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -206,18 +204,30 @@ internal class EmbraceSpanImplTest {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
                 checkNotNull(attributes)
                 assertEquals(timestampNanos, timeUnixNano)
-                assertEquals(IllegalStateException::class.java.canonicalName, attributes.single { it.key == exceptionType.key }.data)
-                assertEquals("oops", attributes.single { it.key == exceptionMessage.key }.data)
-                assertEquals(firstExceptionStackTrace, attributes.single { it.key == exceptionStacktrace.key }.data)
+                assertEquals(
+                    IllegalStateException::class.java.canonicalName,
+                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
+                )
+                assertEquals("oops", attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals(
+                    firstExceptionStackTrace,
+                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
+                )
             }
             with(events.last()) {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
                 checkNotNull(attributes)
                 assertEquals(timestampNanos, timeUnixNano)
-                assertEquals(RuntimeException::class.java.canonicalName, attributes.single { it.key == exceptionType.key }.data)
-                assertEquals("haha", attributes.single { it.key == exceptionMessage.key }.data)
+                assertEquals(
+                    RuntimeException::class.java.canonicalName,
+                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
+                )
+                assertEquals("haha", attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
                 assertEquals("myValue", attributes.single { it.key == "myKey" }.data)
-                assertEquals(secondExceptionStackTrace, attributes.single { it.key == exceptionStacktrace.key }.data)
+                assertEquals(
+                    secondExceptionStackTrace,
+                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
+                )
             }
         }
     }

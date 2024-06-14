@@ -13,6 +13,9 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
+import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
+import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
 
 internal class OpenTelemetryConfiguration(
@@ -25,15 +28,15 @@ internal class OpenTelemetryConfiguration(
     val embraceVersionName = BuildConfig.VERSION_NAME
     val resource: Resource = Resource.getDefault().toBuilder()
         .put(ServiceIncubatingAttributes.SERVICE_NAME, embraceServiceName)
-        .put(serviceVersion, embraceVersionName)
-        .put(osName, systemInfo.osName)
-        .put(osVersion, systemInfo.osVersion)
-        .put(osType, systemInfo.osType)
-        .put(osBuildId, systemInfo.osBuild)
-        .put(androidApiLevel, systemInfo.androidOsApiLevel)
-        .put(deviceManufacturer, systemInfo.deviceManufacturer)
-        .put(deviceModelIdentifier, systemInfo.deviceModel)
-        .put(deviceModelName, systemInfo.deviceModel)
+        .put(ServiceIncubatingAttributes.SERVICE_VERSION, embraceVersionName)
+        .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
+        .put(OsIncubatingAttributes.OS_VERSION, systemInfo.osVersion)
+        .put(OsIncubatingAttributes.OS_TYPE, systemInfo.osType)
+        .put(OsIncubatingAttributes.OS_BUILD_ID, systemInfo.osBuild)
+        .put(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
+        .put(DeviceIncubatingAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
+        .put(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
+        .put(DeviceIncubatingAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
         .build()
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -9,14 +10,15 @@ import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.EXCEPTION_EVENT_NAME
-import io.embrace.android.embracesdk.internal.spans.endSpan
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.toStatus
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.spans.getEmbraceSpan
 import io.opentelemetry.api.trace.SpanContext
+import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -34,6 +36,7 @@ internal class FakePersistableEmbraceSpan(
     var spanStartTimeMs: Long? = null
     var spanEndTimeMs: Long? = null
     var status = Span.Status.UNSET
+    var statusDescription = ""
     var errorCode: ErrorCode? = null
     val attributes = mutableMapOf(type.toEmbraceKeyValuePair())
     val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
@@ -67,16 +70,21 @@ internal class FakePersistableEmbraceSpan(
         return true
     }
 
-    override fun stop(code: ErrorCode?, endTimeMs: Long?): Boolean {
+    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
         if (isRecording) {
-            checkNotNull(sdkSpan).endSpan(errorCode, endTimeMs)
-            errorCode = code
-            if (code != null) {
-                val error = code.fromErrorCode()
-                setSystemAttribute(error.key, error.value)
-                status = Span.Status.ERROR
+            this.errorCode = errorCode
+            if (errorCode != null) {
+                setStatus(StatusCode.ERROR)
             }
-            spanEndTimeMs = endTimeMs ?: fakeClock.now()
+
+            if (status == Span.Status.ERROR) {
+                val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
+                setSystemAttribute(error.key, error.value)
+            }
+
+            val timestamp = endTimeMs ?: fakeClock.now()
+            checkNotNull(sdkSpan).end(timestamp, TimeUnit.MILLISECONDS)
+            spanEndTimeMs = timestamp
         }
         return true
     }
@@ -100,6 +108,11 @@ internal class FakePersistableEmbraceSpan(
     override fun removeEvents(type: EmbType): Boolean {
         events.removeAll { it.hasFixedAttribute(type) }
         return true
+    }
+
+    override fun setStatus(statusCode: StatusCode, description: String) {
+        status = statusCode.toStatus()
+        statusDescription = description
     }
 
     override fun addAttribute(key: String, value: String): Boolean {

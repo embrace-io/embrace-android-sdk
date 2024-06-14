@@ -7,6 +7,7 @@ import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
+import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -33,8 +34,11 @@ internal class OpenTelemetryConfigurationTest {
 
         assertEquals(configuration.embraceSdkName, configuration.resource.getAttribute(ServiceIncubatingAttributes.SERVICE_NAME))
         assertEquals(configuration.embraceSdkVersion, configuration.resource.getAttribute(ServiceIncubatingAttributes.SERVICE_VERSION))
-        assertEquals(configuration.embraceSdkName, configuration.resource.getAttribute(telemetryDistroName))
-        assertEquals(configuration.embraceSdkVersion, configuration.resource.getAttribute(telemetryDistroVersion))
+        assertEquals(configuration.embraceSdkName, configuration.resource.getAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME))
+        assertEquals(
+            configuration.embraceSdkVersion,
+            configuration.resource.getAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION)
+        )
         assertEquals(systemInfo.osName, configuration.resource.getAttribute(OsIncubatingAttributes.OS_NAME))
         assertEquals(systemInfo.osVersion, configuration.resource.getAttribute(OsIncubatingAttributes.OS_VERSION))
         assertEquals(systemInfo.osType, configuration.resource.getAttribute(OsIncubatingAttributes.OS_TYPE))

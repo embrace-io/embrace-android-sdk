@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorDataSo
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -33,9 +34,9 @@ internal class InternalErrorDataSourceImplTest {
         dataSource.handleInternalError(IllegalStateException())
         val data = logWriter.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
-        assertEquals("java.lang.IllegalStateException", attrs["exception.type"])
-        assertEquals("", attrs["exception.message"])
-        assertNotNull(attrs["exception.stacktrace"])
+        assertEquals("java.lang.IllegalStateException", attrs[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
+        assertEquals("", attrs[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
+        assertNotNull(attrs[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key])
     }
 
     @Test
@@ -43,9 +44,9 @@ internal class InternalErrorDataSourceImplTest {
         dataSource.handleInternalError(IllegalArgumentException("Whoops!"))
         val data = logWriter.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
-        assertEquals("java.lang.IllegalArgumentException", attrs["exception.type"])
-        assertEquals("Whoops!", attrs["exception.message"])
-        assertNotNull(attrs["exception.stacktrace"])
+        assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
+        assertEquals("Whoops!", attrs[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
+        assertNotNull(attrs[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key])
     }
 
     @Test

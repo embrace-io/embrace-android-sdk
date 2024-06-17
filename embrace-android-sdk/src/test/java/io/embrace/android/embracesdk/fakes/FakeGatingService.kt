@@ -16,7 +16,7 @@ internal class FakeGatingService(configService: ConfigService = FakeConfigServic
     val envelopesFiltered = mutableListOf<Envelope<SessionPayload>>()
     val eventMessagesFiltered = mutableListOf<EventMessage>()
 
-    private val realGatingService = EmbraceGatingService(configService, FakeLogMessageService(), EmbLoggerImpl())
+    private val realGatingService = EmbraceGatingService(configService, FakeLogService(), EmbLoggerImpl())
 
     override fun gateSessionEnvelope(
         hasCrash: Boolean,

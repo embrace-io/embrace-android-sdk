@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.event.LogMessageService
+import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
@@ -27,7 +27,7 @@ internal class SessionSpanAttrPopulator(
     private val sessionSpanWriter: SessionSpanWriter,
     private val eventService: EventService,
     private val startupService: StartupService,
-    private val logMessageService: LogMessageService,
+    private val logService: LogService,
     private val metadataService: MetadataService
 ) {
 
@@ -62,13 +62,16 @@ internal class SessionSpanAttrPopulator(
             }
             startupInfo?.let { info ->
                 addCustomAttribute(
-                    SpanAttributeData(embSdkStartupDuration.name, startupService.getSdkStartupDuration(coldStart).toString())
+                    SpanAttributeData(
+                        embSdkStartupDuration.name,
+                        startupService.getSdkStartupDuration(coldStart).toString()
+                    )
                 )
                 addCustomAttribute(SpanAttributeData(embSessionStartupDuration.name, info.duration.toString()))
                 addCustomAttribute(SpanAttributeData(embSessionStartupThreshold.name, info.threshold.toString()))
             }
 
-            val logCount = logMessageService.findErrorLogIds(0, Long.MAX_VALUE).size
+            val logCount = logService.findErrorLogIds(0, Long.MAX_VALUE).size
             addCustomAttribute(SpanAttributeData(embErrorLogCount.name, logCount.toString()))
 
             val free = metadataService.getDiskUsage()?.deviceDiskFree

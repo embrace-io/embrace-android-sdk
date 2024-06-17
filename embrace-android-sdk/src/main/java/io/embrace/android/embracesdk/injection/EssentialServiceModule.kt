@@ -235,7 +235,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val gatingService: GatingService by singleton {
-        EmbraceGatingService(configService, customerLogModuleProvider().logMessageService, initModule.logger)
+        EmbraceGatingService(configService, customerLogModuleProvider().logService, initModule.logger)
     }
 
     override val userService: UserService by singleton {

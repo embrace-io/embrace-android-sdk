@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.destination.LogWriter
@@ -15,6 +16,8 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
@@ -39,6 +42,7 @@ internal class EmbraceLogService(
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
     clock: Clock,
+    private val serializer: EmbraceSerializer
 ) : LogService {
 
     private val logCounters = mapOf(
@@ -66,6 +70,64 @@ internal class EmbraceLogService(
 
     override fun log(
         message: String,
+        type: EventType,
+        logExceptionType: LogExceptionType,
+        properties: Map<String, Any>?,
+        stackTraceElements: Array<StackTraceElement>?,
+        customStackTrace: String?,
+        context: String?,
+        library: String?,
+        exceptionName: String?,
+        exceptionMessage: String?
+    ) {
+        // Currently, any call to this log method can only have an event type of INFO_LOG,
+        // WARNING_LOG, or ERROR_LOG, since it is taken from the fromSeverity() method
+        // in EventType.
+        if (type.getSeverity() == null) {
+            logger.logError("Invalid event type for log: $type")
+            return
+        }
+        val severity = type.getSeverity() ?: Severity.INFO
+        if (logExceptionType == LogExceptionType.NONE) {
+            log(
+                message,
+                severity,
+                properties
+            )
+        } else {
+            val stacktrace = if (stackTraceElements != null) {
+                serializer.truncatedStacktrace(stackTraceElements)
+            } else {
+                customStackTrace
+            }
+            if (appFramework == AppFramework.FLUTTER) {
+                logFlutterException(
+                    message = message,
+                    severity = severity,
+                    logExceptionType = logExceptionType,
+                    properties = properties,
+                    stackTrace = stacktrace,
+                    exceptionName = exceptionName,
+                    exceptionMessage = exceptionMessage,
+                    context = context,
+                    library = library
+                )
+            } else {
+                logException(
+                    message = message,
+                    severity = severity,
+                    logExceptionType = logExceptionType,
+                    properties = properties,
+                    stackTrace = stacktrace,
+                    exceptionName = exceptionName,
+                    exceptionMessage = exceptionMessage
+                )
+            }
+        }
+    }
+
+    private fun log(
+        message: String,
         severity: Severity,
         properties: Map<String, Any>?,
     ) {
@@ -79,13 +141,12 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun logException(
+    private fun logException(
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTrace: String?,
-        framework: AppFramework,
         exceptionName: String?,
         exceptionMessage: String?,
     ) {
@@ -112,7 +173,7 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun logFlutterException(
+    private fun logFlutterException(
         message: String,
         severity: Severity,
         logExceptionType: LogExceptionType,
@@ -149,32 +210,8 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun getInfoLogsAttemptedToSend(): Int {
-        return logCounters.getValue(Severity.INFO).getCount()
-    }
-
-    override fun getWarnLogsAttemptedToSend(): Int {
-        return logCounters.getValue(Severity.WARNING).getCount()
-    }
-
-    override fun getErrorLogsAttemptedToSend(): Int {
-        return logCounters.getValue(Severity.ERROR).getCount()
-    }
-
-    override fun findInfoLogIds(startTime: Long, endTime: Long): List<String> {
-        return logCounters.getValue(Severity.INFO).findLogIds(startTime, endTime)
-    }
-
-    override fun findWarningLogIds(startTime: Long, endTime: Long): List<String> {
-        return logCounters.getValue(Severity.WARNING).findLogIds(startTime, endTime)
-    }
-
     override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
         return logCounters.getValue(Severity.ERROR).findLogIds(startTime, endTime)
-    }
-
-    override fun getUnhandledExceptionsSent(): Int {
-        return unhandledExceptionsCount
     }
 
     override fun cleanCollections() {

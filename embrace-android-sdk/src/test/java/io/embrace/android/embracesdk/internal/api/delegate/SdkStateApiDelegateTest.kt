@@ -4,7 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
+import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 internal class SdkStateApiDelegateTest {
 
     private lateinit var delegate: SdkStateApiDelegate
-    private lateinit var logMessageService: FakeLogMessageService
+    private lateinit var logService: FakeLogService
     private lateinit var orchestrator: FakeSessionOrchestrator
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -29,9 +29,9 @@ internal class SdkStateApiDelegateTest {
 
     @Before
     fun setUp() {
-        logMessageService = FakeLogMessageService()
+        logService = FakeLogService()
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            customerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule(logMessageService = logMessageService) }
+            customerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule(logService = logService) }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), Embrace.AppFramework.NATIVE, 0)
         orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator

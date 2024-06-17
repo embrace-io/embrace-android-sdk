@@ -16,9 +16,8 @@ internal class LogsApiDelegate(
 ) : LogsApi {
 
     private val logger = bootstrapper.initModule.logger
-    private val logMessageService by embraceImplInject(sdkCallChecker) { bootstrapper.customerLogModule.logMessageService }
+    private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.customerLogModule.logService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
-    private val appFramework by embraceImplInject(sdkCallChecker) { bootstrapper.coreModule.appFramework }
     private val pushNotificationService by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.pushNotificationService
     }
@@ -147,16 +146,14 @@ internal class LogsApiDelegate(
         exceptionMessage: String? = null
     ) {
         if (sdkCallChecker.check("log_message")) {
-            val framework = appFramework ?: return
             try {
-                logMessageService?.log(
+                logService?.log(
                     message,
                     type,
                     logExceptionType,
                     normalizeProperties(properties, logger),
                     stackTraceElements,
                     customStackTrace,
-                    framework,
                     context,
                     library,
                     exceptionName,

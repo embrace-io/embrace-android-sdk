@@ -367,7 +367,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(CustomerLogModule::class) {
                         serviceRegistry.registerServices(
-                            customerLogModule.logMessageService,
+                            customerLogModule.logService,
                             customerLogModule.networkCaptureService,
                             customerLogModule.networkLoggingService
                         )

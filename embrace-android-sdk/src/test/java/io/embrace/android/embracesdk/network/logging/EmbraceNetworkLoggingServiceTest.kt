@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.utils.at
+import io.opentelemetry.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,7 +41,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         val spans = spanService
             .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
+            .filter { it.attributes.containsKey(HttpAttributes.HTTP_REQUEST_METHOD.key) }
             .mapNotNull { it.snapshot() }
 
         assertEquals(4, spans.size)
@@ -68,7 +69,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         // Network request is recorded correctly
         val spans = spanService
             .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
+            .filter { it.attributes.containsKey(HttpAttributes.HTTP_REQUEST_METHOD.key) }
             .mapNotNull { it.snapshot() }
         assertEquals(1, spans.size)
 
@@ -82,7 +83,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         val spans = spanService
             .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
+            .filter { it.attributes.containsKey(HttpAttributes.HTTP_REQUEST_METHOD.key) }
             .mapNotNull { it.snapshot() }
 
         assertTrue(spans.isEmpty())
@@ -95,7 +96,7 @@ internal class EmbraceNetworkLoggingServiceTest {
 
         val spans = spanService
             .createdSpans
-            .filter { it.attributes.containsKey("http.request.method") }
+            .filter { it.attributes.containsKey(HttpAttributes.HTTP_REQUEST_METHOD.key) }
             .mapNotNull { it.snapshot() }
 
         assertTrue(spans.isEmpty())

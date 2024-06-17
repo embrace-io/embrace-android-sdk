@@ -15,5 +15,7 @@ internal class NoOpNetworkConnectivityService : NetworkConnectivityService {
         return NetworkStatus.UNKNOWN
     }
 
+    override fun register() {}
+
     override val ipAddress: String? = null
 }

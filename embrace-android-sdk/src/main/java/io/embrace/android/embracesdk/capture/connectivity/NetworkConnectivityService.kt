@@ -35,4 +35,9 @@ internal interface NetworkConnectivityService : Closeable {
      * Calculate the device's IP address
      */
     val ipAddress: String?
+
+    /**
+     * Start listening for network connectivity changes
+     */
+    fun register()
 }

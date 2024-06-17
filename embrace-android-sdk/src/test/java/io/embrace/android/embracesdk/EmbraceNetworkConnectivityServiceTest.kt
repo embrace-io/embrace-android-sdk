@@ -91,6 +91,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
     @Test
     @Throws(InterruptedException::class)
     fun `test connectivity broadcast receiver can register and unregister`() {
+        service.register()
         verify { context.registerReceiver(service, any()) }
         service.close()
         verify { context.unregisterReceiver(service) }

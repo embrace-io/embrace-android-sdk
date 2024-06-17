@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -42,13 +42,13 @@ internal class TelemetryAttributesTest {
             configService = configService,
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
-        telemetryAttributes.setAttribute(exceptionType, "exceptionValue")
+        telemetryAttributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE, "exceptionValue")
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
         assertEquals(sessionId, attributes[embSessionId.name])
-        assertEquals("exceptionValue", attributes[exceptionType.key])
+        assertEquals("exceptionValue", attributes[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
         assertEquals(sessionId, telemetryAttributes.getAttribute(embSessionId))
-        assertEquals("exceptionValue", telemetryAttributes.getAttribute(exceptionType))
+        assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE))
     }
 
     @Test

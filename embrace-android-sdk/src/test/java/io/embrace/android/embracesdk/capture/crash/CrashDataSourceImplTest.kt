@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -114,7 +115,7 @@ internal class CrashDataSourceImplTest {
         assertEquals(1, logWriter.logEvents.size)
         val lastSentCrash = logWriter.logEvents.single()
         assertEquals(
-            logWriter.logEvents.single().schemaType.attributes()["log.record.uid"],
+            logWriter.logEvents.single().schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key],
             sessionOrchestrator.crashId
         )
 
@@ -138,7 +139,7 @@ internal class CrashDataSourceImplTest {
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertEquals(
-            logWriter.logEvents.single().schemaType.attributes()["log.record.uid"],
+            logWriter.logEvents.single().schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key],
             sessionOrchestrator.crashId
         )
         assertEquals(ndkService.lastUnityCrashId, sessionOrchestrator.crashId)
@@ -164,7 +165,7 @@ internal class CrashDataSourceImplTest {
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
         assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
         assertEquals(1, logWriter.logEvents.size)
-        assertEquals(lastSentCrashAttributes["log.record.uid"], sessionOrchestrator.crashId)
+        assertEquals(lastSentCrashAttributes[LogIncubatingAttributes.LOG_RECORD_UID.key], sessionOrchestrator.crashId)
         assertEquals(
             "{\"n\":\"NullPointerException\",\"" +
                 "m\":\"Null pointer exception occurred\",\"" +

@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
+import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -68,7 +69,7 @@ internal class CrashTest {
         val message = checkNotNull(testRule.harness.getLastSentSession())
         val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
         assertNotNull(crashId)
-        assertEquals(crashId, attrs.findAttributeValue("log.record.uid"))
+        assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
     @Test
@@ -112,6 +113,6 @@ internal class CrashTest {
         val message = checkNotNull(testRule.harness.getLastSentSession())
         val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
         assertNotNull(crashId)
-        assertEquals(crashId, attrs.findAttributeValue("log.record.uid"))
+        assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 }

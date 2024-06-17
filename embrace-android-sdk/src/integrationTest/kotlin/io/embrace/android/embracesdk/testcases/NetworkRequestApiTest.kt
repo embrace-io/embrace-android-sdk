@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.semconv.HttpAttributes
+import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -256,15 +258,15 @@ internal class NetworkRequestApiTest {
             with(networkSpan) {
                 val attrs = checkNotNull(attributes)
                 assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
-                assertEquals(expectedRequest.httpMethod, attrs.findAttributeValue("http.request.method"))
+                assertEquals(expectedRequest.httpMethod, attrs.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key))
                 assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
                 assertEquals(expectedRequest.endTime.millisToNanos(), endTimeNanos)
                 assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
                 assertEquals(expectedRequest.w3cTraceparent, attrs.findAttributeValue("emb.w3c_traceparent"))
                 if (completed) {
-                    assertEquals(expectedRequest.responseCode.toString(), attrs.findAttributeValue("http.response.status_code"))
-                    assertEquals(expectedRequest.bytesSent.toString(), attrs.findAttributeValue("http.request.body.size"))
-                    assertEquals(expectedRequest.bytesReceived.toString(), attrs.findAttributeValue("http.response.body.size"))
+                    assertEquals(expectedRequest.responseCode.toString(), attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key))
+                    assertEquals(expectedRequest.bytesSent.toString(), attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key))
+                    assertEquals(expectedRequest.bytesReceived.toString(), attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key))
                     assertEquals(null, attrs.findAttributeValue("error.type"))
                     assertEquals(null, attrs.findAttributeValue("error.message"))
                     val statusCode = expectedRequest.responseCode
@@ -275,9 +277,9 @@ internal class NetworkRequestApiTest {
                     }
                     assertEquals(expectedStatus, status)
                 } else {
-                    assertEquals(null, attrs.findAttributeValue("http.response.status_code"))
-                    assertEquals(null, attrs.findAttributeValue("http.request.body.size"))
-                    assertEquals(null, attrs.findAttributeValue("http.response.body.size"))
+                    assertEquals(null, attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key))
+                    assertEquals(null, attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key))
+                    assertEquals(null, attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key))
                     assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
                     assertEquals(expectedRequest.errorMessage, attrs.findAttributeValue("error.message"))
                     assertEquals(Span.Status.ERROR, status)
@@ -290,7 +292,7 @@ internal class NetworkRequestApiTest {
         val session = checkNotNull(testRule.harness.getLastSentSession())
 
         val unfilteredSpans = checkNotNull(session.data.spans)
-        val spans = checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue("http.request.method") != null })
+        val spans = checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

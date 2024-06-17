@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.embState
-import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
+import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
 internal class LogWriterImpl(
     private val logger: Logger,
@@ -31,7 +31,7 @@ internal class LogWriterImpl(
             .setSeverity(severity.toOtelSeverity())
             .setSeverityText(severity.name)
 
-        builder.setAttribute(logRecordUid, Uuid.getEmbUuid())
+        builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
         sessionIdTracker.getActiveSessionId()?.let { sessionId ->
             builder.setAttribute(embSessionId.attributeKey, sessionId)

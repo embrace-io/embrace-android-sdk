@@ -13,6 +13,11 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SpanProcessor
 import io.opentelemetry.sdk.trace.export.SpanExporter
+import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
+import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
+import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
+import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
+import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 
 internal class OpenTelemetryConfiguration(
     spanSink: SpanSink,
@@ -23,18 +28,18 @@ internal class OpenTelemetryConfiguration(
     val embraceSdkName = BuildConfig.LIBRARY_PACKAGE_NAME
     val embraceSdkVersion = BuildConfig.VERSION_NAME
     val resource: Resource = Resource.getDefault().toBuilder()
-        .put(serviceName, embraceSdkName)
-        .put(serviceVersion, embraceSdkVersion)
-        .put(osName, systemInfo.osName)
-        .put(osVersion, systemInfo.osVersion)
-        .put(osType, systemInfo.osType)
-        .put(osBuildId, systemInfo.osBuild)
-        .put(androidApiLevel, systemInfo.androidOsApiLevel)
-        .put(deviceManufacturer, systemInfo.deviceManufacturer)
-        .put(deviceModelIdentifier, systemInfo.deviceModel)
-        .put(deviceModelName, systemInfo.deviceModel)
-        .put(telemetryDistroName, embraceSdkName)
-        .put(telemetryDistroVersion, embraceSdkVersion)
+        .put(ServiceIncubatingAttributes.SERVICE_NAME, embraceSdkName)
+        .put(ServiceIncubatingAttributes.SERVICE_VERSION, embraceSdkVersion)
+        .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
+        .put(OsIncubatingAttributes.OS_VERSION, systemInfo.osVersion)
+        .put(OsIncubatingAttributes.OS_TYPE, systemInfo.osType)
+        .put(OsIncubatingAttributes.OS_BUILD_ID, systemInfo.osBuild)
+        .put(AndroidIncubatingAttributes.ANDROID_OS_API_LEVEL, systemInfo.androidOsApiLevel)
+        .put(DeviceIncubatingAttributes.DEVICE_MANUFACTURER, systemInfo.deviceManufacturer)
+        .put(DeviceIncubatingAttributes.DEVICE_MODEL_IDENTIFIER, systemInfo.deviceModel)
+        .put(DeviceIncubatingAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
+        .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME, embraceSdkName)
+        .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION, embraceSdkVersion)
         .build()
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()

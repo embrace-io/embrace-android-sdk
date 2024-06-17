@@ -20,16 +20,14 @@ import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.opentelemetry.embAndroidThreads
 import io.embrace.android.embracesdk.opentelemetry.embCrashNumber
-import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
-import io.embrace.android.embracesdk.opentelemetry.logRecordUid
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.payload.ThreadInfo
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
 /**
  * Intercept and track uncaught Android Runtime exceptions
@@ -89,15 +87,19 @@ internal class CrashDataSourceImpl(
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)
-            crashAttributes.setAttribute(exceptionType, crashException.name)
-            crashAttributes.setAttribute(exceptionMessage, crashException.message ?: "")
+            crashAttributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE, crashException.name)
             crashAttributes.setAttribute(
-                exceptionStacktrace,
+                ExceptionIncubatingAttributes.EXCEPTION_MESSAGE,
+                crashException.message
+                    ?: ""
+            )
+            crashAttributes.setAttribute(
+                ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE,
                 encodeToUTF8String(
                     serializer.toJson(crashException.lines, List::class.java),
                 ),
             )
-            crashAttributes.setAttribute(logRecordUid, crashId)
+            crashAttributes.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, crashId)
             crashAttributes.setAttribute(embCrashNumber, crashNumber.toString())
             crashAttributes.setAttribute(
                 EmbType.System.Crash.embAndroidCrashExceptionCause,

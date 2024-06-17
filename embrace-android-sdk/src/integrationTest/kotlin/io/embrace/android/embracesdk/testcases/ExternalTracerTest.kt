@@ -15,9 +15,6 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.opentelemetry.EmbSpan
 import io.embrace.android.embracesdk.opentelemetry.EmbSpanBuilder
 import io.embrace.android.embracesdk.opentelemetry.EmbTracer
-import io.embrace.android.embracesdk.opentelemetry.exceptionMessage
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
-import io.embrace.android.embracesdk.opentelemetry.exceptionType
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -28,6 +25,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -143,9 +141,9 @@ internal class ExternalTracerTest {
                         timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
                         attributes = listOf(
                             Attribute("bad", "yes"),
-                            Attribute(exceptionMessage.key, "bah"),
-                            Attribute(exceptionStacktrace.key, stacktrace),
-                            Attribute(exceptionType.key, checkNotNull(RuntimeException::class.java.canonicalName))
+                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key, "bah"),
+                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
+                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
                         )
                     )
                 ),

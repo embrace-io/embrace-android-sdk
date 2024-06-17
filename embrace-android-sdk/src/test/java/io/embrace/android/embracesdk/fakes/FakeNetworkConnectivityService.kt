@@ -22,7 +22,7 @@ internal class FakeNetworkConnectivityService(
             notifyListeners()
         }
 
-    public var networkStatusOnSessionStartedCount = 0
+    var networkStatusOnSessionStartedCount = 0
 
     override fun networkStatusOnSessionStarted(startTime: Long) {
         notifyListeners()
@@ -40,6 +40,9 @@ internal class FakeNetworkConnectivityService(
     override fun getCurrentNetworkStatus(): NetworkStatus = networkStatus
 
     override fun close() {
+    }
+
+    override fun register() {
     }
 
     private fun notifyListeners() {
@@ -64,6 +67,9 @@ internal class NoOpNetworkConnectivityService : NetworkConnectivityService {
 
     override fun getCurrentNetworkStatus(): NetworkStatus {
         return NetworkStatus.UNKNOWN
+    }
+
+    override fun register() {
     }
 
     override val ipAddress: String? = null

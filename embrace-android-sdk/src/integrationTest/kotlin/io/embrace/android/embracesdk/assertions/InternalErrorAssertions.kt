@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.assertions
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.fail
 
 /**
@@ -26,8 +27,8 @@ internal fun assertInternalErrorLogged(
     }
 
     val matchingLogs = logs.filter { log ->
-        log.attributes?.findAttributeValue("exception.type") == exceptionClassName &&
-            log.attributes.findAttributeValue("exception.message") == errorMessage
+        log.attributes?.findAttributeValue(ExceptionIncubatingAttributes.EXCEPTION_TYPE.key) == exceptionClassName &&
+            log.attributes.findAttributeValue(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key) == errorMessage
     }
     if (matchingLogs.isEmpty()) {
         fail("No internal errors found matching the expected exception")

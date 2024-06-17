@@ -18,6 +18,8 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.net.SocketException
+import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -165,7 +167,7 @@ internal class EmbraceInternalInterfaceTest {
             }
 
             val spans = checkNotNull(session?.data?.spans)
-            val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue("http.request.method") != null })
+            val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,

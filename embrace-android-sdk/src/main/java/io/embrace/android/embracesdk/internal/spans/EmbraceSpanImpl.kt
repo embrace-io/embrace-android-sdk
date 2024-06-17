@@ -128,10 +128,8 @@ internal class EmbraceSpanImpl(
                 successful = !isRecording
                 if (successful) {
                     spanId?.let { spanRepository.trackedSpanStopped(it) }
-                    status = if (errorCode != null) {
-                        Span.Status.ERROR
-                    } else {
-                        Span.Status.OK
+                    if (errorCode != null) {
+                        status = Span.Status.ERROR
                     }
                     spanEndTimeMs = attemptedEndTimeMs
                 }

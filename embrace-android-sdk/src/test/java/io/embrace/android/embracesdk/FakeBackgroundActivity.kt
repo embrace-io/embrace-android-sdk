@@ -15,7 +15,7 @@ internal fun fakeBackgroundActivityMessage(): SessionMessage {
     val userInfo = UserInfo("fake-user-id")
     val appInfo = AppInfo("fake-app-id")
     val deviceInfo = DeviceInfo("fake-manufacturer")
-    val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.OK))
+    val spans = listOf(EmbraceSpanData("fake-span-id", "", "", "", 0, 0, StatusCode.UNSET))
     val perfInfo = PerformanceInfo(DiskUsage(1, 2))
 
     return SessionMessage(

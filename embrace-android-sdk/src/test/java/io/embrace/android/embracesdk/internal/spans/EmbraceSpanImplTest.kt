@@ -106,7 +106,6 @@ internal class EmbraceSpanImplTest {
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
-                expectedStatus = Span.Status.OK
             )
             validateStoppedSpan()
         }
@@ -339,7 +338,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(hasFixedAttribute(EmbType.System.LowPower))
             assertTrue(hasFixedAttribute(PrivateSpan))
             assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeUnixNano)
-            assertEquals(Span.Status.UNSET, snapshot.status)
+            assertNull(snapshot.endTimeUnixNano)
 
             val snapshotEvent = checkNotNull(snapshot.events).single()
             assertEquals(EXPECTED_EVENT_NAME, snapshotEvent.name)

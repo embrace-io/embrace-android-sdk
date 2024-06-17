@@ -18,7 +18,7 @@ internal val testSpan = EmbraceSpanData(
     name = "emb-sdk-init",
     startTimeNanos = 1681972471806000000L,
     endTimeNanos = 1681972471871000000L,
-    status = StatusCode.OK,
+    status = StatusCode.UNSET,
     events = listOf(
         checkNotNull(
             EmbraceSpanEvent.create(

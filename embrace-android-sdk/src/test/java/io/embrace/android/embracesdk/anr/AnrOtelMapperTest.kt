@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.anr
 
+import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -176,7 +177,7 @@ internal class AnrOtelMapperTest {
         assertEquals(SpanId.getInvalid(), parentSpanId)
         assertEquals("emb-thread-blockage", name)
         assertEquals(START_TIME_MS, startTimeUnixNano?.nanosToMillis())
-        assertEquals(Span.Status.OK, status)
+        assertSuccessful()
         assertEquals("perf.thread_blockage", attributes?.findAttribute("emb.type")?.data)
     }
 

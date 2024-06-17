@@ -67,19 +67,16 @@ internal class EmbSpan(
 
     override fun end() = end(timestamp = clock.now(), unit = TimeUnit.NANOSECONDS)
 
-    /**
-     * One difference between the implementation of this method and the equivalent implementation in the Java SDK is that [StatusCode] for
-     * the underlying span is set to [StatusCode.OK] automatically if this is called before [setStatus] is called.
-     */
     override fun end(timestamp: Long, unit: TimeUnit) {
         if (isRecording) {
             val endTimeMs = unit.toMillis(timestamp)
             synchronized(pendingStatus) {
-                when (pendingStatus.get()) {
+                val finalStatus = pendingStatus.get()
+                setStatus(finalStatus)
+                when (finalStatus) {
                     StatusCode.ERROR -> {
                         embraceSpan.stop(errorCode = ErrorCode.FAILURE, endTimeMs = endTimeMs)
                     }
-
                     else -> {
                         embraceSpan.stop(endTimeMs = endTimeMs)
                     }

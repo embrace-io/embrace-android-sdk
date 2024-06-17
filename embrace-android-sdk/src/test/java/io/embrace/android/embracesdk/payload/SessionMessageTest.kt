@@ -31,7 +31,7 @@ internal class SessionMessageTest {
             "",
             0,
             0,
-            StatusCode.OK,
+            StatusCode.UNSET,
             emptyList()
         )
     )

@@ -37,6 +37,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public static fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
 	public fun getSessionProperties ()Ljava/util/Map;
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;

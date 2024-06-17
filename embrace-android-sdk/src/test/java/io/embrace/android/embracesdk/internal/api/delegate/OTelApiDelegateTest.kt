@@ -9,8 +9,10 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
+import io.opentelemetry.api.OpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -52,15 +54,24 @@ internal class OTelApiDelegateTest {
     }
 
     @Test
+    fun `get opentelemetry before start`() {
+        sdkCallChecker.started.set(false)
+        assertEquals(OpenTelemetry.noop(), delegate.getOpenTelemetry())
+    }
+
+    @Test
+    fun `get opentelemetry after start`() {
+        assertNotEquals(OpenTelemetry.noop(), delegate.getOpenTelemetry())
+    }
+
+    @Test
     fun `get tracer before start`() {
         sdkCallChecker.started.set(false)
-        val beforeTracer = delegate.getTracer()
-        assertFalse(beforeTracer.spanBuilder("test").startSpan().spanContext.isValid)
+        assertFalse(delegate.getTracer().spanBuilder("test").startSpan().spanContext.isValid)
     }
 
     @Test
     fun `get tracer after start`() {
-        val afterTracer = delegate.getTracer()
-        assertTrue(afterTracer.spanBuilder("test").startSpan().spanContext.isValid)
+        assertTrue(delegate.getTracer().spanBuilder("test").startSpan().spanContext.isValid)
     }
 }

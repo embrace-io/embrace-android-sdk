@@ -30,10 +30,6 @@ internal class EmbraceNetworkConnectivityService(
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
     override val ipAddress by lazy { calculateIpAddress() }
 
-    init {
-        registerConnectivityActionReceiver()
-    }
-
     override fun onReceive(context: Context, intent: Intent) = handleNetworkStatus(true)
 
     override fun networkStatusOnSessionStarted(startTime: Long) = handleNetworkStatus(false, startTime)
@@ -94,7 +90,7 @@ internal class EmbraceNetworkConnectivityService(
     private fun didNetworkStatusChange(newNetworkStatus: NetworkStatus) =
         lastNetworkStatus == null || lastNetworkStatus != newNetworkStatus
 
-    private fun registerConnectivityActionReceiver() {
+    override fun register() {
         backgroundWorker.submit {
             try {
                 context.registerReceiver(this, intentFilter)

@@ -232,7 +232,7 @@ internal class EmbraceLogServiceTest {
             logWithoutException("Test error $k", EventType.ERROR_LOG)
         }
 
-        assertEquals(250, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(250, logService.findErrorLogIds().size)
     }
 
     @Test
@@ -253,7 +253,7 @@ internal class EmbraceLogServiceTest {
             logWithoutException("Test error $k", EventType.ERROR_LOG)
         }
 
-        assertEquals(150, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(150, logService.findErrorLogIds().size)
     }
 
     @Test
@@ -318,11 +318,11 @@ internal class EmbraceLogServiceTest {
             logWithoutException("Test warning $k", EventType.WARNING_LOG)
             logWithoutException("Test error $k", EventType.ERROR_LOG)
         }
-        assertEquals(10, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(10, logService.findErrorLogIds().size)
 
         logService.cleanCollections()
 
-        assertEquals(0, logService.findErrorLogIds(0L, Long.MAX_VALUE).size)
+        assertEquals(0, logService.findErrorLogIds().size)
     }
 
     // If the session components are null, no gating should be applied

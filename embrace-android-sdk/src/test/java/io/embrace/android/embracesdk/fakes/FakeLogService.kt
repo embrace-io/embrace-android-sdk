@@ -50,7 +50,7 @@ internal class FakeLogService : LogService {
         )
     }
 
-    override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
+    override fun findErrorLogIds(): List<String> {
         return errorLogIds
     }
 

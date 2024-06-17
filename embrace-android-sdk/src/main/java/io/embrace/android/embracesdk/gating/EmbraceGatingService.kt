@@ -43,7 +43,7 @@ internal class EmbraceGatingService(
     }
 
     private fun hasErrorLogs(): Boolean {
-        return logService.findErrorLogIds(0, Long.MAX_VALUE).isNotEmpty() &&
+        return logService.findErrorLogIds().isNotEmpty() &&
             configService.sessionBehavior.shouldSendFullForErrorLog()
     }
 

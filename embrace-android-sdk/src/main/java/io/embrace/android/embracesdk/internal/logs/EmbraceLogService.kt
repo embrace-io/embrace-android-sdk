@@ -210,8 +210,8 @@ internal class EmbraceLogService(
         }
     }
 
-    override fun findErrorLogIds(startTime: Long, endTime: Long): List<String> {
-        return logCounters.getValue(Severity.ERROR).findLogIds(startTime, endTime)
+    override fun findErrorLogIds(): List<String> {
+        return logCounters.getValue(Severity.ERROR).findLogIds()
     }
 
     override fun cleanCollections() {
@@ -334,11 +334,8 @@ internal class LogCounter(
         return true
     }
 
-    fun findLogIds(
-        startTime: Long,
-        endTime: Long,
-    ): List<String> {
-        return cache.value { ArrayList(logIds.subMap(startTime, endTime).values) }
+    fun findLogIds(): List<String> {
+        return cache.value { ArrayList(logIds.values) }
     }
 
     fun getCount(): Int = count.get()

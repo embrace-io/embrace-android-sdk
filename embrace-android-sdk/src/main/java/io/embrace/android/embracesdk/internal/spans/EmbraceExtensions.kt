@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
-import io.embrace.android.embracesdk.opentelemetry.exceptionStacktrace
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -18,6 +17,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import java.util.concurrent.TimeUnit
 
 /**
@@ -196,4 +196,4 @@ internal fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity =
 
 internal fun String.isValidLongValueAttribute() = longValueAttributes.contains(this)
 
-internal val longValueAttributes = setOf(exceptionStacktrace.key)
+internal val longValueAttributes = setOf(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key)

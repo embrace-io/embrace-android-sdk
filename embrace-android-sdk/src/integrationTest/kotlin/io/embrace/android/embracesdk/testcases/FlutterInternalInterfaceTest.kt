@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.opentelemetry.api.logs.Severity
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -160,7 +161,7 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
             )
-            assertEquals(expectedStacktrace, log?.findLogAttribute("exception.stacktrace"))
+            assertEquals(expectedStacktrace, log?.findLogAttribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key))
             assertEquals(expectedContext, log?.findLogAttribute("emb.exception.context"))
             assertEquals(expectedLibrary, log?.findLogAttribute("emb.exception.library"))
         }
@@ -196,7 +197,7 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
             )
-            assertEquals(expectedStacktrace, log?.findLogAttribute("exception.stacktrace"))
+            assertEquals(expectedStacktrace, log?.findLogAttribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key))
             assertEquals(expectedContext, log?.findLogAttribute("emb.exception.context"))
             assertEquals(expectedLibrary, log?.findLogAttribute("emb.exception.library"))
         }

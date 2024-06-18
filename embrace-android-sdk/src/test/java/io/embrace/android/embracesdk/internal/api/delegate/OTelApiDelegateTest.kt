@@ -67,11 +67,11 @@ internal class OTelApiDelegateTest {
     @Test
     fun `get tracer before start`() {
         sdkCallChecker.started.set(false)
-        assertFalse(delegate.getTracer().spanBuilder("test").startSpan().spanContext.isValid)
+        assertFalse(delegate.getOpenTelemetry().getTracer("foo").spanBuilder("test").startSpan().spanContext.isValid)
     }
 
     @Test
     fun `get tracer after start`() {
-        assertTrue(delegate.getTracer().spanBuilder("test").startSpan().spanContext.isValid)
+        assertTrue(delegate.getOpenTelemetry().getTracer("foo").spanBuilder("test").startSpan().spanContext.isValid)
     }
 }

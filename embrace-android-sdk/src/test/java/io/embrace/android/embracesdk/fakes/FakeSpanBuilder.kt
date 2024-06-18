@@ -17,6 +17,7 @@ internal class FakeSpanBuilder(
     var spanKind: SpanKind? = null
     var parentContext: Context = Context.root()
     var startTimestampMs: Long? = null
+    var attributes = mutableMapOf<Any, Any>()
 
     override fun setParent(context: Context): SpanBuilder {
         parentContext = context
@@ -65,6 +66,7 @@ internal class FakeSpanBuilder(
     override fun startSpan(): FakeSpan = FakeSpan(this)
 
     override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): SpanBuilder {
-        TODO("Not yet implemented")
+        attributes[key] = value
+        return this
     }
 }

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.context.ImplicitContextKeyed
@@ -48,6 +49,11 @@ internal interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
      * Removes all events with the given [EmbType]
      */
     fun removeEvents(type: EmbType): Boolean
+
+    /**
+     * Set the [StatusCode] and status description of the wrapped Span
+     */
+    fun setStatus(statusCode: StatusCode, description: String = "")
 
     override fun storeInContext(context: Context): Context = context.with(embraceSpanContextKey, this)
 }

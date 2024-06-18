@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
@@ -99,25 +98,6 @@ internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute):
 }
 
 /**
- * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
- * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
- */
-internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null): Span {
-    if (errorCode != null) {
-        setStatus(StatusCode.ERROR)
-        setFixedAttribute(errorCode.fromErrorCode())
-    }
-
-    if (endTimeMs != null) {
-        end(endTimeMs, TimeUnit.MILLISECONDS)
-    } else {
-        end()
-    }
-
-    return this
-}
-
-/**
  * Returns the attributes as a new Map<String, String>
  */
 internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
@@ -195,3 +175,11 @@ internal fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity =
 internal fun String.isValidLongValueAttribute() = longValueAttributes.contains(this)
 
 internal val longValueAttributes = setOf(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key)
+
+internal fun StatusCode.toStatus(): io.embrace.android.embracesdk.internal.payload.Span.Status {
+    return when (this) {
+        StatusCode.UNSET -> io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
+        StatusCode.OK -> io.embrace.android.embracesdk.internal.payload.Span.Status.OK
+        StatusCode.ERROR -> io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR
+    }
+}

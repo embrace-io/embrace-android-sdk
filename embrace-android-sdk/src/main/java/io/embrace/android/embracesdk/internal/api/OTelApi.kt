@@ -21,24 +21,8 @@ internal interface OTelApi {
     fun addSpanExporter(spanExporter: SpanExporter)
 
     /**
-     * Returns an [OpenTelemetry] that provides working [Tracer] implementations.
+     * Returns an [OpenTelemetry] that provides working [Tracer] implementations that will record spans that fit into the Embrace data
+     * model.
      */
     fun getOpenTelemetry(): OpenTelemetry
-
-    /**
-     * Returns a [Tracer] that can be used to log spans. This instance will identify itself as the Embrace SDK.
-     */
-    fun getTracer(): Tracer = getTracer(null, null)
-
-    /**
-     * Returns a [Tracer] that can be used to log spans. This instance will identify itself with the given [instrumentationModuleName] if
-     * it's non-null.
-     */
-    fun getTracer(instrumentationModuleName: String?): Tracer = getTracer(instrumentationModuleName, null)
-
-    /**
-     * Returns a [Tracer] that can be used to log spans. This instance will identify itself with the given [instrumentationModuleName]
-     * and [instrumentationModuleVersion] if the former is non-null.
-     */
-    fun getTracer(instrumentationModuleName: String?, instrumentationModuleVersion: String?): Tracer
 }

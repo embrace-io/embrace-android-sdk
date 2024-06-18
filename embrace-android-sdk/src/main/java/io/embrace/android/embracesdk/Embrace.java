@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
 import io.embrace.android.embracesdk.spans.TracingApi;
 import io.opentelemetry.api.OpenTelemetry;
-import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
 import kotlin.jvm.functions.Function0;
@@ -583,24 +582,6 @@ public final class Embrace implements
     @Override
     public OpenTelemetry getOpenTelemetry() {
         return impl.getOpenTelemetry();
-    }
-
-    @NonNull
-    @Override
-    public Tracer getTracer() {
-        return impl.getTracer(null, null);
-    }
-
-    @NonNull
-    @Override
-    public Tracer getTracer(@Nullable String instrumentationModuleName) {
-        return impl.getTracer(instrumentationModuleName, null);
-    }
-
-    @NonNull
-    @Override
-    public Tracer getTracer(@Nullable String instrumentationModuleName, @Nullable String instrumentationModuleVersion) {
-        return impl.getTracer(instrumentationModuleName, instrumentationModuleVersion);
     }
 
     /**

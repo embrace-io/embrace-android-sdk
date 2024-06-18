@@ -64,7 +64,7 @@ internal class ExternalTracerTest {
     @Test
     fun `check correctness of implementations used by Tracer`() {
         assertSame(
-            testRule.embrace.getTracer("foo"),
+            testRule.embrace.getOpenTelemetry().getTracer("foo"),
             embOpenTelemetry.getTracer("foo")
         )
         assertTrue(embTracer is EmbTracer)

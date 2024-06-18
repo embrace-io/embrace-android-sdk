@@ -10,8 +10,10 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
+import io.embrace.android.embracesdk.opentelemetry.EmbOpenTelemetry
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.mockk.mockk
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
@@ -33,6 +35,8 @@ internal class FakeOpenTelemetryModule(
         get() = TODO()
     override val logger: Logger
         get() = FakeOtelLogger()
+    override val externalOpenTelemetry: OpenTelemetry
+        get() = EmbOpenTelemetry(traceProviderSupplier = { FakeTracerProvider() })
     override val externalTracerProvider: TracerProvider
         get() = FakeTracerProvider()
 }

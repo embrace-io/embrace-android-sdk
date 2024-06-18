@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.api.OTelApi
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
@@ -20,6 +21,14 @@ internal class OTelApiDelegate(
             return
         }
         bootstrapper.openTelemetryModule.openTelemetryConfiguration.addSpanExporter(spanExporter)
+    }
+
+    override fun getOpenTelemetry(): OpenTelemetry {
+        return if (sdkCallChecker.started.get()) {
+            bootstrapper.openTelemetryModule.externalOpenTelemetry
+        } else {
+            OpenTelemetry.noop()
+        }
     }
 
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {

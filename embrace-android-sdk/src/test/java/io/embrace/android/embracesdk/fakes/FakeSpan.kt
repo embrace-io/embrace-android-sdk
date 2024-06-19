@@ -28,7 +28,8 @@ internal class FakeSpan(
     private var statusDescription: String = ""
 
     override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): Span {
-        TODO("Not yet implemented")
+        fakeSpanBuilder.setAttribute(key, value)
+        return this
     }
 
     override fun addEvent(name: String, attributes: Attributes): Span {

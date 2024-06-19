@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
@@ -97,27 +96,6 @@ internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setE
 
 internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
     setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
-    return this
-}
-
-/**
- * Ends the given [Span], and setting the correct properties per the optional [ErrorCode] passed in. If [errorCode]
- * is not specified, it means the [Span] completed successfully, and no [ErrorCode] will be set.
- */
-internal fun Span.endSpan(errorCode: ErrorCode? = null, endTimeMs: Long? = null): Span {
-    if (errorCode == null) {
-        setStatus(StatusCode.OK)
-    } else {
-        setStatus(StatusCode.ERROR)
-        setFixedAttribute(errorCode.fromErrorCode())
-    }
-
-    if (endTimeMs != null) {
-        end(endTimeMs, TimeUnit.MILLISECONDS)
-    } else {
-        end()
-    }
-
     return this
 }
 
@@ -214,3 +192,11 @@ internal fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity =
 internal fun String.isValidLongValueAttribute() = longValueAttributes.contains(this)
 
 internal val longValueAttributes = setOf(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key)
+
+internal fun StatusCode.toStatus(): io.embrace.android.embracesdk.internal.payload.Span.Status {
+    return when (this) {
+        StatusCode.UNSET -> io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
+        StatusCode.OK -> io.embrace.android.embracesdk.internal.payload.Span.Status.OK
+        StatusCode.ERROR -> io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR
+    }
+}

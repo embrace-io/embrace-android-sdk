@@ -271,7 +271,7 @@ internal class NetworkRequestApiTest {
                     assertEquals(null, attrs.findAttributeValue("error.message"))
                     val statusCode = expectedRequest.responseCode
                     val expectedStatus = if (statusCode != null && statusCode >= 200 && statusCode < 400) {
-                        Span.Status.OK
+                        Span.Status.UNSET
                     } else {
                         Span.Status.ERROR
                     }

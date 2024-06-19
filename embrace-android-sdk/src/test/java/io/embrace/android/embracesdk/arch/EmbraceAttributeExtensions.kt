@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 
@@ -59,7 +60,7 @@ internal fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
  * Assert [EmbraceSpanData] has ended successfully
  */
 internal fun EmbraceSpanData.assertSuccessful() {
-    assertEquals(StatusCode.OK, status)
+    assertNotEquals(StatusCode.ERROR, status)
     assertNull(attributes[ErrorCodeAttribute.Failure.key.name])
 }
 
@@ -89,7 +90,7 @@ internal fun Span.assertError(errorCode: ErrorCode) {
 }
 
 internal fun Span.assertSuccessful() {
-    assertEquals(Span.Status.OK, status)
+    assertNotEquals(Span.Status.ERROR, status)
     assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.key.name }.size)
 }
 

@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.opentelemetry.EmbTracer
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanId
@@ -29,6 +30,7 @@ import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -47,6 +49,7 @@ internal class ExternalTracerTest {
     }
 
     private lateinit var spanExporter: FakeSpanExporter
+    private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embTracer: Tracer
     private lateinit var clock: FakeClock
 
@@ -57,12 +60,17 @@ internal class ExternalTracerTest {
             clock = harness.overriddenClock
             embrace.addSpanExporter(spanExporter)
             startSdk(context = harness.overriddenCoreModule.context)
-            embTracer = checkNotNull(embrace.getTracer("external-tracer", "1.0.0"))
+            embOpenTelemetry = embrace.getOpenTelemetry()
+            embTracer = embOpenTelemetry.getTracer("external-tracer", "1.0.0")
         }
     }
 
     @Test
     fun `check correctness of implementations used by Tracer`() {
+        assertSame(
+            testRule.embrace.getOpenTelemetry().getTracer("foo"),
+            embOpenTelemetry.getTracer("foo")
+        )
         assertTrue(embTracer is EmbTracer)
         val spanBuilder = embTracer.spanBuilder("test")
         val span = spanBuilder.startSpan()
@@ -159,5 +167,14 @@ internal class ExternalTracerTest {
                 assertNull(schemaUrl)
             }
         }
+    }
+
+    @Test
+    fun `opentelemetry instance can be used to log spans`() {
+        assertTrue(embTracer is EmbTracer)
+        val spanBuilder = embTracer.spanBuilder("test")
+        val span = spanBuilder.startSpan()
+        assertTrue(spanBuilder is EmbSpanBuilder)
+        assertTrue(span is EmbSpan)
     }
 }

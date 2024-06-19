@@ -37,13 +37,11 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public static fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
 	public fun getSessionProperties ()Ljava/util/Map;
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun getTraceIdHeader ()Ljava/lang/String;
-	public fun getTracer ()Lio/opentelemetry/api/trace/Tracer;
-	public fun getTracer (Ljava/lang/String;)Lio/opentelemetry/api/trace/Tracer;
-	public fun getTracer (Ljava/lang/String;Ljava/lang/String;)Lio/opentelemetry/api/trace/Tracer;
 	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 	public fun isStarted ()Z
 	public fun isTracingAvailable ()Z

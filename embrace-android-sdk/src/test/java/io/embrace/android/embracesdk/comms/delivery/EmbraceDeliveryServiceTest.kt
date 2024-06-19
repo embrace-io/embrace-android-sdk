@@ -40,7 +40,6 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NO
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.trace.SpanId
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -192,11 +191,7 @@ internal class EmbraceDeliveryServiceTest {
     @Test
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
         val startedSnapshot = EmbraceSpanData(perfSpanSnapshot)
-        val completedSpan = startedSnapshot.copy(
-            spanId = "myId",
-            status = StatusCode.OK,
-            endTimeNanos = startedSnapshot.startTimeNanos + 10000000L
-        )
+        val completedSpan = startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L)
         val snapshots = listOfNotNull(startedSnapshot)
         val base = fakeSessionEnvelope()
         val messedUpSession = base.copy(
@@ -215,7 +210,7 @@ internal class EmbraceDeliveryServiceTest {
         assertNotNull(cacheService.writeSession(messedUpSessionFilename, messedUpSession))
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         val sentSession = apiService.sessionRequests.single()
-        assertEquals(4, sentSession.data.spans?.size)
+        assertEquals(3, sentSession.data.spans?.size)
         assertEquals(0, sentSession.data.spanSnapshots?.size)
     }
 

@@ -112,7 +112,6 @@ internal class EmbraceSpanImplTest {
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
-                expectedStatus = Span.Status.OK
             )
             validateStoppedSpan()
         }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -18,6 +19,7 @@ import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.SpanId
+import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
@@ -125,15 +127,18 @@ internal class EmbraceSpanImpl(
                         TimeUnit.NANOSECONDS
                     )
                 }
-                spanToStop.endSpan(errorCode, attemptedEndTimeMs)
+
+                if (errorCode != null) {
+                    setStatus(StatusCode.ERROR)
+                    spanToStop.setFixedAttribute(errorCode.fromErrorCode())
+                } else if (status == Span.Status.ERROR) {
+                    spanToStop.setFixedAttribute(ErrorCodeAttribute.Failure)
+                }
+
+                spanToStop.end(attemptedEndTimeMs, TimeUnit.MILLISECONDS)
                 successful = !isRecording
                 if (successful) {
                     spanId?.let { spanRepository.trackedSpanStopped(it) }
-                    status = if (errorCode != null) {
-                        Span.Status.ERROR
-                    } else {
-                        Span.Status.OK
-                    }
                     spanEndTimeMs = attemptedEndTimeMs
                 }
             }
@@ -186,6 +191,15 @@ internal class EmbraceSpanImpl(
             }
         }
         return false
+    }
+
+    override fun setStatus(statusCode: StatusCode, description: String) {
+        startedSpan.get()?.let { sdkSpan ->
+            synchronized(startedSpan) {
+                status = statusCode.toStatus()
+                sdkSpan.setStatus(statusCode, description)
+            }
+        }
     }
 
     override fun addAttribute(key: String, value: String): Boolean {

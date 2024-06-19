@@ -32,7 +32,7 @@ internal class AnrOtelMapper(
                 name = "emb-thread-blockage",
                 startTimeNanos = interval.startTime.millisToNanos(),
                 endTimeNanos = (interval.endTime ?: clock.now()).millisToNanos(),
-                status = Span.Status.OK,
+                status = Span.Status.UNSET,
                 attributes = attrs,
                 events = events
             )

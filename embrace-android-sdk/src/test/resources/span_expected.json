@@ -23,6 +23,6 @@
   "parent_span_id": "0000000000000000",
   "span_id": "342eb9c7f8cb54ff",
   "start_time_unix_nano": 1681972471806000000,
-  "status": "OK",
+  "status": "UNSET",
   "trace_id": "19bb482ec1c7e6b2f10fb89e0ccc85fa"
 }

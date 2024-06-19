@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
+import io.embrace.android.embracesdk.internal.spans.toStatus
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
@@ -18,12 +19,7 @@ internal fun EmbraceSpanData.toNewPayload() = Span(
     name = name,
     startTimeNanos = startTimeNanos,
     endTimeNanos = endTimeNanos,
-    status = when (status) {
-        StatusCode.UNSET -> Span.Status.UNSET
-        StatusCode.OK -> Span.Status.OK
-        StatusCode.ERROR -> Span.Status.ERROR
-        else -> Span.Status.UNSET
-    },
+    status = status.toStatus(),
     events = events.map(EmbraceSpanEvent::toNewPayload),
     attributes = attributes.toNewPayload()
 )

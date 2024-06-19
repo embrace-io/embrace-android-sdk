@@ -140,6 +140,7 @@ internal class SpanServiceImpl(
     }
 
     companion object {
+        const val MAX_INTERNAL_SPANS_PER_SESSION = 5000
         const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500
     }
 }

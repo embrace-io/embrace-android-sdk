@@ -29,6 +29,7 @@ internal class CurrentSessionSpanImpl(
      * Number of traces created in the current session. This value will be reset when a new session is created.
      */
     private val traceCount = AtomicInteger(0)
+    private val internalTraceCount = AtomicInteger(0)
 
     /**
      * The span that models the lifetime of the current session or background activity
@@ -61,13 +62,19 @@ internal class CurrentSessionSpanImpl(
 
         // If a span can be created, always let internal spans be to be created
         return if (internal) {
-            return true
-        } else if (traceCount.get() >= SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+            checkTraceCount(internalTraceCount, SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION)
+        } else {
+            checkTraceCount(traceCount, SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION)
+        }
+    }
+
+    private fun checkTraceCount(counter: AtomicInteger, limit: Int): Boolean {
+        return if (counter.get() >= limit) {
             // If we have already reached the maximum number of spans created for this session, don't allow another one
             false
         } else {
-            synchronized(traceCount) {
-                traceCount.getAndIncrement() < SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION
+            synchronized(counter) {
+                counter.getAndIncrement() < limit
             }
         }
     }
@@ -134,6 +141,7 @@ internal class CurrentSessionSpanImpl(
      */
     private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
         traceCount.set(0)
+        internalTraceCount.set(0)
 
         return embraceSpanFactorySupplier().create(
             name = "session",

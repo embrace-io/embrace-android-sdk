@@ -192,6 +192,8 @@ internal class EmbraceApiService(
             var successfullySent = false
             try {
                 successfullySent = handleApiRequest(request, action)
+            } catch (e: Exception) {
+                logger.logWarning("API call failed.", e)
             } finally {
                 onComplete?.invoke(successfullySent)
             }
@@ -216,7 +218,7 @@ internal class EmbraceApiService(
 
             if (response !is ApiResponse.Success) {
                 // If the API call failed, propagate the error to the caller.
-                error("Failed to post Embrace API call. ")
+                error("Failed to post Embrace API call. $response")
             } else {
                 return true
             }

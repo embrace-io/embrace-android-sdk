@@ -23,7 +23,7 @@ internal class SessionEnvelopeSourceImplTest {
         assertEquals(metadataSource.metadata, payload.metadata)
         assertEquals(resourceSource.resource, payload.resource)
         assertEquals(sessionPayloadSource.sessionPayload, payload.data)
-        assertEquals("session", payload.type)
+        assertEquals("spans", payload.type)
         assertEquals("0.1.0", payload.version)
     }
 }

@@ -36,6 +36,6 @@
     "disk_space": "__EMBRACE_TEST_IGNORE__"
   },
   "s": "__EMBRACE_TEST_IGNORE__",
-  "type": "session",
+  "type": "spans",
   "version": "0.1.0"
 }

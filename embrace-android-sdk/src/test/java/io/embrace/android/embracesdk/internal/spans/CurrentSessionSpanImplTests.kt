@@ -59,6 +59,19 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
+    fun `check trace limits with maximum internal not started traces`() {
+        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+            assertNotNull(spanService.createSpan(name = "spanzzz$it", internal = false))
+        }
+        assertNull(spanService.createSpan(name = "failed-span", internal = false))
+
+        repeat(SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION) {
+            assertNotNull(spanService.createSpan(name = "internal$it"))
+        }
+        assertNull(spanService.createSpan(name = "failed-span"))
+    }
+
+    @Test
     fun `check trace limited applied to spans created with span builder`() {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(

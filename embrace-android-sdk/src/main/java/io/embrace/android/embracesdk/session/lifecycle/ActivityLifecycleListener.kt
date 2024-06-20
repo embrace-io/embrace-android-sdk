@@ -29,9 +29,4 @@ internal interface ActivityLifecycleListener {
      * @param bundle   the bundle
      */
     fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
-
-    /**
-     * Triggered when the application has completed startup;
-     */
-    fun applicationStartupComplete() {}
 }

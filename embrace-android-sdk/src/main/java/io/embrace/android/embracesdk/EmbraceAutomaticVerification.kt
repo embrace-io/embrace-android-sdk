@@ -11,7 +11,6 @@ import android.widget.Toast
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
 import io.embrace.android.embracesdk.samples.VerifyIntegrationException
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
@@ -33,7 +32,7 @@ import kotlin.system.exitProcess
  */
 internal class EmbraceAutomaticVerification(
     private val scheduledExecutorService: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
-) : ActivityLifecycleListener, ProcessStateListener {
+) : ProcessStateListener {
     private val handler = Handler(Looper.getMainLooper())
 
     private var foregroundEventTriggered = false
@@ -73,7 +72,6 @@ internal class EmbraceAutomaticVerification(
         if (!::processStateService.isInitialized) {
             processStateService = checkNotNull(Embrace.getImpl().activityService)
         }
-        activityLifecycleTracker.addListener(this)
         processStateService.addListener(this)
     }
 
@@ -336,6 +334,7 @@ internal class EmbraceAutomaticVerification(
     private fun logWarning(message: String) {
         Embrace.getInstance().internalInterface.logWarning("$TAG $message", null, null)
     }
+
     private fun logError(message: String) {
         Embrace.getInstance().internalInterface.logError("$TAG $message", null, null, false)
     }

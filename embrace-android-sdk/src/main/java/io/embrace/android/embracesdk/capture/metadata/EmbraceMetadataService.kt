@@ -25,8 +25,8 @@ import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
@@ -67,7 +67,7 @@ internal class EmbraceMetadataService private constructor(
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture,
     private val logger: EmbLogger
-) : MetadataService, ActivityLifecycleListener {
+) : MetadataService, StartupListener {
 
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
     private var reactNativeBundleId: Future<String?>

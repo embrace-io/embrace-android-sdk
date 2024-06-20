@@ -440,6 +440,7 @@ internal class ModuleInitBootstrapper(
                     serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
                     serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.memoryCleanerService)
                     serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
+                    serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
 
                     asyncInitTask.set(initTask)
                     synchronousInitCompletionMs = initModule.clock.now()

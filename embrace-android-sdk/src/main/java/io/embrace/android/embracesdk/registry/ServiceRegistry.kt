@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.session.lifecycle.StartupListener
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,6 +28,7 @@ internal class ServiceRegistry(
     val memoryCleanerListeners by lazy { registry.filterIsInstance<MemoryCleanerListener>() }
     val processStateListeners by lazy { registry.filterIsInstance<ProcessStateListener>() }
     val activityLifecycleListeners by lazy { registry.filterIsInstance<ActivityLifecycleListener>() }
+    val startupListener by lazy { registry.filterIsInstance<StartupListener>() }
 
     fun registerServices(vararg services: Any?) {
         services.forEach(::registerService)
@@ -60,6 +62,12 @@ internal class ServiceRegistry(
         memoryCleanerListeners.forEachSafe(
             "Failed to register memory cleaner listener",
             memoryCleanerService::addListener
+        )
+
+    fun registerStartupListener(activityLifecycleTracker: ActivityTracker) =
+        startupListener.forEachSafe(
+            "Failed to register application lifecycle listener",
+            activityLifecycleTracker::addStartupListener
         )
 
     // close all of the services in one go. this prevents someone creating a Closeable service

@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.utils.stream
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -43,7 +43,7 @@ internal class EmbraceEventService(
     private val logger: EmbLogger,
     workerThreadModule: WorkerThreadModule,
     private val clock: Clock
-) : EventService, ActivityLifecycleListener, ProcessStateListener, MemoryCleanerListener {
+) : EventService, ProcessStateListener, MemoryCleanerListener, StartupListener {
     private val backgroundWorker: BackgroundWorker
 
     /**

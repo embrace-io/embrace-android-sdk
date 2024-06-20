@@ -4,14 +4,21 @@ import android.app.Activity
 import android.os.Bundle
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.session.lifecycle.StartupListener
 
 internal class FakeActivityTracker(
     override var foregroundActivity: Activity? = null
 ) : ActivityTracker {
 
     val listeners = mutableListOf<ActivityLifecycleListener>()
+    val startupListeners = mutableListOf<StartupListener>()
+
     override fun addListener(listener: ActivityLifecycleListener) {
         listeners.add(listener)
+    }
+
+    override fun addStartupListener(listener: StartupListener) {
+        startupListeners.add(listener)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {

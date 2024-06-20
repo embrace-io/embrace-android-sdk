@@ -69,11 +69,6 @@ internal class EmbraceProcessStateService(
      */
     override fun onForeground() {
         logger.logDebug("AppState: App entered foreground.")
-
-        if (!isInBackground) {
-            val msg = "Unbalanced call to onForeground(). This will contribute to session loss."
-            logger.logError(msg, InternalError(msg))
-        }
         isInBackground = false
         val timestamp = clock.now()
 

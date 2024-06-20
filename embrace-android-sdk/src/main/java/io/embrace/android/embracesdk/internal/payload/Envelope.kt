@@ -41,6 +41,7 @@ internal data class Envelope<T>(
 
 internal fun Envelope<SessionPayload>.getSessionSpan(): Span? {
     return data.spans?.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) }
+        ?: data.spanSnapshots?.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) }
 }
 
 internal fun Envelope<SessionPayload>.getSessionId(): String? {

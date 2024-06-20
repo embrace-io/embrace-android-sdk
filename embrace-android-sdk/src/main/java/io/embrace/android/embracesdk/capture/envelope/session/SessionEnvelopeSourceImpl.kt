@@ -17,7 +17,7 @@ internal class SessionEnvelopeSourceImpl(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),
             "0.1.0",
-            "session",
+            "spans",
             sessionPayloadSource.getSessionPayload(endType, crashId)
         )
     }

@@ -33,7 +33,7 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
 
     static URLStreamHandler newUrlStreamHandler(String className) {
         try {
-            return (URLStreamHandler) Class.forName(className).newInstance();
+            return (URLStreamHandler) Class.forName(className).getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             // We catch Exception here instead of the specific exceptions that can be thrown due to a change in the way some
             // of these exceptions are compiled on different OS versions.

@@ -190,10 +190,7 @@ internal data class EnvelopeResource(
     /* (Android) The EGL (Embedded-System Graphics Library) information obtained with the system call
     'ro.hardware.egl'. Previous name: d.gp */
     @Json(name = "egl_info")
-    val eglInfo: Int? = null,
-
-    @Json(name = "disk_space")
-    val diskSpace: Long? = null,
+    val eglInfo: Int? = null
 ) {
 
     /**

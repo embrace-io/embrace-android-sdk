@@ -28,7 +28,7 @@ internal class ViewTrackingApiDelegate(
     override fun registerComposeActivityListener(app: Application) {
         try {
             val composeActivityListener = Class.forName("io.embrace.android.embracesdk.compose.ComposeActivityListener")
-            composeActivityListenerInstance = composeActivityListener.newInstance()
+            composeActivityListenerInstance = composeActivityListener.getDeclaredConstructor().newInstance()
             app.registerActivityLifecycleCallbacks(composeActivityListenerInstance as Application.ActivityLifecycleCallbacks?)
         } catch (e: Throwable) {
             logger.logError("registerComposeActivityListener error", e)

@@ -41,7 +41,7 @@ internal class StartupServiceImpl(
                 private = true,
                 attributes = mapOf(
                     "ended-in-foreground" to endedInForeground.toString(),
-                    "thread-name" to (threadName ?: "unknown"),
+                    "thread-name" to threadName,
                 ),
             )
         }

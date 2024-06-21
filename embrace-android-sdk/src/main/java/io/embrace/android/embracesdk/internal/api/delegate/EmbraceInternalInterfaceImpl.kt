@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
@@ -52,7 +54,6 @@ internal class EmbraceInternalInterfaceImpl(
         embraceImpl.logMessage(message, Severity.ERROR, properties)
     }
 
-    @Suppress("DEPRECATION")
     override fun logHandledException(
         throwable: Throwable,
         type: LogType,

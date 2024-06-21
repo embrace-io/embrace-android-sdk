@@ -227,7 +227,7 @@ static bool configure_reporting(JNIEnv *env) {
         return false;
     }
     EMB_LOGDEV("got ANR class id %p", anr_class);
-    anr_mid = emb_jni_get_method_id(env, anr_class, "saveGoogleAnr", "(J)V");
+    anr_mid = emb_jni_get_method_id(env, anr_class, "saveSigquit", "(J)V");
     return true;
 }
 

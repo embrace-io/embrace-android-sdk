@@ -1,0 +1,6 @@
+public final class io/embrace/android/embracesdk/retrofit/swazzle/callback/retrofit/EmbraceTracedConverterFactory : retrofit2/Converter$Factory {
+	public fun <init> (Lretrofit2/Converter$Factory;)V
+	public fun requestBodyConverter (Ljava/lang/reflect/Type;[Ljava/lang/annotation/Annotation;[Ljava/lang/annotation/Annotation;Lretrofit2/Retrofit;)Lretrofit2/Converter;
+	public fun responseBodyConverter (Ljava/lang/reflect/Type;[Ljava/lang/annotation/Annotation;Lretrofit2/Retrofit;)Lretrofit2/Converter;
+}
+

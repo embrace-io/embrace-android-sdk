@@ -58,7 +58,7 @@ internal class FakeLogRecordBuilder : LogRecordBuilder {
         return this
     }
 
-    override fun <T : Any?> setAttribute(key: AttributeKey<T>, value: T): LogRecordBuilder {
+    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): LogRecordBuilder {
         attributes[key.key.toString()] = value.toString()
         return this
     }

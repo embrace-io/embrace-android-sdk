@@ -25,8 +25,12 @@ internal class ActivityLifecycleTracker(
     /**
      * List of listeners that subscribe to activity events.
      */
-
     val listeners = CopyOnWriteArrayList<ActivityLifecycleListener>()
+
+    /**
+     * List of listeners notified when application startup is complete
+     */
+    val startupListeners = CopyOnWriteArrayList<StartupListener>()
 
     /**
      * The currently active activity.
@@ -85,7 +89,7 @@ internal class ActivityLifecycleTracker(
         if (!activity.javaClass.isAnnotationPresent(StartupActivity::class.java)) {
             // If the activity coming to foreground doesn't have the StartupActivity annotation
             // the the SDK will finalize any pending startup moment.
-            stream(listeners) { listener: ActivityLifecycleListener ->
+            stream(startupListeners) { listener: StartupListener ->
                 try {
                     listener.applicationStartupComplete()
                 } catch (ex: Exception) {
@@ -118,18 +122,24 @@ internal class ActivityLifecycleTracker(
         }
     }
 
+    override fun addStartupListener(listener: StartupListener) {
+        if (!startupListeners.contains(listener)) {
+            startupListeners.addIfAbsent(listener)
+        }
+    }
+
     override fun close() {
         try {
-            logger.logDebug("Shutting down EmbraceActivityService")
+            logger.logDebug("Shutting down ActivityLifecycleTracker")
             application.unregisterActivityLifecycleCallbacks(this)
             listeners.clear()
+            startupListeners.clear()
         } catch (ex: Exception) {
-            logger.logWarning("Error when closing EmbraceActivityService", ex)
+            logger.logWarning("Error when closing ActivityLifecycleTracker", ex)
         }
     }
 
     companion object {
-        private const val ERROR_FAILED_TO_NOTIFY =
-            "Failed to notify ActivityLifecycleTracker listener"
+        private const val ERROR_FAILED_TO_NOTIFY = "Failed to notify ActivityLifecycleTracker listener"
     }
 }

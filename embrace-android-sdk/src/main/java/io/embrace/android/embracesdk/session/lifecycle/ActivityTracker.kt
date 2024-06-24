@@ -17,4 +17,6 @@ internal interface ActivityTracker : Application.ActivityLifecycleCallbacks, Clo
     val foregroundActivity: Activity?
 
     fun addListener(listener: ActivityLifecycleListener)
+
+    fun addStartupListener(listener: StartupListener)
 }

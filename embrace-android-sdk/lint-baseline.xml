@@ -19,7 +19,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceAutomaticVerification.kt"
-            line="34"
+            line="33"
             column="16"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="              ~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceAutomaticVerification.kt"
-            line="55"
+            line="54"
             column="15"/>
     </issue>
 
@@ -164,6 +164,17 @@
             file="src/main/java/io/embrace/android/embracesdk/WebViewClientSwazzledHooks.java"
             line="9"
             column="20"/>
+    </issue>
+
+    <issue
+        id="KaptUsageInsteadOfKsp"
+        message="This library supports using KSP instead of kapt, which greatly improves performance. Learn more: https://developer.android.com/studio/build/migrate-to-ksp"
+        errorLine1="    kapt(&quot;com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}&quot;)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="79"
+            column="5"/>
     </issue>
 
     <issue

@@ -60,7 +60,8 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
-                logger = logger
+                logger = logger,
+                backgroundActivityEnabled = isBackgroundActivityEnabled(),
             )
         )
     }
@@ -77,7 +78,7 @@ internal class PayloadFactoryImpl(
     }
 
     private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): SessionZygote? {
-        if (!configService.isBackgroundActivityCaptureEnabled()) {
+        if (!isBackgroundActivityEnabled()) {
             return null
         }
 
@@ -102,13 +103,14 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
-                logger = logger
+                logger = logger,
+                backgroundActivityEnabled = isBackgroundActivityEnabled(),
             )
         )
     }
 
     private fun endBackgroundActivityWithState(initial: SessionZygote): Envelope<SessionPayload>? {
-        if (!configService.isBackgroundActivityCaptureEnabled()) {
+        if (!isBackgroundActivityEnabled()) {
             return null
         }
 
@@ -118,7 +120,8 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
-                logger = logger
+                logger = logger,
+                backgroundActivityEnabled = true,
             )
         )
     }
@@ -132,6 +135,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.JVM_CRASH,
                 logger = logger,
+                backgroundActivityEnabled = isBackgroundActivityEnabled(),
                 crashId = crashId
             )
         )
@@ -141,7 +145,7 @@ internal class PayloadFactoryImpl(
         initial: SessionZygote,
         crashId: String
     ): Envelope<SessionPayload>? {
-        if (!configService.isBackgroundActivityCaptureEnabled()) {
+        if (!isBackgroundActivityEnabled()) {
             return null
         }
         return payloadMessageCollator.buildFinalEnvelope(
@@ -149,6 +153,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.JVM_CRASH,
                 logger = logger,
+                backgroundActivityEnabled = true,
                 crashId = crashId
             )
         )
@@ -162,21 +167,25 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionSnapshotType.PERIODIC_CACHE,
-                logger = logger
+                logger = logger,
+                backgroundActivityEnabled = isBackgroundActivityEnabled()
             )
         )
     }
 
     private fun snapshotBackgroundActivity(initial: SessionZygote): Envelope<SessionPayload>? {
-        if (!configService.isBackgroundActivityCaptureEnabled()) {
+        if (!isBackgroundActivityEnabled()) {
             return null
         }
         return payloadMessageCollator.buildFinalEnvelope(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionSnapshotType.PERIODIC_CACHE,
-                logger = logger
+                logger = logger,
+                backgroundActivityEnabled = true
             )
         )
     }
+
+    private fun isBackgroundActivityEnabled(): Boolean = configService.isBackgroundActivityCaptureEnabled()
 }

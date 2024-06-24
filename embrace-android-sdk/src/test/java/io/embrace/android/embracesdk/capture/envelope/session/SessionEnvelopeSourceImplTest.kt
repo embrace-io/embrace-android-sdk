@@ -19,7 +19,7 @@ internal class SessionEnvelopeSourceImplTest {
             resourceSource,
             sessionPayloadSource,
         )
-        val payload = source.getEnvelope(SessionSnapshotType.NORMAL_END)
+        val payload = source.getEnvelope(SessionSnapshotType.NORMAL_END, true)
         assertEquals(metadataSource.metadata, payload.metadata)
         assertEquals(resourceSource.resource, payload.resource)
         assertEquals(sessionPayloadSource.sessionPayload, payload.data)

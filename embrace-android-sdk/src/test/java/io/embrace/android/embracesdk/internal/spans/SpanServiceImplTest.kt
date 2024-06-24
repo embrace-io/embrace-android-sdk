@@ -156,7 +156,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `start span created from previous session`() {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        currentSessionSpan.endSession()
+        currentSessionSpan.endSession(startNewSession = true)
         assertTrue(embraceSpan.start())
     }
 
@@ -301,7 +301,7 @@ internal class SpanServiceImplTest {
         val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(parentSpan.start())
         assertTrue(parentSpan.stop())
-        currentSessionSpan.endSession()
+        currentSessionSpan.endSession(startNewSession = true)
         assertTrue(
             spansService.recordCompletedSpan(
                 name = expectedName,
@@ -358,7 +358,8 @@ internal class SpanServiceImplTest {
     @Test
     fun `cannot record completed span if there is not current session span`() {
         currentSessionSpan.endSession(
-            appTerminationCause = AppTerminationCause.UserTermination
+            appTerminationCause = AppTerminationCause.UserTermination,
+            startNewSession = true
         )
         assertFalse(
             spansService.recordCompletedSpan(
@@ -449,7 +450,8 @@ internal class SpanServiceImplTest {
     @Test
     fun `recording span as lambda with no current active session will run code but not log span`() {
         currentSessionSpan.endSession(
-            appTerminationCause = AppTerminationCause.UserTermination
+            appTerminationCause = AppTerminationCause.UserTermination,
+            startNewSession = true
         )
         var executed = false
         spansService.recordSpan(name = "test-span") {
@@ -462,7 +464,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `after ending session with app termination, spans cannot be recorded`() {
-        currentSessionSpan.endSession(AppTerminationCause.UserTermination)
+        currentSessionSpan.endSession(AppTerminationCause.UserTermination, true)
         spansService.recordSpan("test-span") {
             // do thing
         }

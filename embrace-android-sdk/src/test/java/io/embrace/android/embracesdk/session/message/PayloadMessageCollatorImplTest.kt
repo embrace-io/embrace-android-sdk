@@ -86,10 +86,11 @@ internal class PayloadMessageCollatorImplTest {
         // create session
         val payload = collator.buildFinalEnvelope(
             FinalEnvelopeParams(
-                startMsg,
-                SessionSnapshotType.NORMAL_END,
-                initModule.logger,
-                "crashId"
+                initial = startMsg,
+                endType = SessionSnapshotType.NORMAL_END,
+                logger = initModule.logger,
+                backgroundActivityEnabled = true,
+                crashId = "crashId"
             )
         )
         payload.verifyFinalFieldsPopulated()
@@ -112,10 +113,11 @@ internal class PayloadMessageCollatorImplTest {
         // create session
         val payload = collator.buildFinalEnvelope(
             FinalEnvelopeParams(
-                startMsg,
-                SessionSnapshotType.NORMAL_END,
-                initModule.logger,
-                "crashId",
+                initial = startMsg,
+                endType = SessionSnapshotType.NORMAL_END,
+                logger = initModule.logger,
+                backgroundActivityEnabled = true,
+                crashId = "crashId",
             )
         )
         payload.verifyFinalFieldsPopulated()

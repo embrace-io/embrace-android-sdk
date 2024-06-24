@@ -30,7 +30,7 @@ internal class SessionPayloadSourceImpl(
     private val sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
 ) : SessionPayloadSource {
 
-    override fun getSessionPayload(endType: SessionSnapshotType, crashId: String?): SessionPayload {
+    override fun getSessionPayload(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
 
         // future: convert webview service to use OtelMapper pattern or data source directly.
@@ -38,7 +38,7 @@ internal class SessionPayloadSourceImpl(
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
         val snapshots: List<Span>? = retrieveSpanSnapshots()
-        val spans: List<Span>? = retrieveSpanData(endType, crashId)
+        val spans: List<Span>? = retrieveSpanData(endType, startNewSession, crashId)
 
         return SessionPayload(
             spans = spans,
@@ -47,7 +47,7 @@ internal class SessionPayloadSourceImpl(
         )
     }
 
-    private fun retrieveSpanData(endType: SessionSnapshotType, crashId: String?): List<Span>? {
+    private fun retrieveSpanData(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): List<Span>? {
         val cacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
 
         val spans: List<Span>? = captureDataSafely(logger) {
@@ -57,7 +57,10 @@ internal class SessionPayloadSourceImpl(
                         crashId != null -> AppTerminationCause.Crash
                         else -> null
                     }
-                    val spans = currentSessionSpan.endSession(appTerminationCause)
+                    val spans = currentSessionSpan.endSession(
+                        appTerminationCause = appTerminationCause,
+                        startNewSession = startNewSession
+                    )
                     if (appTerminationCause == null) {
                         sessionPropertiesServiceProvider().populateCurrentSession()
                     }

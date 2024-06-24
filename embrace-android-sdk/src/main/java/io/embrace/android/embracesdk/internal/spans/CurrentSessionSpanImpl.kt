@@ -83,7 +83,7 @@ internal class CurrentSessionSpanImpl(
         return sessionSpan.get()?.getSystemAttribute(embSessionId) ?: ""
     }
 
-    override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
+    override fun endSession(appTerminationCause: AppTerminationCause?, startNewSession: Boolean): List<EmbraceSpanData> {
         synchronized(sessionSpan) {
             val endingSessionSpan = sessionSpan.get()
             return if (endingSessionSpan != null && endingSessionSpan.isRecording) {
@@ -98,7 +98,9 @@ internal class CurrentSessionSpanImpl(
                 if (appTerminationCause == null) {
                     endingSessionSpan.stop()
                     spanRepository.clearCompletedSpans()
-                    sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                    if (startNewSession) {
+                        sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                    }
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)

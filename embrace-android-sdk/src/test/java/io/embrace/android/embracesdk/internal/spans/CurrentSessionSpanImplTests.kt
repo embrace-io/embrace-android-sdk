@@ -20,6 +20,7 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.Tracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -199,7 +200,7 @@ internal class CurrentSessionSpanImplTests {
             val module = FakeInitModule(clock = clock)
             val sessionSpan = module.openTelemetryModule.currentSessionSpan
             module.openTelemetryModule.spanService.initializeService(clock.now())
-            val flushedSpans = sessionSpan.endSession(cause)
+            val flushedSpans = sessionSpan.endSession(cause, true)
             assertEquals(1, flushedSpans.size)
 
             val lastFlushedSpan = flushedSpans[0]
@@ -227,7 +228,7 @@ internal class CurrentSessionSpanImplTests {
         clock.tick(500)
 
         val crashTimeMs = clock.now()
-        val flushedSpans = currentSessionSpan.endSession(AppTerminationCause.Crash).associateBy { it.name }
+        val flushedSpans = currentSessionSpan.endSession(AppTerminationCause.Crash, true).associateBy { it.name }
 
         assertEmbraceSpanData(
             span = flushedSpans["emb-session"]?.toNewPayload(),
@@ -259,6 +260,19 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
+    fun `ending a session will only start a new session span if told to`() {
+        val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
+        currentSessionSpan.endSession(startNewSession = true)
+        with(spanRepository.getActiveSpans().single()) {
+            assertTrue(hasFixedAttribute(EmbType.Ux.Session))
+            assertNotEquals(originalSessionSpanId, spanId)
+        }
+
+        currentSessionSpan.endSession(startNewSession = false)
+        assertTrue(spanRepository.getActiveSpans().isEmpty())
+    }
+
+    @Test
     fun `validate tracked spans update when session is ended`() {
         val embraceSpan = checkNotNull(spanService.createSpan(name = "test-span"))
         assertTrue(embraceSpan.start())
@@ -268,7 +282,7 @@ internal class CurrentSessionSpanImplTests {
         val parentSpanId = checkNotNull(parentSpan.spanId)
         val parentSpanFromService = checkNotNull(spanRepository.getSpan(parentSpanId))
         assertTrue(parentSpanFromService.stop())
-        currentSessionSpan.endSession()
+        currentSessionSpan.endSession(startNewSession = true)
 
         // completed span not available after flush
         assertNull(spanRepository.getSpan(parentSpanId))
@@ -287,7 +301,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `add event forwarded to span`() {
         currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L)
-        val span = currentSessionSpan.endSession(null).single()
+        val span = currentSessionSpan.endSession(null, true).single()
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
@@ -304,7 +318,7 @@ internal class CurrentSessionSpanImplTests {
         currentSessionSpan.addCustomAttribute(SpanAttributeData("my_key", "my_value"))
         currentSessionSpan.addCustomAttribute(SpanAttributeData("missing", "my_value"))
         currentSessionSpan.removeCustomAttribute("missing")
-        val span = currentSessionSpan.endSession(null).single()
+        val span = currentSessionSpan.endSession(null, true).single()
         assertEquals("emb-session", span.name)
 
         // verify attribute was added to the span if it wasn't removed

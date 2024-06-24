@@ -2,7 +2,6 @@ import io.embrace.gradle.Versions
 
 plugins {
     id "internal-embrace-plugin"
-    id("org.jetbrains.kotlinx.kover") version "0.7.1"
     id "org.jetbrains.kotlin.kapt"
 }
 
@@ -54,27 +53,23 @@ android {
     }
 }
 
-// See: https://kotlin.github.io/kotlinx-kover/gradle-plugin/configuring#configuring-default-reports
-koverReport {
-    filters {
-        excludes {
-            // exclusion rules - classes to exclude from report
-            classes("io.embrace.android.embracesdk.BuildConfig")
-        }
-    }
+// include these projects in code coverage
+dependencies {
+    kover(project(":embrace-android-compose"))
+    kover(project(":embrace-android-fcm"))
+    kover(project(":embrace-android-okhttp3"))
+}
 
-    androidReports("release") {
+kover {
+    reports {
         filters {
-            // override report filters for all reports for `release` build variant
-            // all filters specified by the level above cease to work
+            excludes {
+                androidGeneratedClasses()
+                classes("*.BuildConfig")
+            }
         }
-
-        xml { /* XML report config for `release` build variant */ }
-        html {
-            title = "Embrace Android SDK merged coverage report"
-        }
-        verify {
-            // FUTURE: we can specify a minimum bound of coverage for new code here.
+        variant("release") {
+            xml {}
         }
     }
 }

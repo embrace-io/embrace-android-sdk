@@ -200,7 +200,8 @@ class InternalEmbracePlugin : Plugin<Project> {
             "kotlin-android",
             "io.gitlab.arturbosch.detekt",
             "checkstyle",
-            "binary-compatibility-validator"
+            "binary-compatibility-validator",
+            "org.jetbrains.kotlinx.kover"
         )
         plugins.forEach { project.plugins.apply(it) }
     }

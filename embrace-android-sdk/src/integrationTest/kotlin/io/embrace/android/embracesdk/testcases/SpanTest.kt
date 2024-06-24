@@ -22,11 +22,9 @@ import org.robolectric.annotation.Config
 internal class SpanTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(startImmediately = false)
+    }
 
     @Test
     fun `SDK can receive a SpanExporter`() {

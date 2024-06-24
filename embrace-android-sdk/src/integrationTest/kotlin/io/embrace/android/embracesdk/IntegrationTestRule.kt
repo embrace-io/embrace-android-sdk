@@ -137,14 +137,17 @@ internal class IntegrationTestRule(
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */
-    internal class Harness(
+    internal class Harness @JvmOverloads constructor(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
         val startImmediately: Boolean = true,
         val appFramework: AppFramework = AppFramework.NATIVE,
         val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
         val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),
         val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
-        val overriddenCoreModule: FakeCoreModule = FakeCoreModule(appFramework = appFramework, logger = overriddenInitModule.logger),
+        val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
+            appFramework = appFramework,
+            logger = overriddenInitModule.logger
+        ),
         val overriddenWorkerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(overriddenInitModule),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
@@ -177,7 +180,7 @@ internal class IntegrationTestRule(
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             ),
-        val fakeAnrModule: AnrModule = FakeAnrModule(),
+        val fakeAnrModule: AnrModule = FakeAnrModule()
     ) {
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)
@@ -186,10 +189,6 @@ internal class IntegrationTestRule(
 
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
-
-        fun newHarness(startImmediately: Boolean): Harness {
-            return Harness(startImmediately = startImmediately)
-        }
 
         private val DEFAULT_SDK_LOCAL_CONFIG = SdkLocalConfig(
             networking = NetworkLocalConfig(

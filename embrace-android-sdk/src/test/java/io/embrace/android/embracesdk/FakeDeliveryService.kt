@@ -3,12 +3,14 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.ndk.NativeCrashService
+import io.embrace.android.embracesdk.opentelemetry.embState
+import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
@@ -27,14 +29,14 @@ internal open class FakeDeliveryService : DeliveryService {
     var eventSentAsyncInvokedCount: Int = 0
     var lastSavedCrash: EventMessage? = null
     var lastSentCachedSession: String? = null
-    val sentSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
-    val savedSessionMessages: MutableList<Pair<SessionMessage, SessionSnapshotType>> = mutableListOf()
+    val sentSessionEnvelopes: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
+    val savedSessionEnvelopes: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
 
-    override fun sendSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType) {
+    override fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType) {
         if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
-            sentSessionMessages.add(sessionMessage to snapshotType)
+            sentSessionEnvelopes.add(envelope to snapshotType)
         }
-        savedSessionMessages.add(sessionMessage to snapshotType)
+        savedSessionEnvelopes.add(envelope to snapshotType)
     }
 
     override fun sendCachedSessions(
@@ -71,39 +73,36 @@ internal open class FakeDeliveryService : DeliveryService {
         lastSentCrash = crash
     }
 
-    fun getSentSessions(): List<SessionMessage> {
-        return sentSessionMessages.filter { it.first.session.appState == Session.APPLICATION_STATE_FOREGROUND }.map { it.first }
+    fun getSentSessions(): List<Envelope<SessionPayload>> {
+        return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.FOREGROUND }.map { it.first }
     }
 
-    fun getSentBackgroundActivities(): List<SessionMessage> {
-        return sentSessionMessages.filter { it.first.session.appState == Session.APPLICATION_STATE_BACKGROUND }.map { it.first }
+    fun getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
+        return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
     }
 
-    fun getSavedSessions(): List<SessionMessage> {
-        return savedSessionMessages.filter {
-            it.first.session.appState == Session.APPLICATION_STATE_FOREGROUND
-        }.map { it.first }
+    private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
+        val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.toUpperCase()
+        return ApplicationState.valueOf(checkNotNull(value))
     }
 
-    fun getSavedBackgroundActivities(): List<SessionMessage> {
-        return savedSessionMessages.filter {
-            it.first.session.appState == Session.APPLICATION_STATE_BACKGROUND
-        }.map { it.first }
-    }
-
-    fun getLastSentSession(): SessionMessage? {
+    fun getLastSentSession(): Envelope<SessionPayload>? {
         return getSentSessions().lastOrNull()
     }
 
-    fun getLastSentBackgroundActivity(): SessionMessage? {
+    fun getLastSentBackgroundActivity(): Envelope<SessionPayload>? {
         return getSentBackgroundActivities().lastOrNull()
     }
 
-    fun getLastSavedSession(): SessionMessage? {
-        return getSavedSessions().lastOrNull()
+    fun getLastSavedSession(): Envelope<SessionPayload>? {
+        return savedSessionEnvelopes.map { it.first }.lastOrNull {
+            it.findAppState() == ApplicationState.FOREGROUND
+        }
     }
 
-    fun getLastSavedBackgroundActivity(): SessionMessage? {
-        return getSavedBackgroundActivities().lastOrNull()
+    fun getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
+        return savedSessionEnvelopes.map { it.first }.lastOrNull {
+            it.findAppState() == ApplicationState.BACKGROUND
+        }
     }
 }

@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.fakes.fakeSession
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -187,6 +189,7 @@ internal class ApiClientImplTest {
         val delivered = server.takeRequest()
         val headers = delivered.headers.toMap()
             .minus("Host")
+            .minus("Connection")
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
@@ -198,7 +201,6 @@ internal class ApiClientImplTest {
                 "X-EM-DID" to "test_did",
                 "X-EM-SID" to "test_eid",
                 "X-EM-LID" to "test_lid",
-                "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
             ),
             headers
@@ -244,13 +246,13 @@ internal class ApiClientImplTest {
         val headers = delivered.headers.toMap()
             .minus("Host")
             .minus("User-Agent")
+            .minus("Connection")
         val userAgent = delivered.headers.toMap()["User-Agent"]
         assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "Content-Type" to "application/json",
-                "Connection" to "keep-alive",
                 "Content-Length" to "${delivered.bodySize}",
             ),
             headers
@@ -263,22 +265,29 @@ internal class ApiClientImplTest {
         val headers = delivered.headers.toMap()
             .minus("Host")
             .minus("User-Agent")
+            .minus("Connection")
         val userAgent = delivered.headers.toMap()["User-Agent"]
         assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "Content-Type" to "application/json",
-                "Connection" to "keep-alive"
+                "Content-Type" to "application/json"
             ),
             headers
         )
     }
 
     private fun createLargeSessionPayload(): String {
-        val props = (1..5000).associate { "my_big_key_$it" to "my_big_val_$it" }
-        val session = fakeSession().copy(properties = props)
-        return serializer.toJson(session)
+        val msg = SessionPayload(
+            spans = listOf(
+                Span(
+                    attributes = (1..5000).map {
+                        Attribute("my_big_key_$it", "my_big_val_$it")
+                    }
+                )
+            )
+        )
+        return serializer.toJson(msg)
     }
 
     companion object {

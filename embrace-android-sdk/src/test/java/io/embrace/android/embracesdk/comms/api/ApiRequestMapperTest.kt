@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
@@ -85,15 +84,9 @@ internal class ApiRequestMapperTest {
     }
 
     @Test
-    fun testV1SessionRequest() {
-        val request = mapper.sessionRequest(false)
-        request.assertCoreFieldsPopulated("/v1/log/sessions")
-    }
-
-    @Test
-    fun testV2SessionRequest() {
-        val request = mapper.sessionRequest(true)
-        request.assertCoreFieldsPopulated("/v1/log/sessions")
+    fun testSessionRequest() {
+        val request = mapper.sessionRequest()
+        request.assertCoreFieldsPopulated("/v2/spans")
     }
 
     @Test
@@ -141,12 +134,6 @@ internal class ApiRequestMapperTest {
         )
         request.assertCoreFieldsPopulated("/v1/log/network")
         assertEquals("n:eventId", request.logId)
-    }
-
-    @Test
-    fun testAeiBlobRequest() {
-        val request = mapper.aeiBlobRequest(BlobMessage())
-        request.assertCoreFieldsPopulated("/v1/log/blobs")
     }
 
     private fun ApiRequest.assertCoreFieldsPopulated(endpoint: String) {

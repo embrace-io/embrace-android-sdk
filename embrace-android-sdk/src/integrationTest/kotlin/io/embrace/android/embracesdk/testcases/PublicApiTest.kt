@@ -27,11 +27,9 @@ import org.robolectric.annotation.Config
 internal class PublicApiTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(startImmediately = false)
+    }
 
     @Before
     fun before() {

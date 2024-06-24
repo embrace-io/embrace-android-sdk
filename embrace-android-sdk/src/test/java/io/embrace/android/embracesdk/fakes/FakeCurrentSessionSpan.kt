@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -25,8 +25,8 @@ internal class FakeCurrentSessionSpan(
         sessionSpan = newSessionSpan(sdkInitStartTimeMs)
     }
 
-    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
-        addedEvents.add(obj.mapper())
+    override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
+        addedEvents.add(SpanEventData(schemaType, startTimeMs))
         return true
     }
 

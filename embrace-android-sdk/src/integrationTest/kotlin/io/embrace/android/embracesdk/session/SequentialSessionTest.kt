@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.opentelemetry.embColdStart
+import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,12 +31,17 @@ internal class SequentialSessionTest {
             val second = checkNotNull(harness.recordSession())
             val third = checkNotNull(harness.recordSession())
 
-            assertEquals(1, first.session.number)
-            assertEquals(2, second.session.number)
-            assertEquals(3, third.session.number)
-            assertTrue(first.session.isColdStart)
-            assertFalse(second.session.isColdStart)
-            assertFalse(third.session.isColdStart)
+            val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
+            assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
+            assertTrue(firstAttrs.findAttributeValue(embColdStart.name).toBoolean())
+
+            val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
+            assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
+            assertFalse(secondAttrs.findAttributeValue(embColdStart.name).toBoolean())
+
+            val thirdAttrs = checkNotNull(third.findSessionSpan().attributes)
+            assertEquals("3", thirdAttrs.findAttributeValue(embSessionNumber.name))
+            assertFalse(thirdAttrs.findAttributeValue(embColdStart.name).toBoolean())
         }
     }
 }

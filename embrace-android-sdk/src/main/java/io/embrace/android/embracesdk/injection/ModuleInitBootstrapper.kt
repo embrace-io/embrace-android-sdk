@@ -187,6 +187,7 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             storageModule,
                             customAppId,
+                            { customerLogModule },
                             { dataSourceModule },
                             configServiceProvider
                         )
@@ -269,8 +270,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(AnrModule::class) {
                         serviceRegistry.registerServices(
-                            anrModule.anrService,
-                            anrModule.responsivenessMonitorService
+                            anrModule.anrService
                         )
 
                         // set callbacks and pass in non-placeholder config.
@@ -348,8 +348,11 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             workerThreadModule,
                             nativeModule,
-                            openTelemetryModule
-                        ) { sessionModule.sessionPropertiesService }
+                            openTelemetryModule,
+                            anrModule,
+                            { sessionModule.sessionPropertiesService },
+                            { dataCaptureServiceModule.webviewService }
+                        )
                     }
 
                     customerLogModule = init(CustomerLogModule::class) {
@@ -367,7 +370,7 @@ internal class ModuleInitBootstrapper(
 
                     postInit(CustomerLogModule::class) {
                         serviceRegistry.registerServices(
-                            customerLogModule.logMessageService,
+                            customerLogModule.logService,
                             customerLogModule.networkCaptureService,
                             customerLogModule.networkLoggingService
                         )
@@ -387,7 +390,6 @@ internal class ModuleInitBootstrapper(
 
                     postInit(NativeModule::class) {
                         serviceRegistry.registerServices(
-                            dataContainerModule.performanceInfoService,
                             dataContainerModule.eventService,
                         )
                     }
@@ -399,14 +401,13 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             essentialServiceModule,
                             nativeModule,
-                            dataContainerModule,
                             deliveryModule,
-                            dataCaptureServiceModule,
-                            customerLogModule,
                             workerThreadModule,
                             dataSourceModule,
                             payloadModule,
-                            anrModule
+                            dataCaptureServiceModule,
+                            dataContainerModule,
+                            customerLogModule
                         )
                     }
 
@@ -419,11 +420,9 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             storageModule,
                             essentialServiceModule,
-                            deliveryModule,
                             nativeModule,
                             sessionModule,
                             anrModule,
-                            dataContainerModule,
                             androidServicesModule,
                             customerLogModule,
                         )

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 
@@ -68,9 +67,8 @@ internal class ApiRequestMapper(
         return requestBuilder(url)
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    fun sessionRequest(v2Payload: Boolean): ApiRequest {
-        val url = Endpoint.SESSIONS // send to v1 endpoint for now.
+    fun sessionRequest(): ApiRequest {
+        val url = Endpoint.SESSIONS_V2
         return requestBuilder(url.asEmbraceUrl())
     }
 
@@ -94,12 +92,6 @@ internal class ApiRequestMapper(
         val abbreviation = EventType.NETWORK_LOG.abbreviation
         val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
         return requestBuilder(url).copy(logId = networkIdentifier)
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    fun aeiBlobRequest(blobMessage: BlobMessage): ApiRequest {
-        val url = Endpoint.BLOBS.asEmbraceUrl()
-        return requestBuilder(url)
     }
 
     /**

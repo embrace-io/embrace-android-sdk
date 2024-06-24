@@ -174,9 +174,6 @@ internal class DataSourceModuleImpl(
                 essentialServiceModule.configService.appExitInfoBehavior,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,
-                essentialServiceModule.metadataService,
-                essentialServiceModule.sessionIdTracker,
-                essentialServiceModule.userService,
                 essentialServiceModule.logWriter,
                 initModule.logger
             )

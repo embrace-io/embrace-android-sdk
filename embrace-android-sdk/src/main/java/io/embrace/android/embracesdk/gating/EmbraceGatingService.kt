@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
+import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.SessionMessage
 
 /**
  * Receives the local and remote config to build the Gating config and define the amount of
@@ -18,71 +18,33 @@ import io.embrace.android.embracesdk.payload.SessionMessage
  */
 internal class EmbraceGatingService(
     private val configService: ConfigService,
+    private val logService: LogService,
     private val logger: EmbLogger
 ) : GatingService {
 
-    /**
-     * This class manages the configuration of the Gating feature. The Gating configuration consists of two lists:
-     * 'components' and a secondary list for special events.
-     *
-     * sessionComponents: This list functions as a whitelist for determining the information to include
-     * in the next session message. Its state impacts the gating feature as follows:
-     *
-     * - If the 'components' list is null, the gating feature is disabled and all data can be included
-     * in the next session message.
-     * - If the 'components' list is empty, the gating feature is enabled but blocks all components from
-     * being included in the next session message.
-     * - If the 'components' list contains specific fields, only those fields should be included in the
-     * next session message.
-     *
-     *  fullSessionEvents list: If this list contains entries such as "CRASH" or "EVENT",
-     *  the SDK should include the full payload for sessions that incorporate a crash or event,
-     *  regardless of the 'components' list status.
-     *
-     */
-    override fun gateSessionMessage(sessionMessage: SessionMessage): SessionMessage {
-        val components = configService.sessionBehavior.getSessionComponents()
-        if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
-            logger.logDebug("Session gating feature enabled. Attempting to sanitize the session message")
-
-            // check if the session has error logs IDs. If so, send the full session payload.
-            if (sessionMessage.session.errorLogIds?.isNotEmpty() == true &&
-                configService.sessionBehavior.shouldSendFullForErrorLog()
-            ) {
-                return sessionMessage
-            }
-
-            // check if the session has a crash report id. If so, send the full session payload.
-            if (sessionMessage.session.crashReportId != null) {
-                return sessionMessage
-            }
-
-            return SessionSanitizerFacade(sessionMessage, components).getSanitizedMessage()
-        }
-
-        return sessionMessage
-    }
-
     override fun gateSessionEnvelope(
-        sessionMessage: SessionMessage,
+        hasCrash: Boolean,
         envelope: Envelope<SessionPayload>
     ): Envelope<SessionPayload> {
         val components = configService.sessionBehavior.getSessionComponents()
         if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
             // check if the session has error logs IDs. If so, send the full session payload.
-            if (sessionMessage.session.errorLogIds?.isNotEmpty() == true &&
-                configService.sessionBehavior.shouldSendFullForErrorLog()
-            ) {
+            if (hasErrorLogs()) {
                 return envelope
             }
 
             // check if the session has a crash report id. If so, send the full session payload.
-            if (sessionMessage.session.crashReportId != null) {
+            if (hasCrash) {
                 return envelope
             }
             return EnvelopeSanitizerFacade(envelope, components).sanitize()
         }
         return envelope
+    }
+
+    private fun hasErrorLogs(): Boolean {
+        return logService.findErrorLogIds().isNotEmpty() &&
+            configService.sessionBehavior.shouldSendFullForErrorLog()
     }
 
     override fun gateEventMessage(eventMessage: EventMessage): EventMessage {

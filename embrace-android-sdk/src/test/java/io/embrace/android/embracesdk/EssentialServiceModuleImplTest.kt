@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
-import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.config.EmbraceConfigService
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
@@ -49,11 +49,11 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
+            customerLogModuleProvider = ::FakeCustomerLogModule,
             dataSourceModuleProvider = { fakeDataSourceModule() },
         ) { null }
 
         assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
-        assertTrue(module.orientationService is NoOpOrientationService)
         assertTrue(module.processStateService is EmbraceProcessStateService)
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.urlBuilder)
@@ -87,6 +87,7 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = null,
+            customerLogModuleProvider = ::FakeCustomerLogModule,
             dataSourceModuleProvider = { fakeDataSourceModule() },
         ) { fakeConfigService }
 

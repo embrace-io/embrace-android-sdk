@@ -14,7 +14,6 @@ internal class EmbraceUrl(val url: URL) {
     fun endpoint(): Endpoint {
         return when (url.path.substringAfterLast("/")) {
             Endpoint.EVENTS.path -> Endpoint.EVENTS
-            Endpoint.BLOBS.path -> Endpoint.BLOBS
             Endpoint.LOGGING.path -> Endpoint.LOGGING
             Endpoint.LOGS.path -> Endpoint.LOGS
             Endpoint.NETWORK.path -> Endpoint.NETWORK

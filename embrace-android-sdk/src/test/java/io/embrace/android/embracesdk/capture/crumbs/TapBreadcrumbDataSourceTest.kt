@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.crumbs
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import org.junit.Assert
@@ -37,7 +36,7 @@ internal class TapBreadcrumbDataSourceTest {
         )
         with(writer.addedEvents.single()) {
             assertEquals(EmbType.Ux.Tap, schemaType.telemetryType)
-            assertEquals(15000000000.millisToNanos(), spanStartTimeMs)
+            assertEquals(15000000000, spanStartTimeMs)
             assertEquals(
                 mapOf(
                     "view.name" to "my-button-id",

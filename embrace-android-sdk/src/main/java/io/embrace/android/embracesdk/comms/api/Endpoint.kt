@@ -7,7 +7,6 @@ import kotlin.math.pow
 
 internal enum class Endpoint(val path: String, val version: String) {
     EVENTS("events", "v1"),
-    BLOBS("blobs", "v1"),
     LOGGING("logging", "v1"),
     LOGS("logs", "v2"),
     NETWORK("network", "v1"),

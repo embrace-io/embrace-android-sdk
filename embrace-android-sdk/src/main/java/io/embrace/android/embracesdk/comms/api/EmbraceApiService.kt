@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -140,10 +139,6 @@ internal class EmbraceApiService(
         pendingApiCallsSender.savePendingApiCall(request, action, sync = true)
     }
 
-    override fun sendAEIBlob(blobMessage: BlobMessage) {
-        post(blobMessage, mapper::aeiBlobRequest)
-    }
-
     override fun sendNetworkCall(networkEvent: NetworkEvent) {
         post(networkEvent, mapper::networkEventRequest)
     }
@@ -156,8 +151,8 @@ internal class EmbraceApiService(
         return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
-    override fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
-        return postOnWorker(action, mapper.sessionRequest(isV2), onFinish)
+    override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
+        return postOnWorker(action, mapper.sessionRequest(), onFinish)
     }
 
     private inline fun <reified T> post(
@@ -197,6 +192,8 @@ internal class EmbraceApiService(
             var successfullySent = false
             try {
                 successfullySent = handleApiRequest(request, action)
+            } catch (e: Exception) {
+                logger.logWarning("API call failed.", e)
             } finally {
                 onComplete?.invoke(successfullySent)
             }
@@ -221,7 +218,7 @@ internal class EmbraceApiService(
 
             if (response !is ApiResponse.Success) {
                 // If the API call failed, propagate the error to the caller.
-                error("Failed to post Embrace API call. ")
+                error("Failed to post Embrace API call. $response")
             } else {
                 return true
             }

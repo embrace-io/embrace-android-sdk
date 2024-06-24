@@ -9,9 +9,10 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.opentelemetry.api.logs.Severity
@@ -39,7 +40,10 @@ internal class FlutterInternalInterfaceTest {
             appFramework = Embrace.AppFramework.FLUTTER,
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.REMOTE_LOGGING)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(
+                fakeInitModule = fakeInitModule,
+                name = WorkerName.REMOTE_LOGGING
+            )
         )
     }
 
@@ -51,13 +55,11 @@ internal class FlutterInternalInterfaceTest {
     @Test
     fun `flutter without values should return defaults`() {
         with(testRule) {
-            val session = harness.recordSession {
-
-            }
-
-            assertEquals(4, session?.appInfo?.appFramework)
-            assertNull(session?.appInfo?.hostedSdkVersion)
-            assertNull(session?.appInfo?.hostedPlatformVersion)
+            val session = harness.recordSession()
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertNull(res.hostedSdkVersion)
+            assertNull(res.hostedPlatformVersion)
         }
     }
 
@@ -69,9 +71,10 @@ internal class FlutterInternalInterfaceTest {
                 embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
             }
 
-            assertEquals(4, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.hostedPlatformVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
         }
     }
 
@@ -87,9 +90,10 @@ internal class FlutterInternalInterfaceTest {
 
             }
 
-            assertEquals(4, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.hostedPlatformVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
         }
     }
 
@@ -106,9 +110,10 @@ internal class FlutterInternalInterfaceTest {
                 embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion(null)
             }
 
-            assertEquals(4, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.hostedPlatformVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
         }
     }
 
@@ -125,9 +130,10 @@ internal class FlutterInternalInterfaceTest {
                 embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.4")
             }
 
-            assertEquals(4, session?.appInfo?.appFramework)
-            assertEquals("28.9.2", checkNotNull(session?.appInfo?.hostedPlatformVersion))
-            assertEquals("1.2.4", checkNotNull(session?.appInfo?.hostedSdkVersion))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals("28.9.2", res.hostedPlatformVersion)
+            assertEquals("1.2.4", res.hostedSdkVersion)
         }
     }
 
@@ -149,7 +155,7 @@ internal class FlutterInternalInterfaceTest {
                 )
                 flushLogs()
             }
-            val log = harness.getLastSentLog()
+            val log = checkNotNull(harness.getLastSentLog())
 
             assertOtelLogReceived(
                 log,
@@ -161,9 +167,10 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
             )
-            assertEquals(expectedStacktrace, log?.findLogAttribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key))
-            assertEquals(expectedContext, log?.findLogAttribute("emb.exception.context"))
-            assertEquals(expectedLibrary, log?.findLogAttribute("emb.exception.library"))
+            val attrs = checkNotNull(log.attributes)
+            assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key))
+            assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
+            assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
         }
     }
 
@@ -185,7 +192,7 @@ internal class FlutterInternalInterfaceTest {
                 )
                 flushLogs()
             }
-            val log = harness.getLastSentLog()
+            val log = checkNotNull(harness.getLastSentLog())
 
             assertOtelLogReceived(
                 log,
@@ -197,9 +204,10 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
             )
-            assertEquals(expectedStacktrace, log?.findLogAttribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key))
-            assertEquals(expectedContext, log?.findLogAttribute("emb.exception.context"))
-            assertEquals(expectedLibrary, log?.findLogAttribute("emb.exception.library"))
+            val attrs = checkNotNull(log.attributes)
+            assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key))
+            assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
+            assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
         }
     }
 

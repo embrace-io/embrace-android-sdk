@@ -12,13 +12,13 @@ internal class SessionEnvelopeSourceImpl(
     private val sessionPayloadSource: SessionPayloadSource,
 ) : SessionEnvelopeSource {
 
-    override fun getEnvelope(endType: SessionSnapshotType): Envelope<SessionPayload> {
+    override fun getEnvelope(endType: SessionSnapshotType, crashId: String?): Envelope<SessionPayload> {
         return Envelope(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),
             "0.1.0",
-            "session",
-            sessionPayloadSource.getSessionPayload(endType)
+            "spans",
+            sessionPayloadSource.getSessionPayload(endType, crashId)
         )
     }
 }

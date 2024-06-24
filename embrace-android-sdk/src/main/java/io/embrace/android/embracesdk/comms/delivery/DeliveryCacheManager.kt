@@ -1,13 +1,14 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal interface DeliveryCacheManager {
-    fun saveSession(sessionMessage: SessionMessage, snapshotType: SessionSnapshotType)
-    fun transformSession(sessionId: String, transformer: (SessionMessage) -> SessionMessage)
+    fun saveSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType)
+    fun transformSession(sessionId: String, transformer: Envelope<SessionPayload>.() -> Envelope<SessionPayload>)
     fun loadSessionAsAction(sessionId: String): SerializationAction?
     fun deleteSession(sessionId: String)
     fun getAllCachedSessionIds(): List<CachedSession>

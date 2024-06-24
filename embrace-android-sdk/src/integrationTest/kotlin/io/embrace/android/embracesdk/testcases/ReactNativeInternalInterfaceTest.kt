@@ -1,5 +1,3 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
@@ -7,11 +5,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
+import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -29,11 +29,9 @@ import org.robolectric.annotation.Config
 internal class ReactNativeInternalInterfaceTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE)
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE)
+    }
 
     @Before
     fun setup() {
@@ -47,10 +45,10 @@ internal class ReactNativeInternalInterfaceTest {
 
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertNull(session?.appInfo?.reactNativeVersion)
-            assertNull(session?.appInfo?.hostedSdkVersion)
-            assertNull(session?.appInfo?.javaScriptPatchNumber)
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertNull(res.hostedPlatformVersion)
+            assertNull(res.javascriptPatchNumber)
         }
     }
 
@@ -63,10 +61,11 @@ internal class ReactNativeInternalInterfaceTest {
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.reactNativeVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
-            assertEquals("666", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
+            assertEquals("666", res.javascriptPatchNumber)
         }
     }
 
@@ -83,10 +82,11 @@ internal class ReactNativeInternalInterfaceTest {
 
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertEquals("28.9.1", checkNotNull(session?.appInfo?.reactNativeVersion))
-            assertEquals("1.2.3", checkNotNull(session?.appInfo?.hostedSdkVersion))
-            assertEquals("666", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals("28.9.1", res.hostedPlatformVersion)
+            assertEquals("1.2.3", res.hostedSdkVersion)
+            assertEquals("666", res.javascriptPatchNumber)
         }
     }
 
@@ -105,10 +105,11 @@ internal class ReactNativeInternalInterfaceTest {
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("999")
             }
 
-            assertEquals(2, session?.appInfo?.appFramework)
-            assertEquals("28.9.2", checkNotNull(session?.appInfo?.reactNativeVersion))
-            assertEquals("1.2.4", checkNotNull(session?.appInfo?.hostedSdkVersion))
-            assertEquals("999", checkNotNull(session?.appInfo?.javaScriptPatchNumber))
+            val res = checkNotNull(session?.resource)
+            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals("28.9.2", res.hostedPlatformVersion)
+            assertEquals("1.2.4", res.hostedSdkVersion)
+            assertEquals("999", res.javascriptPatchNumber)
         }
     }
 
@@ -126,20 +127,19 @@ internal class ReactNativeInternalInterfaceTest {
                 )
             })
 
-            val spans = message.findSpansOfType(EmbType.System.ReactNativeAction)
-
+            val spans = message.findSpansByName("emb-rn-action")
             assertEquals(1, spans.size)
 
             val span = spans.single()
-
+            val attrs = checkNotNull(span.attributes)
             assertEquals("emb-rn-action", span.name)
-            assertEquals("sys.rn_action", span.findSpanAttribute("emb.type"))
-            assertEquals("MyAction", span.findSpanAttribute("name"))
-            assertEquals("SUCCESS", span.findSpanAttribute("outcome"))
-            assertEquals("100", span.findSpanAttribute("payload_size"))
-            assertEquals("value", span.findSpanAttribute("emb.properties.key"))
-            assertEquals(1000, span.startTimeNanos.nanosToMillis())
-            assertEquals(5000, span.endTimeNanos.nanosToMillis())
+            assertEquals("sys.rn_action", attrs.findAttributeValue("emb.type"))
+            assertEquals("MyAction", attrs.findAttributeValue("name"))
+            assertEquals("SUCCESS", attrs.findAttributeValue("outcome"))
+            assertEquals("100", attrs.findAttributeValue("payload_size"))
+            assertEquals("value", attrs.findAttributeValue("emb.properties.key"))
+            assertEquals(1000L, span.startTimeNanos?.nanosToMillis())
+            assertEquals(5000L, span.endTimeNanos?.nanosToMillis())
         }
     }
 
@@ -164,13 +164,15 @@ internal class ReactNativeInternalInterfaceTest {
 
             val firstSpan = spans.single()
             val secondSpan = spanSnapshots.single()
+            val firstAttrs = checkNotNull(firstSpan.attributes)
+            val secondAttrs = checkNotNull(secondSpan.attributes)
 
             assertEquals("emb-screen-view", firstSpan.name)
             assertEquals("emb-screen-view", secondSpan.name)
-            assertEquals("ux.view", firstSpan.findSpanAttribute("emb.type"))
-            assertEquals("ux.view", secondSpan.findSpanAttribute("emb.type"))
-            assertEquals("HomeScreen", firstSpan.findSpanAttribute("view.name"))
-            assertEquals("DetailsScreen", secondSpan.findSpanAttribute("view.name"))
+            assertEquals("ux.view", firstAttrs.findAttributeValue("emb.type"))
+            assertEquals("ux.view", secondAttrs.findAttributeValue("emb.type"))
+            assertEquals("HomeScreen", firstAttrs.findAttributeValue("view.name"))
+            assertEquals("DetailsScreen", secondAttrs.findAttributeValue("view.name"))
         }
     }
 
@@ -195,13 +197,15 @@ internal class ReactNativeInternalInterfaceTest {
 
             val firstSpan = spans.single()
             val secondSpan = spanSnapshots.single()
+            val firstAttrs = checkNotNull(firstSpan.attributes)
+            val secondAttrs = checkNotNull(secondSpan.attributes)
 
             assertEquals("emb-screen-view", firstSpan.name)
             assertEquals("emb-screen-view", secondSpan.name)
-            assertEquals("ux.view", firstSpan.findSpanAttribute("emb.type"))
-            assertEquals("ux.view", secondSpan.findSpanAttribute("emb.type"))
-            assertEquals("HomeScreen", firstSpan.findSpanAttribute("view.name"))
-            assertEquals("HomeScreen", secondSpan.findSpanAttribute("view.name"))
+            assertEquals("ux.view", firstAttrs.findAttributeValue("emb.type"))
+            assertEquals("ux.view", secondAttrs.findAttributeValue("emb.type"))
+            assertEquals("HomeScreen", firstAttrs.findAttributeValue("view.name"))
+            assertEquals("HomeScreen", secondAttrs.findAttributeValue("view.name"))
         }
     }
 }

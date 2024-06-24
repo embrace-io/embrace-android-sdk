@@ -3,64 +3,52 @@ package io.embrace.android.embracesdk.session
 import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
-import io.embrace.android.embracesdk.capture.PerformanceInfoService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.capture.webview.WebViewService
+import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeLogMessageService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePerformanceInfoService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
+import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
@@ -68,8 +56,6 @@ import org.junit.Test
 internal class SessionHandlerTest {
 
     companion object {
-        private val eventService: EventService = FakeEventService()
-        private val logMessageService: LogMessageService = FakeLogMessageService()
         private val clock = FakeClock()
         private const val NOW = 123L
         private var sessionNumber = 5
@@ -77,11 +63,8 @@ internal class SessionHandlerTest {
         private val emptyMapSessionProperties: Map<String, String> = emptyMap()
     }
 
-    private val initial = fakeSession(startMs = NOW)
+    private val initial = fakeSessionZygote().copy(startTime = NOW)
     private val userService: FakeUserService = FakeUserService()
-    private val performanceInfoService: PerformanceInfoService = FakePerformanceInfoService()
-    private val webViewService: WebViewService = FakeWebViewService()
-    private var activeSession: Session = fakeSession()
 
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
@@ -109,7 +92,6 @@ internal class SessionHandlerTest {
         scheduledWorker = ScheduledWorker(executorService)
         logger = EmbLoggerImpl()
         clock.setCurrentTime(NOW)
-        activeSession = fakeSession()
         every { sessionProperties.get() } returns emptyMapSessionProperties
         ndkService = FakeNdkService()
         metadataService = FakeMetadataService()
@@ -145,48 +127,27 @@ internal class SessionHandlerTest {
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
 
-        val payloadMessageCollator = V1PayloadMessageCollator(
-            gatingService,
-            metadataService,
-            eventService,
-            logMessageService,
-            performanceInfoService,
-            webViewService,
-            null,
-            userService,
-            preferencesService,
-            initModule.openTelemetryModule.spanRepository,
-            initModule.openTelemetryModule.spanSink,
-            initModule.openTelemetryModule.currentSessionSpan,
-            FakeSessionPropertiesService(),
-            FakeStartupService(),
-            AnrOtelMapper(FakeAnrService()),
-            NativeAnrOtelMapper(null, EmbraceSerializer()),
-            logger
-        )
-        val v2Collator = V2PayloadMessageCollator(
+        val collator = PayloadMessageCollatorImpl(
             gatingService,
             SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
-                sessionPayloadSource = FakeSessionPayloadSource()
+                sessionPayloadSource = SessionPayloadSourceImpl(
+                    null,
+                    spanSink,
+                    currentSessionSpan,
+                    spanRepository,
+                    fakeAnrOtelMapper(),
+                    fakeNativeAnrOtelMapper(),
+                    logger,
+                    ::FakeWebViewService,
+                    ::FakeSessionPropertiesService,
+                )
             ),
-            metadataService,
-            eventService,
-            logMessageService,
-            performanceInfoService,
-            null,
             preferencesService,
-            spanRepository,
-            spanSink,
-            currentSessionSpan,
-            FakeSessionPropertiesService(),
-            FakeStartupService(),
-            AnrOtelMapper(FakeAnrService()),
-            NativeAnrOtelMapper(null, EmbraceSerializer()),
-            logger,
+            currentSessionSpan
         )
-        payloadFactory = PayloadFactoryImpl(payloadMessageCollator, v2Collator, configService, logger)
+        payloadFactory = PayloadFactoryImpl(collator, configService, logger)
     }
 
     @After
@@ -207,56 +168,6 @@ internal class SessionHandlerTest {
     }
 
     @Test
-    fun `onCrash ended session successfully`() {
-        startFakeSession()
-
-        val crashId = "crash-id"
-        val startTime = 120L
-        val sdkStartupDuration = 2L
-        activeSession = fakeSession().copy(
-            startTime = startTime,
-            isColdStart = true
-        )
-
-        val msg = payloadFactory.endPayloadWithCrash(
-            ProcessState.FOREGROUND,
-            clock.now(),
-            initial,
-            crashId
-        )
-        val session = checkNotNull(msg).session
-
-        // when crashing, the following calls should not be made, this is because since we're
-        // about to crash we can save some time on not doing these //
-        assertEquals(0, memoryCleanerService.callCount)
-        verify(exactly = 0) { sessionProperties.clearTemporary() }
-
-        with(session) {
-            assertFalse(checkNotNull(isEndedCleanly))
-            assertEquals("en", messageType)
-            assertEquals("foreground", appState)
-            assertEquals(emptyList<String>(), eventIds)
-            assertEquals(emptyList<String>(), infoLogIds)
-            assertEquals(emptyList<String>(), warningLogIds)
-            assertEquals(emptyList<String>(), errorLogIds)
-            assertEquals(emptyList<String>(), networkLogIds)
-            assertEquals(0, infoLogsAttemptedToSend)
-            assertEquals(0, warnLogsAttemptedToSend)
-            assertEquals(0, errorLogsAttemptedToSend)
-            assertEquals(NOW, lastHeartbeatTime)
-            assertEquals(sessionProperties.get(), properties)
-            assertEquals(Session.LifeEventType.STATE, endType)
-            assertEquals(0, unhandledExceptions)
-            assertEquals(crashId, crashReportId)
-            assertEquals(NOW, endTime)
-            assertEquals(sdkStartupDuration, sdkStartupDuration)
-            assertEquals(0L, startupDuration)
-            assertEquals(0L, startupThreshold)
-            assertEquals(null, webViewInfo)
-        }
-    }
-
-    @Test
     fun `endSession includes completed spans in message`() {
         startFakeSession()
         initializeServices()
@@ -265,7 +176,7 @@ internal class SessionHandlerTest {
         }
         clock.tick(30000)
         val msg = payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, 10L, initial)
-        assertSpanInSessionMessage(msg)
+        assertSpanInSessionEnvelope(msg)
     }
 
     @Test
@@ -289,7 +200,7 @@ internal class SessionHandlerTest {
             initial,
             "fakeCrashId"
         )
-        assertSpanInSessionMessage(msg)
+        assertSpanInSessionEnvelope(msg)
     }
 
     @Test
@@ -305,7 +216,7 @@ internal class SessionHandlerTest {
         assertEquals(1, spanSink.completedSpans().size)
 
         clock.tick(15000L)
-        val sessionMessage =
+        val envelope =
             checkNotNull(
                 payloadFactory.endPayloadWithState(
                     ProcessState.FOREGROUND,
@@ -313,7 +224,7 @@ internal class SessionHandlerTest {
                     initial
                 )
             )
-        val spans = checkNotNull(sessionMessage.spans)
+        val spans = checkNotNull(envelope.data.spans)
         assertEquals(2, spans.size)
         assertEquals(0, spanSink.completedSpans().size)
     }
@@ -329,7 +240,7 @@ internal class SessionHandlerTest {
         assertEquals(0, spanSink.completedSpans().size)
     }
 
-    private fun startFakeSession(): Session {
+    private fun startFakeSession(): SessionZygote {
         return checkNotNull(payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true))
     }
 
@@ -337,11 +248,11 @@ internal class SessionHandlerTest {
         spanService.initializeService(startTimeMillis)
     }
 
-    private fun assertSpanInSessionMessage(sessionMessage: SessionMessage?) {
-        assertNotNull(sessionMessage)
-        val spans = checkNotNull(sessionMessage?.spans)
+    private fun assertSpanInSessionEnvelope(envelope: Envelope<SessionPayload>?) {
+        assertNotNull(envelope)
+        val spans = checkNotNull(envelope?.data?.spans)
         assertEquals(2, spans.size)
         val expectedSpans = listOf("emb-test-span", "emb-session")
-        assertEquals(expectedSpans, spans.map(EmbraceSpanData::name))
+        assertEquals(expectedSpans, spans.map(Span::name))
     }
 }

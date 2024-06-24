@@ -18,7 +18,7 @@ internal class CachedSession private constructor(
         /**
          * Creates a [CachedSession] from a session id and timestamp.
          */
-        fun create(sessionId: String, timestampMs: Long, v2Payload: Boolean): CachedSession {
+        fun create(sessionId: String, timestampMs: Long, v2Payload: Boolean = true): CachedSession {
             val filename = when {
                 v2Payload -> getV2FileNameForSession(
                     sessionId,

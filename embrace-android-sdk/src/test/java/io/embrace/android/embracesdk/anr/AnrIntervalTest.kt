@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.anr
 
-import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
-import io.embrace.android.embracesdk.deserializeEmptyJsonString
-import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
@@ -54,26 +50,6 @@ internal class AnrIntervalTest {
         assertEquals(AnrInterval.CODE_DEFAULT, interval.code)
         assertNull(copy.anrSampleList)
         assertEquals(AnrInterval.CODE_SAMPLES_CLEARED, copy.code)
-    }
-
-    @Test
-    fun testAnrTickSerialization() {
-        assertJsonMatchesGoldenFile("anr_interval_expected.json", interval.copy())
-    }
-
-    @Test
-    fun testAnrTickDeserialization() {
-        val obj = deserializeJsonFromResource<AnrInterval>("anr_interval_expected.json")
-        assertEquals(150980980980, obj.startTime)
-        assertEquals(150980980980 + 5000, obj.endTime)
-        assertEquals(150980980980 + 4000, obj.lastKnownTime)
-        assertEquals(AnrInterval.Type.UI, obj.type)
-        assertEquals(anrSampleList, obj.anrSampleList)
-    }
-
-    @Test(expected = JsonDataException::class)
-    fun testAnrIntervalEmptyObject() {
-        deserializeEmptyJsonString<AnrInterval>()
     }
 
     @Test

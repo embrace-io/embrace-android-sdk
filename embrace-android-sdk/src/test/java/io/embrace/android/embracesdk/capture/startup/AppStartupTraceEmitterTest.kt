@@ -11,11 +11,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
@@ -232,7 +233,7 @@ internal class AppStartupTraceEmitterTest {
         val startupActivityEnd = checkNotNull((activityCreateEvents.finished))
 
         assertTraceRoot(
-            trace = trace,
+            input = trace,
             expectedStartTimeMs = DEFAULT_FAKE_CURRENT_TIME,
             expectedEndTimeMs = traceEnd,
             expectedProcessCreateDelayMs = processCreateDelayMs,
@@ -266,7 +267,7 @@ internal class AppStartupTraceEmitterTest {
         val startupActivityEnd = checkNotNull((activityCreateEvents.finished))
 
         assertTraceRoot(
-            trace = trace,
+            input = trace,
             expectedStartTimeMs = DEFAULT_FAKE_CURRENT_TIME,
             expectedEndTimeMs = traceEnd,
             expectedProcessCreateDelayMs = processCreateDelayMs,
@@ -313,7 +314,7 @@ internal class AppStartupTraceEmitterTest {
         val startupActivityEnd = checkNotNull((activityCreateEvents.finished))
 
         assertTraceRoot(
-            trace = trace,
+            input = trace,
             expectedStartTimeMs = traceStartMs,
             expectedEndTimeMs = traceEnd,
             expectedFirstActivityLifecycleEventMs = startupActivityStart,
@@ -349,7 +350,7 @@ internal class AppStartupTraceEmitterTest {
         val startupActivityEnd = checkNotNull((activityCreateEvents.finished))
 
         assertTraceRoot(
-            trace = trace,
+            input = trace,
             expectedStartTimeMs = traceStartMs,
             expectedEndTimeMs = traceEnd,
             expectedFirstActivityLifecycleEventMs = startupActivityStart,
@@ -379,7 +380,7 @@ internal class AppStartupTraceEmitterTest {
 
         with(trace) {
             assertTraceRoot(
-                trace = this,
+                input = this,
                 expectedStartTimeMs = startupActivityStart,
                 expectedEndTimeMs = traceEnd,
                 expectedProcessCreateDelayMs = processCreateDelayMs,
@@ -413,7 +414,7 @@ internal class AppStartupTraceEmitterTest {
 
         with(trace) {
             assertTraceRoot(
-                trace = this,
+                input = this,
                 expectedStartTimeMs = startupActivityStart,
                 expectedEndTimeMs = traceEnd,
                 expectedFirstActivityLifecycleEventMs = startupActivityStart,
@@ -456,7 +457,7 @@ internal class AppStartupTraceEmitterTest {
         val activityCreate = checkNotNull(spanMap["emb-activity-create"])
 
         assertTraceRoot(
-            trace = trace,
+            input = trace,
             expectedStartTimeMs = traceStart,
             expectedEndTimeMs = traceEnd,
             expectedProcessCreateDelayMs = if (isWarm) null else 0,
@@ -527,7 +528,7 @@ internal class AppStartupTraceEmitterTest {
     }
 
     private fun assertTraceRoot(
-        trace: EmbraceSpanData,
+        input: EmbraceSpanData,
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
         expectedProcessCreateDelayMs: Long? = null,
@@ -535,17 +536,19 @@ internal class AppStartupTraceEmitterTest {
         expectedActivityPostCreatedMs: Long? = null,
         expectedFirstActivityLifecycleEventMs: Long? = null
     ) {
-        assertEquals(expectedStartTimeMs, trace.startTimeNanos.nanosToMillis())
-        assertEquals(expectedEndTimeMs, trace.endTimeNanos.nanosToMillis())
+        val trace = input.toNewPayload()
+        assertEquals(expectedStartTimeMs, trace.startTimeNanos?.nanosToMillis())
+        assertEquals(expectedEndTimeMs, trace.endTimeNanos?.nanosToMillis())
         trace.assertDoesNotHaveEmbraceAttribute(PrivateSpan)
         trace.assertIsKeySpan()
-        assertEquals(STARTUP_ACTIVITY_NAME, trace.findSpanAttribute("startup-activity-name"))
-        assertEquals(expectedProcessCreateDelayMs?.toString(), trace.attributes["process-create-delay-ms"])
-        assertEquals(expectedActivityPreCreatedMs?.toString(), trace.attributes["startup-activity-pre-created-ms"])
-        assertEquals(expectedActivityPostCreatedMs?.toString(), trace.attributes["startup-activity-post-created-ms"])
-        assertEquals(expectedFirstActivityLifecycleEventMs?.toString(), trace.attributes["first-activity-init-ms"])
-        assertEquals("false", trace.attributes["embrace-init-in-foreground"])
-        assertEquals("main", trace.attributes["embrace-init-thread-name"])
+        val attrs = checkNotNull(trace.attributes)
+        assertEquals(STARTUP_ACTIVITY_NAME, attrs.findAttributeValue("startup-activity-name"))
+        assertEquals(expectedProcessCreateDelayMs?.toString(), attrs.findAttributeValue("process-create-delay-ms"))
+        assertEquals(expectedActivityPreCreatedMs?.toString(), attrs.findAttributeValue("startup-activity-pre-created-ms"))
+        assertEquals(expectedActivityPostCreatedMs?.toString(), attrs.findAttributeValue("startup-activity-post-created-ms"))
+        assertEquals(expectedFirstActivityLifecycleEventMs?.toString(), attrs.findAttributeValue("first-activity-init-ms"))
+        assertEquals("false", attrs.findAttributeValue("embrace-init-in-foreground"))
+        assertEquals("main", attrs.findAttributeValue("embrace-init-thread-name"))
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

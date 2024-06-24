@@ -11,8 +11,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.injection.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.worker.WorkerName
 import java.util.concurrent.atomic.AtomicReference
@@ -36,32 +38,30 @@ internal class AnrFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            val clock = FakeClock(currentTime = START_TIME_MS)
-            val initModule = FakeInitModule(clock)
-            val workerThreadModule =
-                FakeWorkerThreadModule(initModule, WorkerName.ANR_MONITOR).apply {
-                    anrMonitorThread = AtomicReference(Thread.currentThread())
-                }
-            anrMonitorExecutor = workerThreadModule.executor
-            val anrModule = AnrModuleImpl(
-                initModule,
-                FakeEssentialServiceModule(),
-                workerThreadModule,
-                FakeOpenTelemetryModule()
-            )
-            blockedThreadDetector = anrModule.blockedThreadDetector
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        val clock = FakeClock(currentTime = START_TIME_MS)
+        val initModule = FakeInitModule(clock)
+        val workerThreadModule =
+            FakeWorkerThreadModule(initModule, WorkerName.ANR_MONITOR).apply {
+                anrMonitorThread = AtomicReference(Thread.currentThread())
+            }
+        anrMonitorExecutor = workerThreadModule.executor
+        val anrModule = AnrModuleImpl(
+            initModule,
+            FakeEssentialServiceModule(),
+            workerThreadModule,
+            FakeOpenTelemetryModule()
+        )
+        blockedThreadDetector = anrModule.blockedThreadDetector
 
-            IntegrationTestRule.Harness(
-                currentTimeMs = START_TIME_MS,
-                overriddenClock = clock,
-                overriddenInitModule = initModule,
-                overriddenWorkerThreadModule = workerThreadModule,
-                fakeAnrModule = anrModule
-            )
-        }
-    )
+        IntegrationTestRule.Harness(
+            currentTimeMs = START_TIME_MS,
+            overriddenClock = clock,
+            overriddenInitModule = initModule,
+            overriddenWorkerThreadModule = workerThreadModule,
+            fakeAnrModule = anrModule
+        )
+    }
 
     @Test
     fun `trigger ANRs`() {
@@ -149,44 +149,45 @@ internal class AnrFeatureTest {
             // assert ANRs received
             val spans = message.findAnrSpans()
             val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = 0)
+            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = testRule.harness.overriddenClock.now())
         }
     }
 
     private fun assertAnrReceived(
-        span: EmbraceSpanData,
+        span: Span,
         startTime: Long,
         sampleCount: Int,
         expectedIntervalCode: String = "0",
         endTime: Long = startTime + ANR_THRESHOLD_MS + (sampleCount * INTERVAL_MS)
     ) {
         // assert span start/end times
-        assertEquals(startTime, span.startTimeNanos.nanosToMillis())
-        assertEquals(endTime, span.endTimeNanos.nanosToMillis())
+        assertEquals(startTime, span.startTimeNanos?.nanosToMillis())
+        assertEquals(endTime, span.endTimeNanos?.nanosToMillis())
 
         // assert span attributes
-        assertEquals(expectedIntervalCode, span.attributes["interval_code"])
-        assertEquals("perf.thread_blockage", span.attributes["emb.type"])
+        val attributes = checkNotNull(span.attributes)
+        assertEquals(expectedIntervalCode, attributes.findAttributeValue("interval_code"))
+        assertEquals("perf.thread_blockage", attributes.findAttributeValue("emb.type"))
 
-        val events = span.events
+        val events = checkNotNull(span.events)
 
         events.forEachIndexed { index, event ->
             assertEquals("perf.thread_blockage_sample", event.name)
 
             // assert attributes
-            val attrs = event.attributes
-            assertEquals("perf.thread_blockage_sample", attrs["emb.type"])
-            assertEquals("0", attrs["sample_overhead"])
+            val attrs = checkNotNull(event.attributes)
+            assertEquals("perf.thread_blockage_sample", attrs.findAttributeValue("emb.type"))
+            assertEquals("0", attrs.findAttributeValue("sample_overhead"))
 
             val expectedCode = when {
                 index < MAX_SAMPLE_COUNT -> "0"
                 else -> "1"
             }
-            assertEquals(expectedCode, attrs["sample_code"])
+            assertEquals(expectedCode, attrs.findAttributeValue("sample_code"))
 
             // assert interval time
             val expectedTime = startTime + ANR_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)
-            assertEquals(expectedTime, event.timestampNanos.nanosToMillis())
+            assertEquals(expectedTime, event.timestampNanos?.nanosToMillis())
         }
     }
 
@@ -224,5 +225,5 @@ internal class AnrFeatureTest {
         }
     }
 
-    private fun SessionMessage.findAnrSpans() = checkNotNull(spans?.filter { it.name == SPAN_NAME })
+    private fun Envelope<SessionPayload>.findAnrSpans() = checkNotNull(data.spans?.filter { it.name == SPAN_NAME })
 }

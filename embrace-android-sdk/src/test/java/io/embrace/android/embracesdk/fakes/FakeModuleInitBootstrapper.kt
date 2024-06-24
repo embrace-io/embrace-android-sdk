@@ -43,7 +43,7 @@ internal fun fakeModuleInitBootstrapper(
     androidServicesModuleSupplier: AndroidServicesModuleSupplier = { _, _, _ -> FakeAndroidServicesModule() },
     workerThreadModuleSupplier: WorkerThreadModuleSupplier = { _ -> FakeWorkerThreadModule() },
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
-    essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
+    essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
     dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeDataSourceModule() },
     dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
@@ -51,9 +51,9 @@ internal fun fakeModuleInitBootstrapper(
     customerLogModuleSupplier: CustomerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule() },
     nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
     dataContainerModuleSupplier: DataContainerModuleSupplier = { _, _, _, _, _ -> FakeDataContainerModule() },
-    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
-    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeCrashModule() },
-    payloadModuleSupplier: PayloadModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakePayloadModule() }
+    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
+    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCrashModule() },
+    payloadModuleSupplier: PayloadModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadModule() }
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
     initModule = fakeInitModule,

@@ -77,3 +77,28 @@ internal val embSessionStartType = EmbraceAttributeKey("session_start_type")
  * Attribute name that identifies the session end type
  */
 internal val embSessionEndType = EmbraceAttributeKey("session_end_type")
+
+/**
+ * Attribute name that identifies the startup duration
+ */
+internal val embSessionStartupDuration = EmbraceAttributeKey("startup_duration")
+
+/**
+ * Attribute name that identifies the startup threshold
+ */
+internal val embSessionStartupThreshold = EmbraceAttributeKey("threshold")
+
+/**
+ * Attribute name that identifies the SDK duration
+ */
+internal val embSdkStartupDuration = EmbraceAttributeKey("sdk_startup_duration")
+
+/**
+ * Attribute name that identifies the error log count in a session
+ */
+internal val embErrorLogCount = EmbraceAttributeKey("error_log_count")
+
+/**
+ * Attribute name that identifies the number of free bytes on disk
+ */
+internal val embFreeDiskBytes = EmbraceAttributeKey("disk_free_bytes")

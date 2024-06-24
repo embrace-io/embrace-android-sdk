@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.event.EmbraceLogMessageService
-import io.embrace.android.embracesdk.event.LogMessageService
-import io.embrace.android.embracesdk.internal.logs.CompositeLogService
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
@@ -24,7 +21,7 @@ internal interface CustomerLogModule {
     val networkCaptureService: NetworkCaptureService
     val networkCaptureDataSource: NetworkCaptureDataSource
     val networkLoggingService: NetworkLoggingService
-    val logMessageService: LogMessageService
+    val logService: LogService
     val logOrchestrator: LogOrchestrator
 }
 
@@ -44,7 +41,7 @@ internal class CustomerLogModuleImpl(
             essentialServiceModule.metadataService,
             essentialServiceModule.sessionIdTracker,
             androidServicesModule.preferencesService,
-            logMessageService,
+            { networkCaptureDataSource },
             essentialServiceModule.configService,
             initModule.jsonSerializer,
             initModule.logger
@@ -73,23 +70,7 @@ internal class CustomerLogModuleImpl(
         )
     }
 
-    private val v1LogService: LogMessageService by singleton {
-        EmbraceLogMessageService(
-            essentialServiceModule.metadataService,
-            essentialServiceModule.sessionIdTracker,
-            deliveryModule.deliveryService,
-            essentialServiceModule.userService,
-            essentialServiceModule.configService,
-            essentialServiceModule.sessionProperties,
-            initModule.logger,
-            initModule.clock,
-            essentialServiceModule.gatingService,
-            essentialServiceModule.networkConnectivityService,
-            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING)
-        )
-    }
-
-    private val v2LogService: LogService by singleton {
+    override val logService: LogService by singleton {
         EmbraceLogService(
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
@@ -98,16 +79,6 @@ internal class CustomerLogModuleImpl(
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,
             initModule.clock,
-        )
-    }
-
-    override val logMessageService: LogMessageService by singleton {
-        CompositeLogService(
-            { v1LogService },
-            { v2LogService },
-            { networkCaptureDataSource },
-            essentialServiceModule.configService,
-            initModule.logger,
             initModule.jsonSerializer
         )
     }

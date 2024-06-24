@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -29,6 +29,7 @@ internal class CurrentSessionSpanImpl(
      * Number of traces created in the current session. This value will be reset when a new session is created.
      */
     private val traceCount = AtomicInteger(0)
+    private val internalTraceCount = AtomicInteger(0)
 
     /**
      * The span that models the lifetime of the current session or background activity
@@ -61,13 +62,19 @@ internal class CurrentSessionSpanImpl(
 
         // If a span can be created, always let internal spans be to be created
         return if (internal) {
-            return true
-        } else if (traceCount.get() >= SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+            checkTraceCount(internalTraceCount, SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION)
+        } else {
+            checkTraceCount(traceCount, SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION)
+        }
+    }
+
+    private fun checkTraceCount(counter: AtomicInteger, limit: Int): Boolean {
+        return if (counter.get() >= limit) {
             // If we have already reached the maximum number of spans created for this session, don't allow another one
             false
         } else {
-            synchronized(traceCount) {
-                traceCount.getAndIncrement() < SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION
+            synchronized(counter) {
+                counter.getAndIncrement() < limit
             }
         }
     }
@@ -105,13 +112,12 @@ internal class CurrentSessionSpanImpl(
         }
     }
 
-    override fun <T> addEvent(obj: T, mapper: T.() -> SpanEventData): Boolean {
+    override fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean {
         val currentSession = sessionSpan.get() ?: return false
-        val event = obj.mapper()
         return currentSession.addEvent(
-            event.schemaType.fixedObjectName.toEmbraceObjectName(),
-            event.spanStartTimeMs,
-            event.schemaType.attributes() + event.schemaType.telemetryType.toEmbraceKeyValuePair()
+            schemaType.fixedObjectName.toEmbraceObjectName(),
+            startTimeMs,
+            schemaType.attributes() + schemaType.telemetryType.toEmbraceKeyValuePair()
         )
     }
 
@@ -135,6 +141,7 @@ internal class CurrentSessionSpanImpl(
      */
     private fun startSessionSpan(startTimeMs: Long): PersistableEmbraceSpan {
         traceCount.set(0)
+        internalTraceCount.set(0)
 
         return embraceSpanFactorySupplier().create(
             name = "session",

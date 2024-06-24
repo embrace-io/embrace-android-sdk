@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.capture.crash
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.destination.LogEventData
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
+import io.embrace.android.embracesdk.fakes.LogEventData
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes

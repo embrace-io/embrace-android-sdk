@@ -9,9 +9,6 @@ internal data class EventMessage(
     @Json(name = "et")
     val event: Event,
 
-    @Json(name = "cr")
-    val crash: Crash? = null,
-
     @Json(name = "d")
     val deviceInfo: DeviceInfo? = null,
 
@@ -20,9 +17,6 @@ internal data class EventMessage(
 
     @Json(name = "u")
     val userInfo: UserInfo? = null,
-
-    @Json(name = "p")
-    val performanceInfo: PerformanceInfo? = null,
 
     @Json(name = "sk")
     val stacktraces: Stacktraces? = null,

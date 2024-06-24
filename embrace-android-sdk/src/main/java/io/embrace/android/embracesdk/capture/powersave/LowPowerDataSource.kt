@@ -5,8 +5,6 @@ import android.os.PowerManager
 import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.arch.datasource.startSpanCapture
-import io.embrace.android.embracesdk.arch.destination.StartSpanData
-import io.embrace.android.embracesdk.arch.destination.StartSpanMapper
 import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -23,7 +21,7 @@ internal class LowPowerDataSource(
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
     provider: Provider<PowerManager?>
-) : StartSpanMapper<Long>, SpanDataSourceImpl(
+) : SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS }
@@ -38,14 +36,13 @@ internal class LowPowerDataSource(
 
     override fun enableDataCapture() = receiver.register(context, backgroundWorker)
     override fun disableDataCapture() = receiver.unregister(context)
-    override fun toStartSpanData(obj: Long) = StartSpanData(SchemaType.LowPower, obj)
 
     fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val activeSpan = span
 
         if (powerSaveMode && activeSpan == null) {
             alterSessionSpan(NoInputValidation) {
-                startSpanCapture(clock.now(), ::toStartSpanData)?.apply {
+                startSpanCapture(SchemaType.LowPower, clock.now())?.apply {
                     span = this
                 }
             }

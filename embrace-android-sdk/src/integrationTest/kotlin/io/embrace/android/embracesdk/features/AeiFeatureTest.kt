@@ -8,8 +8,8 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.getSentLogPayloads
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import io.mockk.every
 import io.mockk.mockk
@@ -27,9 +27,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(harnessSupplier = {
-        IntegrationTestRule.Harness(startImmediately = false)
-    })
+    val testRule = IntegrationTestRule { IntegrationTestRule.Harness(startImmediately = false) }
 
     @Test
     fun `application exit info feature`() {
@@ -43,16 +41,17 @@ internal class AeiFeatureTest {
             val log = checkNotNull(payload.data.logs?.single())
 
             // assert AEI fields populated
-            assertEquals(log.findLogAttribute("timestamp").toLong(), 15000000000L)
-            assertEquals(log.findLogAttribute("aei_session_id"), "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
-            assertEquals(log.findLogAttribute("process_importance").toInt(), 125)
-            assertEquals(log.findLogAttribute("pss").toLong(), 1509123409L)
-            assertEquals(log.findLogAttribute("rss").toLong(), 1123409L)
-            assertEquals(log.findLogAttribute("exit_status").toInt(), 1)
-            assertEquals(log.findLogAttribute("description"), "testDescription")
-            assertEquals(log.findLogAttribute("reason").toInt(), 4)
+            val attrs = checkNotNull(log.attributes)
+            assertEquals(attrs.findAttributeValue("timestamp")?.toLong(), 15000000000L)
+            assertEquals(attrs.findAttributeValue("aei_session_id"), "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
+            assertEquals(attrs.findAttributeValue("process_importance")?.toInt(), 125)
+            assertEquals(attrs.findAttributeValue("pss")?.toLong(), 1509123409L)
+            assertEquals(attrs.findAttributeValue("rss")?.toLong(), 1123409L)
+            assertEquals(attrs.findAttributeValue("exit_status")?.toInt(), 1)
+            assertEquals(attrs.findAttributeValue("description"), "testDescription")
+            assertEquals(attrs.findAttributeValue("reason")?.toInt(), 4)
             assertEquals("testInputStream", log.body)
-            assertEquals("sys.exit", log.findLogAttribute("emb.type"))
+            assertEquals("sys.exit", attrs.findAttributeValue("emb.type"))
         }
     }
 

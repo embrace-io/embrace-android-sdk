@@ -8,18 +8,16 @@ import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.assertions.assertLogMessageReceived
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentLogMessages
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
+import java.net.SocketException
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
@@ -31,7 +29,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -39,20 +36,16 @@ import java.net.SocketException
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceInternalInterfaceTest {
+
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(startImmediately = false)
+    }
 
     @Before
     fun setup() {
         ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
-        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-            RemoteConfig(oTelConfig = OTelRemoteConfig(isStableEnabled = false))
-        }
     }
 
     @Test
@@ -119,46 +112,6 @@ internal class EmbraceInternalInterfaceTest {
     }
 
     @Test
-    fun `internal logging methods work as expected in v1`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            val expectedProperties = mapOf(Pair("key", "value"))
-            harness.recordSession {
-                embrace.internalInterface.logInfo("info", expectedProperties)
-                embrace.internalInterface.logWarning("warning", expectedProperties, null)
-                embrace.internalInterface.logError("error", expectedProperties, null, false)
-                embrace.internalInterface.logHandledException(NullPointerException(), LogType.ERROR, expectedProperties, null)
-                val logs = harness.getSentLogMessages(4)
-
-                assertLogMessageReceived(
-                    logs[0],
-                    message = "info",
-                    eventType = EventType.INFO_LOG,
-                    properties = expectedProperties
-                )
-                assertLogMessageReceived(
-                    logs[1],
-                    message = "warning",
-                    eventType = EventType.WARNING_LOG,
-                    properties = expectedProperties
-                )
-                assertLogMessageReceived(
-                    logs[2],
-                    message = "error",
-                    eventType = EventType.ERROR_LOG,
-                    properties = expectedProperties
-                )
-                assertLogMessageReceived(
-                    logs[3],
-                    message = "",
-                    eventType = EventType.ERROR_LOG,
-                    properties = expectedProperties
-                )
-            }
-        }
-    }
-
-    @Test
     fun `network recording methods work as expected`() {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
@@ -213,7 +166,8 @@ internal class EmbraceInternalInterfaceTest {
                 )
             }
 
-            val requests = checkNotNull(session?.spans?.filter { it.attributes.containsKey(HttpAttributes.HTTP_REQUEST_METHOD.key) })
+            val spans = checkNotNull(session?.data?.spans)
+            val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${requests.size}",
                 4,
@@ -235,9 +189,10 @@ internal class EmbraceInternalInterfaceTest {
             })
 
             val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-            assertEquals("button", tapBreadcrumb.attributes["view.name"])
-            assertEquals("10,99", tapBreadcrumb.attributes["tap.coords"])
-            assertEquals("tap", tapBreadcrumb.attributes["tap.type"])
+            val attrs = checkNotNull(tapBreadcrumb.attributes)
+            assertEquals("button", attrs.findAttributeValue("view.name"))
+            assertEquals("10,99", attrs.findAttributeValue("tap.coords"))
+            assertEquals("tap", attrs.findAttributeValue("tap.type"))
         }
     }
 
@@ -306,15 +261,18 @@ internal class EmbraceInternalInterfaceTest {
                 }
             }
 
-            val spans = checkNotNull(sessionPayload?.spans?.filter { it.name.startsWith("tz-") }?.associateBy { it.name })
+            val unfilteredSpans = checkNotNull(sessionPayload?.data?.spans)
+            val spans = checkNotNull(unfilteredSpans.filter { checkNotNull(it.name).startsWith("tz-") }.associateBy { it.name })
             assertEquals(4, spans.size)
             with(checkNotNull(spans["tz-parent-span"])) {
-                assertEquals("testvalue", attributes["testkey"])
+                assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
             }
             with(checkNotNull(spans["tz-child-span"])) {
-                assertEquals("cool event bro", events[0].name)
-                assertEquals("value", events[0].attributes["key"])
-                assertEquals(StatusCode.ERROR, status)
+                val spanEvent = checkNotNull(events)[0]
+                val spanAttrs = checkNotNull(spanEvent.attributes)
+                assertEquals("cool event bro", spanEvent.name)
+                assertEquals("value", spanAttrs.findAttributeValue("key"))
+                assertEquals(Span.Status.ERROR, status)
             }
             with(checkNotNull(spans["tz-another-span"])) {
                 assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)

@@ -54,17 +54,15 @@ internal class SessionModuleImplTest {
             FakeAndroidServicesModule(),
             essentialServiceModule,
             FakeNativeModule(),
-            FakeDataContainerModule(),
             FakeDeliveryModule(),
-            FakeDataCaptureServiceModule(),
-            FakeCustomerLogModule(),
             workerThreadModule,
             dataSourceModule,
             FakePayloadModule(),
-            FakeAnrModule()
+            FakeDataCaptureServiceModule(),
+            FakeDataContainerModule(),
+            FakeCustomerLogModule()
         )
-        assertNotNull(module.v1PayloadMessageCollator)
-        assertNotNull(module.v2PayloadMessageCollator)
+        assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
@@ -93,17 +91,15 @@ internal class SessionModuleImplTest {
             FakeAndroidServicesModule(),
             essentialServiceModule,
             FakeNativeModule(),
-            FakeDataContainerModule(),
             FakeDeliveryModule(),
-            FakeDataCaptureServiceModule(),
-            FakeCustomerLogModule(),
             workerThreadModule,
             dataSourceModule,
             FakePayloadModule(),
-            FakeAnrModule()
+            FakeDataCaptureServiceModule(),
+            FakeDataContainerModule(),
+            FakeCustomerLogModule()
         )
-        assertNotNull(module.v1PayloadMessageCollator)
-        assertNotNull(module.v2PayloadMessageCollator)
+        assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)

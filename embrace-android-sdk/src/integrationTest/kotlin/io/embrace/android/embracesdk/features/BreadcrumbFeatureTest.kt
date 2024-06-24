@@ -3,8 +3,11 @@ package io.embrace.android.embracesdk.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -25,7 +28,8 @@ internal class BreadcrumbFeatureTest {
                 embrace.addBreadcrumb("Hello, world!")
             })
             val breadcrumb = message.findSessionSpan().findEventOfType(EmbType.System.Breadcrumb)
-            assertEquals("Hello, world!", breadcrumb.attributes["message"])
+            val attrs = checkNotNull(breadcrumb.attributes)
+            assertEquals("Hello, world!", attrs.findAttributeValue("message"))
         }
     }
 }

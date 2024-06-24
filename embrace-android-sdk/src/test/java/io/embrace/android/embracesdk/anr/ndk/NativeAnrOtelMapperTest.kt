@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.anr.ndk
 
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -22,12 +23,12 @@ internal class NativeAnrOtelMapperTest {
     @Before
     fun setUp() {
         service = FakeNativeThreadSamplerService()
-        mapper = NativeAnrOtelMapper(service, EmbraceSerializer())
+        mapper = NativeAnrOtelMapper(service, EmbraceSerializer(), FakeClock())
     }
 
     @Test
     fun `disabled service`() {
-        val disabledMapper = NativeAnrOtelMapper(null, EmbraceSerializer())
+        val disabledMapper = NativeAnrOtelMapper(null, EmbraceSerializer(), FakeClock())
         assertEquals(emptyList<Span>(), disabledMapper.snapshot(false))
     }
 
@@ -75,7 +76,7 @@ internal class NativeAnrOtelMapperTest {
 
         // assert span
         assertEquals("emb_native_thread_blockage", span.name)
-        assertEquals(1000L.millisToNanos(), span.startTimeUnixNano)
+        assertEquals(1000L.millisToNanos(), span.startTimeNanos)
 
         // assert span attrs
         val attrs = checkNotNull(span.attributes)
@@ -89,7 +90,7 @@ internal class NativeAnrOtelMapperTest {
         // assert span event
         val event = checkNotNull(span.events?.single())
         assertEquals("emb_native_thread_blockage_sample", event.name)
-        assertEquals(2000L.millisToNanos(), event.timeUnixNano)
+        assertEquals(2000L.millisToNanos(), event.timestampNanos)
         val eventAttrs = checkNotNull(event.attributes)
         assertEquals("0", eventAttrs.findAttribute("result").data)
         assertEquals("5", eventAttrs.findAttribute("sample_overhead_ms").data)

@@ -4,10 +4,12 @@ import io.embrace.android.embracesdk.concurrency.ExecutionCoordinator
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fixtures.testSessionMessage
-import io.embrace.android.embracesdk.fixtures.testSessionMessage2
-import io.embrace.android.embracesdk.fixtures.testSessionMessageOneMinuteLater
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
+import io.embrace.android.embracesdk.fixtures.testSessionEnvelope2
+import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
+import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -39,103 +41,123 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
     @Test
     fun `concurrent write attempts to the same non-existent session file should lead to last finished persist`() {
+        val type = Envelope.sessionEnvelopeType
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
-            second = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type) },
+            second = {
+                embraceCacheService.cacheObject(FILENAME, testSessionEnvelopeOneMinuteLater, type)
+            },
             firstBlocksSecond = true
         )
 
         assertEquals(
             executionCoordinator.getErrorMessage(),
-            testSessionMessageOneMinuteLater,
-            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)
+            testSessionEnvelopeOneMinuteLater.getSessionId(),
+            embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME, type)?.getSessionId()
         )
     }
 
     @Test
     fun `accessing sessions with different names should not block`() {
-        embraceCacheService.cacheObject(FILENAME, testSessionMessage2, SessionMessage::class.java)
+        val type = Envelope.sessionEnvelopeType
+        embraceCacheService.cacheObject(FILENAME, testSessionEnvelope2, type)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
-            second = { embraceCacheService.loadObject(FILENAME_2, SessionMessage::class.java) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type) },
+            second = { embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME_2, type) },
             firstBlocksSecond = false
         )
     }
 
     @Test
     fun `reading a session should not block other reads to same session`() {
-        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
+        val type = Envelope.sessionEnvelopeType
+        embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
-            second = { embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
+            first = { embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME, type) },
+            second = { embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME, type) },
             firstBlocksSecond = false
         )
     }
 
     @Test
     fun `reads should block writes`() {
-        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
+        val type = Envelope.sessionEnvelopeType
+        embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
-            second = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
+            first = { embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME, type) },
+            second = {
+                embraceCacheService.cacheObject(FILENAME, testSessionEnvelopeOneMinuteLater, type)
+            },
             firstBlocksSecond = true
         )
 
         assertEquals(
             executionCoordinator.getErrorMessage(),
-            testSessionMessageOneMinuteLater,
-            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)
+            testSessionEnvelopeOneMinuteLater.getSessionId(),
+            embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME, type)?.getSessionId()
         )
     }
 
     @Test
     fun `reading a file that is being written to should block and succeed`() {
-        var readSession: SessionMessage? = null
+        var readSession: Envelope<SessionPayload>? = null
+        val type = Envelope.sessionEnvelopeType
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
-            second = { readSession = embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type) },
+            second = { readSession = embraceCacheService.loadObject(FILENAME, type) },
             firstBlocksSecond = true
         )
 
-        assertEquals(executionCoordinator.getErrorMessage(), testSessionMessage, readSession)
+        assertEquals(executionCoordinator.getErrorMessage(), testSessionEnvelope.getSessionId(), readSession?.getSessionId())
     }
 
     @Test
     fun `reading a file that is being rewritten to should block and succeed`() {
-        var readSession: SessionMessage? = null
-        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
+        var readSession: Envelope<SessionPayload>? = null
+        val type = Envelope.sessionEnvelopeType
+        embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
-            second = { readSession = embraceCacheService.loadObject(FILENAME, SessionMessage::class.java) },
+            first = {
+                embraceCacheService.cacheObject(FILENAME, testSessionEnvelopeOneMinuteLater, type)
+            },
+            second = { readSession = embraceCacheService.loadObject(FILENAME, type) },
             firstBlocksSecond = true
         )
 
-        assertEquals(executionCoordinator.getErrorMessage(), testSessionMessageOneMinuteLater, readSession)
+        assertEquals(
+            executionCoordinator.getErrorMessage(),
+            testSessionEnvelopeOneMinuteLater.getSessionId(),
+            readSession?.getSessionId()
+        )
     }
 
     @Test
     fun `interrupting a session write should not leave a file`() {
+        val type = Envelope.sessionEnvelopeType
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java) },
+            first = { embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type) },
             second = { executionCoordinator.shutdownFirstThread() },
             firstBlocksSecond = false,
             firstOperationFails = true
         )
 
-        assertNull(embraceCacheService.loadObject(FILENAME, SessionMessage::class.java))
+        assertNull(embraceCacheService.loadObject(FILENAME, type))
     }
 
     @Test
     fun `interrupting a session rewrite should not overwrite the file`() {
-        embraceCacheService.cacheObject(FILENAME, testSessionMessage, SessionMessage::class.java)
+        val type = Envelope.sessionEnvelopeType
+        embraceCacheService.cacheObject(FILENAME, testSessionEnvelope, type)
 
         executionCoordinator.executeOperations(
-            first = { embraceCacheService.cacheObject(FILENAME, testSessionMessageOneMinuteLater, SessionMessage::class.java) },
+            first = {
+                embraceCacheService.cacheObject(FILENAME, testSessionEnvelopeOneMinuteLater, type)
+            },
             second = { executionCoordinator.shutdownFirstThread() },
             firstBlocksSecond = false,
             firstOperationFails = true
@@ -143,8 +165,8 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
 
         assertEquals(
             executionCoordinator.getErrorMessage(),
-            testSessionMessage,
-            embraceCacheService.loadObject(FILENAME, SessionMessage::class.java)
+            testSessionEnvelope.getSessionId(),
+            embraceCacheService.loadObject<Envelope<SessionPayload>>(FILENAME, type)?.getSessionId()
         )
     }
 

@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.trace.SdkTracerProvider
@@ -86,10 +87,15 @@ internal class EmbraceSpanImplTest {
             assertNotNull(traceId)
             assertNotNull(spanId)
             assertTrue(isRecording)
-            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs)
+            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, expectedEndTimeMs = expectedStartTimeMs)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
-            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, eventCount = 1, expectedCustomAttributeCount = 1)
+            assertSnapshot(
+                expectedStartTimeMs = expectedStartTimeMs,
+                expectedEndTimeMs = expectedStartTimeMs,
+                eventCount = 1,
+                expectedCustomAttributeCount = 1
+            )
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
         }
@@ -202,7 +208,7 @@ internal class EmbraceSpanImplTest {
             with(events.first()) {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
                 checkNotNull(attributes)
-                assertEquals(timestampNanos, timeUnixNano)
+                assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     IllegalStateException::class.java.canonicalName,
                     attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
@@ -216,7 +222,7 @@ internal class EmbraceSpanImplTest {
             with(events.last()) {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
                 checkNotNull(attributes)
-                assertEquals(timestampNanos, timeUnixNano)
+                assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     RuntimeException::class.java.canonicalName,
                     attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
@@ -333,16 +339,16 @@ internal class EmbraceSpanImplTest {
 
             assertEquals(traceId, snapshot.traceId)
             assertEquals(spanId, snapshot.spanId)
-            assertNull(snapshot.parentSpanId)
+            assertEquals(SpanId.getInvalid(), snapshot.parentSpanId)
             assertEquals(EXPECTED_SPAN_NAME.toEmbraceObjectName(), snapshot.name)
             assertTrue(hasFixedAttribute(EmbType.System.LowPower))
             assertTrue(hasFixedAttribute(PrivateSpan))
-            assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeUnixNano)
-            assertNull(snapshot.endTimeUnixNano)
+            assertEquals(expectedStartTimeMs.millisToNanos(), snapshot.startTimeNanos)
+            assertEquals(Span.Status.UNSET, snapshot.status)
 
             val snapshotEvent = checkNotNull(snapshot.events).single()
             assertEquals(EXPECTED_EVENT_NAME, snapshotEvent.name)
-            assertEquals(expectedEventTime.millisToNanos(), snapshotEvent.timeUnixNano)
+            assertEquals(expectedEventTime.millisToNanos(), snapshotEvent.timestampNanos)
 
             val eventAttributes = checkNotNull(snapshotEvent.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, eventAttributes.key)
@@ -372,7 +378,7 @@ internal class EmbraceSpanImplTest {
         val timePassedIn = fakeClock.tick()
         fakeClock.tick()
         assertTrue(embraceSpan.start(startTimeMs = timePassedIn))
-        assertEquals(timePassedIn, embraceSpan.snapshot()?.startTimeUnixNano?.nanosToMillis())
+        assertEquals(timePassedIn, embraceSpan.snapshot()?.startTimeNanos?.nanosToMillis())
     }
 
     @Test
@@ -393,7 +399,7 @@ internal class EmbraceSpanImplTest {
         )
         fakeClock.tick()
         assertTrue(embraceSpan.start())
-        assertEquals(timeOnSpanBuilder, embraceSpan.snapshot()?.startTimeUnixNano?.nanosToMillis())
+        assertEquals(timeOnSpanBuilder, embraceSpan.snapshot()?.startTimeNanos?.nanosToMillis())
     }
 
     @Test
@@ -430,8 +436,8 @@ internal class EmbraceSpanImplTest {
         isPrivate: Boolean = false,
     ) {
         with(checkNotNull(snapshot())) {
-            assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
-            assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
+            assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+            assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertEquals(expectedStatus, status)
             assertEquals(eventCount, events?.size)
             assertTrue(hasFixedAttribute(expectedType))

@@ -6,6 +6,10 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.opentelemetry.EmbSpan
@@ -21,6 +25,7 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
+import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -36,13 +41,12 @@ import org.robolectric.annotation.Config
 @Config(sdk = [UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class ExternalTracerTest {
+
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule(
-        harnessSupplier = {
-            IntegrationTestRule.newHarness(startImmediately = false)
-        }
-    )
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        IntegrationTestRule.Harness(startImmediately = false)
+    }
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embOpenTelemetry: OpenTelemetry
@@ -109,7 +113,7 @@ internal class ExternalTracerTest {
                 checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
                 checkNotNull(wrappedSpan).end()
             }
-            val spans = checkNotNull(sessionMessage?.spans)
+            val spans = checkNotNull(sessionMessage?.data?.spans)
             val recordedSpans = spans.associateBy { it.name }
             val parent = checkNotNull(recordedSpans["external-span"])
             val child = checkNotNull(recordedSpans["child-span"])
@@ -136,20 +140,18 @@ internal class ExternalTracerTest {
                 span = child,
                 expectedStartTimeMs = checkNotNull(startTimeMs),
                 expectedEndTimeMs = checkNotNull(childEndTimeMs),
-                expectedParentId = parent.spanId,
-                expectedStatus = StatusCode.ERROR,
+                expectedParentId = checkNotNull(parent.spanId),
+                expectedStatus = io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR,
                 expectedErrorCode = ErrorCode.FAILURE,
                 expectedEvents = listOf(
-                    checkNotNull(
-                        EmbraceSpanEvent.create(
-                            name = "exception",
-                            timestampMs = checkNotNull(startTimeMs),
-                            attributes = mapOf(
-                                ExceptionIncubatingAttributes.EXCEPTION_TYPE.key to checkNotNull(RuntimeException::class.java.canonicalName),
-                                ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key to "bah",
-                                ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key to checkNotNull(stacktrace),
-                                "bad" to "yes",
-                            )
+                    SpanEvent(
+                        name = "exception",
+                        timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
+                        attributes = listOf(
+                            Attribute("bad", "yes"),
+                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key, "bah"),
+                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
+                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
                         )
                     )
                 ),
@@ -157,8 +159,8 @@ internal class ExternalTracerTest {
             )
 
             assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))
-            val exportedSpan = spanExporter.exportedSpans.single { it.name == "external-span" }
-            assertEquals(parent, EmbraceSpanData(exportedSpan))
+            val exportedSpan: SpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
+            assertEquals(parent.toOldPayload(), EmbraceSpanData(exportedSpan))
             with(exportedSpan.instrumentationScopeInfo) {
                 assertEquals("external-tracer", name)
                 assertEquals("1.0.0", version)

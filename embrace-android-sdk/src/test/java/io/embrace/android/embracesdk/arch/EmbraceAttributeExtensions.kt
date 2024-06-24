@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.arch
 
-import io.embrace.android.embracesdk.arch.destination.LogEventData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
-import io.embrace.android.embracesdk.arch.destination.StartSpanData
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.KeySpan
 import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.fakes.LogEventData
+import io.embrace.android.embracesdk.fakes.SpanEventData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
@@ -99,11 +98,6 @@ internal fun Span.assertSuccessful() {
  * Assert [SpanEventData] is of type [telemetryType]
  */
 internal fun SpanEventData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)
-
-/**
- * Assert [StartSpanData] is of type [telemetryType]
- */
-internal fun StartSpanData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
  * Assert [LogEventData] is of type [telemetryType]

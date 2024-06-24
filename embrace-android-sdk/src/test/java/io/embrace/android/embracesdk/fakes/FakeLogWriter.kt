@@ -1,21 +1,14 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.LogEventData
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.destination.LogWriter
+import io.embrace.android.embracesdk.arch.schema.SchemaType
 
 internal class FakeLogWriter : LogWriter {
 
     val logEvents = mutableListOf<LogEventData>()
 
-    override fun <T> addLog(log: T, isPrivate: Boolean, mapper: (T.() -> LogEventData)?) {
-        val logEvent = if (log is LogEventData) {
-            log
-        } else if (mapper != null) {
-            log.mapper()
-        } else {
-            return
-        }
-
-        logEvents.add(logEvent)
+    override fun addLog(schemaType: SchemaType, severity: Severity, message: String, isPrivate: Boolean) {
+        logEvents.add(LogEventData(schemaType, severity, message))
     }
 }

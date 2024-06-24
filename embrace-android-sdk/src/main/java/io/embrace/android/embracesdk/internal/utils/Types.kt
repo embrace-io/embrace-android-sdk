@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AnrModule
@@ -88,6 +89,7 @@ internal typealias EssentialServiceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
+    customerLogModuleProvider: Provider<CustomerLogModule>,
     dataSourceModuleProvider: Provider<DataSourceModule>,
     configServiceProvider: Provider<ConfigService?>
 ) -> EssentialServiceModule
@@ -192,14 +194,13 @@ internal typealias SessionModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
-    dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
-    customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadModule: PayloadModule,
-    anrModule: AnrModule
+    dataCaptureServiceModule: DataCaptureServiceModule,
+    dataContainerModule: DataContainerModule,
+    customerLogModule: CustomerLogModule
 ) -> SessionModule
 
 /**
@@ -210,11 +211,9 @@ internal typealias CrashModuleSupplier = (
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    deliveryModule: DeliveryModule,
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    dataContainerModule: DataContainerModule,
     androidServicesModule: AndroidServicesModule,
     logModule: CustomerLogModule,
 ) -> CrashModule
@@ -231,7 +230,9 @@ internal typealias PayloadModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
+    anrModule: AnrModule,
     sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
+    webViewServiceProvider: Provider<WebViewService>,
 ) -> PayloadModule
 
 /**

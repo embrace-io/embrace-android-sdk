@@ -24,8 +24,8 @@ internal class SpanMapperTest {
         assertEquals(input.spanId, output.spanId)
         assertEquals(input.parentSpanId, output.parentSpanId)
         assertEquals(input.name, output.name)
-        assertEquals(input.startTimeNanos, output.startTimeUnixNano)
-        assertEquals(input.endTimeNanos, output.endTimeUnixNano)
+        assertEquals(input.startTimeNanos, output.startTimeNanos)
+        assertEquals(input.endTimeNanos, output.endTimeNanos)
         assertEquals(input.status.name, checkNotNull(output.status).name)
 
         // validate event copied
@@ -46,15 +46,15 @@ internal class SpanMapperTest {
     @Test
     fun `terminating span snapshot works as expected`() {
         val snapshot = EmbraceSpanData(FakeSpanData.perfSpanSnapshot).toNewPayload()
-        val terminationTimeMs = snapshot.startTimeUnixNano!!.nanosToMillis() + 60000L
+        val terminationTimeMs = snapshot.startTimeNanos!!.nanosToMillis() + 60000L
         val failedSpan = snapshot.toFailedSpan(terminationTimeMs)
 
         assertEquals(snapshot.traceId, failedSpan.traceId)
         assertEquals(snapshot.spanId, failedSpan.spanId)
         assertEquals(snapshot.parentSpanId, failedSpan.parentSpanId)
         assertEquals(snapshot.name, failedSpan.name)
-        assertEquals(snapshot.startTimeUnixNano, failedSpan.startTimeUnixNano)
-        assertEquals(terminationTimeMs, failedSpan.endTimeUnixNano?.nanosToMillis())
+        assertEquals(snapshot.startTimeNanos, failedSpan.startTimeNanos)
+        assertEquals(terminationTimeMs, failedSpan.endTimeNanos?.nanosToMillis())
         assertEquals(Span.Status.ERROR, checkNotNull(failedSpan.status))
         assertEquals(snapshot.events?.single(), failedSpan.events?.single())
         failedSpan.assertError(ErrorCode.FAILURE)

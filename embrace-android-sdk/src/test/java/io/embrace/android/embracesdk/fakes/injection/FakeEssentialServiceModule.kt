@@ -2,12 +2,9 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.arch.destination.LogWriter
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.capture.connectivity.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.capture.orientation.NoOpOrientationService
-import io.embrace.android.embracesdk.capture.orientation.OrientationService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiService
@@ -30,6 +27,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.NoOpNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModule
@@ -50,7 +48,6 @@ internal class FakeEssentialServiceModule(
     override val configService: ConfigService = FakeConfigService(),
     override val memoryCleanerService: MemoryCleanerService = FakeMemoryCleanerService(),
     override val gatingService: GatingService = FakeGatingService(),
-    override val orientationService: OrientationService = NoOpOrientationService(),
     override val apiClient: ApiClient = FakeApiClient(),
     override val userService: UserService = FakeUserService(),
     override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(EmbLoggerImpl()),

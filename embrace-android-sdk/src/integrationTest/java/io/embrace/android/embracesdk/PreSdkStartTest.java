@@ -15,9 +15,7 @@ import org.junit.runner.RunWith;
 public class PreSdkStartTest {
 
     @Rule
-    public IntegrationTestRule testRule = new IntegrationTestRule(
-        () -> IntegrationTestRule.Companion.newHarness(false)
-    );
+    public IntegrationTestRule testRule = new IntegrationTestRule(() -> new IntegrationTestRule.Harness(0, false));
 
     @NonNull
     private final Embrace embrace = testRule.getEmbrace();

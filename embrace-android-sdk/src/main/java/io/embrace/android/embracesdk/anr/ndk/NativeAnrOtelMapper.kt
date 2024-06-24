@@ -4,6 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.arch.DataCaptureServiceOtelConverter
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -16,7 +17,8 @@ import io.opentelemetry.sdk.trace.IdGenerator
 
 internal class NativeAnrOtelMapper(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val serializer: EmbraceSerializer
+    private val serializer: EmbraceSerializer,
+    private val clock: Clock
 ) : DataCaptureServiceOtelConverter {
 
     override fun snapshot(isFinalPayload: Boolean): List<Span> {
@@ -34,7 +36,8 @@ internal class NativeAnrOtelMapper(
                 spanId = IdGenerator.random().generateSpanId(),
                 parentSpanId = SpanId.getInvalid(),
                 name = "emb_native_thread_blockage",
-                startTimeUnixNano = interval.threadBlockedTimestamp?.millisToNanos(),
+                startTimeNanos = interval.threadBlockedTimestamp?.millisToNanos(),
+                endTimeNanos = clock.now().millisToNanos(),
                 status = Span.Status.UNSET,
                 attributes = attrs,
                 events = events
@@ -95,7 +98,7 @@ internal class NativeAnrOtelMapper(
         }
         return SpanEvent(
             name = "emb_native_thread_blockage_sample",
-            timeUnixNano = sample.sampleTimestamp?.millisToNanos(),
+            timestampNanos = sample.sampleTimestamp?.millisToNanos(),
             attributes = attrs
         )
     }

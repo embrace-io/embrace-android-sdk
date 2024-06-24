@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.anr
 
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
+import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -14,7 +16,6 @@ import io.embrace.android.embracesdk.payload.extensions.clearSamples
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -70,6 +71,8 @@ internal class AnrOtelMapperTest {
 
     private val clearedInterval = completedInterval.clearSamples()
 
+    private lateinit var clock: FakeClock
+
     private val intervalWithLimitedSample = completedInterval.copy(
         anrSampleList = AnrSampleList(
             List(100) { k ->
@@ -85,7 +88,8 @@ internal class AnrOtelMapperTest {
     @Before
     fun setUp() {
         anrService = FakeAnrService()
-        mapper = AnrOtelMapper(anrService)
+        clock = FakeClock()
+        mapper = AnrOtelMapper(anrService, clock)
     }
 
     @Test
@@ -111,7 +115,7 @@ internal class AnrOtelMapperTest {
         val spans = mapper.snapshot(false)
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
-        assertEquals(END_TIME_MS, span.endTimeUnixNano?.nanosToMillis())
+        assertEquals(END_TIME_MS, span.endTimeNanos?.nanosToMillis())
         assertEquals("0", span.attributes?.findAttribute("interval_code")?.data)
 
         // validate samples
@@ -128,7 +132,7 @@ internal class AnrOtelMapperTest {
         val span = spans.single()
         span.assertCommonOtelCharacteristics()
 
-        assertNull(span.endTimeUnixNano)
+        assertEquals(clock.now().millisToNanos(), span.endTimeNanos)
         val attributes = checkNotNull(span.attributes)
         val lastKnownTime =
             checkNotNull(attributes.findAttribute("last_known_time_unix_nano").data)
@@ -176,7 +180,7 @@ internal class AnrOtelMapperTest {
         assertNotNull(spanId)
         assertEquals(SpanId.getInvalid(), parentSpanId)
         assertEquals("emb-thread-blockage", name)
-        assertEquals(START_TIME_MS, startTimeUnixNano?.nanosToMillis())
+        assertEquals(START_TIME_MS, startTimeNanos?.nanosToMillis())
         assertSuccessful()
         assertEquals("perf.thread_blockage", attributes?.findAttribute("emb.type")?.data)
     }
@@ -184,7 +188,7 @@ internal class AnrOtelMapperTest {
     private fun assertSampleMapped(event: SpanEvent, sample: AnrSample) {
         assertEquals("perf.thread_blockage_sample", event.name)
         assertEquals("perf.thread_blockage_sample", event.attributes?.findAttribute("emb.type")?.data)
-        assertEquals(sample.timestamp, checkNotNull(event.timeUnixNano).nanosToMillis())
+        assertEquals(sample.timestamp, checkNotNull(event.timestampNanos).nanosToMillis())
 
         val attrs = checkNotNull(event.attributes)
         val overhead = attrs.findAttribute("sample_overhead").data

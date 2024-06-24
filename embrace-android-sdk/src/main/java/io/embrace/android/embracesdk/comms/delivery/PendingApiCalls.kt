@@ -39,9 +39,9 @@ internal class PendingApiCalls(
      */
     fun pollNextPendingApiCall(): PendingApiCall? {
         // Return a session API call if it is not rate limited and it is not empty.
-        pendingApiCallsMap[Endpoint.SESSIONS]?.let { sessionsQueue ->
+        pendingApiCallsMap[Endpoint.SESSIONS_V2]?.let { sessionsQueue ->
             synchronized(sessionsQueue) {
-                if (sessionsQueue.hasPendingApiCallsToSend(Endpoint.SESSIONS)) {
+                if (sessionsQueue.hasPendingApiCallsToSend(Endpoint.SESSIONS_V2)) {
                     return sessionsQueue.removeFirstOrNull()
                 }
             }
@@ -87,7 +87,6 @@ internal class PendingApiCalls(
     private fun Endpoint.getMaxPendingApiCalls(): Int {
         return when (this) {
             Endpoint.EVENTS -> 100
-            Endpoint.BLOBS -> 50
             Endpoint.LOGGING -> 100
             Endpoint.LOGS -> 10
             Endpoint.NETWORK -> 50

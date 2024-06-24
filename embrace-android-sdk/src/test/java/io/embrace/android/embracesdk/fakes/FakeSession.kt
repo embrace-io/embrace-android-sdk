@@ -1,78 +1,65 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fixtures.testSpan
-import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
-import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.Companion.APPLICATION_STATE_FOREGROUND
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.payload.ApplicationState
+import io.embrace.android.embracesdk.payload.LifeEventType
+import io.embrace.android.embracesdk.payload.SessionZygote
 
-internal fun fakeSession(
+internal fun fakeSessionZygote() = SessionZygote(
+    sessionId = "fakeSessionId",
+    startTime = 160000000000L,
+    number = 1,
+    appState = ApplicationState.FOREGROUND,
+    isColdStart = true,
+    startType = LifeEventType.STATE
+)
+
+internal fun fakeSessionEnvelope(
     sessionId: String = "fakeSessionId",
     startMs: Long = 160000000000L,
-    number: Int = 1,
-    properties: Map<String, String> = mapOf()
-): Session = Session(
-    sessionId = sessionId,
-    startTime = startMs,
-    number = number,
-    appState = APPLICATION_STATE_FOREGROUND,
-    isColdStart = true,
-    startType = Session.LifeEventType.STATE,
-    properties = properties,
-    messageType = Session.MESSAGE_TYPE_END
-)
+    endMs: Long = 161000400000L
+): Envelope<SessionPayload> {
+    val sessionSpan = Span(
+        startTimeNanos = startMs.millisToNanos(),
+        endTimeNanos = endMs.millisToNanos(),
+        attributes = listOf(
+            Attribute("emb.type", EmbType.Ux.Session.value),
+            Attribute(embSessionId.name, sessionId)
+        )
+    )
+    val spans = listOf(testSpan, sessionSpan)
+    val spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot())
 
-internal fun fakeV1SessionMessage(session: Session = fakeSession()): SessionMessage = SessionMessage(
-    session = session
-)
+    return Envelope(
+        data = SessionPayload(
+            spans = spans,
+            spanSnapshots = spanSnapshots
+        )
+    )
+}
 
-internal fun fakeV1EndedSessionMessage(
-    session: Session = fakeSession(),
-    spans: List<EmbraceSpanData> = listOfNotNull(testSpan),
-    spanSnapshots: List<EmbraceSpanData> = listOfNotNull(),
-): SessionMessage = SessionMessage(
-    session = session.copy(endTime = 160000500000L),
-    spans = spans,
-    spanSnapshots = spanSnapshots,
-)
+internal fun Envelope<SessionPayload>.mutateSessionSpan(action: (original: Span) -> Span): Envelope<SessionPayload> {
+    val spans = data.spans
+    val sessionSpan = checkNotNull(getSessionSpan())
+    return copy(
+        data = data.copy(
+            spans?.minus(sessionSpan)?.plus(action(sessionSpan))
+        )
+    )
+}
 
-internal fun fakeV1EndedSessionMessageWithSnapshot(): SessionMessage = SessionMessage(
-    session = fakeSession().copy(
-        sessionId = "fakeSessionWithSnapshot",
-        startTime = 161000000000L,
-        endTime = 161000400000L
-    ),
-    spans = listOfNotNull(testSpan),
-    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
-)
+internal fun fakeCachedSessionEnvelopeWithTerminationTime(): Envelope<SessionPayload> {
+    return fakeSessionEnvelope(sessionId = "fakeSessionWithTerminationTime")
+}
 
-internal fun fakeCachedV1SessionMessageWithTerminationTime(): SessionMessage = SessionMessage(
-    session = fakeSession().copy(
-        sessionId = "fakeSessionWithTerminationTime",
-        startTime = 161000000000L,
-        terminationTime = 161000500000L
-    ),
-    spans = listOfNotNull(testSpan),
-    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
-)
-
-internal fun fakeCachedV1SessionMessageWithHeartbeatTime(): SessionMessage = SessionMessage(
-    session = fakeSession().copy(
-        sessionId = "fakeSessionWithHeartbeat",
-        startTime = 161000000000L,
-        lastHeartbeatTime = 161000600000L
-    ),
-    spans = listOfNotNull(testSpan),
-    spanSnapshots = listOfNotNull(FakePersistableEmbraceSpan.started().snapshot()?.toOldPayload()),
-)
-
-internal fun fakeV2SessionMessage(): SessionMessage = SessionMessage(
-    session = fakeSession(),
-    metadata = EnvelopeMetadata(),
-    resource = EnvelopeResource(),
-    data = SessionPayload()
-)
+internal fun fakeCachedSessionEnvelopeWithHeartbeatTime(): Envelope<SessionPayload> {
+    return fakeSessionEnvelope(sessionId = "fakeSessionWithHeartbeat")
+}

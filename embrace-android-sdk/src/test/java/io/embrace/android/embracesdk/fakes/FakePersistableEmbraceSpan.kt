@@ -136,8 +136,8 @@ internal class FakePersistableEmbraceSpan(
                 spanId = spanId,
                 parentSpanId = parent?.spanId,
                 name = name,
-                startTimeUnixNano = spanStartTimeMs?.millisToNanos(),
-                endTimeUnixNano = spanEndTimeMs?.millisToNanos(),
+                startTimeNanos = spanStartTimeMs?.millisToNanos(),
+                endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = events.map(EmbraceSpanEvent::toNewPayload),
                 attributes = attributes.toNewPayload()

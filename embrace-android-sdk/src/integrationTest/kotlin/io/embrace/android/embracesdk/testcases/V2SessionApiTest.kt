@@ -3,16 +3,14 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.toMap
 import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,13 +21,6 @@ internal class V2SessionApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
-
-    @Before
-    fun setUp() {
-        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-            RemoteConfig(oTelConfig = OTelRemoteConfig(isDevEnabled = true))
-        }
-    }
 
     /**
      * Verifies that a session end message is sent.
@@ -51,19 +42,19 @@ internal class V2SessionApiTest {
             validatePayloadAgainstGoldenFile(message, "v2_session_expected.json")
 
             // validate snapshots separately, as the JSON diff is tricky to debug
-            val snapshots = checkNotNull(message.spanSnapshots)
+            val snapshots = checkNotNull(message.data.spanSnapshots)
             assertEquals(2, snapshots.size)
 
             // validate network status span
             val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
-            assertEquals(startTime, networkStatusSpan.startTimeNanos.nanosToMillis())
-            assertEquals("sys.network_status", networkStatusSpan.attributes["emb.type"])
+            assertEquals(startTime, networkStatusSpan.startTimeNanos?.nanosToMillis())
+            assertEquals("sys.network_status", networkStatusSpan.attributes?.findAttributeValue("emb.type"))
 
             // validate session span
             val sessionSpan = snapshots.single { it.name == "emb-session" }
-            assertEquals(startTime, sessionSpan.startTimeNanos.nanosToMillis())
-            assertNotNull(sessionSpan.attributes["emb.session_id"])
-            val attrs = sessionSpan.attributes.filterKeys { it != "emb.session_id" }
+            assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
+            assertNotNull(sessionSpan.attributes?.findAttributeValue("emb.session_id"))
+            val attrs = checkNotNull(sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap())
 
             val expected = mapOf(
                 "emb.cold_start" to "true",
@@ -74,7 +65,9 @@ internal class V2SessionApiTest {
                 "emb.session_end_type" to "state",
                 "emb.heartbeat_time_unix_nano" to "${startTime.millisToNanos()}",
                 "emb.session_number" to "1",
-                "emb.type" to "ux.session"
+                "emb.type" to "ux.session",
+                "emb.error_log_count" to "0",
+                "emb.disk_free_bytes" to "0",
             )
             assertEquals(expected, attrs)
         }

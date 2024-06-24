@@ -4,18 +4,15 @@ import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeSession
+import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.fakes.fakeV1SessionMessage
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.SessionMessage
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -30,6 +27,7 @@ internal class EmbraceGatingServiceV2PayloadTest {
 
     private lateinit var gatingService: EmbraceGatingService
     private lateinit var configService: FakeConfigService
+    private lateinit var logService: FakeLogService
     private lateinit var sessionBehavior: SessionBehavior
     private var cfg: RemoteConfig? = RemoteConfig()
 
@@ -37,12 +35,13 @@ internal class EmbraceGatingServiceV2PayloadTest {
     fun setUp() {
         sessionBehavior = fakeSessionBehavior { cfg }
         configService = FakeConfigService(sessionBehavior = fakeSessionBehavior { cfg })
-        gatingService = EmbraceGatingService(configService, EmbLoggerImpl())
+        logService = FakeLogService()
+        gatingService = EmbraceGatingService(configService, logService, EmbLoggerImpl())
     }
 
     @Test
     fun `sessions are not gated by default`() {
-        val result = gatingService.gateSessionEnvelope(fakeV1SessionMessage(), envelope)
+        val result = gatingService.gateSessionEnvelope(false, envelope)
         assertNotNull(checkNotNull(result.metadata).personas)
     }
 
@@ -52,13 +51,9 @@ internal class EmbraceGatingServiceV2PayloadTest {
             setOf(),
             setOf(SessionGatingKeys.FULL_SESSION_ERROR_LOGS)
         )
-        val sessionMessage = SessionMessage(
-            fakeSession().copy(
-                errorLogIds = listOf("id1"),
-            )
-        )
+        logService.errorLogIds = listOf("id1")
         // result shouldn't be sanitized.
-        val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
+        val result = gatingService.gateSessionEnvelope(false, envelope)
         assertNotNull(checkNotNull(result.metadata).personas)
     }
 
@@ -68,28 +63,10 @@ internal class EmbraceGatingServiceV2PayloadTest {
             setOf(),
             setOf(SessionGatingKeys.FULL_SESSION_ERROR_LOGS)
         )
-        val sessionMessage = SessionMessage(
-            fakeSession().copy(
-                crashReportId = "crashReportId",
-            )
-        )
+
         // result shouldn't be sanitized.
-        val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
+        val result = gatingService.gateSessionEnvelope(true, envelope)
         assertNotNull(checkNotNull(result.metadata).personas)
-    }
-
-    @Test
-    fun `regular sessions are gated`() {
-        val session = fakeSession().copy(
-            properties = mapOf("key" to "value")
-        )
-        cfg = buildCustomRemoteConfig(setOf(), null)
-
-        // only check for session properties. Other assertions should go in OtelSessionGatingTest
-        // as it's more comprehensive than this unit test.
-        val sessionMessage = SessionMessage(session)
-        val result = gatingService.gateSessionEnvelope(sessionMessage, envelope)
-        assertNull(checkNotNull(result.metadata).personas)
     }
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>?) =

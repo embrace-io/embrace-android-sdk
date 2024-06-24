@@ -59,7 +59,7 @@ internal class EmbSpanTest {
             val stopTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(fakeClock.tickSecond())
             end(stopTimeSeconds, TimeUnit.SECONDS)
             assertFalse(isRecording)
-            assertEquals(TimeUnit.SECONDS.toNanos(stopTimeSeconds), fakeEmbraceSpan.snapshot()?.endTimeUnixNano)
+            assertEquals(TimeUnit.SECONDS.toNanos(stopTimeSeconds), fakeEmbraceSpan.snapshot()?.endTimeNanos)
         }
     }
 

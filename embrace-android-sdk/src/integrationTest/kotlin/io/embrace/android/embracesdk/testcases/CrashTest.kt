@@ -4,18 +4,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.config.remote.OTelRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeOTelBehavior
-import io.embrace.android.embracesdk.findLogAttribute
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.verifySessionHappened
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -28,6 +26,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class CrashTest {
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
@@ -38,9 +37,6 @@ internal class CrashTest {
     @Before
     fun setup() {
         assertTrue(testRule.harness.getSentSessions().isEmpty())
-        testRule.harness.overriddenConfigService.oTelBehavior = fakeOTelBehavior {
-            RemoteConfig(oTelConfig = OTelRemoteConfig(isBetaEnabled = true))
-        }
     }
 
     @Test
@@ -50,7 +46,7 @@ internal class CrashTest {
             handler.uncaughtException(Thread.currentThread(), testException)
         }
 
-        val log = testRule.harness.getLastSentLog()
+        val log = checkNotNull(testRule.harness.getLastSentLog())
         assertOtelLogReceived(
             log,
             expectedMessage = "",
@@ -65,14 +61,15 @@ internal class CrashTest {
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
-        assertEquals("1", log?.findLogAttribute("emb.android.crash_number"))
-        assertEquals(expectedExceptionCause, log?.findLogAttribute("emb.android.crash.exception_cause"))
-        assertNotNull(log?.findLogAttribute("emb.android.threads"))
+        val attrs = checkNotNull(log.attributes)
+        assertEquals("1", attrs.findAttributeValue("emb.android.crash_number"))
+        assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
+        assertNotNull(attrs.findAttributeValue("emb.android.threads"))
 
         val message = checkNotNull(testRule.harness.getLastSentSession())
-        verifySessionHappened(message)
-        assertNotNull(message.session.crashReportId)
-        assertEquals(message.session.crashReportId, log?.findLogAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key))
+        val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+        assertNotNull(crashId)
+        assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
     @Test
@@ -92,7 +89,7 @@ internal class CrashTest {
             }
         }
 
-        val log = testRule.harness.getLastSentLog()
+        val log = checkNotNull(testRule.harness.getLastSentLog())
         assertOtelLogReceived(
             log,
             expectedMessage = "",
@@ -107,14 +104,15 @@ internal class CrashTest {
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
         val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
-        assertEquals(expectedJsException, log?.findLogAttribute("emb.android.react_native_crash.js_exception"))
-        assertEquals("1", log?.findLogAttribute("emb.android.crash_number"))
-        assertEquals(expectedExceptionCause, log?.findLogAttribute("emb.android.crash.exception_cause"))
-        assertNotNull(log?.findLogAttribute("emb.android.threads"))
+        val attrs = checkNotNull(log.attributes)
+        assertEquals(expectedJsException, attrs.findAttributeValue("emb.android.react_native_crash.js_exception"))
+        assertEquals("1", attrs.findAttributeValue("emb.android.crash_number"))
+        assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
+        assertNotNull(attrs.findAttributeValue("emb.android.threads"))
 
         val message = checkNotNull(testRule.harness.getLastSentSession())
-        verifySessionHappened(message)
-        assertNotNull(message.session.crashReportId)
-        assertEquals(message.session.crashReportId, log?.findLogAttribute(LogIncubatingAttributes.LOG_RECORD_UID.key))
+        val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+        assertNotNull(crashId)
+        assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 }

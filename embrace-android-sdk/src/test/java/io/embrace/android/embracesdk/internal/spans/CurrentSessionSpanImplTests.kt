@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.destination.SpanEventData
 import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
@@ -14,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -56,6 +56,19 @@ internal class CurrentSessionSpanImplTests {
             assertNotNull(spanService.createSpan(name = "spanzzz$it", internal = false))
         }
         assertNull(spanService.createSpan(name = "failed-span", internal = false))
+    }
+
+    @Test
+    fun `check trace limits with maximum internal not started traces`() {
+        repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
+            assertNotNull(spanService.createSpan(name = "spanzzz$it", internal = false))
+        }
+        assertNull(spanService.createSpan(name = "failed-span", internal = false))
+
+        repeat(SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION) {
+            assertNotNull(spanService.createSpan(name = "internal$it"))
+        }
+        assertNull(spanService.createSpan(name = "failed-span"))
     }
 
     @Test
@@ -217,7 +230,7 @@ internal class CurrentSessionSpanImplTests {
         val flushedSpans = currentSessionSpan.endSession(AppTerminationCause.Crash).associateBy { it.name }
 
         assertEmbraceSpanData(
-            span = flushedSpans["emb-session"],
+            span = flushedSpans["emb-session"]?.toNewPayload(),
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = SpanId.getInvalid(),
@@ -230,7 +243,7 @@ internal class CurrentSessionSpanImplTests {
         )
 
         assertEmbraceSpanData(
-            span = flushedSpans[crashedSpanName],
+            span = flushedSpans[crashedSpanName]?.toNewPayload(),
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = SpanId.getInvalid(),
@@ -273,22 +286,17 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `add event forwarded to span`() {
-        currentSessionSpan.addEvent("test-event") {
-            SpanEventData(SchemaType.Breadcrumb(this), 1000L)
-        }
+        currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L)
         val span = currentSessionSpan.endSession(null).single()
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        val testEvent = span.findEventOfType(EmbType.System.Breadcrumb)
-        assertEquals(1000, testEvent.timestampNanos.nanosToMillis())
-        assertEquals(
-            mapOf(
-                EmbType.System.Breadcrumb.toEmbraceKeyValuePair(),
-                "message" to "test-event"
-            ),
-            testEvent.attributes
-        )
+        val testEvent = span.toNewPayload().findEventOfType(EmbType.System.Breadcrumb)
+        assertEquals(1000L, testEvent.timestampNanos?.nanosToMillis())
+
+        val attrs = checkNotNull(testEvent.attributes)
+        assertEquals("test-event", attrs.single { it.key == "message" }.data)
+        assertEquals("sys.breadcrumb", attrs.single { it.key == "emb.type" }.data)
     }
 
     @Test

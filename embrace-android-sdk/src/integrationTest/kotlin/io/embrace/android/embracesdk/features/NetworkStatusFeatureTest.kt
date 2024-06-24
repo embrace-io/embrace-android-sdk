@@ -4,10 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -40,20 +40,22 @@ internal class NetworkStatusFeatureTest {
             assertEquals(1, spans.size)
             val span = spans.single()
 
+            val attrs = checkNotNull(span.attributes)
             assertEquals("emb-network-status", span.name)
-            assertEquals("sys.network_status", span.findSpanAttribute("emb.type"))
-            assertEquals("wan", span.findSpanAttribute("network"))
-            assertEquals(startTimeMs, span.startTimeNanos.nanosToMillis())
-            assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos.nanosToMillis())
+            assertEquals("sys.network_status", attrs.findAttributeValue("emb.type"))
+            assertEquals("wan", attrs.findAttributeValue("network"))
+            assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
 
             val snapshots = message.findSpanSnapshotsOfType(EmbType.System.NetworkStatus)
             assertEquals(1, snapshots.size)
             val snapshot = snapshots.single()
+            val snapshotAttrs = checkNotNull(snapshot.attributes)
 
             assertEquals("emb-network-status", snapshot.name)
-            assertEquals("sys.network_status", snapshot.findSpanAttribute("emb.type"))
-            assertEquals("wifi", snapshot.findSpanAttribute("network"))
-            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos.nanosToMillis())
+            assertEquals("sys.network_status", snapshotAttrs.findAttributeValue("emb.type"))
+            assertEquals("wifi", snapshotAttrs.findAttributeValue("network"))
+            assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 
@@ -70,9 +72,10 @@ internal class NetworkStatusFeatureTest {
             val snapshot = snapshots.single()
 
             assertEquals("emb-network-status", snapshot.name)
-            assertEquals("sys.network_status", snapshot.findSpanAttribute("emb.type"))
-            assertEquals("wan", snapshot.findSpanAttribute("network"))
-            assertEquals(startTimeMs, snapshot.startTimeNanos.nanosToMillis())
+            val snapshotAttrs = checkNotNull(snapshot.attributes)
+            assertEquals("sys.network_status", snapshotAttrs.findAttributeValue("emb.type"))
+            assertEquals("wan", snapshotAttrs.findAttributeValue("network"))
+            assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 }

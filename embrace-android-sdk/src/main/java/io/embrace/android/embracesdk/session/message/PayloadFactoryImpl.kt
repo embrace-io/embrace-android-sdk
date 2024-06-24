@@ -1,25 +1,20 @@
 package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.Session.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.ApplicationState
+import io.embrace.android.embracesdk.payload.LifeEventType
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class PayloadFactoryImpl(
-    private val v1payloadMessageCollator: PayloadMessageCollator,
-    private val v2payloadMessageCollator: PayloadMessageCollator,
+    private val payloadMessageCollator: PayloadMessageCollator,
     private val configService: ConfigService,
     private val logger: EmbLogger
 ) : PayloadFactory {
-
-    private val collator: PayloadMessageCollator
-        get() = when {
-            configService.oTelBehavior.isDevEnabled() -> v2payloadMessageCollator
-            else -> v1payloadMessageCollator
-        }
 
     override fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean) =
         when (state) {
@@ -27,61 +22,61 @@ internal class PayloadFactoryImpl(
             ProcessState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
         }
 
-    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: Session) =
+    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: SessionZygote) =
         when (state) {
-            ProcessState.FOREGROUND -> endSessionWithState(initial, timestamp)
-            ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial, timestamp)
+            ProcessState.FOREGROUND -> endSessionWithState(initial)
+            ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial)
         }
 
     override fun endPayloadWithCrash(
         state: ProcessState,
         timestamp: Long,
-        initial: Session,
+        initial: SessionZygote,
         crashId: String
     ) = when (state) {
-        ProcessState.FOREGROUND -> endSessionWithCrash(initial, timestamp, crashId)
-        ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, timestamp, crashId)
+        ProcessState.FOREGROUND -> endSessionWithCrash(initial, crashId)
+        ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
     }
 
-    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: Session) =
+    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote) =
         when (state) {
-            ProcessState.FOREGROUND -> snapshotSession(initial, timestamp)
-            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial, timestamp)
+            ProcessState.FOREGROUND -> snapshotSession(initial)
+            ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
         }
 
-    override fun startSessionWithManual(timestamp: Long): Session {
-        return collator.buildInitialSession(
-            InitialEnvelopeParams.SessionParams(
+    override fun startSessionWithManual(timestamp: Long): SessionZygote {
+        return payloadMessageCollator.buildInitialSession(
+            InitialEnvelopeParams(
                 false,
                 LifeEventType.MANUAL,
-                timestamp
+                timestamp,
+                ApplicationState.FOREGROUND
             )
         )
     }
 
-    override fun endSessionWithManual(timestamp: Long, initial: Session): SessionMessage {
-        return collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
+    override fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload> {
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp,
-                lifeEventType = LifeEventType.MANUAL,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger
             )
         )
     }
 
-    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): Session {
-        return collator.buildInitialSession(
-            InitialEnvelopeParams.SessionParams(
+    private fun startSessionWithState(timestamp: Long, coldStart: Boolean): SessionZygote {
+        return payloadMessageCollator.buildInitialSession(
+            InitialEnvelopeParams(
                 coldStart,
                 LifeEventType.STATE,
-                timestamp
+                timestamp,
+                ApplicationState.FOREGROUND
             )
         )
     }
 
-    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): Session? {
+    private fun startBackgroundActivityWithState(timestamp: Long, coldStart: Boolean): SessionZygote? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
@@ -92,39 +87,36 @@ internal class PayloadFactoryImpl(
             coldStart -> timestamp
             else -> timestamp + 1
         }
-        return collator.buildInitialSession(
-            InitialEnvelopeParams.BackgroundActivityParams(
+        return payloadMessageCollator.buildInitialSession(
+            InitialEnvelopeParams(
                 coldStart = coldStart,
                 startType = LifeEventType.BKGND_STATE,
-                startTime = time
+                startTime = time,
+                ApplicationState.BACKGROUND
             )
         )
     }
 
-    private fun endSessionWithState(initial: Session, timestamp: Long): SessionMessage {
-        return collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
+    private fun endSessionWithState(initial: SessionZygote): Envelope<SessionPayload> {
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp,
-                lifeEventType = LifeEventType.STATE,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger
             )
         )
     }
 
-    private fun endBackgroundActivityWithState(initial: Session, timestamp: Long): SessionMessage? {
+    private fun endBackgroundActivityWithState(initial: SessionZygote): Envelope<SessionPayload>? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
 
         // kept for backwards compat. the backend expects the start time to be 1 ms greater
         // than the adjacent session, and manually adjusts.
-        return collator.buildFinalBackgroundActivityMessage(
-            FinalEnvelopeParams.BackgroundActivityParams(
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp - 1,
-                lifeEventType = LifeEventType.BKGND_STATE,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger
             )
@@ -132,38 +124,32 @@ internal class PayloadFactoryImpl(
     }
 
     private fun endSessionWithCrash(
-        initial: Session,
-        timestamp: Long,
+        initial: SessionZygote,
         crashId: String
-    ): SessionMessage {
-        return collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
+    ): Envelope<SessionPayload> {
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp,
-                lifeEventType = LifeEventType.STATE,
-                crashId = crashId,
                 endType = SessionSnapshotType.JVM_CRASH,
-                logger = logger
+                logger = logger,
+                crashId = crashId
             )
         )
     }
 
     private fun endBackgroundActivityWithCrash(
-        initial: Session,
-        timestamp: Long,
+        initial: SessionZygote,
         crashId: String
-    ): SessionMessage? {
+    ): Envelope<SessionPayload>? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
-        return collator.buildFinalBackgroundActivityMessage(
-            FinalEnvelopeParams.BackgroundActivityParams(
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp,
-                lifeEventType = LifeEventType.BKGND_STATE,
-                crashId = crashId,
                 endType = SessionSnapshotType.JVM_CRASH,
-                logger = logger
+                logger = logger,
+                crashId = crashId
             )
         )
     }
@@ -171,27 +157,23 @@ internal class PayloadFactoryImpl(
     /**
      * Called when the session is persisted every 2s to cache its state.
      */
-    private fun snapshotSession(initial: Session, timestamp: Long): SessionMessage {
-        return collator.buildFinalSessionMessage(
-            FinalEnvelopeParams.SessionParams(
+    private fun snapshotSession(initial: SessionZygote): Envelope<SessionPayload> {
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp,
-                lifeEventType = LifeEventType.STATE,
                 endType = SessionSnapshotType.PERIODIC_CACHE,
                 logger = logger
             )
         )
     }
 
-    private fun snapshotBackgroundActivity(initial: Session, timestamp: Long): SessionMessage? {
+    private fun snapshotBackgroundActivity(initial: SessionZygote): Envelope<SessionPayload>? {
         if (!configService.isBackgroundActivityCaptureEnabled()) {
             return null
         }
-        return collator.buildFinalBackgroundActivityMessage(
-            FinalEnvelopeParams.BackgroundActivityParams(
+        return payloadMessageCollator.buildFinalEnvelope(
+            FinalEnvelopeParams(
                 initial = initial,
-                endTime = timestamp,
-                lifeEventType = null,
                 endType = SessionSnapshotType.PERIODIC_CACHE,
                 logger = logger
             )

@@ -5,10 +5,8 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.payload.Breadcrumbs
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb.NotificationType
-import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
+import io.embrace.android.embracesdk.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 
 /**
@@ -27,7 +25,7 @@ internal class EmbraceBreadcrumbService(
     private val clock: Clock,
     private val configService: ConfigService,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>
-) : BreadcrumbService, ActivityLifecycleListener, MemoryCleanerListener {
+) : BreadcrumbService, ActivityLifecycleListener {
 
     override fun logView(screen: String?, timestamp: Long) {
         dataSourceModuleProvider()?.viewDataSource?.dataSource?.changeView(screen)
@@ -45,7 +43,7 @@ internal class EmbraceBreadcrumbService(
         point: Pair<Float?, Float?>,
         element: String,
         timestamp: Long,
-        type: TapBreadcrumbType
+        type: TapBreadcrumb.TapBreadcrumbType
     ) {
         dataSourceModuleProvider()?.tapDataSource?.dataSource?.apply {
             logTap(point, element, timestamp, type)
@@ -77,14 +75,6 @@ internal class EmbraceBreadcrumbService(
         }
     }
 
-    override fun getBreadcrumbs() = Breadcrumbs()
-
-    override fun flushBreadcrumbs(): Breadcrumbs {
-        val breadcrumbs = getBreadcrumbs()
-        cleanCollections()
-        return breadcrumbs
-    }
-
     override fun logPushNotification(
         title: String?,
         body: String?,
@@ -92,7 +82,7 @@ internal class EmbraceBreadcrumbService(
         id: String?,
         notificationPriority: Int?,
         messageDeliveredPriority: Int,
-        type: NotificationType
+        type: PushNotificationBreadcrumb.NotificationType
     ) {
         dataSourceModuleProvider()?.pushNotificationDataSource?.dataSource?.apply {
             logPushNotification(
@@ -119,8 +109,5 @@ internal class EmbraceBreadcrumbService(
         if (configService.breadcrumbBehavior.isAutomaticActivityCaptureEnabled()) {
             dataSourceModuleProvider()?.viewDataSource?.dataSource?.onViewClose()
         }
-    }
-
-    override fun cleanCollections() {
     }
 }

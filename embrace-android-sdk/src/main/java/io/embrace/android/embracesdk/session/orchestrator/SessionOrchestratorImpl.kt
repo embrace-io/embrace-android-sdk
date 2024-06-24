@@ -9,26 +9,19 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.opentelemetry.embCleanExit
-import io.embrace.android.embracesdk.opentelemetry.embColdStart
-import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.opentelemetry.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
-import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
-import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
-import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.opentelemetry.embTerminated
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.message.PayloadFactory
-import java.util.Locale
 
 internal class SessionOrchestratorImpl(
     processStateService: ProcessStateService,
@@ -42,6 +35,7 @@ internal class SessionOrchestratorImpl(
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
+    private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
     private val logger: EmbLogger
 ) : SessionOrchestrator {
 
@@ -50,7 +44,7 @@ internal class SessionOrchestratorImpl(
     /**
      * The currently active session.
      */
-    private var activeSession: Session? = null
+    private var activeSession: SessionZygote? = null
     private var state = when {
         processStateService.isInBackground -> ProcessState.BACKGROUND
         else -> ProcessState.FOREGROUND
@@ -76,7 +70,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
             timestamp = timestamp,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithState(ProcessState.BACKGROUND, timestamp, initial)
             },
             newSessionAction = {
@@ -92,7 +86,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
             timestamp = timestamp,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, timestamp, initial)
             },
             newSessionAction = {
@@ -110,7 +104,7 @@ internal class SessionOrchestratorImpl(
             transitionType = TransitionType.END_MANUAL,
             timestamp = timestamp,
             clearUserInfo = clearUserInfo,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endSessionWithManual(timestamp, initial)
             },
             newSessionAction = {
@@ -133,7 +127,7 @@ internal class SessionOrchestratorImpl(
         transitionState(
             transitionType = TransitionType.CRASH,
             timestamp = timestamp,
-            oldSessionAction = { initial: Session ->
+            oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             },
             crashId = crashId
@@ -166,8 +160,8 @@ internal class SessionOrchestratorImpl(
     private fun transitionState(
         transitionType: TransitionType,
         timestamp: Long,
-        oldSessionAction: ((initial: Session) -> SessionMessage?)? = null,
-        newSessionAction: (Provider<Session?>)? = null,
+        oldSessionAction: ((initial: SessionZygote) -> Envelope<SessionPayload>?)? = null,
+        newSessionAction: (Provider<SessionZygote?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
         crashId: String? = null
@@ -193,7 +187,7 @@ internal class SessionOrchestratorImpl(
             // second, end the current session or background activity, if either exist.
             val initial = activeSession
             if (initial != null) {
-                populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId)
+                sessionSpanAttrPopulator.populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId, initial.isColdStart)
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
@@ -206,7 +200,7 @@ internal class SessionOrchestratorImpl(
             activeSession = newState
             val sessionId = newState?.sessionId
             sessionIdTracker.setActiveSessionId(sessionId, inForeground)
-            newState?.let(::populateSessionSpanStartAttrs)
+            newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
 
             // initiate periodic caching of the payload if required
             if (transitionType != TransitionType.CRASH && newState != null) {
@@ -237,33 +231,8 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun populateSessionSpanStartAttrs(session: Session) {
-        with(sessionSpanWriter) {
-            addCustomAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
-            addCustomAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
-            addCustomAttribute(SpanAttributeData(embState.name, session.appState))
-            addCustomAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
-            session.startType?.toString()?.toLowerCase(Locale.US)?.let {
-                addCustomAttribute(SpanAttributeData(embSessionStartType.name, it))
-            }
-        }
-    }
-
-    private fun populateSessionSpanEndAttrs(endType: Session.LifeEventType?, crashId: String?) {
-        with(sessionSpanWriter) {
-            addCustomAttribute(SpanAttributeData(embCleanExit.name, true.toString()))
-            addCustomAttribute(SpanAttributeData(embTerminated.name, false.toString()))
-            crashId?.let {
-                addCustomAttribute(SpanAttributeData(embCrashId.name, crashId))
-            }
-            endType?.toString()?.toLowerCase(Locale.US)?.let {
-                addCustomAttribute(SpanAttributeData(embSessionEndType.name, it))
-            }
-        }
-    }
-
-    private fun processEndMessage(endMessage: SessionMessage?, transitionType: TransitionType) {
-        endMessage?.let {
+    private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
+        envelope?.let {
             val type = when (transitionType) {
                 TransitionType.CRASH -> SessionSnapshotType.JVM_CRASH
                 else -> SessionSnapshotType.NORMAL_END
@@ -274,7 +243,7 @@ internal class SessionOrchestratorImpl(
 
     private fun initiatePeriodicCaching(
         endProcessState: ProcessState,
-        newState: Session
+        newState: SessionZygote
     ) {
         when (endProcessState) {
             ProcessState.FOREGROUND -> scheduleSessionSave(endProcessState, newState)
@@ -284,7 +253,7 @@ internal class SessionOrchestratorImpl(
 
     private fun scheduleSessionSave(
         endProcessState: ProcessState,
-        initial: Session
+        initial: SessionZygote
     ) {
         updatePeriodicCacheAttrs()
         periodicSessionCacher.start {
@@ -301,7 +270,7 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: Session) {
+    private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: SessionZygote) {
         updatePeriodicCacheAttrs()
         periodicBackgroundActivityCacher.scheduleSave {
             if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {

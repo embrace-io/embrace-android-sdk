@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.gating.v2
 
+import io.embrace.android.embracesdk.gating.SpanSanitizer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -14,7 +15,10 @@ internal class EnvelopeSanitizerFacade(
             metadata = EnvelopeMetadataSanitizer(
                 envelope.metadata ?: EnvelopeMetadata(),
                 components
-            ).sanitize()
+            ).sanitize(),
+            data = envelope.data.copy(
+                spans = SpanSanitizer(envelope.data.spans, components).sanitize()
+            )
         )
     }
 }

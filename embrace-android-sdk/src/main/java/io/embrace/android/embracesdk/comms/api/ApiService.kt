@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.payload.BlobMessage
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NetworkEvent
 import java.util.concurrent.Future
@@ -46,14 +45,6 @@ internal interface ApiService {
     fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
 
     /**
-     * Sends an Application Exit Info (AEI) blob message to the API.
-     *
-     * @param blobMessage the blob message containing the AEI data
-     * @return a future containing the response body from the server
-     */
-    fun sendAEIBlob(blobMessage: BlobMessage)
-
-    /**
      * Sends a network event to the API.
      *
      * @param networkEvent the event containing the network call information
@@ -78,5 +69,5 @@ internal interface ApiService {
      * Sends a session to the API. This can be either a v1 or v2 session - the implementation
      * is responsible for routing the payload correctly.
      */
-    fun sendSession(isV2: Boolean, action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>?
+    fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>?
 }

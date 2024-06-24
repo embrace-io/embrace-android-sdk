@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.opentelemetry.api.trace.SpanId
 
 /**
  * A span represents a single unit of work done in the app. It can be a network request, a database
@@ -11,8 +12,8 @@ import com.squareup.moshi.JsonClass
  * @param spanId A value that uniquely identifies a span instance
  * @param parentSpanId A value that uniquely identifies the parent span
  * @param name The name of the span
- * @param startTimeUnixNano The time the span started, in nanoseconds since the Unix epoch
- * @param endTimeUnixNano The time the span ended, in nanoseconds since the Unix epoch
+ * @param startTimeNanos The time the span started, in nanoseconds since the Unix epoch
+ * @param endTimeNanos The time the span ended, in nanoseconds since the Unix epoch
  * @param status The status of the span. Can be one of 'Unset', 'Error', or 'Ok'
  * @param events
  * @param attributes
@@ -30,7 +31,7 @@ internal data class Span(
 
     /* A value that uniquely identifies the parent span */
     @Json(name = "parent_span_id")
-    val parentSpanId: String? = null,
+    val parentSpanId: String? = SpanId.getInvalid(),
 
     /* The name of the span */
     @Json(name = "name")
@@ -38,11 +39,11 @@ internal data class Span(
 
     /* The time the span started, in nanoseconds since the Unix epoch */
     @Json(name = "start_time_unix_nano")
-    val startTimeUnixNano: Long? = null,
+    val startTimeNanos: Long? = null,
 
     /* The time the span ended, in nanoseconds since the Unix epoch */
     @Json(name = "end_time_unix_nano")
-    val endTimeUnixNano: Long? = null,
+    val endTimeNanos: Long? = null,
 
     /* The status of the span. Can be one of 'Unset', 'Error', or 'Ok' */
     @Json(name = "status")

@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.payload.SessionMessage
+import java.lang.reflect.Type
 
 /**
  * Handles the caching of objects.
@@ -14,20 +16,20 @@ internal interface CacheService {
      *
      * @param name   the unique name to identify this object which will form the basis of the file name that stores it
      * @param objectToCache the object to write
-     * @param clazz  the [Class] object of the object to write
+     * @param type the type of the object to write
      * @param T    the class of the object to write
      */
-    fun <T> cacheObject(name: String, objectToCache: T, clazz: Class<T>)
+    fun <T> cacheObject(name: String, objectToCache: T, type: Type)
 
     /**
      * Reads the specified object from the cache, if it exists.
      *
      * @param name  the name of the object to read from the cache
-     * @param clazz the class of the cached object
+     * @param type  the type of the cached object
      * @param <T>   the type of the cached object
      * @return optionally the object, if it can be read successfully
      */
-    fun <T> loadObject(name: String, clazz: Class<T>): T?
+    fun <T> loadObject(name: String, type: Type): T?
 
     /**
      * Caches a payload to disk.
@@ -68,13 +70,13 @@ internal interface CacheService {
 
     /**
      * Serializes a session object to disk via a stream. This saves memory when the session is large & the return value isn't used
-     * (e.g. for a crash & periodic caching). If an existing session already exists, it will only be replaced if the new [SessionMessage]
+     * (e.g. for a crash & periodic caching). If an existing session already exists, it will only be replaced if the new session
      * is successfully written to disk
      */
-    fun writeSession(name: String, sessionMessage: SessionMessage)
+    fun writeSession(name: String, envelope: Envelope<SessionPayload>)
 
     /**
      * Transform the current saved session with the given name using the given [transformer] and save it in its place
      */
-    fun transformSession(name: String, transformer: (SessionMessage) -> SessionMessage)
+    fun transformSession(name: String, transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>)
 }

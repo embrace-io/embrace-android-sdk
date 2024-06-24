@@ -49,7 +49,7 @@ internal class EnvelopeResourceSourceImpl(
             osVersion = device.systemInfo.osVersion,
             osCode = device.systemInfo.androidOsApiLevel,
             screenResolution = device.screenResolution,
-            numCores = device.numberOfCores,
+            numCores = device.numberOfCores
         )
     }
 

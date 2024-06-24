@@ -1,7 +1,4 @@
 {
-  "a": "__EMBRACE_TEST_IGNORE__",
-  "br": "__EMBRACE_TEST_IGNORE__",
-  "d": "__EMBRACE_TEST_IGNORE__",
   "data": {
     "span_snapshots": "__EMBRACE_TEST_IGNORE__",
     "spans": "__EMBRACE_TEST_IGNORE__"
@@ -14,7 +11,6 @@
     "user_id": "some id",
     "username": "John Doe"
   },
-  "p": "__EMBRACE_TEST_IGNORE__",
   "resource": {
     "app_version": "",
     "app_framework": 1,
@@ -36,10 +32,10 @@
     "os_version": "__EMBRACE_TEST_IGNORE__",
     "os_code": "__EMBRACE_TEST_IGNORE__",
     "screen_resolution": "__EMBRACE_TEST_IGNORE__",
-    "num_cores": "__EMBRACE_TEST_IGNORE__"
+    "num_cores": "__EMBRACE_TEST_IGNORE__",
+    "disk_space": "__EMBRACE_TEST_IGNORE__"
   },
   "s": "__EMBRACE_TEST_IGNORE__",
-  "span_snapshots": "__EMBRACE_TEST_IGNORE__",
-  "type": "session",
+  "type": "spans",
   "version": "0.1.0"
 }

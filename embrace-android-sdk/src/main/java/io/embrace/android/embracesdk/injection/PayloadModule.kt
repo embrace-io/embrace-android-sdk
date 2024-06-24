@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSou
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
@@ -33,7 +34,9 @@ internal class PayloadModuleImpl(
     workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
+    anrModule: AnrModule,
     sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
+    webViewServiceProvider: Provider<WebViewService>,
 ) : PayloadModule {
 
     private val backgroundWorker =
@@ -69,7 +72,10 @@ internal class PayloadModuleImpl(
             otelModule.spanSink,
             otelModule.currentSessionSpan,
             otelModule.spanRepository,
+            anrModule.anrOtelMapper,
+            nativeModule.nativeAnrOtelMapper,
             initModule.logger,
+            webViewServiceProvider,
             sessionPropertiesServiceProvider
         )
     }

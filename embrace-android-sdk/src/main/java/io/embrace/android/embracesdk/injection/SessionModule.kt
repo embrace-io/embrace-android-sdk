@@ -6,11 +6,11 @@ import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityC
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactory
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.V1PayloadMessageCollator
-import io.embrace.android.embracesdk.session.message.V2PayloadMessageCollator
+import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
+import io.embrace.android.embracesdk.session.orchestrator.SessionSpanAttrPopulator
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -18,8 +18,7 @@ import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 internal interface SessionModule {
     val payloadFactory: PayloadFactory
-    val v1PayloadMessageCollator: V1PayloadMessageCollator
-    val v2PayloadMessageCollator: V2PayloadMessageCollator
+    val payloadMessageCollatorImpl: PayloadMessageCollatorImpl
     val sessionPropertiesService: SessionPropertiesService
     val sessionOrchestrator: SessionOrchestrator
     val periodicSessionCacher: PeriodicSessionCacher
@@ -33,56 +32,21 @@ internal class SessionModuleImpl(
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
-    dataContainerModule: DataContainerModule,
     deliveryModule: DeliveryModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
-    customerLogModule: CustomerLogModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadModule: PayloadModule,
-    anrModule: AnrModule
+    dataCaptureServiceModule: DataCaptureServiceModule,
+    dataContainerModule: DataContainerModule,
+    customerLogModule: CustomerLogModule
 ) : SessionModule {
 
-    override val v1PayloadMessageCollator: V1PayloadMessageCollator by singleton {
-        V1PayloadMessageCollator(
-            essentialServiceModule.gatingService,
-            essentialServiceModule.metadataService,
-            dataContainerModule.eventService,
-            customerLogModule.logMessageService,
-            dataContainerModule.performanceInfoService,
-            dataCaptureServiceModule.webviewService,
-            nativeModule.nativeThreadSamplerService,
-            essentialServiceModule.userService,
-            androidServicesModule.preferencesService,
-            openTelemetryModule.spanRepository,
-            openTelemetryModule.spanSink,
-            openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService,
-            dataCaptureServiceModule.startupService,
-            anrModule.anrOtelMapper,
-            nativeModule.nativeAnrOtelMapper,
-            initModule.logger
-        )
-    }
-
-    override val v2PayloadMessageCollator: V2PayloadMessageCollator by singleton {
-        V2PayloadMessageCollator(
+    override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
+        PayloadMessageCollatorImpl(
             essentialServiceModule.gatingService,
             payloadModule.sessionEnvelopeSource,
-            essentialServiceModule.metadataService,
-            dataContainerModule.eventService,
-            customerLogModule.logMessageService,
-            dataContainerModule.performanceInfoService,
-            nativeModule.nativeThreadSamplerService,
             androidServicesModule.preferencesService,
-            openTelemetryModule.spanRepository,
-            openTelemetryModule.spanSink,
-            openTelemetryModule.currentSessionSpan,
-            sessionPropertiesService,
-            dataCaptureServiceModule.startupService,
-            anrModule.anrOtelMapper,
-            nativeModule.nativeAnrOtelMapper,
-            initModule.logger
+            openTelemetryModule.currentSessionSpan
         )
     }
 
@@ -114,8 +78,7 @@ internal class SessionModuleImpl(
 
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
-            v1PayloadMessageCollator,
-            v2PayloadMessageCollator,
+            payloadMessageCollatorImpl,
             essentialServiceModule.configService,
             initModule.logger
         )
@@ -136,6 +99,16 @@ internal class SessionModuleImpl(
         DataCaptureOrchestrator(dataSources, initModule.logger, essentialServiceModule.configService)
     }
 
+    private val sessionSpanAttrPopulator by singleton {
+        SessionSpanAttrPopulator(
+            openTelemetryModule.currentSessionSpan,
+            dataContainerModule.eventService,
+            dataCaptureServiceModule.startupService,
+            customerLogModule.logService,
+            essentialServiceModule.metadataService
+        )
+    }
+
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
@@ -149,6 +122,7 @@ internal class SessionModuleImpl(
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
             openTelemetryModule.currentSessionSpan,
+            sessionSpanAttrPopulator,
             initModule.logger
         )
     }

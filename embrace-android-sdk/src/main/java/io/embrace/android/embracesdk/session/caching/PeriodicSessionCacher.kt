@@ -2,9 +2,10 @@ package io.embrace.android.embracesdk.session.caching
 
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.SessionMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -27,7 +28,7 @@ internal class PeriodicSessionCacher(
     /**
      * It starts a background job that will schedule a callback to do periodic caching.
      */
-    fun start(provider: Provider<SessionMessage?>) {
+    fun start(provider: Provider<Envelope<SessionPayload>?>) {
         scheduledFuture = this.sessionPeriodicCacheScheduledWorker.scheduleWithFixedDelay(
             onPeriodicCache(provider),
             0,
@@ -36,7 +37,7 @@ internal class PeriodicSessionCacher(
         )
     }
 
-    private fun onPeriodicCache(provider: Provider<SessionMessage?>) = Runnable {
+    private fun onPeriodicCache(provider: Provider<Envelope<SessionPayload>?>) = Runnable {
         Systrace.traceSynchronous("snapshot-session") {
             try {
                 provider()

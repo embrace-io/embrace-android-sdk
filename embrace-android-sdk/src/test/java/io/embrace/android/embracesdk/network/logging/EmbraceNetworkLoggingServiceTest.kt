@@ -179,8 +179,8 @@ internal class EmbraceNetworkLoggingServiceTest {
         expectedEndTimeMs: Long,
         expectedStatus: Span.Status = Span.Status.UNSET
     ) {
-        assertEquals(expectedStartTimeMs, startTimeUnixNano?.nanosToMillis())
-        assertEquals(expectedEndTimeMs, endTimeUnixNano?.nanosToMillis())
+        assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
+        assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
         assertEquals(expectedStatus, status)
     }
 }

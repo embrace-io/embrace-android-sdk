@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.findSpanAttribute
+import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
@@ -58,8 +58,8 @@ internal class StartupServiceImplTest {
             assertIsTypePerformance()
             assertIsPrivateSpan()
             assertSuccessful()
-            assertEquals("false", findSpanAttribute("ended-in-foreground"))
-            assertEquals("main", findSpanAttribute("thread-name"))
+            assertEquals("false", attributes.findAttributeValue("ended-in-foreground"))
+            assertEquals("main", attributes.findAttributeValue("thread-name"))
         }
     }
 

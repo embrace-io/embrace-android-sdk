@@ -2,12 +2,15 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager.Companion.PENDING_API_CALLS_FILE_NAME
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.getSessionId
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.SessionMessage
-import io.embrace.android.embracesdk.payload.isV2Payload
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority
@@ -38,15 +41,16 @@ internal class EmbraceDeliveryCacheManager(
     private val cachedSessions = mutableMapOf<String, CachedSession>()
 
     override fun saveSession(
-        sessionMessage: SessionMessage,
+        envelope: Envelope<SessionPayload>,
         snapshotType: SessionSnapshotType
     ) {
         try {
             if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
                 deleteOldestSessions()
             }
-            val sessionId = sessionMessage.session.sessionId
-            val sessionStartTimeMs = sessionMessage.session.startTime
+            val span = envelope.getSessionSpan()
+            val sessionId = envelope.getSessionId() ?: return
+            val sessionStartTimeMs = span?.startTimeNanos?.nanosToMillis() ?: return
             val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
             val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
 
@@ -54,11 +58,10 @@ internal class EmbraceDeliveryCacheManager(
                 sessionId,
                 sessionStartTimeMs,
                 writeSync,
-                snapshot,
-                sessionMessage.isV2Payload()
+                snapshot
             ) { filename: String ->
                 Systrace.traceSynchronous("serialize-session") {
-                    cacheService.writeSession(filename, sessionMessage)
+                    cacheService.writeSession(filename, envelope)
                 }
             }
         } catch (exc: Throwable) {
@@ -155,14 +158,19 @@ internal class EmbraceDeliveryCacheManager(
      * a list of [PendingApiCall] instead of [PendingApiCalls].
      */
     override fun loadPendingApiCalls(): PendingApiCalls =
-        runCatching { cacheService.loadObject(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java) }.getOrNull()
+        runCatching {
+            cacheService.loadObject<PendingApiCalls>(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java)
+        }.getOrNull()
             ?: loadPendingApiCallsOldVersion()
             ?: PendingApiCalls()
 
     /**
      * The caller of this method needs to be run in the [WorkerName.DELIVERY_CACHE] thread so all session writes are done serially
      */
-    override fun transformSession(sessionId: String, transformer: (SessionMessage) -> SessionMessage) {
+    override fun transformSession(
+        sessionId: String,
+        transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>
+    ) {
         val filename = cachedSessions[sessionId]?.filename ?: return
         cacheService.transformSession(filename, transformer)
     }
@@ -208,11 +216,10 @@ internal class EmbraceDeliveryCacheManager(
         sessionStartTimeMs: Long,
         writeSync: Boolean = false,
         snapshot: Boolean = false,
-        v2Payload: Boolean,
         saveAction: (filename: String) -> Unit
     ) {
         if (writeSync) {
-            saveSessionBytesImpl(sessionId, sessionStartTimeMs, v2Payload, saveAction)
+            saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
         } else {
             // snapshots are low priority compared to state ends + loading/unloading other payload
             // types. State ends are critical as they contain the final information.
@@ -221,7 +228,7 @@ internal class EmbraceDeliveryCacheManager(
                 else -> TaskPriority.CRITICAL
             }
             backgroundWorker.submit(priority) {
-                saveSessionBytesImpl(sessionId, sessionStartTimeMs, v2Payload, saveAction)
+                saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
             }
         }
     }
@@ -229,13 +236,12 @@ internal class EmbraceDeliveryCacheManager(
     private fun saveSessionBytesImpl(
         sessionId: String,
         sessionStartTimeMs: Long,
-        v2Payload: Boolean,
         saveAction: (filename: String) -> Unit
     ) {
         try {
             synchronized(cachedSessions) {
                 val cachedSession = cachedSessions.getOrElse(sessionId) {
-                    CachedSession.create(sessionId, sessionStartTimeMs, v2Payload)
+                    CachedSession.create(sessionId, sessionStartTimeMs)
                 }
                 saveAction(cachedSession.filename)
                 if (!cachedSessions.containsKey(cachedSession.sessionId)) {

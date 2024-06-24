@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.findSpanAttribute
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -51,10 +51,11 @@ internal class ThermalStateFeatureTest {
             assertEquals(1, snapshots.size)
             val snapshot = snapshots.single()
 
+            val attrs = checkNotNull(snapshot.attributes)
             assertEquals("emb-thermal-state", snapshot.name)
-            assertEquals("perf.thermal_state", snapshot.findSpanAttribute("emb.type"))
-            assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), snapshot.findSpanAttribute("status"))
-            assertEquals(startTimeMs, snapshot.startTimeNanos.nanosToMillis())
+            assertEquals("perf.thermal_state", attrs.findAttributeValue("emb.type"))
+            assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), attrs.findAttributeValue("status"))
+            assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 
@@ -80,25 +81,25 @@ internal class ThermalStateFeatureTest {
 
             spans.forEach {
                 assertEquals("emb-thermal-state", it.name)
-                assertEquals("perf.thermal_state", it.findSpanAttribute("emb.type"))
+                assertEquals("perf.thermal_state", it.attributes?.findAttributeValue("emb.type"))
             }
             val firstSpan = spans.first()
-            assertEquals(PowerManager.THERMAL_STATUS_CRITICAL.toString(), firstSpan.findSpanAttribute("status"))
-            assertEquals(startTimeMs, firstSpan.startTimeNanos.nanosToMillis())
-            assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos.nanosToMillis())
+            assertEquals(PowerManager.THERMAL_STATUS_CRITICAL.toString(), firstSpan.attributes?.findAttributeValue("status"))
+            assertEquals(startTimeMs, firstSpan.startTimeNanos?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos?.nanosToMillis())
             val secondSpan = spans.last()
-            assertEquals(PowerManager.THERMAL_STATUS_MODERATE.toString(), secondSpan.findSpanAttribute("status"))
-            assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos.nanosToMillis())
-            assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos.nanosToMillis())
+            assertEquals(PowerManager.THERMAL_STATUS_MODERATE.toString(), secondSpan.attributes?.findAttributeValue("status"))
+            assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos?.nanosToMillis())
+            assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos?.nanosToMillis())
 
             val snapshots = message.findSpanSnapshotsOfType(EmbType.Performance.ThermalState)
             assertEquals(1, snapshots.size)
 
             val snapshot = snapshots.single()
             assertEquals("emb-thermal-state", snapshot.name)
-            assertEquals("perf.thermal_state", snapshot.findSpanAttribute("emb.type"))
-            assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), snapshot.findSpanAttribute("status"))
-            assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos.nanosToMillis())
+            assertEquals("perf.thermal_state", snapshot.attributes?.findAttributeValue("emb.type"))
+            assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), snapshot.attributes?.findAttributeValue("status"))
+            assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 

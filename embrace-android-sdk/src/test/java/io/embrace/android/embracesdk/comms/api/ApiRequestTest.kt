@@ -94,7 +94,7 @@ internal class ApiRequestTest {
     fun testSessionRequest() {
         assertFalse(request.isSessionRequest())
 
-        val copy = request.copy(url = EmbraceUrl.create("https://example.com/sessions"))
+        val copy = request.copy(url = EmbraceUrl.create("https://example.com/v2/spans"))
         assertTrue(copy.isSessionRequest())
     }
 }

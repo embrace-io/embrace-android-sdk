@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.payload.Session
-import io.embrace.android.embracesdk.payload.SessionMessage
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 
 /**
@@ -12,12 +13,12 @@ internal interface PayloadFactory {
     /**
      * Starts a session in response to a state event.
      */
-    fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean): Session?
+    fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean): SessionZygote?
 
     /**
      * Ends a session in response to a state event.
      */
-    fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: Session): SessionMessage?
+    fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>?
 
     /**
      * Handles an uncaught exception, ending the session and saving the session to disk.
@@ -25,22 +26,22 @@ internal interface PayloadFactory {
     fun endPayloadWithCrash(
         state: ProcessState,
         timestamp: Long,
-        initial: Session,
+        initial: SessionZygote,
         crashId: String
-    ): SessionMessage?
+    ): Envelope<SessionPayload>?
 
     /**
      * Provides a snapshot of the active session
      */
-    fun snapshotPayload(state: ProcessState, timestamp: Long, initial: Session): SessionMessage?
+    fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>?
 
     /**
      * Starts a session manually.
      */
-    fun startSessionWithManual(timestamp: Long): Session
+    fun startSessionWithManual(timestamp: Long): SessionZygote
 
     /**
      * Ends a session manually.
      */
-    fun endSessionWithManual(timestamp: Long, initial: Session): SessionMessage
+    fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>
 }

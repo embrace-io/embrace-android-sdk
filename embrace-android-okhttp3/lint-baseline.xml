@@ -1,102 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="5" by="lint 3.4.2" client="gradle" variant="all" version="3.4.2">
+<issues format="6" by="lint 8.3.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.3.2)" variant="all" version="8.3.2">
 
     <issue
         id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public EmbraceCustomPathException(String customPath, Throwable cause) {"
-        errorLine2="                                      ~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceCustomPathException.java"
-            line="13"
-            column="39"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public EmbraceCustomPathException(String customPath, Throwable cause) {"
-        errorLine2="                                                         ~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceCustomPathException.java"
-            line="13"
-            column="58"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public String getCustomPath() {"
-        errorLine2="           ~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceCustomPathException.java"
-            line="18"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public Response intercept(Chain chain) throws IOException {"
-        errorLine2="           ~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3ApplicationInterceptor.java"
-            line="36"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public Response intercept(Chain chain) throws IOException {"
-        errorLine2="                              ~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3ApplicationInterceptor.java"
-            line="36"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public Response intercept(Chain chain) throws IOException {"
-        errorLine2="           ~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3NetworkInterceptor.java"
-            line="43"
-            column="12"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
-        errorLine1="    public Response intercept(Chain chain) throws IOException {"
-        errorLine2="                              ~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3NetworkInterceptor.java"
-            line="43"
-            column="31"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
         errorLine1="        public static void _preBuild(okhttp3.OkHttpClient.Builder thiz) {"
         errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient.java"
-            line="33"
+            line="36"
             column="38"/>
     </issue>
 
     <issue
         id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://android.github.io/kotlin-guides/interop.html#nullability-annotations"
+        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
         errorLine1="        public static void _constructorOnPostBody(okhttp3.OkHttpClient.Builder thiz) {"
         errorLine2="                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/okhttp3/swazzle/callback/okhttp3/OkHttpClient.java"
-            line="39"
+            line="41"
             column="51"/>
     </issue>
 

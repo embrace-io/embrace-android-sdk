@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -51,7 +52,7 @@ internal class WebViewUrlDataSourceTest {
             assertEquals(15000000000, spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    "webview.url" to "http://www.google.com?query=123"
+                    URL_FULL.key to "http://www.google.com?query=123"
                 ),
                 schemaType.attributes()
             )
@@ -86,7 +87,7 @@ internal class WebViewUrlDataSourceTest {
             assertEquals(15000000000, spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    "webview.url" to "http://www.google.com"
+                    URL_FULL.key to "http://www.google.com"
                 ),
                 schemaType.attributes()
             )

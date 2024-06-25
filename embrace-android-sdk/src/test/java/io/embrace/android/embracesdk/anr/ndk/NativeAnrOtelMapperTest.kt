@@ -11,6 +11,9 @@ import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
 import io.embrace.android.embracesdk.payload.ThreadState
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE
+import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes.THREAD_ID
+import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes.THREAD_NAME
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -81,8 +84,8 @@ internal class NativeAnrOtelMapperTest {
         // assert span attrs
         val attrs = checkNotNull(span.attributes)
         assertEquals("perf.native_thread_blockage", attrs.findAttribute("emb.type").data)
-        assertEquals("1", attrs.findAttribute("thread_id").data)
-        assertEquals("main", attrs.findAttribute("thread_name").data)
+        assertEquals("1", attrs.findAttribute(THREAD_ID.key).data)
+        assertEquals("main", attrs.findAttribute(THREAD_NAME.key).data)
         assertEquals("2", attrs.findAttribute("thread_state").data)
         assertEquals("100", attrs.findAttribute("sampling_offset_ms").data)
         assertEquals("1", attrs.findAttribute("stack_unwinder").data)
@@ -102,7 +105,7 @@ internal class NativeAnrOtelMapperTest {
         val expectedStacktrace =
             "[{\"program_counter\":\"0x8000050209\",\"so_load_addr\":\"0x500234500\"," +
                 "\"so_name\":\"/data/app/lib.so\",\"result\":0}]"
-        assertEquals(expectedStacktrace, eventAttrs.findAttribute("stacktrace").data)
+        assertEquals(expectedStacktrace, eventAttrs.findAttribute(EXCEPTION_STACKTRACE.key).data)
     }
 
     private fun List<Attribute>.findAttribute(key: String): Attribute {

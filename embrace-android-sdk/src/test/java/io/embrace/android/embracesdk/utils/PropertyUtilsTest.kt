@@ -34,8 +34,20 @@ internal class PropertyUtilsTest {
     }
 
     @Test
-    fun testUnserializableValue() {
+    fun testUnSerializableValue() {
         assertEquals("not serializable", sanitizeProperties(mapOf("a" to UnSerializableClass()), logger)["a"])
+    }
+
+    @Test
+    fun testUnSerializableNestedArrayValue() {
+        val properties = mapOf("a" to listOf(UnSerializableClass()))
+        assertEquals(listOf("not serializable"), sanitizeProperties(properties, logger)["a"])
+    }
+
+    @Test
+    fun testUnSerializableInNestedMapValue() {
+        val properties = mapOf("a" to mapOf("b" to UnSerializableClass()))
+        assertEquals(mapOf("b" to "not serializable"), sanitizeProperties(properties, logger)["a"])
     }
 
     private class SerializableClass : java.io.Serializable

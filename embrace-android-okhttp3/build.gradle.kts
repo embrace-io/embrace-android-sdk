@@ -9,9 +9,9 @@ android {
 }
 
 dependencies {
-    compileOnly("com.squareup.okhttp3:okhttp:4.9.3")
+    compileOnly(libs.okhttp)
     compileOnly(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-android-sdk"))
-    testImplementation("io.mockk:mockk:1.12.2")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.3")
+    testImplementation(libs.mockk)
+    testImplementation(libs.mockwebserver)
 }

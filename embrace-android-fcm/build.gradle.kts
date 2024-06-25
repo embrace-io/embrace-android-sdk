@@ -9,6 +9,6 @@ android {
 }
 
 dependencies {
-    compileOnly("com.google.firebase:firebase-messaging:23.1.0")
+    compileOnly(libs.firebase.messaging)
     compileOnly(project(":embrace-android-sdk"))
 }

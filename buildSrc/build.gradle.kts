@@ -5,15 +5,6 @@ plugins {
     `kotlin-dsl`
 }
 
-gradlePlugin {
-    plugins {
-        register("internal-embrace-plugin") {
-            id = "internal-embrace-plugin"
-            implementationClass = "io.embrace.gradle.InternalEmbracePlugin"
-        }
-    }
-}
-
 repositories {
     google()
     mavenCentral()

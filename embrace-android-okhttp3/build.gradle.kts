@@ -1,5 +1,5 @@
 plugins {
-    id("internal-embrace-plugin")
+    id("embrace-defaults")
 }
 
 description = "Embrace Android SDK: OkHttp3"

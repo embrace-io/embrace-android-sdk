@@ -4,7 +4,7 @@ import org.jetbrains.dokka.base.DokkaBaseConfiguration
 import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    id("internal-embrace-plugin")
+    id("embrace-defaults")
     id("org.jetbrains.kotlin.kapt")
     id("org.jetbrains.dokka")
 }

@@ -15,7 +15,7 @@ android {
     useLibrary("android.test.runner")
     useLibrary("android.test.base")
     useLibrary("android.test.mock")
-    ndkVersion = Versions.ndk
+    ndkVersion = Versions.NDK
 
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"

@@ -8,9 +8,8 @@
 
 ## Release Notes
 
-<!-- Notes to add in the next Release. Ignore if the changes are internal. -->
+<!-- Notes to add in the next Release. Do not put any customer information here. Ignore if the changes are internal. -->
 
 **WHAT**:<br>
 **WHY**:<br>
-**WHO**:<br>
 

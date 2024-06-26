@@ -72,7 +72,6 @@ internal class EmbraceNetworkLoggingService(
                 startTimeMs = networkRequest.startTime,
                 endTimeMs = networkRequest.endTime,
                 errorCode = errorCode,
-                parent = null,
                 attributes = networkRequestSchemaType.attributes(),
                 type = EmbType.Performance.Network,
             )

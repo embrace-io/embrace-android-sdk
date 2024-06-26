@@ -109,6 +109,7 @@ internal class UninitializedSdkSpanService : SpanService {
                         parent = it.parent,
                         type = it.type,
                         internal = it.internal,
+                        private = it.private,
                         attributes = it.attributes,
                         events = it.events,
                         errorCode = it.errorCode

@@ -236,7 +236,6 @@ internal class AppStartupTraceEmitter(
                     parent = startupTrace,
                     startTimeMs = trackedInterval.startTimeMs,
                     endTimeMs = trackedInterval.endTimeMs,
-                    private = false
                 )
             }
         } while (additionalTrackedIntervals.isNotEmpty())
@@ -257,7 +256,6 @@ internal class AppStartupTraceEmitter(
             spanService.startSpan(
                 name = "cold-time-to-initial-display",
                 startTimeMs = traceStartTimeMs,
-                private = false
             )?.apply {
                 addTraceMetadata()
 
@@ -271,7 +269,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = traceStartTimeMs,
                         endTimeMs = applicationInitEndMs,
-                        private = false,
                     )
                 }
                 if (sdkInitStartMs != null && sdkInitEndMs != null) {
@@ -280,7 +277,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = sdkInitStartMs,
                         endTimeMs = sdkInitEndMs,
-                        private = false,
                     )
                 }
                 val lastEventBeforeActivityInit = applicationInitEndMs ?: sdkInitEndMs
@@ -291,7 +287,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = lastEventBeforeActivityInit,
                         endTimeMs = firstActivityInit,
-                        private = false,
                     )
                 }
                 if (activityInitStartMs != null && activityInitEndMs != null) {
@@ -300,7 +295,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = activityInitStartMs,
                         endTimeMs = activityInitEndMs,
-                        private = false,
                     )
                 }
                 if (activityInitEndMs != null) {
@@ -314,7 +308,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = activityInitEndMs,
                         endTimeMs = traceEndTimeMs,
-                        private = false,
                     )
                 }
             }
@@ -335,7 +328,6 @@ internal class AppStartupTraceEmitter(
             spanService.startSpan(
                 name = "warm-time-to-initial-display",
                 startTimeMs = traceStartTimeMs,
-                private = false,
             )?.apply {
                 processToActivityCreateGap?.let { gap ->
                     addAttribute("activity-init-gap-ms", gap.toString())
@@ -355,7 +347,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = activityInitStartMs,
                         endTimeMs = activityInitEndMs,
-                        private = false,
                     )
                     val uiLoadSpanName = if (endWithFrameDraw) {
                         "first-frame-render"
@@ -367,7 +358,6 @@ internal class AppStartupTraceEmitter(
                         parent = this,
                         startTimeMs = activityInitEndMs,
                         endTimeMs = traceEndTimeMs,
-                        private = false,
                     )
                 }
             }

@@ -34,7 +34,7 @@ internal class EmbraceSpanFactoryImplTest {
 
     @Test
     fun `check public span creation`() {
-        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = false)
+        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = false, private = false)
         assertTrue(span.start(clock.now()))
         with(span) {
             assertTrue(hasFixedAttribute(EmbType.Performance.Default))
@@ -47,7 +47,7 @@ internal class EmbraceSpanFactoryImplTest {
 
     @Test
     fun `check internal span creation`() {
-        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = true)
+        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = true, private = true)
         assertTrue(span.start(clock.now()))
         with(span) {
             assertTrue(hasFixedAttribute(EmbType.Performance.Default))

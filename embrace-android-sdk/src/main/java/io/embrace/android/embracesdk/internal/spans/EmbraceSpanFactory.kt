@@ -15,7 +15,7 @@ internal interface EmbraceSpanFactory {
         name: String,
         type: TelemetryType,
         internal: Boolean,
-        private: Boolean = internal,
+        private: Boolean,
         parent: EmbraceSpan? = null
     ): PersistableEmbraceSpan
 

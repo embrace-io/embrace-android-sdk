@@ -65,7 +65,7 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
-        private: Boolean = internal,
+        private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
         code: () -> T
@@ -82,7 +82,7 @@ internal interface SpanService : Initializable {
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
-        private: Boolean = internal,
+        private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
         errorCode: ErrorCode? = null

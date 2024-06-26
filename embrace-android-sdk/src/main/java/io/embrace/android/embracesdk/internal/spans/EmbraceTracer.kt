@@ -15,7 +15,8 @@ internal class EmbraceTracer(
         spanService.createSpan(
             name = name,
             parent = parent,
-            internal = false
+            internal = false,
+            private = false,
         )
 
     override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? =
@@ -23,7 +24,8 @@ internal class EmbraceTracer(
             name = name,
             parent = parent,
             startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
-            internal = false
+            internal = false,
+            private = false,
         )
 
     override fun <T> recordSpan(
@@ -36,6 +38,7 @@ internal class EmbraceTracer(
         name = name,
         parent = parent,
         internal = false,
+        private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
         code = code
@@ -55,6 +58,7 @@ internal class EmbraceTracer(
         endTimeMs = endTimeMs.normalizeTimestampAsMillis(),
         parent = parent,
         internal = false,
+        private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
         errorCode = errorCode

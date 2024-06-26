@@ -283,7 +283,7 @@ internal class SpanServiceImplTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertNotKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
         assertTrue(parentSpan.stop())
 
@@ -403,7 +403,7 @@ internal class SpanServiceImplTest {
         with(currentSpans[0]) {
             assertEquals("emb-child-span", name)
             assertNotKeySpan()
-            assertIsPrivateSpan()
+            assertNotPrivateSpan()
         }
     }
 

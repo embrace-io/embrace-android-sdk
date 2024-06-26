@@ -1,11 +1,6 @@
 name: Run Functional Tests
 
 on:
-  workflow_dispatch:
-  workflow_call:
-    secrets:
-      token:
-        required: true
   schedule:
     - cron: '0 3 * * *'
   pull_request:
@@ -29,7 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.CD_GITHUB_TOKEN || secrets.token }}
           fetch-depth: 0
 
       - uses: actions/cache@v4

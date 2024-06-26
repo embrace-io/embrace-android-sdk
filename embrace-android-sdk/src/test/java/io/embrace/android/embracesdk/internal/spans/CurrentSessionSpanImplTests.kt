@@ -30,7 +30,7 @@ import org.junit.Test
 internal class CurrentSessionSpanImplTests {
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
-    private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var currentSessionSpan: CurrentSessionSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var tracer: Tracer
     private val clock = FakeClock(1000L)
@@ -40,7 +40,7 @@ internal class CurrentSessionSpanImplTests {
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
-        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan as CurrentSessionSpanImpl
         tracer = initModule.openTelemetryModule.sdkTracer
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
@@ -48,7 +48,16 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `cannot create span before session is created`() {
-        assertFalse(FakeInitModule(clock = clock).openTelemetryModule.currentSessionSpan.canStartNewSpan(null, true))
+        val uninitialized = FakeInitModule(clock = clock).openTelemetryModule.currentSessionSpan
+        assertFalse(uninitialized.initialized())
+        uninitialized.assertNoSessionSpan()
+    }
+
+    @Test
+    fun `cannot create spans or add data to current span if no current span exists`() {
+        currentSessionSpan.endSession(startNewSession = false)
+        assertTrue(currentSessionSpan.initialized())
+        currentSessionSpan.assertNoSessionSpan()
     }
 
     @Test
@@ -200,7 +209,7 @@ internal class CurrentSessionSpanImplTests {
             val module = FakeInitModule(clock = clock)
             val sessionSpan = module.openTelemetryModule.currentSessionSpan
             module.openTelemetryModule.spanService.initializeService(clock.now())
-            val flushedSpans = sessionSpan.endSession(cause, true)
+            val flushedSpans = sessionSpan.endSession(true, cause)
             assertEquals(1, flushedSpans.size)
 
             val lastFlushedSpan = flushedSpans[0]
@@ -228,7 +237,7 @@ internal class CurrentSessionSpanImplTests {
         clock.tick(500)
 
         val crashTimeMs = clock.now()
-        val flushedSpans = currentSessionSpan.endSession(AppTerminationCause.Crash, true).associateBy { it.name }
+        val flushedSpans = currentSessionSpan.endSession(true, AppTerminationCause.Crash).associateBy { it.name }
 
         assertEmbraceSpanData(
             span = flushedSpans["emb-session"]?.toNewPayload(),
@@ -301,7 +310,7 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `add event forwarded to span`() {
         currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L)
-        val span = currentSessionSpan.endSession(null, true).single()
+        val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
@@ -318,11 +327,22 @@ internal class CurrentSessionSpanImplTests {
         currentSessionSpan.addCustomAttribute(SpanAttributeData("my_key", "my_value"))
         currentSessionSpan.addCustomAttribute(SpanAttributeData("missing", "my_value"))
         currentSessionSpan.removeCustomAttribute("missing")
-        val span = currentSessionSpan.endSession(null, true).single()
+        val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
         // verify attribute was added to the span if it wasn't removed
         assertEquals("my_value", span.attributes["my_key"])
         assertNull(span.attributes["missing"])
+    }
+
+    private fun CurrentSessionSpan.assertNoSessionSpan() {
+        assertEquals("", getSessionId())
+        assertFalse(canStartNewSpan(parent = null, internal = true))
+        assertTrue(endSession(true).isEmpty())
+        assertFalse(addCustomAttribute(attribute = SpanAttributeData("test", "test")))
+        assertFalse(removeCustomAttribute("test"))
+        assertFalse(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
+        // check doesn't throw exception
+        removeEvents(EmbType.System.Breadcrumb)
     }
 }

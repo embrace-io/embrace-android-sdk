@@ -58,8 +58,8 @@ internal class SessionPayloadSourceImpl(
                         else -> null
                     }
                     val spans = currentSessionSpan.endSession(
-                        appTerminationCause = appTerminationCause,
-                        startNewSession = startNewSession
+                        startNewSession = startNewSession,
+                        appTerminationCause = appTerminationCause
                     )
                     if (appTerminationCause == null) {
                         sessionPropertiesServiceProvider().populateCurrentSession()

@@ -46,7 +46,7 @@ internal class FakeCurrentSessionSpan(
         return true
     }
 
-    override fun endSession(appTerminationCause: AppTerminationCause?, startNewSession: Boolean): List<EmbraceSpanData> {
+    override fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         val endingSessionSpan = checkNotNull(sessionSpan)
         endingSessionSpan.endTimeNanos = clock.nowInNanos()
         endingSessionSpan.spanStatus = if (appTerminationCause == null) StatusData.ok() else StatusData.error()

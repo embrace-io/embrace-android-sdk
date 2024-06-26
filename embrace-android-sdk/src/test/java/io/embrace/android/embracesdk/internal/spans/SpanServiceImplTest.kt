@@ -358,8 +358,8 @@ internal class SpanServiceImplTest {
     @Test
     fun `cannot record completed span if there is not current session span`() {
         currentSessionSpan.endSession(
-            appTerminationCause = AppTerminationCause.UserTermination,
-            startNewSession = true
+            startNewSession = true,
+            appTerminationCause = AppTerminationCause.UserTermination
         )
         assertFalse(
             spansService.recordCompletedSpan(
@@ -450,8 +450,8 @@ internal class SpanServiceImplTest {
     @Test
     fun `recording span as lambda with no current active session will run code but not log span`() {
         currentSessionSpan.endSession(
-            appTerminationCause = AppTerminationCause.UserTermination,
-            startNewSession = true
+            startNewSession = true,
+            appTerminationCause = AppTerminationCause.UserTermination
         )
         var executed = false
         spansService.recordSpan(name = "test-span") {
@@ -464,7 +464,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `after ending session with app termination, spans cannot be recorded`() {
-        currentSessionSpan.endSession(AppTerminationCause.UserTermination, true)
+        currentSessionSpan.endSession(true, AppTerminationCause.UserTermination)
         spansService.recordSpan("test-span") {
             // do thing
         }

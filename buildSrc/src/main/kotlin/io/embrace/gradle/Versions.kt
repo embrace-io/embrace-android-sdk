@@ -1,52 +1,21 @@
 package io.embrace.gradle
 
 /**
- * Defines dependency versions that are used in the project.
+ * Defines dependency versions that are used in the project that cannot be defined in libs.versions.toml
  */
 object Versions {
-    @JvmField
-    val compileSdk = 34
+    const val COMPILE_SDK = 34
 
-    @JvmField
-    val minSdk = 21
+    const val MIN_SDK = 21
 
-    @JvmField
-    val junit = "4.13.2"
-
-    // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
-    @JvmField
-    val kotlin = "1.7.21"
+    const val JUNIT = "4.13.2"
 
     // kotin library exposed to the customer
-    @JvmField
-    val kotlinExposed = "1.4.32"
-
-    @JvmField
-    val dokka = "1.9.10"
+    const val KOTLIN_EXPOSED = "1.4.32"
 
     // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
-    @JvmField
-    val detekt = "1.23.0" // kotlin 1.9 required before any further upgrades
+    // kotlin 1.9 required before any further upgrades
+    const val DETEKT = "1.23.0"
 
-    // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
-    @JvmField
-    val agp = "8.3.2"
-
-    @JvmField
-    val lint = "30.1.0"
-
-    @JvmField
-    val ndk = "21.4.7075529"
-
-    @JvmField
-    val openTelemetryCore = "1.38.0"
-
-    @JvmField
-    val openTelementrySemConv = "1.24.0-alpha"
-
-    @JvmField
-    val moshi = "1.12.0"
-
-    @JvmField
-    val lifecycle = "2.5.0"
+    const val NDK = "21.4.7075529"
 }

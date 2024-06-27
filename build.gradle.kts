@@ -1,7 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-import io.embrace.gradle.Versions
-import java.util.Properties
 import java.io.FileInputStream
+import java.util.Properties
 
 buildscript {
     repositories {
@@ -10,9 +9,9 @@ buildscript {
     }
 
     dependencies {
-        classpath("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.0")
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.9.10")
-        classpath("org.jetbrains.dokka:android-documentation-plugin:1.9.10")
+        classpath(libs.detekt.gradle.plugin)
+        classpath(libs.dokka.gradle.plugin)
+        classpath(libs.dokka.docs)
     }
 }
 

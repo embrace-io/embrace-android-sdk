@@ -1,9 +1,9 @@
 import io.embrace.gradle.Versions
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
-import java.net.URI
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URI
 
 plugins {
     id("com.android.library") apply false
@@ -17,14 +17,14 @@ plugins {
 }
 
 android {
-    compileSdk = Versions.compileSdk
+    compileSdk = Versions.COMPILE_SDK
 
     defaultConfig {
-        minSdk = Versions.minSdk
+        minSdk = Versions.MIN_SDK
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         aarMetadata {
-            minCompileSdk = Versions.minSdk
+            minCompileSdk = Versions.MIN_SDK
         }
     }
 
@@ -74,9 +74,9 @@ android {
 }
 
 dependencies {
-    testImplementation("junit:junit:${Versions.junit}")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlinExposed}")
-    add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.detekt}")
+    testImplementation("junit:junit:${Versions.JUNIT}")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN_EXPOSED}")
+    add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}")
     add("lintChecks", project.project(":embrace-lint"))
 }
 

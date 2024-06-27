@@ -1,5 +1,6 @@
 [versions]
 
+detektGradlePlugin = "1.23.0"
 junit = "4.13.2"
 kotlinExposed = "1.4.32"
 dokka = "1.9.10"
@@ -21,6 +22,8 @@ firebase = "23.1.0"
 compose = "1.0.5"
 
 [libraries]
+detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detektGradlePlugin" }
+dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 lifecycle-common-java8 = { group = "androidx.lifecycle", name = "lifecycle-common-java8", version.ref = "lifecycle" }
 lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle" }
 lifecycle-extensions = { group = "androidx.lifecycle", name = "lifecycle-extensions", version.ref = "lifecycle-extensions" }

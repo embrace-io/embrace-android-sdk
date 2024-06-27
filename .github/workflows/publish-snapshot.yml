@@ -13,8 +13,6 @@ jobs:
   functional:
     name: Run Functional Tests
     uses: ./.github/workflows/functional-tests.yml
-    secrets:
-      token: ${{ secrets.CD_GITHUB_TOKEN }}
   baseline-profile:
     name: Update Baseline Profile
     uses: ./.github/workflows/generate_baseline_profile.yml

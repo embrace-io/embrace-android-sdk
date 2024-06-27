@@ -1,6 +1,8 @@
 name: Run Functional Tests
 
 on:
+  workflow_dispatch:
+  workflow_call:
   schedule:
     - cron: '0 3 * * *'
   pull_request:

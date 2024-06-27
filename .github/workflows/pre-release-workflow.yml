@@ -1,4 +1,4 @@
-name: Pre-Release - Cut Release Branch and Create Release Candidates
+name: Pre-Release - Cut Release Branch and Publish Release Candidate
 
 env:
   SONATYPE_USERNAME: embrace-io
@@ -20,117 +20,25 @@ on:
         required: true
 
 jobs:
-  release:
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        jdk-version: ["17"]
-        ndk-version: ["21.4.7075529"]
-    steps:
-      - name: Decode Keystore
-        run: |
-          mkdir "$RUNNER_TEMP"/keystore
-          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
-          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
+  baseline-profile:
+    name: Generate Baseline Profile
+    uses: ./.github/workflows/genereate-baseline-profile.yml@main
+    secrets: inherit
 
-      - name: Configure git
-        run: |
-          git config --global user.name 'embrace-ci[bot]'
-          git config --global user.email 'embrace-ci@users.noreply.github.com'
-          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
+  release-branch:
+    name: Create Release Branches
+    if: ${{ always() }}
+    needs: baseline-profile
+    uses: ./.github/workflows/rc-release-branch.yml@main
+    secrets: inherit
+    with:
+      version_to_release: ${{ github.event.inputs.version_to_release }}
+      next_version: ${{ github.event.inputs.next_version }}
 
-      - name: Checkout SDK
-        uses: actions/checkout@v4
-        with:
-          ref: master
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
-
-      - name: Create Release Branch "release/${{ github.event.inputs.version_to_release }}"
-        run: |
-          git checkout -b release/${{ github.event.inputs.version_to_release }}
-
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.m2/repository
-            ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
-
-      - name: Install JDK ${{ matrix.jdk-version }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'adopt'
-          java-version: ${{ matrix.jdk-version }}
-
-      - name: Setup NDK ${{ matrix.ndk-version }}
-        run: |
-           export ANDROID_ROOT=/usr/local/lib/android
-           export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-           export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-           ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
-
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v3
-
-      - name: SDK Pre-Release - Publish and close Sonatype repository
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
-          ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
-
-      - name: Archive Test Results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-sdk-test-results
-          path: embrace-android-sdk/build/reports/tests/
-
-      - name: Set next SDK version
-        run: |
-          git checkout master
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
-          git push
-
-      - name: Checkout Swazzler
-        uses: actions/checkout@v4
-        with:
-          repository: embrace-io/embrace-swazzler3
-          ref: master
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
-
-      - name: Create Swazzler Release Branch "release/${{ github.event.inputs.version_to_release }}"
-        run: |
-          git checkout -b release/${{ github.event.inputs.version_to_release }}
-
-      - name: Swazzler Pre-Release - Publish and Close repository
-        run: |
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.version_to_release }}.0#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
-          git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
-          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
-
-      - name: Set Next Swazzler Version
-        run: |
-          git checkout master
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
-          git push
-
-      - name: Cleanup Gradle Cache
-        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
-        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
-        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
-        run: |
-          rm -f ~/.gradle/caches/modules-2/modules-2.lock
-          rm -f ~/.gradle/caches/modules-2/gc.properties
+  release-candate:
+    name: Create Release Candidate
+    needs: release-branch
+    uses: ./.github/workflows/build-rc-workflow.yml@main
+    secrets: inherit
+    with:
+      version_of_rc: ${{ github.event.inputs.version_to_release }}

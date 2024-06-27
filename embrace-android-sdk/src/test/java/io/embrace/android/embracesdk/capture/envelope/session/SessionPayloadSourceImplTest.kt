@@ -47,20 +47,20 @@ internal class SessionPayloadSourceImplTest {
             fakeNativeAnrOtelMapper(),
             EmbLoggerImpl(),
             ::FakeWebViewService,
-            ::FakeSessionPropertiesService
+            ::FakeSessionPropertiesService,
         )
     }
 
     @Test
     fun `session crash`() {
-        val payload = impl.getSessionPayload(SessionSnapshotType.JVM_CRASH)
+        val payload = impl.getSessionPayload(SessionSnapshotType.JVM_CRASH, false)
         assertPayloadPopulated(payload)
         assertNotNull(payload.spans?.single())
     }
 
     @Test
     fun `session cache`() {
-        val payload = impl.getSessionPayload(SessionSnapshotType.PERIODIC_CACHE)
+        val payload = impl.getSessionPayload(SessionSnapshotType.PERIODIC_CACHE, false)
         assertPayloadPopulated(payload)
         val span = checkNotNull(payload.spans?.single())
         assertEquals("cache-span", span.name)
@@ -68,7 +68,7 @@ internal class SessionPayloadSourceImplTest {
 
     @Test
     fun `session lifecycle change`() {
-        val payload = impl.getSessionPayload(SessionSnapshotType.NORMAL_END)
+        val payload = impl.getSessionPayload(SessionSnapshotType.NORMAL_END, true)
         assertPayloadPopulated(payload)
         assertNotNull(payload.spans?.single())
     }

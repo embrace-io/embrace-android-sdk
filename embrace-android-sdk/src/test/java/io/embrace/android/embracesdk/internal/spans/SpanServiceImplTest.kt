@@ -156,7 +156,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `start span created from previous session`() {
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
-        currentSessionSpan.endSession()
+        currentSessionSpan.endSession(startNewSession = true)
         assertTrue(embraceSpan.start())
     }
 
@@ -301,7 +301,7 @@ internal class SpanServiceImplTest {
         val parentSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertTrue(parentSpan.start())
         assertTrue(parentSpan.stop())
-        currentSessionSpan.endSession()
+        currentSessionSpan.endSession(startNewSession = true)
         assertTrue(
             spansService.recordCompletedSpan(
                 name = expectedName,
@@ -358,6 +358,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `cannot record completed span if there is not current session span`() {
         currentSessionSpan.endSession(
+            startNewSession = true,
             appTerminationCause = AppTerminationCause.UserTermination
         )
         assertFalse(
@@ -449,6 +450,7 @@ internal class SpanServiceImplTest {
     @Test
     fun `recording span as lambda with no current active session will run code but not log span`() {
         currentSessionSpan.endSession(
+            startNewSession = true,
             appTerminationCause = AppTerminationCause.UserTermination
         )
         var executed = false
@@ -462,7 +464,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `after ending session with app termination, spans cannot be recorded`() {
-        currentSessionSpan.endSession(AppTerminationCause.UserTermination)
+        currentSessionSpan.endSession(true, AppTerminationCause.UserTermination)
         spansService.recordSpan("test-span") {
             // do thing
         }

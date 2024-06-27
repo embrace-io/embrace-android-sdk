@@ -51,7 +51,7 @@ internal class EmbraceSpanServiceTest {
         spanService.recordSpan("test-span") { lambdaRan = true }
         assertTrue(lambdaRan)
         assertEquals(2, spanSink.completedSpans().size)
-        assertEquals(3, currentSessionSpan.endSession().size)
+        assertEquals(3, currentSessionSpan.endSession(startNewSession = true).size)
     }
 
     @Test

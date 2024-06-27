@@ -28,7 +28,7 @@ internal class CurrentSessionSpanAttributeTests {
 
     @Test
     fun `attributes added to cold start session span`() {
-        val span = currentSessionSpan.endSession(null).single()
+        val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
         // assert attributes added by default
@@ -38,8 +38,8 @@ internal class CurrentSessionSpanAttributeTests {
     @Test
     fun `attributes added to hot session span`() {
         // end the first session span then create another one
-        currentSessionSpan.endSession(null)
-        val span = currentSessionSpan.endSession(null).single()
+        currentSessionSpan.endSession(true)
+        val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
         // assert attributes added by default

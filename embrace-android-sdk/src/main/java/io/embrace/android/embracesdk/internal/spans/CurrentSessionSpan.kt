@@ -12,7 +12,7 @@ internal interface CurrentSessionSpan : Initializable, SessionSpanWriter {
     /**
      * End the current session span and start a new one if the app is not terminating
      */
-    fun endSession(appTerminationCause: AppTerminationCause? = null): List<EmbraceSpanData>
+    fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause? = null): List<EmbraceSpanData>
 
     /**
      * Returns true if a span with the given parameters can be started in the current session

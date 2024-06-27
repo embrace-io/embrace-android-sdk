@@ -13,22 +13,27 @@ internal enum class SessionSnapshotType(
     /**
      * Whether the session process experienced a force quit/unexpected termination.
      */
-    val forceQuit: Boolean
+    val forceQuit: Boolean,
+
+    /**
+     * Whether this type of end should lead to the start of a new session
+     */
+    val shouldStartNewSession: Boolean
 ) {
 
     /**
      * The end session happened in the normal way (i.e. process state changes or manual/timed end).
      */
-    NORMAL_END(true, false),
+    NORMAL_END(endedCleanly = true, forceQuit = false, shouldStartNewSession = true),
 
     /**
      * The end session is being constructed so that it can be periodically cached. This avoids
      * the scenario of data loss in the event of NDK crashes.
      */
-    PERIODIC_CACHE(false, true),
+    PERIODIC_CACHE(endedCleanly = false, forceQuit = true, shouldStartNewSession = false),
 
     /**
      * The end session is being constructed because of a JVM crash.
      */
-    JVM_CRASH(false, false)
+    JVM_CRASH(endedCleanly = false, forceQuit = false, shouldStartNewSession = false)
 }

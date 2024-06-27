@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -30,6 +31,7 @@ internal class CurrentSessionSpanImpl(
      */
     private val traceCount = AtomicInteger(0)
     private val internalTraceCount = AtomicInteger(0)
+    private val initialized = AtomicBoolean(false)
 
     /**
      * The span that models the lifetime of the current session or background activity
@@ -37,16 +39,17 @@ internal class CurrentSessionSpanImpl(
     private val sessionSpan: AtomicReference<PersistableEmbraceSpan?> = AtomicReference(null)
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
-        if (sessionSpan.get() == null) {
+        if (!initialized.get()) {
             synchronized(sessionSpan) {
-                if (sessionSpan.get() == null) {
+                if (!initialized.get()) {
                     sessionSpan.set(startSessionSpan(sdkInitStartTimeMs))
+                    initialized.set(sessionSpan.get() != null)
                 }
             }
         }
     }
 
-    override fun initialized(): Boolean = sessionSpan.get() != null
+    override fun initialized(): Boolean = initialized.get()
 
     /**
      * Creating a new Span is only possible if the current session span is active, the parent has already been started, and the total
@@ -83,7 +86,7 @@ internal class CurrentSessionSpanImpl(
         return sessionSpan.get()?.getSystemAttribute(embSessionId) ?: ""
     }
 
-    override fun endSession(appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
+    override fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         synchronized(sessionSpan) {
             val endingSessionSpan = sessionSpan.get()
             return if (endingSessionSpan != null && endingSessionSpan.isRecording) {
@@ -98,7 +101,12 @@ internal class CurrentSessionSpanImpl(
                 if (appTerminationCause == null) {
                     endingSessionSpan.stop()
                     spanRepository.clearCompletedSpans()
-                    sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                    val newSession = if (startNewSession) {
+                        startSessionSpan(openTelemetryClock.now().nanosToMillis())
+                    } else {
+                        null
+                    }
+                    sessionSpan.set(newSession)
                 } else {
                     val crashTime = openTelemetryClock.now().nanosToMillis()
                     spanRepository.failActiveSpans(crashTime)

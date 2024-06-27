@@ -7,5 +7,5 @@ import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 internal class FakeSessionPayloadSource : SessionPayloadSource {
 
     var sessionPayload: SessionPayload = SessionPayload()
-    override fun getSessionPayload(endType: SessionSnapshotType, crashId: String?) = sessionPayload
+    override fun getSessionPayload(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?) = sessionPayload
 }

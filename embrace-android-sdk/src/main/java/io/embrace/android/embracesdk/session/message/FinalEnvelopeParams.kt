@@ -12,6 +12,7 @@ internal class FinalEnvelopeParams(
     val initial: SessionZygote,
     val endType: SessionSnapshotType,
     val logger: EmbLogger,
+    backgroundActivityEnabled: Boolean,
     crashId: String? = null,
 ) {
 
@@ -19,4 +20,6 @@ internal class FinalEnvelopeParams(
         crashId.isNullOrEmpty() -> null
         else -> crashId
     }
+
+    val startNewSession: Boolean = endType.shouldStartNewSession && backgroundActivityEnabled
 }

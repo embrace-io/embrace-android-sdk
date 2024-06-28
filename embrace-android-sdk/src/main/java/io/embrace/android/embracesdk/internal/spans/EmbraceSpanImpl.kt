@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -16,6 +15,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.SpanId
@@ -41,8 +41,8 @@ internal class EmbraceSpanImpl(
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val systemAttributes = ConcurrentHashMap<EmbraceAttributeKey, String>().apply {
-        putAll(spanBuilder.getFixedAttributes().associate { it.key to it.value })
+    private val systemAttributes = ConcurrentHashMap<AttributeKey<String>, String>().apply {
+        putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getCustomAttributes())
@@ -107,7 +107,7 @@ internal class EmbraceSpanImpl(
 
             startedSpan.get()?.let { spanToStop ->
                 systemAttributes.forEach { systemAttribute ->
-                    spanToStop.setEmbraceAttribute(systemAttribute.key, systemAttribute.value)
+                    spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
                 }
                 customAttributes.forEach { attribute ->
                     spanToStop.setAttribute(attribute.key, attribute.value)
@@ -249,18 +249,19 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean = systemAttributes[fixedAttribute.key] == fixedAttribute.value
+    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+        systemAttributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
 
-    override fun getSystemAttribute(key: EmbraceAttributeKey): String? = systemAttributes[key]
+    override fun getSystemAttribute(key: AttributeKey<String>): String? = systemAttributes[key]
 
-    override fun setSystemAttribute(key: EmbraceAttributeKey, value: String) {
+    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
         systemAttributes[key] = value
     }
 
     override fun removeCustomAttribute(key: String): Boolean = customAttributes.remove(key) != null
 
     private fun getAttributesPayload(): List<Attribute> =
-        systemAttributes.map { Attribute(it.key.name, it.value) } + customAttributes.toNewPayload()
+        systemAttributes.map { Attribute(it.key.key, it.value) } + customAttributes.toNewPayload()
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 

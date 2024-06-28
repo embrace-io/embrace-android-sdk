@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.semconv.HttpAttributes
+import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes.EXCEPTION_MESSAGE
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -264,11 +264,20 @@ internal class NetworkRequestApiTest {
                 assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
                 assertEquals(expectedRequest.w3cTraceparent, attrs.findAttributeValue("emb.w3c_traceparent"))
                 if (completed) {
-                    assertEquals(expectedRequest.responseCode.toString(), attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key))
-                    assertEquals(expectedRequest.bytesSent.toString(), attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key))
-                    assertEquals(expectedRequest.bytesReceived.toString(), attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key))
+                    assertEquals(
+                        expectedRequest.responseCode.toString(),
+                        attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
+                    )
+                    assertEquals(
+                        expectedRequest.bytesSent.toString(),
+                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
+                    )
+                    assertEquals(
+                        expectedRequest.bytesReceived.toString(),
+                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
+                    )
                     assertEquals(null, attrs.findAttributeValue("error.type"))
-                    assertEquals(null, attrs.findAttributeValue("error.message"))
+                    assertEquals(null, attrs.findAttributeValue(EXCEPTION_MESSAGE.key))
                     val statusCode = expectedRequest.responseCode
                     val expectedStatus = if (statusCode != null && statusCode >= 200 && statusCode < 400) {
                         Span.Status.UNSET
@@ -281,7 +290,7 @@ internal class NetworkRequestApiTest {
                     assertEquals(null, attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key))
                     assertEquals(null, attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key))
                     assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
-                    assertEquals(expectedRequest.errorMessage, attrs.findAttributeValue("error.message"))
+                    assertEquals(expectedRequest.errorMessage, attrs.findAttributeValue(EXCEPTION_MESSAGE.key))
                     assertEquals(Span.Status.ERROR, status)
                 }
             }
@@ -292,7 +301,8 @@ internal class NetworkRequestApiTest {
         val session = checkNotNull(testRule.harness.getLastSentSession())
 
         val unfilteredSpans = checkNotNull(session.data.spans)
-        val spans = checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
+        val spans =
+            checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

@@ -38,7 +38,7 @@ jobs:
   release-candate:
     name: Create Release Candidate
     needs: release-branch
-    uses: ./.github/workflows/build-rc-workflow.yml@main
+    uses: ./.github/workflows/build-rc-workflow.yml
     secrets: inherit
     with:
       version_of_rc: ${{ github.event.inputs.version_to_release }}

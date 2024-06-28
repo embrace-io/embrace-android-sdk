@@ -28,6 +28,14 @@ jobs:
       version_to_release: ${{ github.event.inputs.version_to_release }}
       next_version: ${{ github.event.inputs.next_version }}
 
+  update-apps:
+    name: Update Test Apps
+    needs: release-branch
+    uses: ./.github/workflows/rc-update-test-apps.yml
+    secrets: inherit
+    with:
+      next_version: ${{ github.event.inputs.next_version }}
+
   release-candate:
     name: Create Release Candidate
     needs: release-branch
@@ -35,3 +43,4 @@ jobs:
     secrets: inherit
     with:
       version_of_rc: ${{ github.event.inputs.version_to_release }}
+

@@ -20,15 +20,8 @@ on:
         required: true
 
 jobs:
-  baseline-profile:
-    name: Generate Baseline Profile
-    uses: ./.github/workflows/generate-baseline-profile.yml
-    secrets: inherit
-
   release-branch:
     name: Create Release Branches
-    if: ${{ always() }}
-    needs: baseline-profile
     uses: ./.github/workflows/rc-release-branch.yml
     secrets: inherit
     with:

@@ -16,8 +16,9 @@ jobs:
   update-apps:
     name: Update Apps Repo
     strategy:
+      fail-fast: false
       matrix:
-        repo: [ embrace-io/android-sdk-benchmark, embrace-io/android-test-suite ]
+        repo: [ embrace-io/android-sdk-benchmark, embrace-io/android-test-suite, embrace-io/ndk-test-app-ndkbuild, embrace-io/ndk-test-app-custombuild, embrace-io/ndk-test-app, embrace-io/android-size-measure ]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:

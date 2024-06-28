@@ -22,14 +22,14 @@ on:
 jobs:
   baseline-profile:
     name: Generate Baseline Profile
-    uses: ./.github/workflows/genereate-baseline-profile.yml@main
+    uses: ./.github/workflows/generate-baseline-profile.yml
     secrets: inherit
 
   release-branch:
     name: Create Release Branches
     if: ${{ always() }}
     needs: baseline-profile
-    uses: ./.github/workflows/rc-release-branch.yml@main
+    uses: ./.github/workflows/rc-release-branch.yml
     secrets: inherit
     with:
       version_to_release: ${{ github.event.inputs.version_to_release }}

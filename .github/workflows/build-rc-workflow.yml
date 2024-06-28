@@ -10,6 +10,11 @@ env:
   mavenSigningKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
 
 on:
+  workflow_call:
+    inputs:
+      version_of_rc:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version_of_rc:

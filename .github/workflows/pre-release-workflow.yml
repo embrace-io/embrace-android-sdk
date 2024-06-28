@@ -20,16 +20,9 @@ on:
         required: true
 
 jobs:
-  baseline-profile:
-    name: Generate Baseline Profile
-    uses: ./.github/workflows/genereate-baseline-profile.yml@main
-    secrets: inherit
-
   release-branch:
     name: Create Release Branches
-    if: ${{ always() }}
-    needs: baseline-profile
-    uses: ./.github/workflows/rc-release-branch.yml@main
+    uses: ./.github/workflows/rc-release-branch.yml
     secrets: inherit
     with:
       version_to_release: ${{ github.event.inputs.version_to_release }}
@@ -38,7 +31,7 @@ jobs:
   release-candate:
     name: Create Release Candidate
     needs: release-branch
-    uses: ./.github/workflows/build-rc-workflow.yml@main
+    uses: ./.github/workflows/build-rc-workflow.yml
     secrets: inherit
     with:
       version_of_rc: ${{ github.event.inputs.version_to_release }}

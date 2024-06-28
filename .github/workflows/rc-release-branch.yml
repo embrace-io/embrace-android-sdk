@@ -1,6 +1,14 @@
 name: Pre-Release - Create Release Branches
 
 on:
+  workflow_call:
+    inputs:
+      version_to_release:
+        required: true
+        type: string
+      next_version:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version_to_release:

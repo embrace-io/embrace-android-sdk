@@ -7,12 +7,12 @@ import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.opentelemetry.embState
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class LogWriterImpl(
     private val logger: Logger,
@@ -34,7 +34,7 @@ internal class LogWriterImpl(
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
         sessionIdTracker.getActiveSessionId()?.let { sessionId ->
-            builder.setAttribute(embSessionId.attributeKey, sessionId)
+            builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
         }
 
         metadataService.getAppState()?.let { appState ->

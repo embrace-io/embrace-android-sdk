@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.arch.schema.TelemetryType
@@ -17,6 +16,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.spans.getEmbraceSpan
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
@@ -79,7 +79,7 @@ internal class FakePersistableEmbraceSpan(
 
             if (status == Span.Status.ERROR) {
                 val error = errorCode?.fromErrorCode() ?: ErrorCodeAttribute.Failure
-                setSystemAttribute(error.key, error.value)
+                setSystemAttribute(error.key.attributeKey, error.value)
             }
 
             val timestamp = endTimeMs ?: fakeClock.now()
@@ -148,10 +148,10 @@ internal class FakePersistableEmbraceSpan(
     override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
         attributes.hasFixedAttribute(fixedAttribute)
 
-    override fun getSystemAttribute(key: EmbraceAttributeKey): String? = attributes[key.name]
+    override fun getSystemAttribute(key: AttributeKey<String>): String? = attributes[key.key]
 
-    override fun setSystemAttribute(key: EmbraceAttributeKey, value: String) {
-        attributes[key.name] = value
+    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
+        attributes[key.key] = value
     }
 
     override fun removeCustomAttribute(key: String): Boolean = attributes.remove(key) != null

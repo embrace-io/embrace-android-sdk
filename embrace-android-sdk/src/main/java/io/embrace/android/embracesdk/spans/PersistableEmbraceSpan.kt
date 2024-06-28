@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.spans
 
 import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
@@ -33,12 +33,12 @@ internal interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
      */
-    fun getSystemAttribute(key: EmbraceAttributeKey): String?
+    fun getSystemAttribute(key: AttributeKey<String>): String?
 
     /**
      * Set the value of the attribute with the given key, overwriting the original value if it's already set
      */
-    fun setSystemAttribute(key: EmbraceAttributeKey, value: String)
+    fun setSystemAttribute(key: AttributeKey<String>, value: String)
 
     /**
      * Remove the custom attribute with the given key name

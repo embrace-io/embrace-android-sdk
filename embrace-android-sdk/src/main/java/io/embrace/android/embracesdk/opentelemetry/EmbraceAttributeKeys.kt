@@ -29,11 +29,6 @@ internal val embProcessIdentifier: EmbraceAttributeKey = EmbraceAttributeKey("pr
 internal val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey(id = "sequence_id", isPrivate = true)
 
 /**
- * Attribute name for the Embrace Sesssion
- */
-internal val embSessionId: EmbraceAttributeKey = EmbraceAttributeKey("session_id")
-
-/**
  * Attribute name for the application state (foreground/background) at the time the log was recorded
  */
 internal val embState = EmbraceAttributeKey("state")

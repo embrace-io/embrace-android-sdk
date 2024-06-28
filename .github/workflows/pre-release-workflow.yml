@@ -21,7 +21,7 @@ jobs:
 
   release-candidate:
     name: Create Release Candidate
-    needs: release-branch
+    needs: baseline-profile
     uses: ./.github/workflows/build-rc-workflow.yml
     secrets: inherit
     with:

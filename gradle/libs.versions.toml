@@ -30,9 +30,10 @@ lifecycle-extensions = { group = "androidx.lifecycle", name = "lifecycle-extensi
 
 moshi = { group = "com.squareup.moshi", name = "moshi", version.ref = "moshi" }
 moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshi" }
-opentelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api", version.ref = "openTelemetryCore" }
-opentelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk", version.ref = "openTelemetryCore" }
-opentelemetry-context = { group = "io.opentelemetry", name = "opentelemetry-context", version.ref = "openTelemetryCore" }
+opentelemetry-bom = { group = "io.opentelemetry", name = "opentelemetry-bom", version.ref = "openTelemetryCore" }
+opentelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api"}
+opentelemetry-sdk = { group = "io.opentelemetry", name = "opentelemetry-sdk"}
+opentelemetry-context = { group = "io.opentelemetry", name = "opentelemetry-context"}
 opentelemetry-semconv = { group = "io.opentelemetry.semconv", name = "opentelemetry-semconv", version.ref = "openTelementrySemConv" }
 opentelemetry-semconv-incubating = { group = "io.opentelemetry.semconv", name = "opentelemetry-semconv-incubating", version.ref = "openTelementrySemConv" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }

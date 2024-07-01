@@ -18,4 +18,9 @@ object Versions {
     const val DETEKT = "1.23.0"
 
     const val NDK = "21.4.7075529"
+    const val MOCKK = "1.12.2"
+    const val ANDROIDX_TEST = "1.4.0"
+    const val ANDROIDX_JUNIT = "1.1.3"
+    const val ROBOLECTRIC = "4.12.1"
+    const val MOCKWEBSERVER = "4.9.3"
 }

@@ -12,9 +12,6 @@ plugins {
 description = "Embrace Android SDK: Core"
 
 android {
-    useLibrary("android.test.runner")
-    useLibrary("android.test.base")
-    useLibrary("android.test.mock")
     ndkVersion = Versions.NDK
 
     defaultConfig {
@@ -36,14 +33,6 @@ android {
     packagingOptions {
         pickFirst("**/*.so")
     }
-
-    sourceSets {
-        // Had to add a 'java' directory to store Java test files, as it doesn't get picked up as a test if I put it in
-        // the kotlin directory. If I've just screwed up somehow and this is actually possible, please consolidate.
-        getByName("test").java.srcDir("src/integrationTest/java")
-        getByName("test").kotlin.srcDir("src/integrationTest/kotlin")
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -89,23 +78,12 @@ dependencies {
     // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
-    testImplementation(libs.mockk)
-    testImplementation(libs.androidx.test.core)
-    testImplementation(libs.androidx.test.junit)
-    testImplementation(libs.robolectric)
-    testImplementation(project(path = ":embrace-android-sdk"))
-    testImplementation(libs.mockwebserver)
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
 
     dokkaHtmlPlugin(libs.dokka.convert)
     dokkaHtmlPlugin(libs.dokka.docs)
-
-    // For the functional tests
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(project(path = ":embrace-android-sdk"))
 }
 
 tasks.withType<DokkaTask>().configureEach {

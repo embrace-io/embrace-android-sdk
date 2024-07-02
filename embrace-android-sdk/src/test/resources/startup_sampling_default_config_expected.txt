@@ -1,5 +1,0 @@
-pct_enabled=100
-sample_interval=1000
-sample_granularity=100
-sampling_duration=10000
-stacktrace_length=100

@@ -3,5 +3,6 @@ include(
     ":embrace-android-okhttp3",
     ":embrace-android-fcm",
     ":embrace-android-compose",
-    ":embrace-lint"
+    ":embrace-lint",
+    ":embrace-test-common"
 )

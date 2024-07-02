@@ -1,6 +1,6 @@
 [versions]
 
-detektGradlePlugin = "1.23.0"
+detektGradlePlugin = "1.23.6"
 junit = "4.13.2"
 kotlinExposed = "1.4.32"
 dokka = "1.9.10"

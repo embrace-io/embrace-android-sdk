@@ -12,6 +12,4 @@ dependencies {
     compileOnly(libs.okhttp)
     compileOnly(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-android-sdk"))
-    testImplementation(libs.mockk)
-    testImplementation(libs.mockwebserver)
 }

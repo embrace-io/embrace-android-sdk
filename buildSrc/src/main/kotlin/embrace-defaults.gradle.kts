@@ -17,6 +17,9 @@ plugins {
 }
 
 android {
+    useLibrary("android.test.runner")
+    useLibrary("android.test.base")
+    useLibrary("android.test.mock")
     compileSdk = Versions.COMPILE_SDK
 
     defaultConfig {
@@ -71,13 +74,28 @@ android {
             withJavadocJar()
         }
     }
+
+    sourceSets {
+        getByName("test").java.srcDir("src/integrationTest/java")
+        getByName("test").kotlin.srcDir("src/integrationTest/kotlin")
+        getByName("test").resources.srcDir("src/integrationTest/resources")
+    }
 }
 
 dependencies {
-    testImplementation("junit:junit:${Versions.JUNIT}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN_EXPOSED}")
     add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}")
     add("lintChecks", project.project(":embrace-lint"))
+
+    testImplementation("junit:junit:${Versions.JUNIT}")
+    testImplementation("io.mockk:mockk:${Versions.MOCKK}")
+    testImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
+    testImplementation("androidx.test.ext:junit:${Versions.ANDROIDX_JUNIT}")
+    testImplementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")
+    testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.MOCKWEBSERVER}")
+
+    androidTestImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
+    androidTestImplementation("androidx.test:runner:${Versions.ANDROIDX_TEST}")
 }
 
 checkstyle {

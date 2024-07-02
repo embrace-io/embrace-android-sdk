@@ -19,7 +19,7 @@ protobuf = "4.27.2"
 profileinstaller = "1.0.0"
 okhttp = "4.9.3"
 firebase = "23.1.0"
-compose = "1.0.5"
+compose = "1.6.8"
 
 [libraries]
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detektGradlePlugin" }

@@ -1,0 +1,104 @@
+name: "Run Subset of Swazzler Tests"
+
+on:
+  workflow_call:
+
+env:
+  ANDROID_BUILD_TOOLS_HOME: "/usr/local/lib/android/sdk/build-tools/32.0.0"
+
+jobs:
+  testGradle:
+    name: "Run Gradle Tests"
+#    runs-on: ubuntu-22.04-8cores
+    runs-on: macos-12
+    timeout-minutes: 10
+    steps:
+      - name: Checkout embrace-android-sdk
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # make sure version in gradle.properties matches the version of embrace-swazzler3 version
+      - name: "Publish SDK locally"
+        run: ./gradlew publishToMavenLocal --no-daemon
+
+      - name: Checkout Swazzler-Test
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/swazzler-test
+          ref: main
+          path: ./swazzler-test
+          token: ${{ secrets.CD_GITHUB_TOKEN || secrets.token }}
+
+      - name: Configure git for submodules
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.CD_GITHUB_TOKEN }}
+        run: git config --global url."https://${GITHUB_API_TOKEN}@github.com".insteadOf "https://github.com"
+
+      # update all submodules, except for the sdk, which we already published based on current branch
+      - name: Git submodules remote update, except for the sdk
+        run: git -c submodule."embrace-android-sdk".update=none submodule update --remote --recursive --init --force
+
+#      - name: "Install NPM"
+#        uses: actions/setup-node@v4
+#        with:
+#          node-version: 14.x
+
+#      - name: Setup NDK 21.4.7075529
+#        run: |
+#          export ANDROID_ROOT=/usr/local/lib/android
+#          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+#          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+#          ln -sfn $ANDROID_SDK_ROOT/ndk/21.4.7075529 $ANDROID_NDK_ROOT
+
+#      - name: Install Java machines
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: 'adopt'
+#          # let's always install java 17 last, so we can build sdk with this version
+#          java-version: 17
+
+      # Agp 4.x does not work well with build-tools 31+. Because of this we are renaming some files so to make it work
+#      - name: "Fix android build tools issue with agp 4.x"
+#        run: |
+#          cd $ANDROID_SDK_ROOT/build-tools/31.0.0 \
+#            && mv d8 dx \
+#            && cd lib  \
+#            && mv d8.jar dx.jar
+
+#      - name: "Publish SDK locally"
+#        run: cd embrace-android-sdk && ./gradlew publishToMavenLocal --no-daemon
+
+      # use java 11 to publish swazzler and run swazzler-tests
+      - name: Install Java machines
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: "Publish Swazzler locally"
+        run: cd embrace-swazzler3 && ./gradlew publishToMavenLocal --no-daemon
+
+      - name: "Run Gradle Tests"
+        run: |
+          echo "Running Gradle tests"        
+          ./gradlew :functional-tests:swazzlerTests --tests "io.embrace.android.gradle.swazzler.tests.MinimumSurvivalTests" --stacktrace
+
+      - name: "Test Results"
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: swazzler-test-results
+          path: functional-tests/build/reports/tests/swazzlerTests/
+
+#      - name: Notify failure to Slack channel
+#        if: ${{ failure() }}
+#        uses: slackapi/slack-github-action@v1.25.0
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+#        with:
+#          payload: |
+#            {
+#              "failed_action_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+#            }

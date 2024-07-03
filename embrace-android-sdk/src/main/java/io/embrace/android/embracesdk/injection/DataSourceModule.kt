@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import android.os.Build
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
@@ -38,11 +39,8 @@ import kotlin.reflect.KProperty
  * Data will then automatically be captured by the SDK.
  */
 internal interface DataSourceModule {
-    /**
-     * Returns a list of all the data sources that are defined in this module.
-     */
-    fun getDataSources(): List<DataSourceState<*>>
-
+    val embraceFeatureRegistry: EmbraceFeatureRegistry
+    val dataCaptureOrchestrator: DataCaptureOrchestrator
     val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
     val viewDataSource: DataSourceState<ViewDataSource>
     val tapDataSource: DataSourceState<TapDataSource>
@@ -71,13 +69,19 @@ internal class DataSourceModuleImpl(
     anrModule: AnrModule
 ) : DataSourceModule {
 
-    private val values: MutableList<DataSourceState<*>> = mutableListOf()
+    private val configService = essentialServiceModule.configService
+
+    override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
+        DataCaptureOrchestrator(configService, initModule.logger)
+    }
+
+    override val embraceFeatureRegistry: EmbraceFeatureRegistry = dataCaptureOrchestrator
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 BreadcrumbDataSource(
-                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    breadcrumbBehavior = configService.breadcrumbBehavior,
                     writer = otelModule.currentSessionSpan,
                     logger = initModule.logger
                 )
@@ -89,7 +93,7 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = {
                 TapDataSource(
-                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    breadcrumbBehavior = configService.breadcrumbBehavior,
                     writer = otelModule.currentSessionSpan,
                     logger = initModule.logger
                 )
@@ -101,7 +105,7 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = {
                 PushNotificationDataSource(
-                    breadcrumbBehavior = essentialServiceModule.configService.breadcrumbBehavior,
+                    breadcrumbBehavior = configService.breadcrumbBehavior,
                     initModule.clock,
                     writer = otelModule.currentSessionSpan,
                     logger = initModule.logger
@@ -160,18 +164,11 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource>? by dataSourceState {
-        DataSourceState(
-            factory = { aeiService },
-            configGate = { configService.isAppExitInfoCaptureEnabled() }
-        )
-    }
-
     private val aeiService: AeiDataSourceImpl? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             AeiDataSourceImpl(
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                essentialServiceModule.configService.appExitInfoBehavior,
+                configService.appExitInfoBehavior,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,
                 essentialServiceModule.logWriter,
@@ -180,6 +177,13 @@ internal class DataSourceModuleImpl(
         } else {
             null
         }
+    }
+
+    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource>? by dataSourceState {
+        DataSourceState(
+            factory = { aeiService },
+            configGate = { configService.isAppExitInfoCaptureEnabled() }
+        )
     }
 
     override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {
@@ -257,7 +261,7 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = {
                 WebViewDataSource(
-                    webViewVitalsBehavior = essentialServiceModule.configService.webViewVitalsBehavior,
+                    webViewVitalsBehavior = configService.webViewVitalsBehavior,
                     writer = otelModule.currentSessionSpan,
                     logger = initModule.logger,
                     serializer = initModule.jsonSerializer
@@ -279,10 +283,6 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    private val configService = essentialServiceModule.configService
-
-    override fun getDataSources(): List<DataSourceState<*>> = values
-
     /**
      * Property delegate that adds the value to a
      * list on its creation. That list is then used by the [DataCaptureOrchestrator] to control
@@ -290,18 +290,18 @@ internal class DataSourceModuleImpl(
      */
     @Suppress("unused")
     private fun <T : DataSource<*>> dataSourceState(provider: Provider<DataSourceState<T>>) =
-        DataSourceDelegate(provider = provider, values = values)
+        DataSourceDelegate(provider, dataCaptureOrchestrator)
 }
 
 private class DataSourceDelegate<S : DataSource<*>>(
     provider: Provider<DataSourceState<S>>,
-    values: MutableList<DataSourceState<*>>,
+    dataCaptureOrchestrator: DataCaptureOrchestrator
 ) : ReadOnlyProperty<Any?, DataSourceState<S>> {
 
     private val value: DataSourceState<S> = provider()
 
     init {
-        values.add(value)
+        dataCaptureOrchestrator.add(value)
     }
 
     override fun getValue(thisRef: Any?, property: KProperty<*>) = value

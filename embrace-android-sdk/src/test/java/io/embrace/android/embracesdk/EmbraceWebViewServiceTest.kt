@@ -52,9 +52,7 @@ internal class EmbraceWebViewServiceTest {
         dataSourceModule = fakeDataSourceModule(
             oTelModule = openTelemetryModule,
         ).apply {
-            getDataSources().forEach {
-                it.onSessionTypeChange(SessionType.FOREGROUND)
-            }
+            dataCaptureOrchestrator.currentSessionType = SessionType.FOREGROUND
         }
         cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
         configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })

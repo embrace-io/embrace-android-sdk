@@ -21,22 +21,22 @@ internal class DataCaptureOrchestratorTest {
         dataSource = FakeDataSource(mockContext())
         configService = FakeConfigService()
         orchestrator = DataCaptureOrchestrator(
-            listOf(
+            configService,
+            EmbLoggerImpl(),
+        ).apply {
+            add(
                 DataSourceState(
                     factory = { dataSource },
-                    configGate = { enabled },
-                    currentSessionType = null
+                    configGate = { enabled }
                 )
-            ),
-            EmbLoggerImpl(),
-            configService
-        )
+            )
+        }
     }
 
     @Test
     fun `config changes are propagated`() {
         assertEquals(0, dataSource.enableDataCaptureCount)
-        orchestrator.onSessionTypeChange(SessionType.FOREGROUND)
+        orchestrator.currentSessionType = SessionType.FOREGROUND
         assertEquals(1, dataSource.enableDataCaptureCount)
 
         enabled = false
@@ -47,7 +47,7 @@ internal class DataCaptureOrchestratorTest {
     @Test
     fun `session type change is propagated`() {
         assertEquals(0, dataSource.enableDataCaptureCount)
-        orchestrator.onSessionTypeChange(SessionType.FOREGROUND)
+        orchestrator.currentSessionType = SessionType.FOREGROUND
         assertEquals(1, dataSource.enableDataCaptureCount)
     }
 }

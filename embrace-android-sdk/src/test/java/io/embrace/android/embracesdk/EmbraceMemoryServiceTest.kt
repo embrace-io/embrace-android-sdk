@@ -40,7 +40,7 @@ internal class EmbraceMemoryServiceTest {
             workerThreadModule = FakeWorkerThreadModule(),
             anrModule = FakeAnrModule()
         )
-        dataSourceModule.getDataSources().forEach { it.onSessionTypeChange(SessionType.FOREGROUND) }
+        dataSourceModule.dataCaptureOrchestrator.currentSessionType = SessionType.FOREGROUND
         embraceMemoryService = EmbraceMemoryService(fakeClock) { dataSourceModule }
     }
 

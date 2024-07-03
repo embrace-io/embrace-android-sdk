@@ -24,16 +24,20 @@ internal class DataSourceState<T : DataSource<*>>(
     private val configGate: Provider<Boolean> = { true },
 
     /**
-     * The type of session that contains the data.
-     */
-    private var currentSessionType: SessionType? = null,
-
-    /**
      * A session type where data capture should be disabled. For example,
      * background activities capture a subset of sessions.
      */
     private val disabledSessionType: SessionType? = null
 ) {
+
+    /**
+     * The type of session that contains the data.
+     */
+    var currentSessionType: SessionType? = null
+        set(value) {
+            field = value
+            onSessionTypeChange()
+        }
 
     private val enabledDataSource by lazy(factory)
 
@@ -47,8 +51,7 @@ internal class DataSourceState<T : DataSource<*>>(
     /**
      * Callback that is invoked when the session type changes.
      */
-    fun onSessionTypeChange(sessionType: SessionType?) {
-        this.currentSessionType = sessionType
+    private fun onSessionTypeChange() {
         updateDataSource()
         enabledDataSource?.resetDataCaptureLimits()
     }

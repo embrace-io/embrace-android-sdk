@@ -9,9 +9,8 @@ internal class DataCaptureEventBehavior(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?> = { null }
 ) : MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck,
-    { null },
-    remoteSupplier
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     companion object {

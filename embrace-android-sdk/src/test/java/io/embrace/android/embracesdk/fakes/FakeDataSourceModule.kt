@@ -18,11 +18,17 @@ import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.capture.webview.WebViewDataSource
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.injection.DataSourceModule
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class FakeDataSourceModule : DataSourceModule {
     override val dataCaptureOrchestrator: DataCaptureOrchestrator =
-        DataCaptureOrchestrator(FakeConfigService(), FakeEmbLogger())
+        DataCaptureOrchestrator(
+            FakeConfigService(),
+            BackgroundWorker(BlockableExecutorService()),
+            FakeEmbLogger()
+        )
     override val embraceFeatureRegistry: EmbraceFeatureRegistry = dataCaptureOrchestrator
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> = DataSourceState({ null })
     override val viewDataSource: DataSourceState<ViewDataSource> = DataSourceState({ null })

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
@@ -33,6 +34,7 @@ import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityC
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -378,6 +380,7 @@ internal class SessionOrchestratorTest {
         fakeDataSource = FakeDataSource(mockContext())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             configService,
+            BackgroundWorker(BlockableExecutorService()),
             logger
         ).apply {
             add(

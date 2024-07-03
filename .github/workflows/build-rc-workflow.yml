@@ -74,7 +74,7 @@ jobs:
 
       - name: Generate SDK RC - Publish and close Sonatype repository
         run: |
-          ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}

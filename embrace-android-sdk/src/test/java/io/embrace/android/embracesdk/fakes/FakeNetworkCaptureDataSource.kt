@@ -12,7 +12,7 @@ internal class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
         loggedCalls.add(networkCapturedCall)
     }
 
-    override fun alterSessionSpan(
+    override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: LogWriter.() -> Unit
     ): Boolean {

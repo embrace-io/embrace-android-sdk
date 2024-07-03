@@ -28,7 +28,7 @@ internal class TapDataSource(
         timestamp: Long,
         type: TapBreadcrumb.TapBreadcrumbType
     ) {
-        alterSessionSpan(
+        captureData(
             inputValidation = NoInputValidation,
             captureAction = {
                 val finalPoint = when {

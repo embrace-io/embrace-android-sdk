@@ -41,7 +41,7 @@ internal class LowPowerDataSource(
         val activeSpan = span
 
         if (powerSaveMode && activeSpan == null) {
-            alterSessionSpan(NoInputValidation) {
+            captureData(NoInputValidation) {
                 startSpanCapture(SchemaType.LowPower, clock.now())?.apply {
                     span = this
                 }

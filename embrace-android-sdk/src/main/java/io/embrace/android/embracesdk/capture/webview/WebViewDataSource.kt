@@ -30,7 +30,7 @@ internal class WebViewDataSource(
         try {
             writer.removeEvents(EmbType.System.WebViewInfo)
             webViewInfoList.forEach { webViewInfo ->
-                alterSessionSpan(
+                captureData(
                     inputValidation = NoInputValidation,
                     captureAction = {
                         val webVitalsString = serializer

@@ -9,7 +9,7 @@ internal class FakeAeiDataSource : AeiDataSource {
     var data: List<AppExitInfoData> =
         listOf(AppExitInfoData(null, null, null, null, null, null, null, null, null, null, null))
 
-    override fun alterSessionSpan(
+    override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: LogWriter.() -> Unit
     ): Boolean {

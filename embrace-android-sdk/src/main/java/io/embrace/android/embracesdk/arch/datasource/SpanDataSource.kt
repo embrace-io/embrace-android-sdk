@@ -6,13 +6,13 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 /**
- * A [DataSource] that adds or alters a new span on the [SpansService]
+ * A [DataSource] that adds or alters a span.
  */
 internal interface SpanDataSource : DataSource<SpanService> {
 
     /**
      * The DataSource should call this function when it wants to start, stop, or mutate
-     * an [EmbraceSpan]. [alterSessionSpan] should only be used for adding to the session span.
+     * an [EmbraceSpan]. [captureData] should only be used for adding to the session span.
      *
      * The [countsTowardsLimits] parameter should be true if the [captureAction] will add data
      * that should count towards the limits.

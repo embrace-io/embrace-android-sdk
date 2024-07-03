@@ -22,7 +22,7 @@ internal class InternalErrorDataSourceImpl(
     ) {
 
     override fun handleInternalError(throwable: Throwable) {
-        alterSessionSpan(NoInputValidation) {
+        captureData(NoInputValidation) {
             val schemaType = SchemaType.InternalError(throwable)
             addLog(schemaType, Severity.ERROR, "", true)
         }

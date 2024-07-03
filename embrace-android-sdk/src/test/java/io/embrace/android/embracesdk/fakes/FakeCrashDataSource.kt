@@ -8,7 +8,7 @@ internal class FakeCrashDataSource : CrashDataSource {
     internal var exception: Throwable? = null
     internal var jsException: JsException? = null
 
-    override fun alterSessionSpan(
+    override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: LogWriter.() -> Unit,
     ): Boolean {

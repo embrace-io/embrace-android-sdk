@@ -182,7 +182,7 @@ internal class AeiDataSourceImpl(
 
     private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
         appExitInfoWithTraces.forEach { data ->
-            alterSessionSpan(
+            captureData(
                 inputValidation = NoInputValidation,
                 captureAction = {
                     val schemaType = SchemaType.AeiLog(data)

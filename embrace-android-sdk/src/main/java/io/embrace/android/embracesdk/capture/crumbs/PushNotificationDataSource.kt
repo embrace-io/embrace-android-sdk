@@ -32,7 +32,7 @@ internal class PushNotificationDataSource(
         notificationPriority: Int?,
         type: PushNotificationBreadcrumb.NotificationType
     ) {
-        alterSessionSpan(
+        captureData(
             inputValidation = NoInputValidation,
             captureAction = {
                 val captureFcmPiiData = breadcrumbBehavior.isCaptureFcmPiiDataEnabled()

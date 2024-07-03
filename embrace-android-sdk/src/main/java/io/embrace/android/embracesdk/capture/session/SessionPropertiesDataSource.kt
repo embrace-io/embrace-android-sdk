@@ -22,7 +22,7 @@ internal class SessionPropertiesDataSource(
      * Assume input has already been sanitized
      */
     fun addProperty(key: String, value: String): Boolean =
-        alterSessionSpan(
+        captureData(
             inputValidation = NoInputValidation,
             captureAction = {
                 addAttribute(key, value)
@@ -30,7 +30,7 @@ internal class SessionPropertiesDataSource(
         )
 
     fun addProperties(properties: Map<String, String>): Boolean =
-        alterSessionSpan(
+        captureData(
             inputValidation = NoInputValidation,
             captureAction = {
                 properties.forEach { property ->
@@ -41,7 +41,7 @@ internal class SessionPropertiesDataSource(
 
     fun removeProperty(key: String): Boolean {
         var success = false
-        alterSessionSpan(
+        captureData(
             inputValidation = NoInputValidation,
             captureAction = {
                 success = removeCustomAttribute(key.toSessionPropertyAttributeName())

@@ -215,7 +215,7 @@ internal class SessionOrchestratorImpl(
                 ProcessState.FOREGROUND -> SessionType.FOREGROUND
                 ProcessState.BACKGROUND -> SessionType.BACKGROUND
             }
-            dataCaptureOrchestrator.onSessionTypeChange(sessionType)
+            dataCaptureOrchestrator.currentSessionType = sessionType
 
             // log the state change
             logSessionStateChange(

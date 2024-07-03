@@ -377,16 +377,16 @@ internal class SessionOrchestratorTest {
             PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
         fakeDataSource = FakeDataSource(mockContext())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
-            listOf(
+            configService,
+            logger
+        ).apply {
+            add(
                 DataSourceState(
                     factory = { fakeDataSource },
-                    configGate = { true },
-                    currentSessionType = null,
+                    configGate = { true }
                 )
-            ),
-            logger,
-            configService
-        )
+            )
+        }
 
         orchestrator = SessionOrchestratorImpl(
             processStateService,

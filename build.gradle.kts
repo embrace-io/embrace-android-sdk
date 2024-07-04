@@ -42,6 +42,10 @@ nexusPublishing {
 }
 
 allprojects {
+    ext.properties["signing.keyId"] = System.getenv("mavenSigningKeyId") ?: localProperties.getProperty("signing.keyId")
+    ext.properties["signing.secretKeyRingFile"] = System.getenv("mavenSigningKeyRingFile") ?: localProperties.getProperty("signing.secretKeyRingFile")
+    ext.properties["signing.password"] = System.getenv("mavenSigningKeyPassword") ?: localProperties.getProperty("signing.password")
+
     repositories {
         google()
         maven(url = "https://plugins.gradle.org/m2/")

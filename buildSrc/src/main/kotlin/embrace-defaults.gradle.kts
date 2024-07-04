@@ -60,11 +60,13 @@ android {
             }
         }
     }
+
     buildTypes {
         named("release") {
             isMinifyEnabled = false
         }
     }
+
     publishing {
 
         // create component with single publication variant
@@ -216,6 +218,10 @@ publishing {
 }
 
 signing {
+    val keyId = System.getenv("mavenSigningKeyId")
+    val key = System.getenv("mavenSigningKeyRingFileEncoded")
+    val password = System.getenv("mavenSigningKeyPassword")
+    useInMemoryPgpKeys(keyId, key, password)
     sign(publishing.publications.getByName("release"))
 }
 

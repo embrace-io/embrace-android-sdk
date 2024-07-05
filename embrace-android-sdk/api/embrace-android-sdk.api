@@ -7,7 +7,7 @@ public final class io/embrace/android/embracesdk/BuildConfig {
 	public fun <init> ()V
 }
 
-public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/EmbraceApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/EmbraceApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
@@ -186,6 +186,13 @@ public abstract interface class io/embrace/android/embracesdk/internal/EmbraceIn
 	public abstract fun setProcessStartedByNotification ()V
 	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
 	public abstract fun stopSdk ()V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/InternalInterfaceApi {
+	public abstract fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
+	public abstract fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
+	public abstract fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
+	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {

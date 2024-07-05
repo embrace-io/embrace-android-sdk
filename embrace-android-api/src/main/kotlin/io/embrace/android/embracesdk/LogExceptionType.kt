@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  * @suppress
  */
 @InternalApi
-public enum class LogExceptionType(internal val value: String) {
+public enum class LogExceptionType(public val value: String) {
     NONE("none"),
     HANDLED("handled"),
     UNHANDLED("unhandled")

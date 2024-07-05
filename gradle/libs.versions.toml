@@ -1,5 +1,6 @@
 [versions]
 
+annotation = "1.8.0"
 detektGradlePlugin = "1.23.6"
 junit = "4.13.2"
 kotlinExposed = "1.4.32"
@@ -22,6 +23,7 @@ firebase = "23.1.0"
 compose = "1.0.5"
 
 [libraries]
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detektGradlePlugin" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
 lifecycle-common-java8 = { group = "androidx.lifecycle", name = "lifecycle-common-java8", version.ref = "lifecycle" }

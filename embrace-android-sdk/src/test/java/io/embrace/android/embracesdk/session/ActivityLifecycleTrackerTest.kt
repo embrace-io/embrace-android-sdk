@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Bundle
 import android.os.Looper
+import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.fakes.system.mockLooper
@@ -242,7 +243,7 @@ internal class ActivityLifecycleTrackerTest {
         assertTrue(activityLifecycleTracker.startupListeners.isEmpty())
     }
 
-    @io.embrace.android.embracesdk.annotation.StartupActivity
+    @StartupActivity
     private class TestStartupActivity : Activity()
 
     private class TestNonStartupActivity : Activity()

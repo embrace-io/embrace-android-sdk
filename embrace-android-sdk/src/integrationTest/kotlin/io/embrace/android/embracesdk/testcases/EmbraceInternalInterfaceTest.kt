@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.net.SocketException
-import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

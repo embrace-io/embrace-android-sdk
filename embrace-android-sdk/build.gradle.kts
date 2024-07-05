@@ -40,6 +40,7 @@ android {
 
 // include these projects in code coverage
 dependencies {
+    kover(project(":embrace-android-api"))
     kover(project(":embrace-android-compose"))
     kover(project(":embrace-android-fcm"))
     kover(project(":embrace-android-okhttp3"))
@@ -60,6 +61,8 @@ kover {
 }
 
 dependencies {
+    api(project(":embrace-android-api"))
+
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api
 /**
  * The public API that is used to start & end moments.
  */
-internal interface MomentsApi {
+public interface MomentsApi {
 
     /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
@@ -13,7 +13,7 @@ internal interface MomentsApi {
      *
      * @param name a name identifying the moment
      */
-    fun startMoment(name: String)
+    public fun startMoment(name: String)
 
     /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
@@ -24,7 +24,7 @@ internal interface MomentsApi {
      * @param name       a name identifying the moment
      * @param identifier an identifier distinguishing between multiple moments with the same name
      */
-    fun startMoment(name: String, identifier: String?)
+    public fun startMoment(name: String, identifier: String?)
 
     /**
      * Starts a 'moment'. Moments are used for encapsulating particular activities within
@@ -36,7 +36,7 @@ internal interface MomentsApi {
      * @param identifier an identifier distinguishing between multiple moments with the same name
      * @param properties custom key-value pairs to provide with the moment
      */
-    fun startMoment(
+    public fun startMoment(
         name: String,
         identifier: String?,
         properties: Map<String, Any?>?
@@ -49,7 +49,7 @@ internal interface MomentsApi {
      *
      * @param name the name of the moment to end
      */
-    fun endMoment(name: String)
+    public fun endMoment(name: String)
 
     /**
      * Signals the end of a moment with the specified name.
@@ -59,7 +59,7 @@ internal interface MomentsApi {
      * @param name       the name of the moment to end
      * @param identifier the identifier of the moment to end, distinguishing between moments with the same name
      */
-    fun endMoment(name: String, identifier: String?)
+    public fun endMoment(name: String, identifier: String?)
 
     /**
      * Signals the end of a moment with the specified name.
@@ -70,7 +70,7 @@ internal interface MomentsApi {
      * @param name       the name of the moment to end
      * @param properties custom key-value pairs to provide with the moment
      */
-    fun endMoment(
+    public fun endMoment(
         name: String,
         properties: Map<String, Any?>?
     )
@@ -84,7 +84,7 @@ internal interface MomentsApi {
      * @param identifier the identifier of the moment to end, distinguishing between moments with the same name
      * @param properties custom key-value pairs to provide with the moment
      */
-    fun endMoment(
+    public fun endMoment(
         name: String,
         identifier: String?,
         properties: Map<String, Any?>?
@@ -93,12 +93,12 @@ internal interface MomentsApi {
     /**
      * Signals that the app has completed startup.
      */
-    fun endAppStartup()
+    public fun endAppStartup()
 
     /**
      * Signals that the app has completed startup.
      *
      * @param properties properties to include as part of the startup moment
      */
-    fun endAppStartup(properties: Map<String, Any?>)
+    public fun endAppStartup(properties: Map<String, Any?>)
 }

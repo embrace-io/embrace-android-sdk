@@ -1,14 +1,5 @@
 name: Pre-Release - Cut Release Branch and Publish Release Candidate
 
-env:
-  SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
-  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
-  MAVEN_QA_USER: github
-  MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
-  mavenSigningKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
-  mavenSigningKeyRingFileEncoded: ${{ secrets.MAVEN_ANDROID_GPG_KEY }}
-  mavenSigningKeyPassword: ${{ secrets.MAVEN_ANDROID_SIGNING_PASSWORD }}
-
 on:
   workflow_dispatch:
     inputs:
@@ -28,7 +19,7 @@ jobs:
       version_to_release: ${{ github.event.inputs.version_to_release }}
       next_version: ${{ github.event.inputs.next_version }}
 
-  release-candate:
+  release-candidate:
     name: Create Release Candidate
     needs: release-branch
     uses: ./.github/workflows/build-rc-workflow.yml

@@ -8,9 +8,8 @@ internal class WebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?>
 ) : MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck,
-    { null },
-    remoteSupplier
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     companion object {

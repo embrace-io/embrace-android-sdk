@@ -1,4 +1,5 @@
 include(
+    ":embrace-android-api",
     ":embrace-android-sdk",
     ":embrace-android-okhttp3",
     ":embrace-android-fcm",

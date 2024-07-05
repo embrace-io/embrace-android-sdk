@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.Severity
 /**
  * The public API that is used to send log messages.
  */
-internal interface LogsApi {
+public interface LogsApi {
     /**
      * Remotely logs a message at the given severity level. These log messages will appear as part of the session
      * timeline, and can be used to describe what was happening at a particular time within the app.
@@ -13,7 +13,7 @@ internal interface LogsApi {
      * @param message  the message to remotely log
      * @param severity the severity level of the log message
      */
-    fun logMessage(
+    public fun logMessage(
         message: String,
         severity: Severity,
     )
@@ -26,7 +26,7 @@ internal interface LogsApi {
      * @param severity   the severity level of the log message
      * @param properties the properties to attach to the log message
      */
-    fun logMessage(
+    public fun logMessage(
         message: String,
         severity: Severity,
         properties: Map<String, Any>?,
@@ -38,7 +38,7 @@ internal interface LogsApi {
      *
      * @param message the message to remotely log
      */
-    fun logInfo(message: String)
+    public fun logInfo(message: String)
 
     /**
      * Remotely logs a message at WARN level. These log messages will appear as part of the session
@@ -46,7 +46,7 @@ internal interface LogsApi {
      *
      * @param message the message to remotely log
      */
-    fun logWarning(message: String)
+    public fun logWarning(message: String)
 
     /**
      * Remotely logs a message at ERROR level. These log messages will appear as part of the session
@@ -54,7 +54,7 @@ internal interface LogsApi {
      *
      * @param message the message to remotely log
      */
-    fun logError(message: String)
+    public fun logError(message: String)
 
     /**
      * Remotely logs a Throwable/Exception at ERROR level. These log messages and stacktraces
@@ -63,7 +63,7 @@ internal interface LogsApi {
      *
      * @param throwable the throwable to remotely log
      */
-    fun logException(throwable: Throwable)
+    public fun logException(throwable: Throwable)
 
     /**
      * Remotely logs a Throwable/Exception at given severity level. These log messages and stacktraces
@@ -73,7 +73,7 @@ internal interface LogsApi {
      * @param throwable the throwable to remotely log
      * @param severity  the severity level of the log message
      */
-    fun logException(
+    public fun logException(
         throwable: Throwable,
         severity: Severity,
     )
@@ -87,7 +87,7 @@ internal interface LogsApi {
      * @param severity   the severity level of the log message
      * @param properties custom key-value pairs to include with the log message
      */
-    fun logException(
+    public fun logException(
         throwable: Throwable,
         severity: Severity,
         properties: Map<String, Any>?,
@@ -103,7 +103,7 @@ internal interface LogsApi {
      * @param properties      custom key-value pairs to include with the log message
      * @param message         the message to remotely log instead of the throwable message
      */
-    fun logException(
+    public fun logException(
         throwable: Throwable,
         severity: Severity,
         properties: Map<String, Any>?,
@@ -117,7 +117,7 @@ internal interface LogsApi {
      *
      * @param stacktraceElements the stacktrace to remotely log
      */
-    fun logCustomStacktrace(stacktraceElements: Array<StackTraceElement>)
+    public fun logCustomStacktrace(stacktraceElements: Array<StackTraceElement>)
 
     /**
      * Remotely logs a custom stacktrace at given severity level. These log messages and stacktraces
@@ -127,7 +127,7 @@ internal interface LogsApi {
      * @param stacktraceElements the stacktrace to remotely log
      * @param severity           the severity level of the log message
      */
-    fun logCustomStacktrace(
+    public fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
     )
@@ -141,7 +141,7 @@ internal interface LogsApi {
      * @param severity           the severity level of the log message
      * @param properties         custom key-value pairs to include with the log message
      */
-    fun logCustomStacktrace(
+    public fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
         properties: Map<String, Any>?,
@@ -157,7 +157,7 @@ internal interface LogsApi {
      * @param properties         custom key-value pairs to include with the log message
      * @param message            the message to remotely log instead of the throwable message
      */
-    fun logCustomStacktrace(
+    public fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
         properties: Map<String, Any>?,
@@ -176,7 +176,7 @@ internal interface LogsApi {
      * @param isNotification           if it is a notification message.
      * @param hasData                  if the message contains payload data.
      */
-    fun logPushNotification(
+    public fun logPushNotification(
         title: String?,
         body: String?,
         topic: String?,

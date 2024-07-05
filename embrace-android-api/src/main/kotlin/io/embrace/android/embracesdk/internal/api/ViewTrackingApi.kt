@@ -3,21 +3,21 @@ package io.embrace.android.embracesdk.internal.api
 import android.app.Application
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
-internal interface ViewTrackingApi {
+public interface ViewTrackingApi {
 
     /**
      * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
      *
      * @param app Global application class
      */
-    fun registerComposeActivityListener(app: Application)
+    public fun registerComposeActivityListener(app: Application)
 
     /**
      * Register ComposeActivityListener as Activity Lifecycle Callbacks into the Application
      *
      * @param app Global application class
      */
-    fun unregisterComposeActivityListener(app: Application)
+    public fun unregisterComposeActivityListener(app: Application)
 
     /**
      * Log the start of a view.
@@ -26,7 +26,7 @@ internal interface ViewTrackingApi {
      *
      * @param name the name of the view to log
      */
-    fun startView(name: String): Boolean
+    public fun startView(name: String): Boolean
 
     /**
      * Log the end of a view.
@@ -35,7 +35,7 @@ internal interface ViewTrackingApi {
      *
      * @param name the name of the view to log
      */
-    fun endView(name: String): Boolean
+    public fun endView(name: String): Boolean
 
     /**
      * Logs a tap on a screen element.
@@ -44,12 +44,12 @@ internal interface ViewTrackingApi {
      * @param elementName the name of the element which was tapped
      * @param type        the type of tap that occurred
      */
-    fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType)
+    public fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType)
 
     /**
      * Logs a React Native Redux Action.
      */
-    fun logRnAction(
+    public fun logRnAction(
         name: String,
         startTime: Long,
         endTime: Long,
@@ -66,5 +66,5 @@ internal interface ViewTrackingApi {
      *
      * @param screen the name of the view to log
      */
-    fun logRnView(screen: String)
+    public fun logRnView(screen: String)
 }

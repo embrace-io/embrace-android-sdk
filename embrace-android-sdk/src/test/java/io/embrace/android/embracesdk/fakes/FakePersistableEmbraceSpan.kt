@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.spans.fromErrorCode
 import io.embrace.android.embracesdk.spans.getEmbraceSpan
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode

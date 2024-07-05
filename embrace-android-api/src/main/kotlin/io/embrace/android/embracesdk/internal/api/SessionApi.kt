@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api
 /**
  * The public API that is used to interact with sessions.
  */
-internal interface SessionApi {
+public interface SessionApi {
 
     /**
      * Adds a property to the current session, overwriting any previous property set with the given key. If a permanent property
@@ -18,7 +18,7 @@ internal interface SessionApi {
      * @return True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the
      * session has exceeded its total properties limit.
      */
-    fun addSessionProperty(
+    public fun addSessionProperty(
         key: String,
         value: String,
         permanent: Boolean
@@ -29,24 +29,24 @@ internal interface SessionApi {
      *
      * @return true if a property with that name had previously existed.
      */
-    fun removeSessionProperty(key: String): Boolean
+    public fun removeSessionProperty(key: String): Boolean
 
     /**
      * Retrieves a map of the current session properties.
      *
      * @return a new immutable map containing the current session properties, or null if the SDK has not been started or has been stopped.
      */
-    fun getSessionProperties(): Map<String, String>?
+    public fun getSessionProperties(): Map<String, String>?
 
     /**
      * Ends the current session and starts a new one.
      */
-    fun endSession()
+    public fun endSession()
 
     /**
      * Ends the current session and starts a new one.
      *
      * @param clearUserInfo Pass in true to clear all user info set on this device.
      */
-    fun endSession(clearUserInfo: Boolean)
+    public fun endSession(clearUserInfo: Boolean)
 }

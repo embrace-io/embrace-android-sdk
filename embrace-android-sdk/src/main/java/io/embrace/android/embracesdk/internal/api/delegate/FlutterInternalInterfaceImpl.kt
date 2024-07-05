@@ -16,7 +16,7 @@ internal class FlutterInternalInterfaceImpl(
 ) : EmbraceInternalInterface by impl, FlutterInternalInterface {
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             if (version != null) {
                 hostedSdkVersionInfo.hostedSdkVersion = version
             }
@@ -26,7 +26,7 @@ internal class FlutterInternalInterfaceImpl(
     }
 
     override fun setDartVersion(version: String?) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             if (version != null) {
                 hostedSdkVersionInfo.hostedPlatformVersion = version
             }
@@ -63,7 +63,7 @@ internal class FlutterInternalInterfaceImpl(
         library: String?,
         exceptionType: LogExceptionType
     ) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             embrace.logMessage(
                 EventType.ERROR_LOG,
                 "Dart error",

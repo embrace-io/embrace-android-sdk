@@ -10,12 +10,12 @@ object Versions {
 
     const val JUNIT = "4.13.2"
 
-    // kotin library exposed to the customer
-    const val KOTLIN_EXPOSED = "1.4.32"
+    // Kotlin stdlib version used
+    const val KOTLIN_EXPOSED = "1.7.21"
 
     // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     // kotlin 1.9 required before any further upgrades
-    const val DETEKT = "1.23.0"
+    const val DETEKT = "1.23.6"
 
     const val NDK = "21.4.7075529"
     const val MOCKK = "1.12.2"

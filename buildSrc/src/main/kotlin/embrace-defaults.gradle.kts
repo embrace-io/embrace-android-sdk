@@ -145,14 +145,10 @@ project.tasks.withType(JavaCompile::class.java).configureEach {
 
 project.tasks.withType(KotlinCompile::class.java).configureEach {
     kotlinOptions {
-        apiVersion = "1.4"
-        languageVersion = "1.4"
+        apiVersion = "1.7"
+        languageVersion = "1.7"
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs = freeCompilerArgs + "-Xexplicit-api=strict"
-
-        // Targetting Kotlin 1.4 emits a warning that can't be suppressed.
-        // Disabling this check for now.
-        allWarningsAsErrors = false
     }
 }
 

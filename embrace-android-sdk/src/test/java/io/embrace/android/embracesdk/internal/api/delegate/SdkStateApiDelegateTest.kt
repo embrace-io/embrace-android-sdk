@@ -64,6 +64,6 @@ internal class SdkStateApiDelegateTest {
     @Test
     fun getCurrentSessionId() {
         sessionIdTracker.sessionId = "test"
-        assertEquals("test", delegate.getCurrentSessionId())
+        assertEquals("test", delegate.currentSessionId)
     }
 }

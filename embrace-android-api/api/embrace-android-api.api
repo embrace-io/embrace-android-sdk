@@ -53,6 +53,12 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Bread
 	public abstract fun addBreadcrumb (Ljava/lang/String;)V
 }
 
+public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
+	public abstract fun logWebView (Ljava/lang/String;)V
+	public abstract fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
+	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/api/LogsApi {
 	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
 	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
@@ -124,11 +130,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/ViewT
 	public abstract fun registerComposeActivityListener (Landroid/app/Application;)V
 	public abstract fun startView (Ljava/lang/String;)Z
 	public abstract fun unregisterComposeActivityListener (Landroid/app/Application;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/WebViewApi {
-	public abstract fun logWebView (Ljava/lang/String;)V
-	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public final class io/embrace/android/embracesdk/internal/network/http/NetworkCaptureData {

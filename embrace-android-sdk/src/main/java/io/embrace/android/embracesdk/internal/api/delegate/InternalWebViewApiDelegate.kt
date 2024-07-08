@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
+import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
-import io.embrace.android.embracesdk.internal.api.WebViewApi
+import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 
-internal class WebViewApiDelegate(
+internal class InternalWebViewApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker
-) : WebViewApi {
+) : InternalWebViewApi {
 
-    private val logger = bootstrapper.initModule.logger
     private val sdkClock = bootstrapper.initModule.clock
     private val breadcrumbService by embraceImplInject(sdkCallChecker) {
         bootstrapper.dataCaptureServiceModule.breadcrumbService
@@ -23,6 +23,10 @@ internal class WebViewApiDelegate(
             breadcrumbService?.logWebView(url, sdkClock.now())
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
+    }
+
+    override fun trackWebViewPerformance(tag: String, consoleMessage: ConsoleMessage) {
+        trackWebViewPerformance(tag, consoleMessage.message())
     }
 
     override fun trackWebViewPerformance(tag: String, message: String) {

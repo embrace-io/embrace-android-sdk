@@ -16,9 +16,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class WebViewApiDelegateTest {
+internal class InternalWebViewApiDelegateTest {
 
-    private lateinit var delegate: WebViewApiDelegate
+    private lateinit var delegate: InternalWebViewApiDelegate
     private lateinit var breadcrumbService: FakeBreadcrumbService
     private lateinit var webviewService: FakeWebViewService
     private lateinit var orchestrator: FakeSessionOrchestrator
@@ -37,7 +37,7 @@ internal class WebViewApiDelegateTest {
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
-        delegate = WebViewApiDelegate(bootstrapper, sdkCallChecker)
+        delegate = InternalWebViewApiDelegate(bootstrapper, sdkCallChecker)
     }
 
     @Test

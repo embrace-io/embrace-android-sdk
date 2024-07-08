@@ -15,7 +15,7 @@ public interface NetworkRequestApi {
      */
     public fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
 
-    public fun getTraceIdHeader(): String
+    public val traceIdHeader: String
 
     public fun generateW3cTraceparent(): String
 }

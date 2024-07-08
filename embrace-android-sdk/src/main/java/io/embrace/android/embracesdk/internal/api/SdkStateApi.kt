@@ -22,7 +22,7 @@ internal interface SdkStateApi {
 
     fun getDeviceId(): String
 
-    fun getCurrentSessionId(): String?
+    val currentSessionId: String?
 
     fun getLastRunEndState(): Embrace.LastRunEndState
 }

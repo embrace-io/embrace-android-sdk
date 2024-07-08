@@ -85,6 +85,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.startup:startup-runtime:1.1.1")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN_EXPOSED}")
     add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}")
     add("lintChecks", project.project(":embrace-lint"))

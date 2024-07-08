@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
@@ -50,6 +51,7 @@ internal class EssentialServiceModuleImplTest {
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
             customerLogModuleProvider = ::FakeCustomerLogModule,
+            framework = AppFramework.NATIVE,
             dataSourceModuleProvider = { fakeDataSourceModule() },
         ) { null }
 
@@ -88,6 +90,7 @@ internal class EssentialServiceModuleImplTest {
             storageModule = FakeStorageModule(),
             customAppId = null,
             customerLogModuleProvider = ::FakeCustomerLogModule,
+            framework = AppFramework.NATIVE,
             dataSourceModuleProvider = { fakeDataSourceModule() },
         ) { fakeConfigService }
 

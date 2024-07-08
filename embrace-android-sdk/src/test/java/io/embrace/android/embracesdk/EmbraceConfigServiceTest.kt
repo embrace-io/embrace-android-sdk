@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
@@ -301,6 +302,11 @@ internal class EmbraceConfigServiceTest {
         assertTrue(configService.hasValidRemoteConfig())
     }
 
+    @Test
+    fun `test app framework`() {
+        assertEquals(AppFramework.NATIVE, service.appFramework)
+    }
+
     /**
      * Create a new instance of the [EmbraceConfigService] using the passed in [worker] to run
      * tasks for its internal [BackgroundWorker]
@@ -313,6 +319,7 @@ internal class EmbraceConfigServiceTest {
             fakeClock,
             logger,
             worker,
-            false
+            false,
+            AppFramework.NATIVE
         )
 }

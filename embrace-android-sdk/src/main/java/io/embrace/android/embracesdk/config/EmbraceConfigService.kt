@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -41,6 +42,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
+    suppliedFramework: AppFramework,
     internal val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck(preferencesService::deviceIdentifier)
 ) : ConfigService, ProcessStateListener {
@@ -264,6 +266,10 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             Embrace.getInstance().internalInterface.stopSdk()
         }
     }
+
+    override val appFramework: AppFramework = localConfig.sdkConfig.appFramework?.let {
+        AppFramework.fromString(it)
+    } ?: suppliedFramework
 
     /**
      * Notifies the listeners that a new config was fetched from the server.

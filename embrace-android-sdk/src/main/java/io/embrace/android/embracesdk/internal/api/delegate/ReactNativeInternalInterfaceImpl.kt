@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.payload.JsException
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
-    private val framework: AppFramework,
     private val crashService: CrashService,
     private val metadataService: MetadataService,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
@@ -109,13 +107,6 @@ internal class ReactNativeInternalInterfaceImpl(
 
     private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
         if (embrace.isStarted()) {
-            if (framework != AppFramework.REACT_NATIVE) {
-                logger.logError(
-                    "Failed to set Java Script bundle ID URL. Current framework: " +
-                        framework.name + " is not React Native."
-                )
-                return
-            }
             metadataService.setReactNativeBundleId(context, url, didUpdate)
         } else {
             logger.logSdkNotInitialized("set JavaScript bundle URL")

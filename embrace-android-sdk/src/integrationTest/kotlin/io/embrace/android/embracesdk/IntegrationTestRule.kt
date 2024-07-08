@@ -101,7 +101,7 @@ internal class IntegrationTestRule(
             bootstrapper = ModuleInitBootstrapper(
                 initModule = overriddenInitModule,
                 openTelemetryModule = overriddenInitModule.openTelemetryModule,
-                coreModuleSupplier = { _, _, _ -> overriddenCoreModule },
+                coreModuleSupplier = { _, _ -> overriddenCoreModule },
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
                 deliveryModuleSupplier = { _, _, _, _ -> overriddenDeliveryModule },
@@ -110,7 +110,9 @@ internal class IntegrationTestRule(
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
-                embraceImpl.start(overriddenCoreModule.context, appFramework) { overriddenConfigService }
+                embraceImpl.start(overriddenCoreModule.context, appFramework) {
+                    overriddenConfigService.apply { appFramework = it }
+                }
             }
         }
     }
@@ -125,7 +127,7 @@ internal class IntegrationTestRule(
     fun startSdk(
         context: Context = harness.overriddenCoreModule.context,
         appFramework: AppFramework = harness.appFramework,
-        configServiceProvider: Provider<ConfigService> = { harness.overriddenConfigService }
+        configServiceProvider: (framework: io.embrace.android.embracesdk.internal.payload.AppFramework) -> ConfigService = { harness.overriddenConfigService }
     ) {
         Embrace.getImpl().start(context, appFramework, configServiceProvider)
     }
@@ -145,7 +147,6 @@ internal class IntegrationTestRule(
         val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),
         val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
         val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
-            appFramework = appFramework,
             logger = overriddenInitModule.logger
         ),
         val overriddenWorkerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(overriddenInitModule),

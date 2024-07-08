@@ -109,4 +109,7 @@ internal class SdkLocalConfig(
      */
     @Json(name = "app_exit_info")
     val appExitInfoConfig: AppExitInfoLocalConfig? = null,
+
+    @Json(name = "app_framework")
+    val appFramework: String? = null
 )

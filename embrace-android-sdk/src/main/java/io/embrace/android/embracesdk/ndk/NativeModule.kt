@@ -45,7 +45,6 @@ internal class NativeModuleImpl(
                 essentialServiceModule.userService,
                 androidServicesModule.preferencesService,
                 essentialServiceModule.sessionProperties,
-                coreModule.appFramework,
                 essentialServiceModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,

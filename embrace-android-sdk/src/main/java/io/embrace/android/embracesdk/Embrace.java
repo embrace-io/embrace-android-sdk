@@ -94,10 +94,14 @@ public final class Embrace implements
         }
     }
 
+    /**
+     * @deprecated Use {@link #start(Context)} instead.
+     */
     @Override
+    @Deprecated
     public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, () -> null);
+            impl.start(context, appFramework, (framework) -> null);
         }
     }
 
@@ -113,13 +117,13 @@ public final class Embrace implements
     }
 
     /**
-     * @deprecated Use {@link #start(Context, AppFramework)} instead. The isDevMode parameter has no effect.
+     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
      */
     @Override
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, () -> null);
+            impl.start(context, appFramework, (framework) -> null);
         }
     }
 
@@ -709,6 +713,7 @@ public final class Embrace implements
     /**
      * The AppFramework that is in use.
      */
+    @Deprecated
     public enum AppFramework {
         NATIVE(1),
         REACT_NATIVE(2),

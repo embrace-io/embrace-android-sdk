@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.capture.envelope.resource
 
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
 internal class EnvelopeResourceSourceImpl(
@@ -27,7 +27,7 @@ internal class EnvelopeResourceSourceImpl(
             appVersion = packageInfo.versionName?.toString()?.trim { it <= ' ' } ?: "",
             bundleVersion = packageInfo.versionCode.toString(),
             appEcosystemId = packageInfo.packageName,
-            appFramework = mapFramework(appFramework),
+            appFramework = appFramework,
             buildId = buildInfo.buildId,
             buildType = buildInfo.buildType,
             buildFlavor = buildInfo.buildFlavor,
@@ -51,21 +51,5 @@ internal class EnvelopeResourceSourceImpl(
             screenResolution = device.screenResolution,
             numCores = device.numberOfCores
         )
-    }
-
-    private fun mapFramework(appFramework: AppFramework): EnvelopeResource.AppFramework {
-        return when (appFramework) {
-            AppFramework.NATIVE ->
-                EnvelopeResource.AppFramework.NATIVE
-
-            AppFramework.REACT_NATIVE ->
-                EnvelopeResource.AppFramework.REACT_NATIVE
-
-            AppFramework.UNITY ->
-                EnvelopeResource.AppFramework.UNITY
-
-            AppFramework.FLUTTER ->
-                EnvelopeResource.AppFramework.FLUTTER
-        }
     }
 }

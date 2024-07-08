@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInter
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.WebViewApiDelegate
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
 
@@ -114,10 +115,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param appFramework             the AppFramework of the application
      * @param configServiceProvider    provider for the config service
      */
+    @Suppress("DEPRECATION")
     fun start(
         context: Context,
         appFramework: Embrace.AppFramework,
-        configServiceProvider: () -> ConfigService? = { null }
+        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
     ) {
         try {
             startSynchronous("sdk-start")
@@ -128,10 +130,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun startImpl(
         context: Context,
         framework: Embrace.AppFramework,
-        configServiceProvider: () -> ConfigService?
+        configServiceProvider: (framework: AppFramework) -> ConfigService?
     ) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
@@ -146,8 +149,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
 
         val startTimeMs = sdkClock.now()
-        logger.logInfo("Starting SDK for framework " + framework.name, null)
-        bootstrapper.init(context, framework, startTimeMs, customAppId, configServiceProvider)
+        val appFramework = AppFramework.fromFramework(framework)
+        bootstrapper.init(context, appFramework, startTimeMs, customAppId, configServiceProvider)
         startSynchronous("post-services-setup")
 
         val coreModule = bootstrapper.coreModule
@@ -159,6 +162,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             stop()
             return
         }
+        logger.logInfo("Starting SDK for framework " + essentialServiceModule.configService.appFramework.name)
 
         if (essentialServiceModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule.application)
@@ -182,7 +186,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             InternalInterfaceModuleImpl(
                 bootstrapper.initModule,
                 bootstrapper.openTelemetryModule,
-                coreModule,
                 essentialServiceModule,
                 bootstrapper.customerLogModule,
                 bootstrapper.dataContainerModule,
@@ -193,11 +196,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         embraceInternalInterface = internalInterfaceModuleImpl.embraceInternalInterface
 
-        when (framework) {
-            Embrace.AppFramework.NATIVE -> {}
-            Embrace.AppFramework.REACT_NATIVE -> internalInterfaceModuleImpl.reactNativeInternalInterface
-            Embrace.AppFramework.UNITY -> internalInterfaceModuleImpl.unityInternalInterface
-            Embrace.AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
+        when (configService?.appFramework) {
+            AppFramework.NATIVE -> {}
+            AppFramework.REACT_NATIVE -> internalInterfaceModuleImpl.reactNativeInternalInterface
+            AppFramework.UNITY -> internalInterfaceModuleImpl.unityInternalInterface
+            AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
         }
         val appId = essentialServiceModule.configService.sdkModeBehavior.appId
         val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME

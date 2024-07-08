@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.app.Application
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 internal class ViewTrackingApiDelegate(
@@ -18,7 +18,9 @@ internal class ViewTrackingApiDelegate(
         bootstrapper.dataCaptureServiceModule.breadcrumbService
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
-    private val appFramework by embraceImplInject(sdkCallChecker) { bootstrapper.coreModule.appFramework }
+    private val appFramework by embraceImplInject(sdkCallChecker) {
+        bootstrapper.essentialServiceModule.configService.appFramework
+    }
 
     /**
      * Variable pointing to the composeActivityListener instance obtained using reflection
@@ -80,7 +82,7 @@ internal class ViewTrackingApiDelegate(
     }
 
     override fun logRnView(screen: String) {
-        if (appFramework != Embrace.AppFramework.REACT_NATIVE) {
+        if (appFramework != AppFramework.REACT_NATIVE) {
             logger.logWarning("[Embrace] logRnView is only available on React Native", null)
             return
         }

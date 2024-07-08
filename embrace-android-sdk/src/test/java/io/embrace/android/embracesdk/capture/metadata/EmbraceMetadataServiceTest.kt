@@ -6,10 +6,8 @@ import android.content.pm.PackageInfo
 import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -24,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
 import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
@@ -103,7 +102,7 @@ internal class EmbraceMetadataServiceTest {
     }
 
     private val activityService = FakeProcessStateService()
-    private val configService: ConfigService =
+    private val configService: FakeConfigService =
         FakeConfigService(
             autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
                 localCfg = {
@@ -128,14 +127,14 @@ internal class EmbraceMetadataServiceTest {
     }
 
     @Suppress("DEPRECATION")
-    private fun getMetadataService(framework: Embrace.AppFramework = Embrace.AppFramework.NATIVE): EmbraceMetadataService {
+    private fun getMetadataService(framework: AppFramework = AppFramework.NATIVE): EmbraceMetadataService {
+        configService.appFramework = framework
         return EmbraceMetadataService.ofContext(
             context,
             AppEnvironment.Environment.UNKNOWN,
             SystemInfo(),
             buildInfo,
             configService,
-            framework,
             preferencesService,
             activityService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
@@ -246,7 +245,6 @@ internal class EmbraceMetadataServiceTest {
             SystemInfo(),
             buildInfo,
             configService,
-            Embrace.AppFramework.NATIVE,
             preferencesService,
             activityService,
             BackgroundWorker(BlockingScheduledExecutorService()),

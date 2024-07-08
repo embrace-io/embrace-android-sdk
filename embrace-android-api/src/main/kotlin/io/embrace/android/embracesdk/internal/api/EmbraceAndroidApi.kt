@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.Embrace
  * [EmbraceAndroidApi] directly or implement it in your own custom classes,
  * as new functions may be added in future. Use the [Embrace] class instead.
  */
-internal interface EmbraceAndroidApi {
+public interface EmbraceAndroidApi {
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
@@ -21,7 +21,7 @@ internal interface EmbraceAndroidApi {
      *
      * @param context an instance of the application context
      */
-    fun start(context: Context)
+    public fun start(context: Context)
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
@@ -34,7 +34,7 @@ internal interface EmbraceAndroidApi {
      * @param context                  an instance of context
      * @param appFramework             the AppFramework of the application
      */
-    fun start(
+    public fun start(
         context: Context,
         appFramework: Embrace.AppFramework
     )
@@ -52,7 +52,7 @@ internal interface EmbraceAndroidApi {
      * sets the environment for all sessions to 'Development'.
      */
     @Deprecated("Use {@link #start(Context)} instead. The isDevMode parameter has no effect.")
-    fun start(
+    public fun start(
         context: Context,
         isDevMode: Boolean
     )
@@ -72,7 +72,7 @@ internal interface EmbraceAndroidApi {
      *
      */
     @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
-    fun start(
+    public fun start(
         context: Context,
         isDevMode: Boolean,
         appFramework: Embrace.AppFramework
@@ -91,7 +91,7 @@ internal interface EmbraceAndroidApi {
      *
      * @param name the name of the view to log
      */
-    fun startView(name: String): Boolean
+    public fun startView(name: String): Boolean
 
     /**
      * Records that a view 'ended'. You should call this when your app stops displaying an
@@ -106,5 +106,5 @@ internal interface EmbraceAndroidApi {
      *
      * @param name the name of the view to log
      */
-    fun endView(name: String): Boolean
+    public fun endView(name: String): Boolean
 }

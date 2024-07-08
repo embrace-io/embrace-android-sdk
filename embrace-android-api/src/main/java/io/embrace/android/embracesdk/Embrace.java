@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
-import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.api.SdkApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
@@ -37,7 +36,7 @@ public final class Embrace implements SdkApi {
     @NonNull
     private static final Embrace embrace = new Embrace();
 
-    private static EmbraceImpl impl = Systrace.traceSynchronous("embrace-impl-init", EmbraceImpl::new);
+    private static SdkApi impl = new EmbraceImpl();
 
     static final String NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE = " cannot be invoked because it contains null parameters";
 
@@ -56,11 +55,11 @@ public final class Embrace implements SdkApi {
      * intended for use in the Android SDK only
      */
     @NonNull
-    static EmbraceImpl getImpl() {
+    static SdkApi getImpl() {
         return impl;
     }
 
-    static void setImpl(@Nullable EmbraceImpl instance) {
+    static void setImpl(@Nullable SdkApi instance) {
         impl = instance;
     }
 
@@ -77,7 +76,7 @@ public final class Embrace implements SdkApi {
     @Override
     public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, () -> null);
+            impl.start(context, appFramework);
         }
     }
 
@@ -99,7 +98,7 @@ public final class Embrace implements SdkApi {
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, () -> null);
+            impl.start(context, appFramework);
         }
     }
 

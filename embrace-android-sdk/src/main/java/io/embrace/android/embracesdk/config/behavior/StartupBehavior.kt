@@ -11,9 +11,8 @@ internal class StartupBehavior(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<StartupMomentLocalConfig?>
 ) : MergedConfigBehavior<StartupMomentLocalConfig, UnimplementedConfig>(
-    thresholdCheck,
-    localSupplier,
-    { null }
+    thresholdCheck = thresholdCheck,
+    localSupplier = localSupplier
 ) {
 
     companion object {

@@ -198,6 +198,7 @@ internal data class EnvelopeResource(
      *
      * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
      */
+    @JsonClass(generateAdapter = false)
     internal enum class AppFramework(val value: Int) {
         @Json(name = "1")
         NATIVE(1),

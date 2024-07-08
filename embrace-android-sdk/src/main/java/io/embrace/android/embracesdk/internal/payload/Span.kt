@@ -61,6 +61,7 @@ internal data class Span(
      *
      * Values: UNSET,ERROR,OK
      */
+    @JsonClass(generateAdapter = false)
     internal enum class Status(val value: String) {
         @Json(name = "Unset")
         UNSET("Unset"),

@@ -255,7 +255,7 @@ internal class EmbraceConfigServiceTest {
         val mockInternalInterface: EmbraceInternalInterface = mockk(relaxed = true)
         mockkObject(Embrace.getImpl())
         every { Embrace.getImpl().isStarted() } returns true
-        every { Embrace.getImpl().getEmbraceInternalInterface() } returns mockInternalInterface
+        every { Embrace.getImpl().internalInterface } returns mockInternalInterface
         fakePreferenceService.sdkDisabled = true
 
         service.onForeground(true, 1100L)

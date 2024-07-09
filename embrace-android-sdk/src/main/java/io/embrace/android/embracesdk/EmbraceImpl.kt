@@ -227,6 +227,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             AppFramework.REACT_NATIVE -> internalInterfaceModuleImpl.reactNativeInternalInterface
             AppFramework.UNITY -> internalInterfaceModuleImpl.unityInternalInterface
             AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
+            null -> {}
         }
         val appId = essentialServiceModule.configService.sdkModeBehavior.appId
         val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME

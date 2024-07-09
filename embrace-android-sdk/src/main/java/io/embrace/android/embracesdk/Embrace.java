@@ -608,9 +608,9 @@ public final class Embrace implements
                                     @Nullable String topic,
                                     @Nullable String id,
                                     @Nullable Integer notificationPriority,
-                                    @NonNull Integer messageDeliveredPriority,
-                                    @NonNull Boolean isNotification,
-                                    @NonNull Boolean hasData) {
+                                    @Nullable Integer messageDeliveredPriority,
+                                    @Nullable Boolean isNotification,
+                                    @Nullable Boolean hasData) {
         if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
             impl.logPushNotification(
                 title,
@@ -653,48 +653,26 @@ public final class Embrace implements
         return impl.getLastRunEndState();
     }
 
-    /**
-     * Get internal interface for the intra-Embrace, not-publicly-supported API
-     *
-     * @hide
-     */
     @NonNull
-    @InternalApi
+    @Override
     public EmbraceInternalInterface getInternalInterface() {
         return impl.getInternalInterface();
     }
 
-    /**
-     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native. Not part of the supported public API.
-     *
-     * @hide
-     */
     @Nullable
-    @InternalApi
+    @Override
     public ReactNativeInternalInterface getReactNativeInternalInterface() {
         return impl.getReactNativeInternalInterface();
     }
 
-    /**
-     * @hide Gets the {@link UnityInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Unity. Not part of the supported public API.
-     * @hide
-     */
     @Nullable
-    @InternalApi
+    @Override
     public UnityInternalInterface getUnityInternalInterface() {
         return impl.getUnityInternalInterface();
     }
 
-    /**
-     * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Flutter. Not part of the supported public API.
-     *
-     * @hide
-     */
     @Nullable
-    @InternalApi
+    @Override
     public FlutterInternalInterface getFlutterInternalInterface() {
         return impl.getFlutterInternalInterface();
     }

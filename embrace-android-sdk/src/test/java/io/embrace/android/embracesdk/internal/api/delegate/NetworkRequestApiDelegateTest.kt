@@ -56,7 +56,7 @@ internal class NetworkRequestApiDelegateTest {
 
     @Test
     fun `test trace id header`() {
-        assertEquals("x-emb-trace-id", delegate.getTraceIdHeader())
+        assertEquals("x-emb-trace-id", delegate.traceIdHeader)
     }
 
     @Test

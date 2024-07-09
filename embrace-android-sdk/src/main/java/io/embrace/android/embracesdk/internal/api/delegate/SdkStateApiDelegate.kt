@@ -69,18 +69,19 @@ internal class SdkStateApiDelegate(
         else -> ""
     }
 
-    override fun getCurrentSessionId(): String? {
-        val localSessionIdTracker = sessionIdTracker
-        if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
-            val sessionId = localSessionIdTracker.getActiveSessionId()
-            if (sessionId != null) {
-                return sessionId
-            } else {
-                logger.logInfo("Session ID is null", null)
+    override val currentSessionId: String?
+        get() {
+            val localSessionIdTracker = sessionIdTracker
+            if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
+                val sessionId = localSessionIdTracker.getActiveSessionId()
+                if (sessionId != null) {
+                    return sessionId
+                } else {
+                    logger.logInfo("Session ID is null", null)
+                }
             }
+            return null
         }
-        return null
-    }
 
     override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted() && crashVerifier != null) {
         if (crashVerifier?.didLastRunCrash() == true) {

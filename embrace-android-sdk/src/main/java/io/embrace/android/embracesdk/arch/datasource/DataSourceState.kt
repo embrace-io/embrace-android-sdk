@@ -39,7 +39,7 @@ internal class DataSourceState<T : DataSource<*>>(
             onSessionTypeChange()
         }
 
-    private val enabledDataSource by lazy(factory)
+    private val factoryRef = lazy(factory)
 
     var dataSource: T? = null
         private set
@@ -53,7 +53,9 @@ internal class DataSourceState<T : DataSource<*>>(
      */
     private fun onSessionTypeChange() {
         updateDataSource()
-        enabledDataSource?.resetDataCaptureLimits()
+        if (factoryRef.isInitialized()) {
+            factoryRef.value?.resetDataCaptureLimits()
+        }
     }
 
     /**
@@ -68,7 +70,7 @@ internal class DataSourceState<T : DataSource<*>>(
             currentSessionType != null && currentSessionType != disabledSessionType && configGate()
 
         if (enabled && dataSource == null) {
-            dataSource = enabledDataSource?.apply {
+            dataSource = factoryRef.value?.apply {
                 enableDataCapture()
             }
         } else if (!enabled && dataSource != null) {

@@ -34,6 +34,8 @@ internal interface EmbraceAndroidApi {
      * @param context                  an instance of context
      * @param appFramework             the AppFramework of the application
      */
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context)} instead.")
     fun start(
         context: Context,
         appFramework: Embrace.AppFramework
@@ -71,6 +73,7 @@ internal interface EmbraceAndroidApi {
      * @param appFramework             the AppFramework of the application
      *
      */
+    @Suppress("DEPRECATION")
     @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
     fun start(
         context: Context,

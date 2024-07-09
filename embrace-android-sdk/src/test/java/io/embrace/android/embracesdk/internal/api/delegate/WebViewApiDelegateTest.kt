@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
@@ -10,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +30,7 @@ internal class WebViewApiDelegateTest {
                 FakeDataCaptureServiceModule(webviewService = FakeWebViewService())
             }
         )
-        bootstrapper.init(ApplicationProvider.getApplicationContext(), Embrace.AppFramework.NATIVE, 0)
+        bootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         orchestrator = bootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
         breadcrumbService = bootstrapper.dataCaptureServiceModule.breadcrumbService as FakeBreadcrumbService
         webviewService = bootstrapper.dataCaptureServiceModule.webviewService as FakeWebViewService

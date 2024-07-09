@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.webview.WebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
@@ -20,6 +19,7 @@ import io.embrace.android.embracesdk.injection.PayloadModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
@@ -42,7 +42,6 @@ internal typealias UnimplementedConfig = Unit?
  */
 internal typealias CoreModuleSupplier = (
     context: Context,
-    appFramework: Embrace.AppFramework,
     logger: EmbLogger
 ) -> CoreModule
 
@@ -91,7 +90,8 @@ internal typealias EssentialServiceModuleSupplier = (
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
     dataSourceModuleProvider: Provider<DataSourceModule>,
-    configServiceProvider: Provider<ConfigService?>
+    framework: AppFramework,
+    configServiceProvider: (framework: AppFramework) -> ConfigService?
 ) -> EssentialServiceModule
 
 /**
@@ -135,7 +135,6 @@ internal typealias AnrModuleSupplier = (
 
 internal typealias CustomerLogModuleSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,

@@ -20,7 +20,6 @@ internal interface InternalInterfaceModule {
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     customerLogModule: CustomerLogModule,
     dataContainerModule: DataContainerModule,
@@ -44,7 +43,6 @@ internal class InternalInterfaceModuleImpl(
         ReactNativeInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            coreModule.appFramework,
             crashModule.crashService,
             essentialServiceModule.metadataService,
             essentialServiceModule.hostedSdkVersionInfo,

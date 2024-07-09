@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -130,7 +130,7 @@ internal class ModuleInitBootstrapper(
         appFramework: AppFramework,
         sdkStartTimeMs: Long,
         customAppId: String? = null,
-        configServiceProvider: Provider<ConfigService?> = { null },
+        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
         try {
@@ -141,7 +141,7 @@ internal class ModuleInitBootstrapper(
 
             synchronized(asyncInitTask) {
                 return if (!isInitialized()) {
-                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, appFramework, logger) }
+                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, logger) }
 
                     val serviceRegistry = coreModule.serviceRegistry
                     postInit(InitModule::class) {
@@ -189,6 +189,7 @@ internal class ModuleInitBootstrapper(
                             customAppId,
                             { customerLogModule },
                             { dataSourceModule },
+                            appFramework,
                             configServiceProvider
                         )
                     }
@@ -317,7 +318,7 @@ internal class ModuleInitBootstrapper(
                                 nativeThreadSamplerService.setupNativeSampler()
 
                                 // In Unity this should always run on the Unity thread.
-                                if (coreModule.appFramework == AppFramework.UNITY && isUnityMainThread()) {
+                                if (essentialServiceModule.configService.appFramework == AppFramework.UNITY && isUnityMainThread()) {
                                     try {
                                         if (nativeModule.nativeThreadSamplerInstaller != null) {
                                             nativeModule.nativeThreadSamplerInstaller?.monitorCurrentThread(
@@ -358,7 +359,6 @@ internal class ModuleInitBootstrapper(
                     customerLogModule = init(CustomerLogModule::class) {
                         customerLogModuleSupplier(
                             initModule,
-                            coreModule,
                             openTelemetryModule,
                             androidServicesModule,
                             essentialServiceModule,

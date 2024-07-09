@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import java.io.Closeable
 
 /**
@@ -93,6 +94,11 @@ internal interface ConfigService : Closeable {
      * How the network span forwarding feature should behave
      */
     val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
+
+    /**
+     * The app framework that is currently in use.
+     */
+    val appFramework: AppFramework
 
     /**
      * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the

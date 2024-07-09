@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
@@ -9,7 +8,6 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
@@ -23,6 +21,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
@@ -45,7 +44,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var cfg: RemoteConfig
     private lateinit var logService: LogService
     private lateinit var logWriter: FakeLogWriter
-    private lateinit var configService: ConfigService
+    private lateinit var configService: FakeConfigService
     private lateinit var gatingService: GatingService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var tick: AtomicLong
@@ -394,10 +393,10 @@ internal class EmbraceLogServiceTest {
     }
 
     private fun getLogServiceWithFramework(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
+        configService.appFramework = appFramework
         return EmbraceLogService(
             logWriter,
             configService,
-            appFramework,
             sessionProperties,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             EmbLoggerImpl(),

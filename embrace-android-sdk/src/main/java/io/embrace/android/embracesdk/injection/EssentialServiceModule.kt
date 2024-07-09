@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
@@ -82,7 +83,8 @@ internal class EssentialServiceModuleImpl(
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
     dataSourceModuleProvider: Provider<DataSourceModule>,
-    private val configServiceProvider: Provider<ConfigService?> = { null }
+    framework: AppFramework,
+    private val configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
 ) : EssentialServiceModule {
 
     // Many of these properties are temporarily here to break a circular dependency between services.
@@ -154,7 +156,7 @@ internal class EssentialServiceModuleImpl(
 
     override val configService: ConfigService by singleton {
         Systrace.traceSynchronous("config-service-init") {
-            configServiceProvider.invoke()
+            configServiceProvider(framework)
                 ?: EmbraceConfigService(
                     localConfig,
                     apiService,
@@ -163,6 +165,7 @@ internal class EssentialServiceModuleImpl(
                     initModule.logger,
                     backgroundWorker,
                     coreModule.isDebug,
+                    framework,
                     thresholdCheck
                 )
         }
@@ -183,7 +186,7 @@ internal class EssentialServiceModuleImpl(
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
         HostedSdkVersionInfo(
             androidServicesModule.preferencesService,
-            coreModule.appFramework
+            configService.appFramework
         )
     }
 
@@ -195,7 +198,6 @@ internal class EssentialServiceModuleImpl(
                 initModule.systemInfo,
                 coreModule.buildInfo,
                 configService,
-                coreModule.appFramework,
                 androidServicesModule.preferencesService,
                 processStateService,
                 backgroundWorker,

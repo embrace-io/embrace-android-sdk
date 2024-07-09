@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -31,11 +30,6 @@ internal interface CoreModule {
     val application: Application
 
     /**
-     * The framework the SDK is running on
-     */
-    val appFramework: AppFramework
-
-    /**
      * Returns the service registry. This is used to register services that need to be closed
      */
     val serviceRegistry: ServiceRegistry
@@ -55,7 +49,6 @@ internal interface CoreModule {
 
 internal class CoreModuleImpl(
     ctx: Context,
-    override val appFramework: AppFramework,
     logger: EmbLogger
 ) : CoreModule {
 

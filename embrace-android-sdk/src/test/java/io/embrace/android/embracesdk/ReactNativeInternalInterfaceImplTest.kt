@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
 import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.prefs.PreferencesService
@@ -39,14 +39,13 @@ internal class ReactNativeInternalInterfaceImplTest {
         metadataService = FakeMetadataService()
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            Embrace.AppFramework.REACT_NATIVE
+            AppFramework.REACT_NATIVE
         )
         logger = mockk(relaxed = true)
         context = mockContext()
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            REACT_NATIVE,
             crashService,
             metadataService,
             hostedSdkVersionInfo,
@@ -133,30 +132,10 @@ internal class ReactNativeInternalInterfaceImplTest {
     }
 
     @Test
-    fun testSetJavaScriptBundleURLWrongFramework() {
-        impl = ReactNativeInternalInterfaceImpl(
-            embrace,
-            mockk(),
-            FLUTTER,
-            crashService,
-            metadataService,
-            hostedSdkVersionInfo,
-            logger
-        )
-
-        every { embrace.isStarted() } returns true
-        impl.setJavaScriptBundleUrl(context, "index.android.bundle")
-        verify(exactly = 1) {
-            logger.logError(any())
-        }
-    }
-
-    @Test
     fun testSetCacheableJavaScriptBundleUrl() {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            REACT_NATIVE,
             crashService,
             metadataService,
             hostedSdkVersionInfo,
@@ -175,7 +154,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            REACT_NATIVE,
             crashService,
             metadataService,
             hostedSdkVersionInfo,

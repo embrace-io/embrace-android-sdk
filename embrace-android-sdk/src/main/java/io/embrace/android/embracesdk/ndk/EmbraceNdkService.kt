@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
@@ -19,6 +18,7 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -54,7 +54,6 @@ internal class EmbraceNdkService(
     private val userService: UserService,
     private val preferencesService: PreferencesService,
     private val sessionProperties: EmbraceSessionProperties,
-    appFramework: AppFramework,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
     private val repository: EmbraceNdkServiceRepository,
@@ -95,10 +94,10 @@ internal class EmbraceNdkService(
             sharedObjectLoader.loadEmbraceNative()
             if (configService.sdkModeBehavior.isServiceInitDeferred()) {
                 highPriorityWorker.submit {
-                    initializeService(processStateService, appFramework)
+                    initializeService(processStateService, configService.appFramework)
                 }
             } else {
-                initializeService(processStateService, appFramework)
+                initializeService(processStateService, configService.appFramework)
             }
         }
     }

@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
 import io.embrace.android.embracesdk.internal.api.EmbraceAndroidApi;
 import io.embrace.android.embracesdk.internal.api.EmbraceApi;
+import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi;
 import io.embrace.android.embracesdk.internal.api.LogsApi;
 import io.embrace.android.embracesdk.internal.api.MomentsApi;
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi;
@@ -49,7 +50,8 @@ public final class Embrace implements
     EmbraceApi,
     EmbraceAndroidApi,
     SdkStateApi,
-    OTelApi {
+    OTelApi,
+    InternalInterfaceApi {
 
     /**
      * Singleton instance of the Embrace SDK.
@@ -659,7 +661,7 @@ public final class Embrace implements
     @NonNull
     @InternalApi
     public EmbraceInternalInterface getInternalInterface() {
-        return impl.getEmbraceInternalInterface();
+        return impl.getInternalInterface();
     }
 
     /**
@@ -702,7 +704,7 @@ public final class Embrace implements
             if (param == null) {
                 final String errorMessage = functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
                 if (isStarted()) {
-                    impl.getEmbraceInternalInterface().logInternalError(new IllegalArgumentException(errorMessage));
+                    impl.getInternalInterface().logInternalError(new IllegalArgumentException(errorMessage));
                 }
                 return false;
             }

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
+import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.MomentsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
@@ -72,7 +73,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     SdkStateApi by sdkStateApiDelegate,
     OTelApi by otelApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
-    WebViewApi by webviewApiDelegate {
+    WebViewApi by webviewApiDelegate,
+    InternalInterfaceApi {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -276,7 +278,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Gets the [EmbraceInternalInterface] that should be used as the sole source of
      * communication with other Android SDK modules.
      */
-    fun getEmbraceInternalInterface(): EmbraceInternalInterface {
+    override val internalInterface get(): EmbraceInternalInterface {
         val internalInterface = embraceInternalInterface
         return if (isStarted() && internalInterface != null) {
             internalInterface
@@ -285,17 +287,15 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    fun getReactNativeInternalInterface(): ReactNativeInternalInterface? = internalInterfaceModule?.reactNativeInternalInterface
-
-    fun getUnityInternalInterface(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
+    override val reactNativeInternalInterface get(): ReactNativeInternalInterface? = internalInterfaceModule?.reactNativeInternalInterface
+    override val unityInternalInterface get(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
+    override val flutterInternalInterface get(): FlutterInternalInterface? = internalInterfaceModule?.flutterInternalInterface
 
     fun installUnityThreadSampler() {
         if (sdkCallChecker.check("install_unity_thread_sampler")) {
             sampleCurrentThreadDuringAnrs()
         }
     }
-
-    fun getFlutterInternalInterface(): FlutterInternalInterface? = internalInterfaceModule?.flutterInternalInterface
 
     private fun sampleCurrentThreadDuringAnrs() {
         try {

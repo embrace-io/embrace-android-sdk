@@ -72,7 +72,11 @@ internal class DataSourceModuleImpl(
     private val configService = essentialServiceModule.configService
 
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
-        DataCaptureOrchestrator(configService, initModule.logger)
+        DataCaptureOrchestrator(
+            configService,
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            initModule.logger
+        )
     }
 
     override val embraceFeatureRegistry: EmbraceFeatureRegistry = dataCaptureOrchestrator

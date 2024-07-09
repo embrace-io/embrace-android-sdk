@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeMetadataService

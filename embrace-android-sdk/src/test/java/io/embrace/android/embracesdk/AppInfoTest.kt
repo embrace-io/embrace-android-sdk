@@ -8,6 +8,7 @@ import org.junit.Test
 
 internal class AppInfoTest {
 
+    @Suppress("DEPRECATION")
     private val info = AppInfo(
         appVersion = "1.0",
         appFramework = Embrace.AppFramework.NATIVE.value,

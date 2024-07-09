@@ -31,7 +31,8 @@ internal class SdkStateApiDelegate(
      *
      * @return true if the SDK is started, false otherwise
      */
-    override fun isStarted(): Boolean = sdkCallChecker.started.get()
+    override val isStarted: Boolean
+        get() = sdkCallChecker.started.get()
 
     /**
      * Sets a custom app ID that overrides the one specified at build time. Must be called before
@@ -41,7 +42,7 @@ internal class SdkStateApiDelegate(
      * @return true if the app ID could be set, false otherwise.
      */
     override fun setAppId(appId: String): Boolean {
-        if (isStarted()) {
+        if (isStarted) {
             logger.logError("You must set the custom app ID before the SDK is started.", null)
             return false
         }
@@ -83,7 +84,7 @@ internal class SdkStateApiDelegate(
             return null
         }
 
-    override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted() && crashVerifier != null) {
+    override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted && crashVerifier != null) {
         if (crashVerifier?.didLastRunCrash() == true) {
             Embrace.LastRunEndState.CRASH
         } else {

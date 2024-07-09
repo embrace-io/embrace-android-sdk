@@ -52,7 +52,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun isStarted() {
-        assertTrue(delegate.isStarted())
+        assertTrue(delegate.isStarted)
     }
 
     @Test

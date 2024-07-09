@@ -82,13 +82,6 @@ internal interface EmbraceAndroidApi {
     )
 
     /**
-     * Whether or not the SDK has been started.
-     *
-     * @return true if the SDK is started, false otherwise
-     */
-    val isStarted: Boolean
-
-    /**
      * Records that a view 'started'. You should call this when your app starts displaying an
      * activity, a fragment, a screen, or any custom UI element, and you want to capture a
      * breadcrumb that this happens.

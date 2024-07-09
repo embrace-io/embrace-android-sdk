@@ -36,7 +36,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testSetFlutterSdkVersionNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setEmbraceFlutterSdkVersion("2.12")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -45,7 +45,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testSetDartVersionNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setDartVersion("2.12")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -54,7 +54,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testLogUnhandledDartException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
@@ -74,7 +74,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testLogHandledDartException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(

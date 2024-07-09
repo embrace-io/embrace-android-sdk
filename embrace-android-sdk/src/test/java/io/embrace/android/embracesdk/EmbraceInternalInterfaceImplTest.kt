@@ -252,7 +252,7 @@ internal class EmbraceInternalInterfaceImplTest {
     @Test
     fun `check stopping SDK`() {
         internalImpl.stopSdk()
-        assertFalse(embraceImpl.isStarted())
+        assertFalse(embraceImpl.isStarted)
     }
 
     companion object {

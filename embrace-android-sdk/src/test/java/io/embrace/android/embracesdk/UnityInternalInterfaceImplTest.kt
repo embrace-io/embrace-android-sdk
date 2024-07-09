@@ -35,7 +35,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testSetUnityMetaDataNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -44,7 +44,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testSetUnityMetaDataNull() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.setUnityMetaData(null, null, "unitySdkVersion")
         assertNull(preferencesService.unityVersionNumber)
         assertNull(preferencesService.unityBuildIdNumber)
@@ -56,7 +56,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testLogUnhandledUnityException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logUnhandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
@@ -76,7 +76,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testLogHandledUnityException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logHandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(

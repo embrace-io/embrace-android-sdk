@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.MomentsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
@@ -64,15 +65,16 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
     private val webviewApiDelegate: InternalWebViewApiDelegate =
         InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
-) : UserApi by userApiDelegate,
-    SessionApi by sessionApiDelegate,
-    NetworkRequestApi by networkRequestApiDelegate,
+) : SdkApi,
     LogsApi by logsApiDelegate,
     MomentsApi by momentsApiDelegate,
+    NetworkRequestApi by networkRequestApiDelegate,
+    SessionApi by sessionApiDelegate,
+    UserApi by userApiDelegate,
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
-    ViewTrackingApi by viewTrackingApiDelegate,
     SdkStateApi by sdkStateApiDelegate,
     OTelApi by otelApiDelegate,
+    ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InternalWebViewApi by webviewApiDelegate,
     InternalInterfaceApi {
@@ -105,6 +107,16 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
+
+    override fun start(context: Context) = start(context, Embrace.AppFramework.NATIVE) { null }
+    override fun start(context: Context, appFramework: Embrace.AppFramework) =
+        start(context, appFramework) { null }
+
+    override fun start(context: Context, isDevMode: Boolean) =
+        start(context, Embrace.AppFramework.NATIVE) { null }
+
+    override fun start(context: Context, isDevMode: Boolean, appFramework: Embrace.AppFramework) =
+        start(context, appFramework) { null }
 
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
@@ -281,7 +293,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
      */
     override val internalInterface get(): EmbraceInternalInterface {
         val internalInterface = embraceInternalInterface
-        return if (isStarted() && internalInterface != null) {
+        return if (isStarted && internalInterface != null) {
             internalInterface
         } else {
             uninitializedSdkInternalInterface

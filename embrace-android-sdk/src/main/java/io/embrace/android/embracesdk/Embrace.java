@@ -10,24 +10,13 @@ import androidx.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
-import io.embrace.android.embracesdk.internal.api.EmbraceAndroidApi;
-import io.embrace.android.embracesdk.internal.api.EmbraceApi;
-import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi;
-import io.embrace.android.embracesdk.internal.api.LogsApi;
-import io.embrace.android.embracesdk.internal.api.MomentsApi;
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi;
-import io.embrace.android.embracesdk.internal.api.OTelApi;
-import io.embrace.android.embracesdk.internal.api.SdkStateApi;
-import io.embrace.android.embracesdk.internal.api.SessionApi;
-import io.embrace.android.embracesdk.internal.api.UserApi;
+import io.embrace.android.embracesdk.internal.api.SdkApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
-import io.embrace.android.embracesdk.spans.TracingApi;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
@@ -40,18 +29,7 @@ import kotlin.jvm.functions.Function0;
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 @SuppressWarnings("unused")
-public final class Embrace implements
-    LogsApi,
-    MomentsApi,
-    NetworkRequestApi,
-    SessionApi,
-    UserApi,
-    TracingApi,
-    EmbraceApi,
-    EmbraceAndroidApi,
-    SdkStateApi,
-    OTelApi,
-    InternalInterfaceApi {
+public final class Embrace implements SdkApi {
 
     /**
      * Singleton instance of the Embrace SDK.
@@ -638,6 +616,13 @@ public final class Embrace implements
     public void trackWebViewPerformance(@NonNull String tag, @NonNull String message) {
         if (verifyNonNullParameters("trackWebViewPerformance", tag, message)) {
             impl.trackWebViewPerformance(tag, message);
+        }
+    }
+
+    @Override
+    public void logWebView(@Nullable String url) {
+        if (verifyNonNullParameters("logWebView", url)) {
+            impl.logWebView(url);
         }
     }
 

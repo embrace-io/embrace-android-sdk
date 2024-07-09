@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
  */
 internal inline fun <reified T> EmbraceImpl.embraceImplInject(
     noinline provider: Provider<T>
-): ReadOnlyProperty<Any?, T?> = EmbraceImplFieldDelegate(::isStarted, provider)
+): ReadOnlyProperty<Any?, T?> = EmbraceImplFieldDelegate({ this.isStarted }, provider)
 
 internal inline fun <reified T> embraceImplInject(
     checker: SdkCallChecker,

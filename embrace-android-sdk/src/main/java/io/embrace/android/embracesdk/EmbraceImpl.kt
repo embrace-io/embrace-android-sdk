@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.MomentsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
@@ -22,8 +23,8 @@ import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
-import io.embrace.android.embracesdk.internal.api.WebViewApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.InternalWebViewApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -34,7 +35,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.WebViewApiDelegate
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.embrace.android.embracesdk.worker.WorkerName
@@ -62,7 +62,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
     private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker),
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
-    private val webviewApiDelegate: WebViewApiDelegate = WebViewApiDelegate(bootstrapper, sdkCallChecker),
+    private val webviewApiDelegate: InternalWebViewApiDelegate =
+        InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
 ) : UserApi by userApiDelegate,
     SessionApi by sessionApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -73,7 +74,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     SdkStateApi by sdkStateApiDelegate,
     OTelApi by otelApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
-    WebViewApi by webviewApiDelegate,
+    InternalWebViewApi by webviewApiDelegate,
     InternalInterfaceApi {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
@@ -287,9 +288,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    override val reactNativeInternalInterface get(): ReactNativeInternalInterface? = internalInterfaceModule?.reactNativeInternalInterface
-    override val unityInternalInterface get(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
-    override val flutterInternalInterface get(): FlutterInternalInterface? = internalInterfaceModule?.flutterInternalInterface
+    override val reactNativeInternalInterface get() = internalInterfaceModule?.reactNativeInternalInterface
+    override val unityInternalInterface get() = internalInterfaceModule?.unityInternalInterface
+    override val flutterInternalInterface get() = internalInterfaceModule?.flutterInternalInterface
 
     fun installUnityThreadSampler() {
         if (sdkCallChecker.check("install_unity_thread_sampler")) {

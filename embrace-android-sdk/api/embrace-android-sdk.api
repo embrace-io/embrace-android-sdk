@@ -245,6 +245,18 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Inter
 	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 }
 
+public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
+	public abstract fun logWebView (Ljava/lang/String;)V
+	public abstract fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
+	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
+	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
+	public abstract fun getTraceIdHeader ()Ljava/lang/String;
+	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {
 	public abstract fun now ()J
 	public abstract fun nowInNanos ()J

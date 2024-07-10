@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
 import io.embrace.android.embracesdk.payload.ThreadState
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE
+import io.opentelemetry.semconv.ExceptionAttributes.EXCEPTION_STACKTRACE
 import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes.THREAD_ID
 import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes.THREAD_NAME
 import org.junit.Assert.assertEquals

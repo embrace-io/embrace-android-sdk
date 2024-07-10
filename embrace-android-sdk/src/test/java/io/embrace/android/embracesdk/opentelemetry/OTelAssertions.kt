@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.data.SpanData
+import io.opentelemetry.semconv.ServiceAttributes
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
-import io.opentelemetry.semconv.incubating.ServiceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import org.junit.Assert.assertEquals
 
@@ -17,8 +17,8 @@ internal fun Resource.assertExpectedAttributes(
     expectedServiceVersion: String,
     systemInfo: SystemInfo
 ) {
-    assertEquals(expectedServiceName, getAttribute(ServiceIncubatingAttributes.SERVICE_NAME))
-    assertEquals(expectedServiceVersion, getAttribute(ServiceIncubatingAttributes.SERVICE_VERSION))
+    assertEquals(expectedServiceName, getAttribute(ServiceAttributes.SERVICE_NAME))
+    assertEquals(expectedServiceVersion, getAttribute(ServiceAttributes.SERVICE_VERSION))
     assertEquals(expectedServiceName, getAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME))
     assertEquals(expectedServiceVersion, getAttribute(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION))
     assertEquals(systemInfo.osName, getAttribute(OsIncubatingAttributes.OS_NAME))

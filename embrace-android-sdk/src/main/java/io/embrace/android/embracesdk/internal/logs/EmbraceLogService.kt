@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import java.util.NavigableMap
 import java.util.concurrent.ConcurrentSkipListMap
@@ -238,9 +238,9 @@ internal class EmbraceLogService(
         message: String?,
     ) {
         attributes.setAttribute(embExceptionHandling, logExceptionType.value)
-        type?.let { attributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE, it) }
-        message?.let { attributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE, it) }
-        stackTrace?.let { attributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE, it) }
+        type?.let { attributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, it) }
+        message?.let { attributes.setAttribute(ExceptionAttributes.EXCEPTION_MESSAGE, it) }
+        stackTrace?.let { attributes.setAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE, it) }
     }
 
     private fun addLogEventData(

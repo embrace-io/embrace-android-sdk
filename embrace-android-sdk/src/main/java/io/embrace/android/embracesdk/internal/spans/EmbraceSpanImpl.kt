@@ -22,7 +22,7 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -164,14 +164,14 @@ internal class EmbraceSpanImpl(
             }
 
             exception.javaClass.canonicalName?.let { type ->
-                eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key] = type
+                eventAttributes[ExceptionAttributes.EXCEPTION_TYPE.key] = type
             }
 
             exception.message?.let { message ->
-                eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key] = message
+                eventAttributes[ExceptionAttributes.EXCEPTION_MESSAGE.key] = message
             }
 
-            eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
+            eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
                 name = EXCEPTION_EVENT_NAME,

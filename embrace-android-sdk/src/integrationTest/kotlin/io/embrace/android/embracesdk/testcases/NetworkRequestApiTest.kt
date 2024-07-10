@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.semconv.ExceptionAttributes.EXCEPTION_MESSAGE
 import io.opentelemetry.semconv.HttpAttributes
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes.EXCEPTION_MESSAGE
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Rule

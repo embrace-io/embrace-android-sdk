@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.utils.NetworkUtils.getValidTraceId
 import io.opentelemetry.semconv.ErrorAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.UrlAttributes
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
@@ -139,7 +139,7 @@ internal sealed class SchemaType(
             HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
             HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
             ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
-            ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key to networkRequest.errorMessage,
+            ExceptionAttributes.EXCEPTION_MESSAGE.key to networkRequest.errorMessage,
             "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
             "emb.trace_id" to getValidTraceId(networkRequest.traceId),
         ).toNonNullMap().mapValues { it.value.toString() }
@@ -207,7 +207,7 @@ internal sealed class SchemaType(
             SessionIncubatingAttributes.SESSION_ID.key to networkCapturedCall.sessionId,
             "start-time" to networkCapturedCall.startTime.toString(),
             "url" to networkCapturedCall.url,
-            ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key to networkCapturedCall.errorMessage,
+            ExceptionAttributes.EXCEPTION_MESSAGE.key to networkCapturedCall.errorMessage,
             "encrypted-payload" to networkCapturedCall.encryptedPayload
         ).toNonNullMap()
     }
@@ -276,12 +276,12 @@ internal sealed class SchemaType(
         fixedObjectName = "internal-error"
     ) {
         override val schemaAttributes = mapOf(
-            ExceptionIncubatingAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
-            ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
+            ExceptionAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
+            ExceptionAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
                 "\n",
                 transform = StackTraceElement::toString
             ),
-            ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key to (throwable.message ?: "")
+            ExceptionAttributes.EXCEPTION_MESSAGE.key to (throwable.message ?: "")
         )
     }
 }

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.trace.IdGenerator
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes
 
 internal class NativeAnrOtelMapper(
@@ -96,7 +96,7 @@ internal class NativeAnrOtelMapper(
         }
         frames?.let { stacktrace ->
             val json = serializer.toJson(stacktrace, Types.newParameterizedType(List::class.java, NativeAnrSampleFrame::class.java))
-            attrs.add(Attribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key, json))
+            attrs.add(Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, json))
         }
         return SpanEvent(
             name = "emb_native_thread_blockage_sample",

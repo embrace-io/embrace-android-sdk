@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
@@ -55,7 +54,6 @@ internal class EmbraceAutomaticVerification(
     companion object {
         internal const val TAG = "[EmbraceVerification]"
         private const val ON_FOREGROUND_DELAY = 5000L
-        private const val EMBRACE_CONTACT_EMAIL = "support@embrace.io"
         private const val VERIFY_INTEGRATION_DELAY = 200L
         private const val ON_FOREGROUND_TIMEOUT = 5000L
         internal val instance = EmbraceAutomaticVerification()
@@ -294,10 +292,6 @@ internal class EmbraceAutomaticVerification(
                 .setTitle(activity.getString(R.string.automatic_verification_error_title))
                 .setMessage(errorString)
                 .setCancelable(true)
-                .setNegativeButton(activity.getString(R.string.send_error_log)) { dialog, _ ->
-                    sendErrorLog(activity, errorString)
-                    dialog.dismiss()
-                }
                 .setPositiveButton(activity.getString(R.string.close)) { dialog, _ ->
                     dialog.dismiss()
                 }
@@ -305,28 +299,6 @@ internal class EmbraceAutomaticVerification(
         } else {
             logError("Verification error - Cannot display popup")
         }
-    }
-
-    private fun sendErrorLog(activity: Activity, errorMessage: String) {
-        val errorLog = generateErrorLog(errorMessage)
-        val selectorIntent = Intent(Intent.ACTION_SENDTO).setData(Uri.parse("mailto:$EMBRACE_CONTACT_EMAIL"))
-
-        val emailIntent = Intent(Intent.ACTION_SEND).apply {
-            putExtra(Intent.EXTRA_EMAIL, arrayOf(EMBRACE_CONTACT_EMAIL))
-            putExtra(Intent.EXTRA_SUBJECT, "Android Verification Log")
-            putExtra(Intent.EXTRA_TEXT, errorLog)
-            selector = selectorIntent
-        }
-
-        activity.startActivity(Intent.createChooser(emailIntent, "Send Email"))
-    }
-
-    private fun generateErrorLog(errorMessage: String): String {
-        var errorLog = "App ID: ${Embrace.getImpl().metadataService?.getAppId()}\n" +
-            "App Version: ${Embrace.getImpl().metadataService?.getAppVersionName()}"
-        errorLog += "\n\n-----------------\n\n"
-        errorLog += errorMessage
-        return errorLog
     }
 
     private fun logInfo(message: String) {

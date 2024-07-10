@@ -31,6 +31,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
+
+    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {

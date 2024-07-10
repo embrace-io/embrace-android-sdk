@@ -27,6 +27,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceTest {
+
+    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {

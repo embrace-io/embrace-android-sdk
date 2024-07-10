@@ -124,6 +124,7 @@ internal class IntegrationTestRule(
         Embrace.getImpl().stop()
     }
 
+    @Suppress("DEPRECATION")
     fun startSdk(
         context: Context = harness.overriddenCoreModule.context,
         appFramework: AppFramework = harness.appFramework,
@@ -139,6 +140,7 @@ internal class IntegrationTestRule(
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */
+    @Suppress("DEPRECATION")
     internal class Harness @JvmOverloads constructor(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
         val startImmediately: Boolean = true,

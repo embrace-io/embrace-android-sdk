@@ -72,6 +72,7 @@ internal class CrashTest {
         assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
         with(testRule) {

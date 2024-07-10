@@ -108,13 +108,21 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
 
+    @Suppress("DEPRECATION")
     override fun start(context: Context) = start(context, Embrace.AppFramework.NATIVE) { null }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context)} instead.")
     override fun start(context: Context, appFramework: Embrace.AppFramework) =
         start(context, appFramework) { null }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context)} instead. The isDevMode parameter has no effect.")
     override fun start(context: Context, isDevMode: Boolean) =
         start(context, Embrace.AppFramework.NATIVE) { null }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
     override fun start(context: Context, isDevMode: Boolean, appFramework: Embrace.AppFramework) =
         start(context, appFramework) { null }
 

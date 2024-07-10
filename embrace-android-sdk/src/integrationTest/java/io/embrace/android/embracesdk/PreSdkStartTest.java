@@ -20,6 +20,7 @@ public class PreSdkStartTest {
     @NonNull
     private final Embrace embrace = testRule.getEmbrace();
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testStartWithNullContext() {
         embrace.start(null);
@@ -27,6 +28,7 @@ public class PreSdkStartTest {
         assertFalse(embrace.isStarted());
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testStartWithNullAppFramework() {
         Context context = testRule.harness.getOverriddenCoreModule().getContext();

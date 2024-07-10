@@ -43,6 +43,8 @@ dependencies {
     kover(project(":embrace-android-compose"))
     kover(project(":embrace-android-fcm"))
     kover(project(":embrace-android-okhttp3"))
+    kover(project(":embrace-android-core"))
+    kover(project(":embrace-android-features"))
 }
 
 kover {
@@ -60,6 +62,9 @@ kover {
 }
 
 dependencies {
+    implementation(project(":embrace-android-core"))
+    implementation(project(":embrace-android-features"))
+
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)

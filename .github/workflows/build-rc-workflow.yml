@@ -34,6 +34,12 @@ jobs:
         jdk-version: [ "17" ]
         ndk-version: [ "21.4.7075529" ]
     steps:
+      - name: Decode Keystore
+        run: |
+          mkdir "$RUNNER_TEMP"/keystore
+          echo $mavenSigningKeyRingFileEncoded | base64 -di > "$RUNNER_TEMP"/keystore/2DE631C1.gpg
+          echo "mavenSigningKeyRingFile=$RUNNER_TEMP/keystore/2DE631C1.gpg" >> $GITHUB_ENV
+
       - name: Configure git
         run: |
           git config --global user.name 'embrace-ci[bot]'

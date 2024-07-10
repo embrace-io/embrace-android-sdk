@@ -5,8 +5,8 @@ package io.embrace.gradle
  */
 object Versions {
     const val COMPILE_SDK = 34
-
     const val MIN_SDK = 21
+    const val MIN_COMPILE_SDK = 34
 
     const val JUNIT = "4.13.2"
 

@@ -145,8 +145,8 @@ project.tasks.withType(JavaCompile::class.java).configureEach {
 
 project.tasks.withType(KotlinCompile::class.java).configureEach {
     kotlinOptions {
-        apiVersion = "1.7"
-        languageVersion = "1.7"
+        apiVersion = "1.8"
+        languageVersion = "1.8"
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs = freeCompilerArgs + "-Xexplicit-api=strict"
     }

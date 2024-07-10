@@ -11,7 +11,7 @@ object Versions {
     const val JUNIT = "4.13.2"
 
     // Kotlin stdlib version used
-    const val KOTLIN_EXPOSED = "1.7.21"
+    const val KOTLIN_EXPOSED = "1.8.22"
 
     // NOTE: when updating keep this in sync with the version in buildSrc/build.gradle.kts
     // kotlin 1.9 required before any further upgrades

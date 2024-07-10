@@ -32,8 +32,6 @@ project.tasks.withType(JavaCompile::class.java).configureEach {
 // ensure the Kotlin + Java compilers both use the same language level.
 project.tasks.withType(KotlinCompile::class.java).configureEach {
     kotlinOptions {
-        apiVersion = "1.7"
-        languageVersion = "1.7"
         jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 }

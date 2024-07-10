@@ -11,6 +11,9 @@ plugins {
 
 description = "Embrace Android SDK: Core"
 
+val version: String by project
+
+
 android {
     useLibrary("android.test.runner")
     useLibrary("android.test.base")
@@ -24,7 +27,7 @@ android {
         // For library projects only, the BuildConfig.VERSION_NAME and BuildConfig.VERSION_CODE properties have been removed from the generated BuildConfig class
         //
         // https://developer.android.com/studio/releases/gradle-plugin#version_properties_removed_from_buildconfig_class_in_library_projects
-        buildConfigField("String", "VERSION_NAME", "\"${defaultConfig.versionName}\"")
+        buildConfigField("String", "VERSION_NAME", "\"${version}\"")
         buildConfigField("String", "VERSION_CODE", "\"${53}\"")
     }
 

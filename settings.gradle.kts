@@ -1,5 +1,7 @@
 include(
     ":embrace-android-sdk",
+    ":embrace-android-core",
+    ":embrace-android-features",
     ":embrace-android-okhttp3",
     ":embrace-android-fcm",
     ":embrace-android-compose",

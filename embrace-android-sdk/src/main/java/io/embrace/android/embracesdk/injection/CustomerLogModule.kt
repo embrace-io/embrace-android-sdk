@@ -27,7 +27,6 @@ internal interface CustomerLogModule {
 
 internal class CustomerLogModuleImpl(
     initModule: InitModule,
-    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
@@ -74,7 +73,6 @@ internal class CustomerLogModuleImpl(
         EmbraceLogService(
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
-            coreModule.appFramework,
             essentialServiceModule.sessionProperties,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,

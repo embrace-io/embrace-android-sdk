@@ -22,7 +22,7 @@ internal class UnityInternalInterfaceImpl(
         buildGuid: String?,
         unitySdkVersion: String?
     ) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             if (unityVersion == null || buildGuid == null) {
                 val sdkVersionMessage = unitySdkVersion ?: "null or previous than 1.7.5"
                 logger.logError(
@@ -56,7 +56,7 @@ internal class UnityInternalInterfaceImpl(
         stacktrace: String?,
         exceptionType: LogExceptionType
     ) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             embrace.logMessage(
                 EventType.ERROR_LOG,
                 "Unity exception",

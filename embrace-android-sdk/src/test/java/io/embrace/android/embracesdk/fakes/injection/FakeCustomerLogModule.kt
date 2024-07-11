@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
@@ -27,7 +26,6 @@ internal class FakeCustomerLogModule(
     override val logService: LogService = EmbraceLogService(
         FakeLogWriter(),
         FakeConfigService(),
-        Embrace.AppFramework.NATIVE,
         fakeEmbraceSessionProperties(),
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         EmbLoggerImpl(),

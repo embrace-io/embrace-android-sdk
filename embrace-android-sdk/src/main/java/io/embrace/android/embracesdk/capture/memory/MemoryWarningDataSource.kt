@@ -20,7 +20,7 @@ internal class MemoryWarningDataSource(
 ) {
 
     fun onMemoryWarning(timestamp: Long) {
-        alterSessionSpan(
+        captureData(
             inputValidation = NoInputValidation,
             captureAction = {
                 addEvent(SchemaType.MemoryWarning(), timestamp)

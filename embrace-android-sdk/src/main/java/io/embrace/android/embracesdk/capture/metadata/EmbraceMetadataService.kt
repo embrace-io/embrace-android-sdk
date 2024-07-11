@@ -12,7 +12,6 @@ import android.os.storage.StorageManager
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.config.ConfigService
@@ -20,6 +19,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
@@ -326,7 +326,6 @@ internal class EmbraceMetadataService private constructor(
 
     override fun getEgl(): String? = egl
 
-    override fun getAppFramework() = appFramework
     override fun getPackageName() = packageName
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
@@ -397,7 +396,6 @@ internal class EmbraceMetadataService private constructor(
             systemInfo: SystemInfo,
             buildInfo: BuildInfo,
             configService: ConfigService,
-            appFramework: AppFramework,
             preferencesService: PreferencesService,
             processStateService: ProcessStateService,
             metadataBackgroundWorker: BackgroundWorker,
@@ -432,7 +430,7 @@ internal class EmbraceMetadataService private constructor(
             }
             val deviceIdentifier = lazy(preferencesService::deviceIdentifier)
             val reactNativeBundleId: Future<String?>
-            if (appFramework == AppFramework.REACT_NATIVE) {
+            if (configService.appFramework == AppFramework.REACT_NATIVE) {
                 reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
                     val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
                     val lastKnownJsBundleId = preferencesService.javaScriptBundleId
@@ -465,7 +463,7 @@ internal class EmbraceMetadataService private constructor(
                 context.packageName,
                 lazyAppVersionName,
                 lazyAppVersionCode,
-                appFramework,
+                configService.appFramework,
                 isAppUpdated,
                 isOsUpdated,
                 preferencesService,

@@ -9,7 +9,7 @@ internal interface SdkStateApi {
      *
      * @return true if the SDK is started, false otherwise
      */
-    fun isStarted(): Boolean
+    val isStarted: Boolean
 
     /**
      * Sets a custom app ID that overrides the one specified at build time. Must be called before
@@ -22,7 +22,7 @@ internal interface SdkStateApi {
 
     fun getDeviceId(): String
 
-    fun getCurrentSessionId(): String?
+    val currentSessionId: String?
 
     fun getLastRunEndState(): Embrace.LastRunEndState
 }

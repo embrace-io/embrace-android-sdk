@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk
 
 import java.io.InputStream
 
-internal object ResourceReader {
+object ResourceReader {
     fun readResource(name: String): InputStream {
         val classLoader = checkNotNull(javaClass.classLoader)
         return classLoader.getResourceAsStream(name)

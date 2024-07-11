@@ -26,7 +26,7 @@ internal class WebViewUrlDataSource(
 
     fun logWebView(url: String?, startTime: Long) {
         try {
-            alterSessionSpan(
+            captureData(
                 inputValidation = {
                     url != null
                 },

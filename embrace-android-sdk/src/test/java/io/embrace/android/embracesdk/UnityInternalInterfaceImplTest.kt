@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.mockk.every
@@ -27,14 +28,14 @@ internal class UnityInternalInterfaceImplTest {
         logger = mockk(relaxed = true)
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            Embrace.AppFramework.UNITY
+            AppFramework.UNITY
         )
         impl = UnityInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 
     @Test
     fun testSetUnityMetaDataNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -43,7 +44,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testSetUnityMetaDataNull() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.setUnityMetaData(null, null, "unitySdkVersion")
         assertNull(preferencesService.unityVersionNumber)
         assertNull(preferencesService.unityBuildIdNumber)
@@ -55,7 +56,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testLogUnhandledUnityException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logUnhandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
@@ -75,7 +76,7 @@ internal class UnityInternalInterfaceImplTest {
 
     @Test
     fun testLogHandledUnityException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logHandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(

@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -29,6 +28,7 @@ import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLogger
@@ -79,7 +79,7 @@ internal class EmbraceNdkServiceTest {
     private lateinit var context: Context
     private lateinit var storageManager: FakeStorageService
     private lateinit var metadataService: MetadataService
-    private lateinit var configService: ConfigService
+    private lateinit var configService: FakeConfigService
     private lateinit var activityService: FakeProcessStateService
     private lateinit var localConfig: LocalConfig
     private lateinit var remoteConfig: RemoteConfig
@@ -87,7 +87,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var userService: UserService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionProperties: EmbraceSessionProperties
-    private lateinit var appFramework: Embrace.AppFramework
     private lateinit var sharedObjectLoader: SharedObjectLoader
     private lateinit var logger: EmbLogger
     private lateinit var delegate: NdkServiceDelegate.NdkDelegate
@@ -118,7 +117,6 @@ internal class EmbraceNdkServiceTest {
         userService = FakeUserService()
         preferencesService = FakePreferenceService()
         sessionProperties = EmbraceSessionProperties(preferencesService, configService, EmbLoggerImpl())
-        appFramework = Embrace.AppFramework.NATIVE
         sharedObjectLoader = mockk()
         logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
@@ -154,7 +152,6 @@ internal class EmbraceNdkServiceTest {
                 userService,
                 preferencesService,
                 sessionProperties,
-                appFramework,
                 sharedObjectLoader,
                 logger,
                 repository,
@@ -233,7 +230,7 @@ internal class EmbraceNdkServiceTest {
         every { Uuid.getEmbUuid() } returns unityId
         enableNdk(true)
 
-        appFramework = Embrace.AppFramework.UNITY
+        configService.appFramework = AppFramework.UNITY
         initializeService()
         assertEquals(1, activityService.listeners.size)
 
@@ -315,7 +312,7 @@ internal class EmbraceNdkServiceTest {
     fun `test getUnityCrashId`() {
         enableNdk(true)
 
-        appFramework = Embrace.AppFramework.UNITY
+        configService.appFramework = AppFramework.UNITY
         every { Uuid.getEmbUuid() } returns "unityId"
         initializeService()
         val uuid = embraceNdkService.getUnityCrashId()
@@ -495,7 +492,7 @@ internal class EmbraceNdkServiceTest {
         every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
 
-        appFramework = Embrace.AppFramework.UNITY
+        configService.appFramework = AppFramework.UNITY
         initializeService()
         every { embraceNdkService.getSymbolsForCurrentArch() } returns mockk()
 
@@ -513,7 +510,7 @@ internal class EmbraceNdkServiceTest {
     fun `test checkForNativeCrash when there is no native crash does not execute crash files logic`() {
         every { repository.sortNativeCrashes(false) } returns listOf()
 
-        appFramework = Embrace.AppFramework.UNITY
+        configService.appFramework = AppFramework.UNITY
         initializeService()
 
         val result = embraceNdkService.getAndSendNativeCrash()

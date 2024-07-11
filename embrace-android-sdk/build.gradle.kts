@@ -11,6 +11,9 @@ plugins {
 
 description = "Embrace Android SDK: Core"
 
+val version: String by project
+
+
 android {
     ndkVersion = Versions.NDK
 
@@ -21,7 +24,7 @@ android {
         // For library projects only, the BuildConfig.VERSION_NAME and BuildConfig.VERSION_CODE properties have been removed from the generated BuildConfig class
         //
         // https://developer.android.com/studio/releases/gradle-plugin#version_properties_removed_from_buildconfig_class_in_library_projects
-        buildConfigField("String", "VERSION_NAME", "\"${defaultConfig.versionName}\"")
+        buildConfigField("String", "VERSION_NAME", "\"${version}\"")
         buildConfigField("String", "VERSION_CODE", "\"${53}\"")
     }
 
@@ -43,6 +46,8 @@ dependencies {
     kover(project(":embrace-android-compose"))
     kover(project(":embrace-android-fcm"))
     kover(project(":embrace-android-okhttp3"))
+    kover(project(":embrace-android-core"))
+    kover(project(":embrace-android-features"))
 }
 
 kover {
@@ -60,6 +65,9 @@ kover {
 }
 
 dependencies {
+    implementation(project(":embrace-android-core"))
+    implementation(project(":embrace-android-features"))
+
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)

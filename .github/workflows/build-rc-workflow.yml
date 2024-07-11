@@ -1,8 +1,8 @@
-name: Pre-Release - Create New Release Candidates
+name: Pre-Release - Create New Release Candidate
 
 env:
-  SONATYPE_USERNAME: embrace-io
-  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+  SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
+  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
   MAVEN_QA_USER: github
   MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
   mavenSigningKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
@@ -19,6 +19,10 @@ on:
     inputs:
       version_of_rc:
         description: 'Version to create new RC for. Specify <major.minor> only, e.g. 6.3'
+        required: true
+      patch_number:
+        description: 'Patch number. e.g. for 6.3.1, use "1". Defaults to 0'
+        default: '0'
         required: true
 
 jobs:
@@ -40,7 +44,6 @@ jobs:
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
-          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Checkout SDK
         uses: actions/checkout@v4
@@ -77,7 +80,7 @@ jobs:
 
       - name: Generate SDK RC - Publish and close Sonatype repository
         run: |
-          ./gradlew clean check publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -88,8 +91,8 @@ jobs:
 
       - name: Set version tag in SDK
         run: |
-          git push origin :refs/tags/${{ github.event.inputs.version_of_rc }}.0
-          git tag -f ${{ github.event.inputs.version_of_rc }}.0
+          git push origin :refs/tags/${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
+          git tag -f ${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
           git push origin --tags
 
       - name: Checkout Swazzler
@@ -105,8 +108,8 @@ jobs:
 
       - name: Set version tag in Swazzler
         run: |
-          git push origin :refs/tags/${{ github.event.inputs.version_of_rc }}.0
-          git tag -f ${{ github.event.inputs.version_of_rc }}.0
+          git push origin :refs/tags/${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
+          git tag -f ${{ github.event.inputs.version_of_rc }}.${{ github.event.inputs.patch_number }}
           git push origin --tags
 
       - name: Cleanup Gradle Cache

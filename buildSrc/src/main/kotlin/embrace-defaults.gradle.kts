@@ -60,11 +60,13 @@ android {
             }
         }
     }
+
     buildTypes {
         named("release") {
             isMinifyEnabled = false
         }
     }
+
     publishing {
 
         // create component with single publication variant
@@ -93,6 +95,7 @@ dependencies {
     testImplementation("androidx.test.ext:junit:${Versions.ANDROIDX_JUNIT}")
     testImplementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")
     testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.MOCKWEBSERVER}")
+    testImplementation(project(":embrace-test-common"))
 
     androidTestImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
     androidTestImplementation("androidx.test:runner:${Versions.ANDROIDX_TEST}")
@@ -215,6 +218,10 @@ publishing {
 }
 
 signing {
+    val keyId = System.getenv("mavenSigningKeyId")
+    val key = System.getenv("mavenSigningKeyRingFileEncoded")
+    val password = System.getenv("mavenSigningKeyPassword")
+    useInMemoryPgpKeys(keyId, key, password)
     sign(publishing.publications.getByName("release"))
 }
 

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.metadata
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage
@@ -137,6 +136,5 @@ internal interface MetadataService {
      * @return egl name
      */
     fun getEgl(): String?
-    fun getAppFramework(): Embrace.AppFramework
     fun getPackageName(): String
 }

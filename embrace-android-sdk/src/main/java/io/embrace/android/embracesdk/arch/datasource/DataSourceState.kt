@@ -24,18 +24,31 @@ internal class DataSourceState<T : DataSource<*>>(
     private val configGate: Provider<Boolean> = { true },
 
     /**
-     * The type of session that contains the data.
-     */
-    private var currentSessionType: SessionType? = null,
-
-    /**
      * A session type where data capture should be disabled. For example,
      * background activities capture a subset of sessions.
      */
-    private val disabledSessionType: SessionType? = null
+    private val disabledSessionType: SessionType? = null,
+
+    /**
+     * Whether this feature supports being initialized asynchronously. Defaults to false. If
+     * the feature is set to true the feature will be initialized on a background thread.
+     *
+     * If you enable this behavior please ensure your implementation is thread safe (e.g.
+     * it can handle unbalanced calls to [enableDataCapture] and others).
+     */
+    val asyncInit: Boolean = false
 ) {
 
-    private val enabledDataSource by lazy(factory)
+    /**
+     * The type of session that contains the data.
+     */
+    var currentSessionType: SessionType? = null
+        set(value) {
+            field = value
+            onSessionTypeChange()
+        }
+
+    private val factoryRef = lazy(factory)
 
     var dataSource: T? = null
         private set
@@ -47,10 +60,11 @@ internal class DataSourceState<T : DataSource<*>>(
     /**
      * Callback that is invoked when the session type changes.
      */
-    fun onSessionTypeChange(sessionType: SessionType?) {
-        this.currentSessionType = sessionType
+    private fun onSessionTypeChange() {
         updateDataSource()
-        enabledDataSource?.resetDataCaptureLimits()
+        if (factoryRef.isInitialized()) {
+            factoryRef.value?.resetDataCaptureLimits()
+        }
     }
 
     /**
@@ -65,7 +79,7 @@ internal class DataSourceState<T : DataSource<*>>(
             currentSessionType != null && currentSessionType != disabledSessionType && configGate()
 
         if (enabled && dataSource == null) {
-            dataSource = enabledDataSource?.apply {
+            dataSource = factoryRef.value?.apply {
                 enableDataCapture()
             }
         } else if (!enabled && dataSource != null) {

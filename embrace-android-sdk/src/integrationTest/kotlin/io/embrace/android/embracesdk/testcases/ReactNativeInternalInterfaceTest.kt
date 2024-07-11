@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -27,6 +27,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceTest {
+
+    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
@@ -46,7 +48,7 @@ internal class ReactNativeInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertNull(res.hostedPlatformVersion)
             assertNull(res.javascriptPatchNumber)
         }
@@ -62,7 +64,7 @@ internal class ReactNativeInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
             assertEquals("666", res.javascriptPatchNumber)
@@ -83,7 +85,7 @@ internal class ReactNativeInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
             assertEquals("666", res.javascriptPatchNumber)
@@ -106,7 +108,7 @@ internal class ReactNativeInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.REACT_NATIVE, res.appFramework)
+            assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertEquals("28.9.2", res.hostedPlatformVersion)
             assertEquals("1.2.4", res.hostedSdkVersion)
             assertEquals("999", res.javascriptPatchNumber)

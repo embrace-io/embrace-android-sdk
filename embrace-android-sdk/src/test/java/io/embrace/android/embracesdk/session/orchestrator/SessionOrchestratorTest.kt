@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
@@ -33,6 +34,7 @@ import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityC
 import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -377,16 +379,17 @@ internal class SessionOrchestratorTest {
             PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
         fakeDataSource = FakeDataSource(mockContext())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
-            listOf(
+            configService,
+            BackgroundWorker(BlockableExecutorService()),
+            logger
+        ).apply {
+            add(
                 DataSourceState(
                     factory = { fakeDataSource },
-                    configGate = { true },
-                    currentSessionType = null,
+                    configGate = { true }
                 )
-            ),
-            logger,
-            configService
-        )
+            )
+        }
 
         orchestrator = SessionOrchestratorImpl(
             processStateService,

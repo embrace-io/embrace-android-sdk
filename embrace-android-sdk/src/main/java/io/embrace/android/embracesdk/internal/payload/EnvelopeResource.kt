@@ -79,7 +79,7 @@ internal data class EnvelopeResource(
 
     /* The frameworks in use by the app. 1=Native, 2=React Native, 3=Unity, 4=Flutter. Previous name: a.f */
     @Json(name = "app_framework")
-    val appFramework: EnvelopeResource.AppFramework? = null,
+    val appFramework: AppFramework? = null,
 
     /* A unique ID for the build that is generated at build time. Previous name: a.bi */
     @Json(name = "build_id")
@@ -191,28 +191,4 @@ internal data class EnvelopeResource(
     'ro.hardware.egl'. Previous name: d.gp */
     @Json(name = "egl_info")
     val eglInfo: Int? = null
-) {
-
-    /**
-     * The frameworks in use by the app. Previous name: a.f
-     *
-     * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
-     */
-    internal enum class AppFramework(val value: Int) {
-        @Json(name = "1")
-        NATIVE(1),
-
-        @Json(name = "2")
-        REACT_NATIVE(2),
-
-        @Json(name = "3")
-        UNITY(3),
-
-        @Json(name = "4")
-        FLUTTER(4);
-
-        companion object {
-            fun fromInt(type: Int) = values().associateBy(AppFramework::value)[type]
-        }
-    }
-}
+)

@@ -14,11 +14,11 @@ dependencies {
     compileOnly(gradleApi())
 
     // NOTE: when updating any of these keep in sync with buildSrc/src/main/kotlin/io/embrace/gradle/Versions.kt
-    implementation("com.android.tools.build:gradle:8.3.2")
+    implementation("com.android.tools.build:gradle:8.5.0")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.6")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.21")
-    implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.14.0")
-    implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.8.1")
+    implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.15.1")
+    implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.8.2")
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.

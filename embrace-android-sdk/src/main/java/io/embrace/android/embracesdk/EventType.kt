@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  */
 @InternalApi
 @SuppressLint("EmbracePublicApiPackageRule")
+@JsonClass(generateAdapter = false)
 internal enum class EventType(
 
     /**

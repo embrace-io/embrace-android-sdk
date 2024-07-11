@@ -11,9 +11,8 @@ internal class LogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<LogRemoteConfig?>
 ) : MergedConfigBehavior<UnimplementedConfig, LogRemoteConfig>(
-    thresholdCheck,
-    { null },
-    remoteSupplier
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     companion object {

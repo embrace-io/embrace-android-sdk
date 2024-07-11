@@ -34,7 +34,7 @@ internal class SigquitDataSource(
 
     fun saveSigquit(timestamp: Long) {
         if (anrBehavior.isGoogleAnrCaptureEnabled()) {
-            alterSessionSpan(NoInputValidation) {
+            captureData(NoInputValidation) {
                 addEvent(SchemaType.Sigquit, timestamp)
             }
         }

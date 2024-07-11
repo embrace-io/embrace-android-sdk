@@ -68,7 +68,7 @@ internal class MyApplication : Application() {
 
         // Do your exporter setup before starting the SDK
 
-        Embrace.getInstance().start()
+        Embrace.getInstance().start(this)
     }
 }
 ```

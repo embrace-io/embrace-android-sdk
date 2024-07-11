@@ -1,8 +1,8 @@
 name: Release - Release RC and Update Documentation
 
 env:
-  SONATYPE_USERNAME: embrace-io
-  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+  SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
+  SONATYPE_PASSWORD: ${{ secrets.SONATYPE_TOKEN_USER_PASSWORD }}
   MAVEN_QA_USER: github
   MAVEN_QA_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
   mavenSigningKeyId: ${{ secrets.MAVEN_ANDROID_SIGNING_KEY }}
@@ -56,7 +56,6 @@ jobs:
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
-          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
 
       - name: Publish gh-pages
         run: |

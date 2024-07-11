@@ -8,9 +8,8 @@ internal class NetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<NetworkSpanForwardingRemoteConfig?>
 ) : MergedConfigBehavior<UnimplementedConfig, NetworkSpanForwardingRemoteConfig>(
-    thresholdCheck,
-    { null },
-    remoteSupplier
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
     companion object {
         /**

@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
  * Fake [ConfigService] used for testing. Updates to registered listeners can be triggered by calling [updateListeners]. Note that the
@@ -22,6 +23,7 @@ import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
  * data. Beware of this difference in implementation compared to the real EmbraceConfigService
  */
 internal class FakeConfigService(
+    override var appFramework: AppFramework = AppFramework.NATIVE,
     var sdkDisabled: Boolean = false,
     var backgroundActivityCaptureEnabled: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,

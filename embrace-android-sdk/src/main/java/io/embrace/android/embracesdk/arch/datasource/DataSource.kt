@@ -15,9 +15,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 internal interface DataSource<T> {
 
     /**
-     * The DataSource should call this function when it wants to capture a [EmbraceSpanEvent] or
-     * [EmbraceSpanAttribute] and send it to the destination. This function is only intended
-     * for one-time use - if you want to record a span, please use [startSpan] and [stopSpan].
+     * The DataSource should call this function when it wants to capture some form of data.
      *
      * The [inputValidation] parameter should return true if the user inputs are valid.
      * (e.g. an empty string is not valid for a breadcrumb message).
@@ -29,7 +27,7 @@ internal interface DataSource<T> {
      * This function returns true if data was successfully captured & false if not.
      * This is assumed to be the case if [captureAction] completed without throwing.
      */
-    fun alterSessionSpan(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
+    fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting

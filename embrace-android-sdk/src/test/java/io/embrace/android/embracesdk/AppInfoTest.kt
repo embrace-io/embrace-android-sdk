@@ -8,6 +8,7 @@ import org.junit.Test
 
 internal class AppInfoTest {
 
+    @Suppress("DEPRECATION")
     private val info = AppInfo(
         appVersion = "1.0",
         appFramework = Embrace.AppFramework.NATIVE.value,
@@ -38,7 +39,6 @@ internal class AppInfoTest {
     fun testDeserialization() {
         val obj: AppInfo = deserializeJsonFromResource("app_info_expected.json")
         assertEquals("1.0", obj.appVersion)
-        assertEquals(Embrace.AppFramework.NATIVE.value, obj.appFramework)
         assertEquals("1234", obj.buildId)
         assertEquals("release", obj.buildType)
         assertEquals("demo", obj.buildFlavor)

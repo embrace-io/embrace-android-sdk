@@ -543,4 +543,30 @@ internal class LocalConfigTest {
             checkNotNull(cfg.anrServiceEnabled)
         )
     }
+
+    @Test
+    fun `test default app framework`() {
+        val localConfig = LocalConfigParser.buildConfig(
+            "GrCPU",
+            false,
+            "{}",
+            serializer,
+            cfg,
+            logger
+        )
+        assertNull(localConfig.sdkConfig.appFramework)
+    }
+
+    @Test
+    fun `test custom app framework`() {
+        val localConfig = LocalConfigParser.buildConfig(
+            "GrCPU",
+            false,
+            "{\"app_framework\": \"flutter\"}",
+            serializer,
+            cfg,
+            logger
+        )
+        assertEquals("flutter", localConfig.sdkConfig.appFramework)
+    }
 }

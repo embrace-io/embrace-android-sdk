@@ -34,6 +34,8 @@ internal interface EmbraceAndroidApi {
      * @param context                  an instance of context
      * @param appFramework             the AppFramework of the application
      */
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context)} instead.")
     fun start(
         context: Context,
         appFramework: Embrace.AppFramework
@@ -71,19 +73,13 @@ internal interface EmbraceAndroidApi {
      * @param appFramework             the AppFramework of the application
      *
      */
+    @Suppress("DEPRECATION")
     @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
     fun start(
         context: Context,
         isDevMode: Boolean,
         appFramework: Embrace.AppFramework
     )
-
-    /**
-     * Whether or not the SDK has been started.
-     *
-     * @return true if the SDK is started, false otherwise
-     */
-    val isStarted: Boolean
 
     /**
      * Records that a view 'started'. You should call this when your app starts displaying an

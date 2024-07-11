@@ -103,7 +103,6 @@ internal class SessionModuleImplTest {
         assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
-        assertNotNull(module.dataCaptureOrchestrator)
     }
 
     private fun createEnabledBehavior(): FakeEssentialServiceModule {

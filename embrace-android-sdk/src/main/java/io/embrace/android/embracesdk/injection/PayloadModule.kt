@@ -52,7 +52,7 @@ internal class PayloadModuleImpl(
             AppEnvironment(coreModule.context.applicationInfo).environment,
             coreModule.buildInfo,
             coreModule.packageInfo,
-            coreModule.appFramework,
+            essentialServiceModule.configService.appFramework,
             essentialServiceModule.deviceArchitecture,
             DeviceImpl(
                 systemServiceModule.windowManager,

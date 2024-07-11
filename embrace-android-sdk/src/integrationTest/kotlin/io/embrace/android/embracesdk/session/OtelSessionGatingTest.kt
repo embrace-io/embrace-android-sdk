@@ -93,7 +93,7 @@ internal class OtelSessionGatingTest {
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.WebView))
 
-        val spans = checkNotNull(payload.data?.spans)
+        val spans = checkNotNull(payload.data.spans)
         val anrSpans = spans.filter { it.name == "emb-thread-blockage" }
         val expectedCount = when (gated) {
             true -> 0

@@ -21,7 +21,7 @@ internal class BreadcrumbDataSource(
 ) {
 
     fun logCustom(message: String, timestamp: Long) {
-        alterSessionSpan(
+        captureData(
             inputValidation = {
                 message.isNotEmpty()
             },

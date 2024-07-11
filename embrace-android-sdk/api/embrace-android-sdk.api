@@ -7,7 +7,7 @@ public final class io/embrace/android/embracesdk/BuildConfig {
 	public fun <init> ()V
 }
 
-public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/EmbraceApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
@@ -59,6 +59,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public fun logWarning (Ljava/lang/String;)V
+	public fun logWebView (Ljava/lang/String;)V
 	public fun recordCompletedSpan (Ljava/lang/String;JJ)Z
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
@@ -236,6 +237,25 @@ public final class io/embrace/android/embracesdk/internal/InternalTracingApi$Def
 	public static synthetic fun recordSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/Object;
 	public static synthetic fun startSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Ljava/lang/String;
 	public static synthetic fun stopSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/InternalInterfaceApi {
+	public abstract fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
+	public abstract fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
+	public abstract fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
+	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
+	public abstract fun logWebView (Ljava/lang/String;)V
+	public abstract fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
+	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
+	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
+	public abstract fun getTraceIdHeader ()Ljava/lang/String;
+	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {

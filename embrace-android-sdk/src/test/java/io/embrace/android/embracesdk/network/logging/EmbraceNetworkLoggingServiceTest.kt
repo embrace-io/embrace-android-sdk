@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -144,6 +145,20 @@ internal class EmbraceNetworkLoggingServiceTest {
         }
 
         assertEquals(2, getNetworkSpans().size)
+    }
+
+    @Test
+    fun `URL parameters will be truncated`() {
+        val url = "https://www.example1.com/a?b=c"
+        logNetworkRequest(
+            url = url,
+            startTime = 100,
+            endTime = 200,
+        )
+
+        with(checkNotNull(getNetworkSpans().single())) {
+            assertEquals(stripUrl(url), attributes?.single { it.key == "url.full" }?.data)
+        }
     }
 
     private fun logNetworkRequest(

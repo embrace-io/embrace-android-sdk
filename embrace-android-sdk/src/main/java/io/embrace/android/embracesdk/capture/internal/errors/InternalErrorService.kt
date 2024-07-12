@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.capture.internal.errors
 
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**

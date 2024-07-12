@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
@@ -36,6 +35,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehav
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.prefs.PreferencesService

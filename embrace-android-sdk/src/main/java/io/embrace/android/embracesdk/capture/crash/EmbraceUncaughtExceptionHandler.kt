@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.crash
 
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 /**
  * Intercepts uncaught exceptions from the JVM and forwards them to the Embrace API. Once handled,

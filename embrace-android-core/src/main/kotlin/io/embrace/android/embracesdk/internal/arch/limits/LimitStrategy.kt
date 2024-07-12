@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch.limits
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
 /**
  * Defines a strategy for limiting the capture of data in a [DataSource].
  */
-@InternalApi
 public interface LimitStrategy {
 
     /**

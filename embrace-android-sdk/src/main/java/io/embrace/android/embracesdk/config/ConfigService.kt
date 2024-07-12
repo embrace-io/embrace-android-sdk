@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.config
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
@@ -23,82 +24,83 @@ import java.io.Closeable
  *
  * Configuration is configured for the user's app, and exposed via the API.
  */
-internal interface ConfigService : Closeable {
+@InternalApi
+public interface ConfigService : Closeable {
 
     /**
      * How background activity functionality should behave.
      */
-    val backgroundActivityBehavior: BackgroundActivityBehavior
+    public val backgroundActivityBehavior: BackgroundActivityBehavior
 
     /**
      * How automatic data capture functionality should behave.
      */
-    val autoDataCaptureBehavior: AutoDataCaptureBehavior
+    public val autoDataCaptureBehavior: AutoDataCaptureBehavior
 
     /**
      * How automatic breadcrumb functionality should behave.
      */
-    val breadcrumbBehavior: BreadcrumbBehavior
+    public val breadcrumbBehavior: BreadcrumbBehavior
 
     /**
      * How log message functionality should behave.
      */
-    val logMessageBehavior: LogMessageBehavior
+    public val logMessageBehavior: LogMessageBehavior
 
     /**
      * How ANR functionality should behave.
      */
-    val anrBehavior: AnrBehavior
+    public val anrBehavior: AnrBehavior
 
     /**
      * How sessions should behave.
      */
-    val sessionBehavior: SessionBehavior
+    public val sessionBehavior: SessionBehavior
 
     /**
      * How network call capture should behave.
      */
-    val networkBehavior: NetworkBehavior
+    public val networkBehavior: NetworkBehavior
 
     /**
      * How the startup moment should behave
      */
-    val startupBehavior: StartupBehavior
+    public val startupBehavior: StartupBehavior
 
     /**
      * How the SDK should handle events where data can be captured. This could be a moment, etc...
      */
-    val dataCaptureEventBehavior: DataCaptureEventBehavior
+    public val dataCaptureEventBehavior: DataCaptureEventBehavior
 
     /**
      * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
      */
-    val sdkModeBehavior: SdkModeBehavior
+    public val sdkModeBehavior: SdkModeBehavior
 
     /**
      * Provides base endpoints the SDK should send data to
      */
-    val sdkEndpointBehavior: SdkEndpointBehavior
+    public val sdkEndpointBehavior: SdkEndpointBehavior
 
     /**
      * Provides whether the SDK should enable certain 'behavior' of web vitals
      */
-    val webViewVitalsBehavior: WebViewVitalsBehavior
+    public val webViewVitalsBehavior: WebViewVitalsBehavior
 
     /**
      * Provides behavior for the app exit info feature
      */
-    val appExitInfoBehavior: AppExitInfoBehavior
+    public val appExitInfoBehavior: AppExitInfoBehavior
 
     /**
      * How the network span forwarding feature should behave
      */
-    val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
+    public val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
 
     /**
      * The app framework that is currently in use.
      */
-    val appFramework: AppFramework
+    public val appFramework: AppFramework
 
     /**
      * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the
@@ -106,7 +108,7 @@ internal interface ConfigService : Closeable {
      *
      * @param configListener the listener to add
      */
-    fun addListener(configListener: () -> Unit)
+    public fun addListener(configListener: () -> Unit)
 
     /**
      * Checks if the SDK is enabled.
@@ -116,7 +118,7 @@ internal interface ConfigService : Closeable {
      *
      * @return true if the sdk is enabled, false otherwise
      */
-    fun isSdkDisabled(): Boolean
+    public fun isSdkDisabled(): Boolean
 
     /**
      * Checks if the capture of background activity is enabled.
@@ -127,7 +129,7 @@ internal interface ConfigService : Closeable {
      *
      * @return true if background activity capture is enabled.
      */
-    fun isBackgroundActivityCaptureEnabled(): Boolean
+    public fun isBackgroundActivityCaptureEnabled(): Boolean
 
     /**
      * Returns true if the remote config has been fetched and is not expired. Generally speaking
@@ -136,12 +138,12 @@ internal interface ConfigService : Closeable {
      *
      * Most callers will not need this function - try not to abuse it.
      */
-    fun hasValidRemoteConfig(): Boolean
+    public fun hasValidRemoteConfig(): Boolean
 
     /**
      * Checks if the capture of Application Exit Info is enabled.
      *
      * @return true if AEI capture is enabled.
      */
-    fun isAppExitInfoCaptureEnabled(): Boolean
+    public fun isAppExitInfoCaptureEnabled(): Boolean
 }

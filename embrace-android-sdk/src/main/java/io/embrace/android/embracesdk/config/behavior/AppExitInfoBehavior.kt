@@ -1,50 +1,22 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.annotation.InternalApi
 
-/**
- * Provides the behavior that should be followed for select services that automatically
- * capture data.
- */
-internal class AppExitInfoBehavior(
-    thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<AppExitInfoLocalConfig?>,
-    remoteSupplier: Provider<RemoteConfig?>
-) : MergedConfigBehavior<AppExitInfoLocalConfig, RemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
-) {
-    companion object {
-        /**
-         * Max size of bytes to allow capturing AppExitInfo ndk/anr traces
-         */
-        private const val MAX_TRACE_SIZE_BYTES = 2097152 // 2MB
-        const val AEI_MAX_NUM_DEFAULT = 0 // 0 means no limit
-        const val AEI_ENABLED_DEFAULT = true
-    }
+@InternalApi
+public interface AppExitInfoBehavior {
 
-    sealed class CollectTracesResult(val result: String?) {
-        class Success(result: String?) : CollectTracesResult(result)
-        class TooLarge(result: String?) : CollectTracesResult(result)
-        class TraceException(message: String?) : CollectTracesResult(message)
-    }
-
-    fun getTraceMaxLimit(): Int =
-        remote?.appExitInfoConfig?.appExitInfoTracesLimit
-            ?: local?.appExitInfoTracesLimit
-            ?: MAX_TRACE_SIZE_BYTES
+    public fun getTraceMaxLimit(): Int
 
     /**
      * Whether the feature is enabled or not.
      */
-    fun isEnabled(): Boolean {
-        return thresholdCheck.isBehaviorEnabled(remote?.appExitInfoConfig?.pctAeiCaptureEnabled)
-            ?: local?.aeiCaptureEnabled
-            ?: AEI_ENABLED_DEFAULT
-    }
+    public fun isEnabled(): Boolean
 
-    fun appExitInfoMaxNum() = remote?.appExitInfoConfig?.aeiMaxNum ?: AEI_MAX_NUM_DEFAULT
+    public fun appExitInfoMaxNum(): Int
+
+    public sealed class CollectTracesResult(public val result: String?) {
+        public class Success(result: String?) : CollectTracesResult(result)
+        public class TooLarge(result: String?) : CollectTracesResult(result)
+        public class TraceException(message: String?) : CollectTracesResult(message)
+    }
 }

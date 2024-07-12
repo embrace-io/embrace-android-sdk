@@ -4,20 +4,34 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
+import io.embrace.android.embracesdk.config.behavior.AnrBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
+import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
+import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.BackgroundActivityBehavior
+import io.embrace.android.embracesdk.config.behavior.BackgroundActivityBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
+import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
+import io.embrace.android.embracesdk.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
+import io.embrace.android.embracesdk.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
+import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
+import io.embrace.android.embracesdk.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.StartupBehavior
+import io.embrace.android.embracesdk.config.behavior.StartupBehaviorImpl
 import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
+import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -68,66 +82,66 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private val remoteSupplier: Provider<RemoteConfig?> = { getConfig() }
 
     override val backgroundActivityBehavior: BackgroundActivityBehavior =
-        BackgroundActivityBehavior(
+        BackgroundActivityBehaviorImpl(
             thresholdCheck = thresholdCheck,
             localSupplier = localConfig.sdkConfig::backgroundActivityConfig,
             remoteSupplier = { getConfig().backgroundActivityConfig }
         )
 
     override val autoDataCaptureBehavior: AutoDataCaptureBehavior =
-        AutoDataCaptureBehavior(
+        AutoDataCaptureBehaviorImpl(
             thresholdCheck = thresholdCheck,
             localSupplier = { localConfig },
             remoteSupplier = remoteSupplier
         )
 
     override val breadcrumbBehavior: BreadcrumbBehavior =
-        BreadcrumbBehavior(
+        BreadcrumbBehaviorImpl(
             thresholdCheck,
             localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
 
     override val logMessageBehavior: LogMessageBehavior =
-        LogMessageBehavior(
+        LogMessageBehaviorImpl(
             thresholdCheck,
             remoteSupplier = { getConfig().logConfig }
         )
 
     override val anrBehavior: AnrBehavior =
-        AnrBehavior(
+        AnrBehaviorImpl(
             thresholdCheck,
             localSupplier = localConfig.sdkConfig::anr,
             remoteSupplier = { getConfig().anrConfig }
         )
 
     override val sessionBehavior: SessionBehavior =
-        SessionBehavior(
+        SessionBehaviorImpl(
             thresholdCheck,
             localSupplier = localConfig.sdkConfig::sessionConfig,
             remoteSupplier = { getConfig() }
         )
 
     override val networkBehavior: NetworkBehavior =
-        NetworkBehavior(
+        NetworkBehaviorImpl(
             thresholdCheck = thresholdCheck,
             localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
 
     override val startupBehavior: StartupBehavior =
-        StartupBehavior(
+        StartupBehaviorImpl(
             thresholdCheck = thresholdCheck,
             localSupplier = localConfig.sdkConfig::startupMoment
         )
 
-    override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehavior(
+    override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(
         thresholdCheck = thresholdCheck,
         remoteSupplier = remoteSupplier
     )
 
     override val sdkModeBehavior: SdkModeBehavior =
-        SdkModeBehavior(
+        SdkModeBehaviorImpl(
             isDebug = isDebug,
             thresholdCheck = thresholdCheck,
             localSupplier = { localConfig },
@@ -135,25 +149,25 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         )
 
     override val sdkEndpointBehavior: SdkEndpointBehavior =
-        SdkEndpointBehavior(
+        SdkEndpointBehaviorImpl(
             thresholdCheck = thresholdCheck,
             localSupplier = localConfig.sdkConfig::baseUrls,
         )
 
-    override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehavior(
+    override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehaviorImpl(
         thresholdCheck = thresholdCheck,
         localSupplier = localConfig.sdkConfig::appExitInfoConfig,
         remoteSupplier = remoteSupplier
     )
 
     override val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
-        NetworkSpanForwardingBehavior(
+        NetworkSpanForwardingBehaviorImpl(
             thresholdCheck = thresholdCheck,
             remoteSupplier = { getConfig().networkSpanForwardingRemoteConfig }
         )
 
     override val webViewVitalsBehavior: WebViewVitalsBehavior =
-        WebViewVitalsBehavior(
+        WebViewVitalsBehaviorImpl(
             thresholdCheck = thresholdCheck,
             remoteSupplier = remoteSupplier
         )

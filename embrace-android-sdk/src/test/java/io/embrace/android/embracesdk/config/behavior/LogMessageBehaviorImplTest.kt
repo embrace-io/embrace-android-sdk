@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class LogMessageBehaviorTest {
+internal class LogMessageBehaviorImplTest {
 
     private val remote = LogRemoteConfig(
         256,

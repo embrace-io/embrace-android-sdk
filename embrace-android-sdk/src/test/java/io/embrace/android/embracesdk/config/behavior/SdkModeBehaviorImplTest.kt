@@ -8,7 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class SdkModeBehaviorTest {
+internal class SdkModeBehaviorImplTest {
 
     private val local = LocalConfig(
         "",

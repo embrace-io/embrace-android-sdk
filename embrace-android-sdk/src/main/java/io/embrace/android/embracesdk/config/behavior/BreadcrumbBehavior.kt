@@ -1,71 +1,35 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.annotation.InternalApi
 
-/**
- * Provides the behavior that should be followed for select services that automatically
- * capture data.
- */
-internal class BreadcrumbBehavior(
-    thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<SdkLocalConfig?>,
-    remoteSupplier: Provider<RemoteConfig?>
-) : MergedConfigBehavior<SdkLocalConfig, RemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
-) {
+@InternalApi
+public interface BreadcrumbBehavior {
 
-    companion object {
-
-        /**
-         * The default breadcrumbs capture limit.
-         */
-        const val DEFAULT_BREADCRUMB_LIMIT = 100
-        const val CAPTURE_TAP_COORDINATES_DEFAULT = true
-        const val ENABLE_AUTOMATIC_ACTIVITY_CAPTURE_DEFAULT = true
-        const val WEB_VIEW_CAPTURE_DEFAULT = true
-        const val WEB_VIEW_QUERY_PARAMS_CAPTURE_DEFAULT = true
-    }
-
-    fun getCustomBreadcrumbLimit(): Int = remote?.uiConfig?.breadcrumbs ?: DEFAULT_BREADCRUMB_LIMIT
-    fun getFragmentBreadcrumbLimit(): Int = remote?.uiConfig?.fragments ?: DEFAULT_BREADCRUMB_LIMIT
-    fun getTapBreadcrumbLimit(): Int = remote?.uiConfig?.taps ?: DEFAULT_BREADCRUMB_LIMIT
-    fun getViewBreadcrumbLimit(): Int = remote?.uiConfig?.views ?: DEFAULT_BREADCRUMB_LIMIT
-    fun getWebViewBreadcrumbLimit(): Int = remote?.uiConfig?.webViews ?: DEFAULT_BREADCRUMB_LIMIT
+    public fun getCustomBreadcrumbLimit(): Int
+    public fun getFragmentBreadcrumbLimit(): Int
+    public fun getTapBreadcrumbLimit(): Int
+    public fun getViewBreadcrumbLimit(): Int
+    public fun getWebViewBreadcrumbLimit(): Int
 
     /**
      * Controls whether tap coordinates are captured in breadcrumbs
      */
-    fun isTapCoordinateCaptureEnabled(): Boolean =
-        local?.taps?.captureCoordinates ?: CAPTURE_TAP_COORDINATES_DEFAULT
+    public fun isTapCoordinateCaptureEnabled(): Boolean
 
     /**
      * Controls whether activity lifecycle changes are captured in breadcrumbs
      */
-    fun isAutomaticActivityCaptureEnabled() =
-        local?.viewConfig?.enableAutomaticActivityCapture
-            ?: ENABLE_AUTOMATIC_ACTIVITY_CAPTURE_DEFAULT
+    public fun isAutomaticActivityCaptureEnabled(): Boolean
 
     /**
      * Controls whether webviews are captured.
      */
-    fun isWebViewBreadcrumbCaptureEnabled(): Boolean =
-        local?.webViewConfig?.captureWebViews ?: WEB_VIEW_CAPTURE_DEFAULT
+    public fun isWebViewBreadcrumbCaptureEnabled(): Boolean
 
     /**
      * Control whether query params for webviews are captured.
      */
-    fun isQueryParamCaptureEnabled(): Boolean =
-        local?.webViewConfig?.captureQueryParams ?: WEB_VIEW_QUERY_PARAMS_CAPTURE_DEFAULT
+    public fun isQueryParamCaptureEnabled(): Boolean
 
-    fun isCaptureFcmPiiDataEnabled(): Boolean {
-        return try {
-            local?.captureFcmPiiData ?: false
-        } catch (ex: Exception) {
-            false
-        }
-    }
+    public fun isCaptureFcmPiiDataEnabled(): Boolean
 }

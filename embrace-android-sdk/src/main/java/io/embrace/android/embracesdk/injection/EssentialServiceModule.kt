@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
+import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -218,7 +218,7 @@ internal class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("url-builder-init") {
             // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
             // but we want to access behaviors from ConfigService when possible.
-            val sdkEndpointBehavior = SdkEndpointBehavior(
+            val sdkEndpointBehavior = SdkEndpointBehaviorImpl(
                 thresholdCheck = thresholdCheck,
                 localSupplier = localConfig.sdkConfig::baseUrls,
             )

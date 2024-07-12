@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.config.local.AnrLocalConfig
+import io.embrace.android.embracesdk.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig.Unwinder
+import io.embrace.android.embracesdk.config.remote.Unwinder
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -10,7 +11,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.regex.Pattern
 
-internal class AnrBehaviorTest {
+internal class AnrBehaviorImplTest {
 
     private val local = AnrLocalConfig(
         captureGoogle = true,
@@ -42,7 +43,7 @@ internal class AnrBehaviorTest {
         strictModeViolationLimit = 209,
         ignoreNativeThreadAnrSamplingAllowlist = false,
         nativeThreadAnrSamplingAllowlist = listOf(
-            AnrRemoteConfig.AllowedNdkSampleMethod(
+            AllowedNdkSampleMethod(
                 "MyFoo",
                 "bar"
             )
@@ -81,7 +82,7 @@ internal class AnrBehaviorTest {
             assertEquals(emptyList<Pattern>(), allowPatternList)
             assertEquals(emptyList<Pattern>(), blockPatternList)
 
-            val expected = AnrRemoteConfig.AllowedNdkSampleMethod("UnityPlayer", "pauseUnity")
+            val expected = AllowedNdkSampleMethod("UnityPlayer", "pauseUnity")
             val observed = getNativeThreadAnrSamplingAllowlist().single()
             assertEquals(expected.clz, observed.clz)
             assertEquals(expected.method, observed.method)
@@ -126,7 +127,7 @@ internal class AnrBehaviorTest {
             assertEquals("test", allowPatternList.single().pattern())
             assertEquals("test2", blockPatternList.single().pattern())
 
-            val expected = AnrRemoteConfig.AllowedNdkSampleMethod("MyFoo", "bar")
+            val expected = AllowedNdkSampleMethod("MyFoo", "bar")
             val observed = getNativeThreadAnrSamplingAllowlist().single()
             assertEquals(expected.clz, observed.clz)
             assertEquals(expected.method, observed.method)

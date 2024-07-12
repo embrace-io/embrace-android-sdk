@@ -8,7 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class BackgroundActivityBehaviorTest {
+internal class BackgroundActivityBehaviorImplTest {
 
     private val local = BackgroundActivityLocalConfig(
         true,

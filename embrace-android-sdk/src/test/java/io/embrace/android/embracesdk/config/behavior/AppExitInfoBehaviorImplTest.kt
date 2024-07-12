@@ -9,7 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class AppExitInfoBehaviorTest {
+internal class AppExitInfoBehaviorImplTest {
 
     private val local = AppExitInfoLocalConfig(33792, false)
 

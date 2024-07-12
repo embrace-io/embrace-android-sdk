@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.anr.ndk
 
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.config.remote.Unwinder
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -52,7 +52,7 @@ internal class NativeAnrOtelMapperTest {
                 priority = 5,
                 threadState = ThreadState.BLOCKED,
                 sampleOffsetMs = 100,
-                unwinderType = AnrRemoteConfig.Unwinder.LIBUNWINDSTACK,
+                unwinderType = Unwinder.LIBUNWINDSTACK,
                 threadBlockedTimestamp = 1000L,
                 samples = mutableListOf(
                     NativeThreadAnrSample(

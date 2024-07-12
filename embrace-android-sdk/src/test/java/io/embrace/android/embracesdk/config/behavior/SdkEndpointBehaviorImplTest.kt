@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-internal class SdkEndpointBehaviorTest {
+internal class SdkEndpointBehaviorImplTest {
 
     private val local = BaseUrlLocalConfig(
         "https://config.example.com",

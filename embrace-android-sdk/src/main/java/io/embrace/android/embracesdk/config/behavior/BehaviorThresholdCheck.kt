@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.config.behavior
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.math.pow
 
 /**
  * Checks whether a percent-based config value is over a threshold where it should be enabled.
  */
-internal class BehaviorThresholdCheck(
+@InternalApi
+public class BehaviorThresholdCheck(
     private val deviceIdProvider: Provider<String>
 ) {
 
@@ -14,13 +16,13 @@ internal class BehaviorThresholdCheck(
      * An implementation of [isBehaviorEnabled] that returns null if the pctEnabled parameter
      * is null.
      */
-    fun isBehaviorEnabled(pctEnabled: Float?): Boolean? = pctEnabled?.let(::isBehaviorEnabled)
+    public fun isBehaviorEnabled(pctEnabled: Float?): Boolean? = pctEnabled?.let(::isBehaviorEnabled)
 
     /**
      * An implementation of [isBehaviorEnabled] that returns null if the pctEnabled parameter
      * is null.
      */
-    fun isBehaviorEnabled(pctEnabled: Int?): Boolean? = pctEnabled?.toFloat().let(::isBehaviorEnabled)
+    public fun isBehaviorEnabled(pctEnabled: Int?): Boolean? = pctEnabled?.toFloat().let(::isBehaviorEnabled)
 
     /**
      * Determines whether behaviour is enabled for a percentage roll-out. This is achieved
@@ -36,7 +38,7 @@ internal class BehaviorThresholdCheck(
      * an integer for maximum granularity.
      * @return whether the behaviour is enabled or not.
      */
-    fun isBehaviorEnabled(pctEnabled: Float): Boolean {
+    public fun isBehaviorEnabled(pctEnabled: Float): Boolean {
         if (pctEnabled <= 0 || pctEnabled > 100) {
             return false
         }
@@ -44,14 +46,14 @@ internal class BehaviorThresholdCheck(
         return pctEnabled >= deviceId
     }
 
-    fun getNormalizedLargeDeviceId(): Float = getNormalizedDeviceId(6)
+    public fun getNormalizedLargeDeviceId(): Float = getNormalizedDeviceId(6)
 
     /**
      * Use [.isBehaviorEnabled] instead as it allows rollouts to be controlled
      * at greater granularity.
      */
     @Deprecated("")
-    fun getNormalizedDeviceId(): Float = getNormalizedDeviceId(2)
+    public fun getNormalizedDeviceId(): Float = getNormalizedDeviceId(2)
 
     private fun getNormalizedDeviceId(digits: Int): Float {
         val deviceId = deviceIdProvider()

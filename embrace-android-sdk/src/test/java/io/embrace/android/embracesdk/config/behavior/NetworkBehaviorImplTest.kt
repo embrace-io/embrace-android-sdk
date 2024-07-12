@@ -21,7 +21,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class NetworkBehaviorTest {
+internal class NetworkBehaviorImplTest {
 
     companion object {
         private const val testCleanPublicKey =

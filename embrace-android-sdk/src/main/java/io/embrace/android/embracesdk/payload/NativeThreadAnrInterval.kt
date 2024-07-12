@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.config.remote.Unwinder
 
 internal class NativeThreadAnrInterval(
 
@@ -35,7 +35,7 @@ internal class NativeThreadAnrInterval(
     internal val samples: MutableList<NativeThreadAnrSample>?,
 
     threadState: ThreadState? = null,
-    unwinderType: AnrRemoteConfig.Unwinder? = null
+    unwinderType: Unwinder? = null
 ) {
 
     /**

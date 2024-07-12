@@ -15,7 +15,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class AutoDataCaptureBehaviorTest {
+internal class AutoDataCaptureBehaviorImplTest {
 
     private val local = LocalConfig(
         appId = "",

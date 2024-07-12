@@ -7,7 +7,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class DataCaptureEventBehaviorTest {
+internal class DataCaptureEventBehaviorImplTest {
 
     private val remote = RemoteConfig(
         internalExceptionCaptureEnabled = false,

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.network.http
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
+import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.mockk.CapturingSlot

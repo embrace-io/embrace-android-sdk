@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
-import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
+import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
 
 import android.annotation.TargetApi;
 import android.os.Build;

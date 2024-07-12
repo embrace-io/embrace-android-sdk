@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.gating
 
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -48,11 +49,12 @@ internal class EmbraceGatingService(
     }
 
     override fun gateEventMessage(eventMessage: EventMessage): EventMessage {
-        val components = configService.sessionBehavior.getSessionComponents()
-        if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
+        val behavior = configService.sessionBehavior
+        val components = behavior.getSessionComponents()
+        if (components != null && behavior.isGatingFeatureEnabled()) {
             logger.logDebug("Session gating feature enabled. Attempting to sanitize the event message")
 
-            if (configService.sessionBehavior.shouldSendFullMessage(eventMessage)) {
+            if (behavior is SessionBehaviorImpl && behavior.shouldSendFullMessage(eventMessage)) {
                 return eventMessage
             }
 

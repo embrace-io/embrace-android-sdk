@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.arch.schema.SchemaType.FlutterException
 import io.embrace.android.embracesdk.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
+import io.embrace.android.embracesdk.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -290,7 +290,7 @@ internal class EmbraceLogService(
             // ensure that we never end up with a negative offset when extracting substring, regardless of the config value set
             val allowedLength = when {
                 maxLength >= endChars.length -> maxLength - endChars.length
-                else -> LogMessageBehavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
+                else -> LogMessageBehaviorImpl.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
             }
             logger.logWarning("Truncating message to ${message.length} characters")
             message.substring(0, allowedLength) + endChars

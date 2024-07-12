@@ -89,16 +89,4 @@ internal data class AnrRemoteConfig(
 
     @Json(name = "monitor_thread_priority")
     val monitorThreadPriority: Int? = null
-) {
-
-    enum class Unwinder(internal val code: Int) {
-        LIBUNWIND(0),
-        LIBUNWINDSTACK(1)
-    }
-
-    @JsonClass(generateAdapter = true)
-    internal class AllowedNdkSampleMethod(
-        @Json(name = "c") val clz: String? = null,
-        @Json(name = "m") val method: String? = null
-    )
-}
+)

@@ -6,7 +6,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class NetworkSpanForwardingBehaviorTest {
+internal class NetworkSpanForwardingBehaviorImplTest {
 
     @Test
     fun testDefault() {

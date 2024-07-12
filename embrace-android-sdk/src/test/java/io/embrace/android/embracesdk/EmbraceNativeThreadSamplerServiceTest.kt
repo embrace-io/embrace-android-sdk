@@ -5,7 +5,9 @@ import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.behavior.AnrBehavior
+import io.embrace.android.embracesdk.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.config.remote.Unwinder
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
@@ -205,11 +207,11 @@ internal class EmbraceNativeThreadSamplerServiceTest {
     fun testRespectsAllowlist() {
         cfg = AnrRemoteConfig(
             nativeThreadAnrSamplingAllowlist = listOf(
-                AnrRemoteConfig.AllowedNdkSampleMethod(
+                AllowedNdkSampleMethod(
                     "com.unity3d.player.UnityPlayer",
                     "pauseUnity"
                 ),
-                AnrRemoteConfig.AllowedNdkSampleMethod("io.example.CustomClz", "customMethod")
+                AllowedNdkSampleMethod("io.example.CustomClz", "customMethod")
             ),
             ignoreNativeThreadAnrSamplingAllowlist = false
         )
@@ -367,7 +369,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         assertEquals(thread.name, tick.name)
         assertEquals(mapThreadState(thread.state).code, tick.state)
         assertEquals(thread.priority, tick.priority)
-        assertEquals(AnrRemoteConfig.Unwinder.LIBUNWIND.code, tick.unwinder)
+        assertEquals(Unwinder.LIBUNWIND.code, tick.unwinder)
 
         val obj = checkNotNull(tick.samples?.single())
         assertEquals(testSample, obj)

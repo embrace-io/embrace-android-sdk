@@ -10,7 +10,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class SessionBehaviorTest {
+internal class SessionBehaviorImplImplTest {
 
     private val local = SessionLocalConfig(
         sessionComponents = setOf("breadcrumbs"),

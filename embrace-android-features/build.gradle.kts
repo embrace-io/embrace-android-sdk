@@ -11,3 +11,5 @@ android {
 dependencies {
     compileOnly(project(":embrace-android-core"))
 }
+
+apiValidation.validationDisabled = true

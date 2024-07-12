@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.event.EmbraceEventService
 import io.embrace.android.embracesdk.event.EventService
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 /**
  * Holds dependencies that normally act as a 'container' for other data. For example,

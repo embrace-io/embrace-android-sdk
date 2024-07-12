@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.worker
+package io.embrace.android.embracesdk.internal.worker
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService

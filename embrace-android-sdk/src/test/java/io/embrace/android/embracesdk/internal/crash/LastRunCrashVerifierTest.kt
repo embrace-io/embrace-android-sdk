@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.crash
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.worker.BackgroundWorker
-import io.embrace.android.embracesdk.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll

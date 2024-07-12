@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal interface NativeModule {
     val ndkService: NdkService

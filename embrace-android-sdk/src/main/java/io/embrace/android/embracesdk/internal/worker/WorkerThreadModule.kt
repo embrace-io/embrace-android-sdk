@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.worker
+package io.embrace.android.embracesdk.internal.worker
 
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference

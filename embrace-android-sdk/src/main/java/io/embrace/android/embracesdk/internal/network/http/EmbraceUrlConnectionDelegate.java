@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
-import io.embrace.android.embracesdk.utils.exceptions.function.CheckedSupplier;
+import io.embrace.android.embracesdk.internal.utils.exceptions.function.CheckedSupplier;
 import kotlin.jvm.functions.Function0;
 
 /**

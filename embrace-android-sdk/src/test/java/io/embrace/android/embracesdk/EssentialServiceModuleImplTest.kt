@@ -21,9 +21,9 @@ import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic

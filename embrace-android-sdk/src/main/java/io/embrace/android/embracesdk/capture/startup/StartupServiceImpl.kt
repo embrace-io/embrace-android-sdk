@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.startup
 
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class StartupServiceImpl(
     private val spanService: SpanService,

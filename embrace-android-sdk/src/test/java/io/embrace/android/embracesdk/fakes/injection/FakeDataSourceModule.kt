@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal fun fakeDataSourceModule(
     initModule: InitModule = FakeInitModule(),

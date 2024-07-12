@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.ndk
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
+import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.payload.NativeCrashData
-import io.embrace.android.embracesdk.storage.NATIVE_CRASH_FILE_FOLDER
-import io.embrace.android.embracesdk.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 

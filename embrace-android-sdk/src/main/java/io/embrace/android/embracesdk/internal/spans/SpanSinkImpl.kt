@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.utils.threadSafeTake
+import io.embrace.android.embracesdk.internal.utils.threadSafeTake
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.data.SpanData
 import java.util.Queue

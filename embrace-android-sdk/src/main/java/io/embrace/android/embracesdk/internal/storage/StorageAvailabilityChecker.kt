@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.storage
+package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
 import android.os.StatFs

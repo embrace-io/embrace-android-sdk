@@ -16,9 +16,9 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.IOException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow

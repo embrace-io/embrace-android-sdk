@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.utils
+package io.embrace.android.embracesdk.internal.utils
 
 /**
  * Backwards compatibility streaming for Java, implemented via Kotlin.

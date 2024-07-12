@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.gating
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_CUSTOM
 import io.embrace.android.embracesdk.gating.SessionGatingKeys.BREADCRUMBS_TAPS
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
-import io.embrace.android.embracesdk.arch.schema.FixedAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context

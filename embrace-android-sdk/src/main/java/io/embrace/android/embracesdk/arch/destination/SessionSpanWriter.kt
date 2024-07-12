@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.arch.destination
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**

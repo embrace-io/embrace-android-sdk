@@ -4,13 +4,13 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.arch.schema
 
+import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.Locale
 

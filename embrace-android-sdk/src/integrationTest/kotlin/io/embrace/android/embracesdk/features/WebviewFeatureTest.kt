@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior

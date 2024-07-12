@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.arch
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority

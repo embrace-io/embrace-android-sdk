@@ -4,7 +4,6 @@ import android.os.Build
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.arch.EmbraceFeatureRegistry
-import io.embrace.android.embracesdk.arch.datasource.DataSource
 import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
@@ -22,6 +21,7 @@ import io.embrace.android.embracesdk.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.capture.webview.WebViewDataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.worker.WorkerName

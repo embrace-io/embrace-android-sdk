@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.arch.datasource
 
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 
 /**
  * A [DataSource] that adds either an event or attribute

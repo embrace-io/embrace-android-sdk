@@ -10,7 +10,7 @@ import com.squareup.moshi.JsonClass
  * @param data The value of the attribute
  */
 @JsonClass(generateAdapter = true)
-internal data class Attribute(
+public data class Attribute(
 
     /* The name of the attribute */
     @Json(name = "key")

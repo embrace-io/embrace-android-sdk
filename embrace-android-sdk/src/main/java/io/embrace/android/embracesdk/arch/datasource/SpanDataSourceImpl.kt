@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.arch.datasource
 
-import io.embrace.android.embracesdk.arch.limits.LimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.logging.EmbLogger
 

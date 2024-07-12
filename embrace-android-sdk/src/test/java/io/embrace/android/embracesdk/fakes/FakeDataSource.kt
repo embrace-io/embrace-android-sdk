@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.res.Configuration
 import io.embrace.android.embracesdk.arch.datasource.EventDataSource
 import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 
 internal class FakeDataSource(
     private val ctx: Context

@@ -1,7 +1,6 @@
-package io.embrace.android.embracesdk.arch.datasource
+package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
-import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Defines a 'data source'. This should be responsible for capturing a specific type
@@ -12,7 +11,8 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
  *
  * See [EventDataSource], [SpanDataSource], and [LogDataSource] for more information.
  */
-internal interface DataSource<T> {
+@InternalApi
+public interface DataSource<T> {
 
     /**
      * The DataSource should call this function when it wants to capture some form of data.
@@ -27,7 +27,7 @@ internal interface DataSource<T> {
      * This function returns true if data was successfully captured & false if not.
      * This is assumed to be the case if [captureAction] completed without throwing.
      */
-    fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
+    public fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting
@@ -35,7 +35,7 @@ internal interface DataSource<T> {
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    fun enableDataCapture()
+    public fun enableDataCapture()
 
     /**
      * Disables data capture. This should include unregistering any listeners, and resetting
@@ -43,10 +43,10 @@ internal interface DataSource<T> {
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    fun disableDataCapture()
+    public fun disableDataCapture()
 
     /**
      * Resets any data capture limits since the last time [enableDataCapture] was called.
      */
-    fun resetDataCaptureLimits()
+    public fun resetDataCaptureLimits()
 }

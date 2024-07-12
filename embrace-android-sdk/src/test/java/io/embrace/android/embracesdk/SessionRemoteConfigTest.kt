@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test

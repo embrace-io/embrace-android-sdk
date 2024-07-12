@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.opentelemetry.api.common.AttributeKey
 

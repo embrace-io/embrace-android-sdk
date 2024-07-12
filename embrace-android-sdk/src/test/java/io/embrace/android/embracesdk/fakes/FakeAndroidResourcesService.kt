@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.content.res.Resources
-import io.embrace.android.embracesdk.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 
 /**
  * Fake [AndroidResourcesService] loaded with gradle-populated resources from the build that the SDK expects.

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.BackgroundActivityLocalConfig
-import io.embrace.android.embracesdk.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundActivityBehavior
+import io.embrace.android.embracesdk.internal.config.local.BackgroundActivityLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

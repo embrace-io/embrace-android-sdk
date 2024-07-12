@@ -4,8 +4,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import android.os.MessageQueue
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.ScheduledWorker

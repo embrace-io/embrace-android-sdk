@@ -22,9 +22,9 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.clearAllMocks

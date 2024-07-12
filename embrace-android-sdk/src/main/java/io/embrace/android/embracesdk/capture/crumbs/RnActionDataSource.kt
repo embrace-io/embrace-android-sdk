@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal open class RnActionDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,

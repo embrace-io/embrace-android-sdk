@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.utils.PropertyUtils
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue

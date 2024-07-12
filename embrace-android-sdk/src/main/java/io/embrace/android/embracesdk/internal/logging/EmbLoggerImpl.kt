@@ -1,10 +1,9 @@
-package io.embrace.android.embracesdk.logging
+package io.embrace.android.embracesdk.internal.logging
 
 import android.util.Log
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorHandler
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.logging.EmbLogger.Severity
 
 internal const val EMBRACE_TAG = "[Embrace]"
 
@@ -17,24 +16,24 @@ internal class EmbLoggerImpl : EmbLogger {
     override var internalErrorService: InternalErrorHandler? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
-        log(msg, Severity.DEBUG, throwable)
+        log(msg, EmbLogger.Severity.DEBUG, throwable)
     }
 
     override fun logInfo(msg: String, throwable: Throwable?) {
-        log(msg, Severity.INFO, throwable)
+        log(msg, EmbLogger.Severity.INFO, throwable)
     }
 
     override fun logWarning(msg: String, throwable: Throwable?) {
-        log(msg, Severity.WARNING, throwable)
+        log(msg, EmbLogger.Severity.WARNING, throwable)
     }
 
     override fun logError(msg: String, throwable: Throwable?) {
-        log(msg, Severity.ERROR, throwable)
+        log(msg, EmbLogger.Severity.ERROR, throwable)
     }
 
     override fun logSdkNotInitialized(action: String) {
         val msg = "Embrace SDK is not initialized yet, cannot $action."
-        log(msg, Severity.WARNING, Throwable(msg))
+        log(msg, EmbLogger.Severity.WARNING, Throwable(msg))
     }
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
@@ -54,8 +53,8 @@ internal class EmbLoggerImpl : EmbLogger {
      * @param throwable exception, if any.
      */
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
-    private inline fun log(msg: String, severity: Severity, throwable: Throwable?) {
-        if (severity >= Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
+    private inline fun log(msg: String, severity: EmbLogger.Severity, throwable: Throwable?) {
+        if (severity >= EmbLogger.Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
             logcatImpl(throwable, severity, msg)
         }
     }
@@ -66,14 +65,14 @@ internal class EmbLoggerImpl : EmbLogger {
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
     private inline fun logcatImpl(
         throwable: Throwable?,
-        severity: Severity,
+        severity: EmbLogger.Severity,
         msg: String
     ) {
         when (severity) {
-            Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, throwable)
-            Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
-            Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
-            Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
+            EmbLogger.Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, throwable)
+            EmbLogger.Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
+            EmbLogger.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
+            EmbLogger.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
         }
     }
 }

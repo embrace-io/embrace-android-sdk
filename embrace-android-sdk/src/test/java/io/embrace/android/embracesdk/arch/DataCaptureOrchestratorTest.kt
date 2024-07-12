@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before

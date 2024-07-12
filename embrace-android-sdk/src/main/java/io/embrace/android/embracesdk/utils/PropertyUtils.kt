@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.utils
 
 import android.os.Parcelable
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.Serializable
 
 /**

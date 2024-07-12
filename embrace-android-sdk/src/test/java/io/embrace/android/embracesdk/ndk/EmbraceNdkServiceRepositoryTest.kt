@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.ndk
 
 import io.embrace.android.embracesdk.fakes.FakeStorageService
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.mockk.every
 import io.mockk.mockk

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.FlutterInternalInterface
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,

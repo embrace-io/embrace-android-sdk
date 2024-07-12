@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.crash.EmbraceUncaughtExceptionHandler
 import io.embrace.android.embracesdk.fakes.FakeCrashService
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.JsException
 import org.junit.Assert.assertEquals
 import org.junit.Test

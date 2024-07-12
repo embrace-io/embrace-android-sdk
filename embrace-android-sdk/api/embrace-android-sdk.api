@@ -414,7 +414,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/arch/data
 }
 
 public abstract class io/embrace/android/embracesdk/internal/arch/datasource/DataSourceImpl : io/embrace/android/embracesdk/internal/arch/datasource/DataSource {
-	public fun <init> (Ljava/lang/Object;Lio/embrace/android/embracesdk/logging/EmbLogger;Lio/embrace/android/embracesdk/internal/arch/limits/LimitStrategy;)V
+	public fun <init> (Ljava/lang/Object;Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Lio/embrace/android/embracesdk/internal/arch/limits/LimitStrategy;)V
 	public fun captureData (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Z
 	protected final fun captureDataImpl (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Z)Z
 	public static synthetic fun captureDataImpl$default (Lio/embrace/android/embracesdk/internal/arch/datasource/DataSourceImpl;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ZILjava/lang/Object;)Z
@@ -1016,6 +1016,33 @@ public final class io/embrace/android/embracesdk/internal/config/remote/Unwinder
 	public static fun values ()[Lio/embrace/android/embracesdk/internal/config/remote/Unwinder;
 }
 
+public abstract interface class io/embrace/android/embracesdk/internal/logging/EmbLogger {
+	public abstract fun getInternalErrorService ()Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;
+	public abstract fun logDebug (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun logError (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun logInfo (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun logSdkNotInitialized (Ljava/lang/String;)V
+	public abstract fun logWarning (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun setInternalErrorService (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;)V
+	public abstract fun trackInternalError (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;Ljava/lang/Throwable;)V
+}
+
+public final class io/embrace/android/embracesdk/internal/logging/EmbLogger$DefaultImpls {
+	public static synthetic fun logDebug$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static synthetic fun logError$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static synthetic fun logInfo$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static synthetic fun logWarning$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public final class io/embrace/android/embracesdk/internal/logging/EmbLogger$Severity : java/lang/Enum {
+	public static final field DEBUG Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
+	public static final field ERROR Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
+	public static final field INFO Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
+	public static final field WARNING Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
+	public static fun values ()[Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
+}
+
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {
 	protected static final field PATH_OVERRIDE Ljava/lang/String;
 	public fun <init> ()V
@@ -1084,33 +1111,6 @@ public final class io/embrace/android/embracesdk/internal/payload/AttributeJsonA
 	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/internal/payload/Attribute;)V
 	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
-}
-
-public abstract interface class io/embrace/android/embracesdk/logging/EmbLogger {
-	public abstract fun getInternalErrorService ()Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;
-	public abstract fun logDebug (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun logError (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun logInfo (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun logSdkNotInitialized (Ljava/lang/String;)V
-	public abstract fun logWarning (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun setInternalErrorService (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;)V
-	public abstract fun trackInternalError (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;Ljava/lang/Throwable;)V
-}
-
-public final class io/embrace/android/embracesdk/logging/EmbLogger$DefaultImpls {
-	public static synthetic fun logDebug$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-	public static synthetic fun logError$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-	public static synthetic fun logInfo$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-	public static synthetic fun logWarning$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-}
-
-public final class io/embrace/android/embracesdk/logging/EmbLogger$Severity : java/lang/Enum {
-	public static final field DEBUG Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
-	public static final field ERROR Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
-	public static final field INFO Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
-	public static final field WARNING Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
-	public static fun values ()[Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
 }
 
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {

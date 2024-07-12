@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.payload.SessionZygote

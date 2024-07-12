@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * Base class for data sources.

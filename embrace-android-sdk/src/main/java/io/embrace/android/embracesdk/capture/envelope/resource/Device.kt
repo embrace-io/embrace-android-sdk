@@ -8,7 +8,7 @@ import android.view.WindowManager
 import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.io.File

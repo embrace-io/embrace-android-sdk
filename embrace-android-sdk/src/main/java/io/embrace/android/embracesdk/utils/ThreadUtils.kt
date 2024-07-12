@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.utils
 
 import android.os.Handler
 import android.os.Looper
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 internal object ThreadUtils {
 

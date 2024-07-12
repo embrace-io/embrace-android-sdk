@@ -10,8 +10,8 @@ import android.view.View
 import android.view.ViewTreeObserver
 import android.view.Window
 import io.embrace.android.embracesdk.annotation.StartupActivity
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.logging.EmbLogger
 
 /**
  * Component that captures various timestamps throughout the startup process and uses that information to log spans that approximates to

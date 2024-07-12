@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.network.logging
 
 import android.util.Base64
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Before

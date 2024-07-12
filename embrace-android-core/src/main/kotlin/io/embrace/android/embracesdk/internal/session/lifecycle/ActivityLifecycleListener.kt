@@ -13,14 +13,14 @@ public interface ActivityLifecycleListener {
      *
      * @param activity details of the activity
      */
-    public fun onView(activity: Activity) {}
+    public fun onActivityStarted(activity: Activity) {}
 
     /**
      * Triggered when an activity is closed.
      *
      * @param activity details of the activity
      */
-    public fun onViewClose(activity: Activity) {}
+    public fun onActivityStopped(activity: Activity) {}
 
     /**
      * Triggered when an activity is created.

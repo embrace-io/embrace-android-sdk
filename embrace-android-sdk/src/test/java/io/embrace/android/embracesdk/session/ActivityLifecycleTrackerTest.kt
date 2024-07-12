@@ -121,7 +121,7 @@ internal class ActivityLifecycleTrackerTest {
 
         activityLifecycleTracker.onActivityStarted(mockActivity)
 
-        verify { mockActivityLifecycleListener.onView(mockActivity) }
+        verify { mockActivityLifecycleListener.onActivityStarted(mockActivity) }
         assertEquals(mockActivity, activityLifecycleTracker.foregroundActivity)
     }
 
@@ -153,7 +153,7 @@ internal class ActivityLifecycleTrackerTest {
 
         activityLifecycleTracker.onActivityStopped(mockActivity)
 
-        verify { mockActivityLifecycleListener.onViewClose(mockActivity) }
+        verify { mockActivityLifecycleListener.onActivityStopped(mockActivity) }
     }
 
     @Test

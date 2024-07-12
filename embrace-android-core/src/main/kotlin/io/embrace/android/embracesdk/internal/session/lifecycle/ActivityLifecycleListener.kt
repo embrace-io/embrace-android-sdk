@@ -1,32 +1,25 @@
 package io.embrace.android.embracesdk.internal.session.lifecycle
 
 import android.app.Activity
+import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Bundle
 
 /**
- * Listener implemented by observers of the [ActivityLifecycleTracker].
+ * Implementation of [ActivityLifecycleCallbacks] with no-op defaults
  */
-public interface ActivityLifecycleListener {
+public interface ActivityLifecycleListener : ActivityLifecycleCallbacks {
 
-    /**
-     * Triggered when an activity is opened.
-     *
-     * @param activity details of the activity
-     */
-    public fun onActivityStarted(activity: Activity) {}
+    override public fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
 
-    /**
-     * Triggered when an activity is closed.
-     *
-     * @param activity details of the activity
-     */
-    public fun onActivityStopped(activity: Activity) {}
+    override public fun onActivityStarted(activity: Activity) {}
 
-    /**
-     * Triggered when an activity is created.
-     *
-     * @param activity the activity
-     * @param bundle   the bundle
-     */
-    public fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
+    override public fun onActivityResumed(activity: Activity) {}
+
+    override public fun onActivityPaused(activity: Activity) {}
+
+    override public fun onActivityStopped(activity: Activity) {}
+
+    override public fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+    override public fun onActivityDestroyed(activity: Activity) {}
 }

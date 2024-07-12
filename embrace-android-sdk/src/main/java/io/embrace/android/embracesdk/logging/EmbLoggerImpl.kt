@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.logging
 
 import android.util.Log
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorHandler
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.logging.EmbLogger.Severity
@@ -14,7 +14,7 @@ internal const val EMBRACE_TAG = "[Embrace]"
  */
 internal class EmbLoggerImpl : EmbLogger {
 
-    override var internalErrorService: InternalErrorService? = null
+    override var internalErrorService: InternalErrorHandler? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
         log(msg, Severity.DEBUG, throwable)

@@ -200,6 +200,416 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 
+public abstract interface class io/embrace/android/embracesdk/arch/EmbraceFeatureRegistry {
+	public abstract fun add (Lio/embrace/android/embracesdk/arch/datasource/DataSourceState;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/SessionType : java/lang/Enum {
+	public static final field BACKGROUND Lio/embrace/android/embracesdk/arch/SessionType;
+	public static final field FOREGROUND Lio/embrace/android/embracesdk/arch/SessionType;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/arch/SessionType;
+	public static fun values ()[Lio/embrace/android/embracesdk/arch/SessionType;
+}
+
+public abstract interface class io/embrace/android/embracesdk/arch/datasource/DataSource {
+	public abstract fun captureData (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Z
+	public abstract fun disableDataCapture ()V
+	public abstract fun enableDataCapture ()V
+	public abstract fun resetDataCaptureLimits ()V
+}
+
+public abstract class io/embrace/android/embracesdk/arch/datasource/DataSourceImpl : io/embrace/android/embracesdk/arch/datasource/DataSource {
+	public fun <init> (Ljava/lang/Object;Lio/embrace/android/embracesdk/logging/EmbLogger;Lio/embrace/android/embracesdk/arch/limits/LimitStrategy;)V
+	public fun captureData (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Z
+	protected final fun captureDataImpl (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Z)Z
+	public static synthetic fun captureDataImpl$default (Lio/embrace/android/embracesdk/arch/datasource/DataSourceImpl;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ZILjava/lang/Object;)Z
+	public fun disableDataCapture ()V
+	public fun enableDataCapture ()V
+	public fun resetDataCaptureLimits ()V
+}
+
+public final class io/embrace/android/embracesdk/arch/datasource/DataSourceState {
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/embrace/android/embracesdk/arch/SessionType;Z)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lio/embrace/android/embracesdk/arch/SessionType;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCurrentSessionType ()Lio/embrace/android/embracesdk/arch/SessionType;
+	public final fun getDataSource ()Lio/embrace/android/embracesdk/arch/datasource/DataSource;
+	public final fun onConfigChange ()V
+	public final fun setCurrentSessionType (Lio/embrace/android/embracesdk/arch/SessionType;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/datasource/NoInputValidationKt {
+	public static final fun getNoInputValidation ()Lkotlin/jvm/functions/Function0;
+}
+
+public abstract interface class io/embrace/android/embracesdk/arch/destination/LogWriter {
+	public abstract fun addLog (Lio/embrace/android/embracesdk/arch/schema/SchemaType;Lio/embrace/android/embracesdk/Severity;Ljava/lang/String;Z)V
+}
+
+public final class io/embrace/android/embracesdk/arch/destination/LogWriter$DefaultImpls {
+	public static synthetic fun addLog$default (Lio/embrace/android/embracesdk/arch/destination/LogWriter;Lio/embrace/android/embracesdk/arch/schema/SchemaType;Lio/embrace/android/embracesdk/Severity;Ljava/lang/String;ZILjava/lang/Object;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/arch/destination/SessionSpanWriter {
+	public abstract fun addCustomAttribute (Lio/embrace/android/embracesdk/arch/destination/SpanAttributeData;)Z
+	public abstract fun addEvent (Lio/embrace/android/embracesdk/arch/schema/SchemaType;J)Z
+	public abstract fun removeCustomAttribute (Ljava/lang/String;)Z
+	public abstract fun removeEvents (Lio/embrace/android/embracesdk/arch/schema/EmbType;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/destination/SpanAttributeData {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/arch/destination/SpanAttributeData;
+	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/arch/destination/SpanAttributeData;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/embrace/android/embracesdk/arch/destination/SpanAttributeData;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKey ()Ljava/lang/String;
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/embrace/android/embracesdk/arch/limits/LimitStrategy {
+	public abstract fun resetDataCaptureLimits ()V
+	public abstract fun shouldCapture ()Z
+}
+
+public final class io/embrace/android/embracesdk/arch/limits/NoopLimitStrategy : io/embrace/android/embracesdk/arch/limits/LimitStrategy {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/limits/NoopLimitStrategy;
+	public fun resetDataCaptureLimits ()V
+	public fun shouldCapture ()Z
+}
+
+public final class io/embrace/android/embracesdk/arch/limits/UpToLimitStrategy : io/embrace/android/embracesdk/arch/limits/LimitStrategy {
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public fun resetDataCaptureLimits ()V
+	public fun shouldCapture ()Z
+}
+
+public abstract class io/embrace/android/embracesdk/arch/schema/EmbType : io/embrace/android/embracesdk/arch/schema/TelemetryType {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getKey ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+	public fun getSendImmediately ()Z
+	public fun getValue ()Ljava/lang/String;
+	public fun toEmbraceKeyValuePair ()Lkotlin/Pair;
+	public fun toPayload ()Lio/embrace/android/embracesdk/internal/payload/Attribute;
+}
+
+public abstract class io/embrace/android/embracesdk/arch/schema/EmbType$Performance : io/embrace/android/embracesdk/arch/schema/EmbType {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$Default : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$Default;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$MemoryWarning : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$MemoryWarning;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$NativeThreadBlockage : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$NativeThreadBlockage;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$NativeThreadBlockageSample : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$NativeThreadBlockageSample;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$Network : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$Network;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$ThermalState : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$ThermalState;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$ThreadBlockage : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$ThreadBlockage;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Performance$ThreadBlockageSample : io/embrace/android/embracesdk/arch/schema/EmbType$Performance {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Performance$ThreadBlockageSample;
+}
+
+public abstract class io/embrace/android/embracesdk/arch/schema/EmbType$System : io/embrace/android/embracesdk/arch/schema/EmbType {
+	public synthetic fun <init> (Ljava/lang/String;ZLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getSendImmediately ()Z
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$Breadcrumb : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$Breadcrumb;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$Crash : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$Crash;
+	public final fun getEmbAndroidCrashExceptionCause ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$Exception : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$Exception;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$Exit : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$Exit;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$FlutterException : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$FlutterException;
+	public final fun getEmbFlutterExceptionContext ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+	public final fun getEmbFlutterExceptionLibrary ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$InternalError : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$InternalError;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$Log : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$Log;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$LowPower : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$LowPower;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$NativeCrash : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$NativeCrash;
+	public final fun getEmbNativeCrashErrors ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+	public final fun getEmbNativeCrashException ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+	public final fun getEmbNativeCrashSymbols ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+	public final fun getEmbNativeCrashUnwindError ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$NetworkCapturedRequest : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$NetworkCapturedRequest;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$NetworkStatus : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$NetworkStatus;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$PushNotification : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$PushNotification;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$ReactNativeAction : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$ReactNativeAction;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$ReactNativeCrash : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$ReactNativeCrash;
+	public final fun getEmbAndroidReactNativeCrashJsException ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$Sigquit : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$Sigquit;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$System$WebViewInfo : io/embrace/android/embracesdk/arch/schema/EmbType$System {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$System$WebViewInfo;
+}
+
+public abstract class io/embrace/android/embracesdk/arch/schema/EmbType$Ux : io/embrace/android/embracesdk/arch/schema/EmbType {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Ux$Session : io/embrace/android/embracesdk/arch/schema/EmbType$Ux {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Ux$Session;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Ux$Tap : io/embrace/android/embracesdk/arch/schema/EmbType$Ux {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Ux$Tap;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Ux$View : io/embrace/android/embracesdk/arch/schema/EmbType$Ux {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Ux$View;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbType$Ux$WebView : io/embrace/android/embracesdk/arch/schema/EmbType$Ux {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/EmbType$Ux$WebView;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey : io/embrace/android/embracesdk/arch/schema/EmbraceAttribute {
+	public fun <init> (Ljava/lang/String;Lio/opentelemetry/api/common/AttributeKey;ZZ)V
+	public synthetic fun <init> (Ljava/lang/String;Lio/opentelemetry/api/common/AttributeKey;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAttributeKey ()Lio/opentelemetry/api/common/AttributeKey;
+	public fun getId ()Ljava/lang/String;
+	public fun getName ()Ljava/lang/String;
+}
+
+public abstract interface class io/embrace/android/embracesdk/arch/schema/FixedAttribute {
+	public abstract fun getKey ()Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;
+	public abstract fun getValue ()Ljava/lang/String;
+	public abstract fun toEmbraceKeyValuePair ()Lkotlin/Pair;
+	public abstract fun toPayload ()Lio/embrace/android/embracesdk/internal/payload/Attribute;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/FixedAttribute$DefaultImpls {
+	public static fun toEmbraceKeyValuePair (Lio/embrace/android/embracesdk/arch/schema/FixedAttribute;)Lkotlin/Pair;
+	public static fun toPayload (Lio/embrace/android/embracesdk/arch/schema/FixedAttribute;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
+}
+
+public abstract class io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public synthetic fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryType;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun attributes ()Ljava/util/Map;
+	public final fun getFixedObjectName ()Ljava/lang/String;
+	protected abstract fun getSchemaAttributes ()Ljava/util/Map;
+	public final fun getTelemetryType ()Lio/embrace/android/embracesdk/arch/schema/TelemetryType;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$Breadcrumb : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$Crash : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryAttributes;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$Exception : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryAttributes;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$FlutterException : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryAttributes;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$InternalError : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/Throwable;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$Log : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryAttributes;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$LowPower : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/SchemaType$LowPower;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$MemoryWarning : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> ()V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$NativeCrash : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryAttributes;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$NativeThreadBlockage : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (ILjava/lang/String;ILjava/lang/String;JLjava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$NativeThreadBlockageSample : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (IJLjava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$NetworkRequest : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$PushNotification : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$ReactNativeAction : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;ILjava/util/Map;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$ReactNativeCrash : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Lio/embrace/android/embracesdk/arch/schema/TelemetryAttributes;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$Sigquit : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/arch/schema/SchemaType$Sigquit;
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$Tap : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$ThermalState : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (I)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$ThreadBlockage : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (IJI)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$ThreadBlockageSample : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (JILjava/lang/String;ILjava/lang/Thread$State;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$View : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$WebViewInfo : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/SchemaType$WebViewUrl : io/embrace/android/embracesdk/arch/schema/SchemaType {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/TelemetryAttributes {
+	public fun <init> (Lio/embrace/android/embracesdk/config/ConfigService;Lkotlin/jvm/functions/Function0;Ljava/util/Map;)V
+	public synthetic fun <init> (Lio/embrace/android/embracesdk/config/ConfigService;Lkotlin/jvm/functions/Function0;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAttribute (Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;)Ljava/lang/String;
+	public final fun getAttribute (Lio/opentelemetry/api/common/AttributeKey;)Ljava/lang/String;
+	public final fun setAttribute (Lio/embrace/android/embracesdk/arch/schema/EmbraceAttributeKey;Ljava/lang/String;)V
+	public final fun setAttribute (Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/String;)V
+	public final fun snapshot ()Ljava/util/Map;
+}
+
+public abstract interface class io/embrace/android/embracesdk/arch/schema/TelemetryType : io/embrace/android/embracesdk/arch/schema/FixedAttribute {
+	public abstract fun getSendImmediately ()Z
+}
+
+public final class io/embrace/android/embracesdk/arch/schema/TelemetryType$DefaultImpls {
+	public static fun toEmbraceKeyValuePair (Lio/embrace/android/embracesdk/arch/schema/TelemetryType;)Lkotlin/Pair;
+	public static fun toPayload (Lio/embrace/android/embracesdk/arch/schema/TelemetryType;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
+}
+
+public abstract interface class io/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler {
+	public abstract fun handleInternalError (Ljava/lang/Throwable;)V
+}
+
+public final class io/embrace/android/embracesdk/capture/internal/errors/InternalErrorType : java/lang/Enum {
+	public static final field ACTIVITY_LISTENER_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field ANR_DATA_FETCH Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field ANR_HEARTBEAT_CHECK_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field ANR_HEARTBEAT_STOP_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field BG_SESSION_CACHE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field CFG_CHANGE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field CONFIG_LISTENER_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field DATA_SOURCE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field DISABLE_DATA_CAPTURE Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field DISK_STAT_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field ENABLE_DATA_CAPTURE Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field END_EVENT_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field FG_SESSION_CACHE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field INVALID_JS_EXCEPTION Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field INVALID_NATIVE_SYMBOLS Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field MEMORY_CLEAN_LISTENER_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field NATIVE_CRASH_LOAD_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field NATIVE_HANDLER_INSTALL_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field NATIVE_THREAD_SAMPLE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field NETWORK_STATUS_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field PROCESS_STATE_CALLBACK_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field PROCESS_STATE_SUMMARY_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field SAFE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field SCREEN_RES_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field SESSION_CHANGE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field START_EVENT_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field TIME_TRAVEL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field UNBALANCED_BG_CALL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field UNBALANCED_CALL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field UNBALANCED_FG_CALL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field UNCAUGHT_EXC_HANDLER Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field USER_LOAD_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static final field WEB_VITAL_PARSE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+	public static fun values ()[Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
+}
+
 public abstract interface class io/embrace/android/embracesdk/config/ConfigService : java/io/Closeable {
 	public abstract fun addListener (Lkotlin/jvm/functions/Function0;)V
 	public abstract fun getAnrBehavior ()Lio/embrace/android/embracesdk/config/behavior/AnrBehavior;
@@ -650,6 +1060,57 @@ public final class io/embrace/android/embracesdk/internal/payload/AppFramework :
 	public static final field UNITY Lio/embrace/android/embracesdk/internal/payload/AppFramework;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/payload/AppFramework;
 	public static fun values ()[Lio/embrace/android/embracesdk/internal/payload/AppFramework;
+}
+
+public final class io/embrace/android/embracesdk/internal/payload/Attribute {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
+	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/internal/payload/Attribute;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getData ()Ljava/lang/String;
+	public final fun getKey ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter : com/squareup/moshi/JsonAdapter {
+	public fun <init> (Lcom/squareup/moshi/Moshi;)V
+	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
+	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
+	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/internal/payload/Attribute;)V
+	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/embrace/android/embracesdk/logging/EmbLogger {
+	public abstract fun getInternalErrorService ()Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;
+	public abstract fun logDebug (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun logError (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun logInfo (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun logSdkNotInitialized (Ljava/lang/String;)V
+	public abstract fun logWarning (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public abstract fun setInternalErrorService (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;)V
+	public abstract fun trackInternalError (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;Ljava/lang/Throwable;)V
+}
+
+public final class io/embrace/android/embracesdk/logging/EmbLogger$DefaultImpls {
+	public static synthetic fun logDebug$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static synthetic fun logError$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static synthetic fun logInfo$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public static synthetic fun logWarning$default (Lio/embrace/android/embracesdk/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+}
+
+public final class io/embrace/android/embracesdk/logging/EmbLogger$Severity : java/lang/Enum {
+	public static final field DEBUG Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
+	public static final field ERROR Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
+	public static final field INFO Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
+	public static final field WARNING Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
+	public static fun values ()[Lio/embrace/android/embracesdk/logging/EmbLogger$Severity;
 }
 
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {

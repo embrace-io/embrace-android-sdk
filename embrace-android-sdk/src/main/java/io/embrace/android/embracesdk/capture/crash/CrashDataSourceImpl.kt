@@ -83,7 +83,7 @@ internal class CrashDataSourceImpl(
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crashAttributes = TelemetryAttributes(
                 configService = configService,
-                sessionProperties = sessionProperties,
+                sessionPropertiesProvider = sessionProperties::get,
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch.schema
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -18,9 +19,11 @@ import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
  * Each schema contains a [TelemetryType] that it is being applied to, as well as an optional [fixedObjectName] used for the recorded
  * telemetry data object if the same, fixed name is used for every instance.
  */
-internal sealed class SchemaType(
-    val telemetryType: TelemetryType,
-    val fixedObjectName: String = "",
+
+@InternalApi
+public sealed class SchemaType(
+    public val telemetryType: TelemetryType,
+    public val fixedObjectName: String = "",
 ) {
     protected abstract val schemaAttributes: Map<String, String>
 
@@ -33,26 +36,26 @@ internal sealed class SchemaType(
     /**
      * The attributes defined for this schema that should be used to populate telemetry objects
      */
-    fun attributes(): Map<String, String> = schemaAttributes.plus(commonAttributes)
+    public fun attributes(): Map<String, String> = schemaAttributes.plus(commonAttributes)
 
-    internal class Breadcrumb(message: String) : SchemaType(
+    public class Breadcrumb(message: String) : SchemaType(
         telemetryType = EmbType.System.Breadcrumb,
         fixedObjectName = "breadcrumb"
     ) {
-        override val schemaAttributes = mapOf("message" to message)
+        override val schemaAttributes: Map<String, String> = mapOf("message" to message)
     }
 
-    internal class View(viewName: String) : SchemaType(
+    public class View(viewName: String) : SchemaType(
         telemetryType = EmbType.Ux.View,
         fixedObjectName = "screen-view"
     ) {
-        override val schemaAttributes = mapOf("view.name" to viewName)
+        override val schemaAttributes: Map<String, String> = mapOf("view.name" to viewName)
     }
 
     /**
      * Represents a span in which a thread was blocked.
      */
-    internal class ThreadBlockage(
+    public class ThreadBlockage(
         threadPriority: Int,
         lastKnownTimeMs: Long,
         intervalCode: Int
@@ -60,7 +63,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.ThreadBlockage,
         fixedObjectName = "thread_blockage"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "thread_priority" to threadPriority.toString(),
             "last_known_time_unix_nano" to lastKnownTimeMs.millisToNanos().toString(),
             "interval_code" to intervalCode.toString()
@@ -70,7 +73,7 @@ internal sealed class SchemaType(
     /**
      * Represents a point in time when a thread was blocked.
      */
-    internal class ThreadBlockageSample(
+    public class ThreadBlockageSample(
         sampleOverheadMs: Long,
         frameCount: Int,
         stacktrace: String,
@@ -80,7 +83,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.ThreadBlockageSample,
         fixedObjectName = "thread_blockage_sample"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "sample_overhead" to sampleOverheadMs.millisToNanos().toString(),
             "frame_count" to frameCount.toString(),
             "stacktrace" to stacktrace,
@@ -95,7 +98,7 @@ internal sealed class SchemaType(
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
      * @param coords The coordinates of the tap event.
      */
-    internal class PushNotification(
+    public class PushNotification(
         title: String?,
         type: String?,
         body: String?,
@@ -106,7 +109,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.System.PushNotification,
         fixedObjectName = "push-notification"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "notification.title" to title,
             "notification.type" to type,
             "notification.body" to body,
@@ -119,7 +122,7 @@ internal sealed class SchemaType(
     /**
      * Represents a span in which a native thread was blocked.
      */
-    internal class NativeThreadBlockage(
+    public class NativeThreadBlockage(
         threadId: Int,
         threadName: String,
         threadPriority: Int,
@@ -130,7 +133,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.NativeThreadBlockage,
         fixedObjectName = "native_thread_blockage"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "thread_id" to threadId.toString(),
             "thread_name" to threadName,
             "thread_priority" to threadPriority.toString(),
@@ -143,7 +146,7 @@ internal sealed class SchemaType(
     /**
      * Represents a point in time when a native thread was blocked.
      */
-    internal class NativeThreadBlockageSample(
+    public class NativeThreadBlockageSample(
         result: Int,
         sampleOverheadMs: Long,
         stacktrace: String,
@@ -151,7 +154,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Performance.NativeThreadBlockageSample,
         fixedObjectName = "native_thread_blockage_sample"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "result" to result.toString(),
             "sample_overhead_ms" to sampleOverheadMs.toString(),
             "stacktrace" to stacktrace
@@ -164,7 +167,7 @@ internal sealed class SchemaType(
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
      * @param coords The coordinates of the tap event.
      */
-    internal class Tap(
+    public class Tap(
         viewName: String?,
         type: String = "tap",
         coords: String
@@ -172,33 +175,33 @@ internal sealed class SchemaType(
         telemetryType = EmbType.Ux.Tap,
         fixedObjectName = "ui-tap"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "view.name" to viewName,
             "tap.type" to type,
             "tap.coords" to coords
         ).toNonNullMap()
     }
 
-    internal class WebViewUrl(
+    public class WebViewUrl(
         url: String
     ) : SchemaType(
         telemetryType = EmbType.Ux.WebView,
         fixedObjectName = "web-view"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "webview.url" to url
         ).toNonNullMap()
     }
 
-    internal class MemoryWarning : SchemaType(
+    public class MemoryWarning : SchemaType(
         telemetryType = EmbType.Performance.MemoryWarning,
         fixedObjectName = "memory-warning"
     ) {
-        override val schemaAttributes = emptyMap<String, String>()
+        override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
     internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "aei_session_id" to message.sessionId,
             "session_id_error" to message.sessionIdError,
             "process_importance" to message.importance.toString(),
@@ -212,8 +215,8 @@ internal sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
-        override val schemaAttributes = mapOf(
+    public class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
+        override val schemaAttributes: Map<String, String> = mapOf(
             "url.full" to networkRequest.url,
             HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
@@ -226,50 +229,50 @@ internal sealed class SchemaType(
         ).toNonNullMap().mapValues { it.value.toString() }
     }
 
-    internal class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
-        override val schemaAttributes = attributes.snapshot()
+    public class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    internal class Exception(attributes: TelemetryAttributes) :
+    public class Exception(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.Exception) {
-        override val schemaAttributes = attributes.snapshot()
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    internal class FlutterException(attributes: TelemetryAttributes) :
+    public class FlutterException(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.FlutterException) {
-        override val schemaAttributes = attributes.snapshot()
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    internal class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
-        override val schemaAttributes = attributes.snapshot()
+    public class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    internal class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
-        override val schemaAttributes = attributes.snapshot()
+    public class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    internal class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
-        override val schemaAttributes = attributes.snapshot()
+    public class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
+        override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    internal object LowPower : SchemaType(
+    public object LowPower : SchemaType(
         telemetryType = EmbType.System.LowPower,
         fixedObjectName = "device-low-power"
     ) {
-        override val schemaAttributes = emptyMap<String, String>()
+        override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
-    internal object Sigquit : SchemaType(
+    public object Sigquit : SchemaType(
         telemetryType = EmbType.System.Sigquit,
         fixedObjectName = "sigquit"
     ) {
-        override val schemaAttributes = emptyMap<String, String>()
+        override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
     internal class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "duration" to networkCapturedCall.duration.toString(),
             "end-time" to networkCapturedCall.endTime.toString(),
             "http-method" to networkCapturedCall.httpMethod,
@@ -299,12 +302,12 @@ internal sealed class SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
         fixedObjectName = "network-status"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "network" to networkStatus.value
         ).toNonNullMap()
     }
 
-    internal class WebViewInfo(
+    public class WebViewInfo(
         url: String,
         webVitals: String,
         tag: String?
@@ -312,14 +315,14 @@ internal sealed class SchemaType(
         telemetryType = EmbType.System.WebViewInfo,
         fixedObjectName = "webview-info"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "emb.webview_info.url" to url,
             "emb.webview_info.web_vitals" to webVitals,
             "emb.webview_info.tag" to tag
         ).toNonNullMap()
     }
 
-    internal class ReactNativeAction(
+    public class ReactNativeAction(
         name: String,
         outcome: String,
         payloadSize: Int,
@@ -328,7 +331,7 @@ internal sealed class SchemaType(
         telemetryType = EmbType.System.ReactNativeAction,
         fixedObjectName = "rn-action"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "name" to name,
             "outcome" to outcome,
             "payload_size" to payloadSize.toString(),
@@ -341,22 +344,22 @@ internal sealed class SchemaType(
             .toNonNullMap()
     }
 
-    internal class ThermalState(
+    public class ThermalState(
         status: Int
     ) : SchemaType(
         telemetryType = EmbType.Performance.ThermalState,
         fixedObjectName = "thermal-state"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             "status" to status.toString()
         )
     }
 
-    internal class InternalError(throwable: Throwable) : SchemaType(
+    public class InternalError(throwable: Throwable) : SchemaType(
         telemetryType = EmbType.System.InternalError,
         fixedObjectName = "internal-error"
     ) {
-        override val schemaAttributes = mapOf(
+        override val schemaAttributes: Map<String, String> = mapOf(
             ExceptionIncubatingAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
             ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
                 "\n",

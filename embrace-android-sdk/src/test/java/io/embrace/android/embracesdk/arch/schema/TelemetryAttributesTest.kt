@@ -55,7 +55,7 @@ internal class TelemetryAttributesTest {
     fun `all attributes types`() {
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
@@ -76,7 +76,7 @@ internal class TelemetryAttributesTest {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties
+            sessionPropertiesProvider = sessionProperties::get,
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
         telemetryAttributes.setAttribute(embSessionId, newSessionId)
@@ -124,7 +124,7 @@ internal class TelemetryAttributesTest {
 
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
@@ -152,7 +152,7 @@ internal class TelemetryAttributesTest {
 
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)

@@ -47,7 +47,7 @@ internal class NativeCrashDataSourceImpl(
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties
+            sessionPropertiesProvider = sessionProperties::get
         )
         crashAttributes.setAttribute(embSessionId, nativeCrash.sessionId)
         crashAttributes.setAttribute(embCrashNumber, nativeCrashNumber.toString())

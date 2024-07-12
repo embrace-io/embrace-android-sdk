@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
+@InternalApi
 public interface InternalInterfaceApi {
 
     /**

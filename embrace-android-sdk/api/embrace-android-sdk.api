@@ -239,6 +239,19 @@ public final class io/embrace/android/embracesdk/internal/InternalTracingApi$Def
 	public static synthetic fun stopSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z
 }
 
+public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
+	public abstract fun addBreadcrumb (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi {
+	public abstract fun endView (Ljava/lang/String;)Z
+	public abstract fun start (Landroid/content/Context;)V
+	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public abstract fun start (Landroid/content/Context;Z)V
+	public abstract fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public abstract fun startView (Ljava/lang/String;)Z
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/api/InternalInterfaceApi {
 	public abstract fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
 	public abstract fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
@@ -252,10 +265,92 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Inter
 	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
 }
 
+public abstract interface class io/embrace/android/embracesdk/internal/api/LogsApi {
+	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
+	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
+	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
+	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun logError (Ljava/lang/String;)V
+	public abstract fun logException (Ljava/lang/Throwable;)V
+	public abstract fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;)V
+	public abstract fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
+	public abstract fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun logInfo (Ljava/lang/String;)V
+	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
+	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
+	public abstract fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
+	public abstract fun logWarning (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/MomentsApi {
+	public abstract fun endAppStartup ()V
+	public abstract fun endAppStartup (Ljava/util/Map;)V
+	public abstract fun endMoment (Ljava/lang/String;)V
+	public abstract fun endMoment (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun endMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+	public abstract fun endMoment (Ljava/lang/String;Ljava/util/Map;)V
+	public abstract fun startMoment (Ljava/lang/String;)V
+	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+}
+
 public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
 	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
 	public abstract fun getTraceIdHeader ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
+	public abstract fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
+	public abstract fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
+	public abstract fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+}
+
+public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
+	public static fun createSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
+	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static fun startSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public static fun startSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {
+	public abstract fun getCurrentSessionId ()Ljava/lang/String;
+	public abstract fun getDeviceId ()Ljava/lang/String;
+	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public abstract fun isStarted ()Z
+	public abstract fun setAppId (Ljava/lang/String;)Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/SessionApi {
+	public abstract fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
+	public abstract fun endSession ()V
+	public abstract fun endSession (Z)V
+	public abstract fun getSessionProperties ()Ljava/util/Map;
+	public abstract fun removeSessionProperty (Ljava/lang/String;)Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/UserApi {
+	public abstract fun addUserPersona (Ljava/lang/String;)V
+	public abstract fun clearAllUserPersonas ()V
+	public abstract fun clearUserAsPayer ()V
+	public abstract fun clearUserEmail ()V
+	public abstract fun clearUserIdentifier ()V
+	public abstract fun clearUserPersona (Ljava/lang/String;)V
+	public abstract fun clearUsername ()V
+	public abstract fun setUserAsPayer ()V
+	public abstract fun setUserEmail (Ljava/lang/String;)V
+	public abstract fun setUserIdentifier (Ljava/lang/String;)V
+	public abstract fun setUsername (Ljava/lang/String;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/clock/Clock {
@@ -411,5 +506,39 @@ public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enu
 	public static final field USER_ABANDON Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/ErrorCode;
 	public static fun values ()[Lio/embrace/android/embracesdk/spans/ErrorCode;
+}
+
+public abstract interface class io/embrace/android/embracesdk/spans/TracingApi {
+	public abstract fun createSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun isTracingAvailable ()Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJ)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
+	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
+	public abstract fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun recordSpan (Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public abstract fun startSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+}
+
+public final class io/embrace/android/embracesdk/spans/TracingApi$DefaultImpls {
+	public static fun createSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;JJ)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
+	public static fun recordSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static fun recordSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static fun recordSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static fun startSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public static fun startSpan (Lio/embrace/android/embracesdk/spans/TracingApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 }
 

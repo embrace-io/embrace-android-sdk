@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.opentelemetry
 
-import io.embrace.android.embracesdk.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.payload.ThreadInfo
 
 /**

@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
-import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 

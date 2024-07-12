@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fixtures
 
-import io.embrace.android.embracesdk.arch.schema.SendImmediately
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
+import io.embrace.android.embracesdk.internal.arch.schema.SendImmediately
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.payload.NativeCrashData

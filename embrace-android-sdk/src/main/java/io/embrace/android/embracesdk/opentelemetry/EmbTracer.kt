@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.opentelemetry
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.embraceSpanBuilder
 import io.embrace.android.embracesdk.spans.getEmbraceSpan

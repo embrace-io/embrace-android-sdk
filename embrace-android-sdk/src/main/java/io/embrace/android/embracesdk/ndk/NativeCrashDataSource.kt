@@ -2,17 +2,17 @@ package io.embrace.android.embracesdk.ndk
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.datasource.LogDataSource
-import io.embrace.android.embracesdk.arch.datasource.LogDataSourceImpl
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashErrors
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
-import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashErrors
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger

@@ -881,30 +881,6 @@ public final class io/embrace/android/embracesdk/internal/payload/AppFramework :
 	public static fun values ()[Lio/embrace/android/embracesdk/internal/payload/AppFramework;
 }
 
-public final class io/embrace/android/embracesdk/internal/payload/Attribute {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
-	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/internal/payload/Attribute;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getData ()Ljava/lang/String;
-	public final fun getKey ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/internal/payload/AttributeJsonAdapter : com/squareup/moshi/JsonAdapter {
-	public fun <init> (Lcom/squareup/moshi/Moshi;)V
-	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/embrace/android/embracesdk/internal/payload/Attribute;
-	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
-	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/internal/payload/Attribute;)V
-	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
-	public fun toString ()Ljava/lang/String;
-}
-
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;

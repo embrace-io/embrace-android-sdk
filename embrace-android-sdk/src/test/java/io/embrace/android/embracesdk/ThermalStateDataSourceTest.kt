@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk
 
 import android.os.PowerManager
-import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.verify

@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
-import io.embrace.android.embracesdk.capture.crash.CrashService
-import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.capture.crash.CrashService
+import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService

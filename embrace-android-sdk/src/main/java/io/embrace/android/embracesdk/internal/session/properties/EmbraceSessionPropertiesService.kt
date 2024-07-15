@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.properties
 
-import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.ndk.NdkService
 

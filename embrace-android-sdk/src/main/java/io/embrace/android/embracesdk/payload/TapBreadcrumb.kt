@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.capture.crumbs.Breadcrumb
+import io.embrace.android.embracesdk.internal.capture.crumbs.Breadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType
 
 /**

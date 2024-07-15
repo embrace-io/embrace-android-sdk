@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.message
 
-import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload

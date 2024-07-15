@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.capture.crash.CrashDataSourceImpl
-import io.embrace.android.embracesdk.capture.crash.CrashService
+import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSourceImpl
+import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier

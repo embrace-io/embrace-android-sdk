@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.capture.envelope.session
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
+import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertEquals
 import org.junit.Test

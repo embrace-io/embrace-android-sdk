@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse

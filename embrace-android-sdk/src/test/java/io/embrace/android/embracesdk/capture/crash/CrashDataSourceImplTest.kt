@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSourceImpl
+import io.embrace.android.embracesdk.internal.capture.crash.EmbraceUncaughtExceptionHandler
 import io.embrace.android.embracesdk.internal.config.local.CrashHandlerLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig

@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.capture.startup.StartupService
+import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink

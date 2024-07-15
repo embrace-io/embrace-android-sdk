@@ -30,6 +30,9 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
+import io.embrace.android.embracesdk.internal.ndk.NdkServiceDelegate
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties

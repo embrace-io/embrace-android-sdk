@@ -1,18 +1,18 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Looper
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.AnrService
-import io.embrace.android.embracesdk.anr.EmbraceAnrService
-import io.embrace.android.embracesdk.anr.NoOpAnrService
-import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
-import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
-import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.anr.sigquit.AnrThreadIdDelegate
-import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.internal.anr.AnrService
+import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
+import io.embrace.android.embracesdk.internal.anr.NoOpAnrService
+import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
+import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
+import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.internal.anr.sigquit.AnrThreadIdDelegate
+import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 

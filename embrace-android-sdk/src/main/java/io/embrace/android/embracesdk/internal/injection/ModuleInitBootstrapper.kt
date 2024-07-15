@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.ndk.NativeModule
+import io.embrace.android.embracesdk.internal.ndk.NativeModuleImpl
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
@@ -32,8 +34,6 @@ import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
-import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.ndk.NativeModuleImpl
 import java.util.Locale
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit

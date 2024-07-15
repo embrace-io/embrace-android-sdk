@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.anr.ndk
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
+import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 import io.embrace.android.embracesdk.internal.payload.Attribute

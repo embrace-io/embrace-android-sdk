@@ -325,7 +325,7 @@ static jobject construct_interval_list(JNIEnv *env, emb_interval *interval) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_finishSampling(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_finishSampling(JNIEnv *env,
                                                                                  jobject thiz) {
 
     // cancel any pending samples here.

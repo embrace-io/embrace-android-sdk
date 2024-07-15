@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.session.properties
 
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class EmbraceSessionPropertiesService(
     private val ndkService: NdkService,

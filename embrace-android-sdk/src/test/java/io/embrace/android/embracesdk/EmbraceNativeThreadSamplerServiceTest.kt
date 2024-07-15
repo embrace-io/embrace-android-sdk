@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerService
-import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
+import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod

@@ -5,6 +5,10 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
+import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
+import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger

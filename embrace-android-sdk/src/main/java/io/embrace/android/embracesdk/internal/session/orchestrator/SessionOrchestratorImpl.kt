@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
@@ -19,8 +21,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.opentelemetry.embHeartbeatTimeUnixNano
-import io.embrace.android.embracesdk.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.payload.SessionZygote
 
 internal class SessionOrchestratorImpl(

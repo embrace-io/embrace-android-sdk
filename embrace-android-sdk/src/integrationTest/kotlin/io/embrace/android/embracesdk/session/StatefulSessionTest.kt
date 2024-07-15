@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.opentelemetry.embErrorLogCount
-import io.embrace.android.embracesdk.opentelemetry.embSessionEndType
-import io.embrace.android.embracesdk.opentelemetry.embSessionStartType
+import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.getSessionId
@@ -48,8 +48,10 @@ internal class StatefulSessionTest {
             val messages = testRule.harness.getSentSessions()
             val first = messages[0]
             val attrs = checkNotNull(first.findSessionSpan().attributes)
-            assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(embSessionStartType.name))
-            assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(embSessionEndType.name))
+            assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(
+                embSessionStartType.name))
+            assertEquals(LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(
+                embSessionEndType.name))
             assertEquals("0", attrs.findAttributeValue(embErrorLogCount.name))
 
             // verify second session

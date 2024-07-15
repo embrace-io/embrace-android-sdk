@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.network.logging
+package io.embrace.android.embracesdk.internal.network.logging
 
 internal data class DomainSettings(
     val limit: Int = 0,

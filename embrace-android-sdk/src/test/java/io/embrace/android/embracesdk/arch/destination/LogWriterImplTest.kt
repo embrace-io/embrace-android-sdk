@@ -8,11 +8,11 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
-import io.embrace.android.embracesdk.opentelemetry.embState
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals

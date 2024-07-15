@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.opentelemetry
 
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracerBuilder
+import io.embrace.android.embracesdk.internal.opentelemetry.TracerKey
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

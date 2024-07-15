@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.payload.ThreadInfo

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.opentelemetry.api.trace.Tracer
@@ -55,9 +55,3 @@ internal class EmbTracerProvider(
         return builder.build()
     }
 }
-
-internal data class TracerKey(
-    val instrumentationScopeName: String,
-    var instrumentationScopeVersion: String? = null,
-    var schemaUrl: String? = null
-)

@@ -4,15 +4,15 @@ import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkCaptureService
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkLoggingService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSourceImpl
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.network.logging.EmbraceDomainCountLimiter
-import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService
-import io.embrace.android.embracesdk.network.logging.EmbraceNetworkLoggingService
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSourceImpl
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
 
 internal class CustomerLogModuleImpl(
     initModule: InitModule,

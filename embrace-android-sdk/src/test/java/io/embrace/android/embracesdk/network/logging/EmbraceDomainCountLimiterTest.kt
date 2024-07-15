@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import org.junit.Before

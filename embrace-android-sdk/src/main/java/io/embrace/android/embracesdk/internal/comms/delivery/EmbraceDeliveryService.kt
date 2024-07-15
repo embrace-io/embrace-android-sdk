@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -19,7 +20,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
-import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NetworkEvent

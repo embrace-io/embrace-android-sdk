@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
-import io.embrace.android.embracesdk.payload.SessionZygote
 
 /**
  * Factory that creates session + background activity payloads.

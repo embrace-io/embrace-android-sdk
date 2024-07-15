@@ -20,6 +20,12 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.Event
+import io.embrace.android.embracesdk.internal.payload.EventMessage
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
+import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
+import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
@@ -29,12 +35,6 @@ import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.payload.Event
-import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.NativeCrashData
-import io.embrace.android.embracesdk.payload.NativeCrashDataError
-import io.embrace.android.embracesdk.payload.NativeCrashMetadata
-import io.embrace.android.embracesdk.payload.NativeSymbols
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream

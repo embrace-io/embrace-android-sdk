@@ -3,11 +3,11 @@ package io.embrace.android.embracesdk.internal.comms.api
 import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.NetworkEvent
 
 internal class ApiRequestMapper(
     private val urlBuilder: ApiUrlBuilder,

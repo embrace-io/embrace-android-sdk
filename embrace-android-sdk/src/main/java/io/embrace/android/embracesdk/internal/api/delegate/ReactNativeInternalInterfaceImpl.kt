@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,

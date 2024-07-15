@@ -3,11 +3,11 @@ package io.embrace.android.embracesdk.internal.anr
 import io.embrace.android.embracesdk.internal.arch.DataCaptureServiceOtelConverter
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.payload.AnrInterval
-import io.embrace.android.embracesdk.payload.AnrSample
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.trace.IdGenerator
 

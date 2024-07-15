@@ -16,11 +16,11 @@ import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
 
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceInternalInterfaceImpl(

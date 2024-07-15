@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.internal.ndk.NdkService
-import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
 internal class FakeNdkService : NdkService {
     var checkForNativeCrashCount: Int = 0

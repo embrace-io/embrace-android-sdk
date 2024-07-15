@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
+import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 
 /**
  * Service which stores breadcrumbs for the application.

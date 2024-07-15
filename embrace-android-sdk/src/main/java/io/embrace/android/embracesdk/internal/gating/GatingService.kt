@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.gating
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.payload.EventMessage
 
 internal interface GatingService {
 

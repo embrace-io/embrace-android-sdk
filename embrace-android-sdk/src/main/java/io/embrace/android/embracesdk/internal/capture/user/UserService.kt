@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
-import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 
 /**
  * Manages user information, allowing the setting and removing of various user attributes.

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
-import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class FakeCrashDataSource : CrashDataSource {
     internal var exception: Throwable? = null

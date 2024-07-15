@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.payload.ApplicationState
-import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionZygote
 
 internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,

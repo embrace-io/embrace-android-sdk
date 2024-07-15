@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
-import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.internal.payload.JsException
 
 /**
  * Service for handling crashes intercepted by the [EmbraceUncaughtExceptionHandler] and

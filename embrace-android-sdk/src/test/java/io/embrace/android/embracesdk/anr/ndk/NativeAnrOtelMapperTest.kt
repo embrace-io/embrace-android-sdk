@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrStackframe
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.ThreadState
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
-import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
-import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
-import io.embrace.android.embracesdk.payload.ThreadState
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

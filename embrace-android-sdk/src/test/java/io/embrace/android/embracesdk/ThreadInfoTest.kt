@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

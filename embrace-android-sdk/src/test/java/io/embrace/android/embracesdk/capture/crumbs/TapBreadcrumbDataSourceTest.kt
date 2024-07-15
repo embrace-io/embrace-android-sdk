@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before

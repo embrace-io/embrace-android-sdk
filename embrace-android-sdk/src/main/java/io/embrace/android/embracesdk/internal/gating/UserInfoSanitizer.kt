@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.gating
 
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.USER_PERSONAS
-import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 
 internal class UserInfoSanitizer(
     private val userInfo: UserInfo?,

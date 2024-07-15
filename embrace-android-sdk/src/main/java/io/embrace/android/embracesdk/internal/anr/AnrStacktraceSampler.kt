@@ -4,15 +4,15 @@ import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringStat
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.enforceThread
+import io.embrace.android.embracesdk.internal.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.AnrSample
+import io.embrace.android.embracesdk.internal.payload.AnrSampleList
+import io.embrace.android.embracesdk.internal.payload.extensions.clearSamples
+import io.embrace.android.embracesdk.internal.payload.extensions.deepCopy
+import io.embrace.android.embracesdk.internal.payload.extensions.duration
+import io.embrace.android.embracesdk.internal.payload.extensions.hasSamples
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
-import io.embrace.android.embracesdk.payload.AnrInterval
-import io.embrace.android.embracesdk.payload.AnrSample
-import io.embrace.android.embracesdk.payload.AnrSampleList
-import io.embrace.android.embracesdk.payload.extensions.clearSamples
-import io.embrace.android.embracesdk.payload.extensions.deepCopy
-import io.embrace.android.embracesdk.payload.extensions.duration
-import io.embrace.android.embracesdk.payload.extensions.hasSamples
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 

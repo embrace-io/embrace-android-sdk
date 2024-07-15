@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.gating.v2.EnvelopeSanitizerFacade
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.payload.EventMessage
 
 /**
  * Receives the local and remote config to build the Gating config and define the amount of

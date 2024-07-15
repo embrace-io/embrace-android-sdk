@@ -12,4 +12,6 @@ apiValidation.validationDisabled = true
 
 dependencies {
     implementation(project(":embrace-android-payload"))
+    compileOnly(platform(libs.opentelemetry.bom))
+    compileOnly(libs.opentelemetry.api)
 }

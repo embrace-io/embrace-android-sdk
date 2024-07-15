@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.telemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.arch.schema.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.capture.envelope.resource.isEmulator
-import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.spans.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
 

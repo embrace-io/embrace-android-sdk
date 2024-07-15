@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-@InternalApi
 public interface EmbraceFeatureRegistry {
 
     /**

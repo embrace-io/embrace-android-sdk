@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.session.id
 
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

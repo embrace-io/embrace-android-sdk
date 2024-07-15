@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.capture.crumbs
 import android.app.Activity
 import android.os.Bundle
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 
 /**
  * In charge of handling all notifications related functionality.

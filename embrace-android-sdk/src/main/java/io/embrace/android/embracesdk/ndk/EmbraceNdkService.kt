@@ -22,6 +22,9 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
@@ -32,9 +35,6 @@ import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.payload.NativeSymbols
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream

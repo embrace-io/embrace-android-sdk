@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.session.captureDataSafely
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.session.captureDataSafely
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal class SessionPayloadSourceImpl(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,

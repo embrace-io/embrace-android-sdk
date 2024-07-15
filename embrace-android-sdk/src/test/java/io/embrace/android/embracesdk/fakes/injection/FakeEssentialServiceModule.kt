@@ -34,11 +34,11 @@ import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSend
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.session.MemoryCleanerService
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 
 internal class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),

@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import kotlin.math.max
 
 /**

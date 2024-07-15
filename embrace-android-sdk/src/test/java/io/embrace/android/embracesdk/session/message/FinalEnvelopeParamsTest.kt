@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.session.message
 
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.session.message.FinalEnvelopeParams
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

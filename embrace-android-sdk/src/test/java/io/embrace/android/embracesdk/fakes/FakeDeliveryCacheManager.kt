@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputS
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal class FakeDeliveryCacheManager : DeliveryCacheManager {
 

@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import android.app.Activity
 import android.os.Bundle
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.session.lifecycle.StartupListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 
 internal class FakeActivityTracker(
     override var foregroundActivity: Activity? = null

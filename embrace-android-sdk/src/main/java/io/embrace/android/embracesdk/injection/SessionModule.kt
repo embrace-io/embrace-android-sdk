@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
+import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionPropertiesService
+import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
-import io.embrace.android.embracesdk.session.message.PayloadFactory
-import io.embrace.android.embracesdk.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
-import io.embrace.android.embracesdk.session.orchestrator.OrchestratorBoundaryDelegate
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestratorImpl
-import io.embrace.android.embracesdk.session.orchestrator.SessionSpanAttrPopulator
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionPropertiesService
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 
 internal interface SessionModule {
     val payloadFactory: PayloadFactory

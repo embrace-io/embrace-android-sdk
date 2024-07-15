@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 
 /**
  * Represents a service that captures data passively, usually in response to callbacks, system

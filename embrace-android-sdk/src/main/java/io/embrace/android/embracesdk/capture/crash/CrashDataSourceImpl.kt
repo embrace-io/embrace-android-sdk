@@ -16,6 +16,8 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.ndk.NdkService
@@ -24,8 +26,6 @@ import io.embrace.android.embracesdk.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.payload.JsException
 import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.payload.ThreadInfo
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 

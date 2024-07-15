@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.memory
 
-import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**

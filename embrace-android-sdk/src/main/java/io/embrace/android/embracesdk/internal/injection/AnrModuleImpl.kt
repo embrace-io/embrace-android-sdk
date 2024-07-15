@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.anr.AnrOtelMapper
@@ -15,12 +15,6 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-
-internal interface AnrModule {
-    val anrService: AnrService
-    val anrOtelMapper: AnrOtelMapper
-    val sigquitDataSource: SigquitDataSource
-}
 
 internal class AnrModuleImpl(
     initModule: InitModule,

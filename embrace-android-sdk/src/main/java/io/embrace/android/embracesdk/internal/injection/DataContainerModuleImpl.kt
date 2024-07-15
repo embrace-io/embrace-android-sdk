@@ -1,16 +1,8 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.event.EmbraceEventService
 import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-
-/**
- * Holds dependencies that normally act as a 'container' for other data. For example,
- * a span, an Event, PerformanceInfo, etc.
- */
-internal interface DataContainerModule {
-    val eventService: EventService
-}
 
 internal class DataContainerModuleImpl(
     initModule: InitModule,

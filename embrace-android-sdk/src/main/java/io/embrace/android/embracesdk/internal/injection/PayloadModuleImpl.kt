@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSourceImpl
@@ -17,18 +17,10 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.ndk.NativeModule
 
-/**
- * Modules containing classes that generate the payloads.
- */
-internal interface PayloadModule {
-    val sessionEnvelopeSource: SessionEnvelopeSource
-    val logEnvelopeSource: LogEnvelopeSource
-}
-
 internal class PayloadModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,

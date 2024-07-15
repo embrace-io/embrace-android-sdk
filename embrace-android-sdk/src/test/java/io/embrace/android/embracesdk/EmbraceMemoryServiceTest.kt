@@ -10,10 +10,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.injection.DataSourceModule
-import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.capture.memory.EmbraceMemoryService
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.injection.DataSourceModuleImpl
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals

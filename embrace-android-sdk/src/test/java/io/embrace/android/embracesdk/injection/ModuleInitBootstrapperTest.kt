@@ -6,6 +6,16 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleImpl
+import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.PayloadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.StorageModuleImpl
+import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework

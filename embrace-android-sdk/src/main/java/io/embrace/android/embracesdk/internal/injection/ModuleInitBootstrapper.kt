@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
@@ -74,7 +74,7 @@ internal class ModuleInitBootstrapper(
     lateinit var systemServiceModule: SystemServiceModule
         private set
 
-    lateinit var androidServicesModule: AndroidServicesModule
+    lateinit var androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
         private set
 
     lateinit var storageModule: StorageModule
@@ -166,10 +166,10 @@ internal class ModuleInitBootstrapper(
                         systemServiceModuleSupplier(coreModule, versionChecker)
                     }
 
-                    androidServicesModule = init(AndroidServicesModule::class) {
+                    androidServicesModule = init(io.embrace.android.embracesdk.internal.injection.AndroidServicesModule::class) {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
-                    postInit(AndroidServicesModule::class) {
+                    postInit(io.embrace.android.embracesdk.internal.injection.AndroidServicesModule::class) {
                         serviceRegistry.registerService(androidServicesModule.preferencesService)
                     }
 

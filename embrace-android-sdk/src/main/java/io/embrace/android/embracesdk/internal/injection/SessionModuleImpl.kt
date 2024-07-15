@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
@@ -15,19 +15,10 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.ndk.NativeModule
 
-internal interface SessionModule {
-    val payloadFactory: PayloadFactory
-    val payloadMessageCollatorImpl: PayloadMessageCollatorImpl
-    val sessionPropertiesService: SessionPropertiesService
-    val sessionOrchestrator: SessionOrchestrator
-    val periodicSessionCacher: PeriodicSessionCacher
-    val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
-}
-
 internal class SessionModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     deliveryModule: DeliveryModule,
@@ -63,7 +54,10 @@ internal class SessionModuleImpl(
     }
 
     override val periodicSessionCacher: PeriodicSessionCacher by singleton {
-        PeriodicSessionCacher(workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE), initModule.logger)
+        PeriodicSessionCacher(
+            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            initModule.logger
+        )
     }
 
     override val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {

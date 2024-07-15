@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
@@ -11,16 +11,6 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import java.util.concurrent.TimeUnit
-
-/**
- * Contains dependencies that are used to store data in the device's storage.
- */
-internal interface StorageModule {
-    val storageService: StorageService
-    val cache: ApiResponseCache
-    val cacheService: CacheService
-    val deliveryCacheManager: DeliveryCacheManager
-}
 
 internal class StorageModuleImpl(
     initModule: InitModule,

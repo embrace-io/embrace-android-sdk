@@ -1,6 +1,4 @@
-@file:Suppress("DEPRECATION")
-
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
@@ -8,17 +6,13 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
-internal interface AndroidServicesModule {
-    val preferencesService: PreferencesService
-}
-
 internal class AndroidServicesModuleImpl(
-    initModule: InitModule,
-    coreModule: CoreModule,
+    initModule: io.embrace.android.embracesdk.internal.injection.InitModule,
+    coreModule: io.embrace.android.embracesdk.internal.injection.CoreModule,
     workerThreadModule: WorkerThreadModule,
-) : AndroidServicesModule {
+) : io.embrace.android.embracesdk.internal.injection.AndroidServicesModule {
 
-    override val preferencesService: PreferencesService by singleton {
+    override val preferencesService: PreferencesService by io.embrace.android.embracesdk.internal.injection.singleton {
         val lazyPrefs = lazy {
             PreferenceManager.getDefaultSharedPreferences(
                 coreModule.context

@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier

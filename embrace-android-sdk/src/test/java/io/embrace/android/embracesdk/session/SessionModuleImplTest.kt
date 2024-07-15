@@ -15,8 +15,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
-import io.embrace.android.embracesdk.injection.SessionModuleImpl
+import io.embrace.android.embracesdk.internal.injection.DataSourceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.SessionModuleImpl
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.StartupEventInfo
+import io.embrace.android.embracesdk.internal.event.EventService
 
 internal class FakeEventService : EventService {
 

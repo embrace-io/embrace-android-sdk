@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestMapper
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log

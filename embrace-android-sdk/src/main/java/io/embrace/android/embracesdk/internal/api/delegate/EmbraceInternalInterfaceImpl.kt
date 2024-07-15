@@ -4,17 +4,17 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
-import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest

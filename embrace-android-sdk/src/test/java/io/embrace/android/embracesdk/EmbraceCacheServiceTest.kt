@@ -1,16 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.EmbraceUrl
-import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.CachedSession
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.EMBRACE_PREFIX
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.NEW_COPY_SUFFIX
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.OLD_COPY_SUFFIX
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
-import io.embrace.android.embracesdk.comms.delivery.PendingApiCall
-import io.embrace.android.embracesdk.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -18,6 +7,17 @@ import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope2
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
+import io.embrace.android.embracesdk.internal.comms.delivery.CachedSession
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService.Companion.EMBRACE_PREFIX
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService.Companion.NEW_COPY_SUFFIX
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService.Companion.OLD_COPY_SUFFIX
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod

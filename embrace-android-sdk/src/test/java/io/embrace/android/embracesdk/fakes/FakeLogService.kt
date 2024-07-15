@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.logs.LogService
 
 internal class FakeLogService : LogService {

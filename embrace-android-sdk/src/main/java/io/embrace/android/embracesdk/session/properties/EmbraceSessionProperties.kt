@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.session.properties
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.prefs.PreferencesService
 import java.util.concurrent.atomic.AtomicReference
 
 internal class EmbraceSessionProperties(

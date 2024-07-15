@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.telemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

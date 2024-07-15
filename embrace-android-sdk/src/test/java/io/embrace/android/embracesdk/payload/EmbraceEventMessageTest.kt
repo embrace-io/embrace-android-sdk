@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.payload
 
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeJsonFromResource
+import io.embrace.android.embracesdk.internal.EventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

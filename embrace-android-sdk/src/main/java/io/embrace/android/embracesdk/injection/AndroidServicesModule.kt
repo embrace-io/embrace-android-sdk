@@ -3,10 +3,10 @@
 package io.embrace.android.embracesdk.injection
 
 import android.preference.PreferenceManager
+import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
-import io.embrace.android.embracesdk.prefs.PreferencesService
 
 internal interface AndroidServicesModule {
     val preferencesService: PreferencesService

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.event.EmbraceEventService
-import io.embrace.android.embracesdk.event.EventService
+import io.embrace.android.embracesdk.internal.event.EmbraceEventService
+import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 /**

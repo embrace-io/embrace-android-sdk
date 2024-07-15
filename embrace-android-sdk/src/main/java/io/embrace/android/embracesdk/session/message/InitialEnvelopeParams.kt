@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.session.message
 
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.prefs.PreferencesService
 
 /**
  * Holds the parameters & logic needed to create an initial session object.

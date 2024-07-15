@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.gating.EventSanitizerFacade
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.gating.EventSanitizerFacade
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.Event

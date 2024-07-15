@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.internal.EventType
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.

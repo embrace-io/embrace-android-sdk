@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.internal.EventType
 
 @JsonClass(generateAdapter = true)
 internal data class Event constructor(

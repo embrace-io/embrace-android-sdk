@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
 internal class FakeTelemetryService : TelemetryService {
 

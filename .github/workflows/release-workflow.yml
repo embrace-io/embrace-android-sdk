@@ -43,7 +43,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: Gradlew Release SDK to Maven Central
         run: |
@@ -84,7 +84,7 @@ jobs:
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@v3
 
       - name: Gradlew Release Swazzler to Maven Central
         run: |

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -9,7 +8,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * that enable/disable the service, and creates new instances of the service as required.
  * It also is capable of disabling the service if the [SessionType] is not supported.
  */
-@InternalApi
 public class DataSourceState<T : DataSource<*>>(
 
     /**
@@ -38,7 +36,7 @@ public class DataSourceState<T : DataSource<*>>(
      * If you enable this behavior please ensure your implementation is thread safe (e.g.
      * it can handle unbalanced calls to [enableDataCapture] and others).
      */
-    internal val asyncInit: Boolean = false
+    public val asyncInit: Boolean = false
 ) {
 
     /**

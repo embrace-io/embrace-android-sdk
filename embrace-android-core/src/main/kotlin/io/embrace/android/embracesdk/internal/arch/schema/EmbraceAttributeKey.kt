@@ -1,13 +1,10 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.internal.spans.toEmbraceAttributeName
 import io.opentelemetry.api.common.AttributeKey
 
 /**
  * Defines a unique object to represent a [EmbraceAttribute]
  */
-@InternalApi
 public class EmbraceAttributeKey(
     override val id: String,
     otelAttributeKey: AttributeKey<String>? = null,

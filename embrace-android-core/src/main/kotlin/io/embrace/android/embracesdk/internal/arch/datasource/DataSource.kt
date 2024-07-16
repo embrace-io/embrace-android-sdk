@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
 /**
  * Defines a 'data source'. This should be responsible for capturing a specific type
  * of data that will be sent to Embrace.
@@ -11,7 +9,6 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  *
  * See [EventDataSource], [SpanDataSource], and [LogDataSource] for more information.
  */
-@InternalApi
 public interface DataSource<T> {
 
     /**

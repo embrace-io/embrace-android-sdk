@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
-@InternalApi
 public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "type")
     override val value: String = type + (subtype?.run { ".$this" } ?: "")

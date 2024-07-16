@@ -31,6 +31,7 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
@@ -38,7 +39,6 @@ import io.embrace.android.embracesdk.payload.NativeCrashData
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

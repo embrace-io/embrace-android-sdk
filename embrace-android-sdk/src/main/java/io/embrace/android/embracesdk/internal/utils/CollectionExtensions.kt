@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.utils
+package io.embrace.android.embracesdk.internal.utils
 
 import java.util.concurrent.atomic.AtomicInteger
 

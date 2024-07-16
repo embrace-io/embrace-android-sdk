@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.worker
+package io.embrace.android.embracesdk.internal.worker
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import java.util.concurrent.Callable

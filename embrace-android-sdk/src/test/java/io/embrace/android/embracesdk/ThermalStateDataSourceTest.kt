@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before

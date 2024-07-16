@@ -8,7 +8,7 @@ import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class PowerSaveModeReceiver(
     private val logger: EmbLogger,

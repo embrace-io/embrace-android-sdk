@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.utils.stream
+import io.embrace.android.embracesdk.internal.utils.stream
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class EmbraceMemoryCleanerService(private val logger: EmbLogger) : MemoryCleanerService {

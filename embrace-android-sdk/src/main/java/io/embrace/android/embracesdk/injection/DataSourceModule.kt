@@ -24,8 +24,8 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 

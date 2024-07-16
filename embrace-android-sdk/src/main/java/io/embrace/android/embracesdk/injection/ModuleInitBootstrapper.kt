@@ -28,12 +28,12 @@ import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
+import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.ndk.NativeModule
 import io.embrace.android.embracesdk.ndk.NativeModuleImpl
-import io.embrace.android.embracesdk.worker.TaskPriority
-import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import java.util.Locale
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit

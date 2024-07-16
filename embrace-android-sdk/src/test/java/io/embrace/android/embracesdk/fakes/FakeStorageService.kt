@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.storage.StorageService
+import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 import java.nio.file.Files

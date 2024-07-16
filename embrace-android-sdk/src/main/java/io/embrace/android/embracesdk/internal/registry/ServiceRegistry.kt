@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.registry
+package io.embrace.android.embracesdk.internal.registry
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener

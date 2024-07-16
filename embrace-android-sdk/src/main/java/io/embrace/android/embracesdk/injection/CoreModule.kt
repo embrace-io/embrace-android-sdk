@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.registry.ServiceRegistry
+import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 /**
  * Contains a core set of dependencies that are required by most services/classes in the SDK.

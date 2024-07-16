@@ -4,7 +4,7 @@ import android.net.http.HttpResponseCache
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.storage.StorageService
+import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.Closeable
 import java.io.IOException
 import java.net.CacheResponse

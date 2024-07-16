@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.utils.exceptions
+package io.embrace.android.embracesdk.internal.utils.exceptions
 
 import java.lang.reflect.InvocationTargetException
 

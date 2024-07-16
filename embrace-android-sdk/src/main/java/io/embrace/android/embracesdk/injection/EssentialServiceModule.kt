@@ -34,6 +34,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdC
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
@@ -43,8 +45,6 @@ import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
 
 /**
  * This module contains services that are essential for bootstrapping other functionality in

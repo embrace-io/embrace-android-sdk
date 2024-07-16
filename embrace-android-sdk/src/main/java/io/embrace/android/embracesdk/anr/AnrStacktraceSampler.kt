@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.enforceThread
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.payload.AnrSample
 import io.embrace.android.embracesdk.payload.AnrSampleList
@@ -12,7 +13,6 @@ import io.embrace.android.embracesdk.payload.extensions.deepCopy
 import io.embrace.android.embracesdk.payload.extensions.duration
 import io.embrace.android.embracesdk.payload.extensions.hasSamples
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.worker.ScheduledWorker
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 

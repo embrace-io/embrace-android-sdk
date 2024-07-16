@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.utils.ThreadUtils
+import io.embrace.android.embracesdk.internal.utils.ThreadUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
 // IMPORTANT: This class is referenced by anr.c. Move or rename both at the same time, or it will break.

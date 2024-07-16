@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals

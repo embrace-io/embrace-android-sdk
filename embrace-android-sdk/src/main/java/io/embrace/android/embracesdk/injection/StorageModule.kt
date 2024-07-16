@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
-import io.embrace.android.embracesdk.storage.EmbraceStorageService
-import io.embrace.android.embracesdk.storage.StatFsAvailabilityChecker
-import io.embrace.android.embracesdk.storage.StorageService
-import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
+import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import java.util.concurrent.TimeUnit
 
 /**

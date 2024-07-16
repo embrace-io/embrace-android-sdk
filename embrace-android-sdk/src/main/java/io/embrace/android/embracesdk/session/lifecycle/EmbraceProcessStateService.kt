@@ -7,9 +7,9 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.utils.ThreadUtils
+import io.embrace.android.embracesdk.internal.utils.stream
 import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.utils.ThreadUtils
-import io.embrace.android.embracesdk.utils.stream
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

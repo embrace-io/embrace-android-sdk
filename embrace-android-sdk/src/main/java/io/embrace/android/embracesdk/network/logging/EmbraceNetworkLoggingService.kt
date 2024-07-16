@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.network.logging
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.logging.EmbraceNetworkCaptureService.Companion.NETWORK_ERROR_CODE
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.utils.NetworkUtils.getDomain
-import io.embrace.android.embracesdk.utils.NetworkUtils.getUrlPath
-import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
 
 /**
  * Logs network calls according to defined limits per domain.

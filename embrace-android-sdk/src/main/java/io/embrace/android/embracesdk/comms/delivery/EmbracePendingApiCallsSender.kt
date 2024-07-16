@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.max

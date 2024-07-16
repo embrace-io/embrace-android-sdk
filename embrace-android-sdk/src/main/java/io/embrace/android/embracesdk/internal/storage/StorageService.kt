@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.storage
+package io.embrace.android.embracesdk.internal.storage
 
 import java.io.File
 import java.io.FilenameFilter

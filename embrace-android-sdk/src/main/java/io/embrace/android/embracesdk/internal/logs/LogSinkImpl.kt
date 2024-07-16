@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl.Companion
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.utils.threadSafeTake
+import io.embrace.android.embracesdk.internal.utils.threadSafeTake
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue

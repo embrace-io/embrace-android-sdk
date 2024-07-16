@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -38,7 +39,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAt
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
-import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.LifeEventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

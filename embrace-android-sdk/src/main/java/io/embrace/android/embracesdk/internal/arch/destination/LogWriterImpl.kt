@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
-import io.embrace.android.embracesdk.opentelemetry.embState
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.opentelemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.opentelemetry.semconv.incubating.AndroidIncubatingAttributes
 import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes

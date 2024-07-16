@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 
 /**

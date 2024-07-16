@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 
 internal class FakeNetworkCaptureService : NetworkCaptureService {
 

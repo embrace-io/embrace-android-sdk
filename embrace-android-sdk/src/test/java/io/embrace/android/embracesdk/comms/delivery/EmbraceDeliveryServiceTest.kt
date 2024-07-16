@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCach
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -38,7 +39,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.payload.NativeCrashData

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.SpanService

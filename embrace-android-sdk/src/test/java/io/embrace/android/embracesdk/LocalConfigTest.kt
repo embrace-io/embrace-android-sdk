@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

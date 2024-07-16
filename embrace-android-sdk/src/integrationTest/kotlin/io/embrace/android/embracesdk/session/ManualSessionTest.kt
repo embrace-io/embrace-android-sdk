@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

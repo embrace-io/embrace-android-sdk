@@ -3,6 +3,10 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
+import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracerProvider
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetrySdk
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanFactory
@@ -14,10 +18,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.opentelemetry.EmbOpenTelemetry
-import io.embrace.android.embracesdk.opentelemetry.EmbTracerProvider
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetrySdk
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer

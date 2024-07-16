@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.logs.LogSink
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer

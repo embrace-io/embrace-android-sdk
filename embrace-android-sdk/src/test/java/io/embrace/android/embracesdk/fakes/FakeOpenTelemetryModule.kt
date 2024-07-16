@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceTracer
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
@@ -10,8 +12,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.opentelemetry.EmbOpenTelemetry
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.mockk.mockk
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger

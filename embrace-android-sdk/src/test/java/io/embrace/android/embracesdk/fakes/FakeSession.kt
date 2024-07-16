@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.LifeEventType
 import io.embrace.android.embracesdk.payload.SessionZygote

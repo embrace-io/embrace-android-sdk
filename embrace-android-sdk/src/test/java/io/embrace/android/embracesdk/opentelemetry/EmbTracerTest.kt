@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

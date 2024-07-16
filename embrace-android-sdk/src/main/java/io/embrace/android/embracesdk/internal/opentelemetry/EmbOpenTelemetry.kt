@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.TracerProvider

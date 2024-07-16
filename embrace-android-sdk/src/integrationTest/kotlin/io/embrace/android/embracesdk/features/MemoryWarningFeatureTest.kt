@@ -5,10 +5,12 @@ import android.content.ComponentCallbacks2
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.recordSession
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +31,20 @@ internal class MemoryWarningFeatureTest {
                 ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
             })
             assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
+        }
+    }
+
+    @Test
+    fun `memory warning limits`() {
+        val ctx = ApplicationProvider.getApplicationContext<Application>()
+        with(testRule) {
+            val message = checkNotNull(harness.recordSession {
+                repeat(150) {
+                    ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+                }
+            })
+            val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
+            assertEquals(10, events.size)
         }
     }
 }

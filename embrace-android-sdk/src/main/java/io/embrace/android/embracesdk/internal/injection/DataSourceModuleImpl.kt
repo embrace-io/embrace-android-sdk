@@ -129,6 +129,8 @@ internal class DataSourceModuleImpl(
         DataSourceState(
             factory = {
                 MemoryWarningDataSource(
+                    application = coreModule.application,
+                    clock = initModule.clock,
                     sessionSpanWriter = otelModule.currentSessionSpan,
                     logger = initModule.logger,
                 )

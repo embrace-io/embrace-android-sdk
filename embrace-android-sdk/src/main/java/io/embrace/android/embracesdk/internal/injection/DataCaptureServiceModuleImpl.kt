@@ -4,9 +4,6 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.internal.capture.memory.ComponentCallbackService
-import io.embrace.android.embracesdk.internal.capture.memory.EmbraceMemoryService
-import io.embrace.android.embracesdk.internal.capture.memory.MemoryService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
@@ -22,7 +19,6 @@ import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker = BuildVersionChecker,
@@ -30,20 +26,6 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 ) : DataCaptureServiceModule {
 
     private val configService = essentialServiceModule.configService
-
-    override val memoryService: MemoryService? by singleton {
-        if (configService.autoDataCaptureBehavior.isMemoryServiceEnabled()) {
-            EmbraceMemoryService(initModule.clock) { dataSourceModule }
-        } else {
-            null
-        }
-    }
-
-    override val componentCallbackService: ComponentCallbackService by singleton {
-        Systrace.traceSynchronous("component-callback-service-init") {
-            ComponentCallbackService(coreModule.application, memoryService, initModule.logger)
-        }
-    }
 
     override val webviewService: WebViewService by singleton {
         EmbraceWebViewService(

@@ -101,7 +101,6 @@ internal typealias EssentialServiceModuleSupplier = (
 internal typealias DataCaptureServiceModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker,

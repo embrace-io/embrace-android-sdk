@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig

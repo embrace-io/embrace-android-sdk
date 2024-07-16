@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.EventType
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.config.local.SessionLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.EventMessage
 import java.util.Locale

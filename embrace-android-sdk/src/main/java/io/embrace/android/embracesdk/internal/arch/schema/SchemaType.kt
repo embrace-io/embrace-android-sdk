@@ -297,7 +297,7 @@ public sealed class SchemaType(
     }
 
     internal class NetworkStatus(
-        networkStatus: io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+        networkStatus: io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
         fixedObjectName = "network-status"

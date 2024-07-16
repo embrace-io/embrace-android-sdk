@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
-import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

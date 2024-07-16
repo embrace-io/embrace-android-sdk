@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.comms.api.ApiResponseCache
-import io.embrace.android.embracesdk.comms.delivery.CacheService
-import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
+import io.embrace.android.embracesdk.internal.comms.api.ApiResponseCache
+import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
+import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService

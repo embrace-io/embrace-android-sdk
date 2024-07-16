@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

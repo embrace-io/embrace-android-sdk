@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.comms.api.ApiClient
+import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 
 @JsonClass(generateAdapter = true)
 internal data class EventMessage(

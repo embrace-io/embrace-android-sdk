@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.CacheableValue
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary

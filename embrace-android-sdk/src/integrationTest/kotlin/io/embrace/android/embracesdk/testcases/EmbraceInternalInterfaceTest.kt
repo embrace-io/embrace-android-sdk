@@ -4,7 +4,7 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType

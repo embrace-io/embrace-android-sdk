@@ -1,16 +1,22 @@
 package io.embrace.android.embracesdk.comms.api
 
 import com.squareup.moshi.Types
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
-import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
+import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
+import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl

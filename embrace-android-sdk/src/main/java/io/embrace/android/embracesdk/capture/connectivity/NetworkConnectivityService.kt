@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.capture.connectivity
 
-import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import java.io.Closeable
 
 /**

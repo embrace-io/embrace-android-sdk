@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace

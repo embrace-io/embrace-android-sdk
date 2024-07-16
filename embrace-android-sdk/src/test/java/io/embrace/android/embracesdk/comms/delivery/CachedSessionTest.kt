@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.comms.delivery
 
+import io.embrace.android.embracesdk.internal.comms.delivery.CachedSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

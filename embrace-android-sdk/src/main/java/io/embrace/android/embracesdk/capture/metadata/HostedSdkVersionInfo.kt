@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.metadata
 
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 internal class HostedSdkVersionInfo(
     private val preferencesService: PreferencesService,

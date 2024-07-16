@@ -4,7 +4,7 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.ToJson
-import io.embrace.android.embracesdk.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 
 @JsonClass(generateAdapter = true)
 internal data class EmbraceUrlJson(

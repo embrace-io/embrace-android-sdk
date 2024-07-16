@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryService
-import io.embrace.android.embracesdk.comms.delivery.NoopDeliveryService
+import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
+import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 

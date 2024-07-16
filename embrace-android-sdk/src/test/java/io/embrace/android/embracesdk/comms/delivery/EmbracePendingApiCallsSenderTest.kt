@@ -1,14 +1,19 @@
 package io.embrace.android.embracesdk.comms.delivery
 
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.ApiRequestMapper
-import io.embrace.android.embracesdk.comms.api.ApiResponse
-import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
-import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestMapper
+import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker

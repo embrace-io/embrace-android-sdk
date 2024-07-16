@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi

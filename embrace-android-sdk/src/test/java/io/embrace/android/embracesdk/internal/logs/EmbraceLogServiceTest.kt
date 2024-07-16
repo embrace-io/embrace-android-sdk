@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
@@ -12,8 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
@@ -21,6 +19,8 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.gating.GatingService
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

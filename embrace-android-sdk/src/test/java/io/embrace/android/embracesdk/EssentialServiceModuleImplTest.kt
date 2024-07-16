@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnecti
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
-import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -14,12 +13,13 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
-import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
+import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService

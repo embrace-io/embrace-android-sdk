@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.startup.StartupService
-import io.embrace.android.embracesdk.event.EventService
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.opentelemetry.embColdStart

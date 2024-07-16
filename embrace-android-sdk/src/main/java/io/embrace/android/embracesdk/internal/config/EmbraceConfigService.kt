@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
@@ -37,10 +37,10 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.stream
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.min

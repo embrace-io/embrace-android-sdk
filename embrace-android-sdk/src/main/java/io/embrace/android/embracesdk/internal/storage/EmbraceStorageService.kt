@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
-import io.embrace.android.embracesdk.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import java.io.File
 import java.io.FilenameFilter
 

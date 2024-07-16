@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.payload
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 /**
  * Information about the user of the app, provided by the developer performing the integration.

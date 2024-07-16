@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.telemetry.EmbraceTelemetryService
-import io.embrace.android.embracesdk.telemetry.TelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts

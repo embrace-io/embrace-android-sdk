@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.comms.api.ApiService
-import io.embrace.android.embracesdk.comms.api.CachedConfig
-import io.embrace.android.embracesdk.comms.delivery.CacheService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.comms.api.ApiService
+import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
+import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -16,9 +16,9 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.mockk.clearAllMocks
 import io.mockk.every

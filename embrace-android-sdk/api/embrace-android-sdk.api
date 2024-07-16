@@ -755,49 +755,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/config/be
 	public abstract fun shouldCaptureMainThreadOnly ()Z
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior {
-	public abstract fun appExitInfoMaxNum ()I
-	public abstract fun getTraceMaxLimit ()I
-	public abstract fun isEnabled ()Z
-}
-
-public abstract class io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult {
-	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getResult ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult$Success : io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult {
-	public fun <init> (Ljava/lang/String;)V
-}
-
-public final class io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult$TooLarge : io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult {
-	public fun <init> (Ljava/lang/String;)V
-}
-
-public final class io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult$TraceException : io/embrace/android/embracesdk/internal/config/behavior/AppExitInfoBehavior$CollectTracesResult {
-	public fun <init> (Ljava/lang/String;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/AutoDataCaptureBehavior {
-	public abstract fun isAnrServiceEnabled ()Z
-	public abstract fun isComposeOnClickEnabled ()Z
-	public abstract fun isDiskUsageReportingEnabled ()Z
-	public abstract fun isMemoryServiceEnabled ()Z
-	public abstract fun isNdkEnabled ()Z
-	public abstract fun isNetworkConnectivityServiceEnabled ()Z
-	public abstract fun isPowerSaveModeServiceEnabled ()Z
-	public abstract fun isSigHandlerDetectionEnabled ()Z
-	public abstract fun isThermalStatusCaptureEnabled ()Z
-	public abstract fun isUncaughtExceptionHandlerEnabled ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/BackgroundActivityBehavior {
-	public abstract fun getManualBackgroundActivityLimit ()I
-	public abstract fun getMaxCachedActivities ()I
-	public abstract fun getMinBackgroundActivityDuration ()J
-	public abstract fun isEnabled ()Z
-}
-
 public final class io/embrace/android/embracesdk/internal/config/behavior/BehaviorThresholdCheck {
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
 	public final fun getNormalizedDeviceId ()F
@@ -805,33 +762,6 @@ public final class io/embrace/android/embracesdk/internal/config/behavior/Behavi
 	public final fun isBehaviorEnabled (F)Z
 	public final fun isBehaviorEnabled (Ljava/lang/Float;)Ljava/lang/Boolean;
 	public final fun isBehaviorEnabled (Ljava/lang/Integer;)Ljava/lang/Boolean;
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/BreadcrumbBehavior {
-	public abstract fun getCustomBreadcrumbLimit ()I
-	public abstract fun getFragmentBreadcrumbLimit ()I
-	public abstract fun getTapBreadcrumbLimit ()I
-	public abstract fun getViewBreadcrumbLimit ()I
-	public abstract fun getWebViewBreadcrumbLimit ()I
-	public abstract fun isAutomaticActivityCaptureEnabled ()Z
-	public abstract fun isCaptureFcmPiiDataEnabled ()Z
-	public abstract fun isQueryParamCaptureEnabled ()Z
-	public abstract fun isTapCoordinateCaptureEnabled ()Z
-	public abstract fun isWebViewBreadcrumbCaptureEnabled ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/DataCaptureEventBehavior {
-	public abstract fun getEventLimits ()Ljava/util/Map;
-	public abstract fun isEventEnabled (Ljava/lang/String;)Z
-	public abstract fun isInternalExceptionCaptureEnabled ()Z
-	public abstract fun isLogMessageEnabled (Ljava/lang/String;)Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/LogMessageBehavior {
-	public abstract fun getErrorLogLimit ()I
-	public abstract fun getInfoLogLimit ()I
-	public abstract fun getLogMessageMaximumAllowedLength ()I
-	public abstract fun getWarnLogLimit ()I
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/NetworkBehavior {
@@ -844,47 +774,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/config/be
 	public abstract fun isNativeNetworkingMonitoringEnabled ()Z
 	public abstract fun isRequestContentLengthCaptureEnabled ()Z
 	public abstract fun isUrlEnabled (Ljava/lang/String;)Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/NetworkSpanForwardingBehavior {
-	public abstract fun isNetworkSpanForwardingEnabled ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/SdkEndpointBehavior {
-	public abstract fun getConfig (Ljava/lang/String;)Ljava/lang/String;
-	public abstract fun getData (Ljava/lang/String;)Ljava/lang/String;
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/SdkModeBehavior {
-	public abstract fun getAppId ()Ljava/lang/String;
-	public abstract fun isBetaFeaturesEnabled ()Z
-	public abstract fun isSdkDisabled ()Z
-	public abstract fun isServiceInitDeferred ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/SessionBehavior {
-	public abstract fun getFullSessionEvents ()Ljava/util/Set;
-	public abstract fun getMaxSessionProperties ()I
-	public abstract fun getSessionComponents ()Ljava/util/Set;
-	public abstract fun isGatingFeatureEnabled ()Z
-	public abstract fun isSessionControlEnabled ()Z
-	public abstract fun shouldGateInfoLog ()Z
-	public abstract fun shouldGateLogProperties ()Z
-	public abstract fun shouldGateMoment ()Z
-	public abstract fun shouldGateSessionProperties ()Z
-	public abstract fun shouldGateStartupMoment ()Z
-	public abstract fun shouldGateWarnLog ()Z
-	public abstract fun shouldSendFullForCrash ()Z
-	public abstract fun shouldSendFullForErrorLog ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/StartupBehavior {
-	public abstract fun isAutomaticEndEnabled ()Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/config/behavior/WebViewVitalsBehavior {
-	public abstract fun getMaxWebViewVitals ()I
-	public abstract fun isWebViewVitalsEnabled ()Z
 }
 
 public final class io/embrace/android/embracesdk/internal/config/remote/AllowedNdkSampleMethod {

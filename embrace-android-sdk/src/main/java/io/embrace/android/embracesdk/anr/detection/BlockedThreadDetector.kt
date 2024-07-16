@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.anr.detection
 
 import android.os.Debug
 import io.embrace.android.embracesdk.anr.BlockedThreadListener
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.logging.EmbLogger
 import java.util.concurrent.atomic.AtomicReference

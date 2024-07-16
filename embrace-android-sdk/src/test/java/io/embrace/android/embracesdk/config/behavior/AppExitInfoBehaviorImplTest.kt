@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
-import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.config.local.AppExitInfoLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

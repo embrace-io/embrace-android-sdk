@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider

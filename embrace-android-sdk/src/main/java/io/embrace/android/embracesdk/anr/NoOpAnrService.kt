@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.anr
 
-import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.payload.AnrInterval
 
 internal class NoOpAnrService : AnrService {

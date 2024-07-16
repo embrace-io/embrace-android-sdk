@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivitySer
 import io.embrace.android.embracesdk.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

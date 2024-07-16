@@ -6,11 +6,11 @@ import android.content.Context
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl

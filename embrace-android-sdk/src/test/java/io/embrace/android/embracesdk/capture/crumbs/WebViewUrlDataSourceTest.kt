@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before

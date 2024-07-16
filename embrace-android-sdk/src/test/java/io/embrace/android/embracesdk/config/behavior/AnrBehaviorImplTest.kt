@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.AnrLocalConfig
-import io.embrace.android.embracesdk.config.remote.AllowedNdkSampleMethod
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
-import io.embrace.android.embracesdk.config.remote.Unwinder
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.internal.config.local.AnrLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

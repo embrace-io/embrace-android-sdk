@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.anr.ndk
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample

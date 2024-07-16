@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.injection
 import android.content.Context
 import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier

@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.anr.ndk
 import android.os.Handler
 import android.os.Looper
 import io.embrace.android.embracesdk.anr.AnrService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import java.util.concurrent.atomic.AtomicBoolean

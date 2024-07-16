@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.anr.sigquit
 
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before

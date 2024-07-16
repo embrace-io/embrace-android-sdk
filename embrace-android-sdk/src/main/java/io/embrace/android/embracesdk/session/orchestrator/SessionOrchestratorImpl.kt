@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session.orchestrator
 
 import io.embrace.android.embracesdk.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.SessionType
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider

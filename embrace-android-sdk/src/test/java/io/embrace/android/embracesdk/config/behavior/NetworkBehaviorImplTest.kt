@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.config.LocalConfigParser
-import io.embrace.android.embracesdk.config.local.DomainLocalConfig
-import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.config.remote.NetworkRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.config.LocalConfigParser
+import io.embrace.android.embracesdk.internal.config.local.DomainLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl

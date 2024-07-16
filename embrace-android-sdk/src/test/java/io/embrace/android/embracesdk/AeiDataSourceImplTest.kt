@@ -4,13 +4,13 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.capture.aei.AeiDataSourceImpl
-import io.embrace.android.embracesdk.config.remote.AppExitInfoConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.mockk.every

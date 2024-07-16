@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.ndk
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeC
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.logging.EmbLogger

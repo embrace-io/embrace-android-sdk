@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import io.embrace.android.embracesdk.worker.TaskPriority

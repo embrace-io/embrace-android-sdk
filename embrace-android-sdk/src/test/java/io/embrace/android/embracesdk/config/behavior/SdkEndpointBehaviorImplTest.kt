@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.internal.config.local.BaseUrlLocalConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

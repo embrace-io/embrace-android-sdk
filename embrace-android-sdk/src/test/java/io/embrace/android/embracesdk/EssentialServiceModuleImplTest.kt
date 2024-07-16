@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
-import io.embrace.android.embracesdk.config.EmbraceConfigService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -20,6 +19,7 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
+import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService

@@ -11,9 +11,6 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -27,6 +24,9 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

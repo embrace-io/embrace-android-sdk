@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.config.behavior
 
 import io.embrace.android.embracesdk.EmbraceConfigServiceTest.Companion.createLocalConfig
-import io.embrace.android.embracesdk.config.local.AppLocalConfig
-import io.embrace.android.embracesdk.config.local.AutomaticDataCaptureLocalConfig
-import io.embrace.android.embracesdk.config.local.ComposeLocalConfig
-import io.embrace.android.embracesdk.config.local.CrashHandlerLocalConfig
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
-import io.embrace.android.embracesdk.config.remote.KillSwitchRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.config.local.AppLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.ComposeLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.CrashHandlerLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
@@ -15,6 +13,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterExce
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace

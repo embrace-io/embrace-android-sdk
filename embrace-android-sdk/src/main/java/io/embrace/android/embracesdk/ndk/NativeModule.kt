@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.injection.DeliveryModule
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.injection.InitModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.singleton
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.worker.WorkerName
 import io.embrace.android.embracesdk.worker.WorkerThreadModule
 

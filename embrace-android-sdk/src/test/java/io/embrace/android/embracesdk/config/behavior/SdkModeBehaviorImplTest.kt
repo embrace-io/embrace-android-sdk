@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.logging.EmbLogger

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.config.behavior
 
-import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
+import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

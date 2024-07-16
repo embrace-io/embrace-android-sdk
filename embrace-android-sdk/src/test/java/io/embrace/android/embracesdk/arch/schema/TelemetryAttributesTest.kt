@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.arch.schema
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl

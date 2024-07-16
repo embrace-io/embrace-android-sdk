@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.config
 
-import io.embrace.android.embracesdk.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.gating
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.gating.v2.EnvelopeSanitizerFacade
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload

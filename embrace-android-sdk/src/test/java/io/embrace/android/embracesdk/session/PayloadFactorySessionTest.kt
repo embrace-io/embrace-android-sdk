@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorServic
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.capture.user.UserService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.LocalConfigParser
-import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -23,6 +21,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.config.LocalConfigParser
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan

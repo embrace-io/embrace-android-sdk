@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
 import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.injection.AnrModule
 import io.embrace.android.embracesdk.injection.CoreModule
@@ -19,6 +18,7 @@ import io.embrace.android.embracesdk.injection.PayloadModule
 import io.embrace.android.embracesdk.injection.SessionModule
 import io.embrace.android.embracesdk.injection.StorageModule
 import io.embrace.android.embracesdk.injection.SystemServiceModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeModule

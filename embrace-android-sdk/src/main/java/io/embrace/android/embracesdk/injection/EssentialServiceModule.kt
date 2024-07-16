@@ -19,11 +19,6 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.EmbraceConfigService
-import io.embrace.android.embracesdk.config.LocalConfigParser
-import io.embrace.android.embracesdk.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -32,6 +27,11 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
+import io.embrace.android.embracesdk.internal.config.LocalConfigParser
+import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
+import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService

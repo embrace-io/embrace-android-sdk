@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.comms.api.ApiClient
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeApiService
@@ -33,6 +32,7 @@ import io.embrace.android.embracesdk.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.MemoryCleanerService
 import io.embrace.android.embracesdk.session.id.SessionIdTracker

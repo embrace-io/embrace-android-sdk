@@ -6,10 +6,10 @@ import com.android.server.os.TombstoneProtos
 import com.google.common.util.concurrent.MoreExecutors
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl

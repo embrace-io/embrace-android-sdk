@@ -6,10 +6,6 @@ import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.local.SessionLocalConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -28,6 +24,10 @@ import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SessionLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span

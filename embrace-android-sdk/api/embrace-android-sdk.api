@@ -200,48 +200,6 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 
-public abstract interface class io/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler {
-	public abstract fun handleInternalError (Ljava/lang/Throwable;)V
-}
-
-public final class io/embrace/android/embracesdk/capture/internal/errors/InternalErrorType : java/lang/Enum {
-	public static final field ACTIVITY_LISTENER_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field ANR_DATA_FETCH Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field ANR_HEARTBEAT_CHECK_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field ANR_HEARTBEAT_STOP_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field BG_SESSION_CACHE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field CFG_CHANGE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field CONFIG_LISTENER_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field DATA_SOURCE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field DISABLE_DATA_CAPTURE Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field DISK_STAT_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field ENABLE_DATA_CAPTURE Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field END_EVENT_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field FG_SESSION_CACHE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field INVALID_JS_EXCEPTION Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field INVALID_NATIVE_SYMBOLS Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field MEMORY_CLEAN_LISTENER_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field NATIVE_CRASH_LOAD_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field NATIVE_HANDLER_INSTALL_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field NATIVE_THREAD_SAMPLE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field NETWORK_STATUS_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field PROCESS_STATE_CALLBACK_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field PROCESS_STATE_SUMMARY_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field SAFE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field SCREEN_RES_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field SESSION_CHANGE_DATA_CAPTURE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field START_EVENT_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field TIME_TRAVEL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field UNBALANCED_BG_CALL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field UNBALANCED_CALL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field UNBALANCED_FG_CALL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field UNCAUGHT_EXC_HANDLER Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field USER_LOAD_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static final field WEB_VITAL_PARSE_FAIL Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-	public static fun values ()[Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface : io/embrace/android/embracesdk/internal/InternalTracingApi {
 	public abstract fun getSdkCurrentTime ()J
 	public abstract fun isAnrCaptureEnabled ()Z
@@ -399,13 +357,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/arch/Embr
 	public abstract fun add (Lio/embrace/android/embracesdk/internal/arch/datasource/DataSourceState;)V
 }
 
-public final class io/embrace/android/embracesdk/internal/arch/SessionType : java/lang/Enum {
-	public static final field BACKGROUND Lio/embrace/android/embracesdk/internal/arch/SessionType;
-	public static final field FOREGROUND Lio/embrace/android/embracesdk/internal/arch/SessionType;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/arch/SessionType;
-	public static fun values ()[Lio/embrace/android/embracesdk/internal/arch/SessionType;
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/arch/datasource/DataSource {
 	public abstract fun captureData (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Z
 	public abstract fun disableDataCapture ()V
@@ -430,10 +381,6 @@ public final class io/embrace/android/embracesdk/internal/arch/datasource/DataSo
 	public final fun getDataSource ()Lio/embrace/android/embracesdk/internal/arch/datasource/DataSource;
 	public final fun onConfigChange ()V
 	public final fun setCurrentSessionType (Lio/embrace/android/embracesdk/internal/arch/SessionType;)V
-}
-
-public final class io/embrace/android/embracesdk/internal/arch/datasource/NoInputValidationKt {
-	public static final fun getNoInputValidation ()Lkotlin/jvm/functions/Function0;
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/arch/destination/LogWriter {
@@ -462,23 +409,6 @@ public final class io/embrace/android/embracesdk/internal/arch/destination/SpanA
 	public final fun getValue ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/arch/limits/LimitStrategy {
-	public abstract fun resetDataCaptureLimits ()V
-	public abstract fun shouldCapture ()Z
-}
-
-public final class io/embrace/android/embracesdk/internal/arch/limits/NoopLimitStrategy : io/embrace/android/embracesdk/internal/arch/limits/LimitStrategy {
-	public static final field INSTANCE Lio/embrace/android/embracesdk/internal/arch/limits/NoopLimitStrategy;
-	public fun resetDataCaptureLimits ()V
-	public fun shouldCapture ()Z
-}
-
-public final class io/embrace/android/embracesdk/internal/arch/limits/UpToLimitStrategy : io/embrace/android/embracesdk/internal/arch/limits/LimitStrategy {
-	public fun <init> (Lkotlin/jvm/functions/Function0;)V
-	public fun resetDataCaptureLimits ()V
-	public fun shouldCapture ()Z
 }
 
 public abstract class io/embrace/android/embracesdk/internal/arch/schema/EmbType : io/embrace/android/embracesdk/internal/arch/schema/TelemetryType {
@@ -1014,33 +944,6 @@ public final class io/embrace/android/embracesdk/internal/config/remote/Unwinder
 	public static final field LIBUNWINDSTACK Lio/embrace/android/embracesdk/internal/config/remote/Unwinder;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/config/remote/Unwinder;
 	public static fun values ()[Lio/embrace/android/embracesdk/internal/config/remote/Unwinder;
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/logging/EmbLogger {
-	public abstract fun getInternalErrorService ()Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;
-	public abstract fun logDebug (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun logError (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun logInfo (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun logSdkNotInitialized (Ljava/lang/String;)V
-	public abstract fun logWarning (Ljava/lang/String;Ljava/lang/Throwable;)V
-	public abstract fun setInternalErrorService (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorHandler;)V
-	public abstract fun trackInternalError (Lio/embrace/android/embracesdk/capture/internal/errors/InternalErrorType;Ljava/lang/Throwable;)V
-}
-
-public final class io/embrace/android/embracesdk/internal/logging/EmbLogger$DefaultImpls {
-	public static synthetic fun logDebug$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-	public static synthetic fun logError$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-	public static synthetic fun logInfo$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-	public static synthetic fun logWarning$default (Lio/embrace/android/embracesdk/internal/logging/EmbLogger;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
-}
-
-public final class io/embrace/android/embracesdk/internal/logging/EmbLogger$Severity : java/lang/Enum {
-	public static final field DEBUG Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
-	public static final field ERROR Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
-	public static final field INFO Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
-	public static final field WARNING Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
-	public static fun values ()[Lio/embrace/android/embracesdk/internal/logging/EmbLogger$Severity;
 }
 
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {

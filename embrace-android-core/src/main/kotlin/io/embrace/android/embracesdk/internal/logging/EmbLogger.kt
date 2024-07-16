@@ -1,16 +1,10 @@
 package io.embrace.android.embracesdk.internal.logging
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorHandler
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-
 /**
  * A simple interface that is used within the Embrace SDK for logging.
  */
-@InternalApi
 public interface EmbLogger {
 
-    @InternalApi
     public enum class Severity {
         DEBUG, INFO, WARNING, ERROR
     }

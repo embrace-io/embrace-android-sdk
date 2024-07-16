@@ -1,12 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
 /**
  * The type of session that contains the data. Currently this is either a session (foreground)
  * or a background activity (background).
  */
-@InternalApi
 public enum class SessionType {
 
     /**

@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.opentelemetry.EmbSpan
 import io.embrace.android.embracesdk.opentelemetry.EmbSpanBuilder
 import io.embrace.android.embracesdk.opentelemetry.EmbTracer
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes

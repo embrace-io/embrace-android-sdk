@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.logging
 
 import android.util.Log
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorHandler
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 
 internal const val EMBRACE_TAG = "[Embrace]"

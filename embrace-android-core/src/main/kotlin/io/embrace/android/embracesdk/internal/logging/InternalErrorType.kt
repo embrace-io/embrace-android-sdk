@@ -1,11 +1,8 @@
-package io.embrace.android.embracesdk.capture.internal.errors
-
-import io.embrace.android.embracesdk.annotation.InternalApi
+package io.embrace.android.embracesdk.internal.logging
 
 /**
  * Represents a type of internal error that can be recorded for the Embrace SDK's telemetry.
  */
-@InternalApi
 public enum class InternalErrorType {
     UNCAUGHT_EXC_HANDLER,
     ANR_DATA_FETCH,

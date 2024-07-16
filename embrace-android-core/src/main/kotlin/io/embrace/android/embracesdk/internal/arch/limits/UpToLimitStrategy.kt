@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.internal.arch.limits
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Allows capturing data up until a limit, then stops capturing.
  */
-@InternalApi
 public class UpToLimitStrategy(
     private val limitProvider: Provider<Int>,
 ) : LimitStrategy {

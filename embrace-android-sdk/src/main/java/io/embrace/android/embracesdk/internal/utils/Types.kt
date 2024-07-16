@@ -233,8 +233,3 @@ internal typealias PayloadModuleSupplier = (
     sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
     webViewServiceProvider: Provider<WebViewService>,
 ) -> PayloadModule
-
-/**
- * Function that returns an instance of T meant to represent a provider/supplier that does not require any input parameters
- */
-internal typealias Provider<T> = () -> T

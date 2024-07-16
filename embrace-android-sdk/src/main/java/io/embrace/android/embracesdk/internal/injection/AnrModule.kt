@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.anr.AnrService
-import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
+import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.internal.anr.AnrService
+import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 
 internal interface AnrModule {
     val anrService: AnrService

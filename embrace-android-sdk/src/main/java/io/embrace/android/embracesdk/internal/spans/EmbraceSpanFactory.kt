@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
 

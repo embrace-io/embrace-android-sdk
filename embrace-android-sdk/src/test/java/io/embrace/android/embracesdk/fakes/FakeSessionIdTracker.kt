@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class FakeSessionIdTracker : SessionIdTracker {
 

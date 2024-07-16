@@ -11,11 +11,11 @@ import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEn
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.ndk.NativeModule
 
 internal class PayloadModuleImpl(
     initModule: InitModule,

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.anr
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Attribute

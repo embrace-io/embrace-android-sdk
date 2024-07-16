@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 /**
  * A [DataSource] that adds or alters a span.

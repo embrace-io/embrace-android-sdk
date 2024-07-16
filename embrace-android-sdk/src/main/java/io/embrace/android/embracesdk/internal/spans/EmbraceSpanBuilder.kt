@@ -6,8 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
-import io.embrace.android.embracesdk.spans.getEmbraceSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.SpanKind

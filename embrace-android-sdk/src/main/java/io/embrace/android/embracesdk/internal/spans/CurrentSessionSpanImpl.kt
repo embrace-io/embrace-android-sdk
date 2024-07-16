@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger

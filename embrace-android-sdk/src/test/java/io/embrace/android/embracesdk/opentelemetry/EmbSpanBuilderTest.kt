@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
-import io.embrace.android.embracesdk.spans.getEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span

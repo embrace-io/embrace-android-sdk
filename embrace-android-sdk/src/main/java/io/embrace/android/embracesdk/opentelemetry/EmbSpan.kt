@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.opentelemetry
 
+import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.toStringMap
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span

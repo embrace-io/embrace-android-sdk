@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
+import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState

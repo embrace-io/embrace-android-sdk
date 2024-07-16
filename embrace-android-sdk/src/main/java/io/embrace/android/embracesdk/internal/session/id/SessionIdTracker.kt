@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.id
 
-import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 
 internal interface SessionIdTracker {
 

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.anr.AnrService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -14,13 +14,13 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.opentelemetry.embAndroidThreads
 import io.embrace.android.embracesdk.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.payload.JsException

@@ -4,7 +4,7 @@ import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.ndk.NdkService
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 
 internal class SessionIdTrackerImpl(
     private val activityManager: ActivityManager?,

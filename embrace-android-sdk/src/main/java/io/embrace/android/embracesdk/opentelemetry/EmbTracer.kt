@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.opentelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.embraceSpanBuilder
-import io.embrace.android.embracesdk.spans.getEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context

@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.injection.CrashModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.ndk.NativeCrashDataSource
-import io.embrace.android.embracesdk.ndk.NoopNativeCrashService
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

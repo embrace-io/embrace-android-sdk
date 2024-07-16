@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.is
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**

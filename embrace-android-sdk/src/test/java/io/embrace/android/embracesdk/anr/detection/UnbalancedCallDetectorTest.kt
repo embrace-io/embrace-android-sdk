@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.anr.detection
 
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.internal.anr.detection.UnbalancedCallDetector
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

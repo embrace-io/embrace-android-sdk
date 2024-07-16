@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.capture.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.capture.envelope.log.LogEnvelopeSourceImpl
-import io.embrace.android.embracesdk.capture.envelope.log.LogPayloadSourceImpl
-import io.embrace.android.embracesdk.capture.envelope.metadata.EnvelopeMetadataSourceImpl
-import io.embrace.android.embracesdk.capture.envelope.resource.DeviceImpl
-import io.embrace.android.embracesdk.capture.envelope.resource.EnvelopeResourceSourceImpl
-import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.capture.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.capture.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.resource.EnvelopeResourceSourceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName

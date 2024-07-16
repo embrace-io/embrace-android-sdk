@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.capture.startup.StartupService
+import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 
 internal class FakeStartupService : StartupService {
 

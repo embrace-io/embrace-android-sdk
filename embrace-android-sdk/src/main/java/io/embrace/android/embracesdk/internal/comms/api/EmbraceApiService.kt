@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityListener
-import io.embrace.android.embracesdk.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender

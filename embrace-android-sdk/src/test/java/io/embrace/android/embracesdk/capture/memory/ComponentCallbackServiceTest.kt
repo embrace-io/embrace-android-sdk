@@ -5,6 +5,7 @@ import android.content.ComponentCallbacks2
 import android.content.Context
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.internal.capture.memory.ComponentCallbackService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.clearAllMocks
 import io.mockk.every

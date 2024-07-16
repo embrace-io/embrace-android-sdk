@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.capture.crumbs.EmbraceBreadcrumbService
-import io.embrace.android.embracesdk.capture.memory.EmbraceMemoryService
-import io.embrace.android.embracesdk.capture.startup.AppStartupTraceEmitter
-import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
@@ -13,6 +9,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
+import io.embrace.android.embracesdk.internal.capture.crumbs.EmbraceBreadcrumbService
+import io.embrace.android.embracesdk.internal.capture.memory.EmbraceMemoryService
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
+import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig

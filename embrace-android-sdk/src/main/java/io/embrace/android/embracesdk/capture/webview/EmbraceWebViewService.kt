@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.WebViewInfo
 import io.embrace.android.embracesdk.payload.WebVitalType
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import java.util.EnumMap
 
 internal class EmbraceWebViewService(

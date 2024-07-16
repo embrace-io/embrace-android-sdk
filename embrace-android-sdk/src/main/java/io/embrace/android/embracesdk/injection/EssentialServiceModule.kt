@@ -33,18 +33,18 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
-import io.embrace.android.embracesdk.session.MemoryCleanerService
-import io.embrace.android.embracesdk.session.id.SessionIdTracker
-import io.embrace.android.embracesdk.session.id.SessionIdTrackerImpl
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 
 /**
  * This module contains services that are essential for bootstrapping other functionality in

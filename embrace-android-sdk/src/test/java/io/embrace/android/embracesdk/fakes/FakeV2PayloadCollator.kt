@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.session.message.FinalEnvelopeParams
+import io.embrace.android.embracesdk.internal.session.message.InitialEnvelopeParams
+import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollator
 import io.embrace.android.embracesdk.payload.ApplicationState
 import io.embrace.android.embracesdk.payload.SessionZygote
-import io.embrace.android.embracesdk.session.message.FinalEnvelopeParams
-import io.embrace.android.embracesdk.session.message.InitialEnvelopeParams
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollator
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class FakeV2PayloadCollator(

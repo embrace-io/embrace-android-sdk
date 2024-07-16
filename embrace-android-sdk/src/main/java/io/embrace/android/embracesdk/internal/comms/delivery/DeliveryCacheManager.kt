@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 
 internal interface DeliveryCacheManager {
     fun saveSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType)

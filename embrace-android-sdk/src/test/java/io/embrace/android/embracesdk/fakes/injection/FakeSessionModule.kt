@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.FakePayloadFactory
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.injection.SessionModule
-import io.embrace.android.embracesdk.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.session.caching.PeriodicSessionCacher
-import io.embrace.android.embracesdk.session.message.PayloadFactory
-import io.embrace.android.embracesdk.session.message.PayloadMessageCollatorImpl
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
+import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
+import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 
 internal class FakeSessionModule(
     override val payloadFactory: PayloadFactory = FakePayloadFactory(),

@@ -4,10 +4,10 @@ import android.app.Activity
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.payload.TapBreadcrumb
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 
 /**
  * Handles the logging of breadcrumbs.

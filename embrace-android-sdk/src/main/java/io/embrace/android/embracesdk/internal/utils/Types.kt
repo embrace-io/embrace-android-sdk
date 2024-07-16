@@ -21,9 +21,9 @@ import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
 import java.io.OutputStream
 
 /**

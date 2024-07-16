@@ -16,12 +16,12 @@ import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.JVM_CRASH
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.JVM_CRASH
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.NORMAL_END
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.spyk

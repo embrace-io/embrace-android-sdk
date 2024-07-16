@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.registry
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.session.MemoryCleanerService
-import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.session.lifecycle.StartupListener
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 

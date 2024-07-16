@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 

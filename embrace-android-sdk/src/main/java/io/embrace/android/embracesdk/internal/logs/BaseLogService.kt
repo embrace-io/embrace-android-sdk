@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.session.MemoryCleanerListener
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 
 internal interface BaseLogService : MemoryCleanerListener {
     /**

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.opentelemetry.semconv.ErrorAttributes
@@ -217,7 +218,7 @@ public sealed class SchemaType(
 
     public class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "url.full" to networkRequest.url,
+            "url.full" to stripUrl(networkRequest.url),
             HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
             HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
             HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
+import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorHandler
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.logging.EmbLogger
 
@@ -18,7 +18,7 @@ internal class FakeEmbLogger : EmbLogger {
     var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
     var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
 
-    override var internalErrorService: InternalErrorService? = null
+    override var internalErrorService: InternalErrorHandler? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
         debugMessages.add(LogMessage(msg, throwable))

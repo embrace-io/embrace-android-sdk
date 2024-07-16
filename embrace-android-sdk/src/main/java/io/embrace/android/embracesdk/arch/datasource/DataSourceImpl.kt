@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.logging.EmbLogger
 /**
  * Base class for data sources.
  */
-internal abstract class DataSourceImpl<T>(
+public abstract class DataSourceImpl<T>(
     private val destination: T,
     private val logger: EmbLogger,
     private val limitStrategy: LimitStrategy,

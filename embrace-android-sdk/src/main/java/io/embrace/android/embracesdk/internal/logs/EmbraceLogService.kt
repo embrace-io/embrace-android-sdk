@@ -221,7 +221,7 @@ internal class EmbraceLogService(
     private fun createTelemetryAttributes(customProperties: Map<String, Any>?): TelemetryAttributes {
         val attributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
 

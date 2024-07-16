@@ -1,126 +1,134 @@
 package io.embrace.android.embracesdk.arch.schema
 
-internal sealed class EmbType(type: String, subtype: String?) : TelemetryType {
-    override val key = EmbraceAttributeKey(id = "type")
-    override val value = type + (subtype?.run { ".$this" } ?: "")
+import io.embrace.android.embracesdk.annotation.InternalApi
+
+@InternalApi
+public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
+    override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "type")
+    override val value: String = type + (subtype?.run { ".$this" } ?: "")
     override val sendImmediately: Boolean = false
 
     /**
      * Keys that track how fast a time interval is. Only applies to spans.
      */
-    internal sealed class Performance(subtype: String?) : EmbType("perf", subtype) {
+    public sealed class Performance(subtype: String?) : EmbType("perf", subtype) {
 
-        internal object Default : Performance(null)
+        public object Default : Performance(null)
 
-        internal object Network : Performance("network_request")
+        public object Network : Performance("network_request")
 
-        internal object ThreadBlockage : Performance("thread_blockage")
+        public object ThreadBlockage : Performance("thread_blockage")
 
-        internal object ThreadBlockageSample : Performance("thread_blockage_sample")
+        public object ThreadBlockageSample : Performance("thread_blockage_sample")
 
-        internal object MemoryWarning : Performance("memory_warning")
+        public object MemoryWarning : Performance("memory_warning")
 
-        internal object NativeThreadBlockage : Performance("native_thread_blockage")
+        public object NativeThreadBlockage : Performance("native_thread_blockage")
 
-        internal object NativeThreadBlockageSample : Performance("native_thread_blockage_sample")
+        public object NativeThreadBlockageSample : Performance("native_thread_blockage_sample")
 
-        internal object ThermalState : Performance("thermal_state")
+        public object ThermalState : Performance("thermal_state")
     }
 
     /**
      * Keys that track telemetry that is explicitly tied to user behaviour or visual in nature.
      * Applies to spans, logs, and span events.
      */
-    internal sealed class Ux(subtype: String) : EmbType("ux", subtype) {
+    public sealed class Ux(subtype: String) : EmbType("ux", subtype) {
 
-        internal object Session : Ux("session")
+        public object Session : Ux("session")
 
-        internal object View : Ux("view")
+        public object View : Ux("view")
 
-        internal object Tap : Ux("tap")
+        public object Tap : Ux("tap")
 
-        internal object WebView : Ux("webview")
+        public object WebView : Ux("webview")
     }
 
     /**
      * Keys that track telemetry that is not explicitly tied to user behaviour and is not visual in nature.
      * Applies to spans, logs, and span events.
      */
-    internal sealed class System(
+    public sealed class System(
         subtype: String,
         override val sendImmediately: Boolean = false
     ) : EmbType("sys", subtype) {
 
-        internal object Breadcrumb : System("breadcrumb")
+        public object Breadcrumb : System("breadcrumb")
 
-        internal object Log : System("log")
+        public object Log : System("log")
 
-        internal object Exception : System("exception")
+        public object Exception : System("exception")
 
-        internal object InternalError : System("internal")
+        public object InternalError : System("internal")
 
-        internal object FlutterException : System("flutter_exception") {
+        public object FlutterException : System("flutter_exception") {
             /**
              * Attribute name for the exception context in a log representing an exception
              */
-            val embFlutterExceptionContext = EmbraceAttributeKey("exception.context")
+            public val embFlutterExceptionContext: EmbraceAttributeKey = EmbraceAttributeKey("exception.context")
 
             /**
              * Attribute name for the exception library in a log representing an exception
              */
-            val embFlutterExceptionLibrary = EmbraceAttributeKey("exception.library")
+            public val embFlutterExceptionLibrary: EmbraceAttributeKey = EmbraceAttributeKey("exception.library")
         }
 
-        internal object Exit : System("exit", true)
+        public object Exit : System("exit", true)
 
-        internal object PushNotification : System("push_notification")
+        public object PushNotification : System("push_notification")
 
-        internal object Crash : System("android.crash", true) {
+        public object Crash : System("android.crash", true) {
             /**
              * The list of [Throwable] that caused the exception responsible for a crash
              */
-            val embAndroidCrashExceptionCause = EmbraceAttributeKey("android.crash.exception_cause")
+            public val embAndroidCrashExceptionCause: EmbraceAttributeKey =
+                EmbraceAttributeKey("android.crash.exception_cause")
         }
 
-        internal object ReactNativeCrash : System("android.react_native_crash", true) {
+        public object ReactNativeCrash : System("android.react_native_crash", true) {
             /**
              * The JavaScript unhandled exception from the ReactNative layer
              */
-            val embAndroidReactNativeCrashJsException = EmbraceAttributeKey("android.react_native_crash.js_exception")
+            public val embAndroidReactNativeCrashJsException: EmbraceAttributeKey = EmbraceAttributeKey(
+                "android.react_native_crash.js_exception"
+            )
         }
 
-        internal object ReactNativeAction : System("rn_action", true)
+        public object ReactNativeAction : System("rn_action", true)
 
-        internal object NativeCrash : System("android.native_crash", true) {
+        public object NativeCrash : System("android.native_crash", true) {
             /**
              * Exception coming from the native layer
              */
-            val embNativeCrashException = EmbraceAttributeKey("android.native_crash.exception")
+            public val embNativeCrashException: EmbraceAttributeKey =
+                EmbraceAttributeKey("android.native_crash.exception")
 
             /**
              * Native symbols used to symbolicate a native crash
              */
-            val embNativeCrashSymbols = EmbraceAttributeKey("android.native_crash.symbols")
+            public val embNativeCrashSymbols: EmbraceAttributeKey = EmbraceAttributeKey("android.native_crash.symbols")
 
             /**
              * Errors associated with the native crash
              */
-            val embNativeCrashErrors = EmbraceAttributeKey("android.native_crash.errors")
+            public val embNativeCrashErrors: EmbraceAttributeKey = EmbraceAttributeKey("android.native_crash.errors")
 
             /**
              * Error encountered during stack unwinding
              */
-            val embNativeCrashUnwindError = EmbraceAttributeKey("android.native_crash.unwind_error")
+            public val embNativeCrashUnwindError: EmbraceAttributeKey =
+                EmbraceAttributeKey("android.native_crash.unwind_error")
         }
 
-        internal object LowPower : System("low_power")
+        public object LowPower : System("low_power")
 
-        internal object Sigquit : System("sigquit")
+        public object Sigquit : System("sigquit")
 
-        internal object NetworkCapturedRequest : System("network_capture", true)
+        public object NetworkCapturedRequest : System("network_capture", true)
 
-        internal object NetworkStatus : System("network_status")
+        public object NetworkStatus : System("network_status")
 
-        internal object WebViewInfo : System("webview_info")
+        public object WebViewInfo : System("webview_info")
     }
 }

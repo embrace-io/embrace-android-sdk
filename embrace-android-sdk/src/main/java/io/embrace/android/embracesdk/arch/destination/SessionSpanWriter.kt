@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch.destination
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -7,7 +8,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 /**
  * Declares functions for writing an [EmbraceSpanEvent] or attributes to the current session span.
  */
-internal interface SessionSpanWriter {
+@InternalApi
+public interface SessionSpanWriter {
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name]. If [spanStartTimeMs] is null, the
@@ -16,24 +18,24 @@ internal interface SessionSpanWriter {
      *
      * Returns true if the event was added, otherwise false.
      */
-    fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
+    public fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
 
     /**
      * Remove all events with the given [EmbType].
      */
-    fun removeEvents(type: EmbType)
+    public fun removeEvents(type: EmbType)
 
     /**
      * Add the given key-value pair as an Attribute to the Event.
      *
      * Returns true if the attribute was added, otherwise false.
      */
-    fun addCustomAttribute(attribute: SpanAttributeData): Boolean
+    public fun addCustomAttribute(attribute: SpanAttributeData): Boolean
 
     /**
      * Remove the attribute with the given key
      *
      * Returns true if attribute was removed, otherwise false.
      */
-    fun removeCustomAttribute(key: String): Boolean
+    public fun removeCustomAttribute(key: String): Boolean
 }

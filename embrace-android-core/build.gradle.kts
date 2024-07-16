@@ -9,3 +9,7 @@ android {
 }
 
 apiValidation.validationDisabled = true
+
+dependencies {
+    implementation(project(":embrace-android-payload"))
+}

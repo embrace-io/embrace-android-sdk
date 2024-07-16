@@ -3,16 +3,16 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.payload.ApplicationState
-import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.NetworkEvent
 
 /**
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of

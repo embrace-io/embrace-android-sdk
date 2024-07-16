@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
-import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 
 /**
  * A snapshot of the current call stack of the threads running in the app process per [ThreadInfo]

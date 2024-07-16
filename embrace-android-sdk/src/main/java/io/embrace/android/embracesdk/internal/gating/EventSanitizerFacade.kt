@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.gating
 
-import io.embrace.android.embracesdk.payload.EventMessage
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 
 internal class EventSanitizerFacade(
     private val eventMessage: EventMessage,

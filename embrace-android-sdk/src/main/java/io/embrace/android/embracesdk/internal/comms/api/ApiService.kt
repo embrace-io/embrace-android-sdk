@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.payload.EventMessage
-import io.embrace.android.embracesdk.payload.NetworkEvent
 import java.util.concurrent.Future
 
 internal interface ApiService {

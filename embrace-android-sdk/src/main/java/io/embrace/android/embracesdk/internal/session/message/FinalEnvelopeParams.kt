@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.payload.SessionZygote
 
 /**
  * Holds the parameters & logic needed to create a final session object that can be

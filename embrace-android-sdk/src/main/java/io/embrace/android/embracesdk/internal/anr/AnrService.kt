@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.internal.arch.DataCaptureService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import java.io.Closeable
 
 /**

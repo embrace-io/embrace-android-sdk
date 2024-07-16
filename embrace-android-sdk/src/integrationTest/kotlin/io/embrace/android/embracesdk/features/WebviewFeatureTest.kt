@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.payload.WebVital
-import io.embrace.android.embracesdk.payload.WebVitalType
+import io.embrace.android.embracesdk.internal.payload.WebVital
+import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Before

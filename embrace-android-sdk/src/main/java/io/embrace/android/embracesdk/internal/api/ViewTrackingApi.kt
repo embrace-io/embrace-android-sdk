@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api
 
 import android.app.Application
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 
 internal interface ViewTrackingApi {
 

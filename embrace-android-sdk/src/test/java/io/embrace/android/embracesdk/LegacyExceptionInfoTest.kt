@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
 import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
+import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
-import io.embrace.android.embracesdk.payload.ApplicationState
-import io.embrace.android.embracesdk.payload.SessionZygote
 
 internal class FakePayloadFactory : PayloadFactory {
 

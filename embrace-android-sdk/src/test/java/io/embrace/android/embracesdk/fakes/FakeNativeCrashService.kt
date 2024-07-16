@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
 internal class FakeNativeCrashService : NativeCrashService {
 

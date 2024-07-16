@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
+import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
-import io.embrace.android.embracesdk.payload.ApplicationState
-import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionZygote
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

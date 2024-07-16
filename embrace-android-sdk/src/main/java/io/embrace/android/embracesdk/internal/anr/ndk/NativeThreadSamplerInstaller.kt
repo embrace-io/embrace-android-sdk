@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class NativeThreadSamplerNdkDelegate : EmbraceNativeThreadSamplerService.NdkDelegate {

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnix
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -21,7 +22,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.payload.SessionZygote
 
 internal class SessionOrchestratorImpl(
     processStateService: ProcessStateService,

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import java.util.regex.Pattern
 
 internal class ThreadInfoCollector(

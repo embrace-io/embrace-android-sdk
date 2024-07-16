@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.internal.arch.schema.SendImmediately
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.embrace.android.embracesdk.payload.NativeCrashData
-import io.embrace.android.embracesdk.payload.NativeCrashDataError
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 
 internal val testLog = Log(
     traceId = "ceadd56622414a06ae382e4e5a70bcf7",

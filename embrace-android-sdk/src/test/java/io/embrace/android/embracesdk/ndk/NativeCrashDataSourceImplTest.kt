@@ -21,13 +21,13 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.payload.NativeCrashDataError
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

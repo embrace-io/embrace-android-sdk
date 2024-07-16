@@ -19,8 +19,8 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartupDur
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartupThreshold
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
-import io.embrace.android.embracesdk.payload.LifeEventType
-import io.embrace.android.embracesdk.payload.SessionZygote
+import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import java.util.Locale
 
 internal class SessionSpanAttrPopulator(

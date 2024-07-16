@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb
 
 internal class LogsApiDelegate(
     bootstrapper: ModuleInitBootstrapper,

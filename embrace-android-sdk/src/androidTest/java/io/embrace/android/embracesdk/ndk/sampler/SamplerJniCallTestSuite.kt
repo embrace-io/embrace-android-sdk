@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.ndk.sampler
 
 import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerNdkDelegate
 import io.embrace.android.embracesdk.ndk.NativeTestSuite
-import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

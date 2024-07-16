@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.payload.UserInfo
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 

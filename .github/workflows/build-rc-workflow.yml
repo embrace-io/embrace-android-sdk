@@ -51,16 +51,8 @@ jobs:
           ref: release/${{ github.event.inputs.version_of_rc }}
           token: ${{ secrets.CD_GITHUB_TOKEN }}
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.m2/repository
-            ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml', 'gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Install JDK ${{ matrix.jdk-version }}
         uses: actions/setup-java@v4

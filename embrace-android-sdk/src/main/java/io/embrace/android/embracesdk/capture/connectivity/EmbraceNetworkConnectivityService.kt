@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import java.net.Inet4Address
 import java.net.NetworkInterface

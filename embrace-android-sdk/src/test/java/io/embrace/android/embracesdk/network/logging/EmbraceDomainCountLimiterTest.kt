@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import org.junit.Before

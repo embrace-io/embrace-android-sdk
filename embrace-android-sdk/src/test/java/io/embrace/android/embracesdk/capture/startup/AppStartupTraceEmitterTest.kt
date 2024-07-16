@@ -12,13 +12,13 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Before

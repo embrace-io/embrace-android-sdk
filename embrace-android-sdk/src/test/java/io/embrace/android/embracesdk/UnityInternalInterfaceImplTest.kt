@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk

@@ -13,12 +13,12 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.Event

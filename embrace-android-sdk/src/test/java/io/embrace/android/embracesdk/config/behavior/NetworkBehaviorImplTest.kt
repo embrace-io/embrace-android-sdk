@@ -10,10 +10,10 @@ import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

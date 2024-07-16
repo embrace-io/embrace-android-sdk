@@ -19,7 +19,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
-import io.embrace.android.embracesdk.logging.EmbLogger;
+import io.embrace.android.embracesdk.internal.logging.EmbLogger;
 
 /**
  * API to encrypt/decrypt data

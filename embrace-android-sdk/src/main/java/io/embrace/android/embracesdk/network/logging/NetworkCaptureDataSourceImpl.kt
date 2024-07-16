@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 
 internal class NetworkCaptureDataSourceImpl(

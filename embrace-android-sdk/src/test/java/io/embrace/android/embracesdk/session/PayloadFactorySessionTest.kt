@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -30,7 +31,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.session.message.PayloadFactory

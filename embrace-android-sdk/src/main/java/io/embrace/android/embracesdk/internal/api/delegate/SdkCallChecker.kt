@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.telemetry.TelemetryService
 import java.util.concurrent.atomic.AtomicBoolean
 

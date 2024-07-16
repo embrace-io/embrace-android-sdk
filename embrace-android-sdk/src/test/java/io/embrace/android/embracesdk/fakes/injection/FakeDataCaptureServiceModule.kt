@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMemoryService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.mockk.mockk
 
 internal class FakeDataCaptureServiceModule(

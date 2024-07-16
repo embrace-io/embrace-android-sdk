@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.session.message
 
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.SessionZygote
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 

@@ -20,8 +20,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties

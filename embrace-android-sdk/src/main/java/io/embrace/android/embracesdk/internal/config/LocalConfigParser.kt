@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 
 internal object LocalConfigParser {

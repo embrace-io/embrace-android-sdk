@@ -9,7 +9,7 @@ import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.fakes.system.mockLooper
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.session.lifecycle.StartupListener

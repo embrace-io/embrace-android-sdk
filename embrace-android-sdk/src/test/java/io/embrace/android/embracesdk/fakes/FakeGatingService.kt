@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.gating.GatingService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.EventMessage
 
 /**

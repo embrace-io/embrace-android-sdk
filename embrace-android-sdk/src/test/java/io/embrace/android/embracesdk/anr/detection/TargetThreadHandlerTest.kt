@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.fakes.system.mockMessage
 import io.embrace.android.embracesdk.fakes.system.mockMessageQueue
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.ScheduledWorker
 import io.mockk.mockk
 import io.mockk.verify

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.enforceThread
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AnrInterval
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * Tracks internal errors & sends them as OTel logs.

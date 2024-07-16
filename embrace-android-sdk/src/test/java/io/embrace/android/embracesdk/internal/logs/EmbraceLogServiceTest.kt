@@ -21,10 +21,10 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.worker.BackgroundWorker

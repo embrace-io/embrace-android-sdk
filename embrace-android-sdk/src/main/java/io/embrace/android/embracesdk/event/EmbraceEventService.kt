@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener

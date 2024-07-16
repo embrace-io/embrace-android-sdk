@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.capture.crash.CrashService
 import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.JsException
 
 internal class ReactNativeInternalInterfaceImpl(

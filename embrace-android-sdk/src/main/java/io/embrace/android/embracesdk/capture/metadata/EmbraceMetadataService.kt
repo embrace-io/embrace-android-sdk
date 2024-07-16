@@ -19,8 +19,8 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppInfo
 import io.embrace.android.embracesdk.payload.DeviceInfo
 import io.embrace.android.embracesdk.payload.DiskUsage

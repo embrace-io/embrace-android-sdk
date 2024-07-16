@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerListener
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.utils.at
 import org.junit.Assert.assertEquals
 import org.junit.Before

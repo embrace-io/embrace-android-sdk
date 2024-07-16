@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.samples
 
 import io.embrace.android.embracesdk.EmbraceAutomaticVerification
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * Exception Handler that verifies if a VerifyIntegrationException was received,

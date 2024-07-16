@@ -12,11 +12,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 import io.embrace.android.embracesdk.opentelemetry.embAndroidThreads
 import io.embrace.android.embracesdk.opentelemetry.embCrashNumber

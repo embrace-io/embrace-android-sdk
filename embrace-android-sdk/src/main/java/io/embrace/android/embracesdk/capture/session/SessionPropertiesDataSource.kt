@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
-import io.embrace.android.embracesdk.logging.EmbLogger
 
 internal class SessionPropertiesDataSource(
     sessionBehavior: SessionBehavior,

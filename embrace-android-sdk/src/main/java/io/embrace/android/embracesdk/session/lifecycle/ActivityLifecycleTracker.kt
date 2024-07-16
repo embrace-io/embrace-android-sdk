@@ -5,7 +5,7 @@ import android.app.Application
 import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.utils.stream
 import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList

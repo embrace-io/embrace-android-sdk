@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.cpu
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 internal class EmbraceCpuInfoDelegate(
     private val sharedObjectLoader: SharedObjectLoader,

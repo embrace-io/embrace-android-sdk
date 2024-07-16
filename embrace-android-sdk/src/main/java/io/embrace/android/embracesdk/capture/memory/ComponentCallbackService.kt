@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.capture.memory
 import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.res.Configuration
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.Closeable
 
 internal class ComponentCallbackService(

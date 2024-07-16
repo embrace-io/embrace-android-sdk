@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe

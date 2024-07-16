@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.NetworkSessionV2
 import io.embrace.android.embracesdk.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.utils.NetworkUtils

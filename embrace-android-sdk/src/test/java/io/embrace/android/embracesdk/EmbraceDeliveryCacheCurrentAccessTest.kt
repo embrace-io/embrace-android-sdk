@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecut
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.storage.StorageService
 import io.embrace.android.embracesdk.worker.BackgroundWorker

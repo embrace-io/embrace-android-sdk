@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

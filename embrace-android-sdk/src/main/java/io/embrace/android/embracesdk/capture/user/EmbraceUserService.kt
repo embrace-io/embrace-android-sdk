@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.capture.user
 
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.UserInfo
 import io.embrace.android.embracesdk.payload.UserInfo.Companion.ofStored
 import io.embrace.android.embracesdk.prefs.PreferencesService

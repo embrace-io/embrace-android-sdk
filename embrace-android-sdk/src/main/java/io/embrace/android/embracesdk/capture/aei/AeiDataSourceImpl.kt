@@ -12,10 +12,10 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.AppExitInfoData
 import io.embrace.android.embracesdk.prefs.PreferencesService
 import io.embrace.android.embracesdk.worker.BackgroundWorker

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.comms.delivery
 import io.embrace.android.embracesdk.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -13,7 +14,6 @@ import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NativeCrashService
 import io.embrace.android.embracesdk.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.payload.EventMessage

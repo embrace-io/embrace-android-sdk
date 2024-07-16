@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.BuildInfo.Companion.fromResources
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.registry.ServiceRegistry
 
 /**

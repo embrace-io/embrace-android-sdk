@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.comms.api.Endpoint
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.Event
 import io.embrace.android.embracesdk.payload.EventMessage
 import io.embrace.android.embracesdk.worker.ScheduledWorker

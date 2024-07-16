@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.session.id
 import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorType
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class SessionIdTrackerImpl(

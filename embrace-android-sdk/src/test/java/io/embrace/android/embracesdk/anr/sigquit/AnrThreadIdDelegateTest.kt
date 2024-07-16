@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.anr.sigquit
 
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

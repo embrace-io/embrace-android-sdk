@@ -6,8 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class PowerSaveModeReceiver(

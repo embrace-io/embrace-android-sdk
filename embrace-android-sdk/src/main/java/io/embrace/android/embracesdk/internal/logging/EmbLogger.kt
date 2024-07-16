@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.logging
+package io.embrace.android.embracesdk.internal.logging
 
 import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorHandler

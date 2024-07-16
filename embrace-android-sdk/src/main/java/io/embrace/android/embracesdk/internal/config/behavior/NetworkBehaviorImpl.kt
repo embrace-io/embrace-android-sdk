@@ -62,11 +62,12 @@ internal class NetworkBehaviorImpl(
         val domainSuffixLimits: MutableMap<String, Int> = remote?.networkConfig?.domainLimits?.toMutableMap() ?: mutableMapOf()
 
         local?.networking?.domains?.forEach { localLimit ->
-            if (localLimit.domain != null && localLimit.limit != null) {
-                domainSuffixLimits[localLimit.domain] =
-                    domainSuffixLimits[localLimit.domain]?.let { remoteLimit ->
-                        min(remoteLimit, localLimit.limit)
-                    } ?: min(limitCeiling, localLimit.limit)
+            val dom = localLimit.domain
+            val lim = localLimit.limit
+            if (dom != null && lim != null) {
+                domainSuffixLimits[dom] = domainSuffixLimits[dom]?.let { remoteLimit ->
+                    min(remoteLimit, lim)
+                } ?: min(limitCeiling, lim)
             }
         }
 

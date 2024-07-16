@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.opentelemetry
 
-import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.EXCEPTION_EVENT_NAME
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute

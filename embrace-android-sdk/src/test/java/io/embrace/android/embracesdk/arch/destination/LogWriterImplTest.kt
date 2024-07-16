@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.arch.destination
 
-import io.embrace.android.embracesdk.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.opentelemetry.embSessionId

@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.capture.session
 
-import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
-import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
+import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.logging.EmbLogger
 

@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fixtures.testLog
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.opentelemetry.sdk.logs.export.LogRecordExporter

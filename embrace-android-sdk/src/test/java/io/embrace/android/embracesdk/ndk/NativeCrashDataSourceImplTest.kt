@@ -2,13 +2,6 @@ package io.embrace.android.embracesdk.ndk
 
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashErrors
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
@@ -16,6 +9,13 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashErrors
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute

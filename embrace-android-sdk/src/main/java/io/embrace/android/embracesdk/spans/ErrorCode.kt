@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.spans
 
 import io.embrace.android.embracesdk.annotation.BetaApi
-import io.embrace.android.embracesdk.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 
 /**
  * Categorize the broad reason a Span completed unsuccessfully.

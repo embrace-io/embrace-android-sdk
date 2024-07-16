@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk
 
 import com.squareup.moshi.Types
-import io.embrace.android.embracesdk.arch.SessionType
-import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.config.remote.RemoteConfig
@@ -13,6 +11,8 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.arch.SessionType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.payload.WebVital

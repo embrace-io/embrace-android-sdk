@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.FixedAttribute
-import io.embrace.android.embracesdk.arch.schema.KeySpan
-import io.embrace.android.embracesdk.arch.schema.PrivateSpan
-import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.spans.getEmbraceSpan

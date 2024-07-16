@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.capture.crash
 
 import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.arch.assertIsType
-import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.config.local.CrashHandlerLocalConfig
 import io.embrace.android.embracesdk.config.local.LocalConfig
 import io.embrace.android.embracesdk.config.local.SdkLocalConfig
@@ -15,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl

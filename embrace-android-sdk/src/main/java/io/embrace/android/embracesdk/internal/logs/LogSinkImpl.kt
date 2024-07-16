@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.arch.schema.SendImmediately
+import io.embrace.android.embracesdk.internal.arch.schema.SendImmediately
 import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl.Companion.MAX_LOGS_PER_BATCH
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.toNewPayload

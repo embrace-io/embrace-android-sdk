@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.arch
 
-import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.internal.arch.SessionType
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 import org.junit.Assert.assertEquals

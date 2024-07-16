@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.payload.NetworkCapturedCall
 

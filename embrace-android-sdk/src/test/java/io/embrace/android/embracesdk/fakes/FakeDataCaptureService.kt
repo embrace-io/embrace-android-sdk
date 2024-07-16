@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.DataCaptureService
+import io.embrace.android.embracesdk.internal.arch.DataCaptureService
 
 internal abstract class FakeDataCaptureService<T> : DataCaptureService<List<T>?> {
 

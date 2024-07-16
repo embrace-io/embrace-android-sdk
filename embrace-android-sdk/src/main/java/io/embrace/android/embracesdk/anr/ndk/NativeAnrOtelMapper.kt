@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.anr.ndk
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Types
-import io.embrace.android.embracesdk.arch.DataCaptureServiceOtelConverter
+import io.embrace.android.embracesdk.internal.arch.DataCaptureServiceOtelConverter
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute

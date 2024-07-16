@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.os.Looper
-import io.embrace.android.embracesdk.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.capture.metadata.EmbraceMetadataService
@@ -20,6 +19,7 @@ import io.embrace.android.embracesdk.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService

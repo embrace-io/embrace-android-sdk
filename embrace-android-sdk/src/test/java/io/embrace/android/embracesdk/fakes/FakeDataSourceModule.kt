@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
-import io.embrace.android.embracesdk.arch.DataCaptureOrchestrator
-import io.embrace.android.embracesdk.arch.EmbraceFeatureRegistry
-import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.capture.crumbs.BreadcrumbDataSource
@@ -20,6 +17,9 @@ import io.embrace.android.embracesdk.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
+import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.worker.BackgroundWorker
 
 internal class FakeDataSourceModule : DataSourceModule {

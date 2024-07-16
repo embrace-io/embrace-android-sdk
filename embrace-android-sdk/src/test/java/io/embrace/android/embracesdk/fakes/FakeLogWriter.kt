@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 
 internal class FakeLogWriter : LogWriter {
 

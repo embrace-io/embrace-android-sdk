@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
-import io.embrace.android.embracesdk.arch.datasource.DataSourceImpl
-import io.embrace.android.embracesdk.arch.datasource.NoInputValidation
-import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
-import io.embrace.android.embracesdk.arch.schema.SchemaType
 import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
+import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.logging.EmbLogger
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb

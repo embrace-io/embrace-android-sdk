@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
-import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
@@ -20,6 +18,8 @@ import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
 import io.embrace.android.embracesdk.fixtures.maxSizeEvents
 import io.embrace.android.embracesdk.fixtures.tooBigAttributes
 import io.embrace.android.embracesdk.fixtures.tooBigEvents
+import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode

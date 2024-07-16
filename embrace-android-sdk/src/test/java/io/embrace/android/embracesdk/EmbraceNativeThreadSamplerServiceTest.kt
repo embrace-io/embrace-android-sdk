@@ -1,21 +1,23 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.anr.ndk.EmbraceNativeThreadSamplerService
-import io.embrace.android.embracesdk.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.AnrBehavior
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
-import io.embrace.android.embracesdk.payload.NativeThreadAnrSample
-import io.embrace.android.embracesdk.payload.NativeThreadAnrStackframe
-import io.embrace.android.embracesdk.payload.mapThreadState
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
+import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
+import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.Unwinder
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrStackframe
+import io.embrace.android.embracesdk.internal.payload.mapThreadState
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -205,11 +207,11 @@ internal class EmbraceNativeThreadSamplerServiceTest {
     fun testRespectsAllowlist() {
         cfg = AnrRemoteConfig(
             nativeThreadAnrSamplingAllowlist = listOf(
-                AnrRemoteConfig.AllowedNdkSampleMethod(
+                AllowedNdkSampleMethod(
                     "com.unity3d.player.UnityPlayer",
                     "pauseUnity"
                 ),
-                AnrRemoteConfig.AllowedNdkSampleMethod("io.example.CustomClz", "customMethod")
+                AllowedNdkSampleMethod("io.example.CustomClz", "customMethod")
             ),
             ignoreNativeThreadAnrSamplingAllowlist = false
         )
@@ -367,7 +369,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         assertEquals(thread.name, tick.name)
         assertEquals(mapThreadState(thread.state).code, tick.state)
         assertEquals(thread.priority, tick.priority)
-        assertEquals(AnrRemoteConfig.Unwinder.LIBUNWIND.code, tick.unwinder)
+        assertEquals(Unwinder.LIBUNWIND.code, tick.unwinder)
 
         val obj = checkNotNull(tick.samples?.single())
         assertEquals(testSample, obj)

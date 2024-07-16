@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.capture.envelope.log
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fixtures.nonbatchableLog
 import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData
+import io.embrace.android.embracesdk.internal.capture.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals

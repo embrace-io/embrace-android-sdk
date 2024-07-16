@@ -3,13 +3,9 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.injection.InternalInterfaceModule
-import io.embrace.android.embracesdk.injection.InternalInterfaceModuleImpl
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
@@ -36,9 +32,14 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
+import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.spans.TracingApi
-import io.embrace.android.embracesdk.worker.WorkerName
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this

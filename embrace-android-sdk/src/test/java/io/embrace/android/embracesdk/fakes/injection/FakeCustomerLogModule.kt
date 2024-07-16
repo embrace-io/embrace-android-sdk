@@ -9,16 +9,16 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
-import io.embrace.android.embracesdk.injection.CustomerLogModule
+import io.embrace.android.embracesdk.internal.injection.CustomerLogModule
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
+import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class FakeCustomerLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),

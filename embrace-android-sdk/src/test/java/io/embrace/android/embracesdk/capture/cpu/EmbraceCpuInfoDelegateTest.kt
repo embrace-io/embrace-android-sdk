@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.capture.cpu
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll

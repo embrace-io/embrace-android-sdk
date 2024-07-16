@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 
 /**

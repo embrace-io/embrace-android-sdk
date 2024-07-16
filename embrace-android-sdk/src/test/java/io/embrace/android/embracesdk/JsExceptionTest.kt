@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.internal.payload.JsException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

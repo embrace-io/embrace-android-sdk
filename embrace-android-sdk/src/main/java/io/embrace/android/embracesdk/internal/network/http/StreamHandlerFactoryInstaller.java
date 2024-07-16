@@ -16,7 +16,7 @@ import java.net.URLStreamHandlerFactory;
 import javax.net.ssl.HttpsURLConnection;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.utils.exceptions.Unchecked;
+import io.embrace.android.embracesdk.internal.utils.exceptions.Unchecked;
 
 /**
  * Installs the correct type of {@link URLStreamHandlerFactory} in order to intercept network

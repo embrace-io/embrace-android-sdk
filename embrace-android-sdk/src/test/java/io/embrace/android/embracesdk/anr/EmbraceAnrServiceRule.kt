@@ -1,18 +1,19 @@
 package io.embrace.android.embracesdk.anr
 
 import android.os.Looper
-import io.embrace.android.embracesdk.anr.detection.BlockedThreadDetector
-import io.embrace.android.embracesdk.anr.detection.LivenessCheckScheduler
-import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler
-import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.system.mockLooper
+import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
+import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
+import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
+import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.atomic.AtomicReference

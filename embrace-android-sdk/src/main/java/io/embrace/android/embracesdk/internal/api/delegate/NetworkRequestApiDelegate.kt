@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 internal class NetworkRequestApiDelegate(
@@ -28,9 +28,9 @@ internal class NetworkRequestApiDelegate(
         get() {
             if (sdkCallChecker.check("get_trace_id_header")) {
                 return configService?.networkBehavior?.getTraceIdHeader()
-                    ?: NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+                    ?: NetworkBehaviorImpl.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
             }
-            return NetworkBehavior.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+            return NetworkBehaviorImpl.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
         }
 
     override fun generateW3cTraceparent(): String = IdGenerator.generateW3CTraceparent()

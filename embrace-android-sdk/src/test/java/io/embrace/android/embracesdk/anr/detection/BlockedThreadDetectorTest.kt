@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.anr.detection
 
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
+import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

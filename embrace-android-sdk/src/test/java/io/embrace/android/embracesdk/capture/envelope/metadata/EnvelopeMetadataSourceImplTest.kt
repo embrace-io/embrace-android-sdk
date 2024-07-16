@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.capture.envelope.metadata
 
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.internal.capture.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

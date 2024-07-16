@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.gating.SessionSanitizerFacade
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.gating.SessionSanitizerFacade
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import org.junit.Assert.assertNotNull

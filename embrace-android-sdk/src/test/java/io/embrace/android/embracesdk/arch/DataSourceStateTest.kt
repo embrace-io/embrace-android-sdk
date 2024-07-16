@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.arch
 
-import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.internal.arch.SessionType
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame

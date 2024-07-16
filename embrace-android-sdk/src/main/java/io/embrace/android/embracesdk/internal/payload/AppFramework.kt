@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.payload
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * The frameworks in use by the app. Previous name: a.f
@@ -10,7 +11,8 @@ import io.embrace.android.embracesdk.Embrace
  * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
  */
 @JsonClass(generateAdapter = false)
-internal enum class AppFramework(val value: Int) {
+@InternalApi
+public enum class AppFramework(internal val value: Int) {
     @Json(name = "1")
     NATIVE(1),
 
@@ -23,7 +25,7 @@ internal enum class AppFramework(val value: Int) {
     @Json(name = "4")
     FLUTTER(4);
 
-    companion object {
+    internal companion object {
 
         fun fromInt(type: Int) = values().associateBy(AppFramework::value)[type]
 

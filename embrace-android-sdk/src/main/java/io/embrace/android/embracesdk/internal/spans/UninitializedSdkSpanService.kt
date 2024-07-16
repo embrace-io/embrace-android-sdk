@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

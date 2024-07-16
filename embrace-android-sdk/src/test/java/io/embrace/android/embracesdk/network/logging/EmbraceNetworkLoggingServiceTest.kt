@@ -1,15 +1,16 @@
 package io.embrace.android.embracesdk.network.logging
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkLoggingService
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.utils.NetworkUtils.stripUrl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before

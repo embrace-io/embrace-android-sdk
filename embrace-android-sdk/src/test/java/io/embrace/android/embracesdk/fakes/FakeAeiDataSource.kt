@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.capture.aei.AeiDataSource
-import io.embrace.android.embracesdk.payload.AppExitInfoData
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
+import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 
 internal class FakeAeiDataSource : AeiDataSource {
 

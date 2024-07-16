@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData

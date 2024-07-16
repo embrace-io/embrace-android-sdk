@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.session.properties
 
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionPropertiesService
+import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -1,18 +1,17 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
-import io.embrace.android.embracesdk.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
-import io.embrace.android.embracesdk.telemetry.TelemetryService
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger

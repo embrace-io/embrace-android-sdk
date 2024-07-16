@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData

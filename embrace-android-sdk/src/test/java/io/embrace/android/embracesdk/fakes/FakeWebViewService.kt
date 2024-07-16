@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.capture.webview.WebViewService
-import io.embrace.android.embracesdk.payload.WebViewInfo
+import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.payload.WebViewInfo
 
 internal class FakeWebViewService : FakeDataCaptureService<WebViewInfo>(), WebViewService {
 

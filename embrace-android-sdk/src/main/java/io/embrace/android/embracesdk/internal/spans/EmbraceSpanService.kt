@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.embrace.android.embracesdk.spans.PersistableEmbraceSpan
 
 /**
  * A [SpanService] that can be instantiated quickly. At that time, it will defer calls an implementation that handles the case when

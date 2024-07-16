@@ -1,17 +1,17 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.storage.StorageService
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.spyk
 import io.mockk.verify

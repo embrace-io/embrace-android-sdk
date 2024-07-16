@@ -4,6 +4,12 @@ import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
+import io.embrace.android.embracesdk.internal.payload.AppInfo
+import io.embrace.android.embracesdk.internal.payload.DeviceInfo
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
+import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test

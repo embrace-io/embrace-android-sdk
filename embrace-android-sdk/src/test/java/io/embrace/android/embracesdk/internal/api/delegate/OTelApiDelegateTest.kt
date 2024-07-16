@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
 import io.opentelemetry.api.OpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

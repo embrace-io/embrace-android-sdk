@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.config
 
-import io.embrace.android.embracesdk.config.remote.KillSwitchRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test

@@ -19,7 +19,7 @@
         errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceAutomaticVerification.kt"
-            line="33"
+            line="32"
             column="16"/>
     </issue>
 
@@ -30,7 +30,7 @@
         errorLine2="              ~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceAutomaticVerification.kt"
-            line="54"
+            line="53"
             column="15"/>
     </issue>
 
@@ -118,7 +118,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="14"
+            line="13"
             column="20"/>
     </issue>
 
@@ -129,7 +129,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="50"
+            line="49"
             column="31"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="61"
+            line="60"
             column="31"/>
     </issue>
 
@@ -172,7 +172,7 @@
         errorLine1="    ): ScheduledFuture&lt;*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/io/embrace/android/embracesdk/worker/ScheduledWorker.kt"
+            file="src/main/java/io/embrace/android/embracesdk/internal/worker/ScheduledWorker.kt"
             line="61"
             column="29"/>
     </issue>
@@ -195,7 +195,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="69"
+            line="77"
             column="5"/>
     </issue>
 
@@ -206,7 +206,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="55"
+            line="54"
             column="80"/>
     </issue>
 
@@ -217,7 +217,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="66"
+            line="65"
             column="88"/>
     </issue>
 
@@ -272,7 +272,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="55"
+            line="54"
             column="40"/>
     </issue>
 
@@ -283,7 +283,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="55"
+            line="54"
             column="80"/>
     </issue>
 
@@ -294,7 +294,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="66"
+            line="65"
             column="44"/>
     </issue>
 
@@ -305,7 +305,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="66"
+            line="65"
             column="88"/>
     </issue>
 

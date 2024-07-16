@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.system.mockLooper
-import io.embrace.android.embracesdk.session.lifecycle.EmbraceProcessStateService
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk

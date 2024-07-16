@@ -3,11 +3,12 @@ package io.embrace.android.embracesdk.capture.webview
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.payload.WebViewInfo
+import io.embrace.android.embracesdk.internal.payload.WebVital
+import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.payload.WebViewInfo
-import io.embrace.android.embracesdk.payload.WebVital
-import io.embrace.android.embracesdk.payload.WebVitalType
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

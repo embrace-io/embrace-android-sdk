@@ -5,7 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

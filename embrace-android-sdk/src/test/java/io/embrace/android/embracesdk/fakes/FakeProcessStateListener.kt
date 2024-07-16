@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class FakeProcessStateListener : ProcessStateListener {

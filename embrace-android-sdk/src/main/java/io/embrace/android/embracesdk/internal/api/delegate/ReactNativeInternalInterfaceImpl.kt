@@ -2,15 +2,15 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.content.Context
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.capture.crash.CrashService
-import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.capture.crash.CrashService
+import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,

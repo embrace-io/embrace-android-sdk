@@ -4,6 +4,7 @@ import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
+import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

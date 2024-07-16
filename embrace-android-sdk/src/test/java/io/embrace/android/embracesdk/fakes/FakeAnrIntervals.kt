@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.payload.AnrInterval
-import io.embrace.android.embracesdk.payload.AnrSample
-import io.embrace.android.embracesdk.payload.AnrSampleList
-import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.AnrSample
+import io.embrace.android.embracesdk.internal.payload.AnrSampleList
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 
 internal val fakeAnrIntervalThreads = listOf(
     ThreadInfo(

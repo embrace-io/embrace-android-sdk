@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.anr
 
-import io.embrace.android.embracesdk.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.payload.AnrInterval
-import io.embrace.android.embracesdk.payload.AnrSample
-import io.embrace.android.embracesdk.payload.AnrSampleList
-import io.embrace.android.embracesdk.payload.extensions.size
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.anr.AnrStacktraceSampler
+import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.internal.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.AnrSample
+import io.embrace.android.embracesdk.internal.payload.AnrSampleList
+import io.embrace.android.embracesdk.internal.payload.extensions.size
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

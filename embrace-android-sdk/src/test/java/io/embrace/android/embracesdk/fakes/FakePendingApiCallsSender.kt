@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.comms.api.ApiRequest
-import io.embrace.android.embracesdk.comms.api.ApiResponse
-import io.embrace.android.embracesdk.comms.delivery.PendingApiCallsSender
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import java.io.ByteArrayOutputStream
 import java.util.LinkedList

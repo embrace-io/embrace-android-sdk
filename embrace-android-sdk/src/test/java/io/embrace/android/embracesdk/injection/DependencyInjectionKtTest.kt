@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.injection.LoadType
+import io.embrace.android.embracesdk.internal.injection.factory
+import io.embrace.android.embracesdk.internal.injection.singleton
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger

@@ -1,11 +1,15 @@
 package io.embrace.android.embracesdk.comms.api
 
+import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
 import io.mockk.mockk

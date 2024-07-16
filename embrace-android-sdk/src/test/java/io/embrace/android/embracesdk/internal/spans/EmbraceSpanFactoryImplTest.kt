@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

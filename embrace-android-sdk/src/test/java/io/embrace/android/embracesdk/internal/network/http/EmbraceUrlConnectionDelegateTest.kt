@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.config.behavior.NetworkBehavior.Companion.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
-import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl.Companion.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride.PATH_OVERRIDE
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_ENCODING
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_LENGTH

@@ -5,9 +5,10 @@ import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.prefs.EmbracePreferencesService
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk

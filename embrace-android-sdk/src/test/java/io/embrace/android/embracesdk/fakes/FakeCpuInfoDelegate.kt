@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.capture.cpu.CpuInfoDelegate
+import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 
 internal class FakeCpuInfoDelegate(
     private val cpuName: String? = "fake_cpu",

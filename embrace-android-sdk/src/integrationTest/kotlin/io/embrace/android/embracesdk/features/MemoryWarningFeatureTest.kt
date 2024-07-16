@@ -5,7 +5,7 @@ import android.content.ComponentCallbacks2
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.recordSession

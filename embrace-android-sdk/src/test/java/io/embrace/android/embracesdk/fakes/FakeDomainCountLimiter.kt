@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.network.logging.DomainCountLimiter
+import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 
 internal class FakeDomainCountLimiter : DomainCountLimiter {
 

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.USER_PERSONAS
-import io.embrace.android.embracesdk.gating.UserInfoSanitizer
-import io.embrace.android.embracesdk.payload.UserInfo
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.USER_PERSONAS
+import io.embrace.android.embracesdk.internal.gating.UserInfoSanitizer
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test

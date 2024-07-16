@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
-import io.embrace.android.embracesdk.comms.api.EmbraceApiUrlBuilder
-import io.embrace.android.embracesdk.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
+import io.embrace.android.embracesdk.internal.config.local.BaseUrlLocalConfig
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals

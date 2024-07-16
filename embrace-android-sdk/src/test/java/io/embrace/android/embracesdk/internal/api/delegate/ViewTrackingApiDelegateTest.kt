@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

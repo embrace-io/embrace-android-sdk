@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.arch
 
-import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.arch.limits.LimitStrategy
-import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
-import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

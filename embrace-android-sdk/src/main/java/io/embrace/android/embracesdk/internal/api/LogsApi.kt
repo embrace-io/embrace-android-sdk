@@ -177,6 +177,7 @@ public interface LogsApi {
      * @param messageDeliveredPriority the priority of the message (as resolved on the server)
      * @param isNotification           if it is a notification message.
      * @param hasData                  if the message contains payload data.
+     * @suppress
      */
     public fun logPushNotification(
         title: String?,

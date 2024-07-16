@@ -7,12 +7,12 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.samples.AutomaticVerificationChecker
 import io.embrace.android.embracesdk.samples.VerificationActions
 import io.embrace.android.embracesdk.samples.VerifyIntegrationException
-import io.embrace.android.embracesdk.session.lifecycle.ActivityTracker
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
 import java.io.IOException
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException

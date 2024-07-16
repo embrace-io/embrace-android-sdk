@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.arch.limits
 
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

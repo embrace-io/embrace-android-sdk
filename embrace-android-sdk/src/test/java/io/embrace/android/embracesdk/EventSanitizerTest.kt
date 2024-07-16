@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.gating.EventSanitizer
-import io.embrace.android.embracesdk.gating.SessionGatingKeys.SESSION_PROPERTIES
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.gating.EventSanitizer
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.SESSION_PROPERTIES
+import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.payload.Event
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

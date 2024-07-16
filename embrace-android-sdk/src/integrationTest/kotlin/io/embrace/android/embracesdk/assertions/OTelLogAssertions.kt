@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
-import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
+import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 
 internal class FakeSessionOrchestrator : SessionOrchestrator {
 

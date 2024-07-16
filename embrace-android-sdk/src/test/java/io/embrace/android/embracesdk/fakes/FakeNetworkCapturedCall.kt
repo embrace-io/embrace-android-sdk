@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
+import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
 internal fun fakeNetworkCapturedCall(): NetworkCapturedCall {
     return NetworkCapturedCall(

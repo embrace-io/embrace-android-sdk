@@ -29,10 +29,17 @@ public data class EmbraceSpanEvent internal constructor(
     @Json(name = "attributes")
     val attributes: Map<String, String>
 ) {
+
+    /**
+     * @suppress
+     */
     public companion object {
         internal const val MAX_EVENT_NAME_LENGTH = 100
         internal const val MAX_EVENT_ATTRIBUTE_COUNT = 10
 
+        /**
+         * @suppress
+         */
         public fun create(name: String, timestampMs: Long, attributes: Map<String, String>?): EmbraceSpanEvent? {
             if (inputsValid(name, attributes)) {
                 return EmbraceSpanEvent(name = name, timestampNanos = timestampMs.millisToNanos(), attributes = attributes ?: emptyMap())

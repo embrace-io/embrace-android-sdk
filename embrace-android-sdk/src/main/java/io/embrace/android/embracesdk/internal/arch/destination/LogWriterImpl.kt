@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
@@ -8,10 +7,10 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
-import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
 internal class LogWriterImpl(
@@ -28,8 +27,8 @@ internal class LogWriterImpl(
     ) {
         val builder = logger.logRecordBuilder()
             .setBody(message)
-            .setSeverity(severity.toOtelSeverity())
-            .setSeverityText(severity.name)
+            .setSeverity(severity)
+            .setSeverityText(getSeverityText(severity))
 
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
@@ -53,5 +52,10 @@ internal class LogWriterImpl(
         }
 
         builder.emit()
+    }
+
+    private fun getSeverityText(severity: Severity) = when (severity) {
+        Severity.WARN -> "WARNING"
+        else -> severity.name
     }
 }

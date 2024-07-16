@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 
 internal interface NativeCrashDataSource : LogDataSource, NativeCrashService
@@ -58,7 +59,7 @@ internal class NativeCrashDataSourceImpl(
         crashAttributes.setAttribute(embNativeCrashSymbols, nativeSymbolsJson)
         crashAttributes.setAttribute(embNativeCrashUnwindError, nativeCrash.unwindError.toString())
 
-        logWriter.addLog(SchemaType.NativeCrash(crashAttributes), Severity.ERROR, "")
+        logWriter.addLog(SchemaType.NativeCrash(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
     }
 
     companion object {

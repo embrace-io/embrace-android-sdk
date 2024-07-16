@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
+import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 
 internal class NetworkCaptureDataSourceImpl(
     private val logWriter: LogWriter,
@@ -24,6 +25,10 @@ internal class NetworkCaptureDataSourceImpl(
      * @param networkCapturedCall the captured network information
      */
     override fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall) {
-        return logWriter.addLog(SchemaType.NetworkCapturedRequest(networkCapturedCall), Severity.INFO, networkCapturedCall.networkId)
+        return logWriter.addLog(
+            SchemaType.NetworkCapturedRequest(networkCapturedCall),
+            Severity.INFO.toOtelSeverity(),
+            networkCapturedCall.networkId
+        )
     }
 }

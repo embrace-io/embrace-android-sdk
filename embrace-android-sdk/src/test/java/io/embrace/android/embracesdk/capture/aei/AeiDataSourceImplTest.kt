@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.capture.aei
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
@@ -18,6 +17,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.opentelemetry.api.logs.Severity
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

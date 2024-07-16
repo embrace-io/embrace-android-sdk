@@ -14,4 +14,6 @@ dependencies {
     implementation(project(":embrace-android-payload"))
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
+    compileOnly(libs.opentelemetry.semconv)
+    compileOnly(libs.opentelemetry.semconv.incubating)
 }

@@ -1,14 +1,11 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 import io.opentelemetry.api.common.AttributeKey
 
 /**
  * Object that aggregates various attributes and returns a [Map] that represents the values at the current state
  */
-@InternalApi
 public class TelemetryAttributes(
     private val configService: ConfigService,
     private val sessionPropertiesProvider: () -> Map<String, String>? = { null },

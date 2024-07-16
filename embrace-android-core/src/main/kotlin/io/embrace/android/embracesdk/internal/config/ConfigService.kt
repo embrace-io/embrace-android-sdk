@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
@@ -15,7 +14,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import java.io.Closeable
 
@@ -24,7 +22,6 @@ import java.io.Closeable
  *
  * Configuration is configured for the user's app, and exposed via the API.
  */
-@InternalApi
 public interface ConfigService : Closeable {
 
     /**

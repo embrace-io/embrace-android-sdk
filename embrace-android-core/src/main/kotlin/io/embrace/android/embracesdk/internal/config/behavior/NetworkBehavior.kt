@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 
-@InternalApi
 public interface NetworkBehavior {
 
     /**

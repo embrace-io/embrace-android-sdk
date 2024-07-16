@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.config.remote
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.annotation.InternalApi
 
 private const val NETWORK_BODY_RULE_DEFAULT_MAX_COUNT = 5
 private const val NETWORK_BODY_RULE_DEFAULT_MAX_SIZE_BYTES = 102400L
@@ -11,7 +10,6 @@ private const val NETWORK_BODY_RULE_DEFAULT_MAX_SIZE_BYTES = 102400L
  * Criteria to determine if a network body call should be captured or not.
  */
 @JsonClass(generateAdapter = true)
-@InternalApi
 public data class NetworkCaptureRuleRemoteConfig(
 
     /**

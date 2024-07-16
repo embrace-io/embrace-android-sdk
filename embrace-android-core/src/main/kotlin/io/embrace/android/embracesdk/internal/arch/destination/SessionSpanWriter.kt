@@ -1,14 +1,11 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 
 /**
  * Declares functions for writing an [EmbraceSpanEvent] or attributes to the current session span.
  */
-@InternalApi
 public interface SessionSpanWriter {
 
     /**

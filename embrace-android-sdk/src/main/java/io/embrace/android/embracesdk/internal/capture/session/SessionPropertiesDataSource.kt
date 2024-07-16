@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
 
 internal class SessionPropertiesDataSource(
     sessionBehavior: SessionBehavior,

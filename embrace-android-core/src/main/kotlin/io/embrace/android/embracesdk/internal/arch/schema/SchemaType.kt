@@ -1,18 +1,10 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.internal.spans.toSessionPropertyAttributeName
-import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
-import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.opentelemetry.semconv.ErrorAttributes
-import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
-import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -21,7 +13,6 @@ import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
  * telemetry data object if the same, fixed name is used for every instance.
  */
 
-@InternalApi
 public sealed class SchemaType(
     public val telemetryType: TelemetryType,
     public val fixedObjectName: String = "",
@@ -201,7 +192,7 @@ public sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
-    internal class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
+    public class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
             "aei_session_id" to message.sessionId,
             "session_id_error" to message.sessionIdError,
@@ -216,18 +207,10 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class NetworkRequest(networkRequest: EmbraceNetworkRequest) : SchemaType(EmbType.Performance.Network) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            "url.full" to stripUrl(networkRequest.url),
-            HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
-            HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
-            HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
-            HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
-            ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
-            "error.message" to networkRequest.errorMessage,
-            "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
-            "emb.trace_id" to getValidTraceId(networkRequest.traceId),
-        ).toNonNullMap().mapValues { it.value.toString() }
+    public class NetworkRequest(networkRequestAttrs: Map<String, String>) : SchemaType(EmbType.Performance.Network) {
+        // EmbraceNetworkRequest needs to stay in embrace-android-sdk module as it's a public API,
+        // so pass a map of attributes directly.
+        override val schemaAttributes: Map<String, String> = networkRequestAttrs
     }
 
     public class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
@@ -270,7 +253,7 @@ public sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
-    internal class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
+    public class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
@@ -297,7 +280,7 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    internal class NetworkStatus(
+    public class NetworkStatus(
         networkStatus: io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkStatus,

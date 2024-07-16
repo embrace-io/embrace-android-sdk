@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.FlutterInternalInterface
@@ -9,13 +9,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
-
-internal interface InternalInterfaceModule {
-    val embraceInternalInterface: EmbraceInternalInterface
-    val reactNativeInternalInterface: ReactNativeInternalInterface
-    val unityInternalInterface: UnityInternalInterface
-    val flutterInternalInterface: FlutterInternalInterface
-}
 
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,

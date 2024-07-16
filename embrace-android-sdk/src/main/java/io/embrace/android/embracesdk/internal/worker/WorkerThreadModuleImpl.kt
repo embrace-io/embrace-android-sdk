@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.worker
 
-import io.embrace.android.embracesdk.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.InitModule
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors

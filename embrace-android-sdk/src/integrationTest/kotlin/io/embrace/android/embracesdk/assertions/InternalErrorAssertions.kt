@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.fail

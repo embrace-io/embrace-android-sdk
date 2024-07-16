@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpanImpl
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanService

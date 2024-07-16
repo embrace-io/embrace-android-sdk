@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.webview
 
-import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

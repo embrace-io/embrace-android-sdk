@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
@@ -38,7 +37,6 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
-import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
@@ -47,30 +45,9 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 /**
- * This module contains services that are essential for bootstrapping other functionality in
- * the SDK during initialization.
+ * Default string value for app info missing strings
  */
-internal interface EssentialServiceModule {
-    val memoryCleanerService: MemoryCleanerService
-    val processStateService: ProcessStateService
-    val activityLifecycleTracker: ActivityTracker
-    val metadataService: MetadataService
-    val hostedSdkVersionInfo: HostedSdkVersionInfo
-    val configService: ConfigService
-    val gatingService: GatingService
-    val userService: UserService
-    val urlBuilder: ApiUrlBuilder
-    val apiClient: ApiClient
-    val apiService: ApiService?
-    val sharedObjectLoader: SharedObjectLoader
-    val cpuInfoDelegate: CpuInfoDelegate
-    val deviceArchitecture: DeviceArchitecture
-    val networkConnectivityService: NetworkConnectivityService
-    val pendingApiCallsSender: PendingApiCallsSender
-    val sessionIdTracker: SessionIdTracker
-    val sessionProperties: EmbraceSessionProperties
-    val logWriter: LogWriter
-}
+private const val UNKNOWN_VALUE = "UNKNOWN"
 
 internal class EssentialServiceModuleImpl(
     initModule: InitModule,
@@ -78,7 +55,7 @@ internal class EssentialServiceModuleImpl(
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
@@ -237,7 +214,11 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val gatingService: GatingService by singleton {
-        EmbraceGatingService(configService, customerLogModuleProvider().logService, initModule.logger)
+        EmbraceGatingService(
+            configService,
+            customerLogModuleProvider().logService,
+            initModule.logger
+        )
     }
 
     override val userService: UserService by singleton {
@@ -327,8 +308,3 @@ internal class EssentialServiceModuleImpl(
         )
     }
 }
-
-/**
- * Default string value for app info missing strings
- */
-private const val UNKNOWN_VALUE = "UNKNOWN"

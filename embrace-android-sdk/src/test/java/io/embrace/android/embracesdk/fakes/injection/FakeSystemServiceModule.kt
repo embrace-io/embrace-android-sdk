@@ -5,7 +5,7 @@ import android.app.usage.StorageStatsManager
 import android.net.ConnectivityManager
 import android.os.PowerManager
 import android.view.WindowManager
-import io.embrace.android.embracesdk.injection.SystemServiceModule
+import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
 
 internal class FakeSystemServiceModule(
     override val activityManager: ActivityManager? = null,

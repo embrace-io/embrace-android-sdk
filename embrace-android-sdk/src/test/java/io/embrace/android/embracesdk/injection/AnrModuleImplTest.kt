@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.injection.AnrModuleImpl
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockkStatic

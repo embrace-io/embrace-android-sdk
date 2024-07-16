@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import android.app.ActivityManager
 import android.app.usage.StorageStatsManager
@@ -9,14 +9,6 @@ import android.os.PowerManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-
-internal interface SystemServiceModule {
-    val activityManager: ActivityManager?
-    val powerManager: PowerManager?
-    val connectivityManager: ConnectivityManager?
-    val storageManager: StorageStatsManager?
-    val windowManager: WindowManager?
-}
 
 internal class SystemServiceModuleImpl @JvmOverloads constructor(
     coreModule: CoreModule,

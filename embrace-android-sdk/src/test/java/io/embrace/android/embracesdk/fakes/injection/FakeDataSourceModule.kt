@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.injection.AnrModule
-import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.DataSourceModule
-import io.embrace.android.embracesdk.injection.DataSourceModuleImpl
-import io.embrace.android.embracesdk.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.injection.SystemServiceModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.injection.DataSourceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal fun fakeDataSourceModule(
@@ -18,7 +18,8 @@ internal fun fakeDataSourceModule(
     oTelModule: OpenTelemetryModule = FakeOpenTelemetryModule(),
     essentialServiceModule: EssentialServiceModule = FakeEssentialServiceModule(),
     systemServiceModule: SystemServiceModule = FakeSystemServiceModule(),
-    androidServicesModule: AndroidServicesModule = FakeAndroidServicesModule(),
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule =
+        FakeAndroidServicesModule(),
     workerThreadModule: WorkerThreadModule = FakeWorkerThreadModule(),
     anrModule: AnrModule = FakeAnrModule()
 ): DataSourceModule {

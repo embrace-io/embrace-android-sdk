@@ -1,24 +1,24 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
-import io.embrace.android.embracesdk.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.injection.AnrModule
-import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.CrashModule
-import io.embrace.android.embracesdk.injection.CustomerLogModule
-import io.embrace.android.embracesdk.injection.DataCaptureServiceModule
-import io.embrace.android.embracesdk.injection.DataContainerModule
-import io.embrace.android.embracesdk.injection.DataSourceModule
-import io.embrace.android.embracesdk.injection.DeliveryModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.injection.PayloadModule
-import io.embrace.android.embracesdk.injection.SessionModule
-import io.embrace.android.embracesdk.injection.StorageModule
-import io.embrace.android.embracesdk.injection.SystemServiceModule
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.CrashModule
+import io.embrace.android.embracesdk.internal.injection.CustomerLogModule
+import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModule
+import io.embrace.android.embracesdk.internal.injection.DataContainerModule
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
+import io.embrace.android.embracesdk.internal.injection.DeliveryModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.PayloadModule
+import io.embrace.android.embracesdk.internal.injection.SessionModule
+import io.embrace.android.embracesdk.internal.injection.StorageModule
+import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
@@ -65,7 +65,7 @@ internal typealias AndroidServicesModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-) -> AndroidServicesModule
+) -> io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 
 /**
  * Function that returns an instance of [StorageModule]. Matches the signature of the constructor for [StorageModuleImpl]
@@ -85,7 +85,7 @@ internal typealias EssentialServiceModuleSupplier = (
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
@@ -136,7 +136,7 @@ internal typealias AnrModuleSupplier = (
 internal typealias CustomerLogModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
@@ -153,7 +153,7 @@ internal typealias NativeModuleSupplier = (
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     workerThreadModule: WorkerThreadModule
 ) -> NativeModule
 
@@ -178,7 +178,7 @@ internal typealias DataSourceModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
     anrModule: AnrModule
 ) -> DataSourceModule
@@ -190,7 +190,7 @@ internal typealias DataSourceModuleSupplier = (
 internal typealias SessionModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     deliveryModule: DeliveryModule,
@@ -213,7 +213,7 @@ internal typealias CrashModuleSupplier = (
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     logModule: CustomerLogModule,
 ) -> CrashModule
 
@@ -223,7 +223,7 @@ internal typealias CrashModuleSupplier = (
 internal typealias PayloadModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
-    androidServicesModule: AndroidServicesModule,
+    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,

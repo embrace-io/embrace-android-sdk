@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.injection.StorageModuleImpl
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull

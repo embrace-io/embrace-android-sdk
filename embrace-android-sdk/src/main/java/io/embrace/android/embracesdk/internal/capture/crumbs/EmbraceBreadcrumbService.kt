@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import android.app.Activity
-import io.embrace.android.embracesdk.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.payload.PushNotificationBreadcrumb

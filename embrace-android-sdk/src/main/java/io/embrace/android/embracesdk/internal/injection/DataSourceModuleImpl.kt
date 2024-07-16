@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Build
 import io.embrace.android.embracesdk.anr.sigquit.SigquitDataSource
@@ -26,37 +26,6 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import kotlin.properties.ReadOnlyProperty
-import kotlin.reflect.KProperty
-
-/**
- * Declares all the data sources that are used by the Embrace SDK.
- *
- * To add a new data source, simply define a new property of type [DataSourceState] using
- * the [dataSourceState] property delegate. It is important that you use this delegate as otherwise
- * the property won't be propagated to the [DataCaptureOrchestrator].
- *
- * Data will then automatically be captured by the SDK.
- */
-internal interface DataSourceModule {
-    val embraceFeatureRegistry: EmbraceFeatureRegistry
-    val dataCaptureOrchestrator: DataCaptureOrchestrator
-    val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
-    val viewDataSource: DataSourceState<ViewDataSource>
-    val tapDataSource: DataSourceState<TapDataSource>
-    val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
-    val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
-    val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
-    val applicationExitInfoDataSource: DataSourceState<AeiDataSource>?
-    val lowPowerDataSource: DataSourceState<LowPowerDataSource>
-    val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
-    val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
-    val sigquitDataSource: DataSourceState<SigquitDataSource>
-    val rnActionDataSource: DataSourceState<RnActionDataSource>
-    val thermalStateDataSource: DataSourceState<ThermalStateDataSource>?
-    val webViewDataSource: DataSourceState<WebViewDataSource>
-    val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
-}
 
 internal class DataSourceModuleImpl(
     initModule: InitModule,
@@ -295,18 +264,4 @@ internal class DataSourceModuleImpl(
     @Suppress("unused")
     private fun <T : DataSource<*>> dataSourceState(provider: Provider<DataSourceState<T>>) =
         DataSourceDelegate(provider, dataCaptureOrchestrator)
-}
-
-private class DataSourceDelegate<S : DataSource<*>>(
-    provider: Provider<DataSourceState<S>>,
-    dataCaptureOrchestrator: DataCaptureOrchestrator
-) : ReadOnlyProperty<Any?, DataSourceState<S>> {
-
-    private val value: DataSourceState<S> = provider()
-
-    init {
-        dataCaptureOrchestrator.add(value)
-    }
-
-    override fun getValue(thisRef: Any?, property: KProperty<*>) = value
 }

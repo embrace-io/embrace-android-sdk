@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
@@ -18,49 +18,6 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-
-/**
- * This modules provides services that capture data from within an application. It could be argued
- * that a lot of classes could fit in this module, so to keep it small (<15 properties) it's best
- * to only include services whose main responsibility is just capturing data. It would be well
- * worth reassessing the grouping once this module grows larger.
- */
-internal interface DataCaptureServiceModule {
-
-    /**
-     * Captures breadcrumbs
-     */
-    val breadcrumbService: BreadcrumbService
-
-    /**
-     * Captures memory events
-     */
-    val memoryService: MemoryService?
-
-    /**
-     * Captures information from webviews
-     */
-    val webviewService: WebViewService
-
-    /**
-     * Captures push notifications
-     */
-    val pushNotificationService: PushNotificationCaptureService
-
-    /**
-     * Registers for the component callback to capture memory events
-     */
-    val componentCallbackService: ComponentCallbackService
-
-    /**
-     * Captures the startup time of the SDK
-     */
-    val startupService: StartupService
-
-    val startupTracker: StartupTracker
-
-    val appStartupDataCollector: AppStartupDataCollector
-}
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     initModule: InitModule,

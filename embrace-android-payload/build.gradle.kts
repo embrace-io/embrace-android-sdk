@@ -1,6 +1,6 @@
 plugins {
     id("embrace-defaults")
-    id("org.jetbrains.kotlin.kapt")
+    id("com.google.devtools.ksp")
 }
 
 description = "Embrace Android SDK: Payload"
@@ -13,5 +13,5 @@ apiValidation.validationDisabled = true
 
 dependencies {
     implementation(libs.moshi)
-    kapt(libs.moshi.kotlin.codegen)
+    ksp(libs.moshi.kotlin.codegen)
 }

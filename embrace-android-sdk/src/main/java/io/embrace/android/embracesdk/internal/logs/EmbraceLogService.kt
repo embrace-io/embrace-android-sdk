@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
@@ -258,7 +259,7 @@ internal class EmbraceLogService(
             return
         }
 
-        logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
+        logWriter.addLog(schemaProvider(attributes), severity.toOtelSeverity(), trimToMaxLength(message))
     }
 
     /**

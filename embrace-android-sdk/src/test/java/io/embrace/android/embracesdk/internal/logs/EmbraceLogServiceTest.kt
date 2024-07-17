@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -28,6 +27,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert
@@ -94,7 +94,7 @@ internal class EmbraceLogServiceTest {
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
-        assertEquals(Severity.WARNING, second.severity)
+        assertEquals(Severity.WARN, second.severity)
         assertNotNull(second.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertNull(second.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
 
@@ -122,7 +122,7 @@ internal class EmbraceLogServiceTest {
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
-        assertEquals(Severity.WARNING, log.severity)
+        assertEquals(Severity.WARN, log.severity)
         assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
@@ -185,7 +185,7 @@ internal class EmbraceLogServiceTest {
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
-        assertEquals(Severity.WARNING, log.severity)
+        assertEquals(Severity.WARN, log.severity)
         assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
         assertEquals("exception message", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
         assertEquals(

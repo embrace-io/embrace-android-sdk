@@ -50,7 +50,7 @@ internal class LogWriterImplTest {
                     customAttributes = mapOf<String, String>(PrivateSpan.toEmbraceKeyValuePair())
                 )
             ),
-            severity = io.embrace.android.embracesdk.Severity.ERROR,
+            severity = Severity.ERROR,
             message = "test"
         )
         with(logger.builders.single()) {
@@ -72,7 +72,7 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = io.embrace.android.embracesdk.Severity.ERROR,
+            severity = Severity.ERROR,
             message = "test",
             isPrivate = true
         )
@@ -85,7 +85,7 @@ internal class LogWriterImplTest {
                     configService = FakeConfigService()
                 )
             ),
-            severity = io.embrace.android.embracesdk.Severity.ERROR,
+            severity = Severity.ERROR,
             message = "test",
             isPrivate = false
         )

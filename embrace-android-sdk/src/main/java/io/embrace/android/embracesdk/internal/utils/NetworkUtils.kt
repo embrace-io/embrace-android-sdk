@@ -74,7 +74,7 @@ internal object NetworkUtils {
      * @return the URL with the hash fragment and query string parameters removed
      */
     @JvmStatic
-    fun stripUrl(url: String): String {
+    public fun stripUrl(url: String): String {
         val pathPos: Int = url.lastIndexOf('/')
         val suffix: String = if (pathPos < 0) url else url.substring(pathPos)
 

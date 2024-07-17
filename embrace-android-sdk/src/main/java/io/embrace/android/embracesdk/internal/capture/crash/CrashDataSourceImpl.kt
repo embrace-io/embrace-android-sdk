@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
@@ -123,7 +124,7 @@ internal class CrashDataSourceImpl(
                 )
             }
 
-            logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR, "")
+            logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
 
             // Attempt to send any logs that are still waiting in the sink
             logOrchestrator.flush(true)

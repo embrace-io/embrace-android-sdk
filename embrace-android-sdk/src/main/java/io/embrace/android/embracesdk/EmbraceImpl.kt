@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInter
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.fromFramework
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -173,7 +174,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
 
         val startTimeMs = sdkClock.now()
-        val appFramework = AppFramework.fromFramework(framework)
+
+        val appFramework = fromFramework(framework)
         bootstrapper.init(context, appFramework, startTimeMs, customAppId, configServiceProvider)
         startSynchronous("post-services-setup")
 

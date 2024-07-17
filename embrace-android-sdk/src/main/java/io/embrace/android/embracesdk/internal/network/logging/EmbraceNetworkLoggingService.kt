@@ -6,9 +6,14 @@ import io.embrace.android.embracesdk.internal.network.logging.EmbraceNetworkCapt
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.semconv.ErrorAttributes
+import io.opentelemetry.semconv.HttpAttributes
+import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 
 /**
  * Logs network calls according to defined limits per domain.
@@ -60,7 +65,7 @@ internal class EmbraceNetworkLoggingService(
         if (embraceDomainCountLimiter.canLogNetworkRequest(domain)) {
             val strippedUrl = stripUrl(networkRequest.url)
 
-            val networkRequestSchemaType = SchemaType.NetworkRequest(networkRequest)
+            val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(networkRequest))
             val statusCode = networkRequest.responseCode
             val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
                 ErrorCode.FAILURE
@@ -77,4 +82,16 @@ internal class EmbraceNetworkLoggingService(
             )
         }
     }
+
+    private fun generateSchemaAttributes(networkRequest: EmbraceNetworkRequest): Map<String, String> = mapOf(
+        "url.full" to stripUrl(networkRequest.url),
+        HttpAttributes.HTTP_REQUEST_METHOD.key to networkRequest.httpMethod,
+        HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkRequest.responseCode,
+        HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
+        HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
+        ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
+        "error.message" to networkRequest.errorMessage,
+        "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
+        "emb.trace_id" to getValidTraceId(networkRequest.traceId),
+    ).toNonNullMap().mapValues { it.value.toString() }
 }

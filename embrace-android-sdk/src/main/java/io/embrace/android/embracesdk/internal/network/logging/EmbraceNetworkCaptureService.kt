@@ -144,10 +144,11 @@ internal class EmbraceNetworkCaptureService(
 
     private fun shouldApplyRule(rule: NetworkCaptureRuleRemoteConfig, duration: Long, statusCode: Int): Boolean {
         return if (rule.statusCodes.contains(statusCode)) {
-            if (rule.duration == null || rule.duration == 0L) {
+            val dur = rule.duration
+            if (dur == null || dur == 0L) {
                 true
             } else {
-                duration >= rule.duration
+                duration >= dur
             }
         } else {
             false

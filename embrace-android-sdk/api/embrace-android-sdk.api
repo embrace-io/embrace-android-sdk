@@ -424,34 +424,6 @@ public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/
 	public static fun values ()[Lio/embrace/android/embracesdk/network/http/HttpMethod;
 }
 
-public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent {
-	public static final field Companion Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion;
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()J
-	public final fun component3 ()Ljava/util/Map;
-	public final fun copy (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
-	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;Ljava/lang/String;JLjava/util/Map;ILjava/lang/Object;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAttributes ()Ljava/util/Map;
-	public final fun getName ()Ljava/lang/String;
-	public final fun getTimestampNanos ()J
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/spans/EmbraceSpanEvent$Companion {
-	public final fun create (Ljava/lang/String;JLjava/util/Map;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
-}
-
-public final class io/embrace/android/embracesdk/spans/EmbraceSpanEventJsonAdapter : com/squareup/moshi/JsonAdapter {
-	public fun <init> (Lcom/squareup/moshi/Moshi;)V
-	public fun fromJson (Lcom/squareup/moshi/JsonReader;)Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;
-	public synthetic fun fromJson (Lcom/squareup/moshi/JsonReader;)Ljava/lang/Object;
-	public fun toJson (Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/spans/EmbraceSpanEvent;)V
-	public synthetic fun toJson (Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
-	public fun toString ()Ljava/lang/String;
-}
-
 public abstract interface class io/embrace/android/embracesdk/spans/TracingApi {
 	public abstract fun createSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public abstract fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;

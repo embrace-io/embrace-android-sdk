@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -266,7 +265,7 @@ internal class EmbraceSpanImplTest {
                 Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
                 Pair("key", TOO_LONG_ATTRIBUTE_VALUE),
             )
-            repeat(EmbraceSpanEvent.MAX_EVENT_ATTRIBUTE_COUNT - 2) {
+            repeat(8) {
                 eventAttributesAMap["key$it"] = "value"
             }
             assertTrue(

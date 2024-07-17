@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent.Companion.inputsValid
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
@@ -148,7 +147,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        recordEvent(name = name, attributes = attributes) {
+        recordEvent {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -157,7 +156,7 @@ internal class EmbraceSpanImpl(
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        recordEvent(name = EXCEPTION_EVENT_NAME, attributes = attributes) {
+        recordEvent {
             val eventAttributes = mutableMapOf<String, String>()
             if (attributes != null) {
                 eventAttributes.putAll(attributes)
@@ -264,8 +263,8 @@ internal class EmbraceSpanImpl(
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
-    private fun recordEvent(name: String, attributes: Map<String, String>?, eventSupplier: () -> EmbraceSpanEvent?): Boolean {
-        if (eventCount.get() < MAX_EVENT_COUNT && inputsValid(name, attributes)) {
+    private fun recordEvent(eventSupplier: () -> EmbraceSpanEvent?): Boolean {
+        if (eventCount.get() < MAX_EVENT_COUNT) {
             synchronized(eventCount) {
                 if (eventCount.get() < MAX_EVENT_COUNT && isRecording) {
                     eventSupplier()?.apply {

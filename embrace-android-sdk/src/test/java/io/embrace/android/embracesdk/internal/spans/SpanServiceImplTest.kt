@@ -234,9 +234,9 @@ internal class SpanServiceImplTest {
             Pair("attribute1", "value1"),
             Pair("attribute2", "value2")
         )
-        val expectedEvents = listOf(
-            EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
-            EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
+        val expectedEvents = listOfNotNull(
+            EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),
+            EmbraceSpanEvent.create(name = "event2", timestampMs = 5_000_000L.nanosToMillis(), expectedAttributes),
         )
 
         spansService.recordCompletedSpan(
@@ -509,7 +509,7 @@ internal class SpanServiceImplTest {
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
             Pair("key", TOO_LONG_ATTRIBUTE_VALUE),
         )
-        repeat(EmbraceSpanEvent.MAX_EVENT_ATTRIBUTE_COUNT - 2) {
+        repeat(8) {
             attributesMap["key$it"] = "value"
         }
 

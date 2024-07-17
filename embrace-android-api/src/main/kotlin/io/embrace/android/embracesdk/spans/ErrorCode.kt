@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.spans
 
 import io.embrace.android.embracesdk.annotation.BetaApi
-import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 
 /**
  * Categorize the broad reason a Span completed unsuccessfully.
@@ -21,11 +20,5 @@ public enum class ErrorCode {
     /**
      * The reason for the unsuccessful termination is unknown
      */
-    UNKNOWN;
-
-    internal fun fromErrorCode(): ErrorCodeAttribute = when (this) {
-        FAILURE -> ErrorCodeAttribute.Failure
-        USER_ABANDON -> ErrorCodeAttribute.UserAbandon
-        UNKNOWN -> ErrorCodeAttribute.Unknown
-    }
+    UNKNOWN
 }

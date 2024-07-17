@@ -6,3 +6,51 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
 }
 
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/BetaApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/InternalApi : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
+}
+
+public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan {
+	public abstract fun addAttribute (Ljava/lang/String;Ljava/lang/String;)Z
+	public abstract fun addEvent (Ljava/lang/String;)Z
+	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;)Z
+	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
+	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public abstract fun getSpanContext ()Lio/opentelemetry/api/trace/SpanContext;
+	public abstract fun getSpanId ()Ljava/lang/String;
+	public abstract fun getTraceId ()Ljava/lang/String;
+	public abstract fun isRecording ()Z
+	public abstract fun recordException (Ljava/lang/Throwable;)Z
+	public abstract fun recordException (Ljava/lang/Throwable;Ljava/util/Map;)Z
+	public abstract fun start ()Z
+	public abstract fun start (Ljava/lang/Long;)Z
+	public abstract fun stop ()Z
+	public abstract fun stop (Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public abstract fun stop (Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;)Z
+	public abstract fun stop (Ljava/lang/Long;)Z
+	public abstract fun updateName (Ljava/lang/String;)Z
+}
+
+public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls {
+	public static fun addEvent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;)Z
+	public static fun addEvent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;Ljava/lang/Long;)Z
+	public static fun recordException (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Throwable;)Z
+	public static fun start (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
+	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;)Z
+	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;)Z
+}
+
+public final class io/embrace/android/embracesdk/spans/ErrorCode : java/lang/Enum {
+	public static final field FAILURE Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static final field UNKNOWN Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static final field USER_ABANDON Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/ErrorCode;
+	public static fun values ()[Lio/embrace/android/embracesdk/spans/ErrorCode;
+}
+

@@ -155,14 +155,6 @@ public abstract interface class io/embrace/android/embracesdk/ReactNativeInterna
 	public abstract fun setReactNativeVersionNumber (Ljava/lang/String;)V
 }
 
-public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
-	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
-	public static final field INFO Lio/embrace/android/embracesdk/Severity;
-	public static final field WARNING Lio/embrace/android/embracesdk/Severity;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Severity;
-	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
-}
-
 public abstract interface class io/embrace/android/embracesdk/UnityInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
 	public abstract fun installUnityThreadSampler ()V
 	public abstract fun logHandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V

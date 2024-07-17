@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
+import io.opentelemetry.api.logs.Severity
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

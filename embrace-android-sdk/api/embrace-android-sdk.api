@@ -353,14 +353,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 	public abstract fun setUsername (Ljava/lang/String;)V
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/arch/destination/LogWriter {
-	public abstract fun addLog (Lio/embrace/android/embracesdk/internal/arch/schema/SchemaType;Lio/embrace/android/embracesdk/Severity;Ljava/lang/String;Z)V
-}
-
-public final class io/embrace/android/embracesdk/internal/arch/destination/LogWriter$DefaultImpls {
-	public static synthetic fun addLog$default (Lio/embrace/android/embracesdk/internal/arch/destination/LogWriter;Lio/embrace/android/embracesdk/internal/arch/schema/SchemaType;Lio/embrace/android/embracesdk/Severity;Ljava/lang/String;ZILjava/lang/Object;)V
-}
-
 public final class io/embrace/android/embracesdk/internal/config/behavior/BehaviorThresholdCheck {
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
 	public final fun getNormalizedDeviceId ()F

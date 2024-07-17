@@ -1,0 +1,8 @@
+public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
+	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
+	public static final field INFO Lio/embrace/android/embracesdk/Severity;
+	public static final field WARNING Lio/embrace/android/embracesdk/Severity;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Severity;
+	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
+}
+

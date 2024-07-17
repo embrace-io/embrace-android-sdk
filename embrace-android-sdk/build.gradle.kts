@@ -2,7 +2,7 @@ import io.embrace.gradle.Versions
 
 plugins {
     id("embrace-defaults")
-    id("org.jetbrains.kotlin.kapt")
+    id("com.google.devtools.ksp")
 }
 
 description = "Embrace Android SDK: Core"
@@ -74,7 +74,7 @@ dependencies {
 
     // json
     implementation(libs.moshi)
-    kapt(libs.moshi.kotlin.codegen)
+    ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)

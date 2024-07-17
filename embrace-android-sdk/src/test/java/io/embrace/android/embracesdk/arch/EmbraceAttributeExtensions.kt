@@ -98,9 +98,13 @@ internal fun Span.assertSuccessful() {
 /**
  * Assert [SpanEventData] is of type [telemetryType]
  */
-internal fun SpanEventData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)
+internal fun SpanEventData.assertIsType(
+    telemetryType: TelemetryType
+) = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
  * Assert [LogEventData] is of type [telemetryType]
  */
-internal fun LogEventData.assertIsType(telemetryType: TelemetryType) = assertEquals(telemetryType, schemaType.telemetryType)
+internal fun LogEventData.assertIsType(
+    telemetryType: TelemetryType
+) = assertEquals(telemetryType, schemaType.telemetryType)

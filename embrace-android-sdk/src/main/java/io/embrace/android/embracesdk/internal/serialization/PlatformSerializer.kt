@@ -23,4 +23,6 @@ internal interface PlatformSerializer {
 /**
  * Return the first 200 elements of [elements] as a JSON-encoded string
  */
-internal fun PlatformSerializer.truncatedStacktrace(elements: Array<StackTraceElement>) = toJson(elements.truncate(), List::class.java)
+internal fun PlatformSerializer.truncatedStacktrace(
+    elements: Array<StackTraceElement>
+) = toJson(elements.truncate(), List::class.java)

@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
-import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
@@ -21,19 +21,17 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
-import io.embrace.android.embracesdk.injection.AnrModule
-import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.DeliveryModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.DeliveryModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import org.junit.rules.ExternalResource
 
 /**
@@ -101,7 +99,7 @@ internal class IntegrationTestRule(
             bootstrapper = ModuleInitBootstrapper(
                 initModule = overriddenInitModule,
                 openTelemetryModule = overriddenInitModule.openTelemetryModule,
-                coreModuleSupplier = { _, _, _ -> overriddenCoreModule },
+                coreModuleSupplier = { _, _ -> overriddenCoreModule },
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
                 deliveryModuleSupplier = { _, _, _, _ -> overriddenDeliveryModule },
@@ -110,7 +108,9 @@ internal class IntegrationTestRule(
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
             if (startImmediately) {
-                embraceImpl.start(overriddenCoreModule.context, appFramework) { overriddenConfigService }
+                embraceImpl.start(overriddenCoreModule.context, appFramework) {
+                    overriddenConfigService.apply { appFramework = it }
+                }
             }
         }
     }
@@ -122,10 +122,11 @@ internal class IntegrationTestRule(
         Embrace.getImpl().stop()
     }
 
+    @Suppress("DEPRECATION")
     fun startSdk(
         context: Context = harness.overriddenCoreModule.context,
         appFramework: AppFramework = harness.appFramework,
-        configServiceProvider: Provider<ConfigService> = { harness.overriddenConfigService }
+        configServiceProvider: (framework: io.embrace.android.embracesdk.internal.payload.AppFramework) -> ConfigService = { harness.overriddenConfigService }
     ) {
         Embrace.getImpl().start(context, appFramework, configServiceProvider)
     }
@@ -137,6 +138,7 @@ internal class IntegrationTestRule(
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */
+    @Suppress("DEPRECATION")
     internal class Harness @JvmOverloads constructor(
         currentTimeMs: Long = DEFAULT_SDK_START_TIME_MS,
         val startImmediately: Boolean = true,
@@ -145,7 +147,6 @@ internal class IntegrationTestRule(
         val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),
         val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
         val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
-            appFramework = appFramework,
             logger = overriddenInitModule.logger
         ),
         val overriddenWorkerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(overriddenInitModule),
@@ -171,7 +172,7 @@ internal class IntegrationTestRule(
                 }
             )
         ),
-        val overriddenAndroidServicesModule: AndroidServicesModule = AndroidServicesModuleImpl(
+        val overriddenAndroidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule = io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleImpl(
             initModule = overriddenInitModule,
             coreModule = overriddenCoreModule,
             workerThreadModule = overriddenWorkerThreadModule

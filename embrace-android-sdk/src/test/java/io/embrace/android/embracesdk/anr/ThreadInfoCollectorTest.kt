@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.anr
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
-import io.embrace.android.embracesdk.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.anr.ThreadInfoCollector
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

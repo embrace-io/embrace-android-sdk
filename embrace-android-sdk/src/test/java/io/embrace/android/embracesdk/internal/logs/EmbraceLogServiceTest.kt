@@ -1,18 +1,8 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.LogRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
@@ -20,15 +10,24 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.gating.GatingService
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.gating.GatingService
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert
@@ -45,7 +44,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var cfg: RemoteConfig
     private lateinit var logService: LogService
     private lateinit var logWriter: FakeLogWriter
-    private lateinit var configService: ConfigService
+    private lateinit var configService: FakeConfigService
     private lateinit var gatingService: GatingService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var tick: AtomicLong
@@ -95,7 +94,7 @@ internal class EmbraceLogServiceTest {
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
-        assertEquals(Severity.WARNING, second.severity)
+        assertEquals(Severity.WARN, second.severity)
         assertNotNull(second.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertNull(second.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
 
@@ -123,7 +122,7 @@ internal class EmbraceLogServiceTest {
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
-        assertEquals(Severity.WARNING, log.severity)
+        assertEquals(Severity.WARN, log.severity)
         assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
         assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
@@ -186,7 +185,7 @@ internal class EmbraceLogServiceTest {
 
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
-        assertEquals(Severity.WARNING, log.severity)
+        assertEquals(Severity.WARN, log.severity)
         assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
         assertEquals("exception message", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
         assertEquals(
@@ -394,10 +393,10 @@ internal class EmbraceLogServiceTest {
     }
 
     private fun getLogServiceWithFramework(appFramework: AppFramework = AppFramework.NATIVE): EmbraceLogService {
+        configService.appFramework = appFramework
         return EmbraceLogService(
             logWriter,
             configService,
-            appFramework,
             sessionProperties,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             EmbLoggerImpl(),

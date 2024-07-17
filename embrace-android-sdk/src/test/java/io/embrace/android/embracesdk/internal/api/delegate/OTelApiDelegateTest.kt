@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
-import io.embrace.android.embracesdk.opentelemetry.OpenTelemetryConfiguration
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.opentelemetry.api.OpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +29,7 @@ internal class OTelApiDelegateTest {
     @Before
     fun setUp() {
         val bootstrapper = fakeModuleInitBootstrapper()
-        bootstrapper.init(ApplicationProvider.getApplicationContext(), Embrace.AppFramework.NATIVE, 0)
+        bootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         cfg = bootstrapper.openTelemetryModule.openTelemetryConfiguration
         logger = bootstrapper.logger as FakeEmbLogger
 

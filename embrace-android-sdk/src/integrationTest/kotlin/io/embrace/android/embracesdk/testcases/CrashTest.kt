@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.android.embracesdk.opentelemetry.embCrashId
-import io.embrace.android.embracesdk.payload.LegacyExceptionInfo
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
+import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
@@ -72,6 +72,7 @@ internal class CrashTest {
         assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
         with(testRule) {

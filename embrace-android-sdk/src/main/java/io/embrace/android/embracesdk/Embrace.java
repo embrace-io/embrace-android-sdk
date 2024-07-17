@@ -10,23 +10,13 @@ import androidx.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface;
 import io.embrace.android.embracesdk.internal.Systrace;
-import io.embrace.android.embracesdk.internal.api.EmbraceAndroidApi;
-import io.embrace.android.embracesdk.internal.api.EmbraceApi;
-import io.embrace.android.embracesdk.internal.api.LogsApi;
-import io.embrace.android.embracesdk.internal.api.MomentsApi;
-import io.embrace.android.embracesdk.internal.api.NetworkRequestApi;
-import io.embrace.android.embracesdk.internal.api.OTelApi;
-import io.embrace.android.embracesdk.internal.api.SdkStateApi;
-import io.embrace.android.embracesdk.internal.api.SessionApi;
-import io.embrace.android.embracesdk.internal.api.UserApi;
+import io.embrace.android.embracesdk.internal.api.SdkApi;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent;
 import io.embrace.android.embracesdk.spans.ErrorCode;
-import io.embrace.android.embracesdk.spans.TracingApi;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.sdk.logs.export.LogRecordExporter;
 import io.opentelemetry.sdk.trace.export.SpanExporter;
@@ -39,17 +29,7 @@ import kotlin.jvm.functions.Function0;
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 @SuppressWarnings("unused")
-public final class Embrace implements
-    LogsApi,
-    MomentsApi,
-    NetworkRequestApi,
-    SessionApi,
-    UserApi,
-    TracingApi,
-    EmbraceApi,
-    EmbraceAndroidApi,
-    SdkStateApi,
-    OTelApi {
+public final class Embrace implements SdkApi {
 
     /**
      * Singleton instance of the Embrace SDK.
@@ -94,10 +74,14 @@ public final class Embrace implements
         }
     }
 
+    /**
+     * @deprecated Use {@link #start(Context)} instead.
+     */
     @Override
+    @Deprecated
     public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, () -> null);
+            impl.start(context, appFramework, (framework) -> null);
         }
     }
 
@@ -113,13 +97,13 @@ public final class Embrace implements
     }
 
     /**
-     * @deprecated Use {@link #start(Context, AppFramework)} instead. The isDevMode parameter has no effect.
+     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
      */
     @Override
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
         if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, () -> null);
+            impl.start(context, appFramework, (framework) -> null);
         }
     }
 
@@ -602,9 +586,9 @@ public final class Embrace implements
                                     @Nullable String topic,
                                     @Nullable String id,
                                     @Nullable Integer notificationPriority,
-                                    @NonNull Integer messageDeliveredPriority,
-                                    @NonNull Boolean isNotification,
-                                    @NonNull Boolean hasData) {
+                                    @Nullable Integer messageDeliveredPriority,
+                                    @Nullable Boolean isNotification,
+                                    @Nullable Boolean hasData) {
         if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
             impl.logPushNotification(
                 title,
@@ -635,6 +619,13 @@ public final class Embrace implements
         }
     }
 
+    @Override
+    public void logWebView(@Nullable String url) {
+        if (verifyNonNullParameters("logWebView", url)) {
+            impl.logWebView(url);
+        }
+    }
+
     @Nullable
     @Override
     public String getCurrentSessionId() {
@@ -647,48 +638,26 @@ public final class Embrace implements
         return impl.getLastRunEndState();
     }
 
-    /**
-     * Get internal interface for the intra-Embrace, not-publicly-supported API
-     *
-     * @hide
-     */
     @NonNull
-    @InternalApi
+    @Override
     public EmbraceInternalInterface getInternalInterface() {
-        return impl.getEmbraceInternalInterface();
+        return impl.getInternalInterface();
     }
 
-    /**
-     * Gets the {@link ReactNativeInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for React Native. Not part of the supported public API.
-     *
-     * @hide
-     */
     @Nullable
-    @InternalApi
+    @Override
     public ReactNativeInternalInterface getReactNativeInternalInterface() {
         return impl.getReactNativeInternalInterface();
     }
 
-    /**
-     * @hide Gets the {@link UnityInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Unity. Not part of the supported public API.
-     * @hide
-     */
     @Nullable
-    @InternalApi
+    @Override
     public UnityInternalInterface getUnityInternalInterface() {
         return impl.getUnityInternalInterface();
     }
 
-    /**
-     * Gets the {@link FlutterInternalInterface} that should be used as the sole source of
-     * communication with the Android SDK for Flutter. Not part of the supported public API.
-     *
-     * @hide
-     */
     @Nullable
-    @InternalApi
+    @Override
     public FlutterInternalInterface getFlutterInternalInterface() {
         return impl.getFlutterInternalInterface();
     }
@@ -698,7 +667,7 @@ public final class Embrace implements
             if (param == null) {
                 final String errorMessage = functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
                 if (isStarted()) {
-                    impl.getEmbraceInternalInterface().logInternalError(new IllegalArgumentException(errorMessage));
+                    impl.getInternalInterface().logInternalError(new IllegalArgumentException(errorMessage));
                 }
                 return false;
             }
@@ -709,6 +678,7 @@ public final class Embrace implements
     /**
      * The AppFramework that is in use.
      */
+    @Deprecated
     public enum AppFramework {
         NATIVE(1),
         REACT_NATIVE(2),

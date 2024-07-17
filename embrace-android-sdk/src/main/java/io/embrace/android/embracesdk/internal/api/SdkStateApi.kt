@@ -1,15 +1,17 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.annotation.InternalApi
 
-internal interface SdkStateApi {
+@InternalApi
+public interface SdkStateApi {
 
     /**
      * Whether or not the SDK has been started.
      *
      * @return true if the SDK is started, false otherwise
      */
-    fun isStarted(): Boolean
+    public val isStarted: Boolean
 
     /**
      * Sets a custom app ID that overrides the one specified at build time. Must be called before
@@ -18,11 +20,11 @@ internal interface SdkStateApi {
      * @param appId custom app ID
      * @return true if the app ID could be set, false otherwise.
      */
-    fun setAppId(appId: String): Boolean
+    public fun setAppId(appId: String): Boolean
 
-    fun getDeviceId(): String
+    public fun getDeviceId(): String
 
-    fun getCurrentSessionId(): String?
+    public val currentSessionId: String?
 
-    fun getLastRunEndState(): Embrace.LastRunEndState
+    public fun getLastRunEndState(): Embrace.LastRunEndState
 }

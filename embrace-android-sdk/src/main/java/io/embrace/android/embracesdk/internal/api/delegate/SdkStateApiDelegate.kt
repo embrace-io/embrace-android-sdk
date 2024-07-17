@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import java.util.regex.Pattern
 
 internal class SdkStateApiDelegate(
@@ -31,7 +31,8 @@ internal class SdkStateApiDelegate(
      *
      * @return true if the SDK is started, false otherwise
      */
-    override fun isStarted(): Boolean = sdkCallChecker.started.get()
+    override val isStarted: Boolean
+        get() = sdkCallChecker.started.get()
 
     /**
      * Sets a custom app ID that overrides the one specified at build time. Must be called before
@@ -41,7 +42,7 @@ internal class SdkStateApiDelegate(
      * @return true if the app ID could be set, false otherwise.
      */
     override fun setAppId(appId: String): Boolean {
-        if (isStarted()) {
+        if (isStarted) {
             logger.logError("You must set the custom app ID before the SDK is started.", null)
             return false
         }
@@ -69,20 +70,21 @@ internal class SdkStateApiDelegate(
         else -> ""
     }
 
-    override fun getCurrentSessionId(): String? {
-        val localSessionIdTracker = sessionIdTracker
-        if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
-            val sessionId = localSessionIdTracker.getActiveSessionId()
-            if (sessionId != null) {
-                return sessionId
-            } else {
-                logger.logInfo("Session ID is null", null)
+    override val currentSessionId: String?
+        get() {
+            val localSessionIdTracker = sessionIdTracker
+            if (localSessionIdTracker != null && sdkCallChecker.check("get_current_session_id")) {
+                val sessionId = localSessionIdTracker.getActiveSessionId()
+                if (sessionId != null) {
+                    return sessionId
+                } else {
+                    logger.logInfo("Session ID is null", null)
+                }
             }
+            return null
         }
-        return null
-    }
 
-    override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted() && crashVerifier != null) {
+    override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted && crashVerifier != null) {
         if (crashVerifier?.didLastRunCrash() == true) {
             Embrace.LastRunEndState.CRASH
         } else {

@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.utils
 
+import io.embrace.android.embracesdk.internal.utils.at
+import io.embrace.android.embracesdk.internal.utils.lockAndRun
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

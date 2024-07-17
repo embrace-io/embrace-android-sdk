@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.comms.api
 
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

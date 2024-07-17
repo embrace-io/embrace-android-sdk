@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.capture.crash.CrashDataSource
-import io.embrace.android.embracesdk.payload.JsException
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
+import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class FakeCrashDataSource : CrashDataSource {
     internal var exception: Throwable? = null
     internal var jsException: JsException? = null
 
-    override fun alterSessionSpan(
+    override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: LogWriter.() -> Unit,
     ): Boolean {

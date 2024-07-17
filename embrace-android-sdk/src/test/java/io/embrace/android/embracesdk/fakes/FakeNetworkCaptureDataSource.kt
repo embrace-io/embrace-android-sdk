@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.network.logging.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.payload.NetworkCapturedCall
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
 internal class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 
@@ -12,7 +12,7 @@ internal class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
         loggedCalls.add(networkCapturedCall)
     }
 
-    override fun alterSessionSpan(
+    override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: LogWriter.() -> Unit
     ): Boolean {

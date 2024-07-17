@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.payload.AppInfo
-import io.embrace.android.embracesdk.payload.DeviceInfo
-import io.embrace.android.embracesdk.payload.DiskUsage
+import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.payload.AppInfo
+import io.embrace.android.embracesdk.internal.payload.DeviceInfo
+import io.embrace.android.embracesdk.internal.payload.DiskUsage
 
 /**
  * Fake implementation of [MetadataService] that represents an Android device. A [UnsupportedOperationException] will be thrown
@@ -15,7 +14,6 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     companion object {
         private val androidAppInfo = AppInfo(
             appVersion = "1.0.0",
-            appFramework = Embrace.AppFramework.NATIVE.value,
             buildId = "100",
             buildType = "release",
             buildFlavor = "oem",
@@ -133,7 +131,6 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     override fun getCpuName(): String? = cpuName
 
     override fun getEgl(): String? = egl
-    override fun getAppFramework() = Embrace.AppFramework.NATIVE
 
     override fun getPackageName() = fakePackageName
 }

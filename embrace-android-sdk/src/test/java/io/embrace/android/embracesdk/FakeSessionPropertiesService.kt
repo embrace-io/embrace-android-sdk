@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.session.properties.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 
 internal class FakeSessionPropertiesService : SessionPropertiesService {
 

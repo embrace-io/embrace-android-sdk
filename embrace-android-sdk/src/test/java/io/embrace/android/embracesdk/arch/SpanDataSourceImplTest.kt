@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.arch
 
-import io.embrace.android.embracesdk.arch.datasource.SpanDataSourceImpl
-import io.embrace.android.embracesdk.arch.limits.LimitStrategy
-import io.embrace.android.embracesdk.arch.limits.NoopLimitStrategy
-import io.embrace.android.embracesdk.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,7 +17,7 @@ internal class SpanDataSourceImplTest {
     fun `capture data successfully`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.alterSessionSpan(inputValidation = { true }) {
+        val success = source.captureData(inputValidation = { true }) {
             createSpan("test")
         }
         assertTrue(success)
@@ -28,7 +28,7 @@ internal class SpanDataSourceImplTest {
     fun `capture data threw exception`() {
         val dst = FakeSpanService()
         val source = FakeDataSourceImpl(dst)
-        val success = source.alterSessionSpan(inputValidation = { true }) {
+        val success = source.captureData(inputValidation = { true }) {
             error("Whoops!")
         }
         assertFalse(success)
@@ -42,7 +42,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.alterSessionSpan(inputValidation = { true }) {
+            source.captureData(inputValidation = { true }) {
                 count++
             }
         }
@@ -56,7 +56,7 @@ internal class SpanDataSourceImplTest {
 
         var count = 0
         repeat(4) {
-            source.alterSessionSpan(inputValidation = { false }) {
+            source.captureData(inputValidation = { false }) {
                 count++
             }
         }

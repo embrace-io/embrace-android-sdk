@@ -2,17 +2,19 @@ package io.embrace.android.embracesdk.anr.detection
 
 import android.os.Message
 import android.os.MessageQueue
-import io.embrace.android.embracesdk.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.fakes.system.mockMessage
 import io.embrace.android.embracesdk.fakes.system.mockMessageQueue
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
+import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
+import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals

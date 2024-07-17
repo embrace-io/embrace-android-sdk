@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.capture.startup.AppStartupDataCollector
+import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 
 internal class FakeAppStartupDataCollector(
     private val clock: FakeClock,

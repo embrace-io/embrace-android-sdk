@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.storage
 
 import android.content.Context
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals

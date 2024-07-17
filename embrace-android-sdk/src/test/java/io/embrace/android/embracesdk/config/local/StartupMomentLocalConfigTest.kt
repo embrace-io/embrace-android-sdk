@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.config.local
 
 import io.embrace.android.embracesdk.deserializeEmptyJsonString
 import io.embrace.android.embracesdk.deserializeJsonFromResource
+import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Test

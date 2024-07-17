@@ -1,17 +1,16 @@
 package io.embrace.android.embracesdk
 
 import android.content.Context
-import io.embrace.android.embracesdk.Embrace.AppFramework.FLUTTER
-import io.embrace.android.embracesdk.Embrace.AppFramework.REACT_NATIVE
-import io.embrace.android.embracesdk.capture.crash.CrashService
-import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.payload.JsException
-import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.capture.crash.CrashService
+import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.JsException
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -39,14 +38,13 @@ internal class ReactNativeInternalInterfaceImplTest {
         metadataService = FakeMetadataService()
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            Embrace.AppFramework.REACT_NATIVE
+            AppFramework.REACT_NATIVE
         )
         logger = mockk(relaxed = true)
         context = mockContext()
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            REACT_NATIVE,
             crashService,
             metadataService,
             hostedSdkVersionInfo,
@@ -56,7 +54,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetJavaScriptPatchNumberNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setJavaScriptPatchNumber("28.9.1")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -65,7 +63,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetJavaScriptPatchNumberNull() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         preferencesService.javaScriptPatchNumber = "123"
         impl.setJavaScriptPatchNumber(null)
         assertEquals("123", preferencesService.javaScriptPatchNumber)
@@ -76,7 +74,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetJavaScriptPatchNumberEmpty() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         preferencesService.javaScriptPatchNumber = "123"
         impl.setJavaScriptPatchNumber("")
         assertEquals("123", preferencesService.javaScriptPatchNumber)
@@ -87,7 +85,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetReactNativeVersionNumberNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setReactNativeVersionNumber("0.69.1")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -96,7 +94,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetReactNativeVersionNumberNull() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         preferencesService.reactNativeVersionNumber = "0.1"
         impl.setReactNativeVersionNumber(null)
         assertEquals("0.1", preferencesService.reactNativeVersionNumber)
@@ -107,7 +105,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetReactNativeVersionNumberEmpty() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         preferencesService.reactNativeVersionNumber = "0.1"
         impl.setReactNativeVersionNumber("")
         assertEquals("0.1", preferencesService.reactNativeVersionNumber)
@@ -118,36 +116,17 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetJavaScriptBundleURL() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
     }
 
     @Test
     fun testSetJavaScriptBundleURLNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
-        }
-    }
-
-    @Test
-    fun testSetJavaScriptBundleURLWrongFramework() {
-        impl = ReactNativeInternalInterfaceImpl(
-            embrace,
-            mockk(),
-            FLUTTER,
-            crashService,
-            metadataService,
-            hostedSdkVersionInfo,
-            logger
-        )
-
-        every { embrace.isStarted() } returns true
-        impl.setJavaScriptBundleUrl(context, "index.android.bundle")
-        verify(exactly = 1) {
-            logger.logError(any())
         }
     }
 
@@ -156,14 +135,13 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            REACT_NATIVE,
             crashService,
             metadataService,
             hostedSdkVersionInfo,
             logger
         )
 
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.setCacheableJavaScriptBundleUrl(context, "index.android.bundle", true)
         // Test that the metadata service was called with the correct parameters
         assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
@@ -175,14 +153,13 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             mockk(),
-            REACT_NATIVE,
             crashService,
             metadataService,
             hostedSdkVersionInfo,
             logger
         )
 
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         // Test that the metadata service was called with the correct parameters
         assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
@@ -191,7 +168,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testLogUnhandledJsException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logUnhandledJsException("name", "message", "type", "stack")
 
         val captor = slot<JsException>()
@@ -208,7 +185,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testLogUnhandledJsExceptionNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.logUnhandledJsException("name", "message", "type", "stack")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())

@@ -31,7 +31,7 @@ static emb_env __impl_emb_env = {0};
 static emb_env *__emb_env = &__impl_emb_env;
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1installSignalHandlers(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1installSignalHandlers(JNIEnv *env,
                                                                                jobject thiz,
                                                                                jstring _base_path,
                                                                                jstring _crash_marker_path,
@@ -98,7 +98,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1installSignalHandlers(J
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1updateMetaData(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateMetaData(JNIEnv *env,
                                                                         jobject thiz,
                                                                         jstring _device_meta_data) {
     if (!__emb_env) {
@@ -116,7 +116,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1updateMetaData(JNIEnv *
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1updateSessionId(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateSessionId(JNIEnv *env,
                                                                          jobject thiz,
                                                                          jstring _session_id) {
     if (!__emb_env) {
@@ -129,7 +129,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1updateSessionId(JNIEnv 
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1updateAppState(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateAppState(JNIEnv *env,
                                                                         jobject thiz,
                                                                         jstring _app_state) {
     if (!__emb_env) {
@@ -141,7 +141,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1updateAppState(JNIEnv *
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1uninstallSignals(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1uninstallSignals(JNIEnv *env,
                                                                           jobject thiz) {
     if (!__emb_env) {
         EMB_LOGINFO("can't uninstall, not installed.");
@@ -156,19 +156,19 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1uninstallSignals(JNIEnv
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1testNativeCrash_1C(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1testNativeCrash_1C(JNIEnv *env,
                                                                             jobject thiz) {
     abort();
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1testNativeCrash_1CPP(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1testNativeCrash_1CPP(JNIEnv *env,
                                                                               jobject thiz) {
     emb_fake_crash();
 }
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1getCrashReport(
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1getCrashReport(
         JNIEnv *env, jobject _this, jstring _report_path) {
     EMB_LOGDEV("Called getCrashReport().");
     static pthread_mutex_t crash_reader_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -223,7 +223,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1getCrashReport(
 
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1getErrors(
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1getErrors(
         JNIEnv *env, jobject _this, jstring _report_path) {
     EMB_LOGDEV("Called getErrors().");
     static pthread_mutex_t error_reader_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -276,7 +276,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1getErrors(
 }
 
 JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_setupNativeThreadSampler(
+Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_setupNativeThreadSampler(
         JNIEnv *env,
         jobject thiz,
         jboolean is32bit) {
@@ -284,14 +284,14 @@ Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_setupN
 }
 
 JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_monitorCurrentThread(
+Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_monitorCurrentThread(
         JNIEnv *env,
         jobject thiz) {
     return emb_monitor_current_thread();
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_startSampling(
+Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_startSampling(
         JNIEnv *env,
         jobject thiz,
         jint unwinder,
@@ -301,7 +301,7 @@ Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_startS
 }
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1checkForOverwrittenHandlers(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1checkForOverwrittenHandlers(JNIEnv *env,
                                                                                      jobject thiz) {
     char buffer[WARNING_LOG_BUFFER_SIZE];
     EMB_LOGINFO("Checking for Overwritten handlers");
@@ -313,7 +313,7 @@ Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1checkForOverwrittenHand
 }
 
 JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_ndk_NdkDelegateImpl__1reinstallSignalHandlers(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1reinstallSignalHandlers(JNIEnv *env,
                                                                                  jobject thiz) {
     EMB_LOGINFO("About to reinstall 3rd party handlers");
 

@@ -3,15 +3,14 @@ package io.embrace.android.embracesdk.fakes.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
-import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
-import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.registry.ServiceRegistry
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockk
@@ -26,7 +25,6 @@ internal class FakeCoreModule(
         if (RuntimeEnvironment.getApplication() == null) mockApplication() else RuntimeEnvironment.getApplication(),
     override val context: Context =
         if (isMockKMock(application)) getMockedContext() else application.applicationContext,
-    override val appFramework: AppFramework = AppFramework.NATIVE,
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(logger),
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,

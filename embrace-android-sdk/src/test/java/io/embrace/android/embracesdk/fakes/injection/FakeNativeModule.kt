@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.FakeNdkService
-import io.embrace.android.embracesdk.anr.ndk.NativeAnrOtelMapper
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerInstaller
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
+import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
+import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
+import io.embrace.android.embracesdk.internal.ndk.NativeModule
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.ndk.NativeModule
-import io.embrace.android.embracesdk.ndk.NdkService
 
 internal class FakeNativeModule(
     override val nativeThreadSamplerService: NativeThreadSamplerService? = null,

@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -21,6 +21,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class UnityInternalInterfaceTest {
+
+    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
@@ -40,7 +42,7 @@ internal class UnityInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.UNITY, res.appFramework)
+            assertEquals(AppFramework.UNITY, res.appFramework)
             assertNull(res.hostedSdkVersion)
             assertNull(res.hostedPlatformVersion)
         }
@@ -54,7 +56,7 @@ internal class UnityInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.UNITY, res.appFramework)
+            assertEquals(AppFramework.UNITY, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
             assertEquals("unity build id", res.unityBuildId)
@@ -73,7 +75,7 @@ internal class UnityInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.UNITY, res.appFramework)
+            assertEquals(AppFramework.UNITY, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
             assertEquals("unity build id", res.unityBuildId)
@@ -92,7 +94,7 @@ internal class UnityInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.UNITY, res.appFramework)
+            assertEquals(AppFramework.UNITY, res.appFramework)
             assertEquals("28.9.2", res.hostedPlatformVersion)
             assertEquals("1.2.4", res.hostedSdkVersion)
             assertEquals("new unity build id", res.unityBuildId)

@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
@@ -134,7 +134,7 @@ internal class TracingApiTest {
             val sessionEndTime = harness.overriddenClock.now()
             val session = checkNotNull(envelope)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
-                checkNotNull(session.data?.spans) +
+                checkNotNull(session.data.spans) +
                 harness.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
 
             val spansMap = allSpans.associateBy { it.name }
@@ -238,7 +238,7 @@ internal class TracingApiTest {
                 private = false
             )
 
-            val snapshots = checkNotNull(envelope.data?.spanSnapshots).associateBy { it.name }
+            val snapshots = checkNotNull(envelope.data.spanSnapshots).associateBy { it.name }
             val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
             unendingSpanSnapshot.assertIsTypePerformance()
             assertEmbraceSpanData(
@@ -305,7 +305,7 @@ internal class TracingApiTest {
 
     private fun getSdkInitSpanFromBackgroundActivity(): List<Span> {
         val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities().last()
-        val spans = checkNotNull(lastSentBackgroundActivity.data?.spans)
+        val spans = checkNotNull(lastSentBackgroundActivity.data.spans)
         return spans.filter { it.name == "emb-sdk-init" }
     }
 }

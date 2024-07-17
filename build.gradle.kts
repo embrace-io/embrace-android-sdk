@@ -1,6 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 import java.io.FileInputStream
 import java.util.Properties
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
 
 buildscript {
     repositories {
@@ -16,13 +17,15 @@ buildscript {
 }
 
 plugins {
+    id("com.google.devtools.ksp") version("1.9.24-1.0.20") apply false
     id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
     id("com.android.library") apply false
     id("org.jetbrains.kotlin.android") apply false
+    id("org.jetbrains.dokka") version "1.9.20"
 }
 
 group = "io.embrace"
-version = project.version//.properties.getVersion()
+version = project.version
 
 // load credentials from local properties if present
 val localProperties = Properties()
@@ -45,5 +48,29 @@ allprojects {
     repositories {
         google()
         maven(url = "https://plugins.gradle.org/m2/")
+    }
+}
+
+// You can apply and configure Dokka in each subproject
+// individially or configure all subprojects at once
+subprojects {
+    if (project.name == "embrace-android-sdk" || project.name == "embrace-android-api") {
+        apply(plugin = "org.jetbrains.dokka")
+    }
+
+    tasks.withType<DokkaTaskPartial>().configureEach {
+        dokkaSourceSets.configureEach {
+            perPackageOption {
+                skipDeprecated.set(false)
+                reportUndocumented.set(true) // Emit warnings about not documented members
+                includeNonPublic.set(false)
+
+                // Suppress files in the internal package
+                matchingRegex.set(".*.internal.*?")
+                suppress.set(true)
+            }
+            suppressObviousFunctions.set(true)
+            noAndroidSdkLink.set(false)
+        }
     }
 }

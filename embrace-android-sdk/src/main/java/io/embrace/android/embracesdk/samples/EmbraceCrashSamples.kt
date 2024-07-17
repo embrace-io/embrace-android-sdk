@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.samples
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 
 /**
  * Encapsulates the logic to trigger different type of crashes for testing purpose.

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.api.OTelApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 import io.opentelemetry.sdk.trace.export.SpanExporter

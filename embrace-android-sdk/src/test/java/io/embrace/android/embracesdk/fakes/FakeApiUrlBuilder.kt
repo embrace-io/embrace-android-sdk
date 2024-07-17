@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 
 internal class FakeApiUrlBuilder : ApiUrlBuilder {
     override fun getConfigUrl(): String {

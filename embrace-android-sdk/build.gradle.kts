@@ -1,20 +1,16 @@
 import io.embrace.gradle.Versions
-import org.jetbrains.dokka.base.DokkaBase
-import org.jetbrains.dokka.base.DokkaBaseConfiguration
-import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
     id("embrace-defaults")
-    id("org.jetbrains.kotlin.kapt")
-    id("org.jetbrains.dokka")
+    id("com.google.devtools.ksp")
 }
 
 description = "Embrace Android SDK: Core"
 
+val version: String by project
+
+
 android {
-    useLibrary("android.test.runner")
-    useLibrary("android.test.base")
-    useLibrary("android.test.mock")
     ndkVersion = Versions.NDK
 
     defaultConfig {
@@ -24,7 +20,7 @@ android {
         // For library projects only, the BuildConfig.VERSION_NAME and BuildConfig.VERSION_CODE properties have been removed from the generated BuildConfig class
         //
         // https://developer.android.com/studio/releases/gradle-plugin#version_properties_removed_from_buildconfig_class_in_library_projects
-        buildConfigField("String", "VERSION_NAME", "\"${defaultConfig.versionName}\"")
+        buildConfigField("String", "VERSION_NAME", "\"${version}\"")
         buildConfigField("String", "VERSION_CODE", "\"${53}\"")
     }
 
@@ -36,14 +32,6 @@ android {
     packagingOptions {
         pickFirst("**/*.so")
     }
-
-    sourceSets {
-        // Had to add a 'java' directory to store Java test files, as it doesn't get picked up as a test if I put it in
-        // the kotlin directory. If I've just screwed up somehow and this is actually possible, please consolidate.
-        getByName("test").java.srcDir("src/integrationTest/java")
-        getByName("test").kotlin.srcDir("src/integrationTest/kotlin")
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -54,6 +42,10 @@ dependencies {
     kover(project(":embrace-android-compose"))
     kover(project(":embrace-android-fcm"))
     kover(project(":embrace-android-okhttp3"))
+    kover(project(":embrace-android-core"))
+    kover(project(":embrace-android-features"))
+    kover(project(":embrace-android-payload"))
+    kover(project(":embrace-android-api"))
 }
 
 kover {
@@ -71,13 +63,18 @@ kover {
 }
 
 dependencies {
+    api(project(":embrace-android-api"))
+    implementation(project(":embrace-android-core"))
+    implementation(project(":embrace-android-features"))
+    implementation(project(":embrace-android-payload"))
+
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)
 
     // json
     implementation(libs.moshi)
-    kapt(libs.moshi.kotlin.codegen)
+    ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)
@@ -89,48 +86,9 @@ dependencies {
     // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
-    testImplementation(libs.mockk)
-    testImplementation(libs.androidx.test.core)
-    testImplementation(libs.androidx.test.junit)
-    testImplementation(libs.robolectric)
-    testImplementation(project(path = ":embrace-android-sdk"))
-    testImplementation(libs.mockwebserver)
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
-
-    dokkaHtmlPlugin(libs.dokka.convert)
-    dokkaHtmlPlugin(libs.dokka.docs)
-
-    // For the functional tests
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(project(path = ":embrace-android-sdk"))
-}
-
-tasks.withType<DokkaTask>().configureEach {
-    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
-        outputDirectory.set(rootProject.file("docs"))
-        dokkaSourceSets {
-            configureEach {
-                perPackageOption {
-                    skipDeprecated.set(false)
-                    reportUndocumented.set(true) // Emit warnings about not documented members
-                    includeNonPublic.set(false)
-
-                    // Suppress files in the internal package
-                    perPackageOption {
-                        matchingRegex.set(".*.internal.*?")
-                        suppress.set(true)
-                    }
-                }
-            }
-            named("main") {
-                noAndroidSdkLink.set(false)
-            }
-        }
-        suppressObviousFunctions.set(true)
-    }
 }
 
 project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }

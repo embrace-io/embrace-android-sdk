@@ -16,7 +16,7 @@ internal class EnvelopeResourceTest {
             appVersion = "1.0.0",
             bundleVersion = "1",
             appEcosystemId = "com.embrace.fake",
-            appFramework = EnvelopeResource.AppFramework.NATIVE,
+            appFramework = AppFramework.NATIVE,
             buildId = "1234",
             buildType = "release",
             buildFlavor = "demo",
@@ -49,7 +49,7 @@ internal class EnvelopeResourceTest {
         assertEquals("1.0.0", obj.appVersion)
         assertEquals("1", obj.bundleVersion)
         assertEquals("com.embrace.fake", obj.appEcosystemId)
-        assertEquals(EnvelopeResource.AppFramework.NATIVE, obj.appFramework)
+        assertEquals(AppFramework.NATIVE, obj.appFramework)
         assertEquals("1234", obj.buildId)
         assertEquals("release", obj.buildType)
         assertEquals("demo", obj.buildFlavor)

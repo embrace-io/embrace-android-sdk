@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.fakes
 import android.content.ComponentCallbacks2
 import android.content.Context
 import android.content.res.Configuration
-import io.embrace.android.embracesdk.arch.datasource.EventDataSource
-import io.embrace.android.embracesdk.arch.destination.SessionSpanWriter
-import io.embrace.android.embracesdk.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.datasource.EventDataSource
+import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 
 internal class FakeDataSource(
     private val ctx: Context
@@ -15,7 +15,7 @@ internal class FakeDataSource(
     var disableDataCaptureCount = 0
     var resetCount = 0
 
-    override fun alterSessionSpan(
+    override fun captureData(
         inputValidation: () -> Boolean,
         captureAction: SessionSpanWriter.() -> Unit
     ): Boolean = true
@@ -35,7 +35,7 @@ internal class FakeDataSource(
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
-        alterSessionSpan(inputValidation = { true }) {
+        captureData(inputValidation = { true }) {
             addCustomAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
         }
     }

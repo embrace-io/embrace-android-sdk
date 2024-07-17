@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -18,7 +18,7 @@ internal class CoreModuleImplTest {
     fun testApplicationObject() {
         val ctx = RuntimeEnvironment.getApplication().applicationContext
         val logger = EmbLoggerImpl()
-        val module = CoreModuleImpl(ctx, Embrace.AppFramework.NATIVE, logger)
+        val module = CoreModuleImpl(ctx, logger)
         assertSame(ctx, module.context)
         assertSame(ctx, module.application)
         assertNotNull(module.serviceRegistry)
@@ -29,7 +29,7 @@ internal class CoreModuleImplTest {
         val application = RuntimeEnvironment.getApplication()
         val isDebug = AppEnvironment(application.applicationInfo).isDebug
         val ctx = application.applicationContext
-        val module = CoreModuleImpl(ctx, Embrace.AppFramework.NATIVE, EmbLoggerImpl())
+        val module = CoreModuleImpl(ctx, EmbLoggerImpl())
         assertSame(application, module.application)
         assertEquals(isDebug, module.isDebug)
     }

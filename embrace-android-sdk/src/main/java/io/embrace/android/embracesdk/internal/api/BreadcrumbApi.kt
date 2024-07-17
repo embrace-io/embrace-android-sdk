@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.api
 
-internal interface BreadcrumbApi {
+import io.embrace.android.embracesdk.annotation.InternalApi
+
+@InternalApi
+public interface BreadcrumbApi {
 
     /**
      * Adds a breadcrumb.
@@ -9,5 +12,5 @@ internal interface BreadcrumbApi {
      *
      * @param message the name of the breadcrumb to add
      */
-    fun addBreadcrumb(message: String)
+    public fun addBreadcrumb(message: String)
 }

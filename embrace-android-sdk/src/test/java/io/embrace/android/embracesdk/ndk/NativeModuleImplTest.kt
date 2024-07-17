@@ -6,8 +6,9 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
-import io.embrace.android.embracesdk.injection.InitModuleImpl
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.ndk.NativeModuleImpl
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test

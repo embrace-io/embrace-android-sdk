@@ -9,6 +9,7 @@ import android.os.PowerManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleImpl
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertNotNull

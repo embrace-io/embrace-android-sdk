@@ -3,26 +3,25 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.injection.InternalInterfaceModule
-import io.embrace.android.embracesdk.injection.InternalInterfaceModuleImpl
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
+import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.MomentsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.SessionApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
-import io.embrace.android.embracesdk.internal.api.WebViewApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.InternalWebViewApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -33,9 +32,15 @@ import io.embrace.android.embracesdk.internal.api.delegate.SessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.WebViewApiDelegate
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.fromFramework
+import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
+import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.spans.TracingApi
-import io.embrace.android.embracesdk.worker.WorkerName
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -60,18 +65,21 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
     private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper, sdkCallChecker),
     private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper, sdkCallChecker),
-    private val webviewApiDelegate: WebViewApiDelegate = WebViewApiDelegate(bootstrapper, sdkCallChecker),
-) : UserApi by userApiDelegate,
-    SessionApi by sessionApiDelegate,
-    NetworkRequestApi by networkRequestApiDelegate,
+    private val webviewApiDelegate: InternalWebViewApiDelegate =
+        InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
+) : SdkApi,
     LogsApi by logsApiDelegate,
     MomentsApi by momentsApiDelegate,
+    NetworkRequestApi by networkRequestApiDelegate,
+    SessionApi by sessionApiDelegate,
+    UserApi by userApiDelegate,
     TracingApi by bootstrapper.openTelemetryModule.embraceTracer,
-    ViewTrackingApi by viewTrackingApiDelegate,
     SdkStateApi by sdkStateApiDelegate,
     OTelApi by otelApiDelegate,
+    ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
-    WebViewApi by webviewApiDelegate {
+    InternalWebViewApi by webviewApiDelegate,
+    InternalInterfaceApi {
 
     private val uninitializedSdkInternalInterface by lazy<EmbraceInternalInterface> {
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
@@ -102,6 +110,24 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
 
+    @Suppress("DEPRECATION")
+    override fun start(context: Context) = start(context, Embrace.AppFramework.NATIVE) { null }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context)} instead.")
+    override fun start(context: Context, appFramework: Embrace.AppFramework) =
+        start(context, appFramework) { null }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context)} instead. The isDevMode parameter has no effect.")
+    override fun start(context: Context, isDevMode: Boolean) =
+        start(context, Embrace.AppFramework.NATIVE) { null }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
+    override fun start(context: Context, isDevMode: Boolean, appFramework: Embrace.AppFramework) =
+        start(context, appFramework) { null }
+
     /**
      * Starts instrumentation of the Android application using the Embrace SDK. This should be
      * called during creation of the application, as early as possible.
@@ -114,10 +140,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * @param appFramework             the AppFramework of the application
      * @param configServiceProvider    provider for the config service
      */
+    @Suppress("DEPRECATION")
     fun start(
         context: Context,
         appFramework: Embrace.AppFramework,
-        configServiceProvider: () -> ConfigService? = { null }
+        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
     ) {
         try {
             startSynchronous("sdk-start")
@@ -128,10 +155,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun startImpl(
         context: Context,
         framework: Embrace.AppFramework,
-        configServiceProvider: () -> ConfigService?
+        configServiceProvider: (framework: AppFramework) -> ConfigService?
     ) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
@@ -146,8 +174,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
 
         val startTimeMs = sdkClock.now()
-        logger.logInfo("Starting SDK for framework " + framework.name, null)
-        bootstrapper.init(context, framework, startTimeMs, customAppId, configServiceProvider)
+
+        val appFramework = fromFramework(framework)
+        bootstrapper.init(context, appFramework, startTimeMs, customAppId, configServiceProvider)
         startSynchronous("post-services-setup")
 
         val coreModule = bootstrapper.coreModule
@@ -159,6 +188,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             stop()
             return
         }
+        logger.logInfo("Starting SDK for framework " + essentialServiceModule.configService.appFramework.name)
 
         if (essentialServiceModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule.application)
@@ -182,7 +212,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             InternalInterfaceModuleImpl(
                 bootstrapper.initModule,
                 bootstrapper.openTelemetryModule,
-                coreModule,
                 essentialServiceModule,
                 bootstrapper.customerLogModule,
                 bootstrapper.dataContainerModule,
@@ -193,11 +222,12 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         embraceInternalInterface = internalInterfaceModuleImpl.embraceInternalInterface
 
-        when (framework) {
-            Embrace.AppFramework.NATIVE -> {}
-            Embrace.AppFramework.REACT_NATIVE -> internalInterfaceModuleImpl.reactNativeInternalInterface
-            Embrace.AppFramework.UNITY -> internalInterfaceModuleImpl.unityInternalInterface
-            Embrace.AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
+        when (configService?.appFramework) {
+            AppFramework.NATIVE -> {}
+            AppFramework.REACT_NATIVE -> internalInterfaceModuleImpl.reactNativeInternalInterface
+            AppFramework.UNITY -> internalInterfaceModuleImpl.unityInternalInterface
+            AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
+            null -> {}
         }
         val appId = essentialServiceModule.configService.sdkModeBehavior.appId
         val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME
@@ -273,26 +303,24 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Gets the [EmbraceInternalInterface] that should be used as the sole source of
      * communication with other Android SDK modules.
      */
-    fun getEmbraceInternalInterface(): EmbraceInternalInterface {
+    override val internalInterface get(): EmbraceInternalInterface {
         val internalInterface = embraceInternalInterface
-        return if (isStarted() && internalInterface != null) {
+        return if (isStarted && internalInterface != null) {
             internalInterface
         } else {
             uninitializedSdkInternalInterface
         }
     }
 
-    fun getReactNativeInternalInterface(): ReactNativeInternalInterface? = internalInterfaceModule?.reactNativeInternalInterface
-
-    fun getUnityInternalInterface(): UnityInternalInterface? = internalInterfaceModule?.unityInternalInterface
+    override val reactNativeInternalInterface get() = internalInterfaceModule?.reactNativeInternalInterface
+    override val unityInternalInterface get() = internalInterfaceModule?.unityInternalInterface
+    override val flutterInternalInterface get() = internalInterfaceModule?.flutterInternalInterface
 
     fun installUnityThreadSampler() {
         if (sdkCallChecker.check("install_unity_thread_sampler")) {
             sampleCurrentThreadDuringAnrs()
         }
     }
-
-    fun getFlutterInternalInterface(): FlutterInternalInterface? = internalInterfaceModule?.flutterInternalInterface
 
     private fun sampleCurrentThreadDuringAnrs() {
         try {

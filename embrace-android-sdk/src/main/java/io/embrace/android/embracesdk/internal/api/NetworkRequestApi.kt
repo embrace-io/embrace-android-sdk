@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 /**
  * The public API that is used for capturing network requests manually
  */
-internal interface NetworkRequestApi {
+@InternalApi
+public interface NetworkRequestApi {
 
     /**
      * Logs the fact that a network call occurred. These are recorded and sent to Embrace as part
@@ -13,9 +15,9 @@ internal interface NetworkRequestApi {
      *
      * You can create an instance of [EmbraceNetworkRequest] using the factory functions.
      */
-    fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
+    public fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest)
 
-    fun getTraceIdHeader(): String
+    public val traceIdHeader: String
 
-    fun generateW3cTraceparent(): String
+    public fun generateW3cTraceparent(): String
 }

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope2
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.junit.Assert.assertEquals

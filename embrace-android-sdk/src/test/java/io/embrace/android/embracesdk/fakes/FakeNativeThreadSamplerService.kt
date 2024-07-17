@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.payload.NativeThreadAnrInterval
+import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
+import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 
 internal class FakeNativeThreadSamplerService : NativeThreadSamplerService {
 

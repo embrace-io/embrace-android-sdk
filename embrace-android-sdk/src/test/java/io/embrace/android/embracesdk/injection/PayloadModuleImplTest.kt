@@ -9,7 +9,9 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.injection.PayloadModuleImpl
+import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 

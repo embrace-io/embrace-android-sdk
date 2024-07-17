@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk

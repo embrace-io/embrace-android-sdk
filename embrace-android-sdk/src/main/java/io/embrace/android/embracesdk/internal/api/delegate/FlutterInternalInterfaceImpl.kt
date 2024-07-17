@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.FlutterInternalInterface
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
@@ -16,7 +16,7 @@ internal class FlutterInternalInterfaceImpl(
 ) : EmbraceInternalInterface by impl, FlutterInternalInterface {
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             if (version != null) {
                 hostedSdkVersionInfo.hostedSdkVersion = version
             }
@@ -26,7 +26,7 @@ internal class FlutterInternalInterfaceImpl(
     }
 
     override fun setDartVersion(version: String?) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             if (version != null) {
                 hostedSdkVersionInfo.hostedPlatformVersion = version
             }
@@ -63,7 +63,7 @@ internal class FlutterInternalInterfaceImpl(
         library: String?,
         exceptionType: LogExceptionType
     ) {
-        if (embrace.isStarted()) {
+        if (embrace.isStarted) {
             embrace.logMessage(
                 EventType.ERROR_LOG,
                 "Dart error",

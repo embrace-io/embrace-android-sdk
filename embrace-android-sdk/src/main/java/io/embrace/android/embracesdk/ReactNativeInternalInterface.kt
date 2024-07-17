@@ -7,10 +7,14 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 /**
  * Provides an internal interface to Embrace that is intended for use by the React Native SDK as its
  * sole source of communication with the Android SDK.
+ * @suppress
  */
 @InternalApi
 public interface ReactNativeInternalInterface : EmbraceInternalInterface {
 
+    /**
+     * @suppress
+     */
     public fun logUnhandledJsException(
         name: String,
         message: String,
@@ -18,6 +22,9 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
         stacktrace: String?
     )
 
+    /**
+     * @suppress
+     */
     public fun logHandledJsException(
         name: String,
         message: String,
@@ -25,16 +32,26 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
         stacktrace: String?
     )
 
+    /**
+     * @suppress
+     */
     public fun setJavaScriptPatchNumber(number: String?)
 
+    /**
+     * @suppress
+     */
     public fun setReactNativeSdkVersion(version: String?)
 
+    /**
+     * @suppress
+     */
     public fun setReactNativeVersionNumber(version: String?)
 
     /**
      * Sets the React Native Bundle URL.
      * @param context the context
      * @param url the JavaScript bundle URL
+     * @suppress
      */
     public fun setJavaScriptBundleUrl(context: Context, url: String)
 
@@ -45,11 +62,13 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
      * @param context the context
      * @param url the JavaScript bundle URL
      * @param didUpdate if the bundle was updated
+     * @suppress
      */
     public fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean)
 
     /**
      * Logs a React Native Redux Action - this is not intended for public use.
+     * @suppress
      */
     public fun logRnAction(
         name: String,
@@ -67,6 +86,7 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
      * logged.
      *
      * @param screen the name of the view to log
+     * @suppress
      */
     public fun logRnView(screen: String)
 }

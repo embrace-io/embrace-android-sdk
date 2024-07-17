@@ -1,7 +1,11 @@
 package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.worker.PriorityThreadPoolExecutor.Companion.createPriorityQueue
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityRunnableFuture
+import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
+import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor.Companion.createPriorityQueue
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

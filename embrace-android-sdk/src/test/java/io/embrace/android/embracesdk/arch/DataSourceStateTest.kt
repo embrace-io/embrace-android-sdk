@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.arch
 
-import io.embrace.android.embracesdk.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.system.mockContext
+import io.embrace.android.embracesdk.internal.arch.SessionType
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -17,8 +18,7 @@ internal class DataSourceStateTest {
         val source = FakeDataSource(ctx)
         val state = DataSourceState(
             factory = { source },
-            configGate = { true },
-            currentSessionType = null
+            configGate = { true }
         )
 
         // data source not retrievable if not session type is null
@@ -26,24 +26,24 @@ internal class DataSourceStateTest {
 
         // data capture is enabled by default.
         state.onConfigChange()
-        state.onSessionTypeChange(null)
+        state.currentSessionType = null
         assertEquals(0, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
 
         // data capture enabled for a session
-        state.onSessionTypeChange(SessionType.FOREGROUND)
+        state.currentSessionType = SessionType.FOREGROUND
         assertSame(source, state.dataSource)
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
 
         // data capture disabled for no session
-        state.onSessionTypeChange(null)
+        state.currentSessionType = null
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(1, source.disableDataCaptureCount)
 
         // functions can be called multiple times without issue
-        state.onSessionTypeChange(SessionType.FOREGROUND)
-        state.onSessionTypeChange(null)
+        state.currentSessionType = SessionType.FOREGROUND
+        state.currentSessionType = null
         assertEquals(2, source.enableDataCaptureCount)
         assertEquals(2, source.disableDataCaptureCount)
     }
@@ -53,13 +53,14 @@ internal class DataSourceStateTest {
         val source = FakeDataSource(ctx)
         DataSourceState(
             factory = { source },
+        ).apply {
             currentSessionType = SessionType.FOREGROUND
-        )
+        }
 
         // data capture is enabled by default.
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
-        assertEquals(0, source.resetCount)
+        assertEquals(1, source.resetCount)
     }
 
     @Test
@@ -68,8 +69,9 @@ internal class DataSourceStateTest {
         DataSourceState(
             factory = { source },
             configGate = { true },
+        ).apply {
             currentSessionType = SessionType.FOREGROUND
-        )
+        }
 
         // data capture is enabled by default.
         assertEquals(1, source.enableDataCaptureCount)
@@ -83,8 +85,9 @@ internal class DataSourceStateTest {
         val state = DataSourceState(
             factory = { source },
             configGate = { enabled },
+        ).apply {
             currentSessionType = SessionType.FOREGROUND
-        )
+        }
 
         // data source not retrievable if disabled
         assertNull(state.dataSource)
@@ -125,9 +128,10 @@ internal class DataSourceStateTest {
         val state = DataSourceState(
             factory = { source },
             configGate = { true },
-            SessionType.BACKGROUND,
             disabledSessionType = SessionType.BACKGROUND
-        )
+        ).apply {
+            currentSessionType = SessionType.BACKGROUND
+        }
 
         // data capture is always disabled by default.
         assertEquals(0, source.enableDataCaptureCount)
@@ -135,22 +139,22 @@ internal class DataSourceStateTest {
         assertEquals(0, source.resetCount)
 
         // new session should enable data capture
-        state.onSessionTypeChange(SessionType.FOREGROUND)
-        state.onSessionTypeChange(SessionType.FOREGROUND)
+        state.currentSessionType = SessionType.FOREGROUND
+        state.currentSessionType = SessionType.FOREGROUND
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
         assertEquals(2, source.resetCount)
 
         // extra payload types should not re-register listeners
-        state.onSessionTypeChange(SessionType.BACKGROUND)
-        state.onSessionTypeChange(SessionType.BACKGROUND)
+        state.currentSessionType = SessionType.BACKGROUND
+        state.currentSessionType = SessionType.BACKGROUND
         assertEquals(1, source.enableDataCaptureCount)
         assertEquals(1, source.disableDataCaptureCount)
         assertEquals(4, source.resetCount)
 
         // functions can be called multiple times without issue
-        state.onSessionTypeChange(SessionType.FOREGROUND)
-        state.onSessionTypeChange(SessionType.BACKGROUND)
+        state.currentSessionType = SessionType.FOREGROUND
+        state.currentSessionType = SessionType.BACKGROUND
         assertEquals(2, source.enableDataCaptureCount)
         assertEquals(2, source.disableDataCaptureCount)
         assertEquals(6, source.resetCount)

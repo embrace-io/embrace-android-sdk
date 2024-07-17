@@ -38,7 +38,7 @@ static bool populate_jni_cache(JNIEnv *env) {
 
     // load class ref for NativeThreadAnrSample
     cache->clz_native_thread_anr_sample = emb_jni_find_class_global_ref(env,
-                                                                        "io/embrace/android/embracesdk/payload/NativeThreadAnrSample");
+                                                                        "io/embrace/android/embracesdk/internal/payload/NativeThreadAnrSample");
     if (cache->clz_native_thread_anr_sample == NULL) {
         EMB_LOGDEV("Failed to initialize clz_native_thread_anr_sample");
         return false;
@@ -46,7 +46,7 @@ static bool populate_jni_cache(JNIEnv *env) {
 
     // load class ref for NativeThreadAnrStackframe
     cache->clz_native_thread_anr_stackframe = emb_jni_find_class_global_ref(env,
-                                                                            "io/embrace/android/embracesdk/payload/NativeThreadAnrStackframe");
+                                                                            "io/embrace/android/embracesdk/internal/payload/NativeThreadAnrStackframe");
     if (cache->clz_native_thread_anr_stackframe == NULL) {
         EMB_LOGDEV("Failed to initialize clz_native_thread_anr_stackframe");
         return false;
@@ -325,7 +325,7 @@ static jobject construct_interval_list(JNIEnv *env, emb_interval *interval) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_io_embrace_android_embracesdk_anr_ndk_NativeThreadSamplerNdkDelegate_finishSampling(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_finishSampling(JNIEnv *env,
                                                                                  jobject thiz) {
 
     // cancel any pending samples here.

@@ -1,28 +1,29 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.Embrace.AppFramework
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.arch.destination.LogWriter
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
-import io.embrace.android.embracesdk.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
-import io.embrace.android.embracesdk.arch.schema.SchemaType
-import io.embrace.android.embracesdk.arch.schema.SchemaType.Exception
-import io.embrace.android.embracesdk.arch.schema.SchemaType.FlutterException
-import io.embrace.android.embracesdk.arch.schema.SchemaType.Log
-import io.embrace.android.embracesdk.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.CacheableValue
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.opentelemetry.embExceptionHandling
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import java.util.NavigableMap
@@ -35,7 +36,6 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
-    private val appFramework: AppFramework,
     private val sessionProperties: EmbraceSessionProperties,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
@@ -98,7 +98,7 @@ internal class EmbraceLogService(
             } else {
                 customStackTrace
             }
-            if (appFramework == AppFramework.FLUTTER) {
+            if (configService.appFramework == AppFramework.FLUTTER) {
                 logFlutterException(
                     message = message,
                     severity = severity,
@@ -222,7 +222,7 @@ internal class EmbraceLogService(
     private fun createTelemetryAttributes(customProperties: Map<String, Any>?): TelemetryAttributes {
         val attributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
 
@@ -259,7 +259,7 @@ internal class EmbraceLogService(
             return
         }
 
-        logWriter.addLog(schemaProvider(attributes), severity, trimToMaxLength(message))
+        logWriter.addLog(schemaProvider(attributes), severity.toOtelSeverity(), trimToMaxLength(message))
     }
 
     /**
@@ -279,7 +279,7 @@ internal class EmbraceLogService(
 
     private fun trimToMaxLength(message: String): String {
         val maxLength =
-            if (appFramework == AppFramework.UNITY) {
+            if (configService.appFramework == AppFramework.UNITY) {
                 LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
             } else {
                 configService.logMessageBehavior.getLogMessageMaximumAllowedLength()
@@ -291,7 +291,7 @@ internal class EmbraceLogService(
             // ensure that we never end up with a negative offset when extracting substring, regardless of the config value set
             val allowedLength = when {
                 maxLength >= endChars.length -> maxLength - endChars.length
-                else -> LogMessageBehavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
+                else -> LogMessageBehaviorImpl.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
             }
             logger.logWarning("Truncating message to ${message.length} characters")
             message.substring(0, allowedLength) + endChars

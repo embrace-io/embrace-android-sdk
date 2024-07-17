@@ -4,9 +4,10 @@ import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecut
 import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.WrongThreadException
-import io.embrace.android.embracesdk.payload.AnrInterval
-import io.embrace.android.embracesdk.payload.AnrSample
-import io.embrace.android.embracesdk.payload.AnrSampleList
+import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
+import io.embrace.android.embracesdk.internal.payload.AnrInterval
+import io.embrace.android.embracesdk.internal.payload.AnrSample
+import io.embrace.android.embracesdk.internal.payload.AnrSampleList
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

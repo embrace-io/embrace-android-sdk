@@ -1,16 +1,17 @@
 package io.embrace.android.embracesdk.arch.schema
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
+import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.opentelemetry.embSessionId
-import io.embrace.android.embracesdk.session.properties.EmbraceSessionProperties
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -55,7 +56,7 @@ internal class TelemetryAttributesTest {
     fun `all attributes types`() {
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
@@ -76,7 +77,7 @@ internal class TelemetryAttributesTest {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties
+            sessionPropertiesProvider = sessionProperties::get,
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
         telemetryAttributes.setAttribute(embSessionId, newSessionId)
@@ -124,7 +125,7 @@ internal class TelemetryAttributesTest {
 
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)
@@ -152,7 +153,7 @@ internal class TelemetryAttributesTest {
 
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionProperties = sessionProperties,
+            sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(embSessionId, sessionId)

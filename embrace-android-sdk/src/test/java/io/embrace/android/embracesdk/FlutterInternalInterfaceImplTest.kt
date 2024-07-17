@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
-import io.embrace.android.embracesdk.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -28,14 +30,14 @@ internal class FlutterInternalInterfaceImplTest {
         )
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             fakePreferencesService,
-            Embrace.AppFramework.FLUTTER
+            AppFramework.FLUTTER
         )
         impl = FlutterInternalInterfaceImpl(embrace, mockk(), hostedSdkVersionInfo, logger)
     }
 
     @Test
     fun testSetFlutterSdkVersionNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setEmbraceFlutterSdkVersion("2.12")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -44,7 +46,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testSetDartVersionNotStarted() {
-        every { embrace.isStarted() } returns false
+        every { embrace.isStarted } returns false
         impl.setDartVersion("2.12")
         verify(exactly = 1) {
             logger.logSdkNotInitialized(any())
@@ -53,7 +55,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testLogUnhandledDartException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
@@ -73,7 +75,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Test
     fun testLogHandledDartException() {
-        every { embrace.isStarted() } returns true
+        every { embrace.isStarted } returns true
         impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(

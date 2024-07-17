@@ -1,20 +1,21 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.behavior.AnrBehavior
-import io.embrace.android.embracesdk.config.behavior.AppExitInfoBehavior
-import io.embrace.android.embracesdk.config.behavior.AutoDataCaptureBehavior
-import io.embrace.android.embracesdk.config.behavior.BackgroundActivityBehavior
-import io.embrace.android.embracesdk.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.config.behavior.DataCaptureEventBehavior
-import io.embrace.android.embracesdk.config.behavior.LogMessageBehavior
-import io.embrace.android.embracesdk.config.behavior.NetworkBehavior
-import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.config.behavior.SdkEndpointBehavior
-import io.embrace.android.embracesdk.config.behavior.SdkModeBehavior
-import io.embrace.android.embracesdk.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.config.behavior.StartupBehavior
-import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
  * Fake [ConfigService] used for testing. Updates to registered listeners can be triggered by calling [updateListeners]. Note that the
@@ -22,6 +23,7 @@ import io.embrace.android.embracesdk.config.behavior.WebViewVitalsBehavior
  * data. Beware of this difference in implementation compared to the real EmbraceConfigService
  */
 internal class FakeConfigService(
+    override var appFramework: AppFramework = AppFramework.NATIVE,
     var sdkDisabled: Boolean = false,
     var backgroundActivityCaptureEnabled: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,

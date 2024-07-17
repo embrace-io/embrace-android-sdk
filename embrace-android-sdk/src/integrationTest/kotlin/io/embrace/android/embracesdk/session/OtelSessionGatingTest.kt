@@ -3,16 +3,16 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.gating.SessionGatingKeys
+import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
@@ -93,7 +93,7 @@ internal class OtelSessionGatingTest {
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.Tap))
         assertEquals(!gated, sessionSpan.hasEventOfType(EmbType.Ux.WebView))
 
-        val spans = checkNotNull(payload.data?.spans)
+        val spans = checkNotNull(payload.data.spans)
         val anrSpans = spans.filter { it.name == "emb-thread-blockage" }
         val expectedCount = when (gated) {
             true -> 0

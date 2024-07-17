@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.capture.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit

@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
@@ -38,17 +38,17 @@ internal fun fakeModuleInitBootstrapper(
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
     fakeInitModule: FakeInitModule = FakeInitModule(logger = fakeEmbLogger),
     fakeOpenTelemetryModule: FakeOpenTelemetryModule = FakeOpenTelemetryModule(),
-    coreModuleSupplier: CoreModuleSupplier = { _, _, _ -> FakeCoreModule() },
+    coreModuleSupplier: CoreModuleSupplier = { _, _ -> FakeCoreModule() },
     systemServiceModuleSupplier: SystemServiceModuleSupplier = { _, _ -> FakeSystemServiceModule() },
     androidServicesModuleSupplier: AndroidServicesModuleSupplier = { _, _, _ -> FakeAndroidServicesModule() },
     workerThreadModuleSupplier: WorkerThreadModuleSupplier = { _ -> FakeWorkerThreadModule() },
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
-    essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
+    essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
     dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeDataSourceModule() },
-    dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
+    dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
-    customerLogModuleSupplier: CustomerLogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCustomerLogModule() },
+    customerLogModuleSupplier: CustomerLogModuleSupplier = { _, _, _, _, _, _, _ -> FakeCustomerLogModule() },
     nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
     dataContainerModuleSupplier: DataContainerModuleSupplier = { _, _, _, _, _ -> FakeDataContainerModule() },
     sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },

@@ -9,8 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeAppStartupDataCollector
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
+import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.logging.EmbLogger
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

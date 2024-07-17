@@ -17,6 +17,9 @@ plugins {
 }
 
 android {
+    useLibrary("android.test.runner")
+    useLibrary("android.test.base")
+    useLibrary("android.test.mock")
     compileSdk = Versions.COMPILE_SDK
 
     defaultConfig {
@@ -24,7 +27,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         aarMetadata {
-            minCompileSdk = Versions.MIN_SDK
+            minCompileSdk = Versions.MIN_COMPILE_SDK
         }
     }
 
@@ -57,11 +60,13 @@ android {
             }
         }
     }
+
     buildTypes {
         named("release") {
             isMinifyEnabled = false
         }
     }
+
     publishing {
 
         // create component with single publication variant
@@ -71,13 +76,30 @@ android {
             withJavadocJar()
         }
     }
+
+    sourceSets {
+        getByName("test").java.srcDir("src/integrationTest/java")
+        getByName("test").kotlin.srcDir("src/integrationTest/kotlin")
+        getByName("test").resources.srcDir("src/integrationTest/resources")
+    }
 }
 
 dependencies {
-    testImplementation("junit:junit:${Versions.JUNIT}")
+    implementation("androidx.startup:startup-runtime:1.1.1")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN_EXPOSED}")
     add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}")
     add("lintChecks", project.project(":embrace-lint"))
+
+    testImplementation("junit:junit:${Versions.JUNIT}")
+    testImplementation("io.mockk:mockk:${Versions.MOCKK}")
+    testImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
+    testImplementation("androidx.test.ext:junit:${Versions.ANDROIDX_JUNIT}")
+    testImplementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")
+    testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.MOCKWEBSERVER}")
+    testImplementation(project(":embrace-test-common"))
+
+    androidTestImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
+    androidTestImplementation("androidx.test:runner:${Versions.ANDROIDX_TEST}")
 }
 
 checkstyle {
@@ -123,14 +145,10 @@ project.tasks.withType(JavaCompile::class.java).configureEach {
 
 project.tasks.withType(KotlinCompile::class.java).configureEach {
     kotlinOptions {
-        apiVersion = "1.4"
-        languageVersion = "1.4"
+        apiVersion = "1.8"
+        languageVersion = "1.8"
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs = freeCompilerArgs + "-Xexplicit-api=strict"
-
-        // Targetting Kotlin 1.4 emits a warning that can't be suppressed.
-        // Disabling this check for now.
-        allWarningsAsErrors = false
     }
 }
 
@@ -197,6 +215,10 @@ publishing {
 }
 
 signing {
+    val keyId = System.getenv("mavenSigningKeyId")
+    val key = System.getenv("mavenSigningKeyRingFileEncoded")
+    val password = System.getenv("mavenSigningKeyPassword")
+    useInMemoryPgpKeys(keyId, key, password)
     sign(publishing.publications.getByName("release"))
 }
 

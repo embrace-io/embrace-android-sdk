@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.opentelemetry.embProcessIdentifier
-import io.embrace.android.embracesdk.opentelemetry.embSequenceId
+import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
+import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.ReadWriteSpan

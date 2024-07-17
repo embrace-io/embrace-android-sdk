@@ -11,10 +11,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -31,6 +31,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
+
+    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
@@ -57,7 +59,7 @@ internal class FlutterInternalInterfaceTest {
         with(testRule) {
             val session = harness.recordSession()
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals(AppFramework.FLUTTER, res.appFramework)
             assertNull(res.hostedSdkVersion)
             assertNull(res.hostedPlatformVersion)
         }
@@ -72,7 +74,7 @@ internal class FlutterInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals(AppFramework.FLUTTER, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
         }
@@ -91,7 +93,7 @@ internal class FlutterInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals(AppFramework.FLUTTER, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
         }
@@ -111,7 +113,7 @@ internal class FlutterInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals(AppFramework.FLUTTER, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
         }
@@ -131,7 +133,7 @@ internal class FlutterInternalInterfaceTest {
             }
 
             val res = checkNotNull(session?.resource)
-            assertEquals(EnvelopeResource.AppFramework.FLUTTER, res.appFramework)
+            assertEquals(AppFramework.FLUTTER, res.appFramework)
             assertEquals("28.9.2", res.hostedPlatformVersion)
             assertEquals("1.2.4", res.hostedSdkVersion)
         }

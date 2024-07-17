@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.opentelemetry
 
 import io.embrace.android.embracesdk.fakes.FakeTracerProvider
+import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.LoggerProvider
 import io.opentelemetry.api.metrics.MeterProvider

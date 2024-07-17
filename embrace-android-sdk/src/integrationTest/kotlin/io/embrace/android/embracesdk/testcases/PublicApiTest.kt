@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.TIRAMISU

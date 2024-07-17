@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.worker
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityCallable
+import io.embrace.android.embracesdk.internal.worker.PriorityRunnable
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue

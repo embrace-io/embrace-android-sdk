@@ -4,9 +4,6 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.config.ConfigService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
@@ -17,10 +14,16 @@ import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.prefs.PreferencesService
-import io.embrace.android.embracesdk.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -40,7 +43,6 @@ internal class EmbraceMetadataReactNativeTest {
     private lateinit var assetManager: AssetManager
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
-    private var appFramework: Embrace.AppFramework = Embrace.AppFramework.REACT_NATIVE
     private lateinit var preferencesService: PreferencesService
     private lateinit var processStateService: ProcessStateService
     private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
@@ -55,7 +57,9 @@ internal class EmbraceMetadataReactNativeTest {
         }
         assetManager = mockk(relaxed = true)
         buildInfo = BuildInfo("device-id", null, null)
-        configService = FakeConfigService()
+        configService = FakeConfigService().apply {
+            appFramework = AppFramework.REACT_NATIVE
+        }
         preferencesService = FakePreferenceService()
         processStateService = FakeProcessStateService()
         preferencesService.javaScriptBundleURL = null
@@ -65,7 +69,7 @@ internal class EmbraceMetadataReactNativeTest {
         cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, EmbLoggerImpl())
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
-            Embrace.AppFramework.REACT_NATIVE
+            AppFramework.REACT_NATIVE
         )
     }
 
@@ -75,7 +79,6 @@ internal class EmbraceMetadataReactNativeTest {
         SystemInfo(),
         buildInfo,
         configService,
-        appFramework,
         preferencesService,
         processStateService,
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),

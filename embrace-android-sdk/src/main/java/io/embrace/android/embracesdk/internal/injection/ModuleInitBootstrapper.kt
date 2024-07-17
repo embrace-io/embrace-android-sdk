@@ -237,7 +237,6 @@ internal class ModuleInitBootstrapper(
                         dataCaptureServiceModuleSupplier(
                             initModule,
                             openTelemetryModule,
-                            coreModule,
                             essentialServiceModule,
                             workerThreadModule,
                             versionChecker,
@@ -254,8 +253,6 @@ internal class ModuleInitBootstrapper(
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
                             dataCaptureServiceModule.webviewService,
-                            dataCaptureServiceModule.memoryService,
-                            dataCaptureServiceModule.componentCallbackService,
                             dataCaptureServiceModule.breadcrumbService,
                             dataCaptureServiceModule.pushNotificationService
                         )

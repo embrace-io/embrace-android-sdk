@@ -26,7 +26,7 @@ internal class InternalWebViewApiDelegateTest {
     @Before
     fun setUp() {
         val bootstrapper = fakeModuleInitBootstrapper(
-            dataCaptureServiceModuleSupplier = { _, _, _, _, _, _, _ ->
+            dataCaptureServiceModuleSupplier = { _, _, _, _, _, _ ->
                 FakeDataCaptureServiceModule(webviewService = FakeWebViewService())
             }
         )

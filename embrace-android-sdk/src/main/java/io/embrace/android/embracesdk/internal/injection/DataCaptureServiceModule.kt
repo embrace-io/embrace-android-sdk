@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
-import io.embrace.android.embracesdk.internal.capture.memory.ComponentCallbackService
-import io.embrace.android.embracesdk.internal.capture.memory.MemoryService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
@@ -23,11 +21,6 @@ internal interface DataCaptureServiceModule {
     val breadcrumbService: BreadcrumbService
 
     /**
-     * Captures memory events
-     */
-    val memoryService: MemoryService?
-
-    /**
      * Captures information from webviews
      */
     val webviewService: WebViewService
@@ -36,11 +29,6 @@ internal interface DataCaptureServiceModule {
      * Captures push notifications
      */
     val pushNotificationService: PushNotificationCaptureService
-
-    /**
-     * Registers for the component callback to capture memory events
-     */
-    val componentCallbackService: ComponentCallbackService
 
     /**
      * Captures the startup time of the SDK

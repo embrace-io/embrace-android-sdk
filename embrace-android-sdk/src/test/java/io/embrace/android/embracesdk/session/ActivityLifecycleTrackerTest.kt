@@ -185,12 +185,12 @@ internal class ActivityLifecycleTrackerTest {
     @Test
     fun `verify a listener is added`() {
         // assert empty list first
-        assertEquals(0, activityLifecycleTracker.listeners.size)
+        assertEquals(0, activityLifecycleTracker.activityListeners.size)
 
         val mockActivityLifecycleListener = mockk<ActivityLifecycleListener>()
         activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        assertEquals(1, activityLifecycleTracker.listeners.size)
+        assertEquals(1, activityLifecycleTracker.activityListeners.size)
     }
 
     @Test
@@ -211,7 +211,7 @@ internal class ActivityLifecycleTrackerTest {
         // add it for a 2nd time
         activityLifecycleTracker.addListener(mockActivityLifecycleListener)
 
-        assertEquals(1, activityLifecycleTracker.listeners.size)
+        assertEquals(1, activityLifecycleTracker.activityListeners.size)
     }
 
     @Test
@@ -222,8 +222,8 @@ internal class ActivityLifecycleTrackerTest {
 
         activityLifecycleTracker.addListener(mockActivityLifecycleListener2)
 
-        assertEquals(2, activityLifecycleTracker.listeners.size)
-        assertEquals(mockActivityLifecycleListener2, activityLifecycleTracker.listeners[1])
+        assertEquals(2, activityLifecycleTracker.activityListeners.size)
+        assertEquals(mockActivityLifecycleListener2, activityLifecycleTracker.activityListeners[1])
     }
 
     @Test
@@ -239,7 +239,7 @@ internal class ActivityLifecycleTrackerTest {
         activityLifecycleTracker.close()
 
         verify { application.unregisterActivityLifecycleCallbacks(activityLifecycleTracker) }
-        assertTrue(activityLifecycleTracker.listeners.isEmpty())
+        assertTrue(activityLifecycleTracker.activityListeners.isEmpty())
         assertTrue(activityLifecycleTracker.startupListeners.isEmpty())
     }
 

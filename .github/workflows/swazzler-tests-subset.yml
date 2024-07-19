@@ -43,13 +43,6 @@ jobs:
       - name: Git submodules remote update
         run: cd swazzler-test && git submodule update --remote --recursive --init --force
 
-      # use java 17 to publish the sdk and run swazzler-tests
-#      - name: Install Java machines
-#        uses: actions/setup-java@v4
-#        with:
-#          distribution: 'adopt'
-#          java-version: 17
-
       - name: "Publish Swazzler locally"
         run: cd swazzler-test/embrace-swazzler3 && ./gradlew publishToMavenLocal --no-daemon
 

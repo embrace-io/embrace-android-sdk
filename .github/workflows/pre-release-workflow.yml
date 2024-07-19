@@ -26,3 +26,11 @@ jobs:
     secrets: inherit
     with:
       version_of_rc: ${{ github.event.inputs.version_to_release }}
+
+  next-version:
+    name: Set Next Version
+    needs: release-branch
+    uses: ./.github/workflows/set-version.yml
+    secrets: inherit
+    with:
+      new_version: ${{ github.event.inputs.next_version }}"

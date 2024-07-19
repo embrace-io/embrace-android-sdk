@@ -1,0 +1,54 @@
+name: Set Next Version in SDK and Swazzler
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version, Specify <major.minor>, e.g. 6.4 (Do NOT include -SNAPSHOT, will be added automatically)'
+        required: true
+
+jobs:
+  set-version:
+    name: Set Version in SDK
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure git
+        run: |
+          git config --global user.name 'embrace-ci[bot]'
+          git config --global user.email 'embrace-ci@users.noreply.github.com'
+          git config --global url."https://${{ secrets.CD_GITHUB_USER }}:${{ secrets.CD_GITHUB_TOKEN }}@github.com".insteadOf "https://github.com"
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Set new SDK version
+        run: |
+          git checkout master
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
+          git add gradle.properties
+          git commit -m "CI/CD: set new version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
+          git push
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: master
+          token: ${{ secrets.CD_GITHUB_TOKEN }}
+
+      - name: Set Next Swazzler Version
+        run: |
+          git checkout master
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
+          git add gradle.properties
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
+          git push

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.opentelemetry.api.trace.SpanId
 
 /**
  * A span represents a single unit of work done in the app. It can be a network request, a database
@@ -19,7 +18,7 @@ import io.opentelemetry.api.trace.SpanId
  * @param attributes
  */
 @JsonClass(generateAdapter = true)
-internal data class Span(
+public data class Span(
 
     /* The ID of the trace that this span is part of */
     @Json(name = "trace_id")
@@ -31,7 +30,7 @@ internal data class Span(
 
     /* A value that uniquely identifies the parent span */
     @Json(name = "parent_span_id")
-    val parentSpanId: String? = SpanId.getInvalid(),
+    val parentSpanId: String? = null,
 
     /* The name of the span */
     @Json(name = "name")
@@ -62,7 +61,7 @@ internal data class Span(
      * Values: UNSET,ERROR,OK
      */
     @JsonClass(generateAdapter = false)
-    internal enum class Status(val value: String) {
+    public enum class Status(public val value: String) {
         @Json(name = "Unset")
         UNSET("Unset"),
 

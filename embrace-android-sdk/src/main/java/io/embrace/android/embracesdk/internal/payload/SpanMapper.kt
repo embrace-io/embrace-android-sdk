@@ -87,6 +87,7 @@ internal fun Span.toFailedSpan(endTimeMs: Long): Span {
 
     return copy(
         endTimeNanos = endTimeMs.millisToNanos(),
+        parentSpanId = this.parentSpanId ?: SpanId.getInvalid(),
         status = Span.Status.ERROR,
         attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList())
     )

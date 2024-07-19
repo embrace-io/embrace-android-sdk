@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.opentelemetry.api.trace.SpanId
 
 internal fun fakeSessionZygote() = SessionZygote(
     sessionId = "fakeSessionId",
@@ -30,6 +31,7 @@ internal fun fakeSessionEnvelope(
     val sessionSpan = Span(
         startTimeNanos = startMs.millisToNanos(),
         endTimeNanos = endMs.millisToNanos(),
+        parentSpanId = SpanId.getInvalid(),
         attributes = listOf(
             Attribute("emb.type", EmbType.Ux.Session.value),
             Attribute(embSessionId.name, sessionId)

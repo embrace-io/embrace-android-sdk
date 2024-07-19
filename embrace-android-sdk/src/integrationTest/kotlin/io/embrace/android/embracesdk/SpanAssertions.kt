@@ -16,10 +16,10 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
  * Finds the first Span Event matching the given [TelemetryType]
  */
 internal fun Span.findEventOfType(telemetryType: TelemetryType): SpanEvent {
-    checkNotNull(events) {
+    val sanitizedEvents = checkNotNull(events) {
         "No events found in span"
     }
-    return checkNotNull(events.single { it.hasFixedAttribute(telemetryType) }) {
+    return checkNotNull(sanitizedEvents.single { it.hasFixedAttribute(telemetryType) }) {
         "Event not found: $name"
     }
 }
@@ -28,10 +28,10 @@ internal fun Span.findEventOfType(telemetryType: TelemetryType): SpanEvent {
  * Finds the Span Events matching the given [TelemetryType]
  */
 internal fun Span.findEventsOfType(telemetryType: TelemetryType): List<SpanEvent> {
-    checkNotNull(events) {
+    val sanitizedEvents = checkNotNull(events) {
         "No events found in span"
     }
-    return checkNotNull(events.filter { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) }) {
+    return checkNotNull(sanitizedEvents.filter { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) }) {
         "Events not found: $name"
     }
 }
@@ -40,10 +40,10 @@ internal fun Span.findEventsOfType(telemetryType: TelemetryType): List<SpanEvent
  * Returns true if an event exists with the given [TelemetryType]
  */
 internal fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
-    checkNotNull(events) {
+    val sanitizedEvents = checkNotNull(events) {
         "No events found in span"
     }
-    return events.find { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) } != null
+    return sanitizedEvents.find { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) } != null
 }
 
 /**

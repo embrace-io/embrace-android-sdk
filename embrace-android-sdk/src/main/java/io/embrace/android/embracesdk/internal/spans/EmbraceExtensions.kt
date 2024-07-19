@@ -28,11 +28,6 @@ import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
  */
 
 /**
- * Prefix added to OTel signal object names recorded by the SDK
- */
-private const val EMBRACE_OBJECT_NAME_PREFIX = "emb-"
-
-/**
  * Prefix added to all attribute keys for all usage attributes added by the SDK
  */
 private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
@@ -83,11 +78,6 @@ internal fun AttributesBuilder.fromMap(attributes: Map<String, String>): Attribu
     }
     return this
 }
-
-/**
- * Return the appropriate name used for telemetry created by Embrace given the current value
- */
-internal fun String.toEmbraceObjectName(): String = EMBRACE_OBJECT_NAME_PREFIX + this
 
 /**
  * Return the appropriate internal Embrace attribute usage name given the current string

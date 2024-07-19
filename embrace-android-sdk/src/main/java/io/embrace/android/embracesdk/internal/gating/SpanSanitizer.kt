@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.BREADCRUM
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.opentelemetry.api.trace.SpanId
 
 internal class SpanSanitizer(
     private val spans: List<Span>?,
@@ -27,7 +28,7 @@ internal class SpanSanitizer(
         val sanitizedSessionSpan = Span(
             sessionSpan.traceId,
             sessionSpan.spanId,
-            sessionSpan.parentSpanId,
+            sessionSpan.parentSpanId ?: SpanId.getInvalid(),
             sessionSpan.name,
             sessionSpan.startTimeNanos,
             sessionSpan.endTimeNanos,

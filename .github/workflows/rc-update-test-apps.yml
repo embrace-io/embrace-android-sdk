@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       next_version:
-        description: 'Next version. Specify <major.minor>, e.g. 6.4 (Do NOT include -SNAPSHOT, will be added automatically)'
+        description: 'SDK version, e.g. 6.9.0-SNAPSHOT'
         required: true
   workflow_call:
     inputs:
@@ -37,7 +37,7 @@ jobs:
       - name: Set next SDK version
         run: |
           git checkout master
-          sed -i -r "s#swazzler_version = ([^\']+)#swazzler_version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
+          sed -i -r "s#swazzler_version([^\']+)#swazzler_version = ${{ github.event.inputs.next_version }}#" gradle.properties
           git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}"
           git push

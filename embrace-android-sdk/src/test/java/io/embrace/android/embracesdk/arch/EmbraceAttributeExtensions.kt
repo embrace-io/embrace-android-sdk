@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.LogEventData
 import io.embrace.android.embracesdk.fakes.SpanEventData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan

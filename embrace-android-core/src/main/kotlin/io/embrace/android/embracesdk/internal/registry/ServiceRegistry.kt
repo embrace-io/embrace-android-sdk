@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * An object that holds all of the services that are registered with the SDK. This makes it simpler
  * to remember to set callbacks & close resources when creating a new service.
  */
-internal class ServiceRegistry(
+public class ServiceRegistry(
     private val logger: EmbLogger
 ) : Closeable {
 
@@ -24,17 +24,23 @@ internal class ServiceRegistry(
 
     // lazy init avoids type checks at startup until absolutely necessary.
     // once these variables are initialized, no further services should be registered.
-    val closeables by lazy { registry.filterIsInstance<Closeable>() }
-    val memoryCleanerListeners by lazy { registry.filterIsInstance<MemoryCleanerListener>() }
-    val processStateListeners by lazy { registry.filterIsInstance<ProcessStateListener>() }
-    val activityLifecycleListeners by lazy { registry.filterIsInstance<ActivityLifecycleListener>() }
-    val startupListener by lazy { registry.filterIsInstance<StartupListener>() }
+    public val closeables: List<Closeable> by lazy { registry.filterIsInstance<Closeable>() }
+    public val memoryCleanerListeners: List<MemoryCleanerListener> by lazy {
+        registry.filterIsInstance<MemoryCleanerListener>()
+    }
+    public val processStateListeners: List<ProcessStateListener> by lazy {
+        registry.filterIsInstance<ProcessStateListener>()
+    }
+    public val activityLifecycleListeners: List<ActivityLifecycleListener> by lazy {
+        registry.filterIsInstance<ActivityLifecycleListener>()
+    }
+    public val startupListener: List<StartupListener> by lazy { registry.filterIsInstance<StartupListener>() }
 
-    fun registerServices(vararg services: Any?) {
+    public fun registerServices(vararg services: Any?) {
         services.forEach(::registerService)
     }
 
-    fun registerService(service: Any?) {
+    public fun registerService(service: Any?) {
         if (initialized.get()) {
             error("Cannot register a service - already initialized.")
         }
@@ -44,27 +50,27 @@ internal class ServiceRegistry(
         registry.add(service)
     }
 
-    fun closeRegistration() {
+    public fun closeRegistration() {
         initialized.set(true)
     }
 
-    fun registerActivityListeners(processStateService: ProcessStateService) = processStateListeners.forEachSafe(
+    public fun registerActivityListeners(processStateService: ProcessStateService): Unit = processStateListeners.forEachSafe(
         "Failed to register activity listener",
         processStateService::addListener
     )
 
-    fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker) = activityLifecycleListeners.forEachSafe(
+    public fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit = activityLifecycleListeners.forEachSafe(
         "Failed to register activity lifecycle listener",
         activityLifecycleTracker::addListener
     )
 
-    fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService) =
+    public fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService): Unit =
         memoryCleanerListeners.forEachSafe(
             "Failed to register memory cleaner listener",
             memoryCleanerService::addListener
         )
 
-    fun registerStartupListener(activityLifecycleTracker: ActivityTracker) =
+    public fun registerStartupListener(activityLifecycleTracker: ActivityTracker): Unit =
         startupListener.forEachSafe(
             "Failed to register application lifecycle listener",
             activityLifecycleTracker::addStartupListener
@@ -72,7 +78,7 @@ internal class ServiceRegistry(
 
     // close all of the services in one go. this prevents someone creating a Closeable service
     // but forgetting to close it.
-    override fun close() = closeables.forEachSafe("Failed to close service", Closeable::close)
+    override fun close(): Unit = closeables.forEachSafe("Failed to close service", Closeable::close)
 
     private fun <T> List<T>.forEachSafe(msg: String, action: (t: T) -> Unit) {
         this.forEach {

@@ -6,21 +6,21 @@ import android.os.Bundle
 /**
  * Listener implemented by observers of the [ActivityLifecycleTracker].
  */
-internal interface ActivityLifecycleListener {
+public interface ActivityLifecycleListener {
 
     /**
      * Triggered when an activity is opened.
      *
      * @param activity details of the activity
      */
-    fun onView(activity: Activity) {}
+    public fun onView(activity: Activity) {}
 
     /**
      * Triggered when an activity is closed.
      *
      * @param activity details of the activity
      */
-    fun onViewClose(activity: Activity) {}
+    public fun onViewClose(activity: Activity) {}
 
     /**
      * Triggered when an activity is created.
@@ -28,5 +28,5 @@ internal interface ActivityLifecycleListener {
      * @param activity the activity
      * @param bundle   the bundle
      */
-    fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
+    public fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
 }

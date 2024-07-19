@@ -1,7 +1,7 @@
 name: "Run subset of swazzler-tests"
 
 on:
-  push:
+  pull_request:
   workflow_dispatch:
 
 env:

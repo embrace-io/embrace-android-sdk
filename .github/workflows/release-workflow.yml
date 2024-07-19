@@ -20,6 +20,9 @@ on:
         required: true
         default: '0'
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -34,8 +37,7 @@ jobs:
         with:
           ref: release/${{ github.event.inputs.version_to_release }}
           fetch-depth: 0
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
-      
+
       - name: Set up JDK ${{ matrix.jdk-version }}
         uses: actions/setup-java@v4
         with:
@@ -81,7 +83,7 @@ jobs:
         with:
           repository: embrace-io/embrace-swazzler3
           ref: release/${{ github.event.inputs.version_to_release }}
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3

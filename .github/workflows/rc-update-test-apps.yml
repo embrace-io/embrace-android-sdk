@@ -32,7 +32,7 @@ jobs:
         with:
           repository: ${{ matrix.repo }}
           ref: master
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }} # NOTE: write embrace-io/android-sdk-benchmark, embrace-io/android-test-suite, embrace-io/ndk-test-app-ndkbuild, embrace-io/ndk-test-app-custombuild, embrace-io/ndk-test-app, embrace-io/android-size-measure
 
       - name: Set next SDK version
         run: |

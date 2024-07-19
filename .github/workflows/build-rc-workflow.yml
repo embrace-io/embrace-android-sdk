@@ -25,6 +25,9 @@ on:
         default: '0'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   release:
     timeout-minutes: 60
@@ -49,7 +52,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: release/${{ github.event.inputs.version_of_rc }}
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - uses: actions/cache@v4
         with:
@@ -100,7 +102,7 @@ jobs:
         with:
           repository: embrace-io/embrace-swazzler3
           ref: release/${{ github.event.inputs.version_of_rc }}
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Generate Swazzler RC - Publish and Close repository
         run: |

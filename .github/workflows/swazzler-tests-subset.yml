@@ -1,5 +1,0 @@
-name: "Run subset of swazzler-tests"
-
-on:
-  push:
-  workflow_dispatch:

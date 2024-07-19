@@ -72,10 +72,13 @@ private fun createEventsListOfSize(size: Int): List<EmbraceSpanEvent> {
     return events
 }
 
+private const val MAX_EVENT_NAME_LENGTH = 100
+private const val MAX_EVENT_ATTRIBUTE_COUNT = 10
+
 internal val MAX_LENGTH_SPAN_NAME = "s".repeat(EmbraceSpanImpl.MAX_NAME_LENGTH)
 internal val TOO_LONG_SPAN_NAME = "s".repeat(EmbraceSpanImpl.MAX_NAME_LENGTH + 1)
-internal val MAX_LENGTH_EVENT_NAME = "s".repeat(EmbraceSpanEvent.MAX_EVENT_NAME_LENGTH)
-internal val TOO_LONG_EVENT_NAME = "s".repeat(EmbraceSpanEvent.MAX_EVENT_NAME_LENGTH + 1)
+internal val MAX_LENGTH_EVENT_NAME = "s".repeat(MAX_EVENT_NAME_LENGTH)
+internal val TOO_LONG_EVENT_NAME = "s".repeat(MAX_EVENT_NAME_LENGTH + 1)
 internal val MAX_LENGTH_ATTRIBUTE_KEY = "s".repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_KEY_LENGTH)
 internal val TOO_LONG_ATTRIBUTE_KEY = "s".repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_KEY_LENGTH + 1)
 internal val MAX_LENGTH_ATTRIBUTE_VALUE = "s".repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_VALUE_LENGTH)
@@ -83,7 +86,7 @@ internal val TOO_LONG_ATTRIBUTE_VALUE = "s".repeat(EmbraceSpanImpl.MAX_ATTRIBUTE
 
 internal val maxSizeAttributes = createMapOfSize(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT)
 internal val tooBigAttributes = createMapOfSize(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT + 1)
-internal val maxSizeEventAttributes = createMapOfSize(EmbraceSpanEvent.MAX_EVENT_ATTRIBUTE_COUNT)
-internal val tooBigEventAttributes = createMapOfSize(EmbraceSpanEvent.MAX_EVENT_ATTRIBUTE_COUNT + 1)
+internal val maxSizeEventAttributes = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT)
+internal val tooBigEventAttributes = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT + 1)
 internal val maxSizeEvents = createEventsListOfSize(EmbraceSpanImpl.MAX_EVENT_COUNT)
 internal val tooBigEvents = createEventsListOfSize(EmbraceSpanImpl.MAX_EVENT_COUNT + 1)

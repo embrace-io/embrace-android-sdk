@@ -114,9 +114,9 @@ internal class EmbraceTracerTest {
         )
 
         val expectedEvents: List<EmbraceSpanEvent> =
-            listOf(
-                EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
-                EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
+            listOfNotNull(
+                EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),
+                EmbraceSpanEvent.create(name = "event2", timestampMs = 5_000_000L.nanosToMillis(), expectedAttributes),
             )
 
         val parentSpan = checkNotNull(embraceTracer.createSpan(name = "parent-span"))
@@ -244,9 +244,9 @@ internal class EmbraceTracerTest {
             Pair("attribute2", "value2")
         )
         val expectedEvents: List<EmbraceSpanEvent> =
-            listOf(
-                EmbraceSpanEvent(name = "event1", timestampNanos = 1_000_000L, expectedAttributes),
-                EmbraceSpanEvent(name = "event2", timestampNanos = 5_000_000L, expectedAttributes),
+            listOfNotNull(
+                EmbraceSpanEvent.create(name = "event1", timestampMs = 1_000_000L.nanosToMillis(), expectedAttributes),
+                EmbraceSpanEvent.create(name = "event2", timestampMs = 5_000_000L.nanosToMillis(), expectedAttributes),
             )
 
         assertTrue(

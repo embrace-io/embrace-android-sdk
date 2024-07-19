@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
@@ -30,9 +31,9 @@ internal fun EmbraceSpanEvent.toNewPayload() = SpanEvent(
     attributes = attributes.toNewPayload()
 )
 
-internal fun SpanEvent.toOldPayload() = EmbraceSpanEvent(
+internal fun SpanEvent.toOldPayload() = EmbraceSpanEvent.create(
     name = name ?: "",
-    timestampNanos = timestampNanos ?: 0,
+    timestampMs = (timestampNanos ?: 0).nanosToMillis(),
     attributes = attributes?.toOldPayload() ?: emptyMap()
 )
 
@@ -56,7 +57,7 @@ internal fun Span.toOldPayload(): EmbraceSpanData {
             Span.Status.ERROR -> StatusCode.ERROR
             else -> StatusCode.UNSET
         },
-        events = events?.map { it.toOldPayload() } ?: emptyList(),
+        events = events?.mapNotNull { it.toOldPayload() } ?: emptyList(),
         attributes = attributes?.toOldPayload() ?: emptyMap()
     )
 }

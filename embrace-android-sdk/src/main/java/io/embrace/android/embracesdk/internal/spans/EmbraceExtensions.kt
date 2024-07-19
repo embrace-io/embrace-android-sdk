@@ -20,7 +20,6 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
-import java.util.concurrent.TimeUnit
 
 /**
  * Extension functions and constants to augment the core OpenTelemetry SDK and provide Embrace-specific customizations
@@ -55,23 +54,6 @@ internal fun Tracer.embraceSpanBuilder(
     private = private,
     parentSpan = parent,
 )
-
-/**
- * Add the given list of [EmbraceSpanEvent] if they are valid
- */
-internal fun Span.addEvents(events: List<EmbraceSpanEvent>): Span {
-    events.forEach { event ->
-        if (EmbraceSpanEvent.inputsValid(event.name, event.attributes)) {
-            addEvent(
-                event.name,
-                Attributes.builder().fromMap(event.attributes).build(),
-                event.timestampNanos,
-                TimeUnit.NANOSECONDS
-            )
-        }
-    }
-    return this
-}
 
 internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
     setAttribute(key.name, value)

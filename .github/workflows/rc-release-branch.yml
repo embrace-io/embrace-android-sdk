@@ -18,6 +18,9 @@ on:
         description: 'Next version. Specify <major.minor>, e.g. 6.4 (Do NOT include -SNAPSHOT, will be added automatically)'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   release-branch:
     name: Create Release Branches
@@ -33,7 +36,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: master
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - name: Create SDK Release Branch "release/${{ github.event.inputs.version_to_release }}"
         run: |
@@ -59,7 +61,7 @@ jobs:
         with:
           repository: embrace-io/embrace-swazzler3
           ref: master
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Create Swazzler Release Branch "release/${{ github.event.inputs.version_to_release }}"
         run: |

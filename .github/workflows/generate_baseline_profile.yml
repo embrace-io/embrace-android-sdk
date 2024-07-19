@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        jdk-version: [ "17" ]
+        jdk-version: [ "21" ]
         ndk-version: [ "21.4.7075529" ]
         api-level: [ 29 ]
         target: [ default ]

@@ -39,7 +39,6 @@ internal class CrashModuleImplTest {
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashService)
-        assertNotNull(module.automaticVerificationExceptionHandler)
         assertTrue(module.nativeCrashService is NoopNativeCrashService)
     }
 
@@ -61,7 +60,6 @@ internal class CrashModuleImplTest {
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashService)
-        assertNotNull(module.automaticVerificationExceptionHandler)
         assertTrue(module.nativeCrashService is NativeCrashDataSource)
     }
 }

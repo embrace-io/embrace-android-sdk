@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.injection.CrashModule
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.samples.AutomaticVerificationExceptionHandler
 import io.mockk.mockk
 
 internal class FakeCrashModule : CrashModule {
@@ -16,9 +15,6 @@ internal class FakeCrashModule : CrashModule {
     )
 
     override val crashService = FakeCrashService()
-
-    override val automaticVerificationExceptionHandler =
-        AutomaticVerificationExceptionHandler(null, mockk(relaxed = true))
 
     override val nativeCrashService: NativeCrashService = FakeNativeCrashService()
 }

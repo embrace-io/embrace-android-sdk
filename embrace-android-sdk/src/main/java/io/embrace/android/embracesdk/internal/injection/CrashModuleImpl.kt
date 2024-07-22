@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
-import io.embrace.android.embracesdk.samples.AutomaticVerificationExceptionHandler
 
 internal class CrashModuleImpl(
     initModule: InitModule,
@@ -47,11 +46,6 @@ internal class CrashModuleImpl(
 
     override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
         LastRunCrashVerifier(crashMarker, initModule.logger)
-    }
-
-    override val automaticVerificationExceptionHandler: AutomaticVerificationExceptionHandler by singleton {
-        val prevHandler = Thread.getDefaultUncaughtExceptionHandler()
-        AutomaticVerificationExceptionHandler(prevHandler, initModule.logger)
     }
 
     override val nativeCrashService: NativeCrashService by singleton {

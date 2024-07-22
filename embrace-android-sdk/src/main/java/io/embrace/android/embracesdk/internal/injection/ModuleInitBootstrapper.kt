@@ -426,7 +426,6 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(CrashModule::class) {
-                        Thread.setDefaultUncaughtExceptionHandler(crashModule.automaticVerificationExceptionHandler)
                         serviceRegistry.registerService(crashModule.crashService)
                     }
 

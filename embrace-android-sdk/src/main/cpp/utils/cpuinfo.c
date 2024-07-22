@@ -26,11 +26,11 @@ jstring emb_get_property(JNIEnv *env, const char* key) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_capture_cpu_EmbraceCpuInfoDelegate_getNativeCpuName(JNIEnv* env, jobject thiz) {
+Java_io_embrace_android_embracesdk_internal_capture_cpu_EmbraceCpuInfoDelegate_getNativeCpuName(JNIEnv* env, jobject thiz) {
     return emb_get_property(env, CPUINFO_CPU_NAME_KEY);
 }
 
 JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_capture_cpu_EmbraceCpuInfoDelegate_getNativeEgl(JNIEnv* env, jobject thiz) {
+Java_io_embrace_android_embracesdk_internal_capture_cpu_EmbraceCpuInfoDelegate_getNativeEgl(JNIEnv* env, jobject thiz) {
     return emb_get_property(env, CPUINFO_EGL_KEY);
 }

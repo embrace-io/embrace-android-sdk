@@ -16,24 +16,24 @@ import java.util.concurrent.TimeUnit
 /**
  * Wrapper for the [SpanBuilder] that stores the input data so that they can be accessed
  */
-internal class EmbraceSpanBuilder(
+public class EmbraceSpanBuilder(
     tracer: Tracer,
     name: String,
     telemetryType: TelemetryType,
-    val internal: Boolean,
+    public val internal: Boolean,
     private: Boolean,
     parentSpan: EmbraceSpan?,
 ) {
-    lateinit var parentContext: Context
+    public lateinit var parentContext: Context
         private set
 
-    val spanName = if (internal) {
+    public val spanName: String = if (internal) {
         name.toEmbraceObjectName()
     } else {
         name
     }
 
-    var startTimeMs: Long? = null
+    public var startTimeMs: Long? = null
 
     private val sdkSpanBuilder = tracer.spanBuilder(spanName)
     private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
@@ -53,34 +53,34 @@ internal class EmbraceSpanBuilder(
         }
     }
 
-    fun startSpan(startTimeMs: Long): Span {
+    public fun startSpan(startTimeMs: Long): Span {
         sdkSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
         return sdkSpanBuilder.startSpan()
     }
 
-    fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
+    public fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
 
-    fun getCustomAttributes(): Map<String, String> = customAttributes
+    public fun getCustomAttributes(): Map<String, String> = customAttributes
 
-    fun setCustomAttribute(key: String, value: String) {
+    public fun setCustomAttribute(key: String, value: String) {
         customAttributes[key] = value
     }
 
-    fun getParentSpan(): EmbraceSpan? = parentContext.getEmbraceSpan()
+    public fun getParentSpan(): EmbraceSpan? = parentContext.getEmbraceSpan()
 
-    fun setParentContext(context: Context) {
+    public fun setParentContext(context: Context) {
         parentContext = context
         sdkSpanBuilder.setParent(parentContext)
         updateKeySpan()
     }
 
-    fun setNoParent() {
+    public fun setNoParent() {
         parentContext = Context.root()
         sdkSpanBuilder.setNoParent()
         updateKeySpan()
     }
 
-    fun setSpanKind(spanKind: SpanKind) {
+    public fun setSpanKind(spanKind: SpanKind) {
         sdkSpanBuilder.setSpanKind(spanKind)
     }
 

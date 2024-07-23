@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
-import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

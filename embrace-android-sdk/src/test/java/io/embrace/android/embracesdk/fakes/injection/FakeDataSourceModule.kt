@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DataSourceModule

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 /**
  * A [DataSource] that adds or alters a span.
  */
-internal interface SpanDataSource : DataSource<SpanService> {
+public interface SpanDataSource : DataSource<SpanService> {
 
     /**
      * The DataSource should call this function when it wants to start, stop, or mutate
@@ -27,14 +27,14 @@ internal interface SpanDataSource : DataSource<SpanService> {
      * This function returns true if data was successfully captured & false if not.
      * This is assumed to be the case if [captureAction] completed without throwing.
      */
-    fun captureSpanData(
+    public fun captureSpanData(
         countsTowardsLimits: Boolean,
         inputValidation: () -> Boolean,
         captureAction: SpanService.() -> Unit
     ): Boolean
 }
 
-internal fun SpanService.startSpanCapture(schemaType: SchemaType, startTimeMs: Long): PersistableEmbraceSpan? {
+public fun SpanService.startSpanCapture(schemaType: SchemaType, startTimeMs: Long): PersistableEmbraceSpan? {
     return startSpan(
         name = schemaType.fixedObjectName,
         startTimeMs = startTimeMs,

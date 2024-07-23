@@ -189,11 +189,12 @@ internal class TracingApiTest {
                 ),
                 key = true
             )
+            val expectedParentId = traceRootSpan.spanId
             assertEmbraceSpanData(
                 span = spansMap["record-span-span"],
                 expectedStartTimeMs = testStartTimeMs + 100,
                 expectedEndTimeMs = testStartTimeMs + 200,
-                expectedParentId = checkNotNull(traceRootSpan.spanId),
+                expectedParentId = checkNotNull(expectedParentId),
                 expectedTraceId = traceRootSpan.traceId
             )
 
@@ -201,7 +202,7 @@ internal class TracingApiTest {
                 span = spansMap["completed-span"],
                 expectedStartTimeMs = testStartTimeMs + 200,
                 expectedEndTimeMs = testStartTimeMs + 400,
-                expectedParentId = traceRootSpan.spanId,
+                expectedParentId = expectedParentId,
                 expectedTraceId = traceRootSpan.traceId,
                 expectedErrorCode = ErrorCode.FAILURE,
                 expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
@@ -218,7 +219,7 @@ internal class TracingApiTest {
                 span = spansMap["bonus-span"],
                 expectedStartTimeMs = testStartTimeMs + 400,
                 expectedEndTimeMs = testStartTimeMs + 401,
-                expectedParentId = traceRootSpan.spanId,
+                expectedParentId = expectedParentId,
                 expectedTraceId = traceRootSpan.traceId
             )
 
@@ -226,7 +227,7 @@ internal class TracingApiTest {
                 span = spansMap["bonus-span-2"],
                 expectedStartTimeMs = testStartTimeMs + 410,
                 expectedEndTimeMs = testStartTimeMs + 700,
-                expectedParentId = traceRootSpan.spanId,
+                expectedParentId = expectedParentId,
                 expectedTraceId = traceRootSpan.traceId
             )
 

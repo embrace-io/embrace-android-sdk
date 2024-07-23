@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
-internal class CoreModuleImpl(
+public class CoreModuleImpl(
     ctx: Context,
     logger: EmbLogger
 ) : CoreModule {
@@ -26,7 +26,7 @@ internal class CoreModuleImpl(
     override val packageInfo: PackageInfo
         get() = context.packageManager.getPackageInfo(context.packageName, 0)
 
-    override val application by singleton { context as Application }
+    override val application: Application by singleton { context as Application }
 
     override val serviceRegistry: ServiceRegistry by singleton {
         ServiceRegistry(logger)

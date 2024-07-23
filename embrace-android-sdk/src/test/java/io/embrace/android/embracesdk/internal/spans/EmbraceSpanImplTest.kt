@@ -203,34 +203,35 @@ internal class EmbraceSpanImplTest {
         }
 
         with(checkNotNull(embraceSpan.snapshot())) {
-            assertEquals(2, checkNotNull(events).size)
-            with(events.first()) {
+            val sanitizedEvents = checkNotNull(events)
+            assertEquals(2, sanitizedEvents.size)
+            with(sanitizedEvents.first()) {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
-                checkNotNull(attributes)
+                val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     IllegalStateException::class.java.canonicalName,
-                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
+                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
                 )
-                assertEquals("oops", attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals("oops", attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
                 assertEquals(
                     firstExceptionStackTrace,
-                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
+                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
                 )
             }
-            with(events.last()) {
+            with(sanitizedEvents.last()) {
                 assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
-                checkNotNull(attributes)
+                val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     RuntimeException::class.java.canonicalName,
-                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
+                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
                 )
-                assertEquals("haha", attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
-                assertEquals("myValue", attributes.single { it.key == "myKey" }.data)
+                assertEquals("haha", attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals("myValue", attrs.single { it.key == "myKey" }.data)
                 assertEquals(
                     secondExceptionStackTrace,
-                    attributes.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
+                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
                 )
             }
         }
@@ -441,9 +442,9 @@ internal class EmbraceSpanImplTest {
             assertEquals(eventCount, events?.size)
             assertTrue(hasFixedAttribute(expectedType))
             assertEquals(isPrivate, hasFixedAttribute(PrivateSpan))
-            checkNotNull(attributes)
-            val embraceAttributeCount = attributes.filter { checkNotNull(it.key).startsWith("emb.") }.size
-            val customAttributeCount = attributes.size - embraceAttributeCount
+            val attrs = checkNotNull(attributes)
+            val embraceAttributeCount = attrs.filter { checkNotNull(it.key).startsWith("emb.") }.size
+            val customAttributeCount = attrs.size - embraceAttributeCount
             assertEquals(expectedEmbraceAttributes, embraceAttributeCount)
             assertEquals(expectedCustomAttributeCount, customAttributeCount)
         }

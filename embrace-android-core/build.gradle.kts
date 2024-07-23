@@ -17,4 +17,5 @@ dependencies {
     compileOnly(libs.opentelemetry.api)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
+    compileOnly(libs.lifecycle.common.java8)
 }

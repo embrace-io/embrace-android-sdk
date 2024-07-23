@@ -7,16 +7,16 @@ import java.io.Closeable
 /**
  * Tracks activity lifecycle events.
  */
-internal interface ActivityTracker : Application.ActivityLifecycleCallbacks, Closeable {
+public interface ActivityTracker : Application.ActivityLifecycleCallbacks, Closeable {
 
     /**
      * Gets the activity which is currently in the foreground.
      *
      * @return an optional of the activity currently in the foreground
      */
-    val foregroundActivity: Activity?
+    public val foregroundActivity: Activity?
 
-    fun addListener(listener: ActivityLifecycleListener)
+    public fun addListener(listener: ActivityLifecycleListener)
 
-    fun addStartupListener(listener: StartupListener)
+    public fun addStartupListener(listener: StartupListener)
 }

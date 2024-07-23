@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.session.lifecycle
 
-internal interface StartupListener {
+public interface StartupListener {
     /**
      * Triggered when the application has completed startup;
      */
-    fun applicationStartupComplete() {}
+    public fun applicationStartupComplete() {}
 }

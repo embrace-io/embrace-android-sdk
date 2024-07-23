@@ -6,7 +6,8 @@ import android.content.Context
 /**
  * Implementation used in production that just defers to the given [Context]
  */
-internal class EmbraceAndroidResourcesService(private val context: Context) : AndroidResourcesService {
+public class EmbraceAndroidResourcesService(private val context: Context) :
+    AndroidResourcesService {
     @SuppressLint("DiscouragedApi")
     override fun getIdentifier(name: String?, defType: String?, defPackage: String?): Int =
         context.resources.getIdentifier(name, defType, defPackage)

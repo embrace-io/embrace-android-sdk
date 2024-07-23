@@ -5,27 +5,27 @@ import android.content.res.Resources
 /**
  * Specifies the application ID and build ID.
  */
-internal class BuildInfo internal constructor(
+public class BuildInfo(
     /**
      * The ID of the particular build, generated at compile-time.
      */
-    val buildId: String?,
+    public val buildId: String?,
 
     /**
      * The BuildType name of the particular build, extracted at compile-time.
      */
-    val buildType: String?,
+    public val buildType: String?,
 
     /**
      * The Flavor name of the particular build, extracted at compile-time.
      */
-    val buildFlavor: String?
+    public val buildFlavor: String?
 ) {
 
-    internal companion object {
-        const val BUILD_INFO_BUILD_ID: String = "emb_build_id"
-        const val BUILD_INFO_BUILD_TYPE: String = "emb_build_type"
-        const val BUILD_INFO_BUILD_FLAVOR: String = "emb_build_flavor"
+    public companion object {
+        public const val BUILD_INFO_BUILD_ID: String = "emb_build_id"
+        public const val BUILD_INFO_BUILD_TYPE: String = "emb_build_type"
+        public const val BUILD_INFO_BUILD_FLAVOR: String = "emb_build_flavor"
         private const val RES_TYPE_STRING = "string"
 
         /**
@@ -35,7 +35,7 @@ internal class BuildInfo internal constructor(
          * @return the build information
          */
         @JvmStatic
-        fun fromResources(resources: AndroidResourcesService, packageName: String): BuildInfo {
+        public fun fromResources(resources: AndroidResourcesService, packageName: String): BuildInfo {
             return BuildInfo(
                 getBuildResource(resources, packageName, BUILD_INFO_BUILD_ID),
                 getBuildResource(resources, packageName, BUILD_INFO_BUILD_TYPE),
@@ -46,7 +46,7 @@ internal class BuildInfo internal constructor(
         /**
          * Given a build property name and a build property type, retrieves the embrace build resource value.
          */
-        fun getBuildResource(
+        public fun getBuildResource(
             resources: AndroidResourcesService,
             packageName: String,
             buildProperty: String

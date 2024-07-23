@@ -7,7 +7,7 @@ import kotlin.reflect.KProperty
 /**
  * How the dependency should be loaded.
  */
-internal enum class LoadType {
+public enum class LoadType {
 
     /**
      * The dependency should be instantiated as soon as the module is created.
@@ -27,7 +27,7 @@ internal enum class LoadType {
  * Lazy dependencies are NOT thread safe. It is assumed that dependencies will always be
  * initialized on the same thread.
  */
-internal inline fun <reified T> singleton(
+public inline fun <reified T> singleton(
     loadType: LoadType = LoadType.LAZY,
     noinline provider: Provider<T>
 ): ReadOnlyProperty<Any?, T> = SingletonDelegate(loadType, provider)
@@ -36,16 +36,16 @@ internal inline fun <reified T> singleton(
  * Creates a new dependency from a factory, meaning every time this property is called a
  * new object will be created.
  */
-internal inline fun <reified T> factory(
+public inline fun <reified T> factory(
     noinline provider: Provider<T>
 ): ReadOnlyProperty<Any?, T> = FactoryDelegate(provider)
 
-internal class FactoryDelegate<T>(private inline val provider: Provider<T>) : ReadOnlyProperty<Any?, T> {
+public class FactoryDelegate<T>(private inline val provider: Provider<T>) : ReadOnlyProperty<Any?, T> {
 
     override fun getValue(thisRef: Any?, property: KProperty<*>): T = provider()
 }
 
-internal class SingletonDelegate<T>(
+public class SingletonDelegate<T>(
     loadType: LoadType,
     provider: Provider<T>
 ) : ReadOnlyProperty<Any?, T> {

@@ -6,7 +6,9 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.IdGeneratorTest.Companion.validPattern
+import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,7 +30,12 @@ internal class PublicApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        IntegrationTestRule.Harness(startImmediately = false).apply {
+            overriddenConfigService.networkSpanForwardingBehavior =
+                fakeNetworkSpanForwardingBehavior {
+                    NetworkSpanForwardingRemoteConfig(100f)
+                }
+        }
     }
 
     @Test
@@ -92,7 +99,10 @@ internal class PublicApiTest {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
             harness.recordSession {
-                assertEquals(embrace.currentSessionId, harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId())
+                assertEquals(
+                    embrace.currentSessionId,
+                    harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId()
+                )
                 assertNotNull(embrace.currentSessionId)
             }
         }
@@ -115,8 +125,9 @@ internal class PublicApiTest {
     @Test
     fun `ensure all generated W3C traceparent conforms to the expected format`() {
         with(testRule) {
+            startSdk()
             repeat(100) {
-                assertTrue(validPattern.matches(embrace.generateW3cTraceparent()))
+                assertTrue(validPattern.matches(checkNotNull(embrace.generateW3cTraceparent())))
             }
         }
     }

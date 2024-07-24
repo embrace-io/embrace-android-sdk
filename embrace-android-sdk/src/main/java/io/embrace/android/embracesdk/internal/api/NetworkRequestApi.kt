@@ -19,5 +19,5 @@ public interface NetworkRequestApi {
 
     public val traceIdHeader: String
 
-    public fun generateW3cTraceparent(): String
+    public fun generateW3cTraceparent(): String?
 }

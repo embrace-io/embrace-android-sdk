@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.findAttributeValue
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -47,7 +48,7 @@ internal class CurrentSessionSpanAttributeTests {
     }
 
     private fun EmbraceSpanData.assertCommonSessionSpanAttrs() {
-        assertNotNull(attributes.findAttributeValue("emb.session_id"))
+        assertNotNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
         assertEquals("ux.session", attributes.findAttributeValue("emb.type"))
     }
 }

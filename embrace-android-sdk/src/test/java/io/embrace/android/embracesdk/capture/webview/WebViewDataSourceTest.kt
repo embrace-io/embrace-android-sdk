@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.WebViewInfo
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.opentelemetry.semconv.UrlAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -44,8 +45,8 @@ internal class WebViewDataSourceTest {
         dataSource.loadDataIntoSession(listOf(webViewInfo1, webViewInfo2))
         assertEquals(2, writer.addedEvents.size)
         assertEquals(2, writer.addedEvents.count { it.schemaType.fixedObjectName == "webview-info" })
-        assertEquals("https://example1.com", writer.addedEvents[0].schemaType.attributes()["emb.webview_info.url"])
-        assertEquals("https://example2.com", writer.addedEvents[1].schemaType.attributes()["emb.webview_info.url"])
+        assertEquals("https://example1.com", writer.addedEvents[0].schemaType.attributes()[UrlAttributes.URL_FULL.key])
+        assertEquals("https://example2.com", writer.addedEvents[1].schemaType.attributes()[UrlAttributes.URL_FULL.key])
     }
 
     private fun getWebViewInfo(url: String): WebViewInfo {

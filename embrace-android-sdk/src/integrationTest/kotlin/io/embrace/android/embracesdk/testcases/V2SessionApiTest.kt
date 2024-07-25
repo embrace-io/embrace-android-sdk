@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.toMap
 import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -53,8 +54,8 @@ internal class V2SessionApiTest {
             // validate session span
             val sessionSpan = snapshots.single { it.name == "emb-session" }
             assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
-            assertNotNull(sessionSpan.attributes?.findAttributeValue("emb.session_id"))
-            val attrs = checkNotNull(sessionSpan.attributes?.filter { it.key != "emb.session_id" }?.toMap())
+            assertNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            val attrs = checkNotNull(sessionSpan.attributes?.filter { it.key != SessionIncubatingAttributes.SESSION_ID.key }?.toMap())
 
             val expected = mapOf(
                 "emb.cold_start" to "true",

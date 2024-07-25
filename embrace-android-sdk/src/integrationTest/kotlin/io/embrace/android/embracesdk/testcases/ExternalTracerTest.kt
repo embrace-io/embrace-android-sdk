@@ -25,7 +25,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -148,9 +148,9 @@ internal class ExternalTracerTest {
                         timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
                         attributes = listOf(
                             Attribute("bad", "yes"),
-                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key, "bah"),
-                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
-                            Attribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
+                            Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
+                            Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
+                            Attribute(ExceptionAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
                         )
                     )
                 ),

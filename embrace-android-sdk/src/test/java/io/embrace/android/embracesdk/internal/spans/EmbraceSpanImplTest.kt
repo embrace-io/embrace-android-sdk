@@ -24,7 +24,7 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.trace.SdkTracerProvider
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -211,12 +211,12 @@ internal class EmbraceSpanImplTest {
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     IllegalStateException::class.java.canonicalName,
-                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE.key }.data
                 )
-                assertEquals("oops", attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals("oops", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE.key }.data)
                 assertEquals(
                     firstExceptionStackTrace,
-                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE.key }.data
                 )
             }
             with(sanitizedEvents.last()) {
@@ -225,13 +225,13 @@ internal class EmbraceSpanImplTest {
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
                     RuntimeException::class.java.canonicalName,
-                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_TYPE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE.key }.data
                 )
-                assertEquals("haha", attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key }.data)
+                assertEquals("haha", attrs.single { it.key == ExceptionAttributes.EXCEPTION_MESSAGE.key }.data)
                 assertEquals("myValue", attrs.single { it.key == "myKey" }.data)
                 assertEquals(
                     secondExceptionStackTrace,
-                    attrs.single { it.key == ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key }.data
+                    attrs.single { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE.key }.data
                 )
             }
         }

@@ -28,7 +28,7 @@ import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionP
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.api.logs.Severity
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -90,19 +90,19 @@ internal class EmbraceLogServiceTest {
         assertEquals(Severity.INFO, first.severity)
         assertEquals("bar", first.schemaType.attributes()["foo"])
         assertNotNull(first.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertNull(first.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
+        assertNull(first.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
 
         val second = logs[1]
         assertEquals("Warning world", second.message)
         assertEquals(Severity.WARN, second.severity)
         assertNotNull(second.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertNull(second.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
+        assertNull(second.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
 
         val third = logs[2]
         assertEquals("Hello errors", third.message)
         assertEquals(Severity.ERROR, third.severity)
         assertNotNull(third.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertNull(third.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
+        assertNull(third.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
         third.assertIsType(EmbType.System.Log)
     }
 
@@ -125,11 +125,11 @@ internal class EmbraceLogServiceTest {
         assertEquals(Severity.WARN, log.severity)
         assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
-        assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals("exception message", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
+        assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals("exception message", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key])
         assertEquals(
             exception.stackTrace.toExceptionSchema(),
-            log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key]
+            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_STACKTRACE.key]
         )
         log.assertIsType(EmbType.System.Exception)
     }
@@ -157,11 +157,11 @@ internal class EmbraceLogServiceTest {
         assertEquals(Severity.ERROR, log.severity)
         assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
-        assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals("exception message", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
+        assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals("exception message", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key])
         assertEquals(
             exception.stackTrace.toExceptionSchema(),
-            log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key]
+            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_STACKTRACE.key]
         )
         assertEquals("context", log.schemaType.attributes()[embFlutterExceptionContext.name])
         assertEquals("library", log.schemaType.attributes()[embFlutterExceptionLibrary.name])
@@ -186,11 +186,11 @@ internal class EmbraceLogServiceTest {
         val log = logWriter.logEvents.single()
         assertEquals("Hello world", log.message)
         assertEquals(Severity.WARN, log.severity)
-        assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals("exception message", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
+        assertEquals("NullPointerException", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals("exception message", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key])
         assertEquals(
             exception.stackTrace.toExceptionSchema(),
-            log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key]
+            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_STACKTRACE.key]
         )
         assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.UNHANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
@@ -311,9 +311,9 @@ internal class EmbraceLogServiceTest {
         assertEquals(Severity.INFO, log.severity)
         assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
 
-        assertEquals("my stacktrace", log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key])
-        assertEquals(null, log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals(null, log.schemaType.attributes()[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
+        assertEquals("my stacktrace", log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_STACKTRACE.key])
+        assertEquals(null, log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals(null, log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key])
         assertEquals(LogExceptionType.HANDLED.value, log.schemaType.attributes()[embExceptionHandling.name])
     }
 

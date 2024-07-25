@@ -19,7 +19,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.trace.data.SpanData
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 
 /**
  * Extension functions and constants to augment the core OpenTelemetry SDK and provide Embrace-specific customizations
@@ -135,7 +135,7 @@ internal fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity =
 
 internal fun String.isValidLongValueAttribute() = longValueAttributes.contains(this)
 
-internal val longValueAttributes = setOf(ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key)
+internal val longValueAttributes = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE.key)
 
 internal fun StatusCode.toStatus(): io.embrace.android.embracesdk.internal.payload.Span.Status {
     return when (this) {

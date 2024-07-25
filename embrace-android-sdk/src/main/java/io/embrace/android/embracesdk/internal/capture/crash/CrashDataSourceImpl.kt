@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionP
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
 /**
@@ -88,14 +88,14 @@ internal class CrashDataSourceImpl(
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)
-            crashAttributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE, crashException.name)
+            crashAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, crashException.name)
             crashAttributes.setAttribute(
-                ExceptionIncubatingAttributes.EXCEPTION_MESSAGE,
+                ExceptionAttributes.EXCEPTION_MESSAGE,
                 crashException.message
                     ?: ""
             )
             crashAttributes.setAttribute(
-                ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE,
+                ExceptionAttributes.EXCEPTION_STACKTRACE,
                 encodeToUTF8String(
                     serializer.toJson(crashException.lines, List::class.java),
                 ),

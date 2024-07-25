@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.semconv.ErrorAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 
@@ -90,7 +91,7 @@ internal class EmbraceNetworkLoggingService(
         HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkRequest.bytesSent,
         HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkRequest.bytesReceived,
         ErrorAttributes.ERROR_TYPE.key to networkRequest.errorType,
-        "error.message" to networkRequest.errorMessage,
+        ExceptionAttributes.EXCEPTION_MESSAGE.key to networkRequest.errorMessage,
         "emb.w3c_traceparent" to networkRequest.w3cTraceparent,
         "emb.trace_id" to getValidTraceId(networkRequest.traceId),
     ).toNonNullMap().mapValues { it.value.toString() }

@@ -8,13 +8,13 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -57,7 +57,7 @@ internal class LogWriterImplTest {
             assertEquals("test", body)
             assertEquals(Severity.ERROR, severity)
             assertEquals(Severity.ERROR.name, severity.name)
-            assertEquals("session-id", attributes.getAttribute(embSessionId))
+            assertEquals("session-id", attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertNotNull(attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertTrue(attributes.hasFixedAttribute(PrivateSpan))

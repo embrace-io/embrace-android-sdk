@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -29,6 +28,7 @@ import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -85,7 +85,7 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals(1, emitCalled)
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
-            assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(embSessionId))
+            assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))
             assertEquals(testNativeCrashData.crash, attributes.getAttribute(embNativeCrashException))
             assertEquals(

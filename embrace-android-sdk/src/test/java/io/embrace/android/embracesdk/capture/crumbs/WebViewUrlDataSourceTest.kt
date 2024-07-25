@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.opentelemetry.semconv.UrlAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -52,7 +53,7 @@ internal class WebViewUrlDataSourceTest {
             assertEquals(15000000000, spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    "webview.url" to "http://www.google.com?query=123"
+                    UrlAttributes.URL_FULL.key to "http://www.google.com?query=123"
                 ),
                 schemaType.attributes()
             )
@@ -87,7 +88,7 @@ internal class WebViewUrlDataSourceTest {
             assertEquals(15000000000, spanStartTimeMs)
             assertEquals(
                 mapOf(
-                    "webview.url" to "http://www.google.com"
+                    UrlAttributes.URL_FULL.key to "http://www.google.com"
                 ),
                 schemaType.attributes()
             )

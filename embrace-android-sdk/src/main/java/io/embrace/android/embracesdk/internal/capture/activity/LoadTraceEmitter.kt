@@ -161,7 +161,7 @@ internal class LoadTraceEmitter(
     }
 
     private fun traceName(
-        activityName: String, 
+        activityName: String,
         openType: LoadEvents.OpenType
     ): String = "$activityName-${openType.typeName}-${getEndEvent().eventName}"
 
@@ -171,7 +171,7 @@ internal class LoadTraceEmitter(
         RESUME("resume"),
         RENDER("render");
 
-        fun spanName(activityName: String): String = "activity-$typeName-$activityName"
+        fun spanName(activityName: String): String = "$activityName-$typeName"
     }
 
     private data class ActivityLoadTrace(

@@ -12,7 +12,7 @@ internal class LoadEventEmitter(
     private val openEvents: LoadEvents,
     private val clock: Clock,
     private val versionChecker: VersionChecker,
-): ActivityLifecycleListener {
+) : ActivityLifecycleListener {
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         create(activity)
     }

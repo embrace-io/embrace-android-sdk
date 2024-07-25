@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
@@ -12,6 +11,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class LogWriterImpl(
     private val logger: Logger,
@@ -33,7 +33,7 @@ internal class LogWriterImpl(
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
         sessionIdTracker.getActiveSessionId()?.let { sessionId ->
-            builder.setAttribute(embSessionId.attributeKey, sessionId)
+            builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
         }
 
         metadataService.getAppState()?.let { appState ->

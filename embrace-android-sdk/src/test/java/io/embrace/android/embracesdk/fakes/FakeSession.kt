@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.fixtures.testSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.opentelemetry.api.trace.SpanId
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal fun fakeSessionZygote() = SessionZygote(
     sessionId = "fakeSessionId",
@@ -34,7 +34,7 @@ internal fun fakeSessionEnvelope(
         parentSpanId = SpanId.getInvalid(),
         attributes = listOf(
             Attribute("emb.type", EmbType.Ux.Session.value),
-            Attribute(embSessionId.name, sessionId)
+            Attribute(SessionIncubatingAttributes.SESSION_ID.key, sessionId)
         )
     )
     val spans = listOf(testSpan, sessionSpan)

@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 /**
  * Finds the first Span Event matching the given [TelemetryType]
@@ -55,7 +55,7 @@ internal fun Envelope<SessionPayload>.getSessionId(): String {
     val sessionSpan = checkNotNull(getSessionSpan()) {
         "No session span found in session message"
     }
-    return checkNotNull(sessionSpan.attributes?.findAttributeValue(embSessionId.name)) {
+    return checkNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)) {
         "No session id found in session message"
     }
 }

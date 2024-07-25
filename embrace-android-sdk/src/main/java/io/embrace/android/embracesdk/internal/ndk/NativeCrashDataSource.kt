@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -23,6 +22,7 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal interface NativeCrashDataSource : LogDataSource, NativeCrashService
 
@@ -50,7 +50,7 @@ internal class NativeCrashDataSourceImpl(
             configService = configService,
             sessionPropertiesProvider = sessionProperties::get
         )
-        crashAttributes.setAttribute(embSessionId, nativeCrash.sessionId)
+        crashAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, nativeCrash.sessionId)
         crashAttributes.setAttribute(embCrashNumber, nativeCrashNumber.toString())
         nativeCrash.crash?.let { crashAttributes.setAttribute(embNativeCrashException, it) }
         val nativeErrorsJson = serializer.toJson(nativeCrash.errors, errorSerializerType)

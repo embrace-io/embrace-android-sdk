@@ -4,9 +4,9 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 /**
  * Envelope used for Embrace API requests for different types of data:
@@ -45,5 +45,5 @@ internal fun Envelope<SessionPayload>.getSessionSpan(): Span? {
 }
 
 internal fun Envelope<SessionPayload>.getSessionId(): String? {
-    return getSessionSpan()?.attributes?.findAttributeValue(embSessionId.name)
+    return getSessionSpan()?.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
 }

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
@@ -15,13 +14,14 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -40,8 +40,8 @@ internal class EmbraceSpanImpl(
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
     private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
-    private val systemAttributes = ConcurrentHashMap<EmbraceAttributeKey, String>().apply {
-        putAll(spanBuilder.getFixedAttributes().associate { it.key to it.value })
+    private val systemAttributes = ConcurrentHashMap<AttributeKey<String>, String>().apply {
+        putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey to it.value })
     }
     private val customAttributes = ConcurrentHashMap<String, String>().apply {
         putAll(spanBuilder.getCustomAttributes())
@@ -106,7 +106,7 @@ internal class EmbraceSpanImpl(
 
             startedSpan.get()?.let { spanToStop ->
                 systemAttributes.forEach { systemAttribute ->
-                    spanToStop.setEmbraceAttribute(systemAttribute.key, systemAttribute.value)
+                    spanToStop.setAttribute(systemAttribute.key, systemAttribute.value)
                 }
                 customAttributes.forEach { attribute ->
                     spanToStop.setAttribute(attribute.key, attribute.value)
@@ -163,14 +163,14 @@ internal class EmbraceSpanImpl(
             }
 
             exception.javaClass.canonicalName?.let { type ->
-                eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key] = type
+                eventAttributes[ExceptionAttributes.EXCEPTION_TYPE.key] = type
             }
 
             exception.message?.let { message ->
-                eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key] = message
+                eventAttributes[ExceptionAttributes.EXCEPTION_MESSAGE.key] = message
             }
 
-            eventAttributes[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
+            eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
                 name = EXCEPTION_EVENT_NAME,
@@ -248,18 +248,19 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean = systemAttributes[fixedAttribute.key] == fixedAttribute.value
+    override fun hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+        systemAttributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
 
-    override fun getSystemAttribute(key: EmbraceAttributeKey): String? = systemAttributes[key]
+    override fun getSystemAttribute(key: AttributeKey<String>): String? = systemAttributes[key]
 
-    override fun setSystemAttribute(key: EmbraceAttributeKey, value: String) {
+    override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
         systemAttributes[key] = value
     }
 
     override fun removeCustomAttribute(key: String): Boolean = customAttributes.remove(key) != null
 
     private fun getAttributesPayload(): List<Attribute> =
-        systemAttributes.map { Attribute(it.key.name, it.value) } + customAttributes.toNewPayload()
+        systemAttributes.map { Attribute(it.key.key, it.value) } + customAttributes.toNewPayload()
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 

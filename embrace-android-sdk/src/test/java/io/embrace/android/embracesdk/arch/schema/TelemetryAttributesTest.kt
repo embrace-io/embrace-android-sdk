@@ -8,11 +8,11 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.opentelemetry.embSessionId
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -42,14 +42,14 @@ internal class TelemetryAttributesTest {
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
         )
-        telemetryAttributes.setAttribute(embSessionId, sessionId)
-        telemetryAttributes.setAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE, "exceptionValue")
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+        telemetryAttributes.setAttribute(ExceptionAttributes.EXCEPTION_TYPE, "exceptionValue")
         val attributes = telemetryAttributes.snapshot()
         assertEquals(2, attributes.size)
-        assertEquals(sessionId, attributes[embSessionId.name])
-        assertEquals("exceptionValue", attributes[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals(sessionId, telemetryAttributes.getAttribute(embSessionId))
-        assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionIncubatingAttributes.EXCEPTION_TYPE))
+        assertEquals(sessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
+        assertEquals("exceptionValue", attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals(sessionId, telemetryAttributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
+        assertEquals("exceptionValue", telemetryAttributes.getAttribute(ExceptionAttributes.EXCEPTION_TYPE))
     }
 
     @Test
@@ -59,7 +59,7 @@ internal class TelemetryAttributesTest {
             sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
-        telemetryAttributes.setAttribute(embSessionId, sessionId)
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
         sessionProperties.add("perm", "permVal", true)
         sessionProperties.add("temp", "tempVal", false)
 
@@ -67,7 +67,7 @@ internal class TelemetryAttributesTest {
         assertEquals("attributeValue", attributes["custom"])
         assertEquals("permVal", attributes.getSessionProperty("perm"))
         assertEquals("tempVal", attributes.getSessionProperty("temp"))
-        assertEquals(sessionId, attributes[embSessionId.name])
+        assertEquals(sessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
         sessionProperties.add("temp", "newVal", false)
         assertEquals("newVal", telemetryAttributes.snapshot().getSessionProperty("temp"))
     }
@@ -79,8 +79,8 @@ internal class TelemetryAttributesTest {
             configService = configService,
             sessionPropertiesProvider = sessionProperties::get,
         )
-        telemetryAttributes.setAttribute(embSessionId, sessionId)
-        telemetryAttributes.setAttribute(embSessionId, newSessionId)
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, newSessionId)
         sessionProperties.add("perm", "permVal", true)
         sessionProperties.add("temp", "tempVal", false)
         sessionProperties.add("perm", "newPermVal", true)
@@ -90,7 +90,7 @@ internal class TelemetryAttributesTest {
         assertEquals(3, attributes.size)
         assertEquals("newPermVal", attributes.getSessionProperty("perm"))
         assertEquals("newTempVal", attributes.getSessionProperty("temp"))
-        assertEquals(newSessionId, attributes[embSessionId.name])
+        assertEquals(newSessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
     }
 
     @Test
@@ -98,12 +98,12 @@ internal class TelemetryAttributesTest {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            customAttributes = mapOf(embSessionId.name to sessionId)
+            customAttributes = mapOf(SessionIncubatingAttributes.SESSION_ID.key to sessionId)
         )
-        telemetryAttributes.setAttribute(embSessionId, newSessionId)
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, newSessionId)
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
-        assertEquals(newSessionId, attributes[embSessionId.name])
+        assertEquals(newSessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
     }
 
     @Test
@@ -128,7 +128,7 @@ internal class TelemetryAttributesTest {
             sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
-        telemetryAttributes.setAttribute(embSessionId, sessionId)
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(1, attributes.size)
@@ -156,7 +156,7 @@ internal class TelemetryAttributesTest {
             sessionPropertiesProvider = sessionProperties::get,
             customAttributes = customAttributes
         )
-        telemetryAttributes.setAttribute(embSessionId, sessionId)
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(4, attributes.size)

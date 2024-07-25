@@ -12,6 +12,9 @@ import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrStackframe
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.ThreadState
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.opentelemetry.semconv.ExceptionAttributes
+import io.opentelemetry.semconv.JvmAttributes
+import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -82,9 +85,9 @@ internal class NativeAnrOtelMapperTest {
         // assert span attrs
         val attrs = checkNotNull(span.attributes)
         assertEquals("perf.native_thread_blockage", attrs.findAttribute("emb.type").data)
-        assertEquals("1", attrs.findAttribute("thread_id").data)
-        assertEquals("main", attrs.findAttribute("thread_name").data)
-        assertEquals("2", attrs.findAttribute("thread_state").data)
+        assertEquals("1", attrs.findAttribute(ThreadIncubatingAttributes.THREAD_ID.key).data)
+        assertEquals("main", attrs.findAttribute(ThreadIncubatingAttributes.THREAD_NAME.key).data)
+        assertEquals("2", attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE.key).data)
         assertEquals("100", attrs.findAttribute("sampling_offset_ms").data)
         assertEquals("1", attrs.findAttribute("stack_unwinder").data)
 
@@ -103,7 +106,7 @@ internal class NativeAnrOtelMapperTest {
         val expectedStacktrace =
             "[{\"program_counter\":\"0x8000050209\",\"so_load_addr\":\"0x500234500\"," +
                 "\"so_name\":\"/data/app/lib.so\",\"result\":0}]"
-        assertEquals(expectedStacktrace, eventAttrs.findAttribute("stacktrace").data)
+        assertEquals(expectedStacktrace, eventAttrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key).data)
     }
 
     private fun List<Attribute>.findAttribute(key: String): Attribute {

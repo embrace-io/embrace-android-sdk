@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSourceImpl
 import io.opentelemetry.api.logs.Severity
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -34,9 +34,9 @@ internal class InternalErrorDataSourceImplTest {
         dataSource.handleInternalError(IllegalStateException())
         val data = logWriter.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
-        assertEquals("java.lang.IllegalStateException", attrs[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals("", attrs[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
-        assertNotNull(attrs[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key])
+        assertEquals("java.lang.IllegalStateException", attrs[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals("", attrs[ExceptionAttributes.EXCEPTION_MESSAGE.key])
+        assertNotNull(attrs[ExceptionAttributes.EXCEPTION_STACKTRACE.key])
     }
 
     @Test
@@ -44,9 +44,9 @@ internal class InternalErrorDataSourceImplTest {
         dataSource.handleInternalError(IllegalArgumentException("Whoops!"))
         val data = logWriter.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
-        assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionIncubatingAttributes.EXCEPTION_TYPE.key])
-        assertEquals("Whoops!", attrs[ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key])
-        assertNotNull(attrs[ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key])
+        assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals("Whoops!", attrs[ExceptionAttributes.EXCEPTION_MESSAGE.key])
+        assertNotNull(attrs[ExceptionAttributes.EXCEPTION_STACKTRACE.key])
     }
 
     @Test

@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
+import io.opentelemetry.semconv.HttpAttributes
+import io.opentelemetry.semconv.UrlAttributes
+import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 /**
  * The collections of attribute schemas used by the associated telemetry types.
@@ -45,46 +48,6 @@ public sealed class SchemaType(
     }
 
     /**
-     * Represents a span in which a thread was blocked.
-     */
-    public class ThreadBlockage(
-        threadPriority: Int,
-        lastKnownTimeMs: Long,
-        intervalCode: Int
-    ) : SchemaType(
-        telemetryType = EmbType.Performance.ThreadBlockage,
-        fixedObjectName = "thread_blockage"
-    ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            "thread_priority" to threadPriority.toString(),
-            "last_known_time_unix_nano" to lastKnownTimeMs.millisToNanos().toString(),
-            "interval_code" to intervalCode.toString()
-        )
-    }
-
-    /**
-     * Represents a point in time when a thread was blocked.
-     */
-    public class ThreadBlockageSample(
-        sampleOverheadMs: Long,
-        frameCount: Int,
-        stacktrace: String,
-        sampleCode: Int,
-        threadState: Thread.State
-    ) : SchemaType(
-        telemetryType = EmbType.Performance.ThreadBlockageSample,
-        fixedObjectName = "thread_blockage_sample"
-    ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            "sample_overhead" to sampleOverheadMs.millisToNanos().toString(),
-            "frame_count" to frameCount.toString(),
-            "stacktrace" to stacktrace,
-            "sample_code" to sampleCode.toString(),
-            "thread_state" to threadState.toString()
-        )
-    }
-
-    /**
      * Represents a push notification event.
      * @param viewName The name of the view that the tap event occurred in.
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
@@ -109,48 +72,6 @@ public sealed class SchemaType(
             "notification.from" to from,
             "notification.priority" to priority.toString()
         ).toNonNullMap()
-    }
-
-    /**
-     * Represents a span in which a native thread was blocked.
-     */
-    public class NativeThreadBlockage(
-        threadId: Int,
-        threadName: String,
-        threadPriority: Int,
-        threadState: String,
-        samplingOffsetMs: Long,
-        stackUnwinder: String,
-    ) : SchemaType(
-        telemetryType = EmbType.Performance.NativeThreadBlockage,
-        fixedObjectName = "native_thread_blockage"
-    ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            "thread_id" to threadId.toString(),
-            "thread_name" to threadName,
-            "thread_priority" to threadPriority.toString(),
-            "thread_state" to threadState,
-            "sampling_offset_ms" to samplingOffsetMs.toString(),
-            "stack_unwinder" to stackUnwinder,
-        )
-    }
-
-    /**
-     * Represents a point in time when a native thread was blocked.
-     */
-    public class NativeThreadBlockageSample(
-        result: Int,
-        sampleOverheadMs: Long,
-        stacktrace: String,
-    ) : SchemaType(
-        telemetryType = EmbType.Performance.NativeThreadBlockageSample,
-        fixedObjectName = "native_thread_blockage_sample"
-    ) {
-        override val schemaAttributes: Map<String, String> = mapOf(
-            "result" to result.toString(),
-            "sample_overhead_ms" to sampleOverheadMs.toString(),
-            "stacktrace" to stacktrace
-        )
     }
 
     /**
@@ -181,7 +102,7 @@ public sealed class SchemaType(
         fixedObjectName = "web-view"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "webview.url" to url
+            UrlAttributes.URL_FULL.key to url
         ).toNonNullMap()
     }
 
@@ -259,23 +180,23 @@ public sealed class SchemaType(
         override val schemaAttributes: Map<String, String> = mapOf(
             "duration" to networkCapturedCall.duration.toString(),
             "end-time" to networkCapturedCall.endTime.toString(),
-            "http-method" to networkCapturedCall.httpMethod,
-            "matched-url" to networkCapturedCall.matchedUrl,
+            HttpAttributes.HTTP_REQUEST_METHOD.key to networkCapturedCall.httpMethod,
+            UrlAttributes.URL_FULL.key to networkCapturedCall.matchedUrl,
             "network-id" to networkCapturedCall.networkId,
             "request-body" to networkCapturedCall.requestBody,
-            "request-body-size" to networkCapturedCall.requestBodySize.toString(),
+            HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to networkCapturedCall.requestBodySize.toString(),
             "request-query" to networkCapturedCall.requestQuery,
-            "request-query-headers" to networkCapturedCall.requestQueryHeaders.toString(),
+            "http.request.header" to networkCapturedCall.requestQueryHeaders.toString(),
             "request-size" to networkCapturedCall.requestSize.toString(),
             "response-body" to networkCapturedCall.responseBody,
-            "response-body-size" to networkCapturedCall.responseBodySize.toString(),
-            "response-headers" to networkCapturedCall.responseHeaders.toString(),
+            HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to networkCapturedCall.responseBodySize.toString(),
+            "http.response.header" to networkCapturedCall.responseHeaders.toString(),
             "response-size" to networkCapturedCall.responseSize.toString(),
-            "response-status" to networkCapturedCall.responseStatus.toString(),
-            "session-id" to networkCapturedCall.sessionId,
+            HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to networkCapturedCall.responseStatus.toString(),
+            SessionIncubatingAttributes.SESSION_ID.key to networkCapturedCall.sessionId,
             "start-time" to networkCapturedCall.startTime.toString(),
             "url" to networkCapturedCall.url,
-            "error-message" to networkCapturedCall.errorMessage,
+            ExceptionAttributes.EXCEPTION_MESSAGE.key to networkCapturedCall.errorMessage,
             "encrypted-payload" to networkCapturedCall.encryptedPayload
         ).toNonNullMap()
     }
@@ -300,7 +221,7 @@ public sealed class SchemaType(
         fixedObjectName = "webview-info"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            "emb.webview_info.url" to url,
+            UrlAttributes.URL_FULL.key to url,
             "emb.webview_info.web_vitals" to webVitals,
             "emb.webview_info.tag" to tag
         ).toNonNullMap()
@@ -344,12 +265,12 @@ public sealed class SchemaType(
         fixedObjectName = "internal-error"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            ExceptionIncubatingAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
-            ExceptionIncubatingAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
+            ExceptionAttributes.EXCEPTION_TYPE.key to throwable.javaClass.name,
+            ExceptionAttributes.EXCEPTION_STACKTRACE.key to throwable.stackTrace.joinToString(
                 "\n",
                 transform = StackTraceElement::toString
             ),
-            ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key to (throwable.message ?: "")
+            ExceptionAttributes.EXCEPTION_MESSAGE.key to (throwable.message ?: "")
         )
     }
 }

@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -54,7 +55,7 @@ internal class WebviewFeatureTest {
             val attrs = checkNotNull(event.attributes)
             assertEquals("emb-webview-info", event.name)
             assertEquals("myWebView", attrs.findAttributeValue("emb.webview_info.tag"))
-            assertEquals("https://embrace.io/", attrs.findAttributeValue("emb.webview_info.url"))
+            assertEquals("https://embrace.io/", attrs.findAttributeValue(URL_FULL.key))
 
             val webVitalsAttr = checkNotNull(attrs.findAttributeValue("emb.webview_info.web_vitals"))
             val type = Types.newParameterizedType(List::class.java, WebVital::class.java)

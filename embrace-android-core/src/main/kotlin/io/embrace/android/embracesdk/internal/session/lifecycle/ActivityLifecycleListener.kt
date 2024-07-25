@@ -9,17 +9,17 @@ import android.os.Bundle
  */
 public interface ActivityLifecycleListener : ActivityLifecycleCallbacks {
 
-    override public fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
+    public override fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
 
-    override public fun onActivityStarted(activity: Activity) {}
+    public override fun onActivityStarted(activity: Activity) {}
 
-    override public fun onActivityResumed(activity: Activity) {}
+    public override fun onActivityResumed(activity: Activity) {}
 
-    override public fun onActivityPaused(activity: Activity) {}
+    public override fun onActivityPaused(activity: Activity) {}
 
-    override public fun onActivityStopped(activity: Activity) {}
+    public override fun onActivityStopped(activity: Activity) {}
 
-    override public fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+    public override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
-    override public fun onActivityDestroyed(activity: Activity) {}
+    public override fun onActivityDestroyed(activity: Activity) {}
 }

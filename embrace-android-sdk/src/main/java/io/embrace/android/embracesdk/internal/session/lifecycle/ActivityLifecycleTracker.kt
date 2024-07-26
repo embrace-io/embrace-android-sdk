@@ -77,7 +77,7 @@ internal class ActivityLifecycleTracker(
         updateStateWithActivity(activity)
         stream(listeners) { listener: ActivityLifecycleListener ->
             try {
-                listener.onView(activity)
+                listener.onActivityStarted(activity)
             } catch (ex: Exception) {
                 logger.logWarning(ERROR_FAILED_TO_NOTIFY)
                 logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
@@ -104,7 +104,7 @@ internal class ActivityLifecycleTracker(
     override fun onActivityStopped(activity: Activity) {
         stream(listeners) { listener: ActivityLifecycleListener ->
             try {
-                listener.onViewClose(activity)
+                listener.onActivityStopped(activity)
             } catch (ex: Exception) {
                 logger.logWarning(ERROR_FAILED_TO_NOTIFY)
                 logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)

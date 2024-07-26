@@ -21,7 +21,7 @@ import com.squareup.moshi.JsonClass
  * processing span. If span_id is present, trace_id SHOULD be also present.
  */
 @JsonClass(generateAdapter = true)
-internal data class Log(
+public data class Log(
 
     /* The time the log was captured, in nanoseconds since the Unix epoch */
     @Json(name = "time_unix_nano")

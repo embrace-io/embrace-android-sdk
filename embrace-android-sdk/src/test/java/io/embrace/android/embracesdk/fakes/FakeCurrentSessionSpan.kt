@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.sdk.trace.data.StatusData
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,7 +53,7 @@ internal class FakeCurrentSessionSpan(
         endingSessionSpan.spanStatus = if (appTerminationCause == null) StatusData.ok() else StatusData.error()
         sessionIteration.incrementAndGet()
         sessionSpan = if (appTerminationCause == null) newSessionSpan(clock.now()) else null
-        return listOf(EmbraceSpanData((endingSessionSpan)))
+        return listOf((endingSessionSpan).toEmbraceSpanData())
     }
 
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {

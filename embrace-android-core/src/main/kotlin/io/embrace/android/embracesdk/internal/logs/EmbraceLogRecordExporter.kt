@@ -9,7 +9,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
 /**
  * Exports the given [LogRecordData] to a [LogSink]
  */
-internal class EmbraceLogRecordExporter(
+public class EmbraceLogRecordExporter(
     private val logSink: LogSink,
     private val externalLogRecordExporter: LogRecordExporter
 ) : LogRecordExporter {

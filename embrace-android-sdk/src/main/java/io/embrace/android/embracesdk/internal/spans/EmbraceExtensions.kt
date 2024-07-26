@@ -9,15 +9,12 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.api.logs.LogRecordBuilder
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.api.trace.Tracer
-import io.opentelemetry.sdk.logs.data.LogRecordData
-import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.semconv.ExceptionAttributes
 
 /**
@@ -44,23 +41,9 @@ internal fun Tracer.embraceSpanBuilder(
     parentSpan = parent,
 )
 
-internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
-    setAttribute(key.name, value)
-    return this
-}
-
-internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
-
 internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
     setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
     return this
-}
-
-/**
- * Returns the attributes as a new Map<String, String>
- */
-internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
-    it.key.key.toString() to it.value.toString()
 }
 
 /**
@@ -72,15 +55,6 @@ internal fun AttributesBuilder.fromMap(attributes: Map<String, String>): Attribu
     }
     return this
 }
-
-internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value
-
-internal fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    attributes[fixedAttribute.key.attributeKey] == fixedAttribute.value
-
-internal fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
-    fixedAttribute.value == attributes[fixedAttribute.key.name]
 
 internal fun io.embrace.android.embracesdk.internal.payload.Span.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean {
     return fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data

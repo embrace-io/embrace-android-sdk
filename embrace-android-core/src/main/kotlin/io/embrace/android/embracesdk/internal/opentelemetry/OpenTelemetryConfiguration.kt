@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
-import io.embrace.android.embracesdk.BuildConfig
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordExporter
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordProcessor
@@ -19,15 +19,15 @@ import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 
-internal class OpenTelemetryConfiguration(
+public class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
     systemInfo: SystemInfo,
     processIdentifier: String
 ) {
-    val embraceSdkName = BuildConfig.LIBRARY_PACKAGE_NAME
-    val embraceSdkVersion = BuildConfig.VERSION_NAME
-    val resource: Resource = Resource.getDefault().toBuilder()
+    public val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
+    public val embraceSdkVersion: String = BuildConfig.VERSION_NAME
+    public val resource: Resource = Resource.getDefault().toBuilder()
         .put(ServiceAttributes.SERVICE_NAME, embraceSdkName)
         .put(ServiceAttributes.SERVICE_VERSION, embraceSdkVersion)
         .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
@@ -45,7 +45,7 @@ internal class OpenTelemetryConfiguration(
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()
 
-    val spanProcessor: SpanProcessor by lazy {
+    public val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
             EmbraceSpanExporter(
                 spanSink = spanSink,
@@ -55,7 +55,7 @@ internal class OpenTelemetryConfiguration(
         )
     }
 
-    val logProcessor: LogRecordProcessor by lazy {
+    public val logProcessor: LogRecordProcessor by lazy {
         EmbraceLogRecordProcessor(
             EmbraceLogRecordExporter(
                 logSink = logSink,
@@ -64,13 +64,13 @@ internal class OpenTelemetryConfiguration(
         )
     }
 
-    fun addSpanExporter(spanExporter: SpanExporter) {
+    public fun addSpanExporter(spanExporter: SpanExporter) {
         externalSpanExporters.add(spanExporter)
     }
 
-    fun addLogExporter(logExporter: LogRecordExporter) {
+    public fun addLogExporter(logExporter: LogRecordExporter) {
         externalLogExporters.add(logExporter)
     }
 
-    fun hasConfiguredOtelExporters() = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
+    public fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
 }

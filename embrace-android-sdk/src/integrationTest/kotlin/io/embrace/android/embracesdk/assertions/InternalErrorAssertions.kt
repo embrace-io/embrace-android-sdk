@@ -27,8 +27,9 @@ internal fun assertInternalErrorLogged(
     }
 
     val matchingLogs = logs.filter { log ->
-        log.attributes?.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE.key) == exceptionClassName &&
-                log.attributes.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key) == errorMessage
+        val attrs = log.attributes
+        attrs?.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE.key) == exceptionClassName &&
+                attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key) == errorMessage
     }
     if (matchingLogs.isEmpty()) {
         fail("No internal errors found matching the expected exception")

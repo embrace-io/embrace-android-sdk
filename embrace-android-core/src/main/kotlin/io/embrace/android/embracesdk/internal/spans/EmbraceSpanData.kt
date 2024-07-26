@@ -4,12 +4,11 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.trace.data.EventData
-import io.opentelemetry.sdk.trace.data.SpanData
 
 /**
  * Serializable representation of [EmbraceSpanData]
  */
-internal data class EmbraceSpanData(
+public data class EmbraceSpanData(
     val traceId: String,
 
     val spanId: String,
@@ -28,20 +27,9 @@ internal data class EmbraceSpanData(
 
     val attributes: Map<String, String> = emptyMap()
 ) {
-    internal constructor(spanData: SpanData) : this(
-        traceId = spanData.spanContext.traceId,
-        spanId = spanData.spanContext.spanId,
-        parentSpanId = spanData.parentSpanId,
-        name = spanData.name,
-        startTimeNanos = spanData.startEpochNanos,
-        endTimeNanos = spanData.endEpochNanos,
-        status = spanData.status.statusCode,
-        events = fromEventData(eventDataList = spanData.events),
-        attributes = spanData.attributes.toStringMap(),
-    )
 
-    companion object {
-        fun fromEventData(eventDataList: List<EventData>?): List<EmbraceSpanEvent> {
+    public companion object {
+        public fun fromEventData(eventDataList: List<EventData>?): List<EmbraceSpanEvent> {
             val events = mutableListOf<EmbraceSpanEvent>()
             eventDataList?.forEach { eventData ->
                 val event = EmbraceSpanEvent.create(

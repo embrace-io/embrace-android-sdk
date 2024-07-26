@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
+import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
@@ -17,7 +17,7 @@ internal class SpanMapperTest {
 
     @Test
     fun toSpan() {
-        val input = EmbraceSpanData(FakeSpanData.perfSpanCompleted)
+        val input = FakeSpanData.perfSpanCompleted.toEmbraceSpanData()
         val output = input.toNewPayload()
 
         assertEquals(input.traceId, output.traceId)
@@ -45,7 +45,7 @@ internal class SpanMapperTest {
 
     @Test
     fun `terminating span snapshot works as expected`() {
-        val snapshot = EmbraceSpanData(FakeSpanData.perfSpanSnapshot).toNewPayload()
+        val snapshot = FakeSpanData.perfSpanSnapshot.toEmbraceSpanData().toNewPayload()
         val terminationTimeMs = snapshot.startTimeNanos!!.nanosToMillis() + 60000L
         val failedSpan = snapshot.toFailedSpan(terminationTimeMs)
 
@@ -69,7 +69,7 @@ internal class SpanMapperTest {
 
     @Test
     fun `terminating span snapshot as old payload works as expected`() {
-        val snapshot = EmbraceSpanData(FakeSpanData.perfSpanSnapshot)
+        val snapshot = FakeSpanData.perfSpanSnapshot.toEmbraceSpanData()
         val terminationTimeMs = snapshot.startTimeNanos.nanosToMillis() + 60000L
         val failedSpan = snapshot.toFailedSpan(terminationTimeMs)
 

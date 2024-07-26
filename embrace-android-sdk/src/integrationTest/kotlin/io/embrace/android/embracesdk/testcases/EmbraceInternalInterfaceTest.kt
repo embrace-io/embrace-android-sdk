@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -17,15 +18,16 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.semconv.HttpAttributes
-import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -269,6 +271,57 @@ internal class EmbraceInternalInterfaceTest {
                 assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
             }
             assertNotNull(spans["tz-old-span"])
+        }
+    }
+
+    @Test
+    fun `span logging across sessions`() {
+        with(testRule) {
+            startSdk(context = harness.overriddenCoreModule.context)
+            val internalInterface = checkNotNull(embrace.internalInterface)
+            var stoppedParentId = ""
+            var activeParentId = ""
+            val s1 = checkNotNull(harness.recordSession {
+                stoppedParentId = checkNotNull(internalInterface.startSpan("parent"))
+                activeParentId = checkNotNull(internalInterface.startSpan("active-parent"))
+                assertTrue(
+                    internalInterface.stopSpan(
+                        checkNotNull(
+                            internalInterface.startSpan(
+                                name = "child",
+                                parentSpanId = stoppedParentId
+                            )
+                        )
+                    )
+                )
+                assertTrue(internalInterface.stopSpan(stoppedParentId))
+            })
+
+            val s2 = checkNotNull(harness.recordSession {
+                assertNull(internalInterface.startSpan(name = "stopped-parent-child", parentSpanId = stoppedParentId))
+                assertTrue(
+                    internalInterface.stopSpan(
+                        checkNotNull(
+                            internalInterface.startSpan(
+                                name = "active-parent-child",
+                                parentSpanId = activeParentId
+                            )
+                        )
+                    )
+                )
+                assertTrue(internalInterface.stopSpan(activeParentId))
+            })
+
+            assertEquals(1, s1.findSpansByName("parent").size)
+            assertEquals(1, s1.findSpansByName("child").size)
+            assertEquals(0, s1.findSpansByName("active-parent").size)
+
+            // spans stopped in a previous session cannot be a valid parent
+            assertEquals(0, s2.findSpansByName("stopped-parent-child").size)
+
+            // active spans started in a previous session is a valid parent
+            assertEquals(1, s2.findSpansByName("active-parent-child").size)
+            assertEquals(1, s2.findSpansByName("active-parent").size)
         }
     }
 

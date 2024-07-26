@@ -17,7 +17,7 @@ object Versions {
     // kotlin 1.9 required before any further upgrades
     const val DETEKT = "1.23.6"
 
-    const val NDK = "21.4.7075529"
+    const val NDK = "22.1.7171670"
     const val MOCKK = "1.12.2"
     const val ANDROIDX_TEST = "1.4.0"
     const val ANDROIDX_JUNIT = "1.1.3"

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.capture.FeatureModule
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
@@ -40,6 +41,15 @@ internal class DataSourceModuleImpl(
 
     private val configService = essentialServiceModule.configService
 
+    private val featureModule: FeatureModule by singleton {
+        FeatureModule(
+            coreModule,
+            initModule,
+            otelModule,
+            configService
+        )
+    }
+
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
         DataCaptureOrchestrator(
             configService,
@@ -50,17 +60,7 @@ internal class DataSourceModuleImpl(
 
     override val embraceFeatureRegistry: EmbraceFeatureRegistry = dataCaptureOrchestrator
 
-    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                BreadcrumbDataSource(
-                    breadcrumbBehavior = configService.breadcrumbBehavior,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger
-                )
-            }
-        )
-    }
+    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState(featureModule::breadcrumbDataSource)
 
     override val tapDataSource: DataSourceState<TapDataSource> by dataSourceState {
         DataSourceState(
@@ -125,19 +125,9 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                MemoryWarningDataSource(
-                    application = coreModule.application,
-                    clock = initModule.clock,
-                    sessionSpanWriter = otelModule.currentSessionSpan,
-                    logger = initModule.logger,
-                )
-            },
-            configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() }
-        )
-    }
+    override val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by dataSourceState(
+        featureModule::memoryWarningDataSource
+    )
 
     private val aeiService: AeiDataSourceImpl? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {

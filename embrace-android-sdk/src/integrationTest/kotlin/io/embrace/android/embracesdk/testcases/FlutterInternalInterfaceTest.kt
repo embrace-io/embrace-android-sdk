@@ -10,16 +10,14 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,11 +45,6 @@ internal class FlutterInternalInterfaceTest {
                 name = WorkerName.REMOTE_LOGGING
             )
         )
-    }
-
-    @Before
-    fun setup() {
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test

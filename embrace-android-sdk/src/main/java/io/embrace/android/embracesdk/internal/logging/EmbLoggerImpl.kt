@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.logging
 
 import android.util.Log
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 
 internal const val EMBRACE_TAG = "[Embrace]"
 
@@ -52,7 +51,7 @@ internal class EmbLoggerImpl : EmbLogger {
      */
     @Suppress("NOTHING_TO_INLINE") // hot path - optimize by inlining
     private inline fun log(msg: String, severity: EmbLogger.Severity, throwable: Throwable?) {
-        if (severity >= EmbLogger.Severity.INFO || ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED) {
+        if (severity >= EmbLogger.Severity.INFO) {
             logcatImpl(throwable, severity, msg)
         }
     }

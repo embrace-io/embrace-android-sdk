@@ -4,12 +4,10 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,11 +25,6 @@ internal class UnityInternalInterfaceTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.UNITY)
-    }
-
-    @Before
-    fun setup() {
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test

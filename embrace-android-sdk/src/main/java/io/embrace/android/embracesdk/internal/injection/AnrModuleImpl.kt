@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Looper
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.AnrService
@@ -27,7 +26,7 @@ internal class AnrModuleImpl(
     private val configService = essentialServiceModule.configService
 
     override val anrService: AnrService by singleton {
-        if (configService.autoDataCaptureBehavior.isAnrServiceEnabled() && !ApkToolsConfig.IS_ANR_MONITORING_DISABLED) {
+        if (configService.autoDataCaptureBehavior.isAnrServiceEnabled()) {
             // the customer didn't enable early ANR detection, so construct the service
             // as part of normal initialization.
             EmbraceAnrService(

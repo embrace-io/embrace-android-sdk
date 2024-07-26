@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
@@ -164,12 +163,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
             logger.logWarning("Embrace SDK has already been initialized", null)
-            return
-        }
-
-        if (ApkToolsConfig.IS_SDK_DISABLED) {
-            logger.logInfo("SDK disabled through ApkToolsConfig", null)
-            stop()
             return
         }
 

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
@@ -56,9 +55,7 @@ internal class CrashDataSourceImpl(
     private var jsException: JsException? = null
 
     init {
-        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled() &&
-            !ApkToolsConfig.IS_EXCEPTION_CAPTURE_DISABLED
-        ) {
+        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled()) {
             registerExceptionHandler()
         }
     }

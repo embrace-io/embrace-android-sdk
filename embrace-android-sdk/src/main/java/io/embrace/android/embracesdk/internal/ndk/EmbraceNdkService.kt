@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -236,7 +235,7 @@ internal class EmbraceNdkService(
                 nativeCrashId,
                 Build.VERSION.SDK_INT,
                 is32bit,
-                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+                false
             )
         }
         Systrace.traceSynchronous("update-metadata") { updateDeviceMetaData() }

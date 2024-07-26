@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.config
 import android.content.res.Resources.NotFoundException
 import android.util.Base64
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -59,7 +58,7 @@ internal object LocalConfigParser {
                 )
 
                 else -> NDK_ENABLED_DEFAULT
-            } && !ApkToolsConfig.IS_NDK_DISABLED
+            }
             val sdkConfigJsonId =
                 resources.getIdentifier(BUILD_INFO_SDK_CONFIG, "string", packageName)
 

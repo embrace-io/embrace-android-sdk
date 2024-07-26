@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.logging
 
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -14,7 +13,6 @@ internal class EmbLoggerImplTest {
     @Before
     fun setUp() {
         logger = FakeEmbLogger()
-        ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED = false
     }
 
     @Test
@@ -36,21 +34,6 @@ internal class EmbLoggerImplTest {
 
         // then logger actions are triggered
         val msg = logger.warningMessages.single()
-        assertEquals("test", msg.msg)
-        assertEquals(throwable, msg.throwable)
-    }
-
-    @Test
-    fun `a log with lower severity than the threshold triggers actions when developer logging is enabled`() {
-        // given the threshold is .INFO and developer logging is enabled
-        ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED = true
-
-        // when log is called with a lower severity
-        val throwable = Exception()
-        logger.logDebug("test", throwable)
-
-        // then logger actions are triggered
-        val msg = logger.debugMessages.single()
         assertEquals("test", msg.msg)
         assertEquals(throwable, msg.throwable)
     }

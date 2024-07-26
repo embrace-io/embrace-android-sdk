@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NetworkEvent
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
@@ -25,7 +25,7 @@ import java.util.concurrent.Future
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
@@ -111,7 +111,7 @@ internal class EmbraceApiService(
         contentType = "application/json",
         userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME,
         accept = "application/json",
-        url = EmbraceUrl.create(url),
+        url = ApiRequestUrl(url),
         httpMethod = HttpMethod.GET,
     )
 
@@ -205,7 +205,8 @@ internal class EmbraceApiService(
      * Otherwise, the API call is saved to be sent later.
      */
     private fun handleApiRequest(request: ApiRequest, action: SerializationAction): Boolean {
-        val endpoint = request.url.endpoint()
+        val url = EmbraceUrl.create(request.url.url)
+        val endpoint = url.endpoint()
 
         if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
             // Execute the request if the device is online and the endpoint is not rate limited.

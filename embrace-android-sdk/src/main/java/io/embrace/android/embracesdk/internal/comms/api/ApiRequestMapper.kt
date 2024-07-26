@@ -19,14 +19,11 @@ internal class ApiRequestMapper(
         urlBuilder.getEmbraceUrlWithSuffix(it.version, it.path)
     }
 
-    private fun Endpoint.asEmbraceUrl(): EmbraceUrl {
-        val urlString: String = checkNotNull(apiUrlBuilders[this])
-        return EmbraceUrl.create(urlString)
-    }
+    private fun Endpoint.asEmbraceUrl(): String = checkNotNull(apiUrlBuilders[this])
 
-    private fun requestBuilder(url: EmbraceUrl): ApiRequest {
+    private fun requestBuilder(url: String): ApiRequest {
         return ApiRequest(
-            url = url,
+            url = ApiRequestUrl(url),
             httpMethod = HttpMethod.POST,
             appId = appId,
             deviceId = lazyDeviceId.value,
@@ -38,7 +35,7 @@ internal class ApiRequestMapper(
         contentType = "application/json",
         userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME,
         accept = "application/json",
-        url = EmbraceUrl.create(url),
+        url = ApiRequestUrl(url),
         httpMethod = HttpMethod.GET,
     )
 

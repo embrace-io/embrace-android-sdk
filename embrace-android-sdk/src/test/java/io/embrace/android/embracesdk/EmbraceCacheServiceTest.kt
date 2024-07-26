@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope2
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
@@ -155,7 +155,7 @@ internal class EmbraceCacheServiceTest {
     fun `test PendingApiCalls can be cached`() {
         val apiRequest = ApiRequest(
             httpMethod = HttpMethod.GET,
-            url = EmbraceUrl.create("http://fake.url/sessions")
+            url = ApiRequestUrl("http://fake.url/sessions")
         )
         val pendingApiCalls = PendingApiCalls()
         pendingApiCalls.add(PendingApiCall(apiRequest, "payload_id"))
@@ -299,14 +299,14 @@ internal class EmbraceCacheServiceTest {
             PendingApiCall(
                 ApiRequest(
                     httpMethod = HttpMethod.POST,
-                    url = EmbraceUrl.create("http://fake.url/sessions")
+                    url = ApiRequestUrl("http://fake.url/sessions")
                 ),
                 "payload_id_1"
             ),
             PendingApiCall(
                 ApiRequest(
                     httpMethod = HttpMethod.POST,
-                    url = EmbraceUrl.create("http://fake.url/sessions")
+                    url = ApiRequestUrl("http://fake.url/sessions")
                 ),
                 "payload_id_2"
             )

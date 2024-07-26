@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.serialization
 
 import com.squareup.moshi.Moshi
-import io.embrace.android.embracesdk.internal.utils.threadLocal
 import okio.buffer
 import okio.sink
 import okio.source
@@ -12,14 +11,15 @@ import java.lang.reflect.Type
 /**
  * A wrapper around the JSON library to allow for thread-safe serialization.
  */
-internal class EmbraceSerializer : PlatformSerializer {
+public class EmbraceSerializer : PlatformSerializer {
 
-    private val impl by threadLocal {
-        Moshi.Builder()
-            .add(EmbraceUrlAdapter())
+    private val ref = object : ThreadLocal<Moshi>() {
+        override fun initialValue(): Moshi = Moshi.Builder()
             .add(AppFrameworkAdapter())
             .build()
     }
+
+    private val impl by lazy { checkNotNull(ref.get()) }
 
     override fun <T> toJson(src: T): String {
         val clz = checkNotNull(src)::class.java
@@ -73,10 +73,5 @@ internal class EmbraceSerializer : PlatformSerializer {
             val adapter = impl.adapter<T>(type)
             adapter.fromJson(it) ?: error("JSON conversion failed.")
         }
-    }
-
-    inline fun <reified T> fromJsonWithTypeToken(json: String): T {
-        val adapter = impl.adapter(T::class.java)
-        return adapter.fromJson(json) ?: error("JSON conversion failed.")
     }
 }

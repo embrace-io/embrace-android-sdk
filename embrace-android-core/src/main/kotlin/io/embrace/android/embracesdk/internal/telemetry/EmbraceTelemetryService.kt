@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.internal.telemetry
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.schema.toEmbraceAttributeName
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.isEmulator
+import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.spans.toEmbraceUsageAttributeName
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Service for tracking usage of public APIs, and different internal metrics about the app.
  */
-internal class EmbraceTelemetryService(
+public class EmbraceTelemetryService(
     private val systemInfo: SystemInfo
 ) : TelemetryService {
 
@@ -67,7 +67,7 @@ internal class EmbraceTelemetryService(
             runCatching { KotlinVersion.CURRENT.toString() }.getOrDefault("unknown")
 
         appAttributesMap["is_emulator".toEmbraceAttributeName()] =
-            runCatching { isEmulator(systemInfo).toString() }.getOrDefault("unknown")
+            runCatching { systemInfo.isEmulator().toString() }.getOrDefault("unknown")
 
         return appAttributesMap
     }

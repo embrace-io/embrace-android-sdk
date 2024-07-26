@@ -4,10 +4,10 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.ToJson
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
-internal class AppFrameworkAdapter {
+public class AppFrameworkAdapter {
     @ToJson
-    fun toJson(appFramework: AppFramework) = appFramework.value
+    public fun toJson(appFramework: AppFramework): Int = appFramework.value
 
     @FromJson
-    fun fromJson(value: Int) = AppFramework.fromInt(value)
+    public fun fromJson(value: Int): AppFramework? = AppFramework.fromInt(value)
 }

@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 /**
  * Tracks internal errors & sends them as OTel logs.
  */
-internal class InternalErrorDataSourceImpl(
+public class InternalErrorDataSourceImpl(
     logWriter: LogWriter,
     logger: EmbLogger,
 ) : InternalErrorDataSource,

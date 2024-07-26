@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
@@ -280,7 +280,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `save and load pending api calls`() {
         val pendingApiCalls = PendingApiCalls()
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
+            url = ApiRequestUrl("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -291,7 +291,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -303,7 +303,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCalls.add(pendingApiCall2)
 
         val request3 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/logging"),
+            url = ApiRequestUrl("http://test.url/logging"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -334,7 +334,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         val pendingApiCalls = PendingApiCalls()
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
+            url = ApiRequestUrl("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -345,7 +345,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -357,7 +357,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCalls.add(pendingApiCall2)
 
         val request3 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/logging"),
+            url = ApiRequestUrl("http://test.url/logging"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
@@ -391,7 +391,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `load old version of pending api calls file as new version when load cache returns null`() {
         val pendingApiCallsQueue = mutableListOf<PendingApiCall>()
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
+            url = ApiRequestUrl("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -402,7 +402,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         pendingApiCallsQueue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",

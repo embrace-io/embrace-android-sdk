@@ -17,6 +17,7 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
+import io.opentelemetry.sdk.common.Clock
 
 internal class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
@@ -39,4 +40,6 @@ internal class FakeOpenTelemetryModule(
         get() = EmbOpenTelemetry(traceProviderSupplier = { FakeTracerProvider() })
     override val externalTracerProvider: TracerProvider
         get() = FakeTracerProvider()
+    override val openTelemetryClock: Clock
+        get() = FakeOpenTelemetryClock(FakeClock())
 }

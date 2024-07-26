@@ -7,6 +7,6 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Reports an internal error to Embrace. An internal error is defined as an exception that was
  * caught within Embrace code & logged to [EmbLogger].
  */
-internal interface InternalErrorService : InternalErrorHandler {
-    var internalErrorDataSource: Provider<InternalErrorDataSource?>
+public interface InternalErrorService : InternalErrorHandler {
+    public var internalErrorDataSource: Provider<InternalErrorDataSource?>
 }

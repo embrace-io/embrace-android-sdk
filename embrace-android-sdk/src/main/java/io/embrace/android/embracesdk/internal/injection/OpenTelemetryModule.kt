@@ -79,4 +79,9 @@ internal interface OpenTelemetryModule {
      * Provides [Tracer] instances for instrumentation external to the Embrace SDK to create spans
      */
     val externalTracerProvider: TracerProvider
+
+    /**
+     * OpenTelemetry SDK compatible clock based on [clock]
+     */
+    val openTelemetryClock: io.opentelemetry.sdk.common.Clock
 }

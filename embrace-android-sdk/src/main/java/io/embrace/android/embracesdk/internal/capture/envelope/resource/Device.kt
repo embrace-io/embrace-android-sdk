@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.capture.envelope.resource
 
-import android.os.Build
 import android.os.Environment
 import android.os.StatFs
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
+import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -153,7 +153,7 @@ internal class DeviceImpl(
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
     private fun checkIfIsJailbroken(): Boolean {
-        if (isEmulator(systemInfo)) {
+        if (systemInfo.isEmulator()) {
             return false
         }
         for (location in jailbreakLocations) {
@@ -183,21 +183,3 @@ internal class DeviceImpl(
 
     override val eglInfo: String? = cpuInfoDelegate.getEgl()
 }
-
-/**
- * Tries to determine whether the device is an emulator by looking for known models and
- * manufacturers which correspond to emulators.
- *
- * @return true if the device is detected to be an emulator, false otherwise
- */
-internal fun isEmulator(systemInfo: SystemInfo): Boolean =
-    Build.FINGERPRINT.startsWith("generic") ||
-        Build.FINGERPRINT.startsWith("unknown") ||
-        Build.FINGERPRINT.contains("emulator") ||
-        systemInfo.deviceModel.contains("google_sdk") ||
-        systemInfo.deviceModel.contains("sdk_gphone64") ||
-        systemInfo.deviceModel.contains("Emulator") ||
-        systemInfo.deviceModel.contains("Android SDK built for") ||
-        systemInfo.deviceManufacturer.contains("Genymotion") ||
-        Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic") ||
-        Build.PRODUCT.equals("google_sdk")

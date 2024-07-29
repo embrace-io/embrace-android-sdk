@@ -11,8 +11,6 @@ import io.embrace.android.embracesdk.internal.capture.FeatureModuleImpl
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
-import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
-import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -37,6 +35,8 @@ internal class DataSourceModuleImpl(
             coreModule,
             initModule,
             otelModule,
+            workerThreadModule,
+            systemServiceModule,
             configService
         )
     }
@@ -81,21 +81,7 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                LowPowerDataSource(
-                    context = coreModule.context,
-                    backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                    clock = initModule.clock,
-                    provider = { systemServiceModule.powerManager },
-                    spanService = otelModule.spanService,
-                    logger = initModule.logger
-                )
-            },
-            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() }
-        )
-    }
+    override val lowPowerDataSource by dataSourceState(featureModule::lowPowerDataSource)
 
     override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by dataSourceState {
         DataSourceState(
@@ -117,31 +103,7 @@ internal class DataSourceModuleImpl(
     }
 
     override val rnActionDataSource by dataSourceState(featureModule::rnActionDataSource)
-
-    private val thermalService: ThermalStateDataSource? by singleton {
-        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
-            ThermalStateDataSource(
-                spanService = otelModule.spanService,
-                logger = initModule.logger,
-                backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                clock = initModule.clock,
-                powerManagerProvider = { systemServiceModule.powerManager }
-            )
-        } else {
-            null
-        }
-    }
-
-    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource>? by dataSourceState {
-        DataSourceState(
-            factory = { thermalService },
-            configGate = {
-                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
-                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
-            }
-        )
-    }
-
+    override val thermalStateDataSource by dataSourceState(featureModule::thermalStateDataSource)
     override val webViewDataSource by dataSourceState(featureModule::webViewDataSource)
 
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by dataSourceState {

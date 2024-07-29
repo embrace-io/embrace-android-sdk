@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -15,6 +17,8 @@ internal class FeatureModuleImplTest {
             coreModule = FakeCoreModule(),
             initModule = FakeInitModule(),
             otelModule = FakeOpenTelemetryModule(),
+            workerThreadModule = FakeWorkerThreadModule(),
+            systemServiceModule = FakeSystemServiceModule(),
             configService = FakeConfigService()
         )
         assertNotNull(module.breadcrumbDataSource)
@@ -25,5 +29,6 @@ internal class FeatureModuleImplTest {
         assertNotNull(module.rnActionDataSource)
         assertNotNull(module.sessionPropertiesDataSource)
         assertNotNull(module.webViewDataSource)
+        assertNotNull(module.lowPowerDataSource)
     }
 }

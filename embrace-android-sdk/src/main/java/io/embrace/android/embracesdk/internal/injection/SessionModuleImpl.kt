@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 internal class SessionModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     deliveryModule: DeliveryModule,

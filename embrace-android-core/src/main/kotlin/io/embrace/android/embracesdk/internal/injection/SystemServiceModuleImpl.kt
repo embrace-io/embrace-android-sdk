@@ -10,7 +10,7 @@ import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
-internal class SystemServiceModuleImpl @JvmOverloads constructor(
+public class SystemServiceModuleImpl @JvmOverloads constructor(
     coreModule: CoreModule,
     versionChecker: VersionChecker = BuildVersionChecker
 ) : SystemServiceModule {

@@ -54,7 +54,7 @@ internal class EssentialServiceModuleImpl(
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,

@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 internal class PayloadModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,

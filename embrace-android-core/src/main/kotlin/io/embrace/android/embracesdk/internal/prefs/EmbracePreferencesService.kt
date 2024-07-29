@@ -11,7 +11,7 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-internal class EmbracePreferencesService(
+public class EmbracePreferencesService(
     private val backgroundWorker: BackgroundWorker,
     lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
@@ -41,7 +41,7 @@ internal class EmbracePreferencesService(
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 
-    override fun applicationStartupComplete() = alterStartupStatus(SDK_STARTUP_COMPLETED)
+    override fun applicationStartupComplete(): Unit = alterStartupStatus(SDK_STARTUP_COMPLETED)
 
     private fun alterStartupStatus(status: String) {
         backgroundWorker.submit {
@@ -342,9 +342,9 @@ internal class EmbracePreferencesService(
         return value ?: maxCount
     }
 
-    companion object {
-        const val SDK_STARTUP_IN_PROGRESS = "startup_entered"
-        const val SDK_STARTUP_COMPLETED = "startup_completed"
+    public companion object {
+        internal const val SDK_STARTUP_IN_PROGRESS = "startup_entered"
+        internal const val SDK_STARTUP_COMPLETED = "startup_completed"
         private const val SDK_STARTUP_STATUS_KEY = "io.embrace.sdkstartup"
         private const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"
         private const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"

@@ -134,17 +134,6 @@
     </issue>
 
     <issue
-        id="UnclosedTrace"
-        message="The `beginSection()` call is not always closed with a matching `endSection()` because the code in between may return early"
-        errorLine1="            Trace.beginSection(&quot;emb-$name&quot;.take(127))"
-        errorLine2="                  ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/internal/Systrace.kt"
-            line="50"
-            column="19"/>
-    </issue>
-
-    <issue
         id="LambdaLast"
         message="Functional interface parameters (such as parameter 1, &quot;thiz&quot;, in io.embrace.android.embracesdk.ViewSwazzledHooks.OnClickListener._preOnClick) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
         errorLine1="        public static void _preOnClick(android.view.View.OnClickListener thiz, android.view.View view) {"

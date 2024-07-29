@@ -7,20 +7,12 @@ import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.FeatureModule
+import io.embrace.android.embracesdk.internal.capture.FeatureModuleImpl
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
-import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -42,7 +34,7 @@ internal class DataSourceModuleImpl(
     private val configService = essentialServiceModule.configService
 
     private val featureModule: FeatureModule by singleton {
-        FeatureModule(
+        FeatureModuleImpl(
             coreModule,
             initModule,
             otelModule,
@@ -60,74 +52,13 @@ internal class DataSourceModuleImpl(
 
     override val embraceFeatureRegistry: EmbraceFeatureRegistry = dataCaptureOrchestrator
 
-    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState(featureModule::breadcrumbDataSource)
-
-    override val tapDataSource: DataSourceState<TapDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                TapDataSource(
-                    breadcrumbBehavior = configService.breadcrumbBehavior,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger
-                )
-            }
-        )
-    }
-
-    override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                PushNotificationDataSource(
-                    breadcrumbBehavior = configService.breadcrumbBehavior,
-                    initModule.clock,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger
-                )
-            }
-        )
-    }
-
-    override val viewDataSource: DataSourceState<ViewDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                ViewDataSource(
-                    configService.breadcrumbBehavior,
-                    initModule.clock,
-                    otelModule.spanService,
-                    initModule.logger
-                )
-            }
-        )
-    }
-
-    override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                WebViewUrlDataSource(
-                    configService.breadcrumbBehavior,
-                    otelModule.currentSessionSpan,
-                    initModule.logger
-                )
-            },
-            configGate = { configService.breadcrumbBehavior.isWebViewBreadcrumbCaptureEnabled() }
-        )
-    }
-
-    override val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                SessionPropertiesDataSource(
-                    sessionBehavior = configService.sessionBehavior,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger
-                )
-            }
-        )
-    }
-
-    override val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by dataSourceState(
-        featureModule::memoryWarningDataSource
-    )
+    override val breadcrumbDataSource by dataSourceState(featureModule::breadcrumbDataSource)
+    override val tapDataSource by dataSourceState(featureModule::tapDataSource)
+    override val pushNotificationDataSource by dataSourceState(featureModule::pushNotificationDataSource)
+    override val viewDataSource by dataSourceState(featureModule::viewDataSource)
+    override val webViewUrlDataSource by dataSourceState(featureModule::webViewUrlDataSource)
+    override val sessionPropertiesDataSource by dataSourceState(featureModule::sessionPropertiesDataSource)
+    override val memoryWarningDataSource by dataSourceState(featureModule::memoryWarningDataSource)
 
     private val aeiService: AeiDataSourceImpl? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
@@ -186,17 +117,7 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val rnActionDataSource: DataSourceState<RnActionDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                RnActionDataSource(
-                    breadcrumbBehavior = configService.breadcrumbBehavior,
-                    otelModule.spanService,
-                    initModule.logger
-                )
-            }
-        )
-    }
+    override val rnActionDataSource by dataSourceState(featureModule::rnActionDataSource)
 
     private val thermalService: ThermalStateDataSource? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
@@ -222,19 +143,7 @@ internal class DataSourceModuleImpl(
         )
     }
 
-    override val webViewDataSource: DataSourceState<WebViewDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                WebViewDataSource(
-                    webViewVitalsBehavior = configService.webViewVitalsBehavior,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger,
-                    serializer = initModule.jsonSerializer
-                )
-            },
-            configGate = { configService.webViewVitalsBehavior.isWebViewVitalsEnabled() }
-        )
-    }
+    override val webViewDataSource by dataSourceState(featureModule::webViewDataSource)
 
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by dataSourceState {
         DataSourceState(

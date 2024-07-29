@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 /**
  * Captures custom breadcrumbs.
  */
-internal class WebViewUrlDataSource(
+public class WebViewUrlDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     private val logger: EmbLogger
@@ -20,11 +20,11 @@ internal class WebViewUrlDataSource(
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getWebViewBreadcrumbLimit)
 ) {
 
-    companion object {
+    private companion object {
         private const val QUERY_PARAMETER_DELIMITER = "?"
     }
 
-    fun logWebView(url: String?, startTime: Long) {
+    public fun logWebView(url: String?, startTime: Long) {
         try {
             captureData(
                 inputValidation = {

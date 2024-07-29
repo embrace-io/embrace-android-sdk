@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.SpanService
 
-internal open class RnActionDataSource(
+public class RnActionDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     spanService: SpanService,
     logger: EmbLogger
@@ -16,7 +16,7 @@ internal open class RnActionDataSource(
     logger,
     UpToLimitStrategy { breadcrumbBehavior.getCustomBreadcrumbLimit() }
 ) {
-    open fun logRnAction(
+    public fun logRnAction(
         name: String?,
         startTime: Long,
         endTime: Long,

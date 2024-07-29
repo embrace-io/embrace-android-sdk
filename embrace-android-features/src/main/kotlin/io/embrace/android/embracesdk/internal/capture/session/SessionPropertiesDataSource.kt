@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttri
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
-internal class SessionPropertiesDataSource(
+public class SessionPropertiesDataSource(
     sessionBehavior: SessionBehavior,
     writer: SessionSpanWriter,
     logger: EmbLogger
@@ -21,7 +21,7 @@ internal class SessionPropertiesDataSource(
     /**
      * Assume input has already been sanitized
      */
-    fun addProperty(key: String, value: String): Boolean =
+    public fun addProperty(key: String, value: String): Boolean =
         captureData(
             inputValidation = NoInputValidation,
             captureAction = {
@@ -29,7 +29,7 @@ internal class SessionPropertiesDataSource(
             }
         )
 
-    fun addProperties(properties: Map<String, String>): Boolean =
+    public fun addProperties(properties: Map<String, String>): Boolean =
         captureData(
             inputValidation = NoInputValidation,
             captureAction = {
@@ -39,7 +39,7 @@ internal class SessionPropertiesDataSource(
             }
         )
 
-    fun removeProperty(key: String): Boolean {
+    public fun removeProperty(key: String): Boolean {
         var success = false
         captureData(
             inputValidation = NoInputValidation,

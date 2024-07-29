@@ -30,8 +30,8 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import org.junit.rules.ExternalResource
 
 /**

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAt
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class SessionModuleImpl(
     initModule: InitModule,

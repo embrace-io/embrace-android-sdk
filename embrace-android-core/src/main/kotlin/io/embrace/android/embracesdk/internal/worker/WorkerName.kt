@@ -1,39 +1,9 @@
 package io.embrace.android.embracesdk.internal.worker
 
-import java.io.Closeable
-import java.util.concurrent.atomic.AtomicReference
-
-/**
- * A set of shared executors to be used throughout the SDK
- */
-internal interface WorkerThreadModule : Closeable {
-
-    /**
-     * Return a [BackgroundWorker] matching the [workerName]
-     */
-    fun backgroundWorker(workerName: WorkerName): BackgroundWorker
-
-    /**
-     * Return the [ScheduledWorker] given the [workerName]
-     */
-    fun scheduledWorker(workerName: WorkerName): ScheduledWorker
-
-    /**
-     * Returns the thread that monitors the main thread for ANRs
-     */
-    val anrMonitorThread: AtomicReference<Thread>
-
-    /**
-     * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the
-     * SDK will not be functional afterwards.
-     */
-    override fun close()
-}
-
 /**
  * The key used to reference a specific shared [BackgroundWorker] or the [ScheduledWorker] that uses it
  */
-internal enum class WorkerName(internal val threadName: String) {
+public enum class WorkerName(internal val threadName: String) {
 
     /**
      * Used primarily to perform short-lived tasks that need to execute only once, or

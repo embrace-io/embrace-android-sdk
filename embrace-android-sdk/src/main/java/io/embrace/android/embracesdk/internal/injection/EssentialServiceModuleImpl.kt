@@ -42,7 +42,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 /**
  * Default string value for app info missing strings

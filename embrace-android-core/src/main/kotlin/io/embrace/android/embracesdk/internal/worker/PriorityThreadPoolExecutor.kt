@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
  * This helps mitigate against resource starvation scenarios where a large number of high priority
  * tasks prevent lower priority tasks from ever completing execution.
  */
-internal class PriorityThreadPoolExecutor(
+public class PriorityThreadPoolExecutor(
     private val clock: Clock,
     threadFactory: ThreadFactory,
     handler: RejectedExecutionHandler,
@@ -56,8 +56,8 @@ internal class PriorityThreadPoolExecutor(
         return PriorityRunnableFuture(runnableFuture, runnable.priority, clock.now())
     }
 
-    companion object {
-        internal fun createPriorityQueue(): PriorityBlockingQueue<Runnable> =
+    public companion object {
+        public fun createPriorityQueue(): PriorityBlockingQueue<Runnable> =
             PriorityBlockingQueue(
                 100,
                 compareBy<Runnable> { runnable ->

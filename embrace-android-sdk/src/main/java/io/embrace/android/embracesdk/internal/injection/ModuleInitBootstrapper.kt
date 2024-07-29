@@ -32,8 +32,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import java.util.Locale
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -150,7 +148,9 @@ internal class ModuleInitBootstrapper(
                     workerThreadModule = init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
 
                     val initTask = postInit(OpenTelemetryModule::class) {
-                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
+                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(
+                            TaskPriority.CRITICAL
+                        ) {
                             Systrace.traceSynchronous("span-service-init") {
                                 openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                             }

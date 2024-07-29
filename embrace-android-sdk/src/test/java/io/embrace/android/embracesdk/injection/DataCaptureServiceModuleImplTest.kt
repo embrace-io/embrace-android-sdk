@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmi
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleImpl
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

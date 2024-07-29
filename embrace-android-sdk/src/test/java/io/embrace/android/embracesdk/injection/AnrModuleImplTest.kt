@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureL
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.injection.AnrModuleImpl
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockkStatic
 import org.junit.Assert.assertNotNull

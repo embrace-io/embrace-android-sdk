@@ -19,11 +19,11 @@ import io.embrace.android.embracesdk.internal.injection.PayloadModule
 import io.embrace.android.embracesdk.internal.injection.SessionModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 import java.io.OutputStream
 
 /**

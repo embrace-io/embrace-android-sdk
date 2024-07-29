@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorData
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class DataSourceModuleImpl(
     initModule: InitModule,

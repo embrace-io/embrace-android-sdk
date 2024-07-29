@@ -1,6 +1,9 @@
-package io.embrace.android.embracesdk.internal.worker
+package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
+import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -13,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-internal class WorkerThreadModuleImpl(
+public class WorkerThreadModuleImpl(
     initModule: InitModule,
 ) : WorkerThreadModule, RejectedExecutionHandler {
 
@@ -22,7 +25,7 @@ internal class WorkerThreadModuleImpl(
     private val executors: MutableMap<WorkerName, ExecutorService> = ConcurrentHashMap()
     private val backgroundWorkers: MutableMap<WorkerName, BackgroundWorker> = ConcurrentHashMap()
     private val scheduledWorkers: MutableMap<WorkerName, ScheduledWorker> = ConcurrentHashMap()
-    override val anrMonitorThread = AtomicReference<Thread>()
+    override val anrMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
 
     override fun backgroundWorker(workerName: WorkerName): BackgroundWorker {
         return backgroundWorkers.getOrPut(workerName) {

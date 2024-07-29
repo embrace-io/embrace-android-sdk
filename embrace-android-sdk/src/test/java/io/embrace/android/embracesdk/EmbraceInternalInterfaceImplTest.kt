@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
@@ -62,7 +61,6 @@ internal class EmbraceInternalInterfaceImplTest {
             fakeConfigService,
             initModule.openTelemetryModule.internalTracer
         )
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test
@@ -207,8 +205,6 @@ internal class EmbraceInternalInterfaceImplTest {
     @Test
     fun `test isInternalNetworkCaptureDisabled`() {
         assertFalse(internalImpl.isInternalNetworkCaptureDisabled())
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
-        assertTrue(internalImpl.isInternalNetworkCaptureDisabled())
     }
 
     @Test

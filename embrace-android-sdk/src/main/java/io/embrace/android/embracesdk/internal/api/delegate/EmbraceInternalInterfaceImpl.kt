@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.InternalTracingApi
@@ -173,7 +172,7 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun getSdkCurrentTime(): Long = initModule.clock.now()
 
-    override fun isInternalNetworkCaptureDisabled(): Boolean = ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED
+    override fun isInternalNetworkCaptureDisabled(): Boolean = false
 
     override fun isAnrCaptureEnabled(): Boolean = configService.anrBehavior.isAnrCaptureEnabled()
 

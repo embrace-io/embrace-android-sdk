@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.math.max
@@ -21,7 +21,7 @@ internal class EmbraceNetworkCaptureService(
     private val preferencesService: PreferencesService,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val configService: ConfigService,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     private val logger: EmbLogger
 ) : NetworkCaptureService {
 

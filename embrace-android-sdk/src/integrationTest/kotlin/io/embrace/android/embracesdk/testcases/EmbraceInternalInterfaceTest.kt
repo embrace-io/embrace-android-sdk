@@ -4,26 +4,24 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
-import java.net.SocketException
 import io.opentelemetry.semconv.HttpAttributes
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,11 +38,6 @@ internal class EmbraceInternalInterfaceTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         IntegrationTestRule.Harness(startImmediately = false)
-    }
-
-    @Before
-    fun setup() {
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test
@@ -230,11 +223,10 @@ internal class EmbraceInternalInterfaceTest {
 
     @Test
     fun `test isInternalNetworkCaptureDisabled`() {
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = true
         with(testRule) {
             assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
             startSdk(context = harness.overriddenCoreModule.context)
-            assertTrue(embrace.internalInterface.isInternalNetworkCaptureDisabled())
+            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
         }
     }
 

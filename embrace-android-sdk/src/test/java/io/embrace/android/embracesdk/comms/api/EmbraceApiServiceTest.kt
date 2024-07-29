@@ -302,7 +302,7 @@ internal class EmbraceApiServiceTest {
 
         val request = fakePendingApiCallsSender.retryQueue.single().first
         val payload = fakePendingApiCallsSender.retryQueue.single().second
-        assertEquals("https://a-$fakeAppId.data.emb-api.com/v2/logs", request.url.toString())
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v2/logs", request.url.url)
         val type: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
         assertArrayEquals(getGenericsExpectedPayloadSerialized(logsEnvelope, type), payload)
     }
@@ -346,7 +346,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLog(event)
         assertEquals(0, fakeApiClient.sentRequests.size)
         val request = fakePendingApiCallsSender.retryQueue.single().first
-        assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/logging", request.url.toString())
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v1/log/logging", request.url.url)
     }
 
     @Test
@@ -575,7 +575,7 @@ internal class EmbraceApiServiceTest {
             assertEquals(fakeDeviceId, deviceId)
             assertEquals(expectedEventId, eventId)
             assertEquals(expectedLogId, logId)
-            assertEquals(expectedUrl, url.toString())
+            assertEquals(expectedUrl, url.url)
             assertEquals(expectedMethod, httpMethod)
             assertEquals(expectedEtag, eTag)
         }

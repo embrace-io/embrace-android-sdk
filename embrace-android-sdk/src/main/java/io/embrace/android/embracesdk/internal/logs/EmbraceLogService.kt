@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
@@ -40,7 +40,7 @@ internal class EmbraceLogService(
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
     clock: Clock,
-    private val serializer: EmbraceSerializer
+    private val serializer: PlatformSerializer
 ) : LogService {
 
     private val logCounters = mapOf(

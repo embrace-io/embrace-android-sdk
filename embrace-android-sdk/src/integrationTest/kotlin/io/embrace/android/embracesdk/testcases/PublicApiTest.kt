@@ -6,7 +6,6 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.IdGeneratorTest.Companion.validPattern
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -15,7 +14,6 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,11 +29,6 @@ internal class PublicApiTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         IntegrationTestRule.Harness(startImmediately = false)
-    }
-
-    @Before
-    fun before() {
-        ApkToolsConfig.IS_SDK_DISABLED = false
     }
 
     @Test
@@ -56,15 +49,6 @@ internal class PublicApiTest {
             startSdk(context = harness.overriddenCoreModule.context)
             assertEquals(AppFramework.NATIVE, harness.appFramework)
             assertTrue(embrace.isStarted)
-        }
-    }
-
-    @Test
-    fun `SDK disabled via the binary cannot start`() {
-        with(testRule) {
-            ApkToolsConfig.IS_SDK_DISABLED = true
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertFalse(embrace.isStarted)
         }
     }
 

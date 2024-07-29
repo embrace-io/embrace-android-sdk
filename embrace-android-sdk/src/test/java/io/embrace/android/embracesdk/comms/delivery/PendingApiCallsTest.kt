@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.comms.delivery
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
@@ -28,7 +28,7 @@ internal class PendingApiCallsTest {
     @Test
     fun `test adding pending api calls associated to endpoints`() {
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/spans"),
+            url = ApiRequestUrl("http://test.url/spans"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -39,7 +39,7 @@ internal class PendingApiCallsTest {
         pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -57,7 +57,7 @@ internal class PendingApiCallsTest {
     @Test
     fun `test hasPendingApiCallsToSend`() {
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/sessions"),
+            url = ApiRequestUrl("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -72,7 +72,7 @@ internal class PendingApiCallsTest {
     @Test
     fun `test pollNextPendingApiCall always return session if exists`() {
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -83,7 +83,7 @@ internal class PendingApiCallsTest {
         pendingApiCalls.add(pendingApiCall1)
 
         val request2 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/spans"),
+            url = ApiRequestUrl("http://test.url/spans"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
@@ -111,7 +111,7 @@ internal class PendingApiCallsTest {
             val path = it.path
             repeat(queueLimit) {
                 val request = ApiRequest(
-                    url = EmbraceUrl.create("http://test.url/$path"),
+                    url = ApiRequestUrl("http://test.url/$path"),
                     httpMethod = HttpMethod.POST,
                     appId = "test_app_id_1",
                     deviceId = "test_device_id",
@@ -124,7 +124,7 @@ internal class PendingApiCallsTest {
             }
 
             val exceedingRequest = ApiRequest(
-                url = EmbraceUrl.create("http://test.url/$path"),
+                url = ApiRequestUrl("http://test.url/$path"),
                 httpMethod = HttpMethod.POST,
                 appId = "test_app_id_1",
                 deviceId = "test_device_id",
@@ -151,7 +151,7 @@ internal class PendingApiCallsTest {
     @Test
     fun `test pollNextPendingApiCall doesn't return api calls from rate limited endpoint`() {
         val request1 = ApiRequest(
-            url = EmbraceUrl.create("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/events"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",

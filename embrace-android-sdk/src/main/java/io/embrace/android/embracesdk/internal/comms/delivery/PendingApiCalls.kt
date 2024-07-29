@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import java.util.concurrent.ConcurrentHashMap
 
@@ -21,7 +22,8 @@ internal class PendingApiCalls(
      * the new one is added.
      */
     fun add(pendingApiCall: PendingApiCall) {
-        val endpoint = pendingApiCall.apiRequest.url.endpoint()
+        val url = EmbraceUrl.create(pendingApiCall.apiRequest.url.url)
+        val endpoint = url.endpoint()
         val pendingApiCallsForEndpoint = pendingApiCallsMap.getOrPut(endpoint, ::mutableListOf)
 
         synchronized(pendingApiCallsForEndpoint) {

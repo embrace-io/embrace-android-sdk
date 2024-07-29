@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
@@ -21,7 +20,7 @@ import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
@@ -43,7 +42,7 @@ internal class CrashDataSourceImpl(
     private val crashMarker: CrashFileMarker,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
 ) : CrashDataSource,
     LogDataSourceImpl(
@@ -56,9 +55,7 @@ internal class CrashDataSourceImpl(
     private var jsException: JsException? = null
 
     init {
-        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled() &&
-            !ApkToolsConfig.IS_EXCEPTION_CAPTURE_DISABLED
-        ) {
+        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled()) {
             registerExceptionHandler()
         }
     }

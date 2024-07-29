@@ -3,12 +3,11 @@ package io.embrace.android.embracesdk.internal.config
 import android.content.res.Resources.NotFoundException
 import android.util.Base64
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
 internal object LocalConfigParser {
 
@@ -43,7 +42,7 @@ internal object LocalConfigParser {
         resources: AndroidResourcesService,
         packageName: String,
         customAppId: String?,
-        serializer: EmbraceSerializer,
+        serializer: PlatformSerializer,
         openTelemetryCfg: OpenTelemetryConfiguration,
         logger: EmbLogger
     ): LocalConfig {
@@ -59,7 +58,7 @@ internal object LocalConfigParser {
                 )
 
                 else -> NDK_ENABLED_DEFAULT
-            } && !ApkToolsConfig.IS_NDK_DISABLED
+            }
             val sdkConfigJsonId =
                 resources.getIdentifier(BUILD_INFO_SDK_CONFIG, "string", packageName)
 
@@ -99,7 +98,7 @@ internal object LocalConfigParser {
         appId: String?,
         ndkEnabled: Boolean,
         sdkConfigs: String?,
-        serializer: EmbraceSerializer,
+        serializer: PlatformSerializer,
         openTelemetryCfg: OpenTelemetryConfiguration,
         logger: EmbLogger
     ): LocalConfig {

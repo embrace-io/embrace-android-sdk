@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -11,8 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.mockk.every
-import io.mockk.mockk
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
@@ -21,7 +19,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.net.SocketException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -53,7 +50,7 @@ internal class ApiClientImplTest {
     @Test
     fun testUnreachableHost() {
         // attempt some unreachable port
-        val request = ApiRequest(url = EmbraceUrl.create("http://localhost:1565"))
+        val request = ApiRequest(url = ApiRequestUrl("http://localhost:1565"))
         val response = apiClient.executePost(request) {
             it.write("Hello world".toByteArray())
         }
@@ -182,7 +179,7 @@ internal class ApiClientImplTest {
             "test_did",
             "test_eid",
             "test_lid",
-            EmbraceUrl.create(baseUrl)
+            ApiRequestUrl(baseUrl)
         )
         server.enqueue(response200)
         apiClient.executePost(postRequest) {
@@ -214,7 +211,7 @@ internal class ApiClientImplTest {
     private fun runGetRequest(): ApiResponse =
         apiClient.executeGet(
             ApiRequest(
-                url = EmbraceUrl.create(baseUrl),
+                url = ApiRequestUrl(baseUrl),
                 httpMethod = HttpMethod.GET
             )
         )
@@ -224,7 +221,7 @@ internal class ApiClientImplTest {
     ): ApiResponse =
         apiClient.executePost(
             ApiRequest(
-                url = EmbraceUrl.create(baseUrl),
+                url = ApiRequestUrl(baseUrl),
                 httpMethod = HttpMethod.POST
             )
         ) {
@@ -234,9 +231,7 @@ internal class ApiClientImplTest {
         }
 
     private fun createThrowingRequest(): ApiRequest {
-        val mockEmbraceUrl: EmbraceUrl = mockk(relaxed = true)
-        every { mockEmbraceUrl.openConnection() } answers { throw SocketException() }
-        return ApiRequest(url = mockEmbraceUrl)
+        return ApiRequest(url = ApiRequestUrl("my bad req"))
     }
 
     private fun RecordedRequest.readCompressedRequestBody(): String {

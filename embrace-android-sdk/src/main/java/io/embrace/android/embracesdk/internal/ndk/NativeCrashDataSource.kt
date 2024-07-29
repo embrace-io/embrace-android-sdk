@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
@@ -32,7 +32,7 @@ internal class NativeCrashDataSourceImpl(
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     logger: EmbLogger,
 ) : NativeCrashDataSource, LogDataSourceImpl(
     destination = logWriter,

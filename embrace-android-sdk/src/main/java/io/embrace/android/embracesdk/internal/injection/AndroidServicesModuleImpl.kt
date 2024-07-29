@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class AndroidServicesModuleImpl(
-    initModule: io.embrace.android.embracesdk.internal.injection.InitModule,
+    initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
 ) : io.embrace.android.embracesdk.internal.injection.AndroidServicesModule {

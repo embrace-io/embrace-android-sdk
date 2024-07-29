@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpan
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpanBuilder
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracer
+import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.OpenTelemetry
@@ -159,7 +160,7 @@ internal class ExternalTracerTest {
 
             assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))
             val exportedSpan: SpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
-            assertEquals(parent.toOldPayload(), EmbraceSpanData(exportedSpan))
+            assertEquals(parent.toOldPayload(), exportedSpan.toEmbraceSpanData())
             with(exportedSpan.instrumentationScopeInfo) {
                 assertEquals("external-tracer", name)
                 assertEquals("1.0.0", version)

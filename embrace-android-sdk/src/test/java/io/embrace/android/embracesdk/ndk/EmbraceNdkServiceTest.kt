@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockResources
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -250,7 +249,7 @@ internal class EmbraceNdkServiceTest {
                 unityId,
                 Build.VERSION.SDK_INT,
                 deviceArchitecture.is32BitDevice,
-                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+                false
             )
         }
 
@@ -301,7 +300,7 @@ internal class EmbraceNdkServiceTest {
                 "uuid",
                 Build.VERSION.SDK_INT,
                 deviceArchitecture.is32BitDevice,
-                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+                false
             )
 
             metadataService.getAppInfo()
@@ -339,7 +338,7 @@ internal class EmbraceNdkServiceTest {
                 embraceNdkService.getUnityCrashId(),
                 Build.VERSION.SDK_INT,
                 deviceArchitecture.is32BitDevice,
-                ApkToolsConfig.IS_DEVELOPER_LOGGING_ENABLED
+                false
             )
         }
 

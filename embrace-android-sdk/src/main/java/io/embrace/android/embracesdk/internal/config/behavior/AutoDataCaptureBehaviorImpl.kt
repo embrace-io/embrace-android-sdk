@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -77,7 +76,7 @@ internal class AutoDataCaptureBehaviorImpl(
             ?: local?.sdkConfig?.sigHandlerDetection ?: true
     }
 
-    override fun isNdkEnabled(): Boolean = local?.ndkEnabled ?: false && !ApkToolsConfig.IS_NDK_DISABLED
+    override fun isNdkEnabled(): Boolean = local?.ndkEnabled ?: false
 
     override fun isDiskUsageReportingEnabled(): Boolean =
         local?.sdkConfig?.app?.reportDiskUsage ?: REPORT_DISK_USAGE_DEFAULT

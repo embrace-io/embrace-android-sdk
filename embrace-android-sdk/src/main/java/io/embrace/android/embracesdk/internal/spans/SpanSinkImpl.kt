@@ -13,7 +13,7 @@ internal class SpanSinkImpl : SpanSink {
 
     override fun storeCompletedSpans(spans: List<SpanData>): CompletableResultCode {
         try {
-            completedSpans += spans.map { EmbraceSpanData(spanData = it) }
+            completedSpans += spans.map { it.toEmbraceSpanData() }
         } catch (t: Throwable) {
             return CompletableResultCode.ofFailure()
         }

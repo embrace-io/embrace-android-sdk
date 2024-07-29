@@ -27,7 +27,7 @@ internal class EmbraceSpanFactoryImplTest {
         tracer = FakeTracer()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             tracer = tracer,
-            openTelemetryClock = initModule.openTelemetryClock,
+            openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock,
             spanRepository = spanRepository,
         )
     }

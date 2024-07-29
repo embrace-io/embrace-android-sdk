@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -23,7 +24,10 @@ import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 
 internal class OpenTelemetryModuleImpl(
-    private val initModule: InitModule
+    private val initModule: InitModule,
+    override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(
+        embraceClock = initModule.clock
+    ),
 ) : OpenTelemetryModule {
 
     override val spanRepository: SpanRepository by lazy {
@@ -47,7 +51,7 @@ internal class OpenTelemetryModuleImpl(
         Systrace.traceSynchronous("otel-sdk-wrapper-init") {
             try {
                 OpenTelemetrySdk(
-                    openTelemetryClock = initModule.openTelemetryClock,
+                    openTelemetryClock = openTelemetryClock,
                     configuration = openTelemetryConfiguration
                 )
             } catch (exc: NoClassDefFoundError) {
@@ -68,14 +72,14 @@ internal class OpenTelemetryModuleImpl(
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
             tracer = sdkTracer,
-            openTelemetryClock = initModule.openTelemetryClock,
+            openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository
         )
     }
 
     override val currentSessionSpan: CurrentSessionSpan by lazy {
         CurrentSessionSpanImpl(
-            openTelemetryClock = initModule.openTelemetryClock,
+            openTelemetryClock = openTelemetryClock,
             telemetryService = initModule.telemetryService,
             spanRepository = spanRepository,
             spanSink = spanSink,
@@ -122,7 +126,7 @@ internal class OpenTelemetryModuleImpl(
         EmbTracerProvider(
             sdkTracerProvider = openTelemetrySdk.sdkTracerProvider,
             spanService = spanService,
-            clock = initModule.openTelemetryClock,
+            clock = openTelemetryClock,
         )
     }
 }

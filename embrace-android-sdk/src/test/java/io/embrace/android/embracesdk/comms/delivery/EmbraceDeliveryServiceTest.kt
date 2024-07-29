@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -194,7 +195,7 @@ internal class EmbraceDeliveryServiceTest {
 
     @Test
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
-        val startedSnapshot = EmbraceSpanData(perfSpanSnapshot)
+        val startedSnapshot = perfSpanSnapshot.toEmbraceSpanData()
         val completedSpan = startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L)
         val snapshots = listOfNotNull(startedSnapshot)
         val base = fakeSessionEnvelope()

@@ -6,94 +6,94 @@ import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 /**
  * A snapshot of the current call stack of the threads running in the app process per [ThreadInfo]
  */
-internal val embAndroidThreads = EmbraceAttributeKey("android.threads")
+public val embAndroidThreads: EmbraceAttributeKey = EmbraceAttributeKey("android.threads")
 
 /**
  * Sequence number for the number of crashes captured by Embrace on the device, reported on every crash
  */
-internal val embCrashNumber = EmbraceAttributeKey("android.crash_number")
+public val embCrashNumber: EmbraceAttributeKey = EmbraceAttributeKey("android.crash_number")
 
 /**
  * Attribute name for the exception handling type - whether it's handled or unhandled
  */
-internal val embExceptionHandling = EmbraceAttributeKey("exception_handling")
+public val embExceptionHandling: EmbraceAttributeKey = EmbraceAttributeKey("exception_handling")
 
 /**
  * Monotonically increasing sequence ID given to completed span that is expected to be sent to the server
  */
-internal val embProcessIdentifier: EmbraceAttributeKey = EmbraceAttributeKey("process_identifier")
+public val embProcessIdentifier: EmbraceAttributeKey = EmbraceAttributeKey("process_identifier")
 
 /**
  * Attribute name for the unique ID assigned to each app instance
  */
-internal val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey(id = "sequence_id", isPrivate = true)
+public val embSequenceId: EmbraceAttributeKey = EmbraceAttributeKey(id = "sequence_id", isPrivate = true)
 
 /**
  * Attribute name for the application state (foreground/background) at the time the log was recorded
  */
-internal val embState = EmbraceAttributeKey("state")
+public val embState: EmbraceAttributeKey = EmbraceAttributeKey("state")
 
 /**
  * Attribute name for whether the session is a cold start
  */
-internal val embColdStart = EmbraceAttributeKey("cold_start")
+public val embColdStart: EmbraceAttributeKey = EmbraceAttributeKey("cold_start")
 
 /**
  * Attribute name for session number (integer sequence ID)
  */
-internal val embSessionNumber = EmbraceAttributeKey("session_number")
+public val embSessionNumber: EmbraceAttributeKey = EmbraceAttributeKey("session_number")
 
 /**
  * Attribute name that indicates whether the session was ended by the SDK or an unexpected termination
  */
-internal val embCleanExit = EmbraceAttributeKey("clean_exit")
+public val embCleanExit: EmbraceAttributeKey = EmbraceAttributeKey("clean_exit")
 
 /**
  * Attribute name that indicates whether the session was terminated
  */
-internal val embTerminated = EmbraceAttributeKey("terminated")
+public val embTerminated: EmbraceAttributeKey = EmbraceAttributeKey("terminated")
 
 /**
  * Attribute name that represents last known time that the session existed (nanoseconds since epoch)
  */
-internal val embHeartbeatTimeUnixNano = EmbraceAttributeKey("heartbeat_time_unix_nano")
+public val embHeartbeatTimeUnixNano: EmbraceAttributeKey = EmbraceAttributeKey("heartbeat_time_unix_nano")
 
 /**
  * Attribute name that identifies the crash report tied to the session
  */
-internal val embCrashId = EmbraceAttributeKey("crash_id")
+public val embCrashId: EmbraceAttributeKey = EmbraceAttributeKey("crash_id")
 
 /**
  * Attribute name that identifies the session start type
  */
-internal val embSessionStartType = EmbraceAttributeKey("session_start_type")
+public val embSessionStartType: EmbraceAttributeKey = EmbraceAttributeKey("session_start_type")
 
 /**
  * Attribute name that identifies the session end type
  */
-internal val embSessionEndType = EmbraceAttributeKey("session_end_type")
+public val embSessionEndType: EmbraceAttributeKey = EmbraceAttributeKey("session_end_type")
 
 /**
  * Attribute name that identifies the startup duration
  */
-internal val embSessionStartupDuration = EmbraceAttributeKey("startup_duration")
+public val embSessionStartupDuration: EmbraceAttributeKey = EmbraceAttributeKey("startup_duration")
 
 /**
  * Attribute name that identifies the startup threshold
  */
-internal val embSessionStartupThreshold = EmbraceAttributeKey("threshold")
+public val embSessionStartupThreshold: EmbraceAttributeKey = EmbraceAttributeKey("threshold")
 
 /**
  * Attribute name that identifies the SDK duration
  */
-internal val embSdkStartupDuration = EmbraceAttributeKey("sdk_startup_duration")
+public val embSdkStartupDuration: EmbraceAttributeKey = EmbraceAttributeKey("sdk_startup_duration")
 
 /**
  * Attribute name that identifies the error log count in a session
  */
-internal val embErrorLogCount = EmbraceAttributeKey("error_log_count")
+public val embErrorLogCount: EmbraceAttributeKey = EmbraceAttributeKey("error_log_count")
 
 /**
  * Attribute name that identifies the number of free bytes on disk
  */
-internal val embFreeDiskBytes = EmbraceAttributeKey("disk_free_bytes")
+public val embFreeDiskBytes: EmbraceAttributeKey = EmbraceAttributeKey("disk_free_bytes")

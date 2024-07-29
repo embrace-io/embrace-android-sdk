@@ -8,5 +8,5 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * caught within Embrace code & logged to [EmbLogger].
  */
 public interface InternalErrorService : InternalErrorHandler {
-    public var internalErrorDataSource: Provider<InternalErrorDataSource?>
+    public var handler: Provider<InternalErrorHandler?>
 }

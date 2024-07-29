@@ -2,6 +2,10 @@ package io.embrace.android.embracesdk.internal.capture
 
 import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
+import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
+import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
@@ -11,9 +15,12 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSourc
 import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
+import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
@@ -29,6 +36,8 @@ public class FeatureModuleImpl(
     otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    logWriter: LogWriter,
     configService: ConfigService
 ) : FeatureModule {
 
@@ -184,6 +193,52 @@ public class FeatureModuleImpl(
                 configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
                     configService.sdkModeBehavior.isBetaFeaturesEnabled()
             }
+        )
+    }
+
+    private val aeiService: AeiDataSourceImpl? by singleton {
+        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
+            AeiDataSourceImpl(
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                configService.appExitInfoBehavior,
+                systemServiceModule.activityManager,
+                androidServicesModule.preferencesService,
+                logWriter,
+                initModule.logger
+            )
+        } else {
+            null
+        }
+    }
+
+    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> by singleton {
+        DataSourceState(
+            factory = { aeiService },
+            configGate = { configService.isAppExitInfoCaptureEnabled() }
+        )
+    }
+
+    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by singleton {
+        DataSourceState(
+            factory = {
+                InternalErrorDataSourceImpl(
+                    logWriter = logWriter,
+                    logger = initModule.logger,
+                )
+            },
+            configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() }
+        )
+    }
+
+    override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by singleton {
+        DataSourceState(
+            factory = {
+                NetworkStatusDataSource(
+                    spanService = otelModule.spanService,
+                    logger = initModule.logger
+                )
+            },
+            configGate = { configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled() }
         )
     }
 }

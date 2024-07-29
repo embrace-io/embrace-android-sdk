@@ -11,4 +11,6 @@ android {
 dependencies {
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
+    compileOnly(libs.opentelemetry.sdk)
+    implementation(libs.lifecycle.process)
 }

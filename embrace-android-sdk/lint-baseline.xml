@@ -2,17 +2,6 @@
 <issues format="6" by="lint 8.5.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.5.1)" variant="all" version="8.5.1">
 
     <issue
-        id="DefaultLocale"
-        message="Implicitly using the default locale is a common source of bugs: Use `toUpperCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
-        errorLine1="        return httpMethod != null ? httpMethod.name().toUpperCase() : null;"
-        errorLine2="                                                      ~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/network/EmbraceNetworkRequest.java"
-            line="431"
-            column="55"/>
-    </issue>
-
-    <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
         errorLine1="public object EmbraceSamples {"
@@ -153,50 +142,6 @@
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
             line="65"
             column="88"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
-        errorLine1="    public static HttpMethod fromString(String method) {"
-        errorLine2="                  ~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
-            line="24"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
-        errorLine1="    public static HttpMethod fromString(String method) {"
-        errorLine2="                                        ~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
-            line="24"
-            column="41"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
-        errorLine1="    public static HttpMethod fromInt(Integer method) {"
-        errorLine2="                  ~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
-            line="57"
-            column="19"/>
-    </issue>
-
-    <issue
-        id="UnknownNullness"
-        message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
-        errorLine1="    public static HttpMethod fromInt(Integer method) {"
-        errorLine2="                                     ~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/network/http/HttpMethod.java"
-            line="57"
-            column="38"/>
     </issue>
 
     <issue

@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 

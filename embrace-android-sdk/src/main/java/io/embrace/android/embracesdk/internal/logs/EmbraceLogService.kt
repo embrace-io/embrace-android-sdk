@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.CacheableValue
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
@@ -18,6 +17,10 @@ import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.payload.EventType.ERROR_LOG
+import io.embrace.android.embracesdk.internal.payload.EventType.INFO_LOG
+import io.embrace.android.embracesdk.internal.payload.EventType.WARNING_LOG
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
@@ -121,6 +124,15 @@ internal class EmbraceLogService(
                     exceptionMessage = exceptionMessage
                 )
             }
+        }
+    }
+
+    private fun EventType.getSeverity(): Severity? {
+        return when (this) {
+            INFO_LOG -> Severity.INFO
+            WARNING_LOG -> Severity.WARNING
+            ERROR_LOG -> Severity.ERROR
+            else -> null
         }
     }
 

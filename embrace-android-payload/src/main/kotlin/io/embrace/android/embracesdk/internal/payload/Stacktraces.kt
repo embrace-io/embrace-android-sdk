@@ -1,35 +1,32 @@
 package io.embrace.android.embracesdk.internal.payload
 
-import androidx.annotation.VisibleForTesting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal class Stacktraces @JvmOverloads constructor(
+public class Stacktraces @JvmOverloads constructor(
     stacktraces: List<String>? = null,
     customStacktrace: String? = null,
     framework: AppFramework = AppFramework.NATIVE,
 
     @Json(name = "c")
-    @get:VisibleForTesting
-    val context: String? = null,
+    public val context: String? = null,
 
     @Json(name = "l")
-    @get:VisibleForTesting
-    val library: String? = null
+    public val library: String? = null
 ) {
 
     @Json(name = "tt")
-    var jvmStacktrace: List<String>?
+    public var jvmStacktrace: List<String>?
 
     @Json(name = "jsk")
-    var javascriptStacktrace: String?
+    public var javascriptStacktrace: String?
 
     @Json(name = "u")
-    var unityStacktrace: String?
+    public var unityStacktrace: String?
 
     @Json(name = "f")
-    var flutterStacktrace: String?
+    public var flutterStacktrace: String?
 
     init {
         javascriptStacktrace = when (framework) {

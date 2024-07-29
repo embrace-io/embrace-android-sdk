@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.payload
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
 import io.embrace.android.embracesdk.deserializeJsonFromResource
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventMessage
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

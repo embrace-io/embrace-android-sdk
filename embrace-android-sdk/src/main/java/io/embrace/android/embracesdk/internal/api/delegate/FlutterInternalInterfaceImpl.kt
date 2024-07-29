@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.FlutterInternalInterface
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.EventType
 
 internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,

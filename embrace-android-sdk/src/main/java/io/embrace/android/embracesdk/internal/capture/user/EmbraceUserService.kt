@@ -3,6 +3,9 @@ package io.embrace.android.embracesdk.internal.capture.user
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
+import io.embrace.android.embracesdk.internal.payload.extensions.PERSONA_FIRST_DAY_USER
+import io.embrace.android.embracesdk.internal.payload.extensions.PERSONA_PAYER
+import io.embrace.android.embracesdk.internal.payload.extensions.getStoredUserInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicReference
@@ -16,11 +19,11 @@ internal class EmbraceUserService(
      * Do not access this directly - use [userInfo] and [modifyUserInfo] to get and set this
      */
     private val userInfoReference = AtomicReference(DEFAULT_USER)
-    private val userInfoProvider: Provider<UserInfo> = { UserInfo.ofStored(preferencesService) }
+    private val userInfoProvider: Provider<UserInfo> = { preferencesService.getStoredUserInfo() }
 
     override fun loadUserInfoFromDisk(): UserInfo? {
         return try {
-            UserInfo.ofStored(preferencesService)
+            preferencesService.getStoredUserInfo()
         } catch (ex: Exception) {
             logger.logError("Failed to load user info from persistent storage.", ex)
             logger.trackInternalError(InternalErrorType.USER_LOAD_FAIL, ex)
@@ -70,11 +73,11 @@ internal class EmbraceUserService(
     }
 
     override fun setUserAsPayer() {
-        addUserPersona(UserInfo.PERSONA_PAYER)
+        addUserPersona(PERSONA_PAYER)
     }
 
     override fun clearUserAsPayer() {
-        clearUserPersona(UserInfo.PERSONA_PAYER)
+        clearUserPersona(PERSONA_PAYER)
     }
 
     override fun addUserPersona(persona: String?) {
@@ -123,10 +126,10 @@ internal class EmbraceUserService(
         }
         val personas: MutableSet<String> = HashSet()
         if (preferencesService.userPayer) {
-            personas.add(UserInfo.PERSONA_PAYER)
+            personas.add(PERSONA_PAYER)
         }
         if (preferencesService.isUsersFirstDay()) {
-            personas.add(UserInfo.PERSONA_FIRST_DAY_USER)
+            personas.add(PERSONA_FIRST_DAY_USER)
         }
         modifyUserInfo(userInfo().copy(personas = personas))
         preferencesService.userPersonas = personas

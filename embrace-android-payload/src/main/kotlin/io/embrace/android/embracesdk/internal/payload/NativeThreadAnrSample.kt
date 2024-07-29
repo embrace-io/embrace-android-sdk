@@ -4,7 +4,7 @@ package io.embrace.android.embracesdk.internal.payload
  * Holds data for a sample of a native stackframe.
  * IMPORTANT: This class is referenced by stacktrace_sampler_jni.c. Move or rename both at the same time, or it will break.
  */
-internal class NativeThreadAnrSample(
+public class NativeThreadAnrSample(
 
     /**
      * A zero value indicates the sample was successful. A non-zero value indicates
@@ -13,20 +13,20 @@ internal class NativeThreadAnrSample(
      * Depending on the error code, the stack might not be populated if the error condition is
      * likely to increase the payload size.
      */
-    val result: Int?,
+    public val result: Int?,
 
     /**
      * The time in milliseconds since the thread was first detected as blocked
      */
-    val sampleTimestamp: Long?,
+    public val sampleTimestamp: Long?,
 
     /**
      * How long the sample took in milliseconds.
      */
-    val sampleDurationMs: Long?,
+    public val sampleDurationMs: Long?,
 
     /**
      * All the stackframes which have been captured during the current sample.
      */
-    val stackframes: List<NativeThreadAnrStackframe>?
+    public val stackframes: List<NativeThreadAnrStackframe>?
 )

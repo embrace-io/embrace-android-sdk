@@ -273,7 +273,7 @@ public final class Embrace implements SdkApi {
         return impl.getTraceIdHeader();
     }
 
-    @NonNull
+    @Nullable
     @Override
     public String generateW3cTraceparent() {
         return impl.generateW3cTraceparent();

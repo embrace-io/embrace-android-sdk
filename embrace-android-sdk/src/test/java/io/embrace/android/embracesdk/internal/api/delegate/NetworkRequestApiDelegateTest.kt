@@ -8,11 +8,14 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,7 +63,15 @@ internal class NetworkRequestApiDelegateTest {
     }
 
     @Test
-    fun testGenerateW3cTraceparent() {
+    fun testGenerateW3cTraceparentEnabled() {
+        configService.networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
+            NetworkSpanForwardingRemoteConfig(100f)
+        }
         assertNotNull(delegate.generateW3cTraceparent())
+    }
+
+    @Test
+    fun testGenerateW3cTraceparent() {
+        assertNull(delegate.generateW3cTraceparent())
     }
 }

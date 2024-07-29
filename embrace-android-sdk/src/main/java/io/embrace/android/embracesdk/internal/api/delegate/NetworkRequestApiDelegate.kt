@@ -33,7 +33,12 @@ internal class NetworkRequestApiDelegate(
             return NetworkBehaviorImpl.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
         }
 
-    override fun generateW3cTraceparent(): String = IdGenerator.generateW3CTraceparent()
+    override fun generateW3cTraceparent(): String? =
+        if (configService?.networkSpanForwardingBehavior?.isNetworkSpanForwardingEnabled() == true) {
+            IdGenerator.generateW3CTraceparent()
+        } else {
+            null
+        }
 
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         if (configService?.networkBehavior?.isUrlEnabled(request.url) == true) {

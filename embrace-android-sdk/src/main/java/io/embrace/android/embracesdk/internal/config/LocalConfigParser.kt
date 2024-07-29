@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
 internal object LocalConfigParser {
 
@@ -42,7 +42,7 @@ internal object LocalConfigParser {
         resources: AndroidResourcesService,
         packageName: String,
         customAppId: String?,
-        serializer: EmbraceSerializer,
+        serializer: PlatformSerializer,
         openTelemetryCfg: OpenTelemetryConfiguration,
         logger: EmbLogger
     ): LocalConfig {
@@ -98,7 +98,7 @@ internal object LocalConfigParser {
         appId: String?,
         ndkEnabled: Boolean,
         sdkConfigs: String?,
-        serializer: EmbraceSerializer,
+        serializer: PlatformSerializer,
         openTelemetryCfg: OpenTelemetryConfiguration,
         logger: EmbLogger
     ): LocalConfig {

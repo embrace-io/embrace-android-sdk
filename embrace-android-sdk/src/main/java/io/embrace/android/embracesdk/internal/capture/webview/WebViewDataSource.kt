@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.WebViewInfo
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 
 /**
@@ -19,7 +19,7 @@ internal class WebViewDataSource(
     private val webViewVitalsBehavior: WebViewVitalsBehavior,
     private val writer: SessionSpanWriter,
     private val logger: EmbLogger,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,

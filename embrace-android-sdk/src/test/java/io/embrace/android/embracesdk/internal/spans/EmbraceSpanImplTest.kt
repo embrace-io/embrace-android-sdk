@@ -47,7 +47,7 @@ internal class EmbraceSpanImplTest {
     fun setup() {
         fakeClock = FakeClock()
         val fakeInitModule = FakeInitModule(fakeClock)
-        openTelemetryClock = fakeInitModule.openTelemetryClock
+        openTelemetryClock = fakeInitModule.openTelemetryModule.openTelemetryClock
         spanRepository = SpanRepository()
         serializer = fakeInitModule.jsonSerializer
         embraceSpan = EmbraceSpanImpl(

@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
+import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -26,7 +27,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
@@ -63,7 +64,7 @@ internal class EmbraceNdkService(
      * The device architecture.
      */
     private val deviceArchitecture: DeviceArchitecture,
-    private val serializer: EmbraceSerializer
+    private val serializer: PlatformSerializer
 ) : NdkService, ProcessStateListener {
     /**
      * Synchronization lock.
@@ -256,9 +257,8 @@ internal class EmbraceNdkService(
             val errorsRaw = delegate._getErrors(absolutePath)
             if (errorsRaw != null) {
                 try {
-                    return serializer.fromJsonWithTypeToken<ArrayList<NativeCrashDataError?>>(
-                        errorsRaw
-                    )
+                    val type = Types.newParameterizedType(List::class.java, NativeCrashDataError::class.java)
+                    return serializer.fromJson(errorsRaw, type)
                 } catch (e: Exception) {
                     logger.logError(
                         "Failed to parse native crash error file {crashId=" + nativeCrash.nativeCrashId +

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnec
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.SerializationAction
@@ -144,7 +145,8 @@ internal class EmbracePendingApiCallsSender(
                 val pendingApiCall = pendingApiCalls.pollNextPendingApiCall() ?: break
                 val response = sendPendingApiCall(pendingApiCall)
                 response?.let {
-                    clearRateLimitIfApplies(pendingApiCall.apiRequest.url.endpoint(), response)
+                    val url = EmbraceUrl.create(pendingApiCall.apiRequest.url.url)
+                    clearRateLimitIfApplies(url.endpoint(), response)
 
                     if (response.shouldRetry) {
                         when (response) {

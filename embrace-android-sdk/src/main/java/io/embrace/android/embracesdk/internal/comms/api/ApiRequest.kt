@@ -25,7 +25,7 @@ internal data class ApiRequest(
 
     val logId: String? = null,
 
-    val url: EmbraceUrl,
+    val url: ApiRequestUrl,
 
     val httpMethod: HttpMethod = HttpMethod.POST,
 
@@ -50,7 +50,7 @@ internal data class ApiRequest(
 
     fun toConnection(): EmbraceConnection {
         try {
-            val connection = url.openConnection()
+            val connection = EmbraceUrl.create(url.url).openConnection()
 
             getHeaders().forEach {
                 connection.setRequestProperty(it.key, it.value)
@@ -69,5 +69,5 @@ internal data class ApiRequest(
      * Returns true if the request is a session request. This heuristic should not be widely used
      * - it is only used to prioritise session requests over other requests.
      */
-    fun isSessionRequest(): Boolean = url.toString().endsWith("spans")
+    fun isSessionRequest(): Boolean = url.url.endsWith("spans")
 }

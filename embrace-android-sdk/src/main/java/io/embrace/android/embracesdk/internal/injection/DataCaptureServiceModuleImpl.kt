@@ -60,7 +60,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
 
     override val appStartupDataCollector: AppStartupDataCollector by singleton {
         AppStartupTraceEmitter(
-            clock = initModule.openTelemetryClock,
+            clock = openTelemetryModule.openTelemetryClock,
             startupServiceProvider = { startupService },
             spanService = openTelemetryModule.spanService,
             backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),

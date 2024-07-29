@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.prefs
 import android.content.SharedPreferences
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -15,7 +15,7 @@ internal class EmbracePreferencesService(
     private val backgroundWorker: BackgroundWorker,
     lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
-    private val serializer: EmbraceSerializer
+    private val serializer: PlatformSerializer
 ) : PreferencesService, StartupListener {
 
     private val preferences: Future<SharedPreferences>

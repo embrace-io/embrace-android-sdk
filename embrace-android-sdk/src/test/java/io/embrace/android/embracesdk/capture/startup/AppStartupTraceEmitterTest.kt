@@ -64,7 +64,7 @@ internal class AppStartupTraceEmitterTest {
         fakeInternalErrorService = FakeInternalErrorService()
         logger = EmbLoggerImpl().apply { internalErrorService = fakeInternalErrorService }
         appStartupTraceEmitter = AppStartupTraceEmitter(
-            clock = initModule.openTelemetryClock,
+            clock = initModule.openTelemetryModule.openTelemetryClock,
             startupServiceProvider = { startupService },
             spanService = spanService,
             backgroundWorker = backgroundWorker,

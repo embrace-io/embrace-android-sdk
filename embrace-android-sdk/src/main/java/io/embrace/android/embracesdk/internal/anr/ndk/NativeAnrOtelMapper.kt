@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -20,7 +20,7 @@ import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes
 
 internal class NativeAnrOtelMapper(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     private val clock: Clock
 ) : DataCaptureServiceOtelConverter {
 

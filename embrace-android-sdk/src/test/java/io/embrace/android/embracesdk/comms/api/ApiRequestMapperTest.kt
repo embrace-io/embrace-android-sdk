@@ -41,7 +41,7 @@ internal class ApiRequestMapperTest {
     @Test
     fun testConfigRequest() {
         with(mapper.configRequest(CONFIG_URL)) {
-            assertEquals(CONFIG_URL, url.toString())
+            assertEquals(CONFIG_URL, url.url)
             assertEquals("application/json", contentType)
             assertEquals("application/json", accept)
             assertTrue(userAgent.startsWith("Embrace/a/"))
@@ -140,7 +140,7 @@ internal class ApiRequestMapperTest {
     }
 
     private fun ApiRequest.assertCoreFieldsPopulated(endpoint: String) {
-        assertEquals("$BASE_URL$endpoint", url.toString())
+        assertEquals("$BASE_URL$endpoint", url.url)
         assertEquals(HttpMethod.POST, httpMethod)
         assertEquals("appId", appId)
         assertEquals("deviceId", deviceId)

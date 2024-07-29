@@ -30,7 +30,7 @@ internal class EmbSpanTest {
     @Before
     fun setup() {
         fakeClock = FakeClock()
-        openTelemetryClock = FakeInitModule(fakeClock).openTelemetryClock
+        openTelemetryClock = FakeInitModule(fakeClock).openTelemetryModule.openTelemetryClock
         fakeEmbraceSpan = FakePersistableEmbraceSpan.started(clock = fakeClock)
         embSpan = EmbSpan(
             embraceSpan = fakeEmbraceSpan,

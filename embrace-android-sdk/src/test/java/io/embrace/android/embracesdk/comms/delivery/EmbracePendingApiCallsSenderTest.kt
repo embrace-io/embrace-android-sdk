@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestMapper
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
@@ -327,10 +328,10 @@ internal class EmbracePendingApiCallsSenderTest {
         pendingApiCallsSender.setSendMethod(mockRetryMethod)
 
         if (loadFailedRequest) {
-            val mockApiRequest = mockk<ApiRequest>(relaxed = true) {
-                every { url.endpoint() } returns Endpoint.SESSIONS
-            }
-            pendingApiCalls.add(PendingApiCall(mockApiRequest, "cached_payload_1"))
+            val request = ApiRequest(
+                url = ApiRequestUrl("https://fake.com/${Endpoint.SESSIONS.path}")
+            )
+            pendingApiCalls.add(PendingApiCall(request, "cached_payload_1"))
         }
 
         if (runRetryJobAfterScheduling) {

@@ -6,14 +6,14 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.WebViewInfo
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.EnumMap
 
 internal class EmbraceWebViewService(
     val configService: ConfigService,
-    private val serializer: EmbraceSerializer,
+    private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
     private val dataSourceModuleProvider: Provider<DataSourceModule?>,
 ) : WebViewService, MemoryCleanerListener {

@@ -6,15 +6,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Component to load native binaries
  */
-internal class SharedObjectLoader(
+public class SharedObjectLoader(
     private val logger: EmbLogger
 ) {
-    val loaded = AtomicBoolean(false)
+    public val loaded: AtomicBoolean = AtomicBoolean(false)
 
     /**
      * Load Embrace native binary if necessary
      */
-    fun loadEmbraceNative(): Boolean {
+    public fun loadEmbraceNative(): Boolean {
         if (loaded.get()) {
             return true
         }

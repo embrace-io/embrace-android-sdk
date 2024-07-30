@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.webview
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.WebViewInfo
@@ -11,11 +10,11 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.EnumMap
 
-internal class EmbraceWebViewService(
-    val configService: ConfigService,
+public class EmbraceWebViewService(
+    public val configService: ConfigService,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
-    private val dataSourceModuleProvider: Provider<DataSourceModule?>,
+    private val webViewDataSourceProvider: Provider<WebViewDataSource?>,
 ) : WebViewService, MemoryCleanerListener {
 
     /**
@@ -32,12 +31,7 @@ internal class EmbraceWebViewService(
     }
 
     override fun loadDataIntoSession() {
-        dataSourceModuleProvider()
-            ?.webViewDataSource
-            ?.dataSource
-            ?.loadDataIntoSession(
-                webViewInfoMap.values.toList()
-            )
+        webViewDataSourceProvider()?.loadDataIntoSession(webViewInfoMap.values.toList())
     }
 
     private fun collectWebVital(message: String, tag: String) {
@@ -113,7 +107,7 @@ internal class EmbraceWebViewService(
         webViewInfoMap.clear()
     }
 
-    companion object {
+    private companion object {
         private const val SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH = 2000
 
         /**

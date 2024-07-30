@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
  * This class is responsible for getting the CPU name and EGL name from the native library.
  * Make sure to update the JNI call in cpuinfo.c with any method or package name changes.
  */
-internal class EmbraceCpuInfoDelegate(
+public class EmbraceCpuInfoDelegate(
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger
 ) : CpuInfoDelegate {

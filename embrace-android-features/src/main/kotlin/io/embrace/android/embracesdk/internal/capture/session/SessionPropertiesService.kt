@@ -1,6 +1,6 @@
-package io.embrace.android.embracesdk.internal.session.properties
+package io.embrace.android.embracesdk.internal.capture.session
 
-internal interface SessionPropertiesService {
+public interface SessionPropertiesService {
 
     /**
      * Annotates the session with a new property. Use this to track permanent and ephemeral
@@ -16,7 +16,7 @@ internal interface SessionPropertiesService {
      * through app launches.
      * @return A boolean indicating whether the property was added or not
      */
-    fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean
+    public fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean
 
     /**
      * Removes a property from the session. If that property was permanent then it is removed from
@@ -24,17 +24,17 @@ internal interface SessionPropertiesService {
      *
      * @param originalKey the key to be removed
      */
-    fun removeProperty(originalKey: String): Boolean
+    public fun removeProperty(originalKey: String): Boolean
 
     /**
      * Get a read-only representation of the currently set session properties. You can query and
      * read from this representation however setting values in this object will not modify the
      * actual properties in the session. To modify session properties see addProperty.
      */
-    fun getProperties(): Map<String, String>
+    public fun getProperties(): Map<String, String>
 
     /**
      * Populate the current session with the existing session properties
      */
-    fun populateCurrentSession(): Boolean
+    public fun populateCurrentSession(): Boolean
 }

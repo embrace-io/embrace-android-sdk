@@ -30,7 +30,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             configService,
             initModule.jsonSerializer,
             initModule.logger,
-        ) { dataSourceModule }
+        ) { dataSourceModule.webViewDataSource.dataSource }
     }
 
     override val activityBreadcrumbTracker: ActivityBreadcrumbTracker by singleton {

@@ -6,7 +6,7 @@ import java.io.Closeable
 /**
  * Detects and records which network the device is connected to.
  */
-internal interface NetworkConnectivityService : Closeable {
+public interface NetworkConnectivityService : Closeable {
 
     /**
      * Record the connection type at the start of the session and open a connectivity interval with it,
@@ -14,30 +14,30 @@ internal interface NetworkConnectivityService : Closeable {
      *
      * @param startTime of the session
      */
-    fun networkStatusOnSessionStarted(startTime: Long)
+    public fun networkStatusOnSessionStarted(startTime: Long)
 
     /**
      * Adds a listener for changes in the connectivity status.
      */
-    fun addNetworkConnectivityListener(listener: NetworkConnectivityListener)
+    public fun addNetworkConnectivityListener(listener: NetworkConnectivityListener)
 
     /**
      * Removes a listener for changes in the connectivity status.
      */
-    fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener)
+    public fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener)
 
     /**
      * Returns the current NetworkStatus.
      */
-    fun getCurrentNetworkStatus(): NetworkStatus
+    public fun getCurrentNetworkStatus(): NetworkStatus
 
     /**
      * Calculate the device's IP address
      */
-    val ipAddress: String?
+    public val ipAddress: String?
 
     /**
      * Start listening for network connectivity changes
      */
-    fun register()
+    public fun register()
 }

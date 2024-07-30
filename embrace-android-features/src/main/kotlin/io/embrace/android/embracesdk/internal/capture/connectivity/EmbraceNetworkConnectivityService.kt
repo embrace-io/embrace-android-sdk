@@ -7,7 +7,6 @@ import android.content.IntentFilter
 import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -16,34 +15,30 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
-internal class EmbraceNetworkConnectivityService(
+public class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val clock: Clock,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
     private val connectivityManager: ConnectivityManager?,
-    private val dataSourceModuleProvider: Provider<DataSourceModule?>,
+    private val networkStatusDataSourceProvider: Provider<NetworkStatusDataSource?>,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private var lastNetworkStatus: NetworkStatus? = null
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
-    override val ipAddress by lazy { calculateIpAddress() }
+    override val ipAddress: String? by lazy { calculateIpAddress() }
 
-    override fun onReceive(context: Context, intent: Intent) = handleNetworkStatus(true)
+    override fun onReceive(context: Context, intent: Intent): Unit = handleNetworkStatus(true)
 
-    override fun networkStatusOnSessionStarted(startTime: Long) = handleNetworkStatus(false, startTime)
+    override fun networkStatusOnSessionStarted(startTime: Long): Unit = handleNetworkStatus(false, startTime)
 
     private fun handleNetworkStatus(notifyListeners: Boolean, timestamp: Long = clock.now()) {
         try {
             val networkStatus = getCurrentNetworkStatus()
             if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
-
-                dataSourceModuleProvider()
-                    ?.networkStatusDataSource
-                    ?.dataSource
-                    ?.networkStatusChange(networkStatus, timestamp)
+                networkStatusDataSourceProvider()?.networkStatusChange(networkStatus, timestamp)
 
                 if (notifyListeners) {
                     logger.logInfo("Network status changed to: " + networkStatus.name)

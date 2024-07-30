@@ -61,7 +61,7 @@ internal class EmbraceWebViewServiceTest {
             configService,
             serializer,
             EmbLoggerImpl()
-        ) { dataSourceModule }
+        ) { dataSourceModule.webViewDataSource.dataSource }
     }
 
     @Test

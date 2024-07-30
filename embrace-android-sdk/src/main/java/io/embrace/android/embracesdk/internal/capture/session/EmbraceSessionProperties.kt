@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.session.properties
+package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger

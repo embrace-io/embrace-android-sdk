@@ -8,18 +8,18 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
  * Holds the parameters & logic needed to create a final session object that can be
  * sent to the backend.
  */
-internal class FinalEnvelopeParams(
-    val initial: SessionZygote,
-    val endType: SessionSnapshotType,
-    val logger: EmbLogger,
+public class FinalEnvelopeParams(
+    public val initial: SessionZygote,
+    public val endType: SessionSnapshotType,
+    public val logger: EmbLogger,
     backgroundActivityEnabled: Boolean,
     crashId: String? = null,
 ) {
 
-    val crashId: String? = when {
+    public val crashId: String? = when {
         crashId.isNullOrEmpty() -> null
         else -> crashId
     }
 
-    val startNewSession: Boolean = endType.shouldStartNewSession && backgroundActivityEnabled
+    public val startNewSession: Boolean = endType.shouldStartNewSession && backgroundActivityEnabled
 }

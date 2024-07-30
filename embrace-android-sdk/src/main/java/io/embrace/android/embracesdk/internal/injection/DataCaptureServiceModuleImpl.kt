@@ -1,8 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
-import io.embrace.android.embracesdk.internal.capture.crumbs.EmbraceBreadcrumbService
+import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
@@ -34,20 +33,14 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         ) { dataSourceModule }
     }
 
-    override val breadcrumbService: BreadcrumbService by singleton {
+    override val activityBreadcrumbTracker: ActivityBreadcrumbTracker by singleton {
         Systrace.traceSynchronous("breadcrumb-service-init") {
-            EmbraceBreadcrumbService(
-                initModule.clock,
-                configService
-            ) { dataSourceModule }
+            ActivityBreadcrumbTracker(configService) { dataSourceModule.viewDataSource.dataSource }
         }
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
-        PushNotificationCaptureService(
-            breadcrumbService,
-            initModule.logger
-        )
+        PushNotificationCaptureService(dataSourceModule.pushNotificationDataSource.dataSource, initModule.logger)
     }
 
     override val startupService: StartupService by singleton {

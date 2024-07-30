@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerServic
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import org.junit.Before
 
-internal class EmbraceBreadcrumbServiceTest {
+internal class ActivityBreadcrumbTrackerTest {
 
     private lateinit var spanService: FakeSpanService
     private lateinit var configService: ConfigService

@@ -253,7 +253,7 @@ internal class ModuleInitBootstrapper(
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
                             dataCaptureServiceModule.webviewService,
-                            dataCaptureServiceModule.breadcrumbService,
+                            dataCaptureServiceModule.activityBreadcrumbTracker,
                             dataCaptureServiceModule.pushNotificationService
                         )
                     }

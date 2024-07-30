@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 /**
  * In charge of handling all notifications related functionality.
  */
-internal class PushNotificationCaptureService(
-    private val breadCrumbService: BreadcrumbService,
+public class PushNotificationCaptureService(
+    private val pushNotificationDataSource: PushNotificationDataSource?,
     private val logger: EmbLogger
 ) : ActivityLifecycleListener {
 
-    companion object Utils {
+    public companion object Utils {
 
-        enum class PRIORITY(val priority: Int) {
+        public enum class PRIORITY(public val priority: Int) {
             PRIORITY_UNKNOWN(0),
             PRIORITY_HIGH(1),
             PRIORITY_NORMAL(2)
@@ -38,14 +38,14 @@ internal class PushNotificationCaptureService(
          * add some more complex code.
          */
 
-        fun getMessagePriority(priority: String?) =
+        public fun getMessagePriority(priority: String?): Int =
             when (priority) {
                 "high" -> PRIORITY.PRIORITY_HIGH.priority
                 "normal" -> PRIORITY.PRIORITY_NORMAL.priority
                 else -> PRIORITY.PRIORITY_UNKNOWN.priority
             }
 
-        fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
+        public fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
             val keySet = bundle.keySet() ?: return emptyMap()
             return keySet.filter {
                 // let's filter all google reserved words, leaving us with user defined keys
@@ -70,7 +70,7 @@ internal class PushNotificationCaptureService(
      * @param messageDeliveredPriority the priority of the message (as resolved on the server)
      * @param type the notification type
      */
-    fun logPushNotification(
+    public fun logPushNotification(
         title: String?,
         body: String?,
         topic: String?,
@@ -79,15 +79,7 @@ internal class PushNotificationCaptureService(
         messageDeliveredPriority: Int,
         type: PushNotificationBreadcrumb.NotificationType
     ) {
-        breadCrumbService.logPushNotification(
-            title,
-            body,
-            topic,
-            id,
-            notificationPriority,
-            messageDeliveredPriority,
-            type
-        )
+        pushNotificationDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
     }
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {

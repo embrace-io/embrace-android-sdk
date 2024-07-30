@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -36,7 +37,6 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks

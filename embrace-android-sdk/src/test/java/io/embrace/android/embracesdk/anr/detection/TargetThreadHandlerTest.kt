@@ -51,7 +51,6 @@ internal class TargetThreadHandlerTest {
         return TargetThreadHandler(
             mockLooper(),
             ScheduledWorker(executorService),
-            anrMonitorThread = anrMonitorThread,
             configService,
             messageQueue,
             logger = EmbLoggerImpl()

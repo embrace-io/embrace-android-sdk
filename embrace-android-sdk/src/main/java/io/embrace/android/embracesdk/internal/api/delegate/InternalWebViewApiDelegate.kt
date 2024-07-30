@@ -11,8 +11,8 @@ internal class InternalWebViewApiDelegate(
 ) : InternalWebViewApi {
 
     private val sdkClock = bootstrapper.initModule.clock
-    private val breadcrumbService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataCaptureServiceModule.breadcrumbService
+    private val webViewUrlDataSource by embraceImplInject(sdkCallChecker) {
+        bootstrapper.dataSourceModule.webViewUrlDataSource.dataSource
     }
     private val webviewService by embraceImplInject(sdkCallChecker) { bootstrapper.dataCaptureServiceModule.webviewService }
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.configService }
@@ -20,7 +20,8 @@ internal class InternalWebViewApiDelegate(
 
     override fun logWebView(url: String?) {
         if (sdkCallChecker.check("log_web_view")) {
-            breadcrumbService?.logWebView(url, sdkClock.now())
+            webViewUrlDataSource
+            webViewUrlDataSource?.logWebView(url, sdkClock.now())
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

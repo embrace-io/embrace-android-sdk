@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
@@ -39,11 +38,11 @@ internal interface DataSourceModule {
     val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource>
     val applicationExitInfoDataSource: DataSourceState<AeiDataSource>?
     val lowPowerDataSource: DataSourceState<LowPowerDataSource>
-    val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
     val sigquitDataSource: DataSourceState<SigquitDataSource>
     val rnActionDataSource: DataSourceState<RnActionDataSource>
     val thermalStateDataSource: DataSourceState<ThermalStateDataSource>?
     val webViewDataSource: DataSourceState<WebViewDataSource>
     val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
+    fun registerFeatures()
 }

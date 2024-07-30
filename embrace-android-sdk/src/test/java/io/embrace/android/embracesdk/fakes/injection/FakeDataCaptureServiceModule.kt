@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.fakes.injection
 
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
-import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
+import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
@@ -16,15 +15,17 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.mockk.mockk
 
 internal class FakeDataCaptureServiceModule(
-    override val breadcrumbService: BreadcrumbService = FakeBreadcrumbService(),
     override val webviewService: WebViewService = EmbraceWebViewService(
         FakeConfigService(),
         EmbraceSerializer(),
         EmbLoggerImpl(),
     ) {
-        fakeDataSourceModule()
+        fakeDataSourceModule().webViewDataSource.dataSource
     }
 ) : DataCaptureServiceModule {
+
+    override val activityBreadcrumbTracker: ActivityBreadcrumbTracker =
+        ActivityBreadcrumbTracker(FakeConfigService(), fakeDataSourceModule().viewDataSource::dataSource)
 
     override val pushNotificationService: PushNotificationCaptureService = mockk(relaxed = true)
 

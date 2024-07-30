@@ -35,8 +35,7 @@ internal class AnrModuleImpl(
                 livenessCheckScheduler = livenessCheckScheduler,
                 anrMonitorWorker = anrMonitorWorker,
                 state = state,
-                clock = initModule.clock,
-                anrMonitorThread = workerModule.anrMonitorThread
+                clock = initModule.clock
             )
         } else {
             NoOpAnrService()
@@ -65,7 +64,6 @@ internal class AnrModuleImpl(
         TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = anrMonitorWorker,
-            anrMonitorThread = workerModule.anrMonitorThread,
             configService = configService,
             logger = initModule.logger,
             clock = initModule.clock,
@@ -78,7 +76,6 @@ internal class AnrModuleImpl(
             clock = initModule.clock,
             state = state,
             targetThread = looper.thread,
-            anrMonitorThread = workerModule.anrMonitorThread,
             logger = initModule.logger,
         )
     }
@@ -91,7 +88,6 @@ internal class AnrModuleImpl(
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
-            anrMonitorThread = workerModule.anrMonitorThread,
             logger = initModule.logger,
         )
     }

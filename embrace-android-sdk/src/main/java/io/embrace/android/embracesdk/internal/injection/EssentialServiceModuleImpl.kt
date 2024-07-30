@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
-import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -39,7 +40,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
@@ -237,7 +237,7 @@ internal class EssentialServiceModuleImpl(
                 backgroundWorker,
                 initModule.logger,
                 systemServiceModule.connectivityManager,
-                dataSourceModuleProvider
+                { dataSourceModuleProvider().networkStatusDataSource.dataSource }
             )
         }
     }

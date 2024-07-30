@@ -4,14 +4,15 @@ import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.session.captureDataSafely
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository

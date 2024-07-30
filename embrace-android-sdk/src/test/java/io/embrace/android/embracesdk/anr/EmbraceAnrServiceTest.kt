@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.anr
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.internal.WrongThreadException
 import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
@@ -45,12 +44,6 @@ internal class EmbraceAnrServiceTest {
         anrExecutorService.shutdown()
         anrExecutorService.awaitTermination(1L, TimeUnit.SECONDS)
         assertFalse(anrExecutorService.executing.get())
-        val lastThrowable = anrExecutorService.lastThrowable()
-        val lastThrowableDescription = lastThrowable?.message
-        assertTrue(
-            "The last throwable was a WrongThreadException with the message: $lastThrowableDescription",
-            lastThrowable == null || lastThrowable !is WrongThreadException
-        )
     }
 
     @Test

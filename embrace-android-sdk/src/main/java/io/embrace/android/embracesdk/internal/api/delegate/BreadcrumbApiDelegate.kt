@@ -9,16 +9,15 @@ internal class BreadcrumbApiDelegate(
     private val sdkCallChecker: SdkCallChecker
 ) : BreadcrumbApi {
 
-    private val logger = bootstrapper.initModule.logger
     private val sdkClock = bootstrapper.initModule.clock
-    private val breadcrumbService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataCaptureServiceModule.breadcrumbService
+    private val breadcrumbDataSource by embraceImplInject(sdkCallChecker) {
+        bootstrapper.dataSourceModule.breadcrumbDataSource
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
 
     override fun addBreadcrumb(message: String) {
         if (sdkCallChecker.check("add_breadcrumb")) {
-            breadcrumbService?.logCustom(message, sdkClock.now())
+            breadcrumbDataSource?.dataSource?.logCustom(message, sdkClock.now())
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

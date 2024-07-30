@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
+import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
@@ -18,7 +18,7 @@ internal interface DataCaptureServiceModule {
     /**
      * Captures breadcrumbs
      */
-    val breadcrumbService: BreadcrumbService
+    val activityBreadcrumbTracker: ActivityBreadcrumbTracker
 
     /**
      * Captures information from webviews

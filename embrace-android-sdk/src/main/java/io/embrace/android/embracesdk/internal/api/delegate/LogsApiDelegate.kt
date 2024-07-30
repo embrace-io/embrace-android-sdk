@@ -21,8 +21,8 @@ internal class LogsApiDelegate(
     private val logger = bootstrapper.initModule.logger
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.customerLogModule.logService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
-    private val pushNotificationService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataCaptureServiceModule.pushNotificationService
+    private val pushNotificationDataSource by embraceImplInject(sdkCallChecker) {
+        bootstrapper.dataSourceModule.pushNotificationDataSource.dataSource
     }
 
     override fun logInfo(message: String) {
@@ -184,7 +184,7 @@ internal class LogsApiDelegate(
                 return
             }
             val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
-            pushNotificationService?.logPushNotification(title, body, topic, id, notificationPriority, messageDeliveredPriority, type)
+            pushNotificationDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

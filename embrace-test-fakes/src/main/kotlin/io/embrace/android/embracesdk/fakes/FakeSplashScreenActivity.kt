@@ -7,4 +7,4 @@ import io.embrace.android.embracesdk.annotation.StartupActivity
  * Activity that will not be used in recording the startup trace
  */
 @StartupActivity
-internal class FakeSplashScreenActivity : Activity()
+public class FakeSplashScreenActivity : Activity()

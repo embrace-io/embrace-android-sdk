@@ -7,13 +7,13 @@ import io.embrace.android.embracesdk.internal.arch.datasource.EventDataSource
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 
-internal class FakeDataSource(
+public class FakeDataSource(
     private val ctx: Context
 ) : EventDataSource, ComponentCallbacks2 {
 
-    var enableDataCaptureCount = 0
-    var disableDataCaptureCount = 0
-    var resetCount = 0
+    public var enableDataCaptureCount: Int = 0
+    public var disableDataCaptureCount: Int = 0
+    public var resetCount: Int = 0
 
     override fun captureData(
         inputValidation: () -> Boolean,

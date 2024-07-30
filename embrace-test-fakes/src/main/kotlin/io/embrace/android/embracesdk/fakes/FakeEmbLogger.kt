@@ -4,19 +4,19 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
-internal class FakeEmbLogger : EmbLogger {
+public class FakeEmbLogger : EmbLogger {
 
-    data class LogMessage(
+    public data class LogMessage(
         val msg: String,
         val throwable: Throwable?
     )
 
-    var debugMessages: MutableList<LogMessage> = mutableListOf()
-    var infoMessages: MutableList<LogMessage> = mutableListOf()
-    var warningMessages: MutableList<LogMessage> = mutableListOf()
-    var errorMessages: MutableList<LogMessage> = mutableListOf()
-    var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
-    var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
+    public var debugMessages: MutableList<LogMessage> = mutableListOf()
+    public var infoMessages: MutableList<LogMessage> = mutableListOf()
+    public var warningMessages: MutableList<LogMessage> = mutableListOf()
+    public var errorMessages: MutableList<LogMessage> = mutableListOf()
+    public var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
+    public var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
 
     override var internalErrorService: InternalErrorHandler? = null
 

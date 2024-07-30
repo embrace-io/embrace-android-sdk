@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 @Suppress("LongParameterList")
-internal class FakePreferenceService(
+public class FakePreferenceService(
     override var appVersion: String? = null,
     override var osVersion: String? = null,
     override var installDate: Long? = 0,
@@ -35,13 +35,13 @@ internal class FakePreferenceService(
     override var applicationExitInfoHistory: Set<String>? = null,
     override var cpuName: String? = null,
     override var egl: String? = null,
-    val sessionNumber: () -> Int = { 0 },
-    val bgActivityNumber: () -> Int = { 5 }
+    public val sessionNumber: () -> Int = { 0 },
+    public val bgActivityNumber: () -> Int = { 5 }
 ) : PreferencesService {
 
-    var networkCaptureRuleOver = false
-    var firstDay: Boolean = false
-    var incrementAndGetSessionNumberCount = 0
+    public var networkCaptureRuleOver: Boolean = false
+    public var firstDay: Boolean = false
+    public var incrementAndGetSessionNumberCount: Int = 0
 
     override fun isNetworkCaptureRuleOver(id: String): Boolean {
         return networkCaptureRuleOver

@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 
-internal class FakeTelemetryService : TelemetryService {
+public class FakeTelemetryService : TelemetryService {
 
-    val storageTelemetryMap = mutableMapOf<String, String>()
-    val apiCalls: MutableList<String> = mutableListOf()
+    public val storageTelemetryMap: MutableMap<String, String> = mutableMapOf()
+    public val apiCalls: MutableList<String> = mutableListOf()
 
     override fun onPublicApiCalled(name: String) {
         apiCalls.add(name)

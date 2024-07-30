@@ -4,9 +4,9 @@ import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.logs.export.LogRecordExporter
 
-internal class FakeLogRecordExporter : LogRecordExporter {
+public class FakeLogRecordExporter : LogRecordExporter {
 
-    var exportedLogs: Collection<LogRecordData>? = null
+    public var exportedLogs: Collection<LogRecordData>? = null
 
     override fun export(logs: MutableCollection<LogRecordData>): CompletableResultCode {
         exportedLogs = logs

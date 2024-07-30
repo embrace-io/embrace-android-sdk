@@ -11,13 +11,13 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-internal class PeriodicBackgroundActivityCacher(
+public class PeriodicBackgroundActivityCacher(
     private val clock: Clock,
     private val scheduledWorker: ScheduledWorker,
     private val logger: EmbLogger
 ) {
 
-    companion object {
+    private companion object {
 
         /**
          * Minimum time between writes of the background activity to disk
@@ -31,7 +31,7 @@ internal class PeriodicBackgroundActivityCacher(
     /**
      * Save the background activity to disk
      */
-    fun scheduleSave(provider: Provider<Envelope<SessionPayload>?>) {
+    public fun scheduleSave(provider: Provider<Envelope<SessionPayload>?>) {
         val delay = calculateDelay()
         val action: () -> Unit = {
             try {
@@ -56,7 +56,7 @@ internal class PeriodicBackgroundActivityCacher(
         return max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
     }
 
-    fun stop() {
+    public fun stop() {
         scheduledFuture?.cancel(false)
     }
 }

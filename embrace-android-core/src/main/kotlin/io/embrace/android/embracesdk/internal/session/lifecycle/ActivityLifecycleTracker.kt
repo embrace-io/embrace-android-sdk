@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Tracks activity lifecycle events.
  */
-internal class ActivityLifecycleTracker(
+public class ActivityLifecycleTracker(
     private val application: Application,
     private val logger: EmbLogger
 ) : ActivityTracker {
@@ -25,12 +25,13 @@ internal class ActivityLifecycleTracker(
     /**
      * List of listeners that subscribe to activity events.
      */
-    val listeners = CopyOnWriteArrayList<ActivityLifecycleListener>()
+    public val listeners: CopyOnWriteArrayList<ActivityLifecycleListener> =
+        CopyOnWriteArrayList<ActivityLifecycleListener>()
 
     /**
      * List of listeners notified when application startup is complete
      */
-    val startupListeners = CopyOnWriteArrayList<StartupListener>()
+    public val startupListeners: CopyOnWriteArrayList<StartupListener> = CopyOnWriteArrayList<StartupListener>()
 
     /**
      * The currently active activity.
@@ -45,7 +46,7 @@ internal class ActivityLifecycleTracker(
      */
 
     @Synchronized
-    fun updateStateWithActivity(activity: Activity?) {
+    public fun updateStateWithActivity(activity: Activity?) {
         currentActivity = WeakReference(activity)
     }
 
@@ -139,7 +140,7 @@ internal class ActivityLifecycleTracker(
         }
     }
 
-    companion object {
+    private companion object {
         private const val ERROR_FAILED_TO_NOTIFY = "Failed to notify ActivityLifecycleTracker listener"
     }
 }

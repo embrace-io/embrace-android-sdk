@@ -44,13 +44,8 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
             appDiskUsage = 10000000L,
             deviceDiskFree = 500000000L
         )
-        private const val screenResolution = "1080x720"
-        private const val fakeAppVersion: String = "1"
-        private const val fakeAppVersionName: String = "1.0.0"
         private const val APP_STATE_FOREGROUND = "foreground"
         private const val APP_STATE_BACKGROUND = "background"
-        private const val cpuName = "fakeCpu"
-        private const val egl = "fakeEgl"
     }
 
     var fakeUnityVersion = "fakeUnityVersion"
@@ -101,20 +96,6 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
 
     override fun getDiskUsage(): DiskUsage = diskUsage
 
-    override fun getScreenResolution(): String = screenResolution
-
-    override fun isJailbroken(): Boolean = false
-
-    override fun getDeviceId(): String = fakeDeviceId
-
-    override fun getAppVersionCode(): String = fakeAppVersion
-
-    override fun getAppVersionName(): String = fakeAppVersionName
-
-    override fun isAppUpdated(): Boolean = appUpdated
-
-    override fun isOsUpdated(): Boolean = osUpdated
-
     override fun getAppState(): String = appState
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
@@ -127,10 +108,4 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
     }
 
     override fun precomputeValues() {}
-
-    override fun getCpuName(): String? = cpuName
-
-    override fun getEgl(): String? = egl
-
-    override fun getPackageName() = fakePackageName
 }

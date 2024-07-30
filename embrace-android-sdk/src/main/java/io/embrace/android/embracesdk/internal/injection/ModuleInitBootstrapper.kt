@@ -72,7 +72,7 @@ internal class ModuleInitBootstrapper(
     lateinit var systemServiceModule: SystemServiceModule
         private set
 
-    lateinit var androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+    lateinit var androidServicesModule: AndroidServicesModule
         private set
 
     lateinit var storageModule: StorageModule
@@ -166,10 +166,10 @@ internal class ModuleInitBootstrapper(
                         systemServiceModuleSupplier(coreModule, versionChecker)
                     }
 
-                    androidServicesModule = init(io.embrace.android.embracesdk.internal.injection.AndroidServicesModule::class) {
+                    androidServicesModule = init(AndroidServicesModule::class) {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
-                    postInit(io.embrace.android.embracesdk.internal.injection.AndroidServicesModule::class) {
+                    postInit(AndroidServicesModule::class) {
                         serviceRegistry.registerService(androidServicesModule.preferencesService)
                     }
 
@@ -231,7 +231,7 @@ internal class ModuleInitBootstrapper(
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }
-                    initModule.internalErrorService.internalErrorDataSource = { dataSourceModule.internalErrorDataSource.dataSource }
+                    initModule.internalErrorService.handler = { dataSourceModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(

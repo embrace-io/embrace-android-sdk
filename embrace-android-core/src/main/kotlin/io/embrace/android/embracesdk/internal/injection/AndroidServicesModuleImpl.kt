@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-internal class AndroidServicesModuleImpl(
+public class AndroidServicesModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-) : io.embrace.android.embracesdk.internal.injection.AndroidServicesModule {
+) : AndroidServicesModule {
 
     override val preferencesService: PreferencesService by singleton {
         val lazyPrefs = lazy {

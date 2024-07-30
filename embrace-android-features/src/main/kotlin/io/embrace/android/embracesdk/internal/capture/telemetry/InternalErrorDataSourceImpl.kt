@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.telemetry.errors
+package io.embrace.android.embracesdk.internal.capture.telemetry
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl

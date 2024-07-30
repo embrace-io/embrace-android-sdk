@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.utils
 
 import java.util.UUID
 
-internal object Uuid {
+public object Uuid {
 
     /**
      * Get the Embrace UUID. If the argument uuid is null, generates the Embrace UUID using a
@@ -13,7 +13,7 @@ internal object Uuid {
      */
     @JvmStatic
     @JvmOverloads
-    fun getEmbUuid(uuid: String? = null): String {
+    public fun getEmbUuid(uuid: String? = null): String {
         val input = uuid ?: UUID.randomUUID().toString()
 
         // optimization: avoid expensive pattern compilation in replaceAll()

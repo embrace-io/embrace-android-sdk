@@ -1,61 +1,61 @@
 package io.embrace.android.embracesdk.internal.prefs
 
-internal interface PreferencesService {
+public interface PreferencesService {
 
     /**
      * The last registered Host App version name
      */
-    var appVersion: String?
+    public var appVersion: String?
 
     /**
      * The last registered OS Version
      */
-    var osVersion: String?
+    public var osVersion: String?
 
     /**
      * The app install date in ms
      */
-    var installDate: Long?
+    public var installDate: Long?
 
     /**
      * The unique identifier for this device.
      */
-    var deviceIdentifier: String
+    public var deviceIdentifier: String
 
     /**
      * The last SDK startup status registered.
      */
-    val sdkStartupStatus: String?
+    public val sdkStartupStatus: String?
 
     /**
      * If the sdk is disabled
      */
-    var sdkDisabled: Boolean
+    public var sdkDisabled: Boolean
 
     /**
      * If the user is payer
      */
-    var userPayer: Boolean
+    public var userPayer: Boolean
 
     /**
      * User unique identifier
      */
-    var userIdentifier: String?
+    public var userIdentifier: String?
 
     /**
      * User email address
      */
-    var userEmailAddress: String?
+    public var userEmailAddress: String?
 
     /**
      * Personas for the user
      */
-    var userPersonas: Set<String>?
+    public var userPersonas: Set<String>?
 
     /**
      * All permanent session properties
      */
-    var permanentSessionProperties: Map<String, String>?
+    public var permanentSessionProperties: Map<String, String>?
 
     /**
      * No longer used, will be removed in a future version.
@@ -66,149 +66,149 @@ internal interface PreferencesService {
      * @return custom personas
      */
     @Deprecated("")
-    val customPersonas: Set<String>?
+    public val customPersonas: Set<String>?
 
     /**
      * Username for the user
      */
-    var username: String?
+    public var username: String?
 
     /**
      * The last time config was fetched from the server
      */
-    var lastConfigFetchDate: Long?
+    public var lastConfigFetchDate: Long?
 
     /**
      * If the user message needs to retry send
      */
-    var userMessageNeedsRetry: Boolean
+    public var userMessageNeedsRetry: Boolean
 
     /**
      * Increments and returns the session number ordinal. This is an integer that increments
      * at the start of every session. This allows us to check the % of sessions that didn't get
      * delivered to the backend.
      */
-    fun incrementAndGetSessionNumber(): Int
+    public fun incrementAndGetSessionNumber(): Int
 
     /**
      * Increments and returns the background activity number ordinal. This is an integer that
      * increments at the start of every background activity. This allows us to check the % of
      * requests that didn't get delivered to the backend.
      */
-    fun incrementAndGetBackgroundActivityNumber(): Int
+    public fun incrementAndGetBackgroundActivityNumber(): Int
 
     /**
      * Increments and returns the crash number ordinal. This is an integer that
      * increments on every crash. It allows us to check the % of crashes that
      * didn't get delivered to the backend.
      */
-    fun incrementAndGetCrashNumber(): Int
+    public fun incrementAndGetCrashNumber(): Int
 
     /**
      * Increments and returns the native crash number ordinal. This is an integer that
      * increments on every native crash. It allows us to check the % of native crashes that
      * didn't get delivered to the backend.
      */
-    fun incrementAndGetNativeCrashNumber(): Int
+    public fun incrementAndGetNativeCrashNumber(): Int
 
     /**
      * Last javaScript bundle string url.
      */
-    var javaScriptBundleURL: String?
+    public var javaScriptBundleURL: String?
 
     /**
      * Last javaScript bundle ID.
      */
-    var javaScriptBundleId: String?
+    public var javaScriptBundleId: String?
 
     /**
      * Embrace sdk version.
      */
-    var rnSdkVersion: String?
+    public var rnSdkVersion: String?
 
     /**
      * Last javaScript patch string number.
      */
-    var javaScriptPatchNumber: String?
+    public var javaScriptPatchNumber: String?
 
     /**
      * Last react native version.
      */
-    var reactNativeVersionNumber: String?
+    public var reactNativeVersionNumber: String?
 
     /**
      * Last Unity version.
      */
-    var unityVersionNumber: String?
+    public var unityVersionNumber: String?
 
     /**
      * Last Unity Build ID
      */
-    var unityBuildIdNumber: String?
+    public var unityBuildIdNumber: String?
 
     /**
      * Last Unity SDK version
      */
-    var unitySdkVersionNumber: String?
+    public var unitySdkVersionNumber: String?
 
     /**
      * Last Flutter SDK version
      */
-    var embraceFlutterSdkVersion: String?
+    public var embraceFlutterSdkVersion: String?
 
     /**
      * Last Dart SDK version
      */
-    var dartSdkVersion: String?
+    public var dartSdkVersion: String?
 
     /**
      * If the device is a rooted device.
      */
-    var jailbroken: Boolean?
+    public var jailbroken: Boolean?
 
     /**
      * The device's screen resolution.
      */
-    var screenResolution: String?
+    public var screenResolution: String?
 
     /**
      * The device's cpu name.
      */
-    var cpuName: String?
+    public var cpuName: String?
 
     /**
      * The device's egl.
      */
-    var egl: String?
+    public var egl: String?
 
     /**
      * If background activity capture is enabled
      */
-    var backgroundActivityEnabled: Boolean
+    public var backgroundActivityEnabled: Boolean
 
     /**
      * Set of hashcodes derived from ApplicationExitInfo objects
      */
-    var applicationExitInfoHistory: Set<String>?
+    public var applicationExitInfoHistory: Set<String>?
 
     /**
      * Whether or not the app was installed within the last 24 hours.
      *
      * @return true if it is the user's first day, false otherwise
      */
-    fun isUsersFirstDay(): Boolean
+    public fun isUsersFirstDay(): Boolean
 
     /**
      * Ssuffix to compose the key to get the stored value
      */
-    fun isNetworkCaptureRuleOver(id: String): Boolean
+    public fun isNetworkCaptureRuleOver(id: String): Boolean
 
     /**
      * Suffix to compose the key to get the stored value
      */
-    fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int)
+    public fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int)
 
-    companion object {
-        const val DAY_IN_MS = 60 * 60 * 24 * 1000L
+    public companion object {
+        public const val DAY_IN_MS: Long = 60 * 60 * 24 * 1000L
     }
 }

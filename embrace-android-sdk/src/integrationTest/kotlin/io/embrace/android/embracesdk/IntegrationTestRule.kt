@@ -21,6 +21,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleImpl
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
@@ -172,7 +174,7 @@ internal class IntegrationTestRule(
                 }
             )
         ),
-        val overriddenAndroidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule = io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleImpl(
+        val overriddenAndroidServicesModule: AndroidServicesModule = AndroidServicesModuleImpl(
             initModule = overriddenInitModule,
             coreModule = overriddenCoreModule,
             workerThreadModule = overriddenWorkerThreadModule

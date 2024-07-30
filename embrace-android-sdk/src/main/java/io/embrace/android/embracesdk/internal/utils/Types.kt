@@ -65,7 +65,7 @@ internal typealias AndroidServicesModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
-) -> io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+) -> AndroidServicesModule
 
 /**
  * Function that returns an instance of [StorageModule]. Matches the signature of the constructor for [StorageModuleImpl]
@@ -85,7 +85,7 @@ internal typealias EssentialServiceModuleSupplier = (
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
@@ -135,7 +135,7 @@ internal typealias AnrModuleSupplier = (
 internal typealias CustomerLogModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
@@ -152,7 +152,7 @@ internal typealias NativeModuleSupplier = (
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule
 ) -> NativeModule
 
@@ -177,7 +177,7 @@ internal typealias DataSourceModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
     anrModule: AnrModule
 ) -> DataSourceModule
@@ -189,7 +189,7 @@ internal typealias DataSourceModuleSupplier = (
 internal typealias SessionModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     deliveryModule: DeliveryModule,
@@ -212,7 +212,7 @@ internal typealias CrashModuleSupplier = (
     nativeModule: NativeModule,
     sessionModule: SessionModule,
     anrModule: AnrModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     logModule: CustomerLogModule,
 ) -> CrashModule
 
@@ -222,7 +222,7 @@ internal typealias CrashModuleSupplier = (
 internal typealias PayloadModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,

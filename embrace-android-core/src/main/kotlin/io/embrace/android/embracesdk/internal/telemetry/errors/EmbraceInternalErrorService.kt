@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.telemetry.errors
 
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -8,8 +9,8 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 internal class EmbraceInternalErrorService : InternalErrorService {
 
     override fun handleInternalError(throwable: Throwable) {
-        internalErrorDataSource()?.handleInternalError(throwable)
+        handler()?.handleInternalError(throwable)
     }
 
-    override var internalErrorDataSource: Provider<InternalErrorDataSource?> = { null }
+    override var handler: Provider<InternalErrorHandler?> = { null }
 }

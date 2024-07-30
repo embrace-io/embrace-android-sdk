@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
  * Intercepts uncaught exceptions from the JVM and forwards them to the Embrace API. Once handled,
  * the exception is then delegated to the default [Thread.UncaughtExceptionHandler].
  */
-internal class EmbraceUncaughtExceptionHandler(
+public class EmbraceUncaughtExceptionHandler(
 
     /**
      * The default uncaught exception handler; is null if not set.

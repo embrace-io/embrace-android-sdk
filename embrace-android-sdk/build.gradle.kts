@@ -1,7 +1,7 @@
 import io.embrace.gradle.Versions
 
 plugins {
-    id("embrace-defaults")
+    id("embrace-prod-defaults")
     id("com.google.devtools.ksp")
 }
 
@@ -86,6 +86,7 @@ dependencies {
     // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
+    testImplementation(project(":embrace-test-fakes"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)

@@ -1,5 +1,5 @@
 plugins {
-    id("embrace-defaults")
+    id("embrace-prod-defaults")
 }
 
 description = "Embrace Android SDK: Firebase Cloud Messaging"

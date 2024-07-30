@@ -228,6 +228,9 @@ internal class ModuleInitBootstrapper(
                             anrModule
                         )
                     }
+                    postInit(DataSourceModule::class) {
+                        dataSourceModule.registerFeatures()
+                    }
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }

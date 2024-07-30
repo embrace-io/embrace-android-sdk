@@ -25,6 +25,7 @@ internal class DataSourceModuleImpl(
 
     private val featureModule: FeatureModule by singleton {
         FeatureModuleImpl(
+            featureRegistry = embraceFeatureRegistry,
             coreModule = coreModule,
             initModule = initModule,
             otelModule = otelModule,
@@ -35,6 +36,8 @@ internal class DataSourceModuleImpl(
             configService = configService
         )
     }
+
+    override fun registerFeatures() = featureModule.registerFeatures()
 
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
         DataCaptureOrchestrator(
@@ -52,7 +55,6 @@ internal class DataSourceModuleImpl(
     override val viewDataSource by dataSourceState(featureModule::viewDataSource)
     override val webViewUrlDataSource by dataSourceState(featureModule::webViewUrlDataSource)
     override val sessionPropertiesDataSource by dataSourceState(featureModule::sessionPropertiesDataSource)
-    override val memoryWarningDataSource by dataSourceState(featureModule::memoryWarningDataSource)
     override val applicationExitInfoDataSource by dataSourceState(featureModule::applicationExitInfoDataSource)
     override val lowPowerDataSource by dataSourceState(featureModule::lowPowerDataSource)
     override val networkStatusDataSource by dataSourceState(featureModule::networkStatusDataSource)

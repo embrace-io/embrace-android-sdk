@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 /**
  * Captures custom breadcrumbs.
  */
-public class MemoryWarningDataSource(
+internal class MemoryWarningDataSource(
     private val application: Application,
     private val clock: Clock,
     sessionSpanWriter: SessionSpanWriter,

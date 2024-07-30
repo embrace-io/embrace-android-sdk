@@ -25,7 +25,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
-internal class AeiDataSourceImpl(
+public class AeiDataSourceImpl(
     private val backgroundWorker: BackgroundWorker,
     private val appExitInfoBehavior: AppExitInfoBehavior,
     private val activityManager: ActivityManager?,
@@ -39,7 +39,7 @@ internal class AeiDataSourceImpl(
     limitStrategy = UpToLimitStrategy { SDK_AEI_SEND_LIMIT }
 ) {
 
-    companion object {
+    private companion object {
         private const val SDK_AEI_SEND_LIMIT = 32
     }
 

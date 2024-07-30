@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
+import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
@@ -10,6 +12,7 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSourc
 import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
+import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 
@@ -25,4 +28,7 @@ public interface FeatureModule {
     public val webViewDataSource: DataSourceState<WebViewDataSource>
     public val lowPowerDataSource: DataSourceState<LowPowerDataSource>
     public val thermalStateDataSource: DataSourceState<ThermalStateDataSource>
+    public val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
+    public val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
+    public val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
 }

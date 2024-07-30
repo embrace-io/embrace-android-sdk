@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.os.Build
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
@@ -8,12 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.FeatureModule
 import io.embrace.android.embracesdk.internal.capture.FeatureModuleImpl
-import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
-import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSourceImpl
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSource
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorDataSourceImpl
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
@@ -32,12 +25,14 @@ internal class DataSourceModuleImpl(
 
     private val featureModule: FeatureModule by singleton {
         FeatureModuleImpl(
-            coreModule,
-            initModule,
-            otelModule,
-            workerThreadModule,
-            systemServiceModule,
-            configService
+            coreModule = coreModule,
+            initModule = initModule,
+            otelModule = otelModule,
+            workerThreadModule = workerThreadModule,
+            systemServiceModule = systemServiceModule,
+            androidServicesModule = androidServicesModule,
+            logWriter = essentialServiceModule.logWriter,
+            configService = configService
         )
     }
 
@@ -58,42 +53,9 @@ internal class DataSourceModuleImpl(
     override val webViewUrlDataSource by dataSourceState(featureModule::webViewUrlDataSource)
     override val sessionPropertiesDataSource by dataSourceState(featureModule::sessionPropertiesDataSource)
     override val memoryWarningDataSource by dataSourceState(featureModule::memoryWarningDataSource)
-
-    private val aeiService: AeiDataSourceImpl? by singleton {
-        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
-            AeiDataSourceImpl(
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                configService.appExitInfoBehavior,
-                systemServiceModule.activityManager,
-                androidServicesModule.preferencesService,
-                essentialServiceModule.logWriter,
-                initModule.logger
-            )
-        } else {
-            null
-        }
-    }
-
-    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource>? by dataSourceState {
-        DataSourceState(
-            factory = { aeiService },
-            configGate = { configService.isAppExitInfoCaptureEnabled() }
-        )
-    }
-
+    override val applicationExitInfoDataSource by dataSourceState(featureModule::applicationExitInfoDataSource)
     override val lowPowerDataSource by dataSourceState(featureModule::lowPowerDataSource)
-
-    override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                NetworkStatusDataSource(
-                    spanService = otelModule.spanService,
-                    logger = initModule.logger
-                )
-            },
-            configGate = { configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled() }
-        )
-    }
+    override val networkStatusDataSource by dataSourceState(featureModule::networkStatusDataSource)
 
     override val sigquitDataSource: DataSourceState<SigquitDataSource> by dataSourceState {
         DataSourceState(
@@ -105,18 +67,7 @@ internal class DataSourceModuleImpl(
     override val rnActionDataSource by dataSourceState(featureModule::rnActionDataSource)
     override val thermalStateDataSource by dataSourceState(featureModule::thermalStateDataSource)
     override val webViewDataSource by dataSourceState(featureModule::webViewDataSource)
-
-    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                InternalErrorDataSourceImpl(
-                    logWriter = essentialServiceModule.logWriter,
-                    logger = initModule.logger,
-                )
-            },
-            configGate = { configService.dataCaptureEventBehavior.isInternalExceptionCaptureEnabled() }
-        )
-    }
+    override val internalErrorDataSource by dataSourceState(featureModule::internalErrorDataSource)
 
     /**
      * Property delegate that adds the value to a

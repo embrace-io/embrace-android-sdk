@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
-internal class NetworkStatusDataSource(
+public class NetworkStatusDataSource(
     spanService: SpanService,
     logger: EmbLogger
 ) : SpanDataSourceImpl(
@@ -24,7 +24,7 @@ internal class NetworkStatusDataSource(
 
     private var span: EmbraceSpan? = null
 
-    fun networkStatusChange(networkStatus: NetworkStatus, timestamp: Long) {
+    public fun networkStatusChange(networkStatus: NetworkStatus, timestamp: Long) {
         // close previous span
         if (span != null) {
             captureSpanData(

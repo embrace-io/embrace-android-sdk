@@ -5,13 +5,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -25,6 +25,8 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -301,6 +303,22 @@ internal class TracingApiTest {
             val childSpan = checkNotNull(spans["child"])
             assertEquals(parentSpan.traceId, childSpan.traceId)
             assertEquals(parentSpan.spanId, childSpan.parentSpanId)
+        }
+    }
+
+    @Test
+    fun `can only create span if there is a valid session`() {
+        with(testRule) {
+            harness.overriddenConfigService.backgroundActivityCaptureEnabled = false
+            assertNull(embrace.startSpan("test"))
+            startSdk()
+            checkNotNull(harness.recordSession {
+                assertNotNull(embrace.startSpan("test"))
+            })
+            assertNull(embrace.startSpan("test"))
+            checkNotNull(harness.recordSession {
+                assertNotNull(embrace.startSpan("test"))
+            })
         }
     }
 

@@ -19,6 +19,7 @@ internal class PayloadMessageCollatorImpl(
 ) : PayloadMessageCollator {
 
     override fun buildInitialSession(params: InitialEnvelopeParams) = with(params) {
+        currentSessionSpan.readySession()
         SessionZygote(
             sessionId = currentSessionSpan.getSessionId(),
             startTime = startTime,

@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpansByName
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -298,6 +298,15 @@ internal class EmbraceInternalInterfaceTest {
             })
 
             val s2 = checkNotNull(harness.recordSession {
+                assertTrue(
+                    internalInterface.stopSpan(
+                        checkNotNull(
+                            internalInterface.startSpan(
+                                name = "parent"
+                            )
+                        )
+                    )
+                )
                 assertNull(internalInterface.startSpan(name = "stopped-parent-child", parentSpanId = stoppedParentId))
                 assertTrue(
                     internalInterface.stopSpan(
@@ -320,6 +329,7 @@ internal class EmbraceInternalInterfaceTest {
             assertEquals(0, s2.findSpansByName("stopped-parent-child").size)
 
             // active spans started in a previous session is a valid parent
+            assertEquals(1, s2.findSpansByName("parent").size)
             assertEquals(1, s2.findSpansByName("active-parent-child").size)
             assertEquals(1, s2.findSpansByName("active-parent").size)
         }

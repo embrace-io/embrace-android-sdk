@@ -196,6 +196,7 @@ internal class SessionOrchestratorImpl(
             boundaryDelegate.prepareForNewSession(clearUserInfo)
 
             // now, we can start the next session or background activity
+
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId

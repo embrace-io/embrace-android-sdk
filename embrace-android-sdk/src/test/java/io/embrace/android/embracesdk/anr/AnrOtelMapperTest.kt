@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
+import io.embrace.android.embracesdk.internal.anr.clearSamples
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
@@ -13,7 +14,6 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
-import io.embrace.android.embracesdk.internal.payload.extensions.clearSamples
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes

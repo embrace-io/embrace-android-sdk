@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.anr
 
+import io.embrace.android.embracesdk.internal.anr.clearSamples
+import io.embrace.android.embracesdk.internal.anr.deepCopy
+import io.embrace.android.embracesdk.internal.anr.duration
+import io.embrace.android.embracesdk.internal.anr.size
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
-import io.embrace.android.embracesdk.internal.payload.extensions.clearSamples
-import io.embrace.android.embracesdk.internal.payload.extensions.deepCopy
-import io.embrace.android.embracesdk.internal.payload.extensions.duration
-import io.embrace.android.embracesdk.internal.payload.extensions.size
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture
 
 import android.os.Build
+import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
@@ -31,6 +32,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 public class FeatureModuleImpl(
+    private val featureRegistry: EmbraceFeatureRegistry,
     coreModule: CoreModule,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
@@ -38,10 +40,10 @@ public class FeatureModuleImpl(
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     logWriter: LogWriter,
-    configService: ConfigService
+    configService: ConfigService,
 ) : FeatureModule {
 
-    override val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by singleton {
+    private val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by singleton {
         DataSourceState(
             factory = {
                 MemoryWarningDataSource(
@@ -240,5 +242,9 @@ public class FeatureModuleImpl(
             },
             configGate = { configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled() }
         )
+    }
+
+    override fun registerFeatures() {
+        featureRegistry.add(memoryWarningDataSource)
     }
 }

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData
-import io.embrace.android.embracesdk.internal.capture.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals

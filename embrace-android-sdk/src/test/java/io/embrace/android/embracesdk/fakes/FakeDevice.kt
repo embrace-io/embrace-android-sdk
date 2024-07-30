@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.Device
+import io.embrace.android.embracesdk.internal.envelope.resource.Device
 
 internal class FakeDevice(
     override var isJailbroken: Boolean? = false,

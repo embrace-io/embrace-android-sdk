@@ -1,18 +1,18 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSourceImpl
-import io.embrace.android.embracesdk.internal.capture.envelope.log.LogPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.capture.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.resource.EnvelopeResourceSourceImpl
-import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeModule
-import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
@@ -34,7 +34,7 @@ internal class PayloadModuleImpl(
         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
 
     private val metadataSource by singleton {
-        EnvelopeMetadataSourceImpl(essentialServiceModule.userService)
+        EnvelopeMetadataSourceImpl(essentialServiceModule.userService::getUserInfo)
     }
 
     private val resourceSource by singleton {

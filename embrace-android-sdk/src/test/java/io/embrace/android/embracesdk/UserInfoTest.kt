@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.internal.capture.user.getStoredUserInfo
 import io.embrace.android.embracesdk.internal.payload.UserInfo
-import io.embrace.android.embracesdk.internal.payload.extensions.getStoredUserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

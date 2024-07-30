@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.extensions.PERSONA_PAYER
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -28,25 +27,25 @@ internal class PersonaFeaturesTest {
             with(checkNotNull(harness.recordSession { embrace.addUserPersona("test") })) {
                 assertPersonaExists("preloaded")
                 assertPersonaExists("test")
-                assertPersonaExists(PERSONA_PAYER)
+                assertPersonaExists("payer")
             }
             embrace.clearUserPersona("test")
             with(checkNotNull(harness.recordSession { })) {
                 assertPersonaExists("preloaded")
                 assertPersonaDoesNotExist("test")
-                assertPersonaExists(PERSONA_PAYER)
+                assertPersonaExists("payer")
             }
             embrace.clearUserAsPayer()
             with(checkNotNull(harness.recordSession { })) {
                 assertPersonaExists("preloaded")
                 assertPersonaDoesNotExist("test")
-                assertPersonaDoesNotExist(PERSONA_PAYER)
+                assertPersonaDoesNotExist("payer")
             }
             embrace.clearAllUserPersonas()
             with(checkNotNull(harness.recordSession { })) {
                 assertPersonaDoesNotExist("preloaded")
                 assertPersonaDoesNotExist("test")
-                assertPersonaDoesNotExist(PERSONA_PAYER)
+                assertPersonaDoesNotExist("payer")
             }
         }
     }

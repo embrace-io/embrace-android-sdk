@@ -5,7 +5,7 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.util.regex.Pattern
 
-internal object NetworkUtils {
+public object NetworkUtils {
 
     private const val TRACE_ID_MAXIMUM_ALLOWED_LENGTH = 64
     private const val DNS_PATTERN =
@@ -18,7 +18,7 @@ internal object NetworkUtils {
     private val DomainPattern = Pattern.compile("$DNS_PATTERN|$IPV4_PATTERN|$IPV6_PATTERN")
 
     @JvmStatic
-    fun getValidTraceId(traceId: String?): String? {
+    public fun getValidTraceId(traceId: String?): String? {
         if (traceId == null) {
             return null
         }
@@ -41,7 +41,7 @@ internal object NetworkUtils {
      * @return the hostname or IP address
      */
     @JvmStatic
-    fun getDomain(originalUrl: String): String? {
+    public fun getDomain(originalUrl: String): String? {
         // This is necessary for the "new URL(url)" logic.
         val url = if (!originalUrl.startsWith("http")) "http://$originalUrl" else originalUrl
 
@@ -64,7 +64,7 @@ internal object NetworkUtils {
      * @return true if the domain is an IP address, false otherwise
      */
     @JvmStatic
-    fun isIpAddress(domain: String?) =
+    public fun isIpAddress(domain: String?): Boolean =
         if (domain == null) false else IpAddrPattern.matcher(domain).find()
 
     /**
@@ -93,7 +93,7 @@ internal object NetworkUtils {
     }
 
     @JvmStatic
-    fun getUrlPath(url: String?): String? = try {
+    public fun getUrlPath(url: String?): String? = try {
         URL(url).path
     } catch (exception: Exception) {
         ""

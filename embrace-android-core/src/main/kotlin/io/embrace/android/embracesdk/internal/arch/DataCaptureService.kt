@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
  * This approach avoids needing any knowledge about session boundaries or what the session payload
  * looks like. It also simplifies testing.
  */
-internal interface DataCaptureService<T> : MemoryCleanerListener {
+public interface DataCaptureService<T> : MemoryCleanerListener {
 
     /**
      * Returns a representation of all the data that has already been captured so far.
@@ -20,5 +20,5 @@ internal interface DataCaptureService<T> : MemoryCleanerListener {
      * This does NOT mean that implementations should go capture data - they should just return
      * what has already been captured, if anything.
      */
-    fun getCapturedData(): T
+    public fun getCapturedData(): T
 }

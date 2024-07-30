@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils.exceptions.function
 
-internal interface CheckedSupplier<R> {
+public interface CheckedSupplier<R> {
 
     /**
      * Gets a result.
@@ -9,5 +9,5 @@ internal interface CheckedSupplier<R> {
      * @throws Throwable if an error occurs
      */
     @Throws(Throwable::class)
-    fun get(): R
+    public fun get(): R
 }

@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
  * place to coordinate everything in one place.
  */
-internal class DataCaptureOrchestrator(
+public class DataCaptureOrchestrator(
     configService: ConfigService,
     private val worker: BackgroundWorker,
     private val logger: EmbLogger
@@ -26,7 +26,7 @@ internal class DataCaptureOrchestrator(
 
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
 
-    var currentSessionType: SessionType? = null
+    public var currentSessionType: SessionType? = null
         set(value) {
             field = value
             onSessionTypeChange()

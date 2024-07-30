@@ -7,11 +7,11 @@ import kotlin.reflect.KProperty
  * Syntactic sugar that makes it easier to define a property in Kotlin whose value is backed by
  * a ThreadLocal.
  */
-internal inline fun <reified T> threadLocal(
+public inline fun <reified T> threadLocal(
     noinline provider: Provider<T>
 ): ReadOnlyProperty<Any?, T> = ThreadLocalDelegate(provider)
 
-internal class ThreadLocalDelegate<T>(
+public class ThreadLocalDelegate<T>(
     provider: Provider<T>
 ) : ReadOnlyProperty<Any?, T> {
 

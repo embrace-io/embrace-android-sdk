@@ -7,9 +7,9 @@ import java.io.Serializable
 /**
  * Utility to for sanitizing user-supplied properties.
  */
-internal object PropertyUtils {
+public object PropertyUtils {
 
-    const val MAX_PROPERTY_SIZE = 10
+    public const val MAX_PROPERTY_SIZE: Int = 10
 
     /**
      * This method will normalize the map by applying the following rules:
@@ -22,7 +22,7 @@ internal object PropertyUtils {
      * @return a normalized Map of the provided properties.
      */
     @JvmStatic
-    fun sanitizeProperties(properties: Map<String, Any?>?, logger: EmbLogger): Map<String, Any> {
+    public fun sanitizeProperties(properties: Map<String, Any?>?, logger: EmbLogger): Map<String, Any> {
         properties ?: return emptyMap()
 
         if (properties.size > MAX_PROPERTY_SIZE) {
@@ -34,7 +34,7 @@ internal object PropertyUtils {
     }
 
     @JvmStatic
-    fun normalizeProperties(properties: Map<String, Any>?, logger: EmbLogger): Map<String, Any>? {
+    public fun normalizeProperties(properties: Map<String, Any>?, logger: EmbLogger): Map<String, Any>? {
         var normalizedProperties: Map<String, Any> = HashMap()
         if (properties != null) {
             try {

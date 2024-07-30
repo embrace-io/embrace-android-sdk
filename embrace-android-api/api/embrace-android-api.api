@@ -1,3 +1,20 @@
+public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {
+	public static final field HANDLED Lio/embrace/android/embracesdk/LogExceptionType;
+	public static final field NONE Lio/embrace/android/embracesdk/LogExceptionType;
+	public static final field UNHANDLED Lio/embrace/android/embracesdk/LogExceptionType;
+	public final fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogExceptionType;
+	public static fun values ()[Lio/embrace/android/embracesdk/LogExceptionType;
+}
+
+public final class io/embrace/android/embracesdk/LogType : java/lang/Enum {
+	public static final field ERROR Lio/embrace/android/embracesdk/LogType;
+	public static final field INFO Lio/embrace/android/embracesdk/LogType;
+	public static final field WARNING Lio/embrace/android/embracesdk/LogType;
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogType;
+	public static fun values ()[Lio/embrace/android/embracesdk/LogType;
+}
+
 public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
 	public static final field INFO Lio/embrace/android/embracesdk/Severity;
@@ -69,6 +86,12 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Momen
 	public abstract fun startMoment (Ljava/lang/String;)V
 	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
+	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
+	public abstract fun getTraceIdHeader ()Ljava/lang/String;
+	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {

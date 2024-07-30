@@ -13,10 +13,10 @@ import io.embrace.android.embracesdk.internal.payload.Span
  *
  * This has the disadvantage of the data is not sent in exporters, so should be used sparingly.
  */
-internal fun interface DataCaptureServiceOtelConverter {
+public fun interface DataCaptureServiceOtelConverter {
 
     /**
      * Returns a snapshot of the data captured by the service as a list of spans.
      */
-    fun snapshot(isFinalPayload: Boolean): List<Span>?
+    public fun snapshot(isFinalPayload: Boolean): List<Span>?
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Service tracking the app's current process state (foreground or background) as reported
  * by ProcessLifecycleOwner.
  */
-internal class EmbraceProcessStateService(
+public class EmbraceProcessStateService(
     private val clock: Clock,
     private val logger: EmbLogger,
     private val lifecycleOwner: LifecycleOwner = ProcessLifecycleOwner.get()
@@ -25,7 +25,7 @@ internal class EmbraceProcessStateService(
     /**
      * List of listeners that subscribe to process lifecycle events.
      */
-    val listeners = CopyOnWriteArrayList<ProcessStateListener>()
+    public val listeners: CopyOnWriteArrayList<ProcessStateListener> = CopyOnWriteArrayList<ProcessStateListener>()
 
     private var sessionOrchestrator: SessionOrchestrator? = null
 
@@ -39,7 +39,7 @@ internal class EmbraceProcessStateService(
      * Returns if the app's in background or not.
      */
     @Volatile
-    override var isInBackground = !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+    override var isInBackground: Boolean = !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
         private set
 
     init {
@@ -125,7 +125,7 @@ internal class EmbraceProcessStateService(
         }
     }
 
-    companion object {
+    private companion object {
         private const val ERROR_FAILED_TO_NOTIFY =
             "Failed to notify EmbraceProcessStateService listener"
     }

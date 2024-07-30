@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
 
-internal class DeviceImpl(
+public class DeviceImpl(
     private val windowManager: WindowManager?,
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,
@@ -125,7 +125,8 @@ internal class DeviceImpl(
      * @param statFs the {@link StatFs} service for the device
      * @return the total free capacity of the internal storage of the device in bytes
      */
-    override val internalStorageTotalCapacity = lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
+    override val internalStorageTotalCapacity: Lazy<Long> =
+        lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
 
     override val cpuName: String? = cpuInfoDelegate.getCpuName()
 

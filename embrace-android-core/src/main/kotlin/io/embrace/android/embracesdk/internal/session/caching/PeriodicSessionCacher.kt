@@ -10,12 +10,12 @@ import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-internal class PeriodicSessionCacher(
+public class PeriodicSessionCacher(
     private val sessionPeriodicCacheScheduledWorker: ScheduledWorker,
     private val logger: EmbLogger
 ) {
 
-    companion object {
+    private companion object {
 
         /**
          * Session caching interval in seconds.
@@ -28,7 +28,7 @@ internal class PeriodicSessionCacher(
     /**
      * It starts a background job that will schedule a callback to do periodic caching.
      */
-    fun start(provider: Provider<Envelope<SessionPayload>?>) {
+    public fun start(provider: Provider<Envelope<SessionPayload>?>) {
         scheduledFuture = this.sessionPeriodicCacheScheduledWorker.scheduleWithFixedDelay(
             onPeriodicCache(provider),
             0,
@@ -48,7 +48,7 @@ internal class PeriodicSessionCacher(
         }
     }
 
-    fun stop() {
+    public fun stop() {
         scheduledFuture?.cancel(false)
     }
 }

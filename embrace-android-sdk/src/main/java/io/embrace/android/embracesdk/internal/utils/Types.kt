@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
@@ -23,7 +24,6 @@ import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import java.io.OutputStream
 
 /**

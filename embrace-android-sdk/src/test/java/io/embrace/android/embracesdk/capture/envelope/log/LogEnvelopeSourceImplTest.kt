@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import io.embrace.android.embracesdk.fixtures.nonbatchableLog
-import io.embrace.android.embracesdk.internal.capture.envelope.log.LogEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals
 import org.junit.Test

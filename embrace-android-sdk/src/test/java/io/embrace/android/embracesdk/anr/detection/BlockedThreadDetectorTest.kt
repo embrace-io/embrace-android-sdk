@@ -38,7 +38,6 @@ internal class BlockedThreadDetectorTest {
             listener,
             state,
             Thread.currentThread(),
-            anrMonitorThread = anrMonitorThread,
             logger = EmbLoggerImpl()
         )
     }

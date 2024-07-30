@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>UnusedParameter:PushNotificationCaptureService.kt$PushNotificationCaptureService$messageDeliveredPriority: Int</ID>
+  </CurrentIssues>
+</SmellBaseline>

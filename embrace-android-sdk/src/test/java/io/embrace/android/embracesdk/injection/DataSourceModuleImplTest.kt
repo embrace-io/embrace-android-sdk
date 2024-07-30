@@ -39,7 +39,6 @@ internal class DataSourceModuleImplTest {
         assertNotNull(module.sessionPropertiesDataSource)
         assertNotNull(module.applicationExitInfoDataSource)
         assertNotNull(module.lowPowerDataSource)
-        assertNotNull(module.memoryWarningDataSource)
         assertNotNull(module.networkStatusDataSource)
         assertNotNull(module.sigquitDataSource)
         assertNotNull(module.rnActionDataSource)

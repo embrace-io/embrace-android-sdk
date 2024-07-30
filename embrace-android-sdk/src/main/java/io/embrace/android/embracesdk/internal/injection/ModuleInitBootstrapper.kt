@@ -228,6 +228,9 @@ internal class ModuleInitBootstrapper(
                             anrModule
                         )
                     }
+                    postInit(DataSourceModule::class) {
+                        dataSourceModule.registerFeatures()
+                    }
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }
@@ -253,7 +256,7 @@ internal class ModuleInitBootstrapper(
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
                             dataCaptureServiceModule.webviewService,
-                            dataCaptureServiceModule.breadcrumbService,
+                            dataCaptureServiceModule.activityBreadcrumbTracker,
                             dataCaptureServiceModule.pushNotificationService
                         )
                     }

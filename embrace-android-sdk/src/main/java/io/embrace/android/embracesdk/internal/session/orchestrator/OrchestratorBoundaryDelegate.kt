@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
-import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 
 /**
  * This class is responsible for orchestrating a clean boundary between sessions.

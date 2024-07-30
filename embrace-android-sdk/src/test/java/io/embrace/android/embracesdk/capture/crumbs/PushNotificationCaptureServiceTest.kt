@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import android.os.Bundle
-import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.system.mockBundle
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -17,7 +17,6 @@ import org.junit.Test
 internal class PushNotificationCaptureServiceTest {
 
     private lateinit var pushNotificationCaptureService: PushNotificationCaptureService
-    private lateinit var breadcrumbService: FakeBreadcrumbService
 
     companion object {
         private val logger: EmbLogger = EmbLoggerImpl()
@@ -30,9 +29,8 @@ internal class PushNotificationCaptureServiceTest {
         // for bundle let's clear answers too
         clearMocks(mockBundle)
 
-        breadcrumbService = FakeBreadcrumbService()
         pushNotificationCaptureService = PushNotificationCaptureService(
-            breadcrumbService,
+            mockk(relaxed = true),
             logger
         )
     }

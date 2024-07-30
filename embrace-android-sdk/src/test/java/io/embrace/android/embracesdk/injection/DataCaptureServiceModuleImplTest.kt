@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
-import io.embrace.android.embracesdk.internal.capture.crumbs.EmbraceBreadcrumbService
+import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -34,7 +34,7 @@ internal class DataCaptureServiceModuleImplTest {
         )
 
         assertTrue(module.webviewService is EmbraceWebViewService)
-        assertTrue(module.breadcrumbService is EmbraceBreadcrumbService)
+        assertTrue(module.activityBreadcrumbTracker is ActivityBreadcrumbTracker)
         assertTrue(module.appStartupDataCollector is AppStartupTraceEmitter)
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.startupService)

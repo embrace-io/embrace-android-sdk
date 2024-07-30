@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  * Note that this implementation has benefited from the work of Pierre-Yves Ricau and his blog post about Android application launch time
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.
  */
-internal class StartupTracker(
+public class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val logger: EmbLogger,
     private val versionChecker: VersionChecker,
@@ -131,7 +131,7 @@ internal class StartupTracker(
         return isStartupActivity()
     }
 
-    companion object {
+    public companion object {
         private class PyNextDrawListener(
             val view: View,
             val onDrawCallback: () -> Unit
@@ -166,15 +166,15 @@ internal class StartupTracker(
             }
         }
 
-        fun Activity.observeForStartup(): Boolean = !javaClass.isAnnotationPresent(StartupActivity::class.java)
+        public fun Activity.observeForStartup(): Boolean = !javaClass.isAnnotationPresent(StartupActivity::class.java)
 
-        fun View.onNextDraw(onDrawCallback: () -> Unit) {
+        public fun View.onNextDraw(onDrawCallback: () -> Unit) {
             viewTreeObserver.addOnDrawListener(
                 PyNextDrawListener(this, onDrawCallback)
             )
         }
 
-        fun Window.onDecorViewReady(onDecorViewReady: () -> Unit) {
+        public fun Window.onDecorViewReady(onDecorViewReady: () -> Unit) {
             if (callback != null) {
                 if (peekDecorView() == null) {
                     onContentChanged {

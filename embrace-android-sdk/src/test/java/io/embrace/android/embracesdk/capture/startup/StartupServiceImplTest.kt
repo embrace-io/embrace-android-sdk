@@ -35,7 +35,7 @@ internal class StartupServiceImplTest {
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
-        startupService = StartupServiceImpl(spanService, backgroundWorker)
+        startupService = StartupServiceImpl(spanService)
     }
 
     @Test

@@ -52,17 +52,15 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         targetThreadHandler = TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = worker,
-            anrMonitorThread = anrMonitorThread,
             configService = fakeConfigService,
-            clock = clock,
-            logger = logger
+            logger = logger,
+            clock = clock
         )
         blockedThreadDetector = BlockedThreadDetector(
             configService = fakeConfigService,
             clock = clock,
             state = state,
             targetThread = Thread.currentThread(),
-            anrMonitorThread = anrMonitorThread,
             logger = logger
         )
         livenessCheckScheduler = LivenessCheckScheduler(
@@ -72,8 +70,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             state = state,
             targetThreadHandler = targetThreadHandler,
             blockedThreadDetector = blockedThreadDetector,
-            logger = logger,
-            anrMonitorThread = anrMonitorThread
+            logger = logger
         )
         anrService = EmbraceAnrService(
             configService = fakeConfigService,
@@ -82,8 +79,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             livenessCheckScheduler = livenessCheckScheduler,
             anrMonitorWorker = worker,
             state = state,
-            clock = clock,
-            anrMonitorThread = anrMonitorThread
+            clock = clock
         )
     }
 }

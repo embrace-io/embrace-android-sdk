@@ -8,5 +8,6 @@ include(
     ":embrace-android-fcm",
     ":embrace-android-compose",
     ":embrace-lint",
-    ":embrace-test-common"
+    ":embrace-test-common",
+    ":embrace-test-fakes"
 )

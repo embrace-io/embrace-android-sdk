@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
-internal class ThermalStateDataSource(
+public class ThermalStateDataSource(
     spanService: SpanService,
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
@@ -71,7 +71,7 @@ internal class ThermalStateDataSource(
         }
     }
 
-    fun handleThermalStateChange(status: Int?) {
+    public fun handleThermalStateChange(status: Int?) {
         if (status == null) {
             return
         }

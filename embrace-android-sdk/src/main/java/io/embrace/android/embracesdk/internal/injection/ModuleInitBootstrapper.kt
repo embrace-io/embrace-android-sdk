@@ -231,7 +231,7 @@ internal class ModuleInitBootstrapper(
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }
-                    initModule.internalErrorService.internalErrorDataSource = { dataSourceModule.internalErrorDataSource.dataSource }
+                    initModule.internalErrorService.handler = { dataSourceModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(

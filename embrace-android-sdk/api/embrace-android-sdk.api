@@ -204,10 +204,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/EmbraceIn
 	public abstract fun stopSdk ()V
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
-	public abstract fun addBreadcrumb (Ljava/lang/String;)V
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi {
 	public abstract fun endView (Ljava/lang/String;)Z
 	public abstract fun start (Landroid/content/Context;)V
@@ -224,51 +220,10 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Inter
 	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
-	public abstract fun logWebView (Ljava/lang/String;)V
-	public abstract fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
-	public abstract fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/LogsApi {
-	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
-	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
-	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
-	public abstract fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
-	public abstract fun logError (Ljava/lang/String;)V
-	public abstract fun logException (Ljava/lang/Throwable;)V
-	public abstract fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;)V
-	public abstract fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
-	public abstract fun logException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
-	public abstract fun logInfo (Ljava/lang/String;)V
-	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;)V
-	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
-	public abstract fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
-	public abstract fun logWarning (Ljava/lang/String;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/MomentsApi {
-	public abstract fun endAppStartup ()V
-	public abstract fun endAppStartup (Ljava/util/Map;)V
-	public abstract fun endMoment (Ljava/lang/String;)V
-	public abstract fun endMoment (Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun endMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun endMoment (Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun startMoment (Ljava/lang/String;)V
-	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
 	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
 	public abstract fun getTraceIdHeader ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
-	public abstract fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
-	public abstract fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
-	public abstract fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
@@ -296,28 +251,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkSt
 	public abstract fun setAppId (Ljava/lang/String;)Z
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/SessionApi {
-	public abstract fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
-	public abstract fun endSession ()V
-	public abstract fun endSession (Z)V
-	public abstract fun getSessionProperties ()Ljava/util/Map;
-	public abstract fun removeSessionProperty (Ljava/lang/String;)Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/UserApi {
-	public abstract fun addUserPersona (Ljava/lang/String;)V
-	public abstract fun clearAllUserPersonas ()V
-	public abstract fun clearUserAsPayer ()V
-	public abstract fun clearUserEmail ()V
-	public abstract fun clearUserIdentifier ()V
-	public abstract fun clearUserPersona (Ljava/lang/String;)V
-	public abstract fun clearUsername ()V
-	public abstract fun setUserAsPayer ()V
-	public abstract fun setUserEmail (Ljava/lang/String;)V
-	public abstract fun setUserIdentifier (Ljava/lang/String;)V
-	public abstract fun setUsername (Ljava/lang/String;)V
-}
-
 public final class io/embrace/android/embracesdk/internal/config/behavior/BehaviorThresholdCheck {
 	public fun <init> (Lkotlin/jvm/functions/Function0;)V
 	public final fun getNormalizedDeviceId ()F
@@ -338,71 +271,5 @@ public abstract interface class io/embrace/android/embracesdk/internal/network/h
 	public abstract fun getHeaderByName (Ljava/lang/String;)Ljava/lang/String;
 	public abstract fun getOverriddenURL (Ljava/lang/String;)Ljava/lang/String;
 	public abstract fun getURLString ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/internal/network/http/NetworkCaptureData {
-	public fun <init> (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;)V
-	public synthetic fun <init> (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/util/Map;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()[B
-	public final fun component4 ()Ljava/util/Map;
-	public final fun component5 ()[B
-	public final fun component6 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;)Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;
-	public static synthetic fun copy$default (Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;ILjava/lang/Object;)Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCapturedRequestBody ()[B
-	public final fun getCapturedResponseBody ()[B
-	public final fun getDataCaptureErrorMessage ()Ljava/lang/String;
-	public final fun getRequestBodySize ()I
-	public final fun getRequestHeaders ()Ljava/util/Map;
-	public final fun getRequestQueryParams ()Ljava/lang/String;
-	public final fun getResponseBodySize ()I
-	public final fun getResponseHeaders ()Ljava/util/Map;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
-	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJILjava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public static fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
-	public fun getBytesIn ()Ljava/lang/Long;
-	public fun getBytesOut ()Ljava/lang/Long;
-	public fun getBytesReceived ()Ljava/lang/Long;
-	public fun getBytesSent ()Ljava/lang/Long;
-	public fun getEndTime ()Ljava/lang/Long;
-	public fun getError ()Ljava/lang/Throwable;
-	public fun getErrorMessage ()Ljava/lang/String;
-	public fun getErrorType ()Ljava/lang/String;
-	public fun getHttpMethod ()Ljava/lang/String;
-	public fun getNetworkCaptureData ()Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;
-	public fun getResponseCode ()Ljava/lang/Integer;
-	public fun getStartTime ()Ljava/lang/Long;
-	public fun getTraceId ()Ljava/lang/String;
-	public fun getUrl ()Ljava/lang/String;
-	public fun getW3cTraceparent ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/lang/Enum {
-	public static final field CONNECT Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field DELETE Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field GET Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field HEAD Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field OPTIONS Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field PATCH Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field POST Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field PUT Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static final field TRACE Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static fun fromInt (Ljava/lang/Integer;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static fun fromString (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static fun values ()[Lio/embrace/android/embracesdk/network/http/HttpMethod;
 }
 

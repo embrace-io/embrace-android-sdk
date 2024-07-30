@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
-import io.embrace.android.embracesdk.internal.payload.mapThreadState
+import io.embrace.android.embracesdk.internal.payload.extensions.mapThreadState
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.Random
 import java.util.concurrent.TimeUnit

@@ -8,7 +8,6 @@ import android.os.Looper
 import android.util.Base64
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
@@ -22,6 +21,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventMessage
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata

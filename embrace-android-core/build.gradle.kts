@@ -1,5 +1,5 @@
 plugins {
-    id("embrace-defaults")
+    id("embrace-prod-defaults")
 }
 
 description = "Embrace Android SDK: Core"
@@ -29,4 +29,5 @@ dependencies {
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
     compileOnly(libs.lifecycle.common.java8)
+    implementation(libs.lifecycle.process)
 }

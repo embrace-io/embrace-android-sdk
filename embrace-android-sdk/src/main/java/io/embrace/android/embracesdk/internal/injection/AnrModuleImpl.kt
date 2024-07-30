@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringStat
 import io.embrace.android.embracesdk.internal.anr.sigquit.AnrThreadIdDelegate
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class AnrModuleImpl(
     initModule: InitModule,

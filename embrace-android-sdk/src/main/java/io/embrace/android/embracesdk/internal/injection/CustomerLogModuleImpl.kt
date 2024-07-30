@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class CustomerLogModuleImpl(
     initModule: InitModule,

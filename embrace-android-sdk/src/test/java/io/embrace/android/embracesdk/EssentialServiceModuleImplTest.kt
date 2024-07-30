@@ -20,10 +20,10 @@ import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic

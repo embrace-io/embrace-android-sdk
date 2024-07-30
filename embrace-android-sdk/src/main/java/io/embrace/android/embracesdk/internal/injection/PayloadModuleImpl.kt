@@ -15,12 +15,11 @@ import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class PayloadModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     systemServiceModule: SystemServiceModule,
     workerThreadModule: WorkerThreadModule,

@@ -32,8 +32,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModuleImpl
 import java.util.Locale
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -74,7 +72,7 @@ internal class ModuleInitBootstrapper(
     lateinit var systemServiceModule: SystemServiceModule
         private set
 
-    lateinit var androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+    lateinit var androidServicesModule: AndroidServicesModule
         private set
 
     lateinit var storageModule: StorageModule
@@ -150,7 +148,9 @@ internal class ModuleInitBootstrapper(
                     workerThreadModule = init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
 
                     val initTask = postInit(OpenTelemetryModule::class) {
-                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(TaskPriority.CRITICAL) {
+                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit(
+                            TaskPriority.CRITICAL
+                        ) {
                             Systrace.traceSynchronous("span-service-init") {
                                 openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                             }
@@ -166,10 +166,10 @@ internal class ModuleInitBootstrapper(
                         systemServiceModuleSupplier(coreModule, versionChecker)
                     }
 
-                    androidServicesModule = init(io.embrace.android.embracesdk.internal.injection.AndroidServicesModule::class) {
+                    androidServicesModule = init(AndroidServicesModule::class) {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
-                    postInit(io.embrace.android.embracesdk.internal.injection.AndroidServicesModule::class) {
+                    postInit(AndroidServicesModule::class) {
                         serviceRegistry.registerService(androidServicesModule.preferencesService)
                     }
 
@@ -231,7 +231,7 @@ internal class ModuleInitBootstrapper(
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }
-                    initModule.internalErrorService.internalErrorDataSource = { dataSourceModule.internalErrorDataSource.dataSource }
+                    initModule.internalErrorService.handler = { dataSourceModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(

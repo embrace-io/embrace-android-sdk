@@ -60,11 +60,12 @@ internal class UserFeaturesTest {
         userName: String?,
         email: String?
     ) {
-        assertEquals(userId, checkNotNull(metadata).userId)
+        val ref = checkNotNull(metadata)
+        assertEquals(userId, ref.userId)
         assertEquals(userId, preferencesService.userIdentifier)
-        assertEquals(userName, metadata.username)
+        assertEquals(userName, ref.username)
         assertEquals(userName, preferencesService.username)
-        assertEquals(email, metadata.email)
+        assertEquals(email, ref.email)
         assertEquals(email, preferencesService.userEmailAddress)
     }
 }

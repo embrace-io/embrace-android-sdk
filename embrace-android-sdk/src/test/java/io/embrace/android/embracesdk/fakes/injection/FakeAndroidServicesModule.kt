@@ -6,4 +6,4 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 internal class FakeAndroidServicesModule(
     override val preferencesService: PreferencesService = FakePreferenceService()
-) : io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+) : AndroidServicesModule

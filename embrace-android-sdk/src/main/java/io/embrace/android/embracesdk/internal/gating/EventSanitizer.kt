@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.gating
 
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.LOG_PROPERTIES
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.SESSION_PROPERTIES
 import io.embrace.android.embracesdk.internal.payload.Event
+import io.embrace.android.embracesdk.internal.payload.EventType
 
 internal class EventSanitizer(
     private val event: Event,

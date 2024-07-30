@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DataSourceModule
@@ -9,7 +10,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 
 internal fun fakeDataSourceModule(
     initModule: InitModule = FakeInitModule(),
@@ -17,7 +18,7 @@ internal fun fakeDataSourceModule(
     oTelModule: OpenTelemetryModule = FakeOpenTelemetryModule(),
     essentialServiceModule: EssentialServiceModule = FakeEssentialServiceModule(),
     systemServiceModule: SystemServiceModule = FakeSystemServiceModule(),
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule =
+    androidServicesModule: AndroidServicesModule =
         FakeAndroidServicesModule(),
     workerThreadModule: WorkerThreadModule = FakeWorkerThreadModule(),
     anrModule: AnrModule = FakeAnrModule()

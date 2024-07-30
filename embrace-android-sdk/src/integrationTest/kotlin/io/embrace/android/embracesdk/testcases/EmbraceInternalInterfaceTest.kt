@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpansByName
-import io.embrace.android.embracesdk.internal.EventType
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue

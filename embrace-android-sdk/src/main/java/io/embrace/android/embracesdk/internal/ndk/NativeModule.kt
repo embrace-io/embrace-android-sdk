@@ -6,14 +6,15 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.StorageModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal interface NativeModule {
     val ndkService: NdkService
@@ -28,7 +29,7 @@ internal class NativeModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
-    androidServicesModule: io.embrace.android.embracesdk.internal.injection.AndroidServicesModule,
+    androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule
 ) : NativeModule {
 

@@ -1,5 +1,5 @@
 plugins {
-    id("embrace-defaults")
+    id("embrace-prod-defaults")
 }
 
 description = "Embrace Android SDK: Features"
@@ -14,6 +14,7 @@ dependencies {
     compileOnly(project(":embrace-android-payload"))
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
+    implementation(libs.lifecycle.process)
 }
 
 apiValidation.validationDisabled = true

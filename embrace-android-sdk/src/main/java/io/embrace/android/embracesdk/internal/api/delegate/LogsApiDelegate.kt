@@ -2,10 +2,13 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.payload.EventType.ERROR_LOG
+import io.embrace.android.embracesdk.internal.payload.EventType.INFO_LOG
+import io.embrace.android.embracesdk.internal.payload.EventType.WARNING_LOG
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -76,7 +79,7 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>?
     ) {
         logMessage(
-            EventType.fromSeverity(severity),
+            fromSeverity(severity),
             message,
             properties,
             null,
@@ -95,7 +98,7 @@ internal class LogsApiDelegate(
     ) {
         val exceptionMessage = if (throwable.message != null) throwable.message else ""
         logMessage(
-            EventType.fromSeverity(severity),
+            fromSeverity(severity),
             (
                 message
                     ?: exceptionMessage
@@ -118,7 +121,7 @@ internal class LogsApiDelegate(
         message: String?
     ) {
         logMessage(
-            EventType.fromSeverity(severity),
+            fromSeverity(severity),
             message
                 ?: "",
             properties,
@@ -184,5 +187,11 @@ internal class LogsApiDelegate(
             pushNotificationService?.logPushNotification(title, body, topic, id, notificationPriority, messageDeliveredPriority, type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
+    }
+
+    private fun fromSeverity(severity: Severity): EventType = when (severity) {
+        Severity.INFO -> INFO_LOG
+        Severity.WARNING -> WARNING_LOG
+        Severity.ERROR -> ERROR_LOG
     }
 }

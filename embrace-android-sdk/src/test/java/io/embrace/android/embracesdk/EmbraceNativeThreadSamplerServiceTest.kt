@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrStackframe
-import io.embrace.android.embracesdk.internal.payload.mapThreadState
+import io.embrace.android.embracesdk.internal.payload.extensions.mapThreadState
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.every
 import io.mockk.mockk

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.NetworkSessionV2
+import io.embrace.android.embracesdk.internal.payload.DomainCount
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import java.util.concurrent.ConcurrentHashMap
@@ -14,7 +14,7 @@ internal class EmbraceDomainCountLimiter(
 ) : MemoryCleanerListener, DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
-    private val callsPerDomainSuffix = ConcurrentHashMap<String, NetworkSessionV2.DomainCount>()
+    private val callsPerDomainSuffix = ConcurrentHashMap<String, DomainCount>()
     private val ipAddressNetworkCallCount = AtomicInteger(0)
     private val untrackedNetworkCallCount = AtomicInteger(0)
     private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
@@ -43,12 +43,12 @@ internal class EmbraceDomainCountLimiter(
                 var countPerSuffix = callsPerDomainSuffix[suffix]
 
                 if (countPerSuffix == null) {
-                    countPerSuffix = NetworkSessionV2.DomainCount(0, limit)
+                    countPerSuffix = DomainCount(0, limit)
                 }
 
                 // Track the number of calls for each domain (or configured suffix)
                 suffix?.let {
-                    callsPerDomainSuffix[it] = NetworkSessionV2.DomainCount(countPerSuffix.requestCount + 1, limit)
+                    callsPerDomainSuffix[it] = DomainCount(countPerSuffix.requestCount + 1, limit)
                 }
 
                 // Exclude if the network call exceeds the limit

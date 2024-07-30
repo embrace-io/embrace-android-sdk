@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.event.EmbraceEventService
 import io.embrace.android.embracesdk.internal.event.EventService
-import io.embrace.android.embracesdk.internal.worker.WorkerThreadModule
 
 internal class DataContainerModuleImpl(
     initModule: InitModule,

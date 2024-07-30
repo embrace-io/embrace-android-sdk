@@ -1,17 +1,17 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.log
+package io.embrace.android.embracesdk.internal.envelope.log
 
-import io.embrace.android.embracesdk.internal.capture.envelope.metadata.EnvelopeMetadataSource
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-internal class LogEnvelopeSourceImpl(
+public class LogEnvelopeSourceImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
     private val logPayloadSource: LogPayloadSource,
 ) : LogEnvelopeSource {
 
-    override fun getBatchedLogEnvelope() = getLogEnvelope(logPayloadSource.getBatchedLogPayload())
+    override fun getBatchedLogEnvelope(): Envelope<LogPayload> = getLogEnvelope(logPayloadSource.getBatchedLogPayload())
 
     override fun getNonbatchedEnvelope(): List<Envelope<LogPayload>> {
         val payloads = logPayloadSource.getNonbatchedLogPayloads()

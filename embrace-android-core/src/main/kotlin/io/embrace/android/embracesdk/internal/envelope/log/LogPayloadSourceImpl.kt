@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.log
+package io.embrace.android.embracesdk.internal.envelope.log
 
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-internal class LogPayloadSourceImpl(
+public class LogPayloadSourceImpl(
     private val logSink: LogSink
 ) : LogPayloadSource {
 
@@ -29,7 +29,7 @@ internal class LogPayloadSourceImpl(
         return nonbatchedLogs
     }
 
-    companion object {
+    private companion object {
         private const val MAX_PAYLOADS = 10
     }
 }

@@ -3,15 +3,12 @@ package io.embrace.android.embracesdk.internal.capture.user
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
-import io.embrace.android.embracesdk.internal.payload.extensions.PERSONA_FIRST_DAY_USER
-import io.embrace.android.embracesdk.internal.payload.extensions.PERSONA_PAYER
-import io.embrace.android.embracesdk.internal.payload.extensions.getStoredUserInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
-internal class EmbraceUserService(
+public class EmbraceUserService(
     private val preferencesService: PreferencesService,
     private val logger: EmbLogger
 ) : UserService {
@@ -160,7 +157,7 @@ internal class EmbraceUserService(
         }
     }
 
-    companion object {
+    private companion object {
         // Valid persona regex representation.
         val VALID_PERSONA: Pattern = Pattern.compile("^[a-zA-Z0-9_]{1,32}$")
 

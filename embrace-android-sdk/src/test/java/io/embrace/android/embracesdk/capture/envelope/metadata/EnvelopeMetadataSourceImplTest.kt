@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.capture.envelope.metadata
 
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.internal.capture.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -19,7 +19,7 @@ internal class EnvelopeMetadataSourceImplTest {
                 personas = setOf("persona1", "persona2")
             )
         }
-        val source = EnvelopeMetadataSourceImpl(userService)
+        val source = EnvelopeMetadataSourceImpl(userService::getUserInfo)
         val metadata = source.getEnvelopeMetadata()
         assertEquals("userId", metadata.userId)
         assertEquals("email", metadata.email)

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 

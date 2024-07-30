@@ -6,6 +6,7 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
+import io.embrace.android.embracesdk.internal.envelope.resource.Device
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -13,59 +14,6 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
-
-internal interface Device {
-
-    /**
-     * Tries to determine whether the device is jailbroken by looking for specific directories which
-     * exist on jailbroken devices. Emulators are excluded and will always return false.
-     *
-     * @return true if the device is jailbroken and not an emulator, false otherwise
-     */
-    var isJailbroken: Boolean?
-
-    /**
-     * Gets the device's screen resolution.
-     *
-     * @param windowManager the {@link WindowManager} from the {@link Context}
-     * @return the device's screen resolution
-     */
-    var screenResolution: String
-
-    /**
-     * Get information about the device and OS known before the SDK starts up
-     */
-    val systemInfo: SystemInfo
-
-    /**
-     * Get the number of available cores for device info
-     *
-     * @return Number of cores in long
-     */
-    val numberOfCores: Int
-
-    /**
-     * Gets the free capacity of the internal storage of the device.
-     *
-     * @param statFs the {@link StatFs} service for the device
-     * @return the total free capacity of the internal storage of the device in bytes
-     */
-    val internalStorageTotalCapacity: Lazy<Long>
-
-    /**
-     * The name of the primary CPU of the device, obtained with the system call 'ro.board.platform'.
-     *
-     * @return the name of the primary CPU of the device
-     */
-    val cpuName: String?
-
-    /**
-     * The EGL (Embedded-System Graphics Library) information obtained with the system call 'ro.hardware.egl'
-     *
-     * @return the ELG of the primary CPU of the device
-     */
-    val eglInfo: String?
-}
 
 internal class DeviceImpl(
     private val windowManager: WindowManager?,

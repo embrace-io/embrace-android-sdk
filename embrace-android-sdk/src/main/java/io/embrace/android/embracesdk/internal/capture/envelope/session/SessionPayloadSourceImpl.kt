@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span

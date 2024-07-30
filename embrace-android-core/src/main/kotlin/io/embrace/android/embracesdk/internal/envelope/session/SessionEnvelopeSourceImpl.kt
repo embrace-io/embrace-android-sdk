@@ -1,12 +1,12 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.session
+package io.embrace.android.embracesdk.internal.envelope.session
 
-import io.embrace.android.embracesdk.internal.capture.envelope.metadata.EnvelopeMetadataSource
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-internal class SessionEnvelopeSourceImpl(
+public class SessionEnvelopeSourceImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
     private val sessionPayloadSource: SessionPayloadSource,

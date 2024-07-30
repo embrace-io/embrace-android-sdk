@@ -1,16 +1,16 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.log
+package io.embrace.android.embracesdk.internal.envelope.log
 
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-internal interface LogPayloadSource {
+public interface LogPayloadSource {
 
     /**
      * Returns a [LogPayload] containing the next batch of objects to be sent
      */
-    fun getBatchedLogPayload(): LogPayload
+    public fun getBatchedLogPayload(): LogPayload
 
     /**
      * Returns a list of [LogPayload] that each contain a single high priority log
      */
-    fun getNonbatchedLogPayloads(): List<LogPayload>
+    public fun getNonbatchedLogPayloads(): List<LogPayload>
 }

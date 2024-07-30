@@ -1,15 +1,13 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.session
+package io.embrace.android.embracesdk.internal.envelope.session
 
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-/**
- * Creates a [SessionPayload] object.
- */
-internal interface SessionPayloadSource {
-    fun getSessionPayload(
+public interface SessionEnvelopeSource {
+    public fun getEnvelope(
         endType: SessionSnapshotType,
         startNewSession: Boolean,
         crashId: String? = null
-    ): SessionPayload
+    ): Envelope<SessionPayload>
 }

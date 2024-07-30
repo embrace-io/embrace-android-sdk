@@ -8,7 +8,7 @@ import java.io.Closeable
 /**
  * Service which detects when the application is not responding.
  */
-internal interface AnrService :
+public interface AnrService :
     DataCaptureService<List<AnrInterval>>,
     Closeable {
 
@@ -16,7 +16,7 @@ internal interface AnrService :
      * Forces ANR tracking stop by closing the monitoring thread when a crash is
      * handled by the [EmbraceCrashService].
      */
-    fun forceAnrTrackingStopOnCrash()
+    public fun forceAnrTrackingStopOnCrash()
 
     /**
      * Finishes initialization of the AnrService so that it can react appropriately to
@@ -25,12 +25,12 @@ internal interface AnrService :
      *
      * @param configService        the configService
      */
-    fun finishInitialization(
+    public fun finishInitialization(
         configService: ConfigService
     )
 
     /**
      * Adds a listener which is invoked when the thread becomes blocked/unblocked.
      */
-    fun addBlockedThreadListener(listener: BlockedThreadListener)
+    public fun addBlockedThreadListener(listener: BlockedThreadListener)
 }

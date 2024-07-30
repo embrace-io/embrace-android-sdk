@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk.internal.payload.extensions
+package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.internal.payload.ThreadState
 import java.lang.Thread.State
 
-internal fun mapThreadState(state: State) =
+public fun mapThreadState(state: State): ThreadState =
     when (state) {
         State.NEW -> ThreadState.NEW
         State.RUNNABLE -> ThreadState.RUNNABLE

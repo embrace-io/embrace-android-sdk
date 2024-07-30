@@ -3,40 +3,33 @@ package io.embrace.android.embracesdk.internal.anr
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
-import io.embrace.android.embracesdk.internal.payload.extensions.clearSamples
-import io.embrace.android.embracesdk.internal.payload.extensions.deepCopy
-import io.embrace.android.embracesdk.internal.payload.extensions.duration
-import io.embrace.android.embracesdk.internal.payload.extensions.hasSamples
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
  */
-internal class AnrStacktraceSampler(
+public class AnrStacktraceSampler(
     private var configService: ConfigService,
     private val clock: Clock,
     targetThread: Thread,
-    private val anrMonitorThread: AtomicReference<Thread>,
     private val anrMonitorWorker: ScheduledWorker
 ) : BlockedThreadListener, MemoryCleanerListener {
 
-    internal val anrIntervals = CopyOnWriteArrayList<AnrInterval>()
+    public val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
     private val samples = mutableListOf<AnrSample>()
     private var lastUnblockedMs: Long = 0
     private val threadInfoCollector = ThreadInfoCollector(targetThread)
 
-    fun setConfigService(configService: ConfigService) {
+    public fun setConfigService(configService: ConfigService) {
         this.configService = configService
     }
 
-    internal fun size() = samples.size
+    public fun size(): Int = samples.size
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
         threadInfoCollector.clearStacktraceCache()
@@ -93,17 +86,16 @@ internal class AnrStacktraceSampler(
      * to pick the least valuable interval in this case.
      */
 
-    internal fun findLeastValuableIntervalWithSamples() =
+    public fun findLeastValuableIntervalWithSamples(): AnrInterval? =
         findIntervalsWithSamples().minByOrNull(AnrInterval::duration)
 
     override fun cleanCollections() {
         anrMonitorWorker.submit {
-            enforceThread(anrMonitorThread)
             anrIntervals.removeAll { it.endTime != null }
         }
     }
 
-    internal fun reachedAnrStacktraceCaptureLimit(): Boolean {
+    public fun reachedAnrStacktraceCaptureLimit(): Boolean {
         val limit = configService.anrBehavior.getMaxAnrIntervalsPerSession()
         val count = findIntervalsWithSamples().size
         return count > limit
@@ -114,7 +106,7 @@ internal class AnrStacktraceSampler(
     /**
      * Retrieves ANR intervals that match the given start/time windows.
      */
-    fun getAnrIntervals(
+    public fun getAnrIntervals(
         state: ThreadMonitoringState,
         clock: Clock
     ): List<AnrInterval> {
@@ -138,7 +130,7 @@ internal class AnrStacktraceSampler(
         }
     }
 
-    companion object {
+    private companion object {
 
         /**
          * Hard limit for the maximum number of ANR intervals an SDK wants to send in a payload.

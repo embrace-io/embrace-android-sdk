@@ -4,9 +4,7 @@ import android.os.Debug
 import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * The number of milliseconds which the monitor thread is allowed to timeout before we
@@ -30,14 +28,13 @@ private const val SAMPLE_BACKOFF_FACTOR = 0.5
  * Responsible for deciding whether a thread is blocked or not. The actual scheduling happens in
  * [LivenessCheckScheduler] whereas this class contains the business logic.
  */
-internal class BlockedThreadDetector(
-    var configService: ConfigService,
+public class BlockedThreadDetector(
+    public var configService: ConfigService,
     private val clock: Clock,
-    var listener: BlockedThreadListener? = null,
+    public var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
-    private val logger: EmbLogger,
-    private val anrMonitorThread: AtomicReference<Thread>
+    private val logger: EmbLogger
 ) {
 
     /**
@@ -47,8 +44,7 @@ internal class BlockedThreadDetector(
      * All functions in this class MUST be called from the same thread - this is part of the
      * synchronization strategy that ensures ANR data is not corrupted.
      */
-    fun onTargetThreadResponse(timestamp: Long) {
-        enforceThread(anrMonitorThread)
+    public fun onTargetThreadResponse(timestamp: Long) {
         state.lastTargetThreadResponseMs = timestamp
 
         if (isDebuggerEnabled()) {
@@ -72,9 +68,7 @@ internal class BlockedThreadDetector(
      * All functions in this class MUST be called from the same thread - this is part of the
      * synchronization strategy that ensures ANR data is not corrupted.
      */
-    fun updateAnrTracking(timestamp: Long) {
-        enforceThread(anrMonitorThread)
-
+    public fun updateAnrTracking(timestamp: Long) {
         if (isDebuggerEnabled()) {
             return
         }
@@ -102,7 +96,7 @@ internal class BlockedThreadDetector(
      * To avoid useless samples grouped within a few ms of each other, this function will return
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
-    internal fun shouldAttemptAnrSample(timestamp: Long): Boolean {
+    public fun shouldAttemptAnrSample(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
         val intervalMs = configService.anrBehavior.getSamplingIntervalMs()
@@ -115,9 +109,7 @@ internal class BlockedThreadDetector(
      * This defaults to the main thread not having processed a message within 1s.
      */
 
-    internal fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
-        enforceThread(anrMonitorThread)
-
+    public fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
         val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
         val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
 

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.payload.extensions
+package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
 

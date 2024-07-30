@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.internal.anr
 
 import android.os.Looper
-import androidx.annotation.VisibleForTesting
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.anr.detection.UnbalancedCallDetector
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
@@ -17,7 +15,6 @@ import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Checks whether the target thread is still responding by using the following strategy:
@@ -26,31 +23,35 @@ import java.util.concurrent.atomic.AtomicReference
  *  1. Using the 'monitoring' thread to message the target thread with a heartbeat
  *  1. Determining whether the target thread responds in time, and if not logging an ANR
  */
-internal class EmbraceAnrService(
-    var configService: ConfigService,
+public class EmbraceAnrService(
+    public var configService: ConfigService,
     looper: Looper,
     logger: EmbLogger,
     livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: ScheduledWorker,
     state: ThreadMonitoringState,
-    @field:VisibleForTesting val clock: Clock,
-    private val anrMonitorThread: AtomicReference<Thread>
+    public val clock: Clock
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
     private val state: ThreadMonitoringState
     private val targetThread: Thread
-    val stacktraceSampler: AnrStacktraceSampler
+    public val stacktraceSampler: AnrStacktraceSampler
     private val logger: EmbLogger
     private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
 
-    val listeners = CopyOnWriteArrayList<BlockedThreadListener>()
+    public val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
 
     init {
         targetThread = looper.thread
         this.logger = logger
         this.state = state
         targetThreadHeartbeatScheduler = livenessCheckScheduler
-        stacktraceSampler = AnrStacktraceSampler(configService, clock, targetThread, anrMonitorThread, anrMonitorWorker)
+        stacktraceSampler = AnrStacktraceSampler(
+            configService,
+            clock,
+            targetThread,
+            anrMonitorWorker
+        )
 
         // add listeners
         listeners.add(stacktraceSampler)
@@ -112,25 +113,22 @@ internal class EmbraceAnrService(
     }
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
-        enforceThread(anrMonitorThread)
         for (listener in listeners) {
             listener.onThreadBlocked(thread, timestamp)
         }
     }
 
     override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
-        enforceThread(anrMonitorThread)
         processAnrTick(timestamp)
     }
 
     override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
-        enforceThread(anrMonitorThread)
         for (listener in listeners) {
             listener.onThreadUnblocked(thread, timestamp)
         }
     }
 
-    internal fun processAnrTick(timestamp: Long) {
+    public fun processAnrTick(timestamp: Long) {
         // Check if ANR capture is enabled
         if (!configService.anrBehavior.isAnrCaptureEnabled()) {
             return
@@ -148,7 +146,6 @@ internal class EmbraceAnrService(
      */
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         this.anrMonitorWorker.submit {
-            enforceThread(anrMonitorThread)
             state.resetState()
             targetThreadHeartbeatScheduler.startMonitoringThread()
         }
@@ -165,7 +162,7 @@ internal class EmbraceAnrService(
         }
     }
 
-    companion object {
+    private companion object {
 
         /**
          * The maximum number of milliseconds we should wait to retrieve ANR intervals to the

@@ -6,24 +6,16 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class NativeThreadSamplerNdkDelegate : EmbraceNativeThreadSamplerService.NdkDelegate {
-    external override fun setupNativeThreadSampler(is32Bit: Boolean): Boolean
-    external override fun monitorCurrentThread(): Boolean
-    external override fun startSampling(unwinderOrdinal: Int, intervalMs: Long)
-    external override fun finishSampling(): List<NativeThreadAnrSample>?
-}
-
-internal class NativeThreadSamplerInstaller(
+public class NativeThreadSamplerInstaller(
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
 ) {
     private val isMonitoring = AtomicBoolean(false)
     private var targetHandler: Handler? = null
 
-    internal var currentThread: Thread? = null
+    public var currentThread: Thread? = null
 
     private fun prepareTargetHandler() {
         // We create a Handler here so that when the functionality is disabled locally
@@ -46,7 +38,7 @@ internal class NativeThreadSamplerInstaller(
         }
     }
 
-    fun monitorCurrentThread(
+    public fun monitorCurrentThread(
         sampler: NativeThreadSamplerService,
         configService: ConfigService,
         anrService: AnrService

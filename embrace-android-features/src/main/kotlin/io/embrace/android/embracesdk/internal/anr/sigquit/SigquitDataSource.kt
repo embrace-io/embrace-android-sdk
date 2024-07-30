@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.ThreadUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
 // IMPORTANT: This class is referenced by anr.c. Move or rename both at the same time, or it will break.
-internal class SigquitDataSource(
+public class SigquitDataSource(
     private val sharedObjectLoader: SharedObjectLoader,
     private val anrThreadIdDelegate: AnrThreadIdDelegate,
     private val anrBehavior: AnrBehavior,
@@ -32,7 +32,7 @@ internal class SigquitDataSource(
         }
     }
 
-    fun saveSigquit(timestamp: Long) {
+    public fun saveSigquit(timestamp: Long) {
         if (anrBehavior.isGoogleAnrCaptureEnabled()) {
             captureData(NoInputValidation) {
                 addEvent(SchemaType.Sigquit, timestamp)

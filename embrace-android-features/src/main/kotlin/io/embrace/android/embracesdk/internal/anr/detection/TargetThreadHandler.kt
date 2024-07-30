@@ -6,11 +6,9 @@ import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A [Handler] that processes messages enqueued on the target [Looper]. If a message is not
@@ -24,22 +22,21 @@ import java.util.concurrent.atomic.AtomicReference
  * an ANR after a certain time threshold. Once [handleMessage] is invoked, the monitor thread
  * knows for sure that the target thread is responsive, so resets the timer for any ANRs.
  */
-internal class TargetThreadHandler(
+public class TargetThreadHandler(
     looper: Looper,
     private val anrMonitorWorker: ScheduledWorker,
-    private val anrMonitorThread: AtomicReference<Thread>,
     private val configService: ConfigService,
     private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
     private val logger: EmbLogger,
     private val clock: Clock,
 ) : Handler(looper) {
 
-    lateinit var action: (time: Long) -> Unit
+    public lateinit var action: (time: Long) -> Unit
 
     @Volatile
-    var installed: Boolean = false
+    public var installed: Boolean = false
 
-    fun start() {
+    public fun start() {
         // set an IdleHandler that automatically gets invoked when the Handler
         // has processed all pending messages. We retain the callback to avoid
         // unnecessary allocations.
@@ -50,7 +47,7 @@ internal class TargetThreadHandler(
         }
     }
 
-    internal fun onIdleThread(): Boolean {
+    public fun onIdleThread(): Boolean {
         onMainThreadUnblocked()
         return true
     }
@@ -73,16 +70,15 @@ internal class TargetThreadHandler(
     private fun onMainThreadUnblocked() {
         val timestamp = clock.now()
         anrMonitorWorker.submit {
-            enforceThread(anrMonitorThread)
             action.invoke(timestamp)
         }
     }
 
-    companion object {
+    public companion object {
 
         /**
          * Unique ID for message (arbitrary number).
          */
-        internal const val HEARTBEAT_REQUEST = 34593
+        public const val HEARTBEAT_REQUEST: Int = 34593
     }
 }

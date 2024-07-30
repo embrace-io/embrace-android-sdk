@@ -1,16 +1,15 @@
 package io.embrace.android.embracesdk.internal.anr.detection
 
 import android.os.Message
+import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.enforceThread
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Responsible for scheduling 'heartbeat' checks on a background thread & posting messages on the
@@ -22,24 +21,23 @@ import java.util.concurrent.atomic.AtomicReference
  * target thread & scheduling regular checks on a background thread. The [BlockedThreadDetector]
  * class is responsible for the actual business logic that checks whether a thread is blocked or not.
  */
-internal class LivenessCheckScheduler internal constructor(
+public class LivenessCheckScheduler(
     configService: ConfigService,
     private val anrMonitorWorker: ScheduledWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,
     private val blockedThreadDetector: BlockedThreadDetector,
-    private val logger: EmbLogger,
-    private val anrMonitorThread: AtomicReference<Thread>
+    private val logger: EmbLogger
 ) {
 
-    var configService
+    public var configService: ConfigService
         set(value) {
             blockedThreadDetector.configService = value
         }
         get() = blockedThreadDetector.configService
 
-    var listener
+    public var listener: BlockedThreadListener?
         set(value) {
             blockedThreadDetector.listener = value
         }
@@ -56,8 +54,7 @@ internal class LivenessCheckScheduler internal constructor(
     /**
      * Starts monitoring the target thread for blockages.
      */
-    fun startMonitoringThread() {
-        enforceThread(anrMonitorThread)
+    public fun startMonitoringThread() {
         if (!state.started.getAndSet(true)) {
             logger.logInfo("Start ANR detection...")
             scheduleRegularHeartbeats()
@@ -67,8 +64,7 @@ internal class LivenessCheckScheduler internal constructor(
     /**
      * Stops monitoring the target thread.
      */
-    fun stopMonitoringThread() {
-        enforceThread(anrMonitorThread)
+    public fun stopMonitoringThread() {
         if (state.started.get()) {
             if (stopHeartbeatTask()) {
                 state.started.set(false)
@@ -78,8 +74,6 @@ internal class LivenessCheckScheduler internal constructor(
 
     @Suppress("DEPRECATION")
     private fun scheduleRegularHeartbeats() {
-        enforceThread(anrMonitorThread)
-
         intervalMs = configService.anrBehavior.getSamplingIntervalMs()
         val runnable = Runnable(::checkHeartbeat)
         try {
@@ -93,8 +87,6 @@ internal class LivenessCheckScheduler internal constructor(
     }
 
     private fun stopHeartbeatTask(): Boolean {
-        enforceThread(anrMonitorThread)
-
         monitorFuture?.let { monitorTask ->
             if (monitorTask.cancel(false)) {
                 logger.logInfo("Stopped ANR detection...")
@@ -115,9 +107,7 @@ internal class LivenessCheckScheduler internal constructor(
      * Called at regular intervals on the monitor thread. This function posts a message to the
      * main thread that is used to check whether it is live or not.
      */
-    internal fun checkHeartbeat() {
-        enforceThread(anrMonitorThread)
-
+    public fun checkHeartbeat() {
         try {
             with(configService.anrBehavior.getMonitorThreadPriority()) {
                 android.os.Process.setThreadPriority(this)

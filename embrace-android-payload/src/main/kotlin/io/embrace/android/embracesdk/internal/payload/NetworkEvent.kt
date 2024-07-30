@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-internal data class NetworkEvent(
+public data class NetworkEvent(
     @Json(name = "app_id")
     val appId: String?,
 

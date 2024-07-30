@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.embrace.android.embracesdk.internal.payload.extensions.getSessionSpan
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 

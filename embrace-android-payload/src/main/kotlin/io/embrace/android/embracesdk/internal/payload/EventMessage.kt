@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 
 @JsonClass(generateAdapter = true)
-internal data class EventMessage(
+public data class EventMessage(
     @Json(name = "et")
     val event: Event,
 
@@ -22,8 +21,16 @@ internal data class EventMessage(
     val stacktraces: Stacktraces? = null,
 
     @Json(name = "v")
-    val version: Int = ApiClient.MESSAGE_VERSION,
+    val version: Int = MESSAGE_VERSION,
 
     @Json(name = "crn")
     val nativeCrash: NativeCrash? = null
-)
+) {
+
+    private companion object {
+        /**
+         * The version of the API message format.
+         */
+        const val MESSAGE_VERSION = 13
+    }
+}

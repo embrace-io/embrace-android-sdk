@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
-import io.embrace.android.embracesdk.internal.EventType
 
 @JsonClass(generateAdapter = true)
-internal data class Event constructor(
+public data class Event(
     @Json(name = "n")
     @JvmField
     val name: String? = null,

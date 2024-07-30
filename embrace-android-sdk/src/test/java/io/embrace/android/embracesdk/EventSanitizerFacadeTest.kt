@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.gating.EventSanitizerFacade
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
 import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventMessage
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull

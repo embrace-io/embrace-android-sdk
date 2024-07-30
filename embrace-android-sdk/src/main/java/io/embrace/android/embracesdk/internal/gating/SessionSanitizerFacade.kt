@@ -21,23 +21,19 @@ internal class SessionSanitizerFacade(
     }
 
     private fun sanitizeMetadata(enabledComponents: Set<String>): EnvelopeMetadata {
-        if (envelope.metadata == null) {
-            return EnvelopeMetadata()
-        }
+        val metadata = envelope.metadata ?: return EnvelopeMetadata()
         if (!shouldSendUserPersonas(enabledComponents)) {
-            return envelope.metadata.copy(personas = null)
+            return metadata.copy(personas = null)
         }
-        return envelope.metadata
+        return metadata
     }
 
     private fun sanitizeResource(enabledComponents: Set<String>): EnvelopeResource {
-        if (envelope.resource == null) {
-            return EnvelopeResource()
-        }
+        val resource = envelope.resource ?: return EnvelopeResource()
         if (!shouldSendCurrentDiskUsage(enabledComponents)) {
-            return envelope.resource.copy(diskTotalCapacity = null)
+            return resource.copy(diskTotalCapacity = null)
         }
-        return envelope.resource
+        return resource
     }
 
     private fun shouldSendCurrentDiskUsage(enabledComponents: Set<String>) =

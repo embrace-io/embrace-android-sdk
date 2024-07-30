@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.EventType
 import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.capture.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class ReactNativeInternalInterfaceImpl(

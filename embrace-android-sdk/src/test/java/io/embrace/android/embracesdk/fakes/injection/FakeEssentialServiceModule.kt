@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
@@ -38,7 +39,6 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 
 internal class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),

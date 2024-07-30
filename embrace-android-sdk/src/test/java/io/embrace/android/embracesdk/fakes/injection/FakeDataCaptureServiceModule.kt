@@ -20,7 +20,7 @@ internal class FakeDataCaptureServiceModule(
         EmbraceSerializer(),
         EmbLoggerImpl(),
     ) {
-        fakeDataSourceModule()
+        fakeDataSourceModule().webViewDataSource.dataSource
     }
 ) : DataCaptureServiceModule {
 

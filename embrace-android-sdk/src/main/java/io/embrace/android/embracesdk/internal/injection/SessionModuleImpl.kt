@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
@@ -10,8 +12,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
-import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionPropertiesService
-import io.embrace.android.embracesdk.internal.session.properties.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class SessionModuleImpl(

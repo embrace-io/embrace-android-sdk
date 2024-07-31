@@ -246,6 +246,13 @@ internal class EmbraceProcessStateServiceTest {
         assertFalse(stateService.isInBackground)
     }
 
+    @Test
+    fun `verify app state`() {
+        assertEquals("background", stateService.getAppState())
+        stateService.onForeground()
+        assertEquals("foreground", stateService.getAppState())
+    }
+
     private class DecoratedListener(
         private val invocations: MutableList<String>
     ) : ProcessStateListener {

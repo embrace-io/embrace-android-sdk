@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.arch.destination
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -26,17 +26,17 @@ internal class LogWriterImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: SessionIdTracker
     private lateinit var logWriterImpl: LogWriterImpl
-    private lateinit var metadataService: FakeMetadataService
+    private lateinit var processStateService: FakeProcessStateService
 
     @Before
     fun setup() {
         sessionIdTracker = FakeSessionIdTracker()
         logger = FakeOpenTelemetryLogger()
-        metadataService = FakeMetadataService()
+        processStateService = FakeProcessStateService()
         logWriterImpl = LogWriterImpl(
             logger = logger,
             sessionIdTracker = sessionIdTracker,
-            metadataService = metadataService,
+            processStateService = processStateService,
         )
     }
 

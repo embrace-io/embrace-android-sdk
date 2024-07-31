@@ -117,6 +117,7 @@ internal class EmbraceEventServiceTest {
             deliveryService = deliveryService,
             logger = logger,
             clock = fakeClock,
+            processStateService = processStateService,
             scheduledWorker = fakeWorkerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
         )
         eventService = EmbraceEventService(
@@ -124,6 +125,7 @@ internal class EmbraceEventServiceTest {
             deliveryService,
             configService,
             metadataService,
+            processStateService,
             sessionIdTracker,
             userService,
             sessionProperties,

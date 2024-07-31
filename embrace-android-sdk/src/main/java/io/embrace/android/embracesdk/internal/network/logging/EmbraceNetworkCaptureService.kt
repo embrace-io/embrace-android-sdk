@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
-import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -16,7 +15,6 @@ import kotlin.math.max
  * Determines if a network call body should be captured based on the network rules obtained from the remote config.
  */
 internal class EmbraceNetworkCaptureService(
-    private val metadataService: MetadataService,
     private val sessionIdTracker: SessionIdTracker,
     private val preferencesService: PreferencesService,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
@@ -44,7 +42,8 @@ internal class EmbraceNetworkCaptureService(
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
-        if (url.contentEquals(configService.sdkEndpointBehavior.getData(metadataService.getAppId()))) {
+        val appId = configService.sdkModeBehavior.appId
+        if (url.contentEquals(configService.sdkEndpointBehavior.getData(appId))) {
             logger.logDebug("Cannot intercept Embrace endpoints")
             return emptySet()
         }

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -175,7 +176,6 @@ internal class EssentialServiceModuleImpl(
                 coreModule.buildInfo,
                 configService,
                 androidServicesModule.preferencesService,
-                processStateService,
                 backgroundWorker,
                 systemServiceModule.storageManager,
                 systemServiceModule.windowManager,
@@ -185,7 +185,9 @@ internal class EssentialServiceModuleImpl(
                 lazyAppVersionName,
                 lazyAppVersionCode,
                 hostedSdkVersionInfo,
-                initModule.logger
+                initModule.logger,
+                io.embrace.android.embracesdk.BuildConfig.VERSION_NAME,
+                io.embrace.android.embracesdk.BuildConfig.VERSION_CODE,
             )
         }
     }
@@ -303,7 +305,7 @@ internal class EssentialServiceModuleImpl(
         LogWriterImpl(
             logger = openTelemetryModule.logger,
             sessionIdTracker = sessionIdTracker,
-            metadataService = metadataService,
+            processStateService = processStateService
         )
     }
 }

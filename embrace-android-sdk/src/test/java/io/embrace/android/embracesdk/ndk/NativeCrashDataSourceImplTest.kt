@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
@@ -47,6 +48,7 @@ internal class NativeCrashDataSourceImplTest {
     private lateinit var otelLogger: FakeOpenTelemetryLogger
     private lateinit var sessionIdTracker: SessionIdTracker
     private lateinit var metadataService: FakeMetadataService
+    private lateinit var processStateService: FakeProcessStateService
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
 
     @Before
@@ -57,10 +59,11 @@ internal class NativeCrashDataSourceImplTest {
         logger = EmbLoggerImpl()
         sessionIdTracker = FakeSessionIdTracker().apply { setActiveSessionId("currentSessionId", true) }
         metadataService = FakeMetadataService()
+        processStateService = FakeProcessStateService()
         otelLogger = FakeOpenTelemetryLogger()
         logWriter = LogWriterImpl(
             sessionIdTracker = sessionIdTracker,
-            metadataService = metadataService,
+            processStateService = processStateService,
             logger = otelLogger
         )
         configService = FakeConfigService()

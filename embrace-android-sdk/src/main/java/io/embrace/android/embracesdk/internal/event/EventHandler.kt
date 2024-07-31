@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import java.util.concurrent.TimeUnit
 
@@ -27,6 +28,7 @@ private const val DEFAULT_LATE_THRESHOLD_MILLIS = 5000L
 internal class EventHandler(
     private val metadataService: MetadataService,
     private val sessionIdTracker: SessionIdTracker,
+    private val processStateService: ProcessStateService,
     private val configService: ConfigService,
     private val userService: UserService,
     private val deliveryService: DeliveryService,
@@ -171,7 +173,7 @@ internal class EventHandler(
             sessionId = sessionIdTracker.getActiveSessionId(),
             eventId = eventId,
             type = EventType.START,
-            appState = metadataService.getAppState(),
+            appState = processStateService.getAppState(),
             lateThreshold = threshold,
             timestamp = startTime,
             sessionProperties = sessionProperties.get().toMap(),
@@ -193,7 +195,7 @@ internal class EventHandler(
             sessionId = sessionIdTracker.getActiveSessionId(),
             timestamp = endTime,
             duration = duration,
-            appState = metadataService.getAppState(),
+            appState = processStateService.getAppState(),
             type = if (late) EventType.LATE else EventType.END,
             customProperties = eventProperties?.toMap(),
             sessionProperties = sessionProperties.get().toMap()

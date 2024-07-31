@@ -47,6 +47,11 @@ internal class FakeCurrentSessionSpan(
         return true
     }
 
+    override fun readySession(): Boolean {
+        sessionSpan = newSessionSpan(clock.now())
+        return true
+    }
+
     override fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         val endingSessionSpan = checkNotNull(sessionSpan)
         endingSessionSpan.endTimeNanos = clock.nowInNanos()

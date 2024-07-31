@@ -17,8 +17,10 @@ import io.embrace.android.embracesdk.internal.session.message.FinalEnvelopeParam
 import io.embrace.android.embracesdk.internal.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -26,6 +28,7 @@ internal class PayloadMessageCollatorImplTest {
 
     private lateinit var initModule: FakeInitModule
     private lateinit var coreModule: FakeCoreModule
+    private lateinit var currentSessionSpan: CurrentSessionSpan
     private lateinit var collator: PayloadMessageCollatorImpl
     private lateinit var gatingService: FakeGatingService
 
@@ -39,10 +42,11 @@ internal class PayloadMessageCollatorImplTest {
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = FakeSessionPayloadSource()
         )
+        currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         collator = PayloadMessageCollatorImpl(
             gatingService = gatingService,
             preferencesService = FakePreferenceService(),
-            currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
+            currentSessionSpan = currentSessionSpan,
             sessionEnvelopeSource = sessionEnvelopeSource
         )
     }
@@ -127,6 +131,25 @@ internal class PayloadMessageCollatorImplTest {
         assertEquals(1, gatingService.envelopesFiltered.size)
     }
 
+    @Test
+    fun `session span is created when session payload is built if it did not exist before`() {
+        currentSessionSpan.endSession(startNewSession = false)
+        listOf(true, false).forEach { startupTemperature ->
+            LifeEventType.values().forEach { lifeEventType ->
+                ApplicationState.values().forEach { previousState ->
+                    collator.buildInitialSession(
+                        InitialEnvelopeParams(
+                            coldStart = startupTemperature,
+                            startType = lifeEventType,
+                            startTime = 5L,
+                            appState = previousState
+                        )
+                    ).verifyInitialFieldsPopulated()
+                }
+            }
+        }
+    }
+
     private fun Envelope<SessionPayload>.verifyFinalFieldsPopulated() {
         assertNotNull(resource)
         assertNotNull(metadata)
@@ -136,7 +159,7 @@ internal class PayloadMessageCollatorImplTest {
     }
 
     private fun SessionZygote.verifyInitialFieldsPopulated() {
-        assertNotNull(sessionId)
+        assertTrue("Session ID invalid: $this", sessionId.isNotBlank())
         assertEquals(5L, startTime)
     }
 }

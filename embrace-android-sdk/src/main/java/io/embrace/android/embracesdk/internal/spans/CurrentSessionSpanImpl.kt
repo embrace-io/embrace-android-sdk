@@ -85,6 +85,18 @@ internal class CurrentSessionSpanImpl(
         return sessionSpan.get()?.getSystemAttribute(SessionIncubatingAttributes.SESSION_ID) ?: ""
     }
 
+    override fun readySession(): Boolean {
+        if (sessionSpan.get() == null) {
+            synchronized(sessionSpan) {
+                if (sessionSpan.get() == null) {
+                    sessionSpan.set(startSessionSpan(openTelemetryClock.now().nanosToMillis()))
+                    return sessionSpanReady()
+                }
+            }
+        }
+        return sessionSpanReady()
+    }
+
     override fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         synchronized(sessionSpan) {
             val endingSessionSpan = sessionSpan.get()
@@ -160,4 +172,6 @@ internal class CurrentSessionSpanImpl(
             setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())
         }
     }
+
+    private fun sessionSpanReady() = sessionSpan.get()?.isRecording ?: false
 }

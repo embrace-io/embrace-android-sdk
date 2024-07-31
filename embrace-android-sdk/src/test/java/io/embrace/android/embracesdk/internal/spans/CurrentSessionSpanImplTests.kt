@@ -6,18 +6,22 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.sdk.common.Clock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -30,6 +34,8 @@ import org.junit.Test
 internal class CurrentSessionSpanImplTests {
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
+    private lateinit var telemetryService: TelemetryService
+    private lateinit var openTelemetryClock: Clock
     private lateinit var currentSessionSpan: CurrentSessionSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var tracer: Tracer
@@ -40,10 +46,18 @@ internal class CurrentSessionSpanImplTests {
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanSink = initModule.openTelemetryModule.spanSink
+        telemetryService = initModule.telemetryService
+        openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan as CurrentSessionSpanImpl
         tracer = initModule.openTelemetryModule.sdkTracer
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
+    }
+
+    @Test
+    fun `session span ready when initialized`() {
+        assertTrue(currentSessionSpan.initialized())
+        currentSessionSpan.assertSessionSpan()
     }
 
     @Test
@@ -282,6 +296,34 @@ internal class CurrentSessionSpanImplTests {
     }
 
     @Test
+    fun `calling readySession creates a session span if not present`() {
+        currentSessionSpan.endSession(startNewSession = false)
+        currentSessionSpan.assertNoSessionSpan()
+        assertTrue(currentSessionSpan.readySession())
+        currentSessionSpan.assertSessionSpan()
+    }
+
+    @Test
+    fun `readySession will not replace existing session span`() {
+        val originalSessionSpanId = spanRepository.getActiveSpans().single().spanId
+        assertTrue(currentSessionSpan.readySession())
+        assertEquals(originalSessionSpanId, spanRepository.getActiveSpans().single().spanId)
+    }
+
+    @Test
+    fun `readySession will return false if session span is not recording`() {
+        val badEmbraceSpanFactory = BadEmbraceSpanFactory()
+        val sessionSpan = CurrentSessionSpanImpl(
+            openTelemetryClock = openTelemetryClock,
+            telemetryService = telemetryService,
+            spanRepository = spanRepository,
+            spanSink = spanSink,
+            embraceSpanFactorySupplier = { badEmbraceSpanFactory }
+        )
+        assertFalse(sessionSpan.readySession())
+    }
+
+    @Test
     fun `validate tracked spans update when session is ended`() {
         val embraceSpan = checkNotNull(spanService.createSpan(name = "test-span"))
         assertTrue(embraceSpan.start())
@@ -344,5 +386,27 @@ internal class CurrentSessionSpanImplTests {
         assertFalse(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
         // check doesn't throw exception
         removeEvents(EmbType.System.Breadcrumb)
+    }
+
+    private fun CurrentSessionSpan.assertSessionSpan() {
+        assertTrue(getSessionId().isNotBlank())
+        assertTrue(canStartNewSpan(parent = null, internal = true))
+        assertTrue(addCustomAttribute(attribute = SpanAttributeData("test", "test")))
+        assertTrue(removeCustomAttribute("test"))
+        assertTrue(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
+        removeEvents(EmbType.System.Breadcrumb)
+    }
+
+    private class BadEmbraceSpanFactory : EmbraceSpanFactory {
+        private val stoppedSpan = FakePersistableEmbraceSpan.stopped()
+        override fun create(
+            name: String,
+            type: TelemetryType,
+            internal: Boolean,
+            private: Boolean,
+            parent: EmbraceSpan?
+        ): PersistableEmbraceSpan = stoppedSpan
+
+        override fun create(embraceSpanBuilder: EmbraceSpanBuilder) = stoppedSpan
     }
 }

@@ -12,7 +12,7 @@ import io.opentelemetry.context.Scope
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 
-internal class EmbSpan(
+public class EmbSpan(
     private val embraceSpan: PersistableEmbraceSpan,
     private val clock: Clock
 ) : Span {
@@ -55,7 +55,7 @@ internal class EmbSpan(
         return this
     }
 
-    override fun end() = end(timestamp = clock.now(), unit = TimeUnit.NANOSECONDS)
+    override fun end(): Unit = end(timestamp = clock.now(), unit = TimeUnit.NANOSECONDS)
 
     override fun end(timestamp: Long, unit: TimeUnit) {
         if (isRecording) {

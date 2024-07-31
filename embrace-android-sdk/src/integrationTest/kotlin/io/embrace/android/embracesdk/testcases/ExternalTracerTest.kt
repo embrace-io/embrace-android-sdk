@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.toOldPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpan
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpanBuilder

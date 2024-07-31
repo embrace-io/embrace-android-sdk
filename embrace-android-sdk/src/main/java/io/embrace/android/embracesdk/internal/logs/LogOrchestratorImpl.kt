@@ -9,14 +9,6 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-internal interface LogOrchestrator {
-
-    /**
-     * Flushes immediately any log still in the sink
-     */
-    fun flush(saveOnly: Boolean)
-}
-
 internal class LogOrchestratorImpl(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,

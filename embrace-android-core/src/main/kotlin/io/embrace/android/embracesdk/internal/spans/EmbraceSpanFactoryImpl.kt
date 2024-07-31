@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
 
-internal class EmbraceSpanFactoryImpl(
+public class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,

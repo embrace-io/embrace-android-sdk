@@ -13,11 +13,11 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
  * the Embrace SDK can hook into its lifecycle. From this, the Embrace SDK can obtain an implementations of the OpenTelemetry API to
  * create OpenTelemetry primitives that it can use internally or export to any OpenTelemetry Collectors.
  */
-internal class OpenTelemetrySdk(
+public class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     configuration: OpenTelemetryConfiguration
 ) {
-    val sdkTracerProvider: SdkTracerProvider by lazy {
+    public val sdkTracerProvider: SdkTracerProvider by lazy {
         Systrace.traceSynchronous("otel-tracer-provider-init") {
             SdkTracerProvider
                 .builder()
@@ -28,13 +28,13 @@ internal class OpenTelemetrySdk(
         }
     }
 
-    val sdkTracer: Tracer by lazy {
+    public val sdkTracer: Tracer by lazy {
         Systrace.traceSynchronous("otel-tracer-init") {
             sdk.getTracer(configuration.embraceSdkName, configuration.embraceSdkVersion)
         }
     }
 
-    fun getOpenTelemetryLogger(): Logger = logger
+    public fun getOpenTelemetryLogger(): Logger = logger
 
     private val sdk: OpenTelemetrySdk by lazy {
         Systrace.traceSynchronous("otel-sdk-init") {

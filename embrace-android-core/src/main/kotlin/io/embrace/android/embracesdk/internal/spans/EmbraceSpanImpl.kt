@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-internal class EmbraceSpanImpl(
+public class EmbraceSpanImpl(
     private val spanBuilder: EmbraceSpanBuilder,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
@@ -283,17 +283,17 @@ internal class EmbraceSpanImpl(
 
     private fun getSpanName() = synchronized(startedSpan) { updatedName ?: spanBuilder.spanName }
 
-    companion object {
-        internal const val MAX_NAME_LENGTH = 50
-        internal const val MAX_EVENT_COUNT = 10
-        internal const val MAX_ATTRIBUTE_COUNT = 50
-        internal const val MAX_ATTRIBUTE_KEY_LENGTH = 50
-        internal const val MAX_ATTRIBUTE_VALUE_LENGTH = 500
-        internal const val EXCEPTION_EVENT_NAME = "exception"
+    public companion object {
+        public const val MAX_NAME_LENGTH: Int = 50
+        public const val MAX_EVENT_COUNT: Int = 10
+        public const val MAX_ATTRIBUTE_COUNT: Int = 50
+        public const val MAX_ATTRIBUTE_KEY_LENGTH: Int = 50
+        public const val MAX_ATTRIBUTE_VALUE_LENGTH: Int = 500
+        public const val EXCEPTION_EVENT_NAME: String = "exception"
 
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_ATTRIBUTE_VALUE_LENGTH
 
-        internal fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
+        public fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
     }
 }

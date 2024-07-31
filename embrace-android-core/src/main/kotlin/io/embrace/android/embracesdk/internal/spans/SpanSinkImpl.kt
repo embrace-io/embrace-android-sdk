@@ -7,7 +7,7 @@ import java.util.Queue
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SpanSinkImpl : SpanSink {
+public class SpanSinkImpl : SpanSink {
     private val completedSpans: Queue<EmbraceSpanData> = ConcurrentLinkedQueue()
     private val spansToFlush = AtomicReference<List<EmbraceSpanData>>(listOf())
 

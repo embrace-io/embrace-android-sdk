@@ -61,7 +61,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger,
-                backgroundActivityEnabled = isBackgroundActivityEnabled(),
+                continueMonitoring = true,
             )
         )
     }
@@ -104,7 +104,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger,
-                backgroundActivityEnabled = isBackgroundActivityEnabled(),
+                continueMonitoring = isBackgroundActivityEnabled(),
             )
         )
     }
@@ -121,7 +121,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger,
-                backgroundActivityEnabled = true,
+                continueMonitoring = true,
             )
         )
     }
@@ -135,7 +135,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.JVM_CRASH,
                 logger = logger,
-                backgroundActivityEnabled = isBackgroundActivityEnabled(),
+                continueMonitoring = false,
                 crashId = crashId
             )
         )
@@ -153,7 +153,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.JVM_CRASH,
                 logger = logger,
-                backgroundActivityEnabled = true,
+                continueMonitoring = false,
                 crashId = crashId
             )
         )
@@ -168,7 +168,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.PERIODIC_CACHE,
                 logger = logger,
-                backgroundActivityEnabled = isBackgroundActivityEnabled()
+                continueMonitoring = true
             )
         )
     }
@@ -182,7 +182,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.PERIODIC_CACHE,
                 logger = logger,
-                backgroundActivityEnabled = true
+                continueMonitoring = true
             )
         )
     }

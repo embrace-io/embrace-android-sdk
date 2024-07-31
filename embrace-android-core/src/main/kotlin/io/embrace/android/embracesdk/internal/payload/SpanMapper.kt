@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 
-internal fun EmbraceSpanData.toNewPayload() = Span(
+public fun EmbraceSpanData.toNewPayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
     parentSpanId = parentSpanId ?: SpanId.getInvalid(),
@@ -25,25 +25,25 @@ internal fun EmbraceSpanData.toNewPayload() = Span(
     attributes = attributes.toNewPayload()
 )
 
-internal fun EmbraceSpanEvent.toNewPayload() = SpanEvent(
+public fun EmbraceSpanEvent.toNewPayload(): SpanEvent = SpanEvent(
     name = name,
     timestampNanos = timestampNanos,
     attributes = attributes.toNewPayload()
 )
 
-internal fun SpanEvent.toOldPayload() = EmbraceSpanEvent.create(
+public fun SpanEvent.toOldPayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
     name = name ?: "",
     timestampMs = (timestampNanos ?: 0).nanosToMillis(),
     attributes = attributes?.toOldPayload() ?: emptyMap()
 )
 
-internal fun Map<String, String>.toNewPayload(): List<Attribute> =
+public fun Map<String, String>.toNewPayload(): List<Attribute> =
     map { (key, value) -> Attribute(key, value) }
 
-internal fun List<Attribute>.toOldPayload(): Map<String, String> =
+public fun List<Attribute>.toOldPayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
-internal fun Span.toOldPayload(): EmbraceSpanData {
+public fun Span.toOldPayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",
@@ -62,7 +62,7 @@ internal fun Span.toOldPayload(): EmbraceSpanData {
     )
 }
 
-internal fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
+public fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
     val newAttributes = mutableMapOf<String, String>().apply {
         setFixedAttribute(ErrorCodeAttribute.Failure)
         if (hasFixedAttribute(EmbType.Ux.Session)) {
@@ -77,7 +77,7 @@ internal fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
     )
 }
 
-internal fun Span.toFailedSpan(endTimeMs: Long): Span {
+public fun Span.toFailedSpan(endTimeMs: Long): Span {
     val newAttributes = mutableMapOf<String, String>().apply {
         setFixedAttribute(ErrorCodeAttribute.Failure)
         if (hasFixedAttribute(EmbType.Ux.Session)) {

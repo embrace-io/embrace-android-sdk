@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.SendImmediately
-import io.embrace.android.embracesdk.internal.logs.LogOrchestratorImpl.Companion.MAX_LOGS_PER_BATCH
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
@@ -10,7 +9,7 @@ import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue
 
-internal class LogSinkImpl : LogSink {
+public class LogSinkImpl : LogSink {
     private val storedLogs: ConcurrentLinkedQueue<Log> = ConcurrentLinkedQueue()
     private val nonbatchedLogs: ConcurrentLinkedQueue<Log> = ConcurrentLinkedQueue()
     private var onLogsStored: (() -> Unit)? = null

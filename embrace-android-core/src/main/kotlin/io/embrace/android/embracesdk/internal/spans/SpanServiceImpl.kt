@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Implementation of the core logic for [SpanService]
  */
-internal class SpanServiceImpl(
+public class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -138,8 +138,8 @@ internal class SpanServiceImpl(
             ((attributes == null) || (attributes.size <= EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT))
     }
 
-    companion object {
-        const val MAX_INTERNAL_SPANS_PER_SESSION = 5000
-        const val MAX_NON_INTERNAL_SPANS_PER_SESSION = 500
+    public companion object {
+        public const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
+        public const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
     }
 }

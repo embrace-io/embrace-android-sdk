@@ -126,22 +126,6 @@ public abstract interface class io/embrace/android/embracesdk/FlutterInternalInt
 	public abstract fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
 }
 
-public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {
-	public static final field HANDLED Lio/embrace/android/embracesdk/LogExceptionType;
-	public static final field NONE Lio/embrace/android/embracesdk/LogExceptionType;
-	public static final field UNHANDLED Lio/embrace/android/embracesdk/LogExceptionType;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogExceptionType;
-	public static fun values ()[Lio/embrace/android/embracesdk/LogExceptionType;
-}
-
-public final class io/embrace/android/embracesdk/LogType : java/lang/Enum {
-	public static final field ERROR Lio/embrace/android/embracesdk/LogType;
-	public static final field INFO Lio/embrace/android/embracesdk/LogType;
-	public static final field WARNING Lio/embrace/android/embracesdk/LogType;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogType;
-	public static fun values ()[Lio/embrace/android/embracesdk/LogType;
-}
-
 public abstract interface class io/embrace/android/embracesdk/ReactNativeInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
 	public abstract fun logHandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
 	public abstract fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
@@ -220,12 +204,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Inter
 	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
-	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
-	public abstract fun getTraceIdHeader ()Ljava/lang/String;
-	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
-}
-
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
 }
 
@@ -249,15 +227,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkSt
 	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
 	public abstract fun isStarted ()Z
 	public abstract fun setAppId (Ljava/lang/String;)Z
-}
-
-public final class io/embrace/android/embracesdk/internal/config/behavior/BehaviorThresholdCheck {
-	public fun <init> (Lkotlin/jvm/functions/Function0;)V
-	public final fun getNormalizedDeviceId ()F
-	public final fun getNormalizedLargeDeviceId ()F
-	public final fun isBehaviorEnabled (F)Z
-	public final fun isBehaviorEnabled (Ljava/lang/Float;)Ljava/lang/Boolean;
-	public final fun isBehaviorEnabled (Ljava/lang/Integer;)Ljava/lang/Boolean;
 }
 
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {

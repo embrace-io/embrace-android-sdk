@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
@@ -35,6 +36,7 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -59,14 +61,12 @@ internal class EmbraceMetadataServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockkStatic(MetadataUtils::class)
             mockkStatic(Environment::class)
 
             initContext()
             initPreferences()
 
             every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-            every { MetadataUtils.getInternalStorageFreeCapacity(any()) }.returns(123L)
 
             hostedSdkVersionInfo = HostedSdkVersionInfo(
                 preferencesService
@@ -150,32 +150,6 @@ internal class EmbraceMetadataServiceTest {
     }
 
     @Test
-    @Throws(InterruptedException::class)
-    fun `test EmbraceMetadataService creation loads AppVersion lazily`() {
-        verify(exactly = 0) { preferencesService.appVersion }
-        getMetadataService().isAppUpdated()
-        verify(exactly = 1) { preferencesService.appVersion }
-    }
-
-    @Test
-    @Throws(InterruptedException::class)
-    fun `test EmbraceMetadataService creation loads OsVersion lazily`() {
-        verify(exactly = 0) { preferencesService.osVersion }
-        getMetadataService().isOsUpdated()
-        verify(exactly = 1) { preferencesService.osVersion }
-    }
-
-    @Test
-    @Throws(InterruptedException::class)
-    fun `test EmbraceMetadataService creation loads DeviceIdentifier lazily`() {
-        every { preferencesService.deviceIdentifier }.returns("device-id")
-
-        verify(exactly = 0) { preferencesService.deviceIdentifier }
-        getMetadataService().getDeviceId()
-        verify(exactly = 1) { preferencesService.deviceIdentifier }
-    }
-
-    @Test
     fun `test app info`() { // FIXME: causing mockk error
         every { preferencesService.appVersion }.returns(null)
         every { preferencesService.osVersion }.returns(null)
@@ -192,7 +166,7 @@ internal class EmbraceMetadataServiceTest {
             .filter { !it.isWhitespace() }
 
         val appInfo = serializer.toJson(obj)
-        Assert.assertEquals(expectedInfo, appInfo.replace(" ", ""))
+        assertEquals(expectedInfo, appInfo.replace(" ", ""))
     }
 
     @Test
@@ -216,15 +190,8 @@ internal class EmbraceMetadataServiceTest {
     @Test
     fun `test device info`() {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-        every { MetadataUtils.getInternalStorageTotalCapacity(any()) }.returns(123L)
-        every { MetadataUtils.getLocale() }.returns("en-US")
 
         val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
-
-        verify(exactly = 1) { MetadataUtils.getLocale() }
-        verify(exactly = 1) { MetadataUtils.getInternalStorageTotalCapacity(any()) }
-        verify(exactly = 1) { MetadataUtils.getTimezoneId() }
-        verify(exactly = 1) { MetadataUtils.getNumberOfCores() }
 
         Assert.assertTrue(deviceInfo.contains("\"jb\":true"))
         Assert.assertTrue(deviceInfo.contains("\"sr\":\"200x300\""))
@@ -235,8 +202,6 @@ internal class EmbraceMetadataServiceTest {
     @Test
     fun `test device info without running async operations`() {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-        every { MetadataUtils.getInternalStorageTotalCapacity(any()) }.returns(123L)
-        every { MetadataUtils.getLocale() }.returns("en-US")
 
         val metadataService = EmbraceMetadataService.ofContext(
             context,
@@ -260,9 +225,6 @@ internal class EmbraceMetadataServiceTest {
 
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
 
-        verify(exactly = 1) { MetadataUtils.getLocale() }
-        verify(exactly = 1) { MetadataUtils.getInternalStorageTotalCapacity(any()) }
-        verify(exactly = 1) { MetadataUtils.getTimezoneId() }
         Assert.assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
@@ -271,13 +233,12 @@ internal class EmbraceMetadataServiceTest {
         val metadataService = getMetadataService()
 
         activityService.isInBackground = true
-        Assert.assertEquals("background", metadataService.getAppState())
+        assertEquals("background", metadataService.getAppState())
 
         activityService.isInBackground = false
-        Assert.assertEquals("foreground", metadataService.getAppState())
+        assertEquals("foreground", metadataService.getAppState())
 
-        Assert.assertEquals("appId", metadataService.getAppId())
-        Assert.assertEquals("10", metadataService.getAppVersionCode())
+        assertEquals("appId", metadataService.getAppId())
     }
 
     @Test
@@ -286,8 +247,8 @@ internal class EmbraceMetadataServiceTest {
         every { preferencesService.egl } returns null
 
         val metadataService = getMetadataService()
-
-        Assert.assertEquals("fake_cpu", metadataService.getCpuName())
-        Assert.assertEquals("fake_egl", metadataService.getEgl())
+        val info = metadataService.getDeviceInfo()
+        assertEquals("fake_cpu", info.cpuName)
+        assertEquals("fake_egl", info.egl)
     }
 }

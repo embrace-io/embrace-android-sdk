@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
@@ -23,7 +24,6 @@ import io.embrace.android.embracesdk.internal.payload.EventType.INFO_LOG
 import io.embrace.android.embracesdk.internal.payload.EventType.WARNING_LOG
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
-import io.embrace.android.embracesdk.internal.session.properties.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker

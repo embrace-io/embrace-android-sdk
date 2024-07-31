@@ -62,47 +62,6 @@ internal interface MetadataService {
     fun getDiskUsage(): DiskUsage?
 
     /**
-     * Gets the device's screen resolution.
-     *
-     * @return the device's screen resolution
-     */
-    fun getScreenResolution(): String?
-
-    /**
-     * Gets if the device is jailbroken.
-     *
-     * @return if the device is Jailbroken
-     */
-    fun isJailbroken(): Boolean?
-
-    /**
-     * Gets the unique ID from the device. This is an MD5 hash of the Android Secure ID.
-     *
-     * @return the unique device ID
-     */
-    fun getDeviceId(): String
-
-    /**
-     * @return the app version code.
-     */
-    fun getAppVersionCode(): String?
-
-    /**
-     * @return the app version name.
-     */
-    fun getAppVersionName(): String
-
-    /**
-     * @return is the app was updated since last launch.
-     */
-    fun isAppUpdated(): Boolean
-
-    /**
-     * @return is the OS was updated since last launch.
-     */
-    fun isOsUpdated(): Boolean
-
-    /**
      * Returns 'foreground' if the application is in the foreground, or 'background' if the app is in
      * the background.
      *
@@ -124,17 +83,4 @@ internal interface MetadataService {
      * Queues in a single thread executor callables to retrieve values in background
      */
     fun precomputeValues()
-
-    /**
-     *
-     * @return cpu name
-     */
-    fun getCpuName(): String?
-
-    /**
-     *
-     * @return egl name
-     */
-    fun getEgl(): String?
-    fun getPackageName(): String
 }

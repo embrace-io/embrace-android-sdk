@@ -73,7 +73,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             worker,
             logger,
             mockConnectivityManager,
-        ) { fakeDataSourceModule() }
+        ) { fakeDataSourceModule().networkStatusDataSource.dataSource }
     }
 
     /**

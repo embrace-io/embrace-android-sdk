@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -34,6 +35,7 @@ import java.io.FileNotFoundException
 import java.io.InputStream
 import java.security.MessageDigest
 import java.util.Locale
+import java.util.TimeZone
 import java.util.concurrent.Future
 
 /**
@@ -165,7 +167,7 @@ internal class EmbraceMetadataService private constructor(
             if (storedIsJailbroken != null) {
                 isJailbroken = storedIsJailbroken
             } else {
-                isJailbroken = isJailbroken()
+                isJailbroken = isJailbroken
                 preferencesService.jailbroken = isJailbroken
             }
         }
@@ -173,7 +175,7 @@ internal class EmbraceMetadataService private constructor(
 
     private fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
         metadataBackgroundWorker.submit {
-            val free = MetadataUtils.getInternalStorageFreeCapacity(statFs.value)
+            val free = statFs.value.freeBytes
             if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     storageStatsManager,
@@ -226,34 +228,28 @@ internal class EmbraceMetadataService private constructor(
             null
         }
 
-    override fun getDeviceId(): String = deviceId.value
-
-    override fun getAppVersionCode(): String = lazyAppVersionCode.value
-
-    override fun getAppVersionName(): String = lazyAppVersionName.value
-
     override fun getDeviceInfo(): DeviceInfo = getDeviceInfo(true)
 
     private fun getDeviceInfo(populateAllFields: Boolean): DeviceInfo {
         val storageCapacityBytes = when {
-            populateAllFields -> MetadataUtils.getInternalStorageTotalCapacity(statFs.value)
+            populateAllFields -> statFs.value.totalBytes
             else -> 0
         }
         return DeviceInfo(
             systemInfo.deviceManufacturer,
             systemInfo.deviceModel,
             deviceArchitecture.architecture,
-            isJailbroken(),
-            MetadataUtils.getLocale(),
+            isJailbroken,
+            Locale.getDefault().language + "_" + Locale.getDefault().country,
             storageCapacityBytes,
             systemInfo.osName,
             systemInfo.osVersion,
             systemInfo.androidOsApiLevel.toInt(),
-            getScreenResolution(),
-            MetadataUtils.getTimezoneId(),
-            MetadataUtils.getNumberOfCores(),
-            if (populateAllFields) getCpuName() else null,
-            if (populateAllFields) getEgl() else null
+            screenResolution,
+            TimeZone.getDefault().id,
+            Runtime.getRuntime().availableProcessors(),
+            if (populateAllFields) cpuName else null,
+            if (populateAllFields) egl else null
         )
     }
 
@@ -304,10 +300,6 @@ internal class EmbraceMetadataService private constructor(
         return configService.sdkModeBehavior.appId
     }
 
-    override fun isAppUpdated(): Boolean = appUpdated.value
-
-    override fun isOsUpdated(): Boolean = osUpdated.value
-
     override fun getAppState(): String {
         return if (processStateService.isInBackground) {
             "background"
@@ -317,16 +309,6 @@ internal class EmbraceMetadataService private constructor(
     }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
-
-    override fun getScreenResolution(): String? = screenResolution
-
-    override fun isJailbroken(): Boolean? = isJailbroken
-
-    override fun getCpuName(): String? = cpuName
-
-    override fun getEgl(): String? = egl
-
-    override fun getPackageName() = packageName
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         val currentUrl = preferencesService.javaScriptBundleURL
@@ -353,9 +335,9 @@ internal class EmbraceMetadataService private constructor(
     }
 
     override fun applicationStartupComplete() {
-        val appVersion = getAppVersionName()
+        val appVersion = lazyAppVersionName.value
         val osVersion = systemInfo.osVersion
-        val localDeviceId = getDeviceId()
+        val localDeviceId = deviceId.value
         val installDate = clock.now()
         logger.logDebug(
             String.format(

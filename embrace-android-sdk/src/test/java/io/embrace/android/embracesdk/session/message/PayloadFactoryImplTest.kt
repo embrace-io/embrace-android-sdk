@@ -8,10 +8,13 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.BACKGROUND
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.FOREGROUND
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -20,12 +23,14 @@ import org.junit.Test
 internal class PayloadFactoryImplTest {
 
     private lateinit var configService: FakeConfigService
+    private lateinit var sessionPayloadSource: FakeSessionPayloadSource
     private lateinit var factory: PayloadFactoryImpl
 
     @Before
     fun setUp() {
-        configService = FakeConfigService()
         val initModule = FakeInitModule()
+        configService = FakeConfigService()
+        sessionPayloadSource = FakeSessionPayloadSource()
         val collator = PayloadMessageCollatorImpl(
             gatingService = FakeGatingService(),
             preferencesService = FakePreferenceService(),
@@ -33,7 +38,7 @@ internal class PayloadFactoryImplTest {
             sessionEnvelopeSource = SessionEnvelopeSourceImpl(
                 FakeEnvelopeMetadataSource(),
                 FakeEnvelopeResourceSource(),
-                FakeSessionPayloadSource()
+                sessionPayloadSource
             )
         )
         factory = PayloadFactoryImpl(
@@ -50,29 +55,36 @@ internal class PayloadFactoryImplTest {
     }
 
     @Test
-    fun `start payload with state generate payloads with valid session IDs if ba is enabled`() {
+    fun `verify expected payloads with ba enabled`() {
         configService.backgroundActivityCaptureEnabled = true
-        assertTrue(checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false)).sessionId.isNotBlank())
-        assertTrue(checkNotNull(factory.startPayloadWithState(BACKGROUND, 0, false)).sessionId.isNotBlank())
+        verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = true)
+        verifyPayloadWithState(state = BACKGROUND, zygoteCreated = true, startNewSession = true)
+        verifyPayloadWithManual()
     }
 
     @Test
-    fun `start payload with state generate payloads with valid session IDs only for foreground if ba is disabled`() {
+    fun `verify expected payloads with ba disabled`() {
         configService.backgroundActivityCaptureEnabled = false
-        assertTrue(checkNotNull(factory.startPayloadWithState(FOREGROUND, 0, false)).sessionId.isNotBlank())
-        assertNull(factory.startPayloadWithState(BACKGROUND, 0, false))
+        verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = false)
+        verifyPayloadWithState(state = BACKGROUND, zygoteCreated = false, startNewSession = false)
+        verifyPayloadWithManual()
     }
 
-    @Test
-    fun `start payload with manual generate payloads with valid session IDs if ba is enabled`() {
-        configService.backgroundActivityCaptureEnabled = true
-        assertTrue(checkNotNull(factory.startSessionWithManual(100L)).sessionId.isNotBlank())
-        assertTrue(checkNotNull(factory.startPayloadWithState(BACKGROUND, 0, false)).sessionId.isNotBlank())
+    private fun verifyPayloadWithState(state: ProcessState, zygoteCreated: Boolean, startNewSession: Boolean) {
+        val zygote = factory.startPayloadWithState(state, 0, false)
+        if (zygoteCreated) {
+            assertTrue(checkNotNull(zygote).sessionId.isNotBlank())
+            assertNotNull(factory.endPayloadWithState(state, 0, zygote))
+            assertEquals(startNewSession, sessionPayloadSource.lastStartNewSession)
+        } else {
+            assertNull(zygote)
+        }
     }
 
-    @Test
-    fun `start payload with manual generate payloads with valid session IDs if ba is disabled`() {
-        configService.backgroundActivityCaptureEnabled = false
-        assertTrue(checkNotNull(factory.startSessionWithManual(100L)).sessionId.isNotBlank())
+    private fun verifyPayloadWithManual() {
+        val zygote = factory.startSessionWithManual(0)
+        assertTrue(zygote.sessionId.isNotBlank())
+        assertNotNull(factory.endSessionWithManual(0, zygote))
+        assertEquals(true, sessionPayloadSource.lastStartNewSession)
     }
 }

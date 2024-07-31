@@ -96,7 +96,7 @@ internal class PayloadMessageCollatorImplTest {
                 initial = startMsg,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = initModule.logger,
-                backgroundActivityEnabled = true,
+                continueMonitoring = true,
                 crashId = "crashId"
             )
         )
@@ -123,7 +123,7 @@ internal class PayloadMessageCollatorImplTest {
                 initial = startMsg,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = initModule.logger,
-                backgroundActivityEnabled = true,
+                continueMonitoring = true,
                 crashId = "crashId",
             )
         )

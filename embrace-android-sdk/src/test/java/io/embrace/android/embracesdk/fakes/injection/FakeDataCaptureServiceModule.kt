@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.FakeBreadcrumbService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
+import io.embrace.android.embracesdk.internal.capture.activity.LoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
@@ -33,4 +34,6 @@ internal class FakeDataCaptureServiceModule(
     override val startupTracker: StartupTracker = mockk(relaxed = true)
 
     override val appStartupDataCollector: AppStartupDataCollector = mockk(relaxed = true)
+
+    override val activityCreateTraceEmitter: LoadTraceEmitter = mockk(relaxed = true)
 }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.capture.activity.LoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.EmbraceBreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
@@ -65,6 +66,14 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
             versionChecker = versionChecker,
             logger = initModule.logger
+        )
+    }
+
+    override val activityCreateTraceEmitter: LoadTraceEmitter by singleton {
+        LoadTraceEmitter(
+            spanService = openTelemetryModule.spanService,
+            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            versionChecker = versionChecker,
         )
     }
 

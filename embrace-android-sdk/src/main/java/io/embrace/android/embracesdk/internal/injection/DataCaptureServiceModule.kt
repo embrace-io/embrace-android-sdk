@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.capture.activity.LoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbService
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
@@ -38,4 +39,6 @@ internal interface DataCaptureServiceModule {
     val startupTracker: StartupTracker
 
     val appStartupDataCollector: AppStartupDataCollector
+
+    val activityCreateTraceEmitter: LoadTraceEmitter
 }

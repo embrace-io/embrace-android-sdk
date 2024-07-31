@@ -134,15 +134,20 @@ internal class PayloadMessageCollatorImplTest {
     @Test
     fun `session span is created when session payload is built if it did not exist before`() {
         currentSessionSpan.endSession(startNewSession = false)
-        val msg = collator.buildInitialSession(
-            InitialEnvelopeParams(
-                false,
-                LifeEventType.STATE,
-                5,
-                ApplicationState.FOREGROUND
-            )
-        )
-        msg.verifyInitialFieldsPopulated()
+        listOf(true, false).forEach { startupTemperature ->
+            LifeEventType.values().forEach { lifeEventType ->
+                ApplicationState.values().forEach { previousState ->
+                    collator.buildInitialSession(
+                        InitialEnvelopeParams(
+                            coldStart = startupTemperature,
+                            startType = lifeEventType,
+                            startTime = 5L,
+                            appState = previousState
+                        )
+                    ).verifyInitialFieldsPopulated()
+                }
+            }
+        }
     }
 
     private fun Envelope<SessionPayload>.verifyFinalFieldsPopulated() {
@@ -154,7 +159,7 @@ internal class PayloadMessageCollatorImplTest {
     }
 
     private fun SessionZygote.verifyInitialFieldsPopulated() {
-        assertTrue(sessionId.isNotBlank())
+        assertTrue("Session ID invalid: $this", sessionId.isNotBlank())
         assertEquals(5L, startTime)
     }
 }

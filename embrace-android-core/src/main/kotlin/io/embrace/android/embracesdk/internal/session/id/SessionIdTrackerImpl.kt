@@ -4,25 +4,26 @@ import android.app.ActivityManager
 import android.os.Build
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.ndk.NdkService
+import java.util.concurrent.CopyOnWriteArraySet
 
-internal class SessionIdTrackerImpl(
+public class SessionIdTrackerImpl(
     private val activityManager: ActivityManager?,
     private val logger: EmbLogger
 ) : SessionIdTracker {
+
+    private val listeners = CopyOnWriteArraySet<(String?) -> Unit>()
 
     @Volatile
     private var sessionId: String? = null
         set(value) {
             field = value
-            ndkService?.updateSessionId(value ?: "")
+            listeners.forEach { it(value) }
         }
 
-    override var ndkService: NdkService? = null
-        set(value) {
-            field = value
-            ndkService?.updateSessionId(sessionId ?: "")
-        }
+    override fun addListener(listener: (String?) -> Unit) {
+        listeners.add(listener)
+        listener(sessionId)
+    }
 
     override fun getActiveSessionId(): String? = sessionId
 

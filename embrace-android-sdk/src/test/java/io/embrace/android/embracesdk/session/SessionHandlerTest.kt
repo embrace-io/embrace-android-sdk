@@ -99,7 +99,7 @@ internal class SessionHandlerTest {
         memoryCleanerService = FakeMemoryCleanerService()
 
         localConfig = LocalConfig(
-            appId = metadataService.getAppId(),
+            appId = "abcde",
             ndkEnabled = true,
             sdkConfig = SdkLocalConfig()
         )

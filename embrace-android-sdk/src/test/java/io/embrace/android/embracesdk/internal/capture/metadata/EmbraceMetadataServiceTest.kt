@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
@@ -100,7 +99,6 @@ internal class EmbraceMetadataServiceTest {
         }
     }
 
-    private val activityService = FakeProcessStateService()
     private val configService: FakeConfigService =
         FakeConfigService(
             autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
@@ -135,7 +133,6 @@ internal class EmbraceMetadataServiceTest {
             buildInfo,
             configService,
             preferencesService,
-            activityService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             storageStatsManager,
             windowManager,
@@ -146,6 +143,8 @@ internal class EmbraceMetadataServiceTest {
             lazy { packageInfo.versionCode.toString() },
             hostedSdkVersionInfo,
             EmbLoggerImpl(),
+            "1",
+            "33"
         ).apply { precomputeValues() }
     }
 
@@ -210,7 +209,6 @@ internal class EmbraceMetadataServiceTest {
             buildInfo,
             configService,
             preferencesService,
-            activityService,
             BackgroundWorker(BlockingScheduledExecutorService()),
             mockStorageStatsManager(),
             mockWindowManager(),
@@ -220,25 +218,14 @@ internal class EmbraceMetadataServiceTest {
             lazy { packageInfo.versionName },
             lazy { packageInfo.versionCode.toString() },
             hostedSdkVersionInfo,
-            logger
+            logger,
+            "1",
+            "33"
         )
 
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
 
         Assert.assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
-    }
-
-    @Test
-    fun `test public methods`() {
-        val metadataService = getMetadataService()
-
-        activityService.isInBackground = true
-        assertEquals("background", metadataService.getAppState())
-
-        activityService.isInBackground = false
-        assertEquals("foreground", metadataService.getAppState())
-
-        assertEquals("appId", metadataService.getAppId())
     }
 
     @Test

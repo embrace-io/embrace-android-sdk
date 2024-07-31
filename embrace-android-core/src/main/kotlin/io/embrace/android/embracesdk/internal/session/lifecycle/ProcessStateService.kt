@@ -33,4 +33,12 @@ public interface ProcessStateService : LifecycleEventObserver, Closeable {
      * enters the background. You should not call this directly.
      */
     public fun onBackground()
+
+    /**
+     * Returns 'foreground' if the application is in the foreground, or 'background' if the app is in
+     * the background.
+     *
+     * @return the current state of the app
+     */
+    public fun getAppState(): String
 }

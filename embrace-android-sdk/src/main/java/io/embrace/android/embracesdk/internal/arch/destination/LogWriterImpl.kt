@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.api.common.AttributeKey
@@ -16,7 +16,7 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 internal class LogWriterImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
-    private val metadataService: MetadataService,
+    private val processStateService: ProcessStateService
 ) : LogWriter {
 
     override fun addLog(
@@ -36,9 +36,7 @@ internal class LogWriterImpl(
             builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
         }
 
-        metadataService.getAppState()?.let { appState ->
-            builder.setAttribute(embState.attributeKey, appState)
-        }
+        builder.setAttribute(embState.attributeKey, processStateService.getAppState())
 
         if (isPrivate) {
             builder.setFixedAttribute(PrivateSpan)

@@ -125,6 +125,11 @@ public class EmbraceProcessStateService(
         }
     }
 
+    override fun getAppState(): String = when {
+        isInBackground -> "background"
+        else -> "foreground"
+    }
+
     private companion object {
         private const val ERROR_FAILED_TO_NOTIFY =
             "Failed to notify EmbraceProcessStateService listener"

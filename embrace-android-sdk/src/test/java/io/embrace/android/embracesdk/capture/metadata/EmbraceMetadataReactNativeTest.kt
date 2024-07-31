@@ -80,7 +80,6 @@ internal class EmbraceMetadataReactNativeTest {
         buildInfo,
         configService,
         preferencesService,
-        processStateService,
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         mockStorageStatsManager(),
         mockWindowManager(),
@@ -91,6 +90,8 @@ internal class EmbraceMetadataReactNativeTest {
         lazy { "" },
         hostedSdkVersionInfo,
         EmbLoggerImpl(),
+        "1",
+        "33"
     )
 
     @Test

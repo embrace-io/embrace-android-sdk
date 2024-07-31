@@ -17,6 +17,7 @@ internal class DataContainerModuleImpl(
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
             essentialServiceModule.metadataService,
+            essentialServiceModule.processStateService,
             essentialServiceModule.sessionIdTracker,
             essentialServiceModule.userService,
             essentialServiceModule.sessionProperties,

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicReference
 
-internal class EmbraceSessionProperties(
+public class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
     private val configService: ConfigService,
     private val logger: EmbLogger
@@ -33,7 +33,7 @@ internal class EmbraceSessionProperties(
         return permanentProperties().containsKey(key) || temporary.containsKey(key)
     }
 
-    fun add(sanitizedKey: String, sanitizedValue: String, isPermanent: Boolean): Boolean {
+    public fun add(sanitizedKey: String, sanitizedValue: String, isPermanent: Boolean): Boolean {
         synchronized(permanentPropertiesReference) {
             val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
             if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
@@ -59,7 +59,7 @@ internal class EmbraceSessionProperties(
         }
     }
 
-    fun remove(sanitizedKey: String): Boolean {
+    public fun remove(sanitizedKey: String): Boolean {
         synchronized(permanentPropertiesReference) {
             var existed = false
             if (temporary.remove(sanitizedKey) != null) {
@@ -76,13 +76,15 @@ internal class EmbraceSessionProperties(
         }
     }
 
-    fun get(): Map<String, String> = synchronized(permanentPropertiesReference) { permanentProperties().plus(temporary) }
+    public fun get(): Map<String, String> = synchronized(permanentPropertiesReference) {
+        permanentProperties().plus(temporary)
+    }
 
     private fun size(): Int = permanentProperties().size + temporary.size
 
-    fun clearTemporary() = temporary.clear()
+    public fun clearTemporary(): Unit = temporary.clear()
 
-    companion object {
+    private companion object {
         private val NOT_LOADED = mutableMapOf<String, String>()
     }
 }

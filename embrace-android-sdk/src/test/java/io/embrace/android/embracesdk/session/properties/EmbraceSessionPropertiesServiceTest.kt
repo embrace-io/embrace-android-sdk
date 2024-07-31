@@ -35,7 +35,7 @@ internal class EmbraceSessionPropertiesServiceTest {
             writer = fakeCurrentSessionSpan,
             logger = logger,
         )
-        service = EmbraceSessionPropertiesService(ndkService, props) { dataSource }
+        service = EmbraceSessionPropertiesService(ndkService::onSessionPropertiesUpdate, props) { dataSource }
     }
 
     @Test

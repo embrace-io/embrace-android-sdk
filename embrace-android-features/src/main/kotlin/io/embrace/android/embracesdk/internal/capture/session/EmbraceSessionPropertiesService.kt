@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
-import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-internal class EmbraceSessionPropertiesService(
-    private val ndkService: NdkService,
+public class EmbraceSessionPropertiesService(
+    private val listener: (Map<String, String>) -> Unit,
     private val sessionProperties: EmbraceSessionProperties,
     private val dataSourceProvider: Provider<SessionPropertiesDataSource?>
 ) : SessionPropertiesService {
@@ -25,7 +24,7 @@ internal class EmbraceSessionPropertiesService(
             dataSourceProvider()?.apply {
                 addProperty(sanitizedKey, sanitizedValue)
             }
-            ndkService.onSessionPropertiesUpdate(sessionProperties.get())
+            listener(sessionProperties.get())
         }
         return added
     }
@@ -41,7 +40,7 @@ internal class EmbraceSessionPropertiesService(
             dataSourceProvider()?.apply {
                 removeProperty(sanitizedKey)
             }
-            ndkService.onSessionPropertiesUpdate(sessionProperties.get())
+            listener(sessionProperties.get())
         }
         return removed
     }
@@ -62,7 +61,7 @@ internal class EmbraceSessionPropertiesService(
         return value.substring(0, maxLength - endChars.length) + endChars
     }
 
-    companion object {
+    private companion object {
         /**
          * The maximum number of characters of a session property key
          */

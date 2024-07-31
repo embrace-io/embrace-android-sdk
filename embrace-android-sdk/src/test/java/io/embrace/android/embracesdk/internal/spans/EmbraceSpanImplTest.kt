@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE
@@ -379,6 +380,25 @@ internal class EmbraceSpanImplTest {
         fakeClock.tick()
         assertTrue(embraceSpan.start(startTimeMs = timePassedIn))
         assertEquals(timePassedIn, embraceSpan.snapshot()?.startTimeNanos?.nanosToMillis())
+    }
+
+    @Test
+    fun `OTel clock used if start time passed is zero`() {
+        val fakeOpenTelemetryClock = FakeOpenTelemetryClock(fakeClock)
+        val spanBuilder = tracer.embraceSpanBuilder(
+            name = EXPECTED_SPAN_NAME,
+            type = EmbType.System.LowPower,
+            internal = true,
+            private = true
+        )
+        embraceSpan = EmbraceSpanImpl(
+            spanBuilder = spanBuilder,
+            openTelemetryClock = fakeOpenTelemetryClock,
+            spanRepository = spanRepository,
+        )
+
+        assertTrue(embraceSpan.start(startTimeMs = 0L))
+        assertEquals(fakeOpenTelemetryClock.now(), embraceSpan.snapshot()?.startTimeNanos)
     }
 
     @Test

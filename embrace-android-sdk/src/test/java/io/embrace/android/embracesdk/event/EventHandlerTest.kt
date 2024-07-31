@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
@@ -60,6 +61,7 @@ internal class EventHandlerTest {
         private lateinit var mockLateTimer: ScheduledFuture<*>
         private lateinit var userInfo: UserInfo
         private lateinit var fakeMetadataService: FakeMetadataService
+        private lateinit var processStateService: FakeProcessStateService
         private lateinit var sessionIdTracker: FakeSessionIdTracker
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var scheduledExecutorService: ScheduledExecutorService
@@ -91,10 +93,12 @@ internal class EventHandlerTest {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         scheduledExecutorService = blockingScheduledExecutorService
         fakeMetadataService = FakeMetadataService(sessionId = "session-id")
+        processStateService = FakeProcessStateService()
         sessionIdTracker = FakeSessionIdTracker()
         eventHandler = EventHandler(
             fakeMetadataService,
             sessionIdTracker,
+            processStateService,
             configService,
             userService,
             deliveryService,
@@ -185,7 +189,7 @@ internal class EventHandlerTest {
         val builtEndEvent = Event(
             eventId = originEventId,
             type = EventType.END,
-            appState = fakeMetadataService.getAppState(),
+            appState = processStateService.getAppState(),
             name = originEventName,
             timestamp = endTime,
             customProperties = customPropertiesMap,
@@ -233,7 +237,7 @@ internal class EventHandlerTest {
         val endEvent = Event(
             eventId = originEventId,
             type = EventType.LATE,
-            appState = fakeMetadataService.getAppState(),
+            appState = processStateService.getAppState(),
             name = originEventName,
             timestamp = endTime,
             customProperties = customPropertiesMap,
@@ -270,7 +274,7 @@ internal class EventHandlerTest {
         val builtEvent = Event(
             eventId = eventId,
             type = EventType.START,
-            appState = fakeMetadataService.getAppState(),
+            appState = processStateService.getAppState(),
             name = eventName,
             lateThreshold = threshold,
             timestamp = startTime,

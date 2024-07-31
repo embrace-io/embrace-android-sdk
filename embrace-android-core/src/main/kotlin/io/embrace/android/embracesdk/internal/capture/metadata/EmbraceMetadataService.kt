@@ -11,7 +11,6 @@ import android.os.StatFs
 import android.os.storage.StorageManager
 import android.util.DisplayMetrics
 import android.view.WindowManager
-import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
 import io.embrace.android.embracesdk.internal.payload.DiskUsage
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.ByteArrayOutputStream
@@ -42,7 +40,7 @@ import java.util.concurrent.Future
  * Provides information about the state of the device, retrieved from Android system services,
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
-internal class EmbraceMetadataService private constructor(
+public class EmbraceMetadataService private constructor(
     private val windowManager: WindowManager?,
     private val packageManager: PackageManager,
     private val storageStatsManager: StorageStatsManager?,
@@ -61,14 +59,15 @@ internal class EmbraceMetadataService private constructor(
     private val appUpdated: Lazy<Boolean>,
     private val osUpdated: Lazy<Boolean>,
     private val preferencesService: PreferencesService,
-    private val processStateService: ProcessStateService,
     reactNativeBundleId: Future<String?>,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
+    private val versionName: String,
+    private val versionCode: String
 ) : MetadataService, StartupListener {
 
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
@@ -194,7 +193,7 @@ internal class EmbraceMetadataService private constructor(
 
     @Suppress("DEPRECATION")
     @TargetApi(Build.VERSION_CODES.O)
-    fun getDeviceDiskAppUsage(
+    private fun getDeviceDiskAppUsage(
         storageStatsManager: StorageStatsManager?,
         packageManager: PackageManager,
         contextPackageName: String?
@@ -283,8 +282,8 @@ internal class EmbraceMetadataService private constructor(
                 populateAllFields -> osUpdated.value
                 else -> false
             },
-            BuildConfig.VERSION_NAME,
-            BuildConfig.VERSION_CODE,
+            versionName,
+            versionCode,
             getReactNativeBundleId(),
             hostedSdkVersionInfo.javaScriptPatchNumber,
             hostedSdkVersionInfo.hostedPlatformVersion,
@@ -295,18 +294,6 @@ internal class EmbraceMetadataService private constructor(
     }
 
     override fun getLightweightAppInfo(): AppInfo = getAppInfo(false)
-
-    override fun getAppId(): String? {
-        return configService.sdkModeBehavior.appId
-    }
-
-    override fun getAppState(): String {
-        return if (processStateService.isInBackground) {
-            "background"
-        } else {
-            "foreground"
-        }
-    }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
 
@@ -358,7 +345,7 @@ internal class EmbraceMetadataService private constructor(
         }
     }
 
-    companion object {
+    public companion object {
 
         /**
          * Creates an instance of the [EmbraceMetadataService] from the device's [Context]
@@ -372,14 +359,13 @@ internal class EmbraceMetadataService private constructor(
          */
         @JvmStatic
         @Suppress("LongParameterList")
-        fun ofContext(
+        public fun ofContext(
             context: Context,
             environment: AppEnvironment.Environment,
             systemInfo: SystemInfo,
             buildInfo: BuildInfo,
             configService: ConfigService,
             preferencesService: PreferencesService,
-            processStateService: ProcessStateService,
             metadataBackgroundWorker: BackgroundWorker,
             storageStatsManager: StorageStatsManager?,
             windowManager: WindowManager?,
@@ -389,7 +375,9 @@ internal class EmbraceMetadataService private constructor(
             lazyAppVersionName: Lazy<String>,
             lazyAppVersionCode: Lazy<String>,
             hostedSdkVersionInfo: HostedSdkVersionInfo,
-            logger: EmbLogger
+            logger: EmbLogger,
+            versionName: String,
+            versionCode: String
         ): EmbraceMetadataService {
             val isAppUpdated = lazy {
                 val lastKnownAppVersion = preferencesService.appVersion
@@ -449,14 +437,15 @@ internal class EmbraceMetadataService private constructor(
                 isAppUpdated,
                 isOsUpdated,
                 preferencesService,
-                processStateService,
                 reactNativeBundleId,
                 hostedSdkVersionInfo,
                 metadataBackgroundWorker,
                 clock,
                 embraceCpuInfoDelegate,
                 deviceArchitecture,
-                logger
+                logger,
+                versionName,
+                versionCode
             )
         }
 

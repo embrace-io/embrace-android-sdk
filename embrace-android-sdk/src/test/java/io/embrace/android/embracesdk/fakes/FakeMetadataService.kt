@@ -88,15 +88,11 @@ internal class FakeMetadataService(sessionId: String? = null) : MetadataService 
 
     override fun getLightweightAppInfo(): AppInfo = androidAppInfo
 
-    override fun getAppId(): String = fakeAppId
-
     override fun getDeviceInfo(): DeviceInfo = androidDeviceInfo
 
     override fun getLightweightDeviceInfo(): DeviceInfo = androidDeviceInfo
 
     override fun getDiskUsage(): DiskUsage = diskUsage
-
-    override fun getAppState(): String = appState
 
     override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
         fakeReactNativeBundleId = jsBundleUrl

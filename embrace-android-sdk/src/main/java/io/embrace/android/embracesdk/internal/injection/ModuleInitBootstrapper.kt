@@ -309,7 +309,9 @@ internal class ModuleInitBootstrapper(
                         )
 
                         if (essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
-                            essentialServiceModule.sessionIdTracker.ndkService = nativeModule.ndkService
+                            essentialServiceModule.sessionIdTracker.addListener {
+                                nativeModule.ndkService.updateSessionId(it ?: "")
+                            }
                         }
 
                         if (nativeModule.nativeThreadSamplerInstaller != null) {

@@ -61,7 +61,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.NORMAL_END,
                 logger = logger,
-                backgroundActivityEnabled = isBackgroundActivityEnabled(),
+                backgroundActivityEnabled = true,
             )
         )
     }
@@ -135,7 +135,7 @@ internal class PayloadFactoryImpl(
                 initial = initial,
                 endType = SessionSnapshotType.JVM_CRASH,
                 logger = logger,
-                backgroundActivityEnabled = isBackgroundActivityEnabled(),
+                backgroundActivityEnabled = true,
                 crashId = crashId
             )
         )

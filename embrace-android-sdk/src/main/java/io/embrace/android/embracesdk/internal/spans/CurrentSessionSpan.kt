@@ -10,6 +10,12 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
  */
 internal interface CurrentSessionSpan : Initializable, SessionSpanWriter {
     /**
+     * Ensure there exists a session span that is ready to take in data, and create one if it's possible.
+     * Returns true if an active session span exists at the time the method returns.
+     */
+    fun readySession(): Boolean
+
+    /**
      * End the current session span and start a new one if the app is not terminating
      */
     fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause? = null): List<EmbraceSpanData>

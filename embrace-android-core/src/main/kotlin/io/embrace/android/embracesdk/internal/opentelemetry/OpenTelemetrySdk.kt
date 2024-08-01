@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_SYSTEM_EVENT_COUNT
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.sdk.logs.SdkLoggerProvider
 import io.opentelemetry.sdk.trace.SdkTracerProvider
+import io.opentelemetry.sdk.trace.SpanLimits
 
 /**
  * Wrapper that instantiates a copy of the OpenTelemetry SDK configured with the appropriate settings and the given components so
@@ -23,6 +25,7 @@ public class OpenTelemetrySdk(
                 .builder()
                 .addResource(configuration.resource)
                 .addSpanProcessor(configuration.spanProcessor)
+                .setSpanLimits(SpanLimits.getDefault().toBuilder().setMaxNumberOfEvents(MAX_SYSTEM_EVENT_COUNT).build())
                 .setClock(openTelemetryClock)
                 .build()
         }

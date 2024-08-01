@@ -1,60 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html class="no-js">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>addSessionProperty</title>
     <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
     <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
-const savedDarkMode = storage ? JSON.parse(storage) : false
-if(savedDarkMode === true){
-    document.getElementsByTagName("html")[0].classList.add("theme-dark")
-}</script>
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
 <link href="../../../styles/style.css" rel="Stylesheet">
-<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
 <link href="../../../styles/main.css" rel="Stylesheet">
 <link href="../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
 <script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
 </head>
 <body>
-<div class="navigation-wrapper" id="navigation-wrapper">
-    <div id="leftToggler"><span class="icon-toggler"></span></div>
-    <div class="library-name">
-            <a href="../../../index.html">
-                    <span>embrace-android-sdk</span>
-            </a>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../index.html">
+                            embrace-android-sdk
+                    </a>
+            </div>
+            <div class="library-version">
+6.9.2            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":embrace-android-sdk:dokkaHtml/release">androidJvm</button>
+        </div>
     </div>
-    <div>
-6.3.0    </div>
-    <div class="pull-right d-flex">
-        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
-        <div id="searchBar"></div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
     </div>
-</div>
-<div id="container">
-    <div id="leftColumn">
-        <div id="sideMenu"></div>
-    </div>
-    <div id="main">
-<div class="main-content" id="content" pageIds="embrace-android-sdk::io.embrace.android.embracesdk/Embrace/addSessionProperty/#java.lang.String#java.lang.String#boolean/PointingToDeclaration//22257658">
-  <div class="breadcrumbs"><a href="../../../index.html">embrace-android-sdk</a><span class="delimiter">/</span><a href="../index.html">io.embrace.android.embracesdk</a><span class="delimiter">/</span><a href="index.html">Embrace</a><span class="delimiter">/</span><a href="add-session-property.html">addSessionProperty</a></div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="member" id="content" pageIds="embrace-android-sdk::io.embrace.android.embracesdk/Embrace/addSessionProperty/#java.lang.String#java.lang.String#boolean/PointingToDeclaration//22257658">
+  <div class="breadcrumbs"><a href="../../../index.html">embrace-android-sdk</a><span class="delimiter">/</span><a href="../index.html">io.embrace.android.embracesdk</a><span class="delimiter">/</span><a href="index.html">Embrace</a><span class="delimiter">/</span><span class="current">addSessionProperty</span></div>
   <div class="cover ">
     <h1 class="cover"><span>add</span><wbr></wbr><span>Session</span><wbr></wbr><span><span>Property</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span>boolean <a href="add-session-property.html"><span class="token function">addSessionProperty</span></a><span class="token punctuation">(</span><span class="parameters wrapped"><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span><span class="token annotation">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/NonNull.html"><span class="token annotation">NonNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span> </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> key<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span><span class="token annotation">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/NonNull.html"><span class="token annotation">NonNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span> </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> value<span class="token punctuation">, </span></span><span class="parameter indented">&nbsp;&nbsp;&nbsp;&nbsp;<span class="token keyword"></span>boolean permanent</span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Adds a property to the current session, overwriting any previous property set with the given key. If a permanent property already exists with the given name and a non-permanent one is to be added, the permanent one will be removed (and vice versa).</p><h4 class="">Return</h4><p class="paragraph">True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the session has exceeded its total properties limit.</p><h2 class="">Parameters</h2><div data-togglable="Parameters"><div class="table" data-togglable="Parameters"><div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span><span>key</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">The case-sensitive key to be used for this property. The maximum length for this is 128 characters. A key passed in that exceeds the maximum length will be truncated.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span><span>value</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">The value associated with the given key. The maximum length for this is 1024 characters. A value passed in that exceeds the maximum length will be truncated.</p></div></div></div></div></div><div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"><div class="main-subrow keyValue WithExtraAttributes"><div class=""><span class="inline-flex"><div><span><span>permanent</span></span></div></span></div><div><div class="title"><div data-togglable="Parameters"><p class="paragraph">True if this property should be added to subsequent sessions going forward, persisting through app launches.</p></div></div></div></div></div></div></div></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword"></span>boolean <a href="add-session-property.html"><span class="token function">addSessionProperty</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/NonNull.html"><span class="token annotation builtin">NonNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span> </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> key<span class="token punctuation">, </span></span><span class="parameter "><span><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/androidx/annotation/NonNull.html"><span class="token annotation builtin">NonNull</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span> </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> value<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword"></span>boolean permanent</span></span><span class="token punctuation">)</span></div><p class="paragraph">Adds a property to the current session, overwriting any previous property set with the given key. If a permanent property already exists with the given name and a non-permanent one is to be added, the permanent one will be removed (and vice versa).</p><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph">True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the session has exceeded its total properties limit.</p></span><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>key</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The case-sensitive key to be used for this property. The maximum length for this is 128 characters. A key passed in that exceeds the maximum length will be truncated.</p></div></div></div></div><div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>value</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The value associated with the given key. The maximum length for this is 1024 characters. A value passed in that exceeds the maximum length will be truncated.</p></div></div></div></div><div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>permanent</span></span></u></div></span></div><div><div class="title"><p class="paragraph">True if this property should be added to subsequent sessions going forward, persisting through app launches.</p></div></div></div></div></div></div></div>
 </div>
       <div class="footer">
         <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span
                 class="pull-right"><span>Generated by </span><a
                 href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
+            </div>
+        </div>
     </div>
-</div>
 </body>
 </html>

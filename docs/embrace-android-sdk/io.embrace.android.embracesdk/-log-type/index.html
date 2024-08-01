@@ -1,130 +1,217 @@
 <!DOCTYPE html>
-<html>
+<html class="no-js">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
     <title>LogType</title>
     <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
     <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
-const savedDarkMode = storage ? JSON.parse(storage) : false
-if(savedDarkMode === true){
-    document.getElementsByTagName("html")[0].classList.add("theme-dark")
-}</script>
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
 <link href="../../../styles/style.css" rel="Stylesheet">
-<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
 <link href="../../../styles/main.css" rel="Stylesheet">
 <link href="../../../styles/prism.css" rel="Stylesheet">
 <link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
 <script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
 <script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
 <script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
 </head>
 <body>
-<div class="navigation-wrapper" id="navigation-wrapper">
-    <div id="leftToggler"><span class="icon-toggler"></span></div>
-    <div class="library-name">
-            <a href="../../../index.html">
-                    <span>embrace-android-sdk</span>
-            </a>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../index.html">
+                            embrace-android-sdk
+                    </a>
+            </div>
+            <div class="library-version">
+6.9.2            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":embrace-android-sdk:dokkaHtml/release">androidJvm</button>
+        </div>
     </div>
-    <div>
-6.3.0    </div>
-    <div class="pull-right d-flex">
-        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
-        <div id="searchBar"></div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
     </div>
-</div>
-<div id="container">
-    <div id="leftColumn">
-        <div id="sideMenu"></div>
-    </div>
-    <div id="main">
-<div class="main-content" id="content" pageIds="embrace-android-sdk::io.embrace.android.embracesdk/LogType///PointingToDeclaration//22257658">
-  <div class="breadcrumbs"><a href="../../../index.html">embrace-android-sdk</a><span class="delimiter">/</span><a href="../index.html">io.embrace.android.embracesdk</a><span class="delimiter">/</span><a href="index.html">LogType</a></div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="embrace-android-sdk::io.embrace.android.embracesdk/LogType///PointingToDeclaration//22257658">
+  <div class="breadcrumbs"><a href="../../../index.html">embrace-android-sdk</a><span class="delimiter">/</span><a href="../index.html">io.embrace.android.embracesdk</a><span class="delimiter">/</span><span class="current">LogType</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Log</span><wbr></wbr><span><span>Type</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace strikethrough"><strike><span class="token keyword">public </span></strike><strike><span class="token keyword">enum </span></strike><a href="index.html"><strike>LogType</strike></a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><p class="paragraph">Deprecated: use Severity instead. This enum is deprecated and will be removed in a future release. Will flag the message as one of info, warning, or error for filtering on the dashboard</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-deprecated/index.html"><span class="token annotation builtin">Deprecated</span></a><span class="token punctuation">(</span><span>message<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">public </span><span class="token keyword">enum </span><a href="index.html"><strike>LogType</strike></a><span class="token keyword"> extends </span><a href="https://developer.android.com/reference/kotlin/java/lang/Enum.html">Enum</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">LogType</a><span class="token operator">&gt;</span></div><div class="deprecation-content"><h3 class="">Deprecated</h3></div><p class="paragraph">Deprecated: use Severity instead. This enum is deprecated and will be removed in a future release.</p><p class="paragraph">Will flag the message as one of info, warning, or error for filtering on the dashboard</p></div></div>
   </div>
   <div class="tabbedcontent">
-    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="Entries">Entries</button><button class="section-tab" data-togglable="Functions">Functions</button></div>
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button><button class="section-tab" data-togglable="ENTRY">Entries</button></div>
     <div class="tabs-section-body">
-      <h2 class="tabbedcontent">Entries</h2>
-      <div class="table" data-togglable="Entries"><a data-name="789977672%2FClasslikes%2F22257658" anchor-label="INFO" id="789977672%2FClasslikes%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
-        <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
-          <div class="main-subrow keyValue ">
-            <div class=""><span class="inline-flex">
-                <div><a href="-i-n-f-o/index.html">INFO</a></div>
+      <div data-togglable="ENTRY">
+        <h2 class="">Entries</h2>
+        <div class="table"><a data-name="789977672%2FClasslikes%2F22257658" anchor-label="INFO" id="789977672%2FClasslikes%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
+          <div class="table-row" data-togglable="ENTRY" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-i-n-f-o/index.html">INFO</a></div>
 <span class="anchor-wrapper"><span class="anchor-icon" pointing-to="789977672%2FClasslikes%2F22257658"></span>
-                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                </span></span></div>
-            <div>
-              <div class="title">
-                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace strikethrough"><a href="-i-n-f-o/index.html"><strike>INFO</strike></a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace"><a href="-i-n-f-o/index.html">INFO</a></div></div></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 <a data-name="-1295644214%2FClasslikes%2F22257658" anchor-label="WARNING" id="-1295644214%2FClasslikes%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
-        <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
-          <div class="main-subrow keyValue ">
-            <div class=""><span class="inline-flex">
-                <div><a href="-w-a-r-n-i-n-g/index.html">WARNING</a></div>
+          <div class="table-row" data-togglable="ENTRY" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-w-a-r-n-i-n-g/index.html">WARNING</a></div>
 <span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1295644214%2FClasslikes%2F22257658"></span>
-                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                </span></span></div>
-            <div>
-              <div class="title">
-                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace strikethrough"><a href="-w-a-r-n-i-n-g/index.html"><strike>WARNING</strike></a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace"><a href="-w-a-r-n-i-n-g/index.html">WARNING</a></div></div></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 <a data-name="-1505085002%2FClasslikes%2F22257658" anchor-label="ERROR" id="-1505085002%2FClasslikes%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
-        <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
-          <div class="main-subrow keyValue ">
-            <div class=""><span class="inline-flex">
-                <div><a href="-e-r-r-o-r/index.html">ERROR</a></div>
+          <div class="table-row" data-togglable="ENTRY" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-e-r-r-o-r/index.html">ERROR</a></div>
 <span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1505085002%2FClasslikes%2F22257658"></span>
-                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                </span></span></div>
-            <div>
-              <div class="title">
-                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace strikethrough"><a href="-e-r-r-o-r/index.html"><strike>ERROR</strike></a><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace"><a href="-e-r-r-o-r/index.html">ERROR</a></div></div></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <h2 class="">Functions</h2>
-      <div class="table" data-togglable="Functions"><a data-name="2085775255%2FFunctions%2F22257658" anchor-label="valueOf" id="2085775255%2FFunctions%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
-        <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
-          <div class="main-subrow keyValue ">
-            <div class=""><span class="inline-flex">
-                <div><a href="value-of.html"><span>value</span><wbr></wbr><span><span>Of</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2085775255%2FFunctions%2F22257658"></span>
-                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                </span></span></div>
-            <div>
-              <div class="title">
-                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">static </span><a href="https://developer.android.com/reference/kotlin/java/lang/Object.html">Object</a> <a href="value-of.html"><span class="token function">valueOf</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> name</span></span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-372974862%2FProperties%2F22257658" anchor-label="name" id="-372974862%2FProperties%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../io.embrace.android.embracesdk.spans/-error-code/-u-n-k-n-o-w-n/index.html#-372974862%2FProperties%2F22257658"><span><span>name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-372974862%2FProperties%2F22257658"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="../../io.embrace.android.embracesdk.spans/-error-code/-u-n-k-n-o-w-n/index.html#-372974862%2FProperties%2F22257658">name</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-739389684%2FProperties%2F22257658" anchor-label="ordinal" id="-739389684%2FProperties%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="../../io.embrace.android.embracesdk.spans/-error-code/-u-n-k-n-o-w-n/index.html#-739389684%2FProperties%2F22257658"><span><span>ordinal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-739389684%2FProperties%2F22257658"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">private </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="../../io.embrace.android.embracesdk.spans/-error-code/-u-n-k-n-o-w-n/index.html#-739389684%2FProperties%2F22257658">ordinal</a></div></div></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1406018715%2FFunctions%2F22257658" anchor-label="getName" id="1406018715%2FFunctions%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1406018715%2FFunctions%2F22257658"><span>get</span><wbr></wbr><span><span>Name</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1406018715%2FFunctions%2F22257658"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> <a href="index.html#1406018715%2FFunctions%2F22257658"><span class="token function">getName</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1656797379%2FFunctions%2F22257658" anchor-label="getOrdinal" id="1656797379%2FFunctions%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="index.html#1656797379%2FFunctions%2F22257658"><span>get</span><wbr></wbr><span><span>Ordinal</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1656797379%2FFunctions%2F22257658"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/Integer.html">Integer</a> <a href="index.html#1656797379%2FFunctions%2F22257658"><span class="token function">getOrdinal</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-918906648%2FFunctions%2F22257658" anchor-label="valueOf" id="-918906648%2FFunctions%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
+          <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="value-of.html"><span>value</span><wbr></wbr><span><span>Of</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-918906648%2FFunctions%2F22257658"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">final </span><span class="token keyword"></span><a href="index.html">LogType</a> <a href="value-of.html"><span class="token function">valueOf</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword"></span><a href="https://developer.android.com/reference/kotlin/java/lang/String.html">String</a> value</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Returns the enum constant of this type with the specified name. The string must match exactly an identifier used to declare an enum constant in this type. (Extraneous whitespace characters are not permitted.)</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="-686777356%2FFunctions%2F22257658" anchor-label="values" id="-686777356%2FFunctions%2F22257658" data-filterable-set=":embrace-android-sdk:dokkaHtml/release"></a>
-        <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
-          <div class="main-subrow keyValue ">
-            <div class=""><span class="inline-flex">
-                <div><a href="values.html"><span><span>values</span></span></a></div>
+          <div class="table-row" data-filterable-current=":embrace-android-sdk:dokkaHtml/release" data-filterable-set=":embrace-android-sdk:dokkaHtml/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="values.html"><span><span>values</span></span></a></div>
 <span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-686777356%2FFunctions%2F22257658"></span>
-                  <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                </span></span></div>
-            <div>
-              <div class="title">
-                <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-depenent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">static </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><a href="https://developer.android.com/reference/kotlin/java/lang/Object.html">Object</a><span class="token operator">&gt;</span> <a href="values.html"><span class="token function">values</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-sdk:dokkaHtml/release"><div class="symbol monospace block"><span class="token keyword">public </span><span class="token keyword">final </span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-array/index.html">Array</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="index.html">LogType</a><span class="token operator">&gt;</span> <a href="values.html"><span class="token function">values</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Returns an array containing the constants of this enum type, in the order they're declared.</p></div></div></div>
+                </div>
               </div>
             </div>
           </div>
@@ -138,7 +225,8 @@ if(savedDarkMode === true){
                 class="pull-right"><span>Generated by </span><a
                 href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
       </div>
+            </div>
+        </div>
     </div>
-</div>
 </body>
 </html>

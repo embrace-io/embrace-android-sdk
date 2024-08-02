@@ -303,7 +303,7 @@ public class EmbraceSpanImpl(
     public companion object {
         public const val MAX_NAME_LENGTH: Int = 50
         public const val MAX_EVENT_COUNT: Int = 10
-        public const val MAX_SYSTEM_EVENT_COUNT: Int = 1000
+        public const val MAX_SYSTEM_EVENT_COUNT: Int = 11000
         public const val MAX_ATTRIBUTE_COUNT: Int = 50
         public const val MAX_ATTRIBUTE_KEY_LENGTH: Int = 50
         public const val MAX_ATTRIBUTE_VALUE_LENGTH: Int = 500

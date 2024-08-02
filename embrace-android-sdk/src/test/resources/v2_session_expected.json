@@ -12,14 +12,14 @@
     "username": "John Doe"
   },
   "resource": {
-    "app_version": "",
+    "app_version": "2.5.1",
     "app_framework": 1,
     "build_id": "5.22.0",
-    "app_ecosystem_id": "io.embrace.android.embracesdk.test",
+    "app_ecosystem_id": "com.fake.package",
     "build_type": "release",
     "build_flavor": "delicious",
     "environment": "dev",
-    "bundle_version": "0",
+    "bundle_version": "99",
     "sdk_version": "__EMBRACE_TEST_IGNORE__",
     "sdk_simple_version": 53,
     "device_manufacturer": "__EMBRACE_TEST_IGNORE__",

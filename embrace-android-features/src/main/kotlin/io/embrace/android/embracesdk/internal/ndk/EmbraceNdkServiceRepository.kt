@@ -1,26 +1,25 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_ERROR_FILE_SUFFIX
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_FILE_PREFIX
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_FILE_SUFFIX
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_MAP_FILE_SUFFIX
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 
-private const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
-private const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-private const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
-private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
-
 /**
  * Encapsulates the logic of managing Files to get, sort and or delete them
  */
-internal class EmbraceNdkServiceRepository(
+public class EmbraceNdkServiceRepository(
     private val storageService: StorageService,
     private val logger: EmbLogger
 ) {
 
-    fun sortNativeCrashes(byOldest: Boolean): List<File> {
+    public fun sortNativeCrashes(byOldest: Boolean): List<File> {
         val nativeCrashFiles: Array<File> = getNativeCrashFiles()
         val nativeCrashList: MutableList<File> = mutableListOf()
 
@@ -81,15 +80,15 @@ internal class EmbraceNdkServiceRepository(
         }
     }
 
-    fun errorFileForCrash(crashFile: File): File? {
+    public fun errorFileForCrash(crashFile: File): File? {
         return companionFileForCrash(crashFile, NATIVE_CRASH_ERROR_FILE_SUFFIX)
     }
 
-    fun mapFileForCrash(crashFile: File): File? {
+    public fun mapFileForCrash(crashFile: File): File? {
         return companionFileForCrash(crashFile, NATIVE_CRASH_MAP_FILE_SUFFIX)
     }
 
-    fun deleteFiles(
+    public fun deleteFiles(
         crashFile: File,
         errorFile: File?,
         mapFile: File?,

@@ -5,6 +5,6 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 /**
  * [NativeCrashService] used when the native features are not enabled
  */
-internal class NoopNativeCrashService : NativeCrashService {
+public class NoopNativeCrashService : NativeCrashService {
     override fun getAndSendNativeCrash(): NativeCrashData? = null
 }

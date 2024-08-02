@@ -6,14 +6,13 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Base64
-import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
@@ -44,7 +43,7 @@ import java.io.InputStreamReader
 import java.util.LinkedList
 import java.util.Locale
 
-internal class EmbraceNdkService(
+public class EmbraceNdkService(
     private val context: Context,
     private val storageService: StorageService,
     private val metadataService: MetadataService,
@@ -257,7 +256,7 @@ internal class EmbraceNdkService(
             val errorsRaw = delegate._getErrors(absolutePath)
             if (errorsRaw != null) {
                 try {
-                    val type = Types.newParameterizedType(List::class.java, NativeCrashDataError::class.java)
+                    val type = TypeUtils.typedList(NativeCrashDataError::class)
                     return serializer.fromJson(errorsRaw, type)
                 } catch (e: Exception) {
                     logger.logError(
@@ -517,7 +516,7 @@ internal class EmbraceNdkService(
             metadata?.appInfo,
             metadata?.userInfo,
             null,
-            ApiClient.MESSAGE_VERSION,
+            13,
             nativeCrash.getCrash(nativeCrashNumber)
         )
         try {
@@ -563,7 +562,7 @@ internal class EmbraceNdkService(
         delegate._uninstallSignals()
     }
 
-    companion object {
+    public companion object {
         /**
          * Signals to the API that the application was in the foreground.
          */
@@ -578,11 +577,11 @@ internal class EmbraceNdkService(
          * The NDK symbols name that matches with the resource name injected by the plugin.
          */
         private const val KEY_NDK_SYMBOLS = "emb_ndk_symbols"
-        private const val CRASH_REPORT_EVENT_NAME = "_crash_report"
-        private const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
-        private const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-        private const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
-        private const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
+        internal const val CRASH_REPORT_EVENT_NAME = "_crash_report"
+        internal const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
+        internal const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
+        internal const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
+        internal const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
         private const val MAX_NATIVE_CRASH_FILES_ALLOWED = 4
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
         private const val HANDLER_CHECK_DELAY_MS = 5000

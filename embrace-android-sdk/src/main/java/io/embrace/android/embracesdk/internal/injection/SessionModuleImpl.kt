@@ -40,7 +40,7 @@ internal class SessionModuleImpl(
 
     override val sessionPropertiesService: SessionPropertiesService by singleton {
         EmbraceSessionPropertiesService(
-            nativeModule.ndkService,
+            nativeModule.ndkService::onSessionPropertiesUpdate,
             essentialServiceModule.sessionProperties
         ) { dataSourceModule.sessionPropertiesDataSource.dataSource }
     }

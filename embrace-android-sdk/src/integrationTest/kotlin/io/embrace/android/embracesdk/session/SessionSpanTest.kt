@@ -51,7 +51,7 @@ internal class SessionSpanTest {
     }
 
     @Test
-    fun `session span event do no affect logging maximum breadcrumbs`() {
+    fun `session span event limits do not affect logging maximum breadcrumbs`() {
         with(testRule) {
             startSdk()
             val session = checkNotNull(harness.recordSession {

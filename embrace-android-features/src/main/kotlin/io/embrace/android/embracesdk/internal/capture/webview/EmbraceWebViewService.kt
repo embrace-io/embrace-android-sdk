@@ -30,10 +30,6 @@ public class EmbraceWebViewService(
         }
     }
 
-    override fun loadDataIntoSession() {
-        webViewDataSourceProvider()?.loadDataIntoSession(webViewInfoMap.values.toList())
-    }
-
     private fun collectWebVital(message: String, tag: String) {
         if (webViewInfoMap.size >= configService.webViewVitalsBehavior.getMaxWebViewVitals()) {
             logger.logDebug("Max webview vitals per session exceeded")
@@ -52,6 +48,7 @@ public class EmbraceWebViewService(
 
             webViewInfoMap[it.url + it.startTime] = processVitalList(it, checkNotNull(webViewInfoMap[it.url + it.startTime]))
         }
+        webViewDataSourceProvider()?.loadDataIntoSession(webViewInfoMap.values.toList())
     }
 
     /**

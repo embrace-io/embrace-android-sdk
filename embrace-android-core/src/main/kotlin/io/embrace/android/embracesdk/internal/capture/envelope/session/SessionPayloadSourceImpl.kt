@@ -1,11 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.envelope.session
 
-import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
-import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
-import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -17,25 +12,18 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.utils.Provider
 
-internal class SessionPayloadSourceImpl(
-    private val nativeThreadSamplerService: NativeThreadSamplerService?,
+public class SessionPayloadSourceImpl(
+    private val symbolMapProvider: () -> Map<String, String>?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
-    private val anrOtelMapper: AnrOtelMapper,
-    private val nativeAnrOtelMapper: NativeAnrOtelMapper,
-    private val logger: EmbLogger,
-    private val webViewServiceProvider: Provider<WebViewService>,
-    private val sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
+    private val otelPayloadMapper: OtelPayloadMapper,
+    private val logger: EmbLogger
 ) : SessionPayloadSource {
 
     override fun getSessionPayload(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): SessionPayload {
-        val sharedLibSymbolMapping = captureDataSafely(logger) { nativeThreadSamplerService?.getNativeSymbols() }
-
-        // future: convert webview service to use OtelMapper pattern or data source directly.
-        webViewServiceProvider().loadDataIntoSession()
+        val sharedLibSymbolMapping = captureDataSafely(logger, symbolMapProvider)
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
         val snapshots: List<Span>? = retrieveSpanSnapshots()
@@ -62,17 +50,13 @@ internal class SessionPayloadSourceImpl(
                         startNewSession = startNewSession,
                         appTerminationCause = appTerminationCause
                     )
-                    if (appTerminationCause == null) {
-                        sessionPropertiesServiceProvider().populateCurrentSession()
-                    }
                     spans.map(EmbraceSpanData::toNewPayload)
                 }
 
                 else -> spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
             }
-            // add ANR spans if the payload is capturing spans.
-            result.plus(anrOtelMapper.snapshot(!cacheAttempt))
-                .plus(nativeAnrOtelMapper.snapshot(!cacheAttempt))
+            // add spans that need mapping to OTel if the payload is capturing spans.
+            result.plus(otelPayloadMapper.getSessionPayload(endType, crashId))
         }
         return spans
     }

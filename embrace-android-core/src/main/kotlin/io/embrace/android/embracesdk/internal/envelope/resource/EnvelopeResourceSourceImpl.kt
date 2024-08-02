@@ -1,18 +1,16 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.resource
+package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.content.pm.PackageInfo
-import io.embrace.android.embracesdk.BuildConfig
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.resource.Device
-import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 
-internal class EnvelopeResourceSourceImpl(
+public class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
     private val environment: AppEnvironment.Environment,
     private val buildInfo: BuildInfo,

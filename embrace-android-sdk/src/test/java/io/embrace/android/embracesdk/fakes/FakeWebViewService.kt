@@ -10,7 +10,4 @@ internal class FakeWebViewService : FakeDataCaptureService<WebViewInfo>(), WebVi
     override fun collectWebData(tag: String, message: String) {
         tags.add(tag)
     }
-
-    override fun loadDataIntoSession() {
-    }
 }

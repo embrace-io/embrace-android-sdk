@@ -32,7 +32,7 @@ import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 /**
  * Intercept and track uncaught Android Runtime exceptions
  */
-internal class CrashDataSourceImpl(
+public class CrashDataSourceImpl(
     private val logOrchestrator: LogOrchestrator,
     private val sessionOrchestrator: SessionOrchestrator,
     private val sessionProperties: EmbraceSessionProperties,

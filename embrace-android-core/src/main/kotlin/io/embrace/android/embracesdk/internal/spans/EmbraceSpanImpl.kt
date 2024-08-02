@@ -249,7 +249,7 @@ public class EmbraceSpanImpl(
                 parentSpanId = parent?.spanId ?: SpanId.getInvalid(),
                 name = getSpanName(),
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
-                endTimeNanos = spanEndTimeMs?.millisToNanos() ?: openTelemetryClock.now(),
+                endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
                 events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + customEvents.map(EmbraceSpanEvent::toNewPayload),
                 attributes = getAttributesPayload()

@@ -28,4 +28,9 @@ internal class FakeProcessStateService(
 
     override fun onBackground() {
     }
+
+    override fun getAppState(): String = when (isInBackground) {
+        true -> "background"
+        false -> "foreground"
+    }
 }

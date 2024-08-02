@@ -1,16 +1,17 @@
 package io.embrace.android.embracesdk.network.logging
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -36,7 +37,6 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     companion object {
         private var cfg: RemoteConfig = RemoteConfig()
-        private val metadataService: FakeMetadataService = FakeMetadataService()
         private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
         private val configService: FakeConfigService = FakeConfigService(
             networkBehavior = fakeNetworkBehavior { cfg },
@@ -110,6 +110,8 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     @Test
     fun `test capture rule doesn't capture Embrace endpoints`() {
+        configService.sdkModeBehavior =
+            fakeSdkModeBehavior(localCfg = { LocalConfig(appId = "o0o0o", true, SdkLocalConfig()) })
         val rule = getDefaultRule(urlRegex = "https://a-o0o0o.data.emb-api.com")
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
         val result = getService().getNetworkCaptureRules("https://a-o0o0o.data.emb-api.com", "GET")
@@ -235,7 +237,6 @@ internal class EmbraceNetworkCaptureServiceTest {
     }
 
     private fun getService() = EmbraceNetworkCaptureService(
-        metadataService,
         sessionIdTracker,
         preferenceService,
         { networkCaptureDataSource },

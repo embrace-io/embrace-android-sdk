@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * For the start of warm launch traces, we use the creation time for the first activity that we want to consider for startup
  *
  */
-internal class AppStartupTraceEmitter(
+public class AppStartupTraceEmitter(
     private val clock: Clock,
     private val startupServiceProvider: Provider<StartupService?>,
     private val spanService: SpanService,
@@ -409,15 +409,15 @@ internal class AppStartupTraceEmitter(
         val endTimeMs: Long,
     )
 
-    companion object {
+    public companion object {
         /**
          * The gap between the end of the Embrace SDK initialization to when the first activity loaded after startup happens.
          * If this gap is greater than 2 seconds, it is assumed that the app process was not created because the user tapped on the app,
          * so we track this app launch as a warm start.
          */
-        const val SDK_AND_ACTIVITY_INIT_GAP = 2000L
+        public const val SDK_AND_ACTIVITY_INIT_GAP: Long = 2000L
 
-        fun duration(start: Long?, end: Long?): Long? = if (start != null && end != null) {
+        public fun duration(start: Long?, end: Long?): Long? = if (start != null && end != null) {
             end - start
         } else {
             null

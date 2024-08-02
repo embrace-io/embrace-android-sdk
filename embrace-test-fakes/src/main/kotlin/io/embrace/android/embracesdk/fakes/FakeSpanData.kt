@@ -21,7 +21,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import kotlin.random.Random
 
-internal class FakeSpanData(
+public class FakeSpanData(
     private var name: String = "fake-started-span",
     private var kind: SpanKind = SpanKind.INTERNAL,
     private var spanContext: SpanContext = newTraceRootContext(),
@@ -44,8 +44,8 @@ internal class FakeSpanData(
     ),
     private var links: MutableList<LinkData> = mutableListOf(),
     private var resource: Resource = Resource.empty(),
-    var spanStatus: StatusData = StatusData.unset(),
-    var endTimeNanos: Long = 0L
+    public var spanStatus: StatusData = StatusData.unset(),
+    public var endTimeNanos: Long = 0L
 ) : SpanData {
     override fun getName(): String = name
     override fun getKind(): SpanKind = kind
@@ -63,13 +63,13 @@ internal class FakeSpanData(
     override fun getTotalAttributeCount(): Int = attributes.size()
 
     @Deprecated("Deprecated in Java")
-    override fun getInstrumentationLibraryInfo() = InstrumentationLibraryInfo.empty()
+    override fun getInstrumentationLibraryInfo(): InstrumentationLibraryInfo = InstrumentationLibraryInfo.empty()
     override fun getResource(): Resource = resource
 
-    companion object {
+    public companion object {
         private const val DEFAULT_START_TIME_MS = FakeClock.DEFAULT_FAKE_CURRENT_TIME
-        val perfSpanSnapshot = FakeSpanData(name = "snapshot-perf-span")
-        val perfSpanCompleted =
+        public val perfSpanSnapshot: FakeSpanData = FakeSpanData(name = "snapshot-perf-span")
+        public val perfSpanCompleted: FakeSpanData =
             FakeSpanData(
                 name = "completed-perf-span",
                 spanStatus = StatusData.ok(),

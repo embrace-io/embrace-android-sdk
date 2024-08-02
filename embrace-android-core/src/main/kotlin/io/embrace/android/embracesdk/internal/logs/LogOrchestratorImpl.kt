@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-internal class LogOrchestratorImpl(
+public class LogOrchestratorImpl(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
     private val sink: LogSink,
@@ -99,8 +99,8 @@ internal class LogOrchestratorImpl(
         return firstLogInBatchTime != 0L && now - firstLogInBatchTime >= MAX_BATCH_TIME
     }
 
-    companion object {
-        const val MAX_LOGS_PER_BATCH = 50
+    public companion object {
+        public const val MAX_LOGS_PER_BATCH: Int = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

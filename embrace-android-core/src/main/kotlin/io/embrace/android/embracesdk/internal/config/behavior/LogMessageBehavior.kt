@@ -6,3 +6,4 @@ public interface LogMessageBehavior {
     public fun getWarnLogLimit(): Int
     public fun getErrorLogLimit(): Int
 }
+public const val LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH: Int = 128

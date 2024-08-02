@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.CacheableValue
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionContext
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.FlutterException.embFlutterExceptionLibrary
@@ -14,7 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -29,14 +28,11 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
-import java.util.NavigableMap
-import java.util.concurrent.ConcurrentSkipListMap
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
-internal class EmbraceLogService(
+public class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionProperties: EmbraceSessionProperties,
@@ -303,7 +299,7 @@ internal class EmbraceLogService(
             // ensure that we never end up with a negative offset when extracting substring, regardless of the config value set
             val allowedLength = when {
                 maxLength >= endChars.length -> maxLength - endChars.length
-                else -> LogMessageBehaviorImpl.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
+                else -> LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
             }
             logger.logWarning("Truncating message to ${message.length} characters")
             message.substring(0, allowedLength) + endChars
@@ -312,46 +308,11 @@ internal class EmbraceLogService(
         }
     }
 
-    companion object {
+    private companion object {
 
         /**
          * The default limit of Unity log messages that can be sent.
          */
         private const val LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH = 16384
-    }
-}
-
-internal class LogCounter(
-    private val name: String,
-    private val clock: Clock,
-    private val getConfigLogLimit: (() -> Int),
-    private val logger: EmbLogger
-) {
-    private val count = AtomicInteger(0)
-    private val logIds: NavigableMap<Long, String> = ConcurrentSkipListMap()
-    private val cache = CacheableValue<List<String>> { logIds.size }
-
-    fun addIfAllowed(logId: String): Boolean {
-        val timestamp = clock.now()
-        count.incrementAndGet()
-
-        if (logIds.size < getConfigLogLimit.invoke()) {
-            logIds[timestamp] = logId
-        } else {
-            logger.logInfo("$name log limit has been reached.")
-            return false
-        }
-        return true
-    }
-
-    fun findLogIds(): List<String> {
-        return cache.value { ArrayList(logIds.values) }
-    }
-
-    fun getCount(): Int = count.get()
-
-    fun clear() {
-        count.set(0)
-        logIds.clear()
     }
 }

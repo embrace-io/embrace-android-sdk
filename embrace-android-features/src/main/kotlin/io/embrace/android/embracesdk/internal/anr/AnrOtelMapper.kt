@@ -16,7 +16,7 @@ import io.opentelemetry.semconv.JvmAttributes
 /**
  * Maps captured ANRs to OTel constructs.
  */
-internal class AnrOtelMapper(
+public class AnrOtelMapper(
     private val anrService: AnrService,
     private val clock: Clock
 ) : DataCaptureServiceOtelConverter {

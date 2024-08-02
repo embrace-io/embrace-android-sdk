@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.anr.ndk
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
-import com.squareup.moshi.Types
+import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.DataCaptureServiceOtelConverter
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -18,7 +16,7 @@ import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes
 import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes
 
-internal class NativeAnrOtelMapper(
+public class NativeAnrOtelMapper(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val serializer: PlatformSerializer,
     private val clock: Clock
@@ -96,7 +94,7 @@ internal class NativeAnrOtelMapper(
             )
         }
         frames?.let { stacktrace ->
-            val json = serializer.toJson(stacktrace, Types.newParameterizedType(List::class.java, NativeAnrSampleFrame::class.java))
+            val json = serializer.toJson(stacktrace, TypeUtils.typedList(NativeAnrSampleFrame::class))
             attrs.add(Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, json))
         }
         return SpanEvent(
@@ -105,19 +103,4 @@ internal class NativeAnrOtelMapper(
             attributes = attrs
         )
     }
-
-    @JsonClass(generateAdapter = true)
-    internal class NativeAnrSampleFrame(
-        @Json(name = "program_counter")
-        val programCounter: String? = null,
-
-        @Json(name = "so_load_addr")
-        val soLoadAddr: String? = null,
-
-        @Json(name = "so_name")
-        val soName: String? = null,
-
-        @Json(name = "result")
-        val result: Int? = null
-    )
 }

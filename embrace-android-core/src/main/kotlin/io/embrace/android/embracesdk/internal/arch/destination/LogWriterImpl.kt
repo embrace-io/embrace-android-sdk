@@ -13,7 +13,7 @@ import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
-internal class LogWriterImpl(
+public class LogWriterImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
     private val processStateService: ProcessStateService

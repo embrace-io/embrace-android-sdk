@@ -247,17 +247,6 @@ internal class EmbraceConfigServiceTest {
     }
 
     @Test
-    fun `test onForeground() with sdk started and config sdkDisabled=true stops the SDK`() {
-        var stopped = false
-        service = createService(worker) {
-            stopped = true
-        }
-        fakePreferenceService.sdkDisabled = true
-        service.onForeground(true, 1100L)
-        assertTrue(stopped)
-    }
-
-    @Test
     fun `test isSdkDisabled returns true`() {
         fakePreferenceService.sdkDisabled = true
         assertTrue(service.isSdkDisabled())

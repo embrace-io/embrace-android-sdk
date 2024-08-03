@@ -278,7 +278,6 @@ internal class EmbraceConfigService(
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         // Refresh the config on resume if it has expired
         getConfig()
-        foregroundAction()
     }
 
     override val appFramework: AppFramework = localConfig.sdkConfig.appFramework?.let {

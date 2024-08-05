@@ -34,7 +34,8 @@ internal class FakeCustomerLogModule(
     )
 ) : CustomerLogModule {
 
-    override val networkCaptureService: NetworkCaptureService = FakeNetworkCaptureService()
+    override val networkCaptureService: NetworkCaptureService =
+        FakeNetworkCaptureService()
 
     override val logOrchestrator: LogOrchestrator
         get() = FakeLogOrchestrator()

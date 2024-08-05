@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.EventType
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
-internal interface LogService : BaseLogService {
+public interface LogService : BaseLogService {
 
     /**
      * Creates a remote log.
@@ -23,7 +23,7 @@ internal interface LogService : BaseLogService {
      * @param exceptionMessage   the exception message of a Throwable is it is present
      */
     @Suppress("LongParameterList")
-    fun log(
+    public fun log(
         message: String,
         type: EventType,
         logExceptionType: LogExceptionType,

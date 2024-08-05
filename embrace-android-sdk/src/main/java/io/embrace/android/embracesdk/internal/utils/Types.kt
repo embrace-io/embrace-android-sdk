@@ -32,11 +32,6 @@ import java.io.OutputStream
 internal typealias SerializationAction = (outputStream: OutputStream) -> Unit
 
 /**
- * When a local or remote config doesn't exist, this type can be used as a placeholder.
- */
-internal typealias UnimplementedConfig = Unit?
-
-/**
  * Function that returns an instance of [CoreModule]. Matches the signature of the constructor for [CoreModuleImpl]
  */
 internal typealias CoreModuleSupplier = (

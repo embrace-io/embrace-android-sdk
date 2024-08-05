@@ -75,6 +75,7 @@ dependencies {
     testImplementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")
     testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.MOCKWEBSERVER}")
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-test-fakes"))
 
     androidTestImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
     androidTestImplementation("androidx.test:runner:${Versions.ANDROIDX_TEST}")

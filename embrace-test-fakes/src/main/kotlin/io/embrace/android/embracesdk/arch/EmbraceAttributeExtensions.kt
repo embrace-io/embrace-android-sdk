@@ -24,36 +24,36 @@ import org.junit.Assert.assertTrue
 /**
  * Assert [EmbraceSpanData] is of type [EmbType.Performance.Default]
  */
-internal fun EmbraceSpanData.assertIsTypePerformance() = assertIsType(EmbType.Performance.Default)
+public fun EmbraceSpanData.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
 
 /**
  * Assert [EmbraceSpanData] is of type [telemetryType]
  */
-internal fun EmbraceSpanData.assertIsType(telemetryType: TelemetryType) = assertHasEmbraceAttribute(telemetryType)
+public fun EmbraceSpanData.assertIsType(telemetryType: TelemetryType): Unit = assertHasEmbraceAttribute(telemetryType)
 
-internal fun EmbraceSpanData.assertIsKeySpan() = assertHasEmbraceAttribute(KeySpan)
+public fun EmbraceSpanData.assertIsKeySpan(): Unit = assertHasEmbraceAttribute(KeySpan)
 
-internal fun EmbraceSpanData.assertNotKeySpan() = assertDoesNotHaveEmbraceAttribute(KeySpan)
+public fun EmbraceSpanData.assertNotKeySpan(): Unit = assertDoesNotHaveEmbraceAttribute(KeySpan)
 
-internal fun EmbraceSpanData.assertIsPrivateSpan() = assertHasEmbraceAttribute(PrivateSpan)
+public fun EmbraceSpanData.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 
-internal fun EmbraceSpanData.assertNotPrivateSpan() = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+public fun EmbraceSpanData.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
 
 /**
  * Assert [EmbraceSpanData] has the [FixedAttribute] defined by [fixedAttribute]
  */
-internal fun EmbraceSpanData.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
+public fun EmbraceSpanData.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
     assertTrue(hasFixedAttribute(fixedAttribute))
 }
 
-internal fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(fixedAttribute: FixedAttribute) {
+public fun EmbraceSpanData.assertDoesNotHaveEmbraceAttribute(fixedAttribute: FixedAttribute) {
     assertFalse(attributes[fixedAttribute.key.name]?.equals(fixedAttribute.value) ?: false)
 }
 
 /**
  * Assert [EmbraceSpanData] has ended with the error defined by [errorCode]
  */
-internal fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
+public fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
     assertEquals(StatusCode.ERROR, status)
     assertHasEmbraceAttribute(errorCode.fromErrorCode())
 }
@@ -61,37 +61,37 @@ internal fun EmbraceSpanData.assertError(errorCode: ErrorCode) {
 /**
  * Assert [EmbraceSpanData] has ended successfully
  */
-internal fun EmbraceSpanData.assertSuccessful() {
+public fun EmbraceSpanData.assertSuccessful() {
     assertNotEquals(StatusCode.ERROR, status)
     assertNull(attributes[ErrorCodeAttribute.Failure.key.name])
 }
 
-internal fun Span.assertIsTypePerformance() = assertIsType(EmbType.Performance.Default)
+public fun Span.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
 
-internal fun Span.assertIsType(telemetryType: TelemetryType) = assertHasEmbraceAttribute(telemetryType)
+public fun Span.assertIsType(telemetryType: TelemetryType): Unit = assertHasEmbraceAttribute(telemetryType)
 
-internal fun Span.assertIsKeySpan() = assertHasEmbraceAttribute(KeySpan)
+public fun Span.assertIsKeySpan(): Unit = assertHasEmbraceAttribute(KeySpan)
 
-internal fun Span.assertNotKeySpan() = assertDoesNotHaveEmbraceAttribute(KeySpan)
+public fun Span.assertNotKeySpan(): Unit = assertDoesNotHaveEmbraceAttribute(KeySpan)
 
-internal fun Span.assertIsPrivateSpan() = assertHasEmbraceAttribute(PrivateSpan)
+public fun Span.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 
-internal fun Span.assertNotPrivateSpan() = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
+public fun Span.assertNotPrivateSpan(): Unit = assertDoesNotHaveEmbraceAttribute(PrivateSpan)
 
-internal fun Span.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
+public fun Span.assertHasEmbraceAttribute(fixedAttribute: FixedAttribute) {
     assertTrue(checkNotNull(attributes).contains(fixedAttribute.toPayload()))
 }
 
-internal fun Span.assertDoesNotHaveEmbraceAttribute(fixedAttribute: FixedAttribute) {
+public fun Span.assertDoesNotHaveEmbraceAttribute(fixedAttribute: FixedAttribute) {
     assertFalse(checkNotNull(attributes).contains(fixedAttribute.toPayload()))
 }
 
-internal fun Span.assertError(errorCode: ErrorCode) {
+public fun Span.assertError(errorCode: ErrorCode) {
     assertEquals(Span.Status.ERROR, status)
     assertHasEmbraceAttribute(errorCode.fromErrorCode())
 }
 
-internal fun Span.assertSuccessful() {
+public fun Span.assertSuccessful() {
     assertNotEquals(Span.Status.ERROR, status)
     assertEquals(0, checkNotNull(attributes).filter { it.key == ErrorCodeAttribute.Failure.key.name }.size)
 }
@@ -99,13 +99,13 @@ internal fun Span.assertSuccessful() {
 /**
  * Assert [SpanEventData] is of type [telemetryType]
  */
-internal fun SpanEventData.assertIsType(
+public fun SpanEventData.assertIsType(
     telemetryType: TelemetryType
-) = assertEquals(telemetryType, schemaType.telemetryType)
+): Unit = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
  * Assert [LogEventData] is of type [telemetryType]
  */
-internal fun LogEventData.assertIsType(
+public fun LogEventData.assertIsType(
     telemetryType: TelemetryType
-) = assertEquals(telemetryType, schemaType.telemetryType)
+): Unit = assertEquals(telemetryType, schemaType.telemetryType)

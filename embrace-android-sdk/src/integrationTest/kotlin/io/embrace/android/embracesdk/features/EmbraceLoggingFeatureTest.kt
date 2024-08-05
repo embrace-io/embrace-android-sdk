@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.testcases
+package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
@@ -16,7 +16,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class OTelLoggingApiTest {
+internal class EmbraceLoggingFeatureTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {

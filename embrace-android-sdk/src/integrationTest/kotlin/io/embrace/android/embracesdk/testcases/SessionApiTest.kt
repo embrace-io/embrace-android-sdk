@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-internal class V2SessionApiTest {
+internal class SessionApiTest {
 
     @Rule
     @JvmField

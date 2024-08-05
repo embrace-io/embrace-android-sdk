@@ -67,7 +67,6 @@ internal class EmbraceWebViewServiceTest {
     @Test
     fun `test messages complete group by url and timestamp`() {
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
-        embraceWebViewService.loadDataIntoSession()
 
         assertEquals(1, writer.addedEvents.size)
         writer.addedEvents.first().let {
@@ -85,7 +84,6 @@ internal class EmbraceWebViewServiceTest {
     fun `test two complete groups by url and timestamp`() {
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteData2)
-        embraceWebViewService.loadDataIntoSession()
 
         assertEquals(2, writer.addedEvents.size)
         writer.addedEvents.forEach {
@@ -103,7 +101,6 @@ internal class EmbraceWebViewServiceTest {
     fun `test two complete groups whit same url and timestamp keep correct CLS and LCP`() {
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteRepeatedData)
-        embraceWebViewService.loadDataIntoSession()
 
         assertEquals(1, writer.addedEvents.size)
         val event = writer.addedEvents.first()
@@ -129,7 +126,6 @@ internal class EmbraceWebViewServiceTest {
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView1", expectedCompleteData2)
         embraceWebViewService.collectWebData("webView1", expectedCompleteRepeatedData)
-        embraceWebViewService.loadDataIntoSession()
 
         assertEquals(2, writer.addedEvents.size)
         writer.addedEvents.forEach {
@@ -146,7 +142,6 @@ internal class EmbraceWebViewServiceTest {
     @Test
     fun `test repeated elements in one message`() {
         embraceWebViewService.collectWebData("webView1", repeatedElementsSameMessage)
-        embraceWebViewService.loadDataIntoSession()
 
         assertEquals(1, writer.addedEvents.size)
         val event = writer.addedEvents.first()
@@ -173,7 +168,6 @@ internal class EmbraceWebViewServiceTest {
 
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData)
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData2)
-        embraceWebViewService.loadDataIntoSession()
         assertEquals(1, writer.addedEvents.size)
 
         // same but bigger max vitals limit
@@ -181,7 +175,6 @@ internal class EmbraceWebViewServiceTest {
 
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData)
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData2)
-        embraceWebViewService.loadDataIntoSession()
         assertEquals(2, writer.addedEvents.size)
     }
 
@@ -192,7 +185,6 @@ internal class EmbraceWebViewServiceTest {
             "$EMBRACE_KEY_FOR_CONSOLE_LOGS ".repeat(repeatTimes) + "1" // limit is 800 characters
 
         embraceWebViewService.collectWebData("webViewMock", messageTooLong)
-        embraceWebViewService.loadDataIntoSession()
         assertEquals(0, writer.addedEvents.size)
     }
 
@@ -202,7 +194,6 @@ internal class EmbraceWebViewServiceTest {
 
         embraceWebViewService.collectWebData("webView1", expectedCompleteData)
         embraceWebViewService.collectWebData("webView2", dataWithoutKey)
-        embraceWebViewService.loadDataIntoSession()
 
         assertEquals(1, writer.addedEvents.size)
     }
@@ -211,8 +202,7 @@ internal class EmbraceWebViewServiceTest {
     fun testWebViewCleanCollections() {
         embraceWebViewService.collectWebData("webView1", repeatedElementsSameMessage)
         embraceWebViewService.cleanCollections()
-        embraceWebViewService.loadDataIntoSession()
-        assertEquals(0, writer.addedEvents.size)
+        assertEquals(1, writer.addedEvents.size)
     }
 }
 

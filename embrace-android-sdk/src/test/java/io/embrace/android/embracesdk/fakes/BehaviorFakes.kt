@@ -81,6 +81,7 @@ internal fun fakeAutoDataCaptureBehavior(
 /**
  * A fake [BreadcrumbBehaviorImpl] that returns default values.
  */
+@Deprecated("Use FakeBreadcrumberBehavior class instead")
 internal fun fakeBreadcrumbBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<SdkLocalConfig?> = { null },

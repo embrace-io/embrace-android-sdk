@@ -2,12 +2,11 @@ package io.embrace.android.embracesdk.capture.envelope.session
 
 import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeNativeThreadSamplerService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData
-import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -40,15 +39,16 @@ internal class SessionPayloadSourceImplTest {
         spanRepository = SpanRepository()
         spanRepository.trackStartedSpan(activeSpan)
         impl = SessionPayloadSourceImpl(
-            FakeNativeThreadSamplerService(),
+            { mapOf("armeabi-v7a" to "my-symbols") },
             sink,
             currentSessionSpan,
             spanRepository,
-            fakeAnrOtelMapper(),
-            fakeNativeAnrOtelMapper(),
-            EmbLoggerImpl(),
-            ::FakeWebViewService,
-            ::FakeSessionPropertiesService,
+            OtelPayloadMapperImpl(
+                fakeAnrOtelMapper(),
+                fakeNativeAnrOtelMapper(),
+                ::FakeSessionPropertiesService,
+            ),
+            EmbLoggerImpl()
         )
     }
 

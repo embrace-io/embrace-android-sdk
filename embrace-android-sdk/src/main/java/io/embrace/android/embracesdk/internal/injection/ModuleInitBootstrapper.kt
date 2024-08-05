@@ -351,8 +351,7 @@ internal class ModuleInitBootstrapper(
                             nativeModule,
                             openTelemetryModule,
                             anrModule,
-                            { sessionModule.sessionPropertiesService },
-                            { dataCaptureServiceModule.webviewService }
+                            { sessionModule.sessionPropertiesService }
                         )
                     }
 

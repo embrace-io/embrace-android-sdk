@@ -7,6 +7,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.junit)
     compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-sdk"))
     compileOnly(project(":embrace-android-payload"))

@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.capture.crumbs
 
 import io.embrace.android.embracesdk.arch.assertIsType
-import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -19,9 +19,9 @@ internal class BreadcrumbDataSourceTest {
     fun setUp() {
         writer = FakeCurrentSessionSpan()
         source = BreadcrumbDataSource(
-            FakeConfigService().breadcrumbBehavior,
+            FakeBreadcrumbBehavior(),
             writer,
-            EmbLoggerImpl(),
+            FakeEmbLogger()
         )
     }
 

@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.EnvelopeResourceSourceImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -25,8 +25,7 @@ internal class PayloadModuleImpl(
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
-    webViewServiceProvider: Provider<WebViewService>,
+    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
 ) : PayloadModule {
 
     private val backgroundWorker =
@@ -58,15 +57,17 @@ internal class PayloadModuleImpl(
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(
-            nativeModule.nativeThreadSamplerService,
+            { nativeModule.nativeThreadSamplerService?.getNativeSymbols() },
             otelModule.spanSink,
             otelModule.currentSessionSpan,
             otelModule.spanRepository,
-            anrModule.anrOtelMapper,
-            nativeModule.nativeAnrOtelMapper,
+            OtelPayloadMapperImpl(
+                anrModule.anrOtelMapper,
+                nativeModule.nativeAnrOtelMapper,
+                sessionPropertiesServiceProvider
+            ),
             initModule.logger,
-            webViewServiceProvider,
-            sessionPropertiesServiceProvider
+
         )
     }
 

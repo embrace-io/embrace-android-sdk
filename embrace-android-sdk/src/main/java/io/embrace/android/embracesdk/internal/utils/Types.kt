@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.utils
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
@@ -229,6 +228,5 @@ internal typealias PayloadModuleSupplier = (
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>,
-    webViewServiceProvider: Provider<WebViewService>,
+    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
 ) -> PayloadModule

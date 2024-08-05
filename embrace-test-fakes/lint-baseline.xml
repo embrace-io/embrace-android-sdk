@@ -166,4 +166,26 @@
             column="47"/>
     </issue>
 
+    <issue
+        id="SyntheticAccessor"
+        message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
+        errorLine1="    private var spanContext: SpanContext = newTraceRootContext(),"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
+            line="27"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="SyntheticAccessor"
+        message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
+        errorLine1="    private var spanContext: SpanContext = newTraceRootContext(),"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
+            line="27"
+            column="44"/>
+    </issue>
+
 </issues>

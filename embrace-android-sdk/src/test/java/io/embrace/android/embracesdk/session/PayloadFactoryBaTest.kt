@@ -14,12 +14,12 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.FakeWebViewService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -154,15 +154,16 @@ internal class PayloadFactoryBaTest {
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             sessionPayloadSource = SessionPayloadSourceImpl(
-                null,
+                { null },
                 spanSink,
                 currentSessionSpan,
                 spanRepository,
-                fakeAnrOtelMapper(),
-                fakeNativeAnrOtelMapper(),
-                logger,
-                ::FakeWebViewService,
-                ::FakeSessionPropertiesService,
+                OtelPayloadMapperImpl(
+                    fakeAnrOtelMapper(),
+                    fakeNativeAnrOtelMapper(),
+                    ::FakeSessionPropertiesService,
+                ),
+                logger
             )
         )
         val collator = PayloadMessageCollatorImpl(

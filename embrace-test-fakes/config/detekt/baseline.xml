@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>TooGenericExceptionThrown:FakeSharedPreferences.kt$FakeSharedPreferences$throw Exception("test exception")</ID>
+  </CurrentIssues>
+</SmellBaseline>

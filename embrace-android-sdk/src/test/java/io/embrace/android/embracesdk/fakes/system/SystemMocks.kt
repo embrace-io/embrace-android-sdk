@@ -15,23 +15,23 @@ import android.view.WindowManager
 import io.mockk.every
 import io.mockk.mockk
 
-internal fun mockLooper(): Looper = mockk(relaxed = true) {
+public fun mockLooper(): Looper = mockk(relaxed = true) {
     every { thread } returns Thread.currentThread()
 }
 
-internal fun mockMessageQueue(): MessageQueue = mockk(relaxed = true)
-internal fun mockMessage(): Message = mockk(relaxed = true)
-internal fun mockActivity(): Activity = mockk(relaxed = true) {
+public fun mockMessageQueue(): MessageQueue = mockk(relaxed = true)
+public fun mockMessage(): Message = mockk(relaxed = true)
+public fun mockActivity(): Activity = mockk(relaxed = true) {
     every { localClassName } returns "MyMockActivity"
 }
-internal fun mockIntent(): Intent = mockk(relaxed = true)
-internal fun mockContext(): Context = mockk(relaxed = true)
-internal fun mockApplication(): Application = mockk(relaxed = true) {
+public fun mockIntent(): Intent = mockk(relaxed = true)
+public fun mockContext(): Context = mockk(relaxed = true)
+public fun mockApplication(): Application = mockk(relaxed = true) {
     every { registerActivityLifecycleCallbacks(any()) } returns Unit
 }
 
-internal fun mockResources(): Resources = mockk(relaxed = true)
-internal fun mockBundle(): Bundle = mockk(relaxed = true)
-internal fun mockStorageStatsManager(): StorageStatsManager = mockk(relaxed = true)
-internal fun mockWindowManager(): WindowManager = mockk(relaxed = true)
-internal fun mockPowerManager(): PowerManager = mockk(relaxed = true)
+public fun mockResources(): Resources = mockk(relaxed = true)
+public fun mockBundle(): Bundle = mockk(relaxed = true)
+public fun mockStorageStatsManager(): StorageStatsManager = mockk(relaxed = true)
+public fun mockWindowManager(): WindowManager = mockk(relaxed = true)
+public fun mockPowerManager(): PowerManager = mockk(relaxed = true)

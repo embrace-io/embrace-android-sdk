@@ -19,8 +19,8 @@ import org.robolectric.RuntimeEnvironment
 /**
  * If used in a Robolectric test, [application] and [context] will be fakes supplied by the Robolectric framework
  */
-internal class FakeCoreModule(
-    val logger: EmbLogger = EmbLoggerImpl(),
+public class FakeCoreModule(
+    private val logger: EmbLogger = EmbLoggerImpl(),
     override val application: Application =
         if (RuntimeEnvironment.getApplication() == null) mockApplication() else RuntimeEnvironment.getApplication(),
     override val context: Context =
@@ -33,10 +33,10 @@ internal class FakeCoreModule(
     override val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 ) : CoreModule {
 
-    companion object {
+    public companion object {
 
         @Suppress("DEPRECATION")
-        fun getMockedContext(): Context {
+        public fun getMockedContext(): Context {
             val packageInfo = PackageInfo()
             packageInfo.versionName = "1.0.0"
             packageInfo.versionCode = 10

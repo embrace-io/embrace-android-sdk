@@ -8,4 +8,7 @@ public object TypeUtils {
 
     public fun typedList(clz: KClass<*>): ParameterizedType =
         Types.newParameterizedType(List::class.java, clz.java)
+
+    public fun <K, V> typedMap(keyClz: Class<K>, valueClz: Class<V>): ParameterizedType =
+        Types.newParameterizedType(Map::class.java, keyClz, valueClz)
 }

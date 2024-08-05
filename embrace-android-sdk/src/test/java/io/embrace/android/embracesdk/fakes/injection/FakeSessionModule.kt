@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.FakePayloadFactory
-import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.injection.SessionModule
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher

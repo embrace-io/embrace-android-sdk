@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.session.properties
 
-import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionPropertiesService

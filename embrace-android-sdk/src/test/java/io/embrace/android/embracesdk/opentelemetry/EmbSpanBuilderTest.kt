@@ -79,7 +79,12 @@ internal class EmbSpanBuilderTest {
 
     @Test
     fun `set parent to root`() {
-        val oldParent = FakePersistableEmbraceSpan.started(parentContext = Context.root().with(fakeContextKey, "value"))
+        val oldParent = FakePersistableEmbraceSpan.started(
+            parentContext = Context.root().with(
+                fakeContextKey,
+                "value"
+            )
+        )
         val newEmbraceSpanBuilder = EmbraceSpanBuilder(
             tracer = tracer,
             name = "custom",

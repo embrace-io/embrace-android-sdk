@@ -18,10 +18,6 @@ internal interface ApiClient {
     fun executePost(request: ApiRequest, action: SerializationAction): ApiResponse
 
     companion object {
-        /**
-         * The version of the API message format.
-         */
-        const val MESSAGE_VERSION = 13
 
         const val NO_HTTP_RESPONSE = -1
 

@@ -103,8 +103,3 @@ private const val EMBRACE_TELEMETRY_USED_STORAGE_NAME = "emb.storage.used"
  * Telemetry attribute name for the storage used by Embrace.
  */
 private const val EMBRACE_TELEMETRY_AVAILABLE_STORAGE_NAME = "emb.storage.available"
-
-/**
- * Directory name for the native crash files that are stored in the files directory.
- */
-internal const val NATIVE_CRASH_FILE_FOLDER = "ndk"

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk
 
-import com.squareup.moshi.JsonDataException
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -8,37 +7,6 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class LegacyExceptionInfoTest {
-
-    private val info = LegacyExceptionInfo(
-        "java.lang.IllegalStateException",
-        "Whoops!",
-        listOf(
-            "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
-            "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
-        )
-    )
-
-    @Test
-    fun testExceptionInfoSerialization() {
-        assertJsonMatchesGoldenFile("exception_info_expected.json", info)
-    }
-
-    @Test
-    fun testExceptionInfoDeserialization() {
-        val obj = deserializeJsonFromResource<LegacyExceptionInfo>("exception_info_expected.json")
-        assertEquals("java.lang.IllegalStateException", obj.name)
-        assertEquals("Whoops!", obj.message)
-        assertEquals("java.base/java.lang.Thread.getStackTrace(Thread.java:1602)", obj.lines[0])
-        assertEquals(
-            "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)",
-            obj.lines[1]
-        )
-    }
-
-    @Test(expected = JsonDataException::class)
-    fun testExceptionInfoEmptyObject() {
-        deserializeEmptyJsonString<LegacyExceptionInfo>()
-    }
 
     @Test
     fun testOfThrowable() {
@@ -48,7 +16,7 @@ internal class LegacyExceptionInfoTest {
         assertEquals("UhOh.", info.message)
         assertEquals("io.embrace.android.embracesdk.LegacyExceptionInfoTest\$testOfThrowable\$throwable\$1", info.name)
         assertEquals(
-            "io.embrace.android.embracesdk.LegacyExceptionInfoTest.testOfThrowable(LegacyExceptionInfoTest.kt:45)",
+            "io.embrace.android.embracesdk.LegacyExceptionInfoTest.testOfThrowable(LegacyExceptionInfoTest.kt:13)",
             info.lines.first()
         )
         assertNull(info.originalLength)

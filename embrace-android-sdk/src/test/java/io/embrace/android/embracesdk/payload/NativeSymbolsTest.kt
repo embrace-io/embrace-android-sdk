@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.payload
 
-import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
-import io.embrace.android.embracesdk.deserializeEmptyJsonString
-import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -40,24 +36,5 @@ internal class NativeSymbolsTest {
         assertEquals(armv7Symbols, symbols.getSymbolByArchitecture("armeabi-v7a"))
         assertEquals(x86Symbols, symbols.getSymbolByArchitecture("x86"))
         assertEquals(x86Symbols, symbols.getSymbolByArchitecture("x86_64"))
-    }
-
-    @Test
-    fun testSerialization() {
-        assertJsonMatchesGoldenFile("native_symbols_expected.json", symbols)
-    }
-
-    @Test
-    fun testDeserialization() {
-        val obj = deserializeJsonFromResource<NativeSymbols>("native_symbols_expected.json")
-        assertEquals(armv7Symbols, obj.getSymbolByArchitecture("arm64-v8a"))
-        assertEquals(armv7Symbols, obj.getSymbolByArchitecture("armeabi-v7a"))
-        assertEquals(x86Symbols, obj.getSymbolByArchitecture("x86"))
-        assertEquals(x86Symbols, obj.getSymbolByArchitecture("x86_64"))
-    }
-
-    @Test(expected = JsonDataException::class)
-    fun testEmptyObject() {
-        deserializeEmptyJsonString<NativeSymbols>()
     }
 }

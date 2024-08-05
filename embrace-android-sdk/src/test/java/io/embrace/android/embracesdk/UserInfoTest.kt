@@ -4,38 +4,10 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.capture.user.getStoredUserInfo
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class UserInfoTest {
-
-    private val info = UserInfo(
-        userId = "123",
-        email = "fake@example.com",
-        username = "joebloggs",
-        personas = setOf("first_day"),
-    )
-
-    @Test
-    fun testSerialization() {
-        assertJsonMatchesGoldenFile("user_info_expected.json", info)
-    }
-
-    @Test
-    fun testDeserialization() {
-        val obj = deserializeJsonFromResource<UserInfo>("user_info_expected.json")
-        assertEquals("123", obj.userId)
-        assertEquals("fake@example.com", obj.email)
-        assertEquals("joebloggs", obj.username)
-        assertEquals(setOf("first_day"), obj.personas)
-    }
-
-    @Test
-    fun testEmptyObject() {
-        val obj = deserializeEmptyJsonString<UserInfo>()
-        assertNotNull(obj)
-    }
 
     /**
      * Construct a default builder

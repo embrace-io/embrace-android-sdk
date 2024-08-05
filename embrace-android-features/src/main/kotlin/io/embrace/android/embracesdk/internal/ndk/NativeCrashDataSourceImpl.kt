@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
-internal class NativeCrashDataSourceImpl(
+public class NativeCrashDataSourceImpl(
     private val sessionProperties: EmbraceSessionProperties,
     private val ndkService: NdkService,
     private val preferencesService: PreferencesService,
@@ -56,8 +56,7 @@ internal class NativeCrashDataSourceImpl(
         logWriter.addLog(SchemaType.NativeCrash(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
     }
 
-    companion object {
-        private val errorSerializerType =
-            Types.newParameterizedType(List::class.java, NativeCrashDataError::class.java)
+    private companion object {
+        private val errorSerializerType = TypeUtils.typedList(NativeCrashDataError::class)
     }
 }

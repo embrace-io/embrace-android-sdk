@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.internal.ndk.NativeModule
+import io.embrace.android.embracesdk.internal.injection.NativeModule
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 

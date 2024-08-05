@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.NativeModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.PayloadModule
 import io.embrace.android.embracesdk.internal.injection.SessionModule
@@ -22,7 +23,6 @@ import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.ndk.NativeModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import java.io.OutputStream
 

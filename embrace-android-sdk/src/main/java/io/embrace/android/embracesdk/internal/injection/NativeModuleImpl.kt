@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.ndk
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
@@ -6,22 +6,11 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.DeliveryModule
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.StorageModule
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.singleton
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
+import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
+import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
+import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-
-internal interface NativeModule {
-    val ndkService: NdkService
-    val nativeThreadSamplerService: NativeThreadSamplerService?
-    val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller?
-    val nativeAnrOtelMapper: NativeAnrOtelMapper
-}
 
 internal class NativeModuleImpl(
     initModule: InitModule,

@@ -47,9 +47,18 @@ public interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     public fun removeCustomAttribute(key: String): Boolean
 
     /**
-     * Removes all events with the given [EmbType]
+     * Add a system event to the span that will subjected to a different maximum than typical span events.
      */
-    public fun removeEvents(type: EmbType): Boolean
+    public fun addSystemEvent(
+        name: String,
+        timestampMs: Long?,
+        attributes: Map<String, String>?
+    ): Boolean
+
+    /**
+     * Removes all system events with the given [EmbType]
+     */
+    public fun removeSystemEvents(type: EmbType): Boolean
 
     /**
      * Set the [StatusCode] and status description of the wrapped Span

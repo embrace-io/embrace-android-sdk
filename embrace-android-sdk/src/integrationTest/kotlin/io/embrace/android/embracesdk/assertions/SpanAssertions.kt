@@ -21,7 +21,7 @@ import org.junit.Assert.assertNull
 internal fun assertEmbraceSpanData(
     span: Span?,
     expectedStartTimeMs: Long,
-    expectedEndTimeMs: Long,
+    expectedEndTimeMs: Long?,
     expectedParentId: String,
     expectedTraceId: String? = null,
     expectedStatus: Span.Status = Span.Status.UNSET,

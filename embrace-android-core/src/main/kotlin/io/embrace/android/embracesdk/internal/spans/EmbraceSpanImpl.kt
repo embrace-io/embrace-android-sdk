@@ -22,6 +22,7 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 import io.opentelemetry.semconv.ExceptionAttributes
+import java.util.Queue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
@@ -39,7 +40,8 @@ public class EmbraceSpanImpl(
     private var spanEndTimeMs: Long? = null
     private var status = Span.Status.UNSET
     private var updatedName: String? = null
-    private val events = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    private val systemEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    private val customEvents = ConcurrentLinkedQueue<EmbraceSpanEvent>()
     private val systemAttributes = ConcurrentHashMap<AttributeKey<String>, String>().apply {
         putAll(spanBuilder.getFixedAttributes().associate { it.key.attributeKey to it.value })
     }
@@ -49,7 +51,8 @@ public class EmbraceSpanImpl(
 
     // size for ConcurrentLinkedQueues is not a constant operation, so it could be subject to race conditions
     // do the bookkeeping separately so we don't have to worry about this
-    private val eventCount = AtomicInteger(0)
+    private val systemEventCount = AtomicInteger(0)
+    private val customEventCount = AtomicInteger(0)
 
     override val parent: EmbraceSpan? = spanBuilder.getParentSpan()
 
@@ -111,7 +114,7 @@ public class EmbraceSpanImpl(
                     spanToStop.setAttribute(attribute.key, attribute.value)
                 }
 
-                events.forEach { event ->
+                (systemEvents + customEvents).forEach { event ->
                     val eventAttributes = if (event.attributes.isNotEmpty()) {
                         Attributes.builder().fromMap(event.attributes).build()
                     } else {
@@ -146,7 +149,7 @@ public class EmbraceSpanImpl(
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        recordEvent {
+        recordEvent(customEvents, customEventCount, MAX_EVENT_COUNT) {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -155,7 +158,7 @@ public class EmbraceSpanImpl(
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        recordEvent {
+        recordEvent(customEvents, customEventCount, MAX_EVENT_COUNT) {
             val eventAttributes = mutableMapOf<String, String>()
             if (attributes != null) {
                 eventAttributes.putAll(attributes)
@@ -178,12 +181,21 @@ public class EmbraceSpanImpl(
             )
         }
 
-    override fun removeEvents(type: EmbType): Boolean {
-        synchronized(eventCount) {
-            events.forEach { event ->
+    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
+        recordEvent(systemEvents, systemEventCount, MAX_SYSTEM_EVENT_COUNT) {
+            EmbraceSpanEvent.create(
+                name = name,
+                timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
+                attributes = attributes
+            )
+        }
+
+    override fun removeSystemEvents(type: EmbType): Boolean {
+        synchronized(systemEventCount) {
+            systemEvents.forEach { event ->
                 if (event.hasFixedAttribute(type)) {
-                    events.remove(event)
-                    eventCount.decrementAndGet()
+                    systemEvents.remove(event)
+                    systemEventCount.decrementAndGet()
                     return true
                 }
             }
@@ -237,9 +249,9 @@ public class EmbraceSpanImpl(
                 parentSpanId = parent?.spanId ?: SpanId.getInvalid(),
                 name = getSpanName(),
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
-                endTimeNanos = spanEndTimeMs?.millisToNanos() ?: openTelemetryClock.now(),
+                endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
-                events = events.map(EmbraceSpanEvent::toNewPayload),
+                events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + customEvents.map(EmbraceSpanEvent::toNewPayload),
                 attributes = getAttributesPayload()
             )
         } else {
@@ -263,13 +275,18 @@ public class EmbraceSpanImpl(
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs != null
 
-    private fun recordEvent(eventSupplier: () -> EmbraceSpanEvent?): Boolean {
-        if (eventCount.get() < MAX_EVENT_COUNT) {
-            synchronized(eventCount) {
-                if (eventCount.get() < MAX_EVENT_COUNT && isRecording) {
+    private fun recordEvent(
+        events: Queue<EmbraceSpanEvent>,
+        count: AtomicInteger,
+        max: Int,
+        eventSupplier: () -> EmbraceSpanEvent?
+    ): Boolean {
+        if (count.get() < max) {
+            synchronized(count) {
+                if (count.get() < max && isRecording) {
                     eventSupplier()?.apply {
                         events.add(this)
-                        eventCount.incrementAndGet()
+                        count.incrementAndGet()
                         return true
                     }
                 }
@@ -286,6 +303,7 @@ public class EmbraceSpanImpl(
     public companion object {
         public const val MAX_NAME_LENGTH: Int = 50
         public const val MAX_EVENT_COUNT: Int = 10
+        public const val MAX_SYSTEM_EVENT_COUNT: Int = 11000
         public const val MAX_ATTRIBUTE_COUNT: Int = 50
         public const val MAX_ATTRIBUTE_KEY_LENGTH: Int = 50
         public const val MAX_ATTRIBUTE_VALUE_LENGTH: Int = 500

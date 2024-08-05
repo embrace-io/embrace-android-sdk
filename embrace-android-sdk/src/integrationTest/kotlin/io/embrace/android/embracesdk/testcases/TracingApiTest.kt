@@ -247,7 +247,7 @@ internal class TracingApiTest {
             assertEmbraceSpanData(
                 span = unendingSpanSnapshot,
                 expectedStartTimeMs = testStartTimeMs + 700,
-                expectedEndTimeMs = testRule.harness.overriddenClock.now(),
+                expectedEndTimeMs = null,
                 expectedParentId = SpanId.getInvalid(),
                 expectedStatus = Span.Status.UNSET,
                 expectedCustomAttributes = mapOf(Pair("unending-key", "unending-value")),
@@ -266,7 +266,7 @@ internal class TracingApiTest {
             assertEmbraceSpanData(
                 span = sessionSpanSnapshot,
                 expectedStartTimeMs = 169220160100,
-                expectedEndTimeMs = testRule.harness.overriddenClock.now(),
+                expectedEndTimeMs = null,
                 expectedParentId = SpanId.getInvalid(),
                 expectedStatus = Span.Status.UNSET,
                 private = false

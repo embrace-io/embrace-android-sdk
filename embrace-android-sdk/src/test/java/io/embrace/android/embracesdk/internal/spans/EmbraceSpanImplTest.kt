@@ -88,12 +88,12 @@ internal class EmbraceSpanImplTest {
             assertNotNull(traceId)
             assertNotNull(spanId)
             assertTrue(isRecording)
-            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, expectedEndTimeMs = expectedStartTimeMs)
+            assertSnapshot(expectedStartTimeMs = expectedStartTimeMs, expectedEndTimeMs = null)
             assertTrue(addEvent("eventName"))
             assertTrue(addAttribute("first", "value"))
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
-                expectedEndTimeMs = expectedStartTimeMs,
+                expectedEndTimeMs = null,
                 eventCount = 1,
                 expectedCustomAttributeCount = 1
             )

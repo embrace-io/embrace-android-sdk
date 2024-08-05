@@ -2,7 +2,9 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -45,6 +47,19 @@ internal class SessionSpanTest {
             checkNotNull(harness.recordSession {
                 assertFalse(embrace.currentSessionId.isNullOrBlank())
             })
+        }
+    }
+
+    @Test
+    fun `session span event do no affect logging maximum breadcrumbs`() {
+        with(testRule) {
+            startSdk()
+            val session = checkNotNull(harness.recordSession {
+                repeat(101) {
+                    embrace.addBreadcrumb("breadcrumb $it")
+                }
+            })
+            assertEquals(100, session.getSessionSpan()?.events?.size)
         }
     }
 }

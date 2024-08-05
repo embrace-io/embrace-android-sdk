@@ -9,21 +9,18 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 public interface SessionSpanWriter {
 
     /**
-     * Add an [EmbraceSpanEvent] with the given [name]. If [spanStartTimeMs] is null, the
-     * current time will be used. Optionally, the specific
-     * time of the event and a set of attributes can be passed in associated with the event.
-     *
-     * Returns true if the event was added, otherwise false.
+     * Add a span event for the given [schemaType] to the session span. If [spanStartTimeMs] is null, the
+     * current time will be used. Returns true if the event was added, otherwise false.
      */
     public fun addEvent(schemaType: SchemaType, startTimeMs: Long): Boolean
 
     /**
-     * Remove all events with the given [EmbType].
+     * Remove all span events with the given [EmbType].
      */
     public fun removeEvents(type: EmbType)
 
     /**
-     * Add the given key-value pair as an Attribute to the Event.
+     * Add the given key-value pair as an Attribute to the session span
      *
      * Returns true if the attribute was added, otherwise false.
      */

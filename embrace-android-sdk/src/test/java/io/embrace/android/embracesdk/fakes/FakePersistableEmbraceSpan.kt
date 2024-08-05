@@ -106,7 +106,10 @@ internal class FakePersistableEmbraceSpan(
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
         addEvent(EXCEPTION_EVENT_NAME, null, attributes)
 
-    override fun removeEvents(type: EmbType): Boolean {
+    override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
+        addEvent(name, timestampMs, attributes)
+
+    override fun removeSystemEvents(type: EmbType): Boolean {
         events.removeAll { it.hasFixedAttribute(type) }
         return true
     }

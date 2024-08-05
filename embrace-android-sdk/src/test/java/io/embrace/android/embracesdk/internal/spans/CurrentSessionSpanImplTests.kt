@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_SYSTEM_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -363,6 +364,19 @@ internal class CurrentSessionSpanImplTests {
         val attrs = checkNotNull(testEvent.attributes)
         assertEquals("test-event", attrs.single { it.key == "message" }.data)
         assertEquals("sys.breadcrumb", attrs.single { it.key == "emb.type" }.data)
+    }
+
+    @Test
+    fun `validate maximum events on session span`() {
+        repeat(MAX_SYSTEM_EVENT_COUNT + 1) {
+            currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
+        }
+
+        val span = currentSessionSpan.endSession(true).single()
+        assertEquals("emb-session", span.name)
+
+        // verify event was added to the span
+        assertEquals(MAX_SYSTEM_EVENT_COUNT, span.toNewPayload().events?.size)
     }
 
     @Test

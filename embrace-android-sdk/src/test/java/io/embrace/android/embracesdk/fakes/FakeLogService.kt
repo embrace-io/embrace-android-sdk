@@ -4,23 +4,23 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.EventType
 
-internal class FakeLogService : LogService {
-    internal class LogData(
-        val message: String,
-        val type: EventType,
-        val logExceptionType: LogExceptionType,
-        val properties: Map<String, Any>?,
-        val stackTraceElements: Array<StackTraceElement>?,
-        val customStackTrace: String?,
-        val context: String?,
-        val library: String?,
-        val exceptionName: String?,
-        val exceptionMessage: String?
+public class FakeLogService : LogService {
+    public class LogData(
+        public val message: String,
+        public val type: EventType,
+        public val logExceptionType: LogExceptionType,
+        public val properties: Map<String, Any>?,
+        public val stackTraceElements: Array<StackTraceElement>?,
+        public val customStackTrace: String?,
+        public val context: String?,
+        public val library: String?,
+        public val exceptionName: String?,
+        public val exceptionMessage: String?
     )
 
-    val logs = mutableListOf<String>()
-    val loggedMessages = mutableListOf<LogData>()
-    var errorLogIds = listOf<String>()
+    public val logs: MutableList<String> = mutableListOf()
+    public val loggedMessages: MutableList<LogData> = mutableListOf()
+    public var errorLogIds: List<String> = listOf()
 
     override fun log(
         message: String,

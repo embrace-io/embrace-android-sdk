@@ -16,7 +16,8 @@ internal class EmbraceLogRecordExporterTest {
     @Test
     fun `export() should store logs in LogSink`() {
         val logSink: LogSink = LogSinkImpl()
-        val embraceLogRecordExporter = EmbraceLogRecordExporter(logSink, LogRecordExporter.composite(emptyList()))
+        val embraceLogRecordExporter =
+            EmbraceLogRecordExporter(logSink, LogRecordExporter.composite(emptyList()))
         val logRecordData = FakeLogRecordData()
 
         embraceLogRecordExporter.export(listOf(logRecordData))
@@ -29,11 +30,17 @@ internal class EmbraceLogRecordExporterTest {
     fun `private logs should be filtered out from external exporters`() {
         val logSink: LogSink = LogSinkImpl()
         val externalExporter = FakeLogRecordExporter()
-        val embraceLogRecordExporter = EmbraceLogRecordExporter(logSink, LogRecordExporter.composite(externalExporter))
+        val embraceLogRecordExporter =
+            EmbraceLogRecordExporter(logSink, LogRecordExporter.composite(externalExporter))
         val logRecordData = FakeLogRecordData()
         val privateLogRecordData = FakeLogRecordData(
             log = testLog.copy(
-                attributes = logRecordData.log.attributes?.plus(Attribute(PrivateSpan.key.name, PrivateSpan.value))
+                attributes = logRecordData.log.attributes?.plus(
+                    Attribute(
+                        PrivateSpan.key.name,
+                        PrivateSpan.value
+                    )
+                )
             )
         )
 

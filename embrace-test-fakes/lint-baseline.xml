@@ -380,20 +380,6 @@
 
     <issue
         id="InvalidPackage"
-        message="Invalid package reference in library; not included in Android: `java.lang.management`. Referenced from `net.bytebuddy.agent.ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForLegacyVm`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.12.5/454dec528d1e8eb73fd9b9490a291668355886b9/byte-buddy-agent-1.12.5.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in library; not included in Android: `java.lang.instrument`. Referenced from `io.mockk.proxy.jvm.JvmMockKAgentFactory`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.12.2/a03722a5526becface47dae2993aa206ea35a85d/mockk-agent-jvm-1.12.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
         message="Invalid package reference in org.robolectric:resources; not included in Android: `javax.xml.stream`. Referenced from `org.robolectric.res.NodeHandler`.">
         <location
             file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.robolectric/resources/4.12.1/27d487d37469973f0f84e56706730db2705aa6b8/resources-4.12.1.jar"/>
@@ -464,14 +450,14 @@
     </issue>
 
     <issue
-        id="SyntheticAccessor"
-        message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
-        errorLine1="    private var spanContext: SpanContext = newTraceRootContext(),"
-        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
+        id="NewApi"
+        message="Call requires API level 24, or core library desugaring (current min is 21): `java.util.Collection#removeIf`"
+        errorLine1="            latches.removeIf { it.count == 0L }"
+        errorLine2="                    ~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="27"
-            column="44"/>
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanExporter.kt"
+            line="24"
+            column="21"/>
     </issue>
 
     <issue
@@ -486,14 +472,14 @@
     </issue>
 
     <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead"
-        errorLine1="    implementation(&quot;io.mockk:mockk:${Versions.MOCKK}&quot;)"
-        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="SyntheticAccessor"
+        message="Access to `private` method `newTraceRootContext` of class `Companion` requires synthetic accessor"
+        errorLine1="    private var spanContext: SpanContext = newTraceRootContext(),"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
         <location
-            file="build.gradle.kts"
-            line="22"
-            column="20"/>
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
+            line="27"
+            column="44"/>
     </issue>
 
     <issue
@@ -503,7 +489,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="23"
+            line="24"
             column="20"/>
     </issue>
 

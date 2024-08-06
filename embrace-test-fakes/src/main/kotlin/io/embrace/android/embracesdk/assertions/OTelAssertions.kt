@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
@@ -12,7 +12,7 @@ import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import org.junit.Assert.assertEquals
 
-internal fun Resource.assertExpectedAttributes(
+public fun Resource.assertExpectedAttributes(
     expectedServiceName: String,
     expectedServiceVersion: String,
     systemInfo: SystemInfo
@@ -31,6 +31,6 @@ internal fun Resource.assertExpectedAttributes(
     assertEquals(systemInfo.deviceModel, getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME))
 }
 
-internal fun SpanData.assertHasEmbraceAttribute(key: EmbraceAttributeKey, value: String) {
+public fun SpanData.assertHasEmbraceAttribute(key: EmbraceAttributeKey, value: String) {
     assertEquals(value, attributes.get(AttributeKey.stringKey(key.name)))
 }

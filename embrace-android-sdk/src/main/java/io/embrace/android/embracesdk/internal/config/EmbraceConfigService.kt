@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
@@ -275,10 +274,6 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         // Refresh the config on resume if it has expired
         getConfig()
-        if (Embrace.getInstance().isStarted && isSdkDisabled()) {
-            logger.logInfo("Embrace SDK disabled by config")
-            Embrace.getInstance().internalInterface.stopSdk()
-        }
     }
 
     override val appFramework: AppFramework = localConfig.sdkConfig.appFramework?.let {

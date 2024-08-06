@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
@@ -23,10 +22,8 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -248,19 +245,6 @@ internal class EmbraceConfigServiceTest {
         service.onForeground(true, 1100L)
 
         assertTrue(configListenerTriggered)
-    }
-
-    @Test
-    fun `test onForeground() with sdk started and config sdkDisabled=true stops the SDK`() {
-        val mockInternalInterface: EmbraceInternalInterface = mockk(relaxed = true)
-        mockkObject(Embrace.getImpl())
-        every { Embrace.getImpl().isStarted } returns true
-        every { Embrace.getImpl().internalInterface } returns mockInternalInterface
-        fakePreferenceService.sdkDisabled = true
-
-        service.onForeground(true, 1100L)
-
-        verify(exactly = 1) { mockInternalInterface.stopSdk() }
     }
 
     @Test

@@ -177,7 +177,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val essentialServiceModule = bootstrapper.essentialServiceModule
         if (essentialServiceModule.configService.isSdkDisabled()) {
-            logger.logInfo("Interrupting SDK start because it is disabled", null)
             stop()
             return
         }

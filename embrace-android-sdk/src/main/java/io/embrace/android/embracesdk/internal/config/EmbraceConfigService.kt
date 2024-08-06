@@ -26,6 +26,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
@@ -101,6 +103,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
+
+    override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl(localConfig.sdkConfig)
 
     override val logMessageBehavior: LogMessageBehavior =
         LogMessageBehaviorImpl(

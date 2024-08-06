@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
@@ -154,3 +155,10 @@ internal fun fakeWebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<RemoteConfig?> = { null },
 ) = WebViewVitalsBehaviorImpl(thresholdCheck, remoteCfg)
+
+/**
+ * A fake [SensitiveKeysBehaviorImpl] that returns default values.
+ */
+internal fun fakeSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(
+    SdkLocalConfig()
+)

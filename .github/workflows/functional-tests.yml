@@ -65,7 +65,7 @@ jobs:
           java-version: ${{ matrix.jdk-version }}
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v4
 
       - name: Run Functional Tests
         uses: embrace-io/android-emulator-runner@v2

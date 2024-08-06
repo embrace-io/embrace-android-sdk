@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
-public class CoreModuleImpl(
+internal class CoreModuleImpl(
     ctx: Context,
     logger: EmbLogger
 ) : CoreModule {

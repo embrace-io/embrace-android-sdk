@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource

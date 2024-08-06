@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-public class WorkerThreadModuleImpl(
+internal class WorkerThreadModuleImpl(
     initModule: InitModule,
 ) : WorkerThreadModule, RejectedExecutionHandler {
 

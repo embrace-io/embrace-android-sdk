@@ -6,9 +6,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.NativeModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -25,7 +24,7 @@ internal class NativeModuleImplTest {
             FakeEssentialServiceModule(),
             FakeDeliveryModule(),
             FakeAndroidServicesModule(),
-            WorkerThreadModuleImpl(InitModuleImpl())
+            FakeWorkerThreadModule()
         )
         assertNotNull(module.ndkService)
         assertNull(module.nativeThreadSamplerService)

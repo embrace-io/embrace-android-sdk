@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.WorkerName
@@ -17,13 +18,11 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    essentialServiceModule: EssentialServiceModule,
+    configService: ConfigService,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker = BuildVersionChecker,
     dataSourceModule: DataSourceModule
 ) : DataCaptureServiceModule {
-
-    private val configService = essentialServiceModule.configService
 
     override val webviewService: WebViewService by singleton {
         EmbraceWebViewService(

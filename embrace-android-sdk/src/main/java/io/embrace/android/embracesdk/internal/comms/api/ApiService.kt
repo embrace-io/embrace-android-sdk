@@ -1,26 +1,14 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NetworkEvent
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import java.util.concurrent.Future
 
-internal interface ApiService {
-
-    /**
-     * Asynchronously gets the app's SDK configuration.
-     *
-     * These settings define app-specific settings, such as disabled log patterns, whether
-     * screenshots are enabled, as well as limits and thresholds.
-     *
-     * @return a future containing the configuration.
-     */
-    fun getConfig(): RemoteConfig?
-
-    fun getCachedConfig(): CachedConfig
+internal interface ApiService : RemoteConfigSource {
 
     /**
      * Sends a log message to the API.

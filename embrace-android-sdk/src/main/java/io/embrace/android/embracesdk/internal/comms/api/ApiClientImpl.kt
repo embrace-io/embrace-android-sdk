@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader

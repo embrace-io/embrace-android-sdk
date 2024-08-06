@@ -14,11 +14,11 @@ import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCa
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.clearMocks
 import io.mockk.every

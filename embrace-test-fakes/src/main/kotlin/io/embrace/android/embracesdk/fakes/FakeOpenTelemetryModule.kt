@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -12,7 +13,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.mockk.mockk
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
@@ -25,7 +25,8 @@ public class FakeOpenTelemetryModule(
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
 ) : OpenTelemetryModule {
-    override val openTelemetryConfiguration: OpenTelemetryConfiguration = mockk(relaxed = true)
+    override val openTelemetryConfiguration: OpenTelemetryConfiguration =
+        OpenTelemetryConfiguration(spanSink, logSink, SystemInfo(), "my.example")
     override val sdkTracer: Tracer
         get() = FakeTracer()
     override val spanService: SpanService

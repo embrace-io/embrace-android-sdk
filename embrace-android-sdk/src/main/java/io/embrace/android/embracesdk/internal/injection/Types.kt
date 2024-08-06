@@ -1,28 +1,13 @@
-package io.embrace.android.embracesdk.internal.utils
+package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.AnrModule
-import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.CrashModule
-import io.embrace.android.embracesdk.internal.injection.CustomerLogModule
-import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModule
-import io.embrace.android.embracesdk.internal.injection.DataContainerModule
-import io.embrace.android.embracesdk.internal.injection.DataSourceModule
-import io.embrace.android.embracesdk.internal.injection.DeliveryModule
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.NativeModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.PayloadModule
-import io.embrace.android.embracesdk.internal.injection.SessionModule
-import io.embrace.android.embracesdk.internal.injection.StorageModule
-import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.io.OutputStream
 
 /**
@@ -95,7 +80,7 @@ internal typealias EssentialServiceModuleSupplier = (
 internal typealias DataCaptureServiceModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    essentialServiceModule: EssentialServiceModule,
+    configService: ConfigService,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker,
     dataSourceModule: DataSourceModule
@@ -108,19 +93,8 @@ internal typealias DeliveryModuleSupplier = (
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
-    essentialServiceModule: EssentialServiceModule,
+    apiService: ApiService?,
 ) -> DeliveryModule
-
-/**
- * Function that returns an instance of [AnrModule]. Matches the signature of the constructor for [AnrModuleImpl]
- */
-
-internal typealias AnrModuleSupplier = (
-    initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule,
-    workerModule: WorkerThreadModule,
-    otelModule: OpenTelemetryModule
-) -> AnrModule
 
 /**
  * Function that returns an instance of [CustomerLogModule]. Matches the signature of the constructor for [CustomerLogModuleImpl]

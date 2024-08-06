@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.util.LinkedList

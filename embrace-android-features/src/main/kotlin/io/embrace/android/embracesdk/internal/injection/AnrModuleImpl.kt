@@ -12,17 +12,17 @@ import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.anr.sigquit.AnrThreadIdDelegate
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class AnrModuleImpl(
     initModule: InitModule,
-    essentialServiceModule: EssentialServiceModule,
+    configService: ConfigService,
     workerModule: WorkerThreadModule,
     otelModule: OpenTelemetryModule
 ) : AnrModule {
 
     private val anrMonitorWorker = workerModule.scheduledWorker(WorkerName.ANR_MONITOR)
-    private val configService = essentialServiceModule.configService
 
     override val anrService: AnrService by singleton {
         if (configService.autoDataCaptureBehavior.isAnrServiceEnabled()) {
@@ -70,7 +70,7 @@ internal class AnrModuleImpl(
         )
     }
 
-    val blockedThreadDetector by singleton {
+    override val blockedThreadDetector by singleton {
         BlockedThreadDetector(
             configService = configService,
             clock = initModule.clock,

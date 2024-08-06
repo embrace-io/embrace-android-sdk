@@ -557,7 +557,7 @@ internal class SpanServiceImplTest {
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
             Pair("key", TOO_LONG_ATTRIBUTE_VALUE),
         )
-        repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT - 2) {
+        repeat(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT - 2) {
             attributesMap["key$it"] = "value"
         }
 

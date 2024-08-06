@@ -155,10 +155,16 @@ public class FakePersistableEmbraceSpan(
     override fun getSystemAttribute(key: AttributeKey<String>): String? = attributes[key.key]
 
     override fun setSystemAttribute(key: AttributeKey<String>, value: String) {
-        attributes[key.key] = value
+        addSystemAttribute(key.key, value)
     }
 
-    override fun removeCustomAttribute(key: String): Boolean = attributes.remove(key) != null
+    override fun addSystemAttribute(key: String, value: String) {
+        attributes[key] = value
+    }
+
+    override fun removeSystemAttribute(key: String) {
+        attributes.remove(key)
+    }
 
     private fun started(): Boolean = sdkSpan != null
 

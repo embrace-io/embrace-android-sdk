@@ -135,7 +135,7 @@ public class SpanServiceImpl(
     ): Boolean {
         return name.isValidName() &&
             ((events == null) || (events.size <= EmbraceSpanImpl.MAX_EVENT_COUNT)) &&
-            ((attributes == null) || (attributes.size <= EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT))
+            ((attributes == null) || (attributes.size <= EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT))
     }
 
     public companion object {

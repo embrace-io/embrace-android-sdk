@@ -21,15 +21,11 @@ public interface SessionSpanWriter {
 
     /**
      * Add the given key-value pair as an Attribute to the session span
-     *
-     * Returns true if the attribute was added, otherwise false.
      */
-    public fun addCustomAttribute(attribute: SpanAttributeData): Boolean
+    public fun addSystemAttribute(attribute: SpanAttributeData)
 
     /**
      * Remove the attribute with the given key
-     *
-     * Returns true if attribute was removed, otherwise false.
      */
-    public fun removeCustomAttribute(key: String): Boolean
+    public fun removeSystemAttribute(key: String)
 }

@@ -145,14 +145,14 @@ public class CurrentSessionSpanImpl(
         currentSession.removeSystemEvents(type)
     }
 
-    override fun addCustomAttribute(attribute: SpanAttributeData): Boolean {
-        val currentSession = sessionSpan.get() ?: return false
-        return currentSession.addAttribute(attribute.key, attribute.value)
+    override fun addSystemAttribute(attribute: SpanAttributeData) {
+        val currentSession = sessionSpan.get() ?: return
+        currentSession.addSystemAttribute(attribute.key, attribute.value)
     }
 
-    override fun removeCustomAttribute(key: String): Boolean {
-        val currentSession = sessionSpan.get() ?: return false
-        return currentSession.removeCustomAttribute(key)
+    override fun removeSystemAttribute(key: String) {
+        val currentSession = sessionSpan.get() ?: return
+        currentSession.removeSystemAttribute(key)
     }
 
     /**

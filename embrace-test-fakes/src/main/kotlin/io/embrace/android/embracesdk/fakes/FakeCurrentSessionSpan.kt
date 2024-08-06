@@ -35,11 +35,13 @@ public class FakeCurrentSessionSpan(
         addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
     }
 
-    override fun addCustomAttribute(attribute: SpanAttributeData): Boolean = addedAttributes.add(attribute)
+    override fun addSystemAttribute(attribute: SpanAttributeData) {
+        addedAttributes.add(attribute)
+    }
 
-    override fun removeCustomAttribute(key: String): Boolean {
-        val attributeToRemove = addedAttributes.find { it.key == key } ?: return false
-        return addedAttributes.remove(attributeToRemove)
+    override fun removeSystemAttribute(key: String) {
+        val attributeToRemove = addedAttributes.find { it.key == key } ?: return
+        addedAttributes.remove(attributeToRemove)
     }
 
     override fun initialized(): Boolean {

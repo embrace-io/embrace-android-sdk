@@ -200,7 +200,7 @@ internal class SessionOrchestratorImpl(
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
-            sessionIdTracker.setActiveSessionId(sessionId, inForeground)
+            sessionIdTracker.setActiveSession(sessionId, inForeground)
             newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
 
             // initiate periodic caching of the payload if required

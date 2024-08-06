@@ -21,17 +21,19 @@ internal class SessionIdTrackerImplTest {
         tracker.addListener {
             id = it
         }
+        assertNull(tracker.getActiveSession())
         assertNull(tracker.getActiveSessionId())
         assertNull(id)
 
-        tracker.setActiveSessionId("123", true)
+        tracker.setActiveSession("123", true)
+        assertEquals(SessionData("123", true), tracker.getActiveSession())
         assertEquals("123", tracker.getActiveSessionId())
         assertEquals("123", id)
 
-        tracker.setActiveSessionId("456", true)
+        tracker.setActiveSession("456", true)
         assertEquals("456", id)
 
-        tracker.setActiveSessionId(null, false)
+        tracker.setActiveSession(null, false)
         assertEquals(null, id)
     }
 }

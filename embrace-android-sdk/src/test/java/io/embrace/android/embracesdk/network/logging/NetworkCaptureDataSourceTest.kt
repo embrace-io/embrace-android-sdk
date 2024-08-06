@@ -38,7 +38,7 @@ internal class NetworkCaptureDataSourceTest {
         assertEquals(mapOf("response-header" to "value"), capturedCall.responseHeaders)
         assertEquals(300, capturedCall.responseSize)
         assertEquals(200, capturedCall.responseStatus)
-        assertEquals("session-id", capturedCall.sessionId)
+        assertEquals("fake-session-id", capturedCall.sessionId)
         assertEquals(1713452000L, capturedCall.startTime)
         assertEquals("https://httpbin.org/get", capturedCall.url)
         assertEquals("", capturedCall.errorMessage)

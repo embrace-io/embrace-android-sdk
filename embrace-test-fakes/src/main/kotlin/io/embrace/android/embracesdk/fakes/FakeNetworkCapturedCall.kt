@@ -19,7 +19,7 @@ public fun fakeNetworkCapturedCall(): NetworkCapturedCall {
         responseHeaders = mapOf("response-header" to "value"),
         responseSize = 300,
         responseStatus = 200,
-        sessionId = "session-id",
+        sessionId = "fake-session-id",
         startTime = 1713452000,
         url = "https://httpbin.org/get",
         errorMessage = "",

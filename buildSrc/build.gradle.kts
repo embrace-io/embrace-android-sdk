@@ -14,7 +14,7 @@ dependencies {
     compileOnly(gradleApi())
 
     // Version of Kotlin used at build time
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.10")
 
     // NOTE: when updating any of these keep in sync with buildSrc/src/main/kotlin/io/embrace/gradle/Versions.kt
     implementation("com.android.tools.build:gradle:8.5.1")

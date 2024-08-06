@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData

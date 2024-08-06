@@ -22,7 +22,7 @@ internal class LogsApiDelegate(
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.customerLogModule.logService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
     private val pushNotificationDataSource by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataSourceModule.pushNotificationDataSource.dataSource
+        bootstrapper.featureModule.pushNotificationDataSource.dataSource
     }
 
     override fun logInfo(message: String) {

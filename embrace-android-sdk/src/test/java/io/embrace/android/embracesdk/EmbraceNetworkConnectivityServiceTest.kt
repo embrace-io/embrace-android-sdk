@@ -6,7 +6,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
+import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
@@ -73,7 +73,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             worker,
             logger,
             mockConnectivityManager,
-        ) { fakeDataSourceModule().networkStatusDataSource.dataSource }
+        ) { FakeFeatureModule().networkStatusDataSource.dataSource }
     }
 
     /**

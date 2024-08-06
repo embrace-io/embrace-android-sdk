@@ -44,14 +44,14 @@ internal fun fakeModuleInitBootstrapper(
     workerThreadModuleSupplier: WorkerThreadModuleSupplier = { _ -> FakeWorkerThreadModule() },
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
     essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
-    dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeDataSourceModule() },
+    dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _ -> FakeDataSourceModule() },
     dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
     customerLogModuleSupplier: CustomerLogModuleSupplier = { _, _, _, _, _, _, _ -> FakeCustomerLogModule() },
     nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
     dataContainerModuleSupplier: DataContainerModuleSupplier = { _, _, _, _, _ -> FakeDataContainerModule() },
-    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
+    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeCrashModule() },
     payloadModuleSupplier: PayloadModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakePayloadModule() }
 ) = ModuleInitBootstrapper(

@@ -43,7 +43,7 @@ internal class ThermalStateFeatureTest {
                 startTimeMs = harness.overriddenClock.now()
 
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.thermalStateDataSource?.dataSource)
+                    checkNotNull(bootstrapper.featureModule.thermalStateDataSource?.dataSource)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
             })
 
@@ -68,7 +68,7 @@ internal class ThermalStateFeatureTest {
                 startTimeMs = harness.overriddenClock.now()
 
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.thermalStateDataSource?.dataSource)
+                    checkNotNull(bootstrapper.featureModule.thermalStateDataSource?.dataSource)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_MODERATE)

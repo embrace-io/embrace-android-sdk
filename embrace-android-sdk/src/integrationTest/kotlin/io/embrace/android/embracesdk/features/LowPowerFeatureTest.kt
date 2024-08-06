@@ -29,7 +29,7 @@ internal class LowPowerFeatureTest {
 
                 // look inside embrace internals as there isn't a good way to trigger this E2E
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.lowPowerDataSource.dataSource)
+                    checkNotNull(bootstrapper.featureModule.lowPowerDataSource.dataSource)
                 dataSource.onPowerSaveModeChanged(true)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.onPowerSaveModeChanged(false)

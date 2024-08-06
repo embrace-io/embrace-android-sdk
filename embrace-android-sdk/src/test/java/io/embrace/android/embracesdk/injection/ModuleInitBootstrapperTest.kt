@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -65,7 +64,7 @@ internal class ModuleInitBootstrapperTest {
             assertNotNull(androidServicesModule)
             assertTrue(storageModule is StorageModuleImpl)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
-            assertTrue(dataCaptureServiceModule is DataCaptureServiceModuleImpl)
+            assertNotNull(dataCaptureServiceModule)
             assertTrue(deliveryModule is DeliveryModuleImpl)
             assertTrue(payloadModule is PayloadModuleImpl)
         }

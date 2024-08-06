@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.injection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -10,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
@@ -52,7 +52,7 @@ internal class EssentialServiceModuleImplTest {
             customAppId = "abcde",
             customerLogModuleProvider = ::FakeCustomerLogModule,
             framework = AppFramework.NATIVE,
-            dataSourceModuleProvider = { fakeDataSourceModule() },
+            featureModuleProvider = { FakeFeatureModule() },
         ) { null }
 
         assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
@@ -91,7 +91,7 @@ internal class EssentialServiceModuleImplTest {
             customAppId = null,
             customerLogModuleProvider = ::FakeCustomerLogModule,
             framework = AppFramework.NATIVE,
-            dataSourceModuleProvider = { fakeDataSourceModule() },
+            featureModuleProvider = { FakeFeatureModule() },
         ) { fakeConfigService }
 
         assertSame(fakeConfigService, module.configService)

@@ -31,7 +31,7 @@ internal class NetworkStatusFeatureTest {
 
                 // look inside embrace internals as there isn't a good way to trigger this E2E
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.networkStatusDataSource.dataSource)
+                    checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.networkStatusChange(NetworkStatus.WIFI, startTimeMs + tickTimeMs)
             })

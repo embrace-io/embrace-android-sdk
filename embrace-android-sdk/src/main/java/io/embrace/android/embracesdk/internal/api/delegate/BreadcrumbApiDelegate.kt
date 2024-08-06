@@ -11,7 +11,7 @@ internal class BreadcrumbApiDelegate(
 
     private val sdkClock = bootstrapper.initModule.clock
     private val breadcrumbDataSource by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataSourceModule.breadcrumbDataSource
+        bootstrapper.featureModule.breadcrumbDataSource
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
 

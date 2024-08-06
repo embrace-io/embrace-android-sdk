@@ -14,8 +14,8 @@ internal class ViewTrackingApiDelegate(
 
     private val logger = bootstrapper.initModule.logger
     private val sdkClock = bootstrapper.initModule.clock
-    private val dataSourceModule by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataSourceModule
+    private val featureModule by embraceImplInject(sdkCallChecker) {
+        bootstrapper.featureModule
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
     private val appFramework by embraceImplInject(sdkCallChecker) {
@@ -49,21 +49,21 @@ internal class ViewTrackingApiDelegate(
 
     override fun startView(name: String): Boolean {
         if (sdkCallChecker.check("start_view")) {
-            return dataSourceModule?.viewDataSource?.dataSource?.startView(name) ?: false
+            return featureModule?.viewDataSource?.dataSource?.startView(name) ?: false
         }
         return false
     }
 
     override fun endView(name: String): Boolean {
         if (sdkCallChecker.check("end_view")) {
-            return dataSourceModule?.viewDataSource?.dataSource?.endView(name) ?: false
+            return featureModule?.viewDataSource?.dataSource?.endView(name) ?: false
         }
         return false
     }
 
     override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
         if (sdkCallChecker.check("log_tap")) {
-            dataSourceModule?.tapDataSource?.dataSource?.logTap(point, elementName, sdkClock.now(), type)
+            featureModule?.tapDataSource?.dataSource?.logTap(point, elementName, sdkClock.now(), type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }
@@ -77,7 +77,7 @@ internal class ViewTrackingApiDelegate(
         output: String
     ) {
         if (sdkCallChecker.check("log_react_native_action")) {
-            dataSourceModule?.rnActionDataSource?.dataSource?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+            featureModule?.rnActionDataSource?.dataSource?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
         }
     }
 
@@ -88,7 +88,7 @@ internal class ViewTrackingApiDelegate(
         }
 
         if (sdkCallChecker.check("log RN view")) {
-            dataSourceModule?.viewDataSource?.dataSource?.changeView(screen)
+            featureModule?.viewDataSource?.dataSource?.changeView(screen)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

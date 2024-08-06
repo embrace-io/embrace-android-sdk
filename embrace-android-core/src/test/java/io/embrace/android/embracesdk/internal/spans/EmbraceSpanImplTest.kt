@@ -262,7 +262,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 5) {
+            repeat(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(

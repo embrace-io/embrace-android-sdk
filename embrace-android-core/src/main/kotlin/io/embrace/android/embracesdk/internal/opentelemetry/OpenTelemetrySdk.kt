@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_SYSTEM_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_ATTRIBUTE_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_EVENT_COUNT
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -30,7 +30,7 @@ public class OpenTelemetrySdk(
                     SpanLimits
                         .getDefault()
                         .toBuilder()
-                        .setMaxNumberOfEvents(MAX_SYSTEM_EVENT_COUNT)
+                        .setMaxNumberOfEvents(MAX_TOTAL_EVENT_COUNT)
                         .setMaxNumberOfAttributes(MAX_TOTAL_ATTRIBUTE_COUNT)
                         .build()
                 )

@@ -29,21 +29,22 @@ internal class FakeCoreModule(
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
     override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName),
-    @Suppress("DEPRECATION")
-    override val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    override val packageInfo: PackageInfo = fakePackageInfo
 ) : CoreModule {
 
     companion object {
 
         @Suppress("DEPRECATION")
-        fun getMockedContext(): Context {
-            val packageInfo = PackageInfo()
-            packageInfo.versionName = "1.0.0"
-            packageInfo.versionCode = 10
+        private val fakePackageInfo = PackageInfo().apply {
+            packageName = "com.fake.package"
+            versionName = "2.5.1"
+            versionCode = 99
+        }
 
+        fun getMockedContext(): Context {
             val mockContext = mockk<Context>(relaxed = true)
-            every { mockContext.packageName }.returns("package-info")
-            every { mockContext.packageManager.getPackageInfo("package-info", 0) }.returns(packageInfo)
+            every { mockContext.packageName }.returns(fakePackageInfo.packageName)
+            every { mockContext.packageManager.getPackageInfo(fakePackageInfo.packageName, 0) }.returns(fakePackageInfo)
             return mockContext
         }
     }

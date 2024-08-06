@@ -1,8 +1,7 @@
-package io.embrace.android.embracesdk.capture.crumbs
+package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import android.os.Bundle
 import io.embrace.android.embracesdk.fakes.system.mockBundle
-import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.clearAllMocks

@@ -4,9 +4,9 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.sdk.logs.ReadWriteLogRecord
 import io.opentelemetry.sdk.logs.data.LogRecordData
 
-internal class FakeReadWriteLogRecord : ReadWriteLogRecord {
+public class FakeReadWriteLogRecord : ReadWriteLogRecord {
 
-    val attributes: MutableMap<String, String> = mutableMapOf()
+    public val attributes: MutableMap<String, String> = mutableMapOf()
 
     private val logRecordData = FakeLogRecordData()
 

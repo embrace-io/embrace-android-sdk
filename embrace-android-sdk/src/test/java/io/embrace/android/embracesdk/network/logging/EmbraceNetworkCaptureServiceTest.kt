@@ -84,7 +84,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         clearAllMocks()
         preferenceService = FakePreferenceService()
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
-        sessionIdTracker.setActiveSessionId("session-123", true)
+        sessionIdTracker.setActiveSession("session-123", true)
     }
 
     @Test

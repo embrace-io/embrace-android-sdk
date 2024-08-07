@@ -57,7 +57,7 @@ internal class NativeCrashDataSourceImplTest {
         fakeNdkService = FakeNdkService()
         preferencesService = FakePreferenceService()
         logger = EmbLoggerImpl()
-        sessionIdTracker = FakeSessionIdTracker().apply { setActiveSessionId("currentSessionId", true) }
+        sessionIdTracker = FakeSessionIdTracker().apply { setActiveSession("currentSessionId", true) }
         metadataService = FakeMetadataService()
         processStateService = FakeProcessStateService()
         otelLogger = FakeOpenTelemetryLogger()

@@ -84,7 +84,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
-        assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
+        assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
         assertEquals(0, deliveryService.sentSessionEnvelopes.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
@@ -96,7 +96,7 @@ internal class SessionOrchestratorTest {
         assertEquals(orchestrator, processStateService.listeners.single())
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
-        assertEquals(sessionIdTracker.sessionId, currentSessionSpan.getSessionId())
+        assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
         assertEquals(0, deliveryService.sentSessionEnvelopes.size)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }

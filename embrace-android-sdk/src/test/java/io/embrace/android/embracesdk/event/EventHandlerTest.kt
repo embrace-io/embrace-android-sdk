@@ -92,7 +92,7 @@ internal class EventHandlerTest {
         clock = FakeClock()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         scheduledExecutorService = blockingScheduledExecutorService
-        fakeMetadataService = FakeMetadataService(sessionId = "session-id")
+        fakeMetadataService = FakeMetadataService(sessionId = "fake-session-id")
         processStateService = FakeProcessStateService()
         sessionIdTracker = FakeSessionIdTracker()
         eventHandler = EventHandler(

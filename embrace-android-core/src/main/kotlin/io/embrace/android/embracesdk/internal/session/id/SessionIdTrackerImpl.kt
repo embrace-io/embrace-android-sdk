@@ -14,24 +14,24 @@ public class SessionIdTrackerImpl(
     private val listeners = CopyOnWriteArraySet<(String?) -> Unit>()
 
     @Volatile
-    private var sessionId: String? = null
+    private var activeSession: SessionData? = null
         set(value) {
             field = value
-            listeners.forEach { it(value) }
+            listeners.forEach { it(value?.id) }
         }
 
     override fun addListener(listener: (String?) -> Unit) {
         listeners.add(listener)
-        listener(sessionId)
+        listener(activeSession?.id)
     }
 
-    override fun getActiveSessionId(): String? = sessionId
+    override fun getActiveSession(): SessionData? = activeSession
 
-    override fun setActiveSessionId(sessionId: String?, isSession: Boolean) {
-        this.sessionId = sessionId
+    override fun setActiveSession(sessionId: String?, isSession: Boolean) {
+        activeSession = sessionId?.run { SessionData(sessionId, isSession) }
 
         if (isSession) {
-            setSessionIdToProcessStateSummary(this.sessionId)
+            setSessionIdToProcessStateSummary(sessionId)
         }
     }
 

@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.opentelemetry.embAndroidThreads
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.payload.JsException
@@ -31,7 +30,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 public class CrashDataSourceImpl(
     private val sessionProperties: EmbraceSessionProperties,
-    private val ndkService: NdkService,
+    private val unityCrashIdProvider: () -> String?,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
@@ -68,7 +67,7 @@ public class CrashDataSourceImpl(
             // Check if the unity crash id exists. If so, means that the native crash capture
             // is enabled for an Unity build. When a native crash occurs and the NDK sends an
             // uncaught exception the SDK assign the unity crash id as the java crash id.
-            val crashId = ndkService.getUnityCrashId() ?: getEmbUuid()
+            val crashId = unityCrashIdProvider() ?: getEmbUuid()
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crashAttributes = TelemetryAttributes(
                 configService = configService,

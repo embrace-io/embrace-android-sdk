@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeCrashDataSource
-import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.injection.CrashModule
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.mockk.mockk
 
 internal class FakeCrashModule : CrashModule {
@@ -15,6 +13,4 @@ internal class FakeCrashModule : CrashModule {
     )
 
     override val crashDataSource = FakeCrashDataSource()
-
-    override val nativeCrashService: NativeCrashService = FakeNativeCrashService()
 }

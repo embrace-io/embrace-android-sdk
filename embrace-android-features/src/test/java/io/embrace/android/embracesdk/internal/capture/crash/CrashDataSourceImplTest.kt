@@ -81,7 +81,7 @@ internal class CrashDataSourceImplTest {
         )
         crashDataSource = CrashDataSourceImpl(
             sessionProperties,
-            ndkService,
+            ndkService::getUnityCrashId,
             preferencesService,
             logWriter,
             configService,

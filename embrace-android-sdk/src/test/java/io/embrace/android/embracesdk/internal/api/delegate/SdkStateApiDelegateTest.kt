@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
+import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -31,7 +31,7 @@ internal class SdkStateApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            customerLogModuleSupplier = { _, _, _, _, _, _, _ -> FakeCustomerLogModule(logService = logService) }
+            logModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureServ
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-internal class CustomerLogModuleImpl(
+internal class LogModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
@@ -21,7 +21,7 @@ internal class CustomerLogModuleImpl(
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     payloadModule: PayloadModule,
-) : CustomerLogModule {
+) : LogModule {
 
     override val networkCaptureService: NetworkCaptureService by singleton {
         EmbraceNetworkCaptureService(

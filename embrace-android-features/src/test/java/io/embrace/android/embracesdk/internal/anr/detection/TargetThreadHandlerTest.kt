@@ -1,24 +1,17 @@
-package io.embrace.android.embracesdk.anr.detection
+package io.embrace.android.embracesdk.internal.anr.detection
 
 import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
-import io.embrace.android.embracesdk.fakes.system.mockLooper
-import io.embrace.android.embracesdk.fakes.system.mockMessage
-import io.embrace.android.embracesdk.fakes.system.mockMessageQueue
-import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
-import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler.Companion.HEARTBEAT_REQUEST
-import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
@@ -49,7 +42,7 @@ internal class TargetThreadHandlerTest {
 
     private fun createHandler(messageQueue: MessageQueue?): TargetThreadHandler {
         return TargetThreadHandler(
-            mockLooper(),
+            mockk(relaxed = true),
             ScheduledWorker(executorService),
             configService,
             messageQueue,
@@ -61,69 +54,69 @@ internal class TargetThreadHandlerTest {
 
     @Test
     fun testTargetThreadHandlerWrongMsg() {
-        assertNotNull(handler)
+        Assert.assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
 
         // process a message
-        handler.handleMessage(mockMessage())
+        handler.handleMessage(mockk(relaxed = true))
         verify(exactly = 0) { handler.action.invoke(any()) }
     }
 
     @Test
     fun testNoAnrInProgress() {
-        assertNotNull(handler)
+        Assert.assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
 
         // process a message
         val msg = mockk<Message>()
-        msg.what = HEARTBEAT_REQUEST
+        msg.what = TargetThreadHandler.HEARTBEAT_REQUEST
         handler.handleMessage(msg)
-        assertEquals(2, executorService.submitCount)
+        Assert.assertEquals(2, executorService.submitCount)
     }
 
     @Test
     fun testTargetThreadHandlerCorrectMsg() {
-        assertNotNull(handler)
+        Assert.assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
         state.anrInProgress = true
 
         // process a message
         val msg = mockk<Message>()
-        msg.what = HEARTBEAT_REQUEST
+        msg.what = TargetThreadHandler.HEARTBEAT_REQUEST
         handler.handleMessage(msg)
-        assertEquals(2, executorService.submitCount)
+        Assert.assertEquals(2, executorService.submitCount)
         executorService.runCurrentlyBlocked()
         verify { handler.action.invoke(FAKE_TIME_MS) }
     }
 
     @Test
     fun testCorrectMsgNonNullQueue() {
-        handler = createHandler(mockMessageQueue())
+        handler = createHandler(mockk(relaxed = true))
         handler.installed = true
-        assertNotNull(handler)
+        Assert.assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
         state.anrInProgress = true
 
         // process a message
         val msg = mockk<Message>()
-        msg.what = HEARTBEAT_REQUEST
+        msg.what = TargetThreadHandler.HEARTBEAT_REQUEST
         handler.handleMessage(msg)
     }
 
     @Test
     fun testRejectedExecution() {
         executorService.shutdownNow()
-        assertNotNull(handler)
+        Assert.assertNotNull(handler)
         state.lastTargetThreadResponseMs = 0L
 
         // RejectedExecutionException ignored as ScheduledExecutorService will be shutting down.
-        handler.handleMessage(mockMessage())
-        assertEquals(0L, state.lastTargetThreadResponseMs)
+        handler.handleMessage(mockk(relaxed = true))
+        Assert.assertEquals(0L, state.lastTargetThreadResponseMs)
     }
 
     @Test
     fun testStartIdleHandlerEnabled() {
-        val messageQueue = mockMessageQueue()
+        val messageQueue = mockk<MessageQueue>(relaxed = true)
         configService = FakeConfigService(
             anrBehavior = fakeAnrBehavior {
                 AnrRemoteConfig(pctIdleHandlerEnabled = 100f)
@@ -136,7 +129,7 @@ internal class TargetThreadHandlerTest {
 
     @Test
     fun testStartIdleHandlerDisabled() {
-        val messageQueue = mockMessageQueue()
+        val messageQueue = mockk<MessageQueue>(relaxed = true)
         configService = FakeConfigService(
             anrBehavior = fakeAnrBehavior {
                 AnrRemoteConfig(pctIdleHandlerEnabled = 0f)

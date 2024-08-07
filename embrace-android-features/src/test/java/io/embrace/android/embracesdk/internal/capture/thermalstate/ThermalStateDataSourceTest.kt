@@ -1,14 +1,13 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.capture.thermalstate
 
 import android.os.PowerManager
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
-import io.embrace.android.embracesdk.fakes.system.mockPowerManager
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -18,7 +17,7 @@ internal class ThermalStateDataSourceTest {
 
     private lateinit var dataSource: ThermalStateDataSource
     private lateinit var spanWriter: FakeSpanService
-    private val mockPowerManager = mockPowerManager()
+    private val mockPowerManager = mockk<PowerManager>(relaxed = true)
 
     @Before
     fun setUp() {

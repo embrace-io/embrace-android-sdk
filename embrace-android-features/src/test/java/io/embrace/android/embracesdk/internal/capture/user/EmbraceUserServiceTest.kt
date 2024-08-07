@@ -1,7 +1,6 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.UserInfo

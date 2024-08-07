@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.capture.metadata
+package io.embrace.android.embracesdk.internal.capture.metadata
 
 import android.content.Context
 import android.content.res.AssetManager
@@ -9,14 +9,10 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.fakes.system.mockStorageStatsManager
-import io.embrace.android.embracesdk.fakes.system.mockWindowManager
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -81,8 +77,8 @@ internal class EmbraceMetadataReactNativeTest {
         configService,
         preferencesService,
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-        mockStorageStatsManager(),
-        mockWindowManager(),
+        mockk(relaxed = true),
+        mockk(relaxed = true),
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.internal.session
 
 import android.app.Activity
 import android.app.Application
@@ -8,8 +8,6 @@ import android.os.Bundle
 import android.os.Looper
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.system.mockApplication
-import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
@@ -41,9 +39,9 @@ internal class ActivityLifecycleTrackerTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            mockLooper = mockLooper()
+            mockLooper = mockk(relaxed = true)
             mockkStatic(Looper::class)
-            application = mockApplication()
+            application = mockk(relaxed = true)
 
             fakeClock.setCurrentTime(1234)
             every { application.registerActivityLifecycleCallbacks(any()) } returns Unit

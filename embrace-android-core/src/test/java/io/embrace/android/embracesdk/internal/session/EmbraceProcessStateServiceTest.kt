@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.internal.session
 
 import android.app.Application
 import android.os.Looper
@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -36,7 +35,7 @@ internal class EmbraceProcessStateServiceTest {
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
-            looper = mockLooper()
+            looper = mockk(relaxed = true)
             mockkStatic(Looper::class)
             mockApplication = mockk(relaxed = true)
 

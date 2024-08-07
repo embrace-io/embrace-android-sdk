@@ -1,8 +1,6 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.fakes.FakeCrashService
-import io.embrace.android.embracesdk.internal.capture.crash.CrashService
-import io.embrace.android.embracesdk.internal.capture.crash.EmbraceUncaughtExceptionHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.JsException
 import org.junit.Assert.assertEquals

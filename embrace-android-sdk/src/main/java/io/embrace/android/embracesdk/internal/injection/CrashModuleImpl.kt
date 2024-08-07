@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
 import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSourceImpl
-import io.embrace.android.embracesdk.internal.capture.crash.CrashService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
@@ -14,10 +14,7 @@ internal class CrashModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
-    sessionModule: SessionModule,
-    anrModule: AnrModule,
-    androidServicesModule: AndroidServicesModule,
-    logModule: CustomerLogModule
+    androidServicesModule: AndroidServicesModule
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
@@ -27,20 +24,18 @@ internal class CrashModuleImpl(
         CrashFileMarkerImpl(markerFile, initModule.logger)
     }
 
-    override val crashService: CrashService by singleton {
+    override val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
-            logModule.logOrchestrator,
-            sessionModule.sessionOrchestrator,
             essentialServiceModule.sessionProperties,
-            anrModule.anrService,
             nativeModule.ndkService,
             androidServicesModule.preferencesService,
-            crashMarker,
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
             initModule.jsonSerializer,
             initModule.logger,
-        )
+        ).apply {
+            addCrashTeardownHandler(crashMarker)
+        }
     }
 
     override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {

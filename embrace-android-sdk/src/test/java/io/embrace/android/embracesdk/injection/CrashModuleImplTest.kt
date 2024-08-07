@@ -3,12 +3,9 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
-import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -32,13 +29,10 @@ internal class CrashModuleImplTest {
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeNativeModule(),
-            FakeSessionModule(),
-            FakeAnrModule(),
             FakeAndroidServicesModule(),
-            FakeCustomerLogModule(),
         )
         assertNotNull(module.lastRunCrashVerifier)
-        assertNotNull(module.crashService)
+        assertNotNull(module.crashDataSource)
         assertTrue(module.nativeCrashService is NoopNativeCrashService)
     }
 
@@ -53,13 +47,10 @@ internal class CrashModuleImplTest {
                 )
             ),
             FakeNativeModule(),
-            FakeSessionModule(),
-            FakeAnrModule(),
             FakeAndroidServicesModule(),
-            FakeCustomerLogModule(),
         )
         assertNotNull(module.lastRunCrashVerifier)
-        assertNotNull(module.crashService)
+        assertNotNull(module.crashDataSource)
         assertTrue(module.nativeCrashService is NativeCrashDataSource)
     }
 }

@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.crash
 
-public interface CrashFileMarker {
+import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+
+public interface CrashFileMarker : CrashTeardownHandler {
 
     /**
      * Creates a file in the cache directory to indicate that a crash has occurred.

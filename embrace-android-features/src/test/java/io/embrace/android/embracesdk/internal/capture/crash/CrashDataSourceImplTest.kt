@@ -80,18 +80,19 @@ internal class CrashDataSourceImplTest {
             )
         )
         crashDataSource = CrashDataSourceImpl(
-            logOrchestrator,
-            sessionOrchestrator,
             sessionProperties,
-            anrService,
             ndkService,
             preferencesService,
-            crashMarker,
             logWriter,
             configService,
             serializer,
             logger
-        )
+        ).apply {
+            addCrashTeardownHandler(logOrchestrator)
+            addCrashTeardownHandler(sessionOrchestrator)
+            addCrashTeardownHandler(crashMarker)
+            addCrashTeardownHandler(anrService)
+        }
     }
 
     @Test
@@ -100,7 +101,7 @@ internal class CrashDataSourceImplTest {
 
         crashDataSource.handleCrash(testException)
 
-        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertTrue(logOrchestrator.flushCalled)
         assertNotNull(sessionOrchestrator.crashId)
@@ -111,7 +112,7 @@ internal class CrashDataSourceImplTest {
         setupForHandleCrash()
         crashDataSource.handleCrash(testException)
 
-        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
         val lastSentCrash = logWriter.logEvents.single()
         assertEquals(
@@ -124,7 +125,7 @@ internal class CrashDataSourceImplTest {
          * by testing that a second execution of handleCrash wont run anything
          */
         crashDataSource.handleCrash(testException)
-        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertSame(lastSentCrash, logWriter.logEvents.single())
     }
@@ -136,7 +137,7 @@ internal class CrashDataSourceImplTest {
 
         crashDataSource.handleCrash(testException)
 
-        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertEquals(
             logWriter.logEvents.single().schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key],
@@ -163,7 +164,7 @@ internal class CrashDataSourceImplTest {
         val logEvent = logWriter.logEvents.single()
         logEvent.assertIsType(EmbType.System.ReactNativeCrash)
         val lastSentCrashAttributes = logEvent.schemaType.attributes()
-        assertEquals(1, anrService.forceAnrTrackingStopOnCrashCount)
+        assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertEquals(lastSentCrashAttributes[LogIncubatingAttributes.LOG_RECORD_UID.key], sessionOrchestrator.crashId)
         assertEquals(

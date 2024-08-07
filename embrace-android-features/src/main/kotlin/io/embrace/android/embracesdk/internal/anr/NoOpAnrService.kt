@@ -9,7 +9,7 @@ public class NoOpAnrService : AnrService {
         return emptyList()
     }
 
-    override fun forceAnrTrackingStopOnCrash() {
+    override fun handleCrash(crashId: String) {
     }
 
     override fun finishInitialization(

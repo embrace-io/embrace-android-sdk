@@ -48,6 +48,10 @@ public class CrashFileMarkerImpl(
         }
     }
 
+    override fun handleCrash(crashId: String) {
+        mark()
+    }
+
     private fun createMarkerFile(): Boolean {
         return try {
             markerFile.value.writeText(CRASH_MARKER_SOURCE_JVM)

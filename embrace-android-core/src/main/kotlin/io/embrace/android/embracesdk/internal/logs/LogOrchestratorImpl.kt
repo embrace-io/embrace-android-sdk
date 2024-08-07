@@ -44,6 +44,10 @@ public class LogOrchestratorImpl(
         }
     }
 
+    override fun handleCrash(crashId: String) {
+        flush(true)
+    }
+
     private fun onLogsAdded() {
         logEnvelopeSource.getNonbatchedEnvelope().forEach { logEnvelope ->
             deliveryService.sendLogs(logEnvelope)

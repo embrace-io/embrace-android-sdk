@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.internal.arch.DataCaptureService
+import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import java.io.Closeable
@@ -10,13 +11,8 @@ import java.io.Closeable
  */
 public interface AnrService :
     DataCaptureService<List<AnrInterval>>,
+    CrashTeardownHandler,
     Closeable {
-
-    /**
-     * Forces ANR tracking stop by closing the monitoring thread when a crash is
-     * handled by the [EmbraceCrashService].
-     */
-    public fun forceAnrTrackingStopOnCrash()
 
     /**
      * Finishes initialization of the AnrService so that it can react appropriately to

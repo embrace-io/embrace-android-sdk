@@ -276,7 +276,7 @@ internal class SessionOrchestratorTest {
             backgroundActivityCaptureEnabled = true,
         )
         createOrchestrator(true)
-        orchestrator.endSessionWithCrash("crashId")
+        orchestrator.handleCrash("crashId")
         assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
     }
 
@@ -286,7 +286,7 @@ internal class SessionOrchestratorTest {
             backgroundActivityCaptureEnabled = true,
         )
         createOrchestrator(false)
-        orchestrator.endSessionWithCrash("crashId")
+        orchestrator.handleCrash("crashId")
         assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
     }
 
@@ -317,7 +317,7 @@ internal class SessionOrchestratorTest {
     fun `test session span with crash`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
-        orchestrator.endSessionWithCrash("my-crash-id")
+        orchestrator.handleCrash("my-crash-id")
         checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
     }
 
@@ -335,7 +335,7 @@ internal class SessionOrchestratorTest {
         assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
 
         // end with crash
-        orchestrator.endSessionWithCrash("my-crash-id")
+        orchestrator.handleCrash("my-crash-id")
         assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
     }
 
@@ -352,7 +352,7 @@ internal class SessionOrchestratorTest {
         assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
 
         // end with crash
-        orchestrator.endSessionWithCrash("my-crash-id")
+        orchestrator.handleCrash("my-crash-id")
         assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
     }
 

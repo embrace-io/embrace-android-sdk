@@ -36,7 +36,7 @@ internal class InternalInterfaceModuleImpl(
         ReactNativeInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            crashModule.crashService,
+            crashModule.crashDataSource,
             essentialServiceModule.metadataService,
             essentialServiceModule.hostedSdkVersionInfo,
             initModule.logger

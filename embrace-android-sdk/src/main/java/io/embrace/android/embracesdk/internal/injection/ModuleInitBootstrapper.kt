@@ -419,15 +419,17 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             essentialServiceModule,
                             nativeModule,
-                            sessionModule,
-                            anrModule,
-                            androidServicesModule,
-                            customerLogModule,
+                            androidServicesModule
                         )
                     }
 
                     postInit(CrashModule::class) {
-                        serviceRegistry.registerService(crashModule.crashService)
+                        serviceRegistry.registerService(crashModule.crashDataSource)
+                        with(crashModule.crashDataSource) {
+                            addCrashTeardownHandler(anrModule.anrService)
+                            addCrashTeardownHandler(customerLogModule.logOrchestrator)
+                            addCrashTeardownHandler(sessionModule.sessionOrchestrator)
+                        }
                     }
 
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can

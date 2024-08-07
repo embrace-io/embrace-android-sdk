@@ -122,7 +122,7 @@ internal class SessionOrchestratorImpl(
         )
     }
 
-    override fun endSessionWithCrash(crashId: String) {
+    override fun handleCrash(crashId: String) {
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.CRASH,

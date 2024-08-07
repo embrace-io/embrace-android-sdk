@@ -395,7 +395,7 @@ internal class EmbraceAnrServiceTest {
     }
 
     @Test
-    fun `test forceAnrTrackingStopOnCrash stops ANR tracking but samples can still be retrieved`() {
+    fun `test handleCrash stops ANR tracking but samples can still be retrieved`() {
         with(rule) {
             clock.setCurrentTime(14000000L)
             cfg = cfg.copy(pctBgEnabled = 100)
@@ -404,7 +404,7 @@ internal class EmbraceAnrServiceTest {
                 assertTrue(state.started.get())
             }
             populateAnrIntervals(anrService)
-            anrService.forceAnrTrackingStopOnCrash()
+            anrService.handleCrash("")
             val anrIntervals = anrService.getCapturedData()
             assertEquals(5, anrIntervals.size)
             assertFalse(state.started.get())

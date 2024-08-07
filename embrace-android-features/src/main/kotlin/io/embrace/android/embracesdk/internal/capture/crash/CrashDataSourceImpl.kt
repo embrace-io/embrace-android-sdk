@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -11,9 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.opentelemetry.embAndroidThreads
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
@@ -22,24 +19,20 @@ import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Intercept and track uncaught Android Runtime exceptions
  */
 public class CrashDataSourceImpl(
-    private val logOrchestrator: LogOrchestrator,
-    private val sessionOrchestrator: SessionOrchestrator,
     private val sessionProperties: EmbraceSessionProperties,
-    private val anrService: AnrService?,
     private val ndkService: NdkService,
     private val preferencesService: PreferencesService,
-    private val crashMarker: CrashFileMarker,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val serializer: PlatformSerializer,
@@ -51,6 +44,7 @@ public class CrashDataSourceImpl(
         limitStrategy = NoopLimitStrategy,
     ) {
 
+    private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
     private var mainCrashHandled = false
     private var jsException: JsException? = null
 
@@ -70,9 +64,6 @@ public class CrashDataSourceImpl(
     override fun handleCrash(exception: Throwable) {
         if (!mainCrashHandled) {
             mainCrashHandled = true
-
-            // Stop ANR tracking first to avoid capture ANR when crash message is being sent
-            anrService?.forceAnrTrackingStopOnCrash()
 
             // Check if the unity crash id exists. If so, means that the native crash capture
             // is enabled for an Unity build. When a native crash occurs and the NDK sends an
@@ -123,19 +114,17 @@ public class CrashDataSourceImpl(
 
             logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
 
-            // Attempt to send any logs that are still waiting in the sink
-            logOrchestrator.flush(true)
-
-            // Attempt to end and send the session
-            sessionOrchestrator.endSessionWithCrash(crashId)
-
-            // Indicate that a crash happened so we can know that in the next launch
-            crashMarker.mark()
+            // finally, notify other services that need to perform tear down
+            handlers.forEach { it.handleCrash(crashId) }
         }
     }
 
     override fun logUnhandledJsException(exception: JsException) {
         this.jsException = exception
+    }
+
+    override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
+        handlers.add(handler)
     }
 
     private fun getSchemaType(attributes: TelemetryAttributes): SchemaType =

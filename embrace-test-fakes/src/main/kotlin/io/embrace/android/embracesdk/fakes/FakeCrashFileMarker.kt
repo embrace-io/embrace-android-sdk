@@ -21,4 +21,8 @@ public class FakeCrashFileMarker : CrashFileMarker {
     override fun getAndCleanMarker(): Boolean {
         return marked.also { marked = false }
     }
+
+    override fun handleCrash(crashId: String) {
+        mark()
+    }
 }

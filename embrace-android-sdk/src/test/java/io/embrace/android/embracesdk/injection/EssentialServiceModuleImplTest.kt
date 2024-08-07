@@ -6,8 +6,10 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
@@ -19,8 +21,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCa
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
@@ -40,12 +40,12 @@ internal class EssentialServiceModuleImplTest {
         every { Looper.getMainLooper() } returns mockk(relaxed = true)
 
         val coreModule = FakeCoreModule()
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
             openTelemetryModule = FakeOpenTelemetryModule(),
             coreModule = coreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
@@ -78,13 +78,13 @@ internal class EssentialServiceModuleImplTest {
     @Test
     fun testConfigServiceProvider() {
         val fakeConfigService = FakeConfigService()
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val fakeCoreModule = FakeCoreModule()
         val module = EssentialServiceModuleImpl(
             initModule = initModule,
             openTelemetryModule = FakeOpenTelemetryModule(),
             coreModule = fakeCoreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),

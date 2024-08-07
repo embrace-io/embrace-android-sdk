@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture
+package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
@@ -21,17 +21,10 @@ import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDat
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.singleton
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-public class FeatureModuleImpl(
+internal class FeatureModuleImpl(
     private val featureRegistry: EmbraceFeatureRegistry,
     coreModule: CoreModule,
     initModule: InitModule,

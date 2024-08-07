@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>UnusedPrivateMember:EmbraceLogServiceTest.kt$private fun Array&lt;StackTraceElement&gt;.toExceptionSchema(): String</ID>
+    <ID>LongParameterList:EssentialServiceModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, coreModule: CoreModule, workerThreadModule: WorkerThreadModule, systemServiceModule: SystemServiceModule, androidServicesModule: AndroidServicesModule, storageModule: StorageModule, customAppId: String?, customerLogModuleProvider: Provider&lt;CustomerLogModule&gt;, dataSourceModuleProvider: Provider&lt;DataSourceModule&gt;, framework: AppFramework, configServiceProvider: (framework: AppFramework) -&gt; ConfigService? )</ID>
+    <ID>LongParameterList:SessionModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, nativeModule: NativeModule, deliveryModule: DeliveryModule, workerThreadModule: WorkerThreadModule, dataSourceModule: DataSourceModule, payloadModule: PayloadModule, dataCaptureServiceModule: DataCaptureServiceModule, dataContainerModule: DataContainerModule, customerLogModule: CustomerLogModule )</ID>
   </CurrentIssues>
 </SmellBaseline>

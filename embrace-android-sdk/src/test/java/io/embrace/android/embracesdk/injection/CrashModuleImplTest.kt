@@ -6,13 +6,13 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.injection.CrashModuleImpl
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import org.junit.Assert.assertNotNull
@@ -28,7 +28,7 @@ internal class CrashModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val module = CrashModuleImpl(
-            InitModuleImpl(),
+            FakeInitModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeNativeModule(),
@@ -45,7 +45,7 @@ internal class CrashModuleImplTest {
     @Test
     fun `default config turns on v2 native crash service`() {
         val module = CrashModuleImpl(
-            InitModuleImpl(),
+            FakeInitModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(
                 configService = FakeConfigService(

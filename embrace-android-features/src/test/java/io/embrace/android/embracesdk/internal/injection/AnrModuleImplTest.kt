@@ -31,7 +31,7 @@ internal class AnrModuleImplTest {
         val module = AnrModuleImpl(
             FakeInitModule(),
             FakeConfigService(),
-            WorkerThreadModuleImpl(FakeInitModule()),
+            FakeWorkerThreadModule(),
             FakeOpenTelemetryModule()
         )
         assertNotNull(module.anrService)

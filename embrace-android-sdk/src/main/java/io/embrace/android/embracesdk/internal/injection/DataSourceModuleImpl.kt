@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.capture.FeatureModule
-import io.embrace.android.embracesdk.internal.capture.FeatureModuleImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
@@ -24,7 +22,7 @@ internal class DataSourceModuleImpl(
     private val configService = essentialServiceModule.configService
 
     private val featureModule: FeatureModule by singleton {
-        FeatureModuleImpl(
+        createFeatureModule(
             featureRegistry = embraceFeatureRegistry,
             coreModule = coreModule,
             initModule = initModule,

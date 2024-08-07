@@ -1,10 +1,8 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleImpl
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
+import io.mockk.mockk
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -13,7 +11,7 @@ internal class AndroidServicesModuleImplTest {
     @Test
     fun testDefault() {
         val initModule = InitModuleImpl()
-        val coreModule = FakeCoreModule()
+        val coreModule = createCoreModule(mockk(relaxed = true), FakeEmbLogger())
         val module = AndroidServicesModuleImpl(
             initModule = initModule,
             coreModule = coreModule,

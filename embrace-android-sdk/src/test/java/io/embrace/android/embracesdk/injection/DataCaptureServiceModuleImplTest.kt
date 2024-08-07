@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,8 +27,8 @@ internal class DataCaptureServiceModuleImplTest {
             initModule,
             openTelemetryModule,
             createEnabledBehavior(),
-            WorkerThreadModuleImpl(initModule),
-            FakeVersionChecker(true),
+            FakeWorkerThreadModule(),
+            FakeVersionChecker(false),
             fakeDataSourceModule()
         )
 

@@ -45,13 +45,6 @@ internal class SessionModuleImpl(
         ) { featureModule.sessionPropertiesDataSource.dataSource }
     }
 
-    private val ndkService by singleton {
-        when {
-            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
-            else -> null
-        }
-    }
-
     override val periodicSessionCacher: PeriodicSessionCacher by singleton {
         PeriodicSessionCacher(
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
@@ -79,7 +72,6 @@ internal class SessionModuleImpl(
         OrchestratorBoundaryDelegate(
             essentialServiceModule.memoryCleanerService,
             essentialServiceModule.userService,
-            ndkService,
             essentialServiceModule.sessionProperties,
             essentialServiceModule.networkConnectivityService
         )

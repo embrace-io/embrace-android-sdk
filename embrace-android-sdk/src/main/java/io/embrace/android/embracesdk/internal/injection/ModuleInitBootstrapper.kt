@@ -39,7 +39,7 @@ internal class ModuleInitBootstrapper(
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::createDataCaptureServiceModule,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::createDeliveryModule,
     private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
-    private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::createCustomerLogModule,
+    private val logModuleSupplier: LogModuleSupplier = ::createLogModule,
     private val nativeModuleSupplier: NativeModuleSupplier = ::createNativeModule,
     private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::createDataContainerModule,
     private val sessionModuleSupplier: SessionModuleSupplier = ::createSessionModule,
@@ -73,7 +73,7 @@ internal class ModuleInitBootstrapper(
     lateinit var anrModule: AnrModule
         private set
 
-    lateinit var customerLogModule: CustomerLogModule
+    lateinit var logModule: LogModule
         private set
 
     lateinit var nativeModule: NativeModule
@@ -173,7 +173,7 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             storageModule,
                             customAppId,
-                            { customerLogModule },
+                            { logModule },
                             { featureModule },
                             appFramework,
                             configServiceProvider
@@ -355,8 +355,8 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    customerLogModule = init(CustomerLogModule::class) {
-                        customerLogModuleSupplier(
+                    logModule = init(LogModule::class) {
+                        logModuleSupplier(
                             initModule,
                             openTelemetryModule,
                             androidServicesModule,
@@ -367,14 +367,14 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    postInit(CustomerLogModule::class) {
+                    postInit(LogModule::class) {
                         serviceRegistry.registerServices(
-                            customerLogModule.logService,
-                            customerLogModule.networkCaptureService,
-                            customerLogModule.networkLoggingService
+                            logModule.logService,
+                            logModule.networkCaptureService,
+                            logModule.networkLoggingService
                         )
                         // Start the log orchestrator
-                        customerLogModule.logOrchestrator
+                        logModule.logOrchestrator
                     }
 
                     dataContainerModule = init(DataContainerModule::class) {
@@ -407,7 +407,7 @@ internal class ModuleInitBootstrapper(
                             payloadModule,
                             dataCaptureServiceModule,
                             dataContainerModule,
-                            customerLogModule
+                            logModule
                         )
                     }
 
@@ -420,8 +420,8 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             storageModule,
                             essentialServiceModule,
-                            nativeModule,
-                            androidServicesModule
+                            androidServicesModule,
+                            nativeModule.ndkService::getUnityCrashId
                         )
                     }
 
@@ -429,7 +429,7 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerService(crashModule.crashDataSource)
                         with(crashModule.crashDataSource) {
                             addCrashTeardownHandler(anrModule.anrService)
-                            addCrashTeardownHandler(customerLogModule.logOrchestrator)
+                            addCrashTeardownHandler(logModule.logOrchestrator)
                             addCrashTeardownHandler(sessionModule.sessionOrchestrator)
                         }
                     }

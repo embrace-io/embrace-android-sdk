@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.SessionModuleImpl
@@ -49,7 +49,7 @@ internal class SessionModuleImplTest {
             FakePayloadModule(),
             FakeDataCaptureServiceModule(),
             FakeDataContainerModule(),
-            FakeCustomerLogModule()
+            FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)
@@ -85,7 +85,7 @@ internal class SessionModuleImplTest {
             FakePayloadModule(),
             FakeDataCaptureServiceModule(),
             FakeDataContainerModule(),
-            FakeCustomerLogModule()
+            FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
         assertNotNull(module.sessionPropertiesService)

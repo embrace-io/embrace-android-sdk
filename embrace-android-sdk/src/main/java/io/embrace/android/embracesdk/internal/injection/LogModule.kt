@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingServ
 /**
  * Holds dependencies that are required for a customer to send log messages to the backend.
  */
-internal interface CustomerLogModule {
+internal interface LogModule {
     val networkCaptureService: NetworkCaptureService
     val networkCaptureDataSource: NetworkCaptureDataSource
     val networkLoggingService: NetworkLoggingService

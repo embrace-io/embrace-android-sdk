@@ -16,7 +16,7 @@ internal typealias SessionModuleSupplier = (
     payloadModule: PayloadModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     dataContainerModule: DataContainerModule,
-    customerLogModule: CustomerLogModule
+    logModule: LogModule
 ) -> SessionModule
 
 internal fun createSessionModule(
@@ -32,7 +32,7 @@ internal fun createSessionModule(
     payloadModule: PayloadModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     dataContainerModule: DataContainerModule,
-    customerLogModule: CustomerLogModule
+    logModule: LogModule
 ): SessionModule = SessionModuleImpl(
     initModule,
     openTelemetryModule,
@@ -46,5 +46,5 @@ internal fun createSessionModule(
     payloadModule,
     dataCaptureServiceModule,
     dataContainerModule,
-    customerLogModule
+    logModule
 )

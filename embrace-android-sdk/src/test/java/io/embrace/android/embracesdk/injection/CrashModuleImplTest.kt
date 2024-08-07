@@ -10,10 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.injection.CrashModuleImpl
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSource
-import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class CrashModuleImplTest {
@@ -24,20 +21,21 @@ internal class CrashModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val androidServicesModule = FakeNativeModule()
         val module = CrashModuleImpl(
             FakeInitModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
-            FakeNativeModule(),
             FakeAndroidServicesModule(),
+            androidServicesModule.ndkService::getUnityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)
-        assertTrue(module.nativeCrashService is NoopNativeCrashService)
     }
 
     @Test
     fun `default config turns on v2 native crash service`() {
+        val androidServicesModule = FakeNativeModule()
         val module = CrashModuleImpl(
             FakeInitModule(),
             FakeStorageModule(),
@@ -46,11 +44,10 @@ internal class CrashModuleImplTest {
                     autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled
                 )
             ),
-            FakeNativeModule(),
             FakeAndroidServicesModule(),
+            androidServicesModule.ndkService::getUnityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)
-        assertTrue(module.nativeCrashService is NativeCrashDataSource)
     }
 }

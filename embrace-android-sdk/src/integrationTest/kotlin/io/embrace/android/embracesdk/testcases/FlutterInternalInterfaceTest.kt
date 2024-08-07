@@ -209,7 +209,7 @@ internal class FlutterInternalInterfaceTest {
     private fun flushLogs() {
         val executor = (testRule.harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
         executor.runCurrentlyBlocked()
-        val logOrchestrator = testRule.bootstrapper.customerLogModule.logOrchestrator
+        val logOrchestrator = testRule.bootstrapper.logModule.logOrchestrator
         logOrchestrator.flush(false)
     }
 }

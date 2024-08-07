@@ -26,7 +26,7 @@ internal class SessionModuleImpl(
     payloadModule: PayloadModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     dataContainerModule: DataContainerModule,
-    customerLogModule: CustomerLogModule
+    logModule: LogModule
 ) : SessionModule {
 
     override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
@@ -82,7 +82,7 @@ internal class SessionModuleImpl(
             openTelemetryModule.currentSessionSpan,
             dataContainerModule.eventService,
             dataCaptureServiceModule.startupService,
-            customerLogModule.logService,
+            logModule.logService,
             essentialServiceModule.metadataService
         )
     }

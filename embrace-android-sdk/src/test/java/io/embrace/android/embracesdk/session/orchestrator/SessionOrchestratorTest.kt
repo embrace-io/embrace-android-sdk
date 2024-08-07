@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -56,7 +55,6 @@ internal class SessionOrchestratorTest {
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var userService: FakeUserService
-    private lateinit var ndkService: FakeNdkService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -236,7 +234,6 @@ internal class SessionOrchestratorTest {
 
         orchestrator.endSessionWithManual(true)
         assertEquals(1, userService.clearedCount)
-        assertEquals(1, ndkService.userUpdateCount)
     }
 
     @Test
@@ -374,7 +371,6 @@ internal class SessionOrchestratorTest {
         memoryCleanerService = FakeMemoryCleanerService()
         sessionProperties = fakeEmbraceSessionProperties()
         userService = FakeUserService()
-        ndkService = FakeNdkService()
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
@@ -404,7 +400,6 @@ internal class SessionOrchestratorTest {
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
-                ndkService,
                 sessionProperties,
                 FakeNetworkConnectivityService()
             ),

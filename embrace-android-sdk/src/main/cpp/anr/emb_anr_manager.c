@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 JNIEXPORT jint JNICALL
-Java_io_embrace_android_embracesdk_internal_anr_sigquit_SigquitDataSource_installGoogleAnrHandler(
+Java_io_embrace_android_embracesdk_internal_anr_sigquit_EmbraceSigquitNdkDelegate_installGoogleAnrHandler(
         JNIEnv *env, jobject thiz,
         jint google_thread_id) {
     return emb_install_google_anr_handler(env, thiz, google_thread_id);

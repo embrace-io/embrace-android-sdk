@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 
 /**
  * A simple interface to make internal HTTP requests to the Embrace API

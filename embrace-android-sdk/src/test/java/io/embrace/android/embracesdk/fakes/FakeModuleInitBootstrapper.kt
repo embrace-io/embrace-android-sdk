@@ -15,23 +15,23 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.AnrModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.CoreModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.CrashModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.CustomerLogModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.DataContainerModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.DataSourceModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.DeliveryModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CrashModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CustomerLogModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataContainerModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataSourceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.NativeModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.PayloadModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.SessionModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.NativeModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.PayloadModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.SessionModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
 
 @Suppress("LongParameterList")
 internal fun fakeModuleInitBootstrapper(

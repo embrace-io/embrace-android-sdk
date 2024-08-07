@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -97,12 +98,13 @@ internal class EmbraceConfigServiceTest {
     fun setup() {
         fakeClock.setCurrentTime(1000000000000)
         every { mockApiService.getConfig() } returns remoteConfig
-        fakePreferenceService = FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
+        fakePreferenceService =
+            FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
         every {
             mockCacheService.loadObject<RemoteConfig>("config.json", RemoteConfig::class.java)
         } returns fakeCachedConfig
         worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
-        service = createService(worker = worker)
+        service = createService(worker = worker, action = {})
     }
 
     /**
@@ -202,7 +204,7 @@ internal class EmbraceConfigServiceTest {
         val obj = RemoteConfig(anrConfig = AnrRemoteConfig(mainThreadOnly = false))
         every { mockApiService.getConfig() } returns null
         every { mockApiService.getCachedConfig() } returns CachedConfig(obj, null)
-        service = createService(worker)
+        service = createService(worker) {}
 
         // config was updated
         assertFalse(service.anrBehavior.shouldCaptureMainThreadOnly())
@@ -252,6 +254,9 @@ internal class EmbraceConfigServiceTest {
 
     @Test
     fun `test onForeground() with sdk started and config sdkDisabled=true stops the SDK`() {
+        service = createService(worker) {
+            io.embrace.android.embracesdk.Embrace.getInstance().internalInterface.stopSdk()
+        }
         val mockInternalInterface: EmbraceInternalInterface = mockk(relaxed = true)
         mockkObject(Embrace.getImpl())
         every { Embrace.getImpl().isStarted } returns true
@@ -286,7 +291,7 @@ internal class EmbraceConfigServiceTest {
 
         // Create a new instance of the ConfigService where the value of the config is what it is when the config
         // variable is initialized, before the cached version is loaded.
-        val configService = createService(BackgroundWorker(pausableExecutorService))
+        val configService = createService(BackgroundWorker(pausableExecutorService)) {}
         assertFalse(configService.hasValidRemoteConfig())
 
         // call arbitrary function to trigger config refresh
@@ -311,7 +316,7 @@ internal class EmbraceConfigServiceTest {
      * Create a new instance of the [EmbraceConfigService] using the passed in [worker] to run
      * tasks for its internal [BackgroundWorker]
      */
-    private fun createService(worker: BackgroundWorker): EmbraceConfigService =
+    private fun createService(worker: BackgroundWorker, action: ConfigService.() -> Unit): EmbraceConfigService =
         EmbraceConfigService(
             localConfig,
             mockApiService,
@@ -320,6 +325,7 @@ internal class EmbraceConfigServiceTest {
             logger,
             worker,
             false,
-            AppFramework.NATIVE
+            AppFramework.NATIVE,
+            action
         )
 }

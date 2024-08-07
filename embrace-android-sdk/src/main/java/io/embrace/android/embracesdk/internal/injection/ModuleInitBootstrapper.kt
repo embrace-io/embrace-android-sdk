@@ -9,25 +9,9 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CrashModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CustomerLogModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataContainerModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataSourceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.NativeModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.PayloadModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.SessionModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import java.util.Locale
@@ -53,7 +37,7 @@ internal class ModuleInitBootstrapper(
     private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::DataSourceModuleImpl,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::DataCaptureServiceModuleImpl,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::DeliveryModuleImpl,
-    private val anrModuleSupplier: AnrModuleSupplier = ::AnrModuleImpl,
+    private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
     private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::CustomerLogModuleImpl,
     private val nativeModuleSupplier: NativeModuleSupplier = ::NativeModuleImpl,
     private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::DataContainerModuleImpl,
@@ -211,7 +195,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     anrModule = init(AnrModule::class) {
-                        anrModuleSupplier(initModule, essentialServiceModule, workerThreadModule, openTelemetryModule)
+                        anrModuleSupplier(initModule, essentialServiceModule.configService, workerThreadModule, openTelemetryModule)
                     }
 
                     dataSourceModule = init(DataSourceModule::class) {
@@ -238,7 +222,7 @@ internal class ModuleInitBootstrapper(
                         dataCaptureServiceModuleSupplier(
                             initModule,
                             openTelemetryModule,
-                            essentialServiceModule,
+                            essentialServiceModule.configService,
                             workerThreadModule,
                             versionChecker,
                             dataSourceModule
@@ -260,7 +244,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     deliveryModule = init(DeliveryModule::class) {
-                        deliveryModuleSupplier(initModule, workerThreadModule, storageModule, essentialServiceModule)
+                        deliveryModuleSupplier(initModule, workerThreadModule, storageModule, essentialServiceModule.apiService)
                     }
 
                     postInit(DeliveryModule::class) {

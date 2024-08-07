@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
@@ -40,13 +39,11 @@ internal class DataCaptureServiceModuleImplTest {
         assertNotNull(module.startupService)
     }
 
-    private fun createEnabledBehavior(): FakeEssentialServiceModule {
-        return FakeEssentialServiceModule(
-            configService = FakeConfigService(
-                anrBehavior = fakeAnrBehavior { AnrRemoteConfig(pctStrictModeListenerEnabled = 100f) },
-                sdkModeBehavior = fakeSdkModeBehavior(
-                    isDebug = true
-                )
+    private fun createEnabledBehavior(): FakeConfigService {
+        return FakeConfigService(
+            anrBehavior = fakeAnrBehavior { AnrRemoteConfig(pctStrictModeListenerEnabled = 100f) },
+            sdkModeBehavior = fakeSdkModeBehavior(
+                isDebug = true
             )
         )
     }

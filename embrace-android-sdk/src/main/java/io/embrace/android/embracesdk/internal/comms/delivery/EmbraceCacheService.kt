@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -10,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.StorageService
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import java.io.File
 import java.io.FileNotFoundException
 import java.lang.reflect.Type

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
@@ -9,11 +10,10 @@ internal class DeliveryModuleImpl(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
-    essentialServiceModule: EssentialServiceModule,
+    apiService: ApiService?
 ) : DeliveryModule {
 
     override val deliveryService: DeliveryService by singleton {
-        val apiService = essentialServiceModule.apiService
         if (apiService == null) {
             NoopDeliveryService()
         } else {

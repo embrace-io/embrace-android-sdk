@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -18,7 +18,7 @@ internal class DeliveryModuleImplTest {
             initModule,
             WorkerThreadModuleImpl(InitModuleImpl()),
             FakeStorageModule(),
-            FakeEssentialServiceModule(),
+            FakeApiService(),
         )
 
         assertNotNull(module.deliveryService)

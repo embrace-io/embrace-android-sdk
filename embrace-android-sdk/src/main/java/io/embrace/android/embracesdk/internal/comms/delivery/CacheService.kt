@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import java.lang.reflect.Type
 
 /**

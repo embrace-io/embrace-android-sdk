@@ -1,20 +1,17 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.fakes.system.mockLooper
 import io.embrace.android.embracesdk.internal.anr.NoOpAnrService
 import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.injection.AnrModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -26,14 +23,14 @@ internal class AnrModuleImplTest {
     @Before
     fun setUp() {
         mockkStatic(Looper::class)
-        every { Looper.getMainLooper() } returns mockLooper()
+        every { Looper.getMainLooper() } returns mockk(relaxed = true)
     }
 
     @Test
     fun testDefaultImplementations() {
         val module = AnrModuleImpl(
             FakeInitModule(),
-            FakeEssentialServiceModule(),
+            FakeConfigService(),
             WorkerThreadModuleImpl(FakeInitModule()),
             FakeOpenTelemetryModule()
         )
@@ -45,9 +42,7 @@ internal class AnrModuleImplTest {
     fun testBehaviorDisabled() {
         val module = AnrModuleImpl(
             FakeInitModule(),
-            FakeEssentialServiceModule(
-                configService = createConfigServiceWithAnrDisabled()
-            ),
+            createConfigServiceWithAnrDisabled(),
             FakeWorkerThreadModule(),
             FakeOpenTelemetryModule()
         )

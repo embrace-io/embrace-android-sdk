@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
@@ -48,16 +46,17 @@ import kotlin.math.min
 /**
  * Loads configuration for the app from the Embrace API.
  */
-internal class EmbraceConfigService @JvmOverloads constructor(
+public class EmbraceConfigService @JvmOverloads constructor(
     private val localConfig: LocalConfig,
-    private val apiService: ApiService?,
+    private val remoteConfigSource: RemoteConfigSource?,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     isDebug: Boolean,
     suppliedFramework: AppFramework,
-    internal val thresholdCheck: BehaviorThresholdCheck =
+    private val foregroundAction: ConfigService.() -> Unit,
+    public val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck(preferencesService::deviceIdentifier)
 ) : ConfigService, ProcessStateListener {
 
@@ -71,7 +70,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     private var configProp = RemoteConfig()
 
     @Volatile
-    var lastUpdated: Long = 0
+    public var lastUpdated: Long = 0
 
     @Volatile
     private var lastRefreshConfigAttempt: Long = 0
@@ -189,8 +188,8 @@ internal class EmbraceConfigService @JvmOverloads constructor(
      * Load Config from cache if present.
      */
 
-    fun loadConfigFromCache() {
-        val cachedConfig = apiService?.getCachedConfig()
+    public fun loadConfigFromCache() {
+        val cachedConfig = remoteConfigSource?.getCachedConfig()
         val obj = cachedConfig?.remoteConfig
 
         if (obj != null) {
@@ -223,7 +222,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
             if (configRequiresRefresh()) {
                 try {
                     lastRefreshConfigAttempt = clock.now()
-                    val newConfig = apiService?.getConfig()
+                    val newConfig = remoteConfigSource?.getConfig()
                     if (newConfig != null) {
                         updateConfig(previousConfig, newConfig)
                         lastUpdated = clock.now()
@@ -275,10 +274,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         // Refresh the config on resume if it has expired
         getConfig()
-        if (Embrace.getInstance().isStarted && isSdkDisabled()) {
-            logger.logInfo("Embrace SDK disabled by config")
-            Embrace.getInstance().internalInterface.stopSdk()
-        }
+        foregroundAction()
     }
 
     override val appFramework: AppFramework = localConfig.sdkConfig.appFramework?.let {
@@ -327,7 +323,7 @@ internal class EmbraceConfigService @JvmOverloads constructor(
         return appExitInfoBehavior.isEnabled()
     }
 
-    companion object {
+    private companion object {
 
         /**
          * Config lives for 1 hour before attempting to retrieve again.

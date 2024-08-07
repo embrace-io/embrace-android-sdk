@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.StorageModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -15,12 +15,12 @@ internal class StorageModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val coreModule = FakeCoreModule()
         val module = StorageModuleImpl(
             initModule = initModule,
             coreModule = coreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule),
+            workerThreadModule = FakeWorkerThreadModule(),
         )
 
         assertNotNull(module.storageService)

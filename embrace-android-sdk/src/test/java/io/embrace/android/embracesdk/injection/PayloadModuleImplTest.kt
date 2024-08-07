@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.injection
 
-import io.embrace.android.embracesdk.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.PayloadModuleImpl
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
@@ -18,7 +18,7 @@ internal class PayloadModuleImplTest {
 
     @Test
     fun `module default values`() {
-        val initModule = InitModuleImpl()
+        val initModule = FakeInitModule()
         val coreModule = FakeCoreModule()
         val module = PayloadModuleImpl(
             initModule,
@@ -26,7 +26,7 @@ internal class PayloadModuleImplTest {
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeSystemServiceModule(),
-            WorkerThreadModuleImpl(initModule),
+            FakeWorkerThreadModule(),
             FakeNativeModule(),
             FakeOpenTelemetryModule(),
             FakeAnrModule(),

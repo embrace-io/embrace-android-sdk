@@ -28,6 +28,8 @@ dependencies {
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
     testImplementation(libs.lifecycle.process)
+    testImplementation(libs.protobuf.java)
+    testImplementation(libs.protobuf.java.util)
 }
 
 apiValidation.validationDisabled = true

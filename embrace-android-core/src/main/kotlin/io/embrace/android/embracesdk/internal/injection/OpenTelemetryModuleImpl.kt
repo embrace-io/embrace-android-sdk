@@ -23,7 +23,7 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 
-public class OpenTelemetryModuleImpl(
+internal class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
     override val openTelemetryClock: io.opentelemetry.sdk.common.Clock = OpenTelemetryClock(
         embraceClock = initModule.clock

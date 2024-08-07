@@ -5,10 +5,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.assertions.assertExpectedAttributes
+import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
-import io.embrace.android.embracesdk.opentelemetry.assertExpectedAttributes
-import io.embrace.android.embracesdk.opentelemetry.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

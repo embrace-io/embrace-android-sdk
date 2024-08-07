@@ -9,25 +9,9 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.utils.AndroidServicesModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.utils.CoreModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CrashModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.CustomerLogModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataCaptureServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataContainerModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DataSourceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.DeliveryModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.EssentialServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.NativeModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.PayloadModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.SessionModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.StorageModuleSupplier
-import io.embrace.android.embracesdk.internal.utils.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.utils.WorkerThreadModuleSupplier
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import java.util.Locale
@@ -41,25 +25,26 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    val logger: EmbLogger = EmbLoggerImpl(),
-    val initModule: InitModule = InitModuleImpl(logger = logger),
-    val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(initModule),
-    private val coreModuleSupplier: CoreModuleSupplier = ::CoreModuleImpl,
-    private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::SystemServiceModuleImpl,
-    private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = ::AndroidServicesModuleImpl,
-    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = ::WorkerThreadModuleImpl,
-    private val storageModuleSupplier: StorageModuleSupplier = ::StorageModuleImpl,
-    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::EssentialServiceModuleImpl,
-    private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::DataSourceModuleImpl,
-    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::DataCaptureServiceModuleImpl,
-    private val deliveryModuleSupplier: DeliveryModuleSupplier = ::DeliveryModuleImpl,
-    private val anrModuleSupplier: AnrModuleSupplier = ::AnrModuleImpl,
-    private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::CustomerLogModuleImpl,
-    private val nativeModuleSupplier: NativeModuleSupplier = ::NativeModuleImpl,
-    private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::DataContainerModuleImpl,
-    private val sessionModuleSupplier: SessionModuleSupplier = ::SessionModuleImpl,
-    private val crashModuleSupplier: CrashModuleSupplier = ::CrashModuleImpl,
-    private val payloadModuleSupplier: PayloadModuleSupplier = ::PayloadModuleImpl,
+    public val logger: EmbLogger = EmbLoggerImpl(),
+    val initModule: InitModule = createInitModule(logger = logger),
+    val openTelemetryModule: OpenTelemetryModule = createOpenTelemetryModule(initModule),
+    private val coreModuleSupplier: CoreModuleSupplier = ::createCoreModule,
+    private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::createSystemServiceModule,
+    private val androidServicesModuleSupplier: AndroidServicesModuleSupplier = ::createAndroidServicesModule,
+    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = ::createWorkerThreadModule,
+    private val storageModuleSupplier: StorageModuleSupplier = ::createStorageModuleSupplier,
+    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::createEssentialServiceModule,
+    private val featureModuleSupplier: FeatureModuleSupplier = ::createFeatureModule,
+    private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::createDataSourceModule,
+    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::createDataCaptureServiceModule,
+    private val deliveryModuleSupplier: DeliveryModuleSupplier = ::createDeliveryModule,
+    private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
+    private val customerLogModuleSupplier: CustomerLogModuleSupplier = ::createCustomerLogModule,
+    private val nativeModuleSupplier: NativeModuleSupplier = ::createNativeModule,
+    private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::createDataContainerModule,
+    private val sessionModuleSupplier: SessionModuleSupplier = ::createSessionModule,
+    private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
+    private val payloadModuleSupplier: PayloadModuleSupplier = ::createPayloadModule,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -98,6 +83,9 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var dataSourceModule: DataSourceModule
+        private set
+
+    lateinit var featureModule: FeatureModule
         private set
 
     lateinit var sessionModule: SessionModule
@@ -186,7 +174,7 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             customAppId,
                             { customerLogModule },
-                            { dataSourceModule },
+                            { featureModule },
                             appFramework,
                             configServiceProvider
                         )
@@ -211,37 +199,47 @@ internal class ModuleInitBootstrapper(
                     }
 
                     anrModule = init(AnrModule::class) {
-                        anrModuleSupplier(initModule, essentialServiceModule, workerThreadModule, openTelemetryModule)
+                        anrModuleSupplier(initModule, essentialServiceModule.configService, workerThreadModule, openTelemetryModule)
                     }
 
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
-                            coreModule,
-                            openTelemetryModule,
-                            essentialServiceModule,
-                            systemServiceModule,
-                            androidServicesModule,
-                            workerThreadModule,
-                            anrModule
+                            essentialServiceModule.configService,
+                            workerThreadModule
                         )
                     }
-                    postInit(DataSourceModule::class) {
-                        dataSourceModule.registerFeatures()
+
+                    featureModule = init(FeatureModule::class) {
+                        featureModuleSupplier(
+                            dataSourceModule.embraceFeatureRegistry,
+                            coreModule,
+                            initModule,
+                            openTelemetryModule,
+                            workerThreadModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            anrModule,
+                            essentialServiceModule.logWriter,
+                            essentialServiceModule.configService,
+                        )
+                    }
+                    postInit(FeatureModule::class) {
+                        featureModule.registerFeatures()
                     }
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }
-                    initModule.internalErrorService.handler = { dataSourceModule.internalErrorDataSource.dataSource }
+                    initModule.internalErrorService.handler = { featureModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(
                             initModule,
                             openTelemetryModule,
-                            essentialServiceModule,
+                            essentialServiceModule.configService,
                             workerThreadModule,
                             versionChecker,
-                            dataSourceModule
+                            featureModule
                         )
                     }
 
@@ -260,7 +258,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     deliveryModule = init(DeliveryModule::class) {
-                        deliveryModuleSupplier(initModule, workerThreadModule, storageModule, essentialServiceModule)
+                        deliveryModuleSupplier(initModule, workerThreadModule, storageModule, essentialServiceModule.apiService)
                     }
 
                     postInit(DeliveryModule::class) {
@@ -403,6 +401,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             workerThreadModule,
                             dataSourceModule,
+                            featureModule,
                             payloadModule,
                             dataCaptureServiceModule,
                             dataContainerModule,

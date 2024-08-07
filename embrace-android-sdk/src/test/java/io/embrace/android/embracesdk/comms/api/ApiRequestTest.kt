@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.comms.api
 
-import com.squareup.moshi.JsonDataException
-import io.embrace.android.embracesdk.assertJsonMatchesGoldenFile
-import io.embrace.android.embracesdk.deserializeEmptyJsonString
-import io.embrace.android.embracesdk.deserializeJsonFromResource
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -60,36 +56,6 @@ internal class ApiRequestTest {
             ),
             minimal.getHeaders().minus("User-Agent")
         )
-    }
-
-    @Test
-    fun testSerialization() {
-        assertJsonMatchesGoldenFile("api_request.json", request)
-    }
-
-    @Test
-    fun testDeserialization() {
-        val obj = deserializeJsonFromResource<ApiRequest>("api_request.json")
-        assertEquals(
-            mapOf(
-                "Accept" to "application/json",
-                "User-Agent" to "Embrace/a/1",
-                "Content-Type" to "application/json",
-                "Content-Encoding" to "application/json",
-                "Accept-Encoding" to "application/json",
-                "X-EM-AID" to "abcde",
-                "X-EM-DID" to "test_did",
-                "X-EM-SID" to "test_eid",
-                "X-EM-LID" to "test_lid",
-                "If-None-Match" to "d800f828fec4409dcabc7f5252e7ce71"
-            ),
-            obj.getHeaders()
-        )
-    }
-
-    @Test(expected = JsonDataException::class)
-    fun testEmptyObject() {
-        deserializeEmptyJsonString<ApiRequest>()
     }
 
     @Test

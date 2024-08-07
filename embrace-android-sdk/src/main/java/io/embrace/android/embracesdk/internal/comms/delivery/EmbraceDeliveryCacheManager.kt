@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager.Companion.PENDING_API_CALLS_FILE_NAME
+import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
@@ -10,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.utils.SerializationAction
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority

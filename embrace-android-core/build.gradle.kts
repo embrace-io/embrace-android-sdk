@@ -23,11 +23,23 @@ apiValidation.validationDisabled = true
 dependencies {
     implementation(project(":embrace-android-payload"))
     compileOnly(project(":embrace-android-api"))
+    testImplementation(project(":embrace-android-payload"))
+    testImplementation(project(":embrace-android-api"))
+
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
     compileOnly(libs.opentelemetry.sdk)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
     compileOnly(libs.lifecycle.common.java8)
+    implementation(libs.lifecycle.process)
+
+
+    testImplementation(platform(libs.opentelemetry.bom))
+    testImplementation(libs.opentelemetry.api)
+    testImplementation(libs.opentelemetry.sdk)
+    testImplementation(libs.opentelemetry.semconv)
+    testImplementation(libs.opentelemetry.semconv.incubating)
+    testImplementation(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)
 }

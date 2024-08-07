@@ -1,6 +1,0 @@
-{
-  "max_length": 768,
-  "info_limit": 50,
-  "warn_limit": 200,
-  "error_limit": 500
-}

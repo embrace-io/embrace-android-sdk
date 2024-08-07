@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes.injection
 
-import io.embrace.android.embracesdk.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService

@@ -7,7 +7,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.internal.IdGeneratorTest.Companion.validPattern
 import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -27,6 +26,11 @@ import org.robolectric.annotation.Config
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class PublicApiTest {
+
+    companion object {
+        val validPattern = Regex("^00-" + "[0-9a-fA-F]{32}" + "-" + "[0-9a-fA-F]{16}" + "-01$")
+    }
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {

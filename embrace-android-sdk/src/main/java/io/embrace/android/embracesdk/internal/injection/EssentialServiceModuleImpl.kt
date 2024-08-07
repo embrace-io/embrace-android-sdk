@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
@@ -58,7 +59,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
-    dataSourceModuleProvider: Provider<DataSourceModule>,
+    featureModuleProvider: Provider<FeatureModule>,
     framework: AppFramework,
     private val configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
 ) : EssentialServiceModule {
@@ -142,7 +143,13 @@ internal class EssentialServiceModuleImpl(
                     backgroundWorker,
                     coreModule.isDebug,
                     framework,
-                    thresholdCheck
+                    {
+                        if (Embrace.getInstance().isStarted && isSdkDisabled()) {
+                            Embrace.getInstance().internalInterface.stopSdk()
+                        }
+                    },
+                    thresholdCheck,
+
                 )
         }
     }
@@ -238,7 +245,7 @@ internal class EssentialServiceModuleImpl(
                 backgroundWorker,
                 initModule.logger,
                 systemServiceModule.connectivityManager,
-                { dataSourceModuleProvider().networkStatusDataSource.dataSource }
+                { featureModuleProvider().networkStatusDataSource.dataSource }
             )
         }
     }

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-public class AndroidServicesModuleImpl(
+internal class AndroidServicesModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,

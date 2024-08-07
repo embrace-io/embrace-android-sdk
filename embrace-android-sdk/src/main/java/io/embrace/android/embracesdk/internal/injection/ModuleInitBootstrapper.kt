@@ -290,6 +290,8 @@ internal class ModuleInitBootstrapper(
 
                     postInit(NativeModule::class) {
                         val ndkService = nativeModule.ndkService
+                        essentialServiceModule.userService.addUserInfoListener(ndkService::onUserInfoUpdate)
+
                         val initWorkerTaskQueueTime = initModule.clock.now()
                         workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT).submit {
                             openTelemetryModule.spanService.recordCompletedSpan(

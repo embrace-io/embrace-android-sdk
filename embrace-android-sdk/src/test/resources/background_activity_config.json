@@ -1,6 +1,0 @@
-{
-  "capture_enabled": true,
-  "manual_background_activity_limit": 15,
-  "min_background_activity_duration": 10000,
-  "max_cached_activities": 16
-}

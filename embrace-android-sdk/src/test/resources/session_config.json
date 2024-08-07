@@ -1,5 +1,0 @@
-{
-  "error_log_strict_mode": true,
-  "send_full_for": ["crash"],
-  "components": ["breadcrumbs"]
-}

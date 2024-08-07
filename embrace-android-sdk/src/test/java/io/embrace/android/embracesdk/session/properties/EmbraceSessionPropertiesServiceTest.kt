@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProp
 import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,7 +28,14 @@ internal class EmbraceSessionPropertiesServiceTest {
     @Before
     fun setUp() {
         val logger = EmbLoggerImpl()
-        val fakeConfigService = FakeConfigService()
+        val fakeConfigService =
+            FakeConfigService(
+                sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                    SdkLocalConfig(
+                        sensitiveKeysDenylist = listOf("password")
+                    )
+                )
+            )
         props = EmbraceSessionProperties(FakePreferenceService(), fakeConfigService, logger)
         ndkService = FakeNdkService()
         fakeCurrentSessionSpan = FakeCurrentSessionSpan()
@@ -35,7 +44,11 @@ internal class EmbraceSessionPropertiesServiceTest {
             writer = fakeCurrentSessionSpan,
             logger = logger,
         )
-        service = EmbraceSessionPropertiesService(ndkService::onSessionPropertiesUpdate, props) { dataSource }
+        service = EmbraceSessionPropertiesService(
+            ndkService::onSessionPropertiesUpdate,
+            props,
+            fakeConfigService.sensitiveKeysBehavior
+        ) { dataSource }
     }
 
     @Test
@@ -48,6 +61,21 @@ internal class EmbraceSessionPropertiesServiceTest {
         assertEquals(1, fakeCurrentSessionSpan.attributeCount())
 
         service.removeProperty("key")
+        assertEquals(emptyMap<String, String>(), props.get())
+        assertEquals(emptyMap<String, String>(), ndkService.propUpdates.last())
+        assertEquals(0, fakeCurrentSessionSpan.attributeCount())
+    }
+
+    @Test
+    fun testAddRedactedSessionProp() {
+        service.addProperty("password", "value", false)
+        val expected = mapOf("password" to "<redacted>")
+        assertEquals(expected, props.get())
+        assertEquals(expected, ndkService.propUpdates.single())
+        assertEquals(expected, service.getProperties())
+        assertEquals(1, fakeCurrentSessionSpan.attributeCount())
+
+        service.removeProperty("password")
         assertEquals(emptyMap<String, String>(), props.get())
         assertEquals(emptyMap<String, String>(), ndkService.propUpdates.last())
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())

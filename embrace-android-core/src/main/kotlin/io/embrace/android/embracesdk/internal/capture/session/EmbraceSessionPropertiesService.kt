@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 public class EmbraceSessionPropertiesService(
     private val listener: (Map<String, String>) -> Unit,
     private val sessionProperties: EmbraceSessionProperties,
+    private val sensitiveKeysBehavior: SensitiveKeysBehavior,
     private val dataSourceProvider: Provider<SessionPropertiesDataSource?>
 ) : SessionPropertiesService {
 
@@ -17,7 +19,12 @@ public class EmbraceSessionPropertiesService(
         if (!isValidValue(originalValue)) {
             return false
         }
-        val sanitizedValue = enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+
+        val sanitizedValue = if (sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
+            "<redacted>"
+        } else {
+            enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+        }
 
         val added = sessionProperties.add(sanitizedKey, sanitizedValue, permanent)
         if (added) {

@@ -42,9 +42,14 @@ public interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     public fun setSystemAttribute(key: AttributeKey<String>, value: String)
 
     /**
-     * Remove the custom attribute with the given key name
+     * Add the given key value pair as a system attribute to ths span
      */
-    public fun removeCustomAttribute(key: String): Boolean
+    public fun addSystemAttribute(key: String, value: String)
+
+    /**
+     * Remove the system attribute with the given key name
+     */
+    public fun removeSystemAttribute(key: String)
 
     /**
      * Add a system event to the span that will subjected to a different maximum than typical span events.

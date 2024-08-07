@@ -84,8 +84,8 @@ public val TOO_LONG_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanImpl.MAX_ATTRI
 public val MAX_LENGTH_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_VALUE_LENGTH)
 public val TOO_LONG_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_VALUE_LENGTH + 1)
 
-public val maxSizeAttributes: Map<String, String> = createMapOfSize(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT)
-public val tooBigAttributes: Map<String, String> = createMapOfSize(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT + 1)
+public val maxSizeAttributes: Map<String, String> = createMapOfSize(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT)
+public val tooBigAttributes: Map<String, String> = createMapOfSize(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT + 1)
 public val maxSizeEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT)
 public val tooBigEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT + 1)
 public val maxSizeEvents: List<EmbraceSpanEvent> = createEventsListOfSize(EmbraceSpanImpl.MAX_EVENT_COUNT)

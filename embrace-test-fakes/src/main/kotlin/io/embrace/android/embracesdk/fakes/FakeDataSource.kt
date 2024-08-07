@@ -36,7 +36,7 @@ public class FakeDataSource(
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         captureData(inputValidation = { true }) {
-            addCustomAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
+            addSystemAttribute(SpanAttributeData("orientation", newConfig.orientation.toString()))
         }
     }
 

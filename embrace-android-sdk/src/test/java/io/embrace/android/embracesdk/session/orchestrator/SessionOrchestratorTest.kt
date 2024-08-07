@@ -36,7 +36,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
@@ -408,7 +408,7 @@ internal class SessionOrchestratorTest {
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
             currentSessionSpan,
-            SessionSpanAttrPopulator(
+            SessionSpanAttrPopulatorImpl(
                 currentSessionSpan,
                 FakeEventService(),
                 FakeStartupService(),

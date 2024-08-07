@@ -18,7 +18,7 @@ import org.junit.Assert.assertNull
 /**
  * Assert the [EmbraceSpanData] is as expected
  */
-internal fun assertEmbraceSpanData(
+public fun assertEmbraceSpanData(
     span: Span?,
     expectedStartTimeMs: Long,
     expectedEndTimeMs: Long?,

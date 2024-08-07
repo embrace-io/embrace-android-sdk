@@ -19,7 +19,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.common.Clock
 
-internal class FakeOpenTelemetryModule(
+public class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
     override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),

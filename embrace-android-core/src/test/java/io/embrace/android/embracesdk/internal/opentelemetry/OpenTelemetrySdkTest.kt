@@ -1,5 +1,6 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.internal.opentelemetry
 
+import io.embrace.android.embracesdk.assertions.assertExpectedAttributes
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
@@ -7,8 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetrySdk
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import org.junit.Assert.assertEquals

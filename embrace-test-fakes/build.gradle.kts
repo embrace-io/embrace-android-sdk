@@ -17,6 +17,8 @@ dependencies {
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
     compileOnly(libs.opentelemetry.sdk)
+    compileOnly(libs.opentelemetry.semconv)
+    compileOnly(libs.opentelemetry.semconv.incubating)
 
     implementation(libs.junit)
     implementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")

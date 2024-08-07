@@ -7,7 +7,7 @@ import android.os.PowerManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModule
 
-internal class FakeSystemServiceModule(
+public class FakeSystemServiceModule(
     override val activityManager: ActivityManager? = null,
     override val powerManager: PowerManager? = null,
     override val connectivityManager: ConnectivityManager? = null,

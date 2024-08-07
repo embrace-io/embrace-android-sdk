@@ -1,5 +1,7 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
-  <CurrentIssues></CurrentIssues>
+  <CurrentIssues>
+    <ID>UnusedPrivateMember:EmbraceLogServiceTest.kt$private fun Array&lt;StackTraceElement&gt;.toExceptionSchema(): String</ID>
+  </CurrentIssues>
 </SmellBaseline>

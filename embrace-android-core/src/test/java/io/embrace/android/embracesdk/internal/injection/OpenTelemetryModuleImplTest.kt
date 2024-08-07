@@ -1,8 +1,5 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracerProvider

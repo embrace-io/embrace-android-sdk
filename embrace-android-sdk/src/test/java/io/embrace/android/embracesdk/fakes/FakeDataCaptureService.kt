@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.DataCaptureService
 
-internal abstract class FakeDataCaptureService<T> : DataCaptureService<List<T>?> {
+public abstract class FakeDataCaptureService<T> : DataCaptureService<List<T>?> {
 
-    internal var data: List<T>? = mutableListOf()
+    public var data: List<T>? = mutableListOf()
 
     override fun cleanCollections() {
     }

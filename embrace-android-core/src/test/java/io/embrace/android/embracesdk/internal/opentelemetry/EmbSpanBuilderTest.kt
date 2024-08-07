@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.opentelemetry
+package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.opentelemetry.api.common.AttributeKey

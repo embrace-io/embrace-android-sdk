@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import java.util.concurrent.atomic.AtomicReference
 
-internal class FakeWorkerThreadModule(
+public class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
     private val name: WorkerName? = null,
     private val base: WorkerThreadModule = WorkerThreadModuleImpl(fakeInitModule)
 ) : WorkerThreadModule by base {
 
-    val executorClock = fakeInitModule.getFakeClock() ?: FakeClock()
-    val executor = BlockingScheduledExecutorService(fakeClock = executorClock)
+    public val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()
+    public val executor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
 
     private val backgroundWorker = BackgroundWorker(executor)
     private val scheduledWorker = ScheduledWorker(executor)

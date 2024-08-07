@@ -1,6 +1,4 @@
-@file:Suppress("DEPRECATION")
-
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.capture.session
 
 import android.content.Context
 import android.preference.PreferenceManager
@@ -9,7 +7,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -18,15 +15,18 @@ import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+
+private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
+private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
 
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceSessionPropertiesTest {
@@ -143,7 +143,7 @@ internal class EmbraceSessionPropertiesTest {
                 assertTrue(properties.add(property, VALUE_VALID, false))
                 doneSignal.countDown()
             } catch (ex: InterruptedException) {
-                fail("worker thread died")
+                Assert.fail("worker thread died")
             }
         }
     }
@@ -247,6 +247,3 @@ internal class EmbraceSessionPropertiesTest {
         assertTrue(sessionProperties.get().isEmpty())
     }
 }
-
-private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
-private const val MAX_SESSION_PROPERTIES_DEFAULT = 10

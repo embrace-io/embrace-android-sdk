@@ -1,8 +1,7 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 internal class SessionPropertiesServiceImpl(
     preferencesService: PreferencesService,
-    configService: ConfigService,
+    private val configService: ConfigService,
     logger: EmbLogger,
     writer: SessionSpanWriter
 ) : SessionPropertiesService {
@@ -24,7 +24,12 @@ internal class SessionPropertiesServiceImpl(
         if (!isValidValue(originalValue)) {
             return false
         }
-        val sanitizedValue = enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+
+        val sanitizedValue = if (configService.sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
+            "<redacted>"
+        } else {
+            enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
+        }
 
         val added = props.add(sanitizedKey, sanitizedValue, permanent)
         if (added) {

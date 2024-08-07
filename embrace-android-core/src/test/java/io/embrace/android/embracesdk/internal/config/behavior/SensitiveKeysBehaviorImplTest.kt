@@ -1,6 +1,5 @@
-package io.embrace.android.embracesdk.config.behavior
+package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

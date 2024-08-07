@@ -59,7 +59,7 @@ internal class EssentialServiceModuleImpl(
     storageModule: StorageModule,
     customAppId: String?,
     customerLogModuleProvider: Provider<CustomerLogModule>,
-    dataSourceModuleProvider: Provider<DataSourceModule>,
+    featureModuleProvider: Provider<FeatureModule>,
     framework: AppFramework,
     private val configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
 ) : EssentialServiceModule {
@@ -245,7 +245,7 @@ internal class EssentialServiceModuleImpl(
                 backgroundWorker,
                 initModule.logger,
                 systemServiceModule.connectivityManager,
-                { dataSourceModuleProvider().networkStatusDataSource.dataSource }
+                { featureModuleProvider().networkStatusDataSource.dataSource }
             )
         }
     }

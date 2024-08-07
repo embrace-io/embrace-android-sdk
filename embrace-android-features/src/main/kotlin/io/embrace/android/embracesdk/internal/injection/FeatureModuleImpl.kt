@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Build
+import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
+import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
+import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
@@ -22,6 +25,7 @@ import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateD
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class FeatureModuleImpl(
@@ -32,6 +36,7 @@ internal class FeatureModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
+    anrModule: AnrModule,
     logWriter: LogWriter,
     configService: ConfigService,
 ) : FeatureModule {
@@ -50,7 +55,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by singleton {
+    override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 BreadcrumbDataSource(
@@ -62,7 +67,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val viewDataSource: DataSourceState<ViewDataSource> by singleton {
+    override val viewDataSource: DataSourceState<ViewDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 ViewDataSource(
@@ -75,7 +80,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by singleton {
+    override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 PushNotificationDataSource(
@@ -88,7 +93,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val tapDataSource: DataSourceState<TapDataSource> by singleton {
+    override val tapDataSource: DataSourceState<TapDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 TapDataSource(
@@ -100,7 +105,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> by singleton {
+    override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 WebViewUrlDataSource(
@@ -113,7 +118,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val rnActionDataSource: DataSourceState<RnActionDataSource> by singleton {
+    override val rnActionDataSource: DataSourceState<RnActionDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 RnActionDataSource(
@@ -125,7 +130,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource> by singleton {
+    override val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 SessionPropertiesDataSource(
@@ -137,7 +142,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val webViewDataSource: DataSourceState<WebViewDataSource> by singleton {
+    override val webViewDataSource: DataSourceState<WebViewDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 WebViewDataSource(
@@ -151,7 +156,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by singleton {
+    override val lowPowerDataSource: DataSourceState<LowPowerDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 LowPowerDataSource(
@@ -181,7 +186,7 @@ internal class FeatureModuleImpl(
         }
     }
 
-    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> by singleton {
+    override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> by dataSourceState {
         DataSourceState(
             factory = { thermalService },
             configGate = {
@@ -206,14 +211,14 @@ internal class FeatureModuleImpl(
         }
     }
 
-    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> by singleton {
+    override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> by dataSourceState {
         DataSourceState(
             factory = { aeiService },
             configGate = { configService.isAppExitInfoCaptureEnabled() }
         )
     }
 
-    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by singleton {
+    override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 InternalErrorDataSourceImpl(
@@ -225,7 +230,7 @@ internal class FeatureModuleImpl(
         )
     }
 
-    override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by singleton {
+    override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> by dataSourceState {
         DataSourceState(
             factory = {
                 NetworkStatusDataSource(
@@ -237,7 +242,23 @@ internal class FeatureModuleImpl(
         )
     }
 
+    override val sigquitDataSource: DataSourceState<SigquitDataSource> by dataSourceState {
+        DataSourceState(
+            factory = anrModule::sigquitDataSource,
+            configGate = { configService.anrBehavior.isGoogleAnrCaptureEnabled() }
+        )
+    }
+
     override fun registerFeatures() {
         featureRegistry.add(memoryWarningDataSource)
     }
+
+    /**
+     * Property delegate that adds the value to a
+     * list on its creation. That list is then used by the [DataCaptureOrchestrator] to control
+     * the data sources.
+     */
+    @Suppress("unused")
+    private fun <T : DataSource<*>> dataSourceState(provider: Provider<DataSourceState<T>>) =
+        DataSourceDelegate(provider, featureRegistry)
 }

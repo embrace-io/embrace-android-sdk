@@ -21,7 +21,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     configService: ConfigService,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker = BuildVersionChecker,
-    dataSourceModule: DataSourceModule
+    featureModule: FeatureModule
 ) : DataCaptureServiceModule {
 
     override val webviewService: WebViewService by singleton {
@@ -29,17 +29,17 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             configService,
             initModule.jsonSerializer,
             initModule.logger,
-        ) { dataSourceModule.webViewDataSource.dataSource }
+        ) { featureModule.webViewDataSource.dataSource }
     }
 
     override val activityBreadcrumbTracker: ActivityBreadcrumbTracker by singleton {
         Systrace.traceSynchronous("breadcrumb-service-init") {
-            ActivityBreadcrumbTracker(configService) { dataSourceModule.viewDataSource.dataSource }
+            ActivityBreadcrumbTracker(configService) { featureModule.viewDataSource.dataSource }
         }
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
-        PushNotificationCaptureService(dataSourceModule.pushNotificationDataSource.dataSource, initModule.logger)
+        PushNotificationCaptureService(featureModule.pushNotificationDataSource.dataSource, initModule.logger)
     }
 
     override val startupService: StartupService by singleton {

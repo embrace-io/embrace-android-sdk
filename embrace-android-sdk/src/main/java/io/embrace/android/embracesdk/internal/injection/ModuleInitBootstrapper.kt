@@ -34,6 +34,7 @@ internal class ModuleInitBootstrapper(
     private val workerThreadModuleSupplier: WorkerThreadModuleSupplier = ::createWorkerThreadModule,
     private val storageModuleSupplier: StorageModuleSupplier = ::createStorageModuleSupplier,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier = ::createEssentialServiceModule,
+    private val featureModuleSupplier: FeatureModuleSupplier = ::createFeatureModule,
     private val dataSourceModuleSupplier: DataSourceModuleSupplier = ::createDataSourceModule,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = ::createDataCaptureServiceModule,
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::createDeliveryModule,
@@ -82,6 +83,9 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var dataSourceModule: DataSourceModule
+        private set
+
+    lateinit var featureModule: FeatureModule
         private set
 
     lateinit var sessionModule: SessionModule
@@ -170,7 +174,7 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             customAppId,
                             { customerLogModule },
-                            { dataSourceModule },
+                            { featureModule },
                             appFramework,
                             configServiceProvider
                         )
@@ -201,22 +205,32 @@ internal class ModuleInitBootstrapper(
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
-                            coreModule,
-                            openTelemetryModule,
-                            essentialServiceModule,
-                            systemServiceModule,
-                            androidServicesModule,
-                            workerThreadModule,
-                            anrModule
+                            essentialServiceModule.configService,
+                            workerThreadModule
                         )
                     }
-                    postInit(DataSourceModule::class) {
-                        dataSourceModule.registerFeatures()
+
+                    featureModule = init(FeatureModule::class) {
+                        featureModuleSupplier(
+                            dataSourceModule.embraceFeatureRegistry,
+                            coreModule,
+                            initModule,
+                            openTelemetryModule,
+                            workerThreadModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            anrModule,
+                            essentialServiceModule.logWriter,
+                            essentialServiceModule.configService,
+                        )
+                    }
+                    postInit(FeatureModule::class) {
+                        featureModule.registerFeatures()
                     }
                     Systrace.traceSynchronous("network-connectivity-registration") {
                         essentialServiceModule.networkConnectivityService.register()
                     }
-                    initModule.internalErrorService.handler = { dataSourceModule.internalErrorDataSource.dataSource }
+                    initModule.internalErrorService.handler = { featureModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(
@@ -225,7 +239,7 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule.configService,
                             workerThreadModule,
                             versionChecker,
-                            dataSourceModule
+                            featureModule
                         )
                     }
 
@@ -387,6 +401,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             workerThreadModule,
                             dataSourceModule,
+                            featureModule,
                             payloadModule,
                             dataCaptureServiceModule,
                             dataContainerModule,

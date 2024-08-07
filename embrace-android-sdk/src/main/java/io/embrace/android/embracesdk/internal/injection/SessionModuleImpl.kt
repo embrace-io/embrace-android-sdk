@@ -22,6 +22,7 @@ internal class SessionModuleImpl(
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
+    featureModule: FeatureModule,
     payloadModule: PayloadModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     dataContainerModule: DataContainerModule,
@@ -41,7 +42,7 @@ internal class SessionModuleImpl(
         EmbraceSessionPropertiesService(
             nativeModule.ndkService::onSessionPropertiesUpdate,
             essentialServiceModule.sessionProperties
-        ) { dataSourceModule.sessionPropertiesDataSource.dataSource }
+        ) { featureModule.sessionPropertiesDataSource.dataSource }
     }
 
     private val ndkService by singleton {

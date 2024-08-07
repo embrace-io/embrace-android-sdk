@@ -8,11 +8,17 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
  * Function that returns an instance of [FeatureModule]. Matches the signature of the constructor for [FeatureModuleImpl]
  */
 public typealias FeatureModuleSupplier = (
+    featureRegistry: EmbraceFeatureRegistry,
+    coreModule: CoreModule,
     initModule: InitModule,
-    configService: ConfigService,
-    workerModule: WorkerThreadModule,
-    otelModule: OpenTelemetryModule
-) -> AnrModule
+    otelModule: OpenTelemetryModule,
+    workerThreadModule: WorkerThreadModule,
+    systemServiceModule: SystemServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    anrModule: AnrModule,
+    logWriter: LogWriter,
+    configService: ConfigService
+) -> FeatureModule
 
 public fun createFeatureModule(
     featureRegistry: EmbraceFeatureRegistry,
@@ -22,6 +28,7 @@ public fun createFeatureModule(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
+    anrModule: AnrModule,
     logWriter: LogWriter,
     configService: ConfigService,
 ): FeatureModule = FeatureModuleImpl(
@@ -32,6 +39,7 @@ public fun createFeatureModule(
     workerThreadModule = workerThreadModule,
     systemServiceModule = systemServiceModule,
     androidServicesModule = androidServicesModule,
+    anrModule = anrModule,
     logWriter = logWriter,
     configService = configService,
 )

@@ -3,16 +3,15 @@ package io.embrace.android.embracesdk
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
-import io.embrace.android.embracesdk.fakes.injection.fakeDataSourceModule
-import io.embrace.android.embracesdk.internal.arch.SessionType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
+import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.WebViewVitals
-import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
@@ -40,7 +39,6 @@ internal class EmbraceWebViewServiceTest {
     private lateinit var serializer: EmbraceSerializer
     private lateinit var writer: FakeCurrentSessionSpan
     private lateinit var openTelemetryModule: FakeOpenTelemetryModule
-    private lateinit var dataSourceModule: DataSourceModule
     private lateinit var configService: ConfigService
     private lateinit var embraceWebViewService: EmbraceWebViewService
     private var cfg: RemoteConfig? = RemoteConfig()
@@ -50,18 +48,13 @@ internal class EmbraceWebViewServiceTest {
         serializer = EmbraceSerializer()
         writer = FakeCurrentSessionSpan()
         openTelemetryModule = FakeOpenTelemetryModule(writer)
-        dataSourceModule = fakeDataSourceModule(
-            oTelModule = openTelemetryModule,
-        ).apply {
-            dataCaptureOrchestrator.currentSessionType = SessionType.FOREGROUND
-        }
         cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
         configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })
         embraceWebViewService = EmbraceWebViewService(
             configService,
             serializer,
             EmbLoggerImpl()
-        ) { dataSourceModule.webViewDataSource.dataSource }
+        ) { WebViewDataSource(configService.webViewVitalsBehavior, writer, FakeEmbLogger(), serializer) }
     }
 
     @Test

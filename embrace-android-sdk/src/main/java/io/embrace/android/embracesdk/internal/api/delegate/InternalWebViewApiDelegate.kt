@@ -12,7 +12,7 @@ internal class InternalWebViewApiDelegate(
 
     private val sdkClock = bootstrapper.initModule.clock
     private val webViewUrlDataSource by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataSourceModule.webViewUrlDataSource.dataSource
+        bootstrapper.featureModule.webViewUrlDataSource.dataSource
     }
     private val webviewService by embraceImplInject(sdkCallChecker) { bootstrapper.dataCaptureServiceModule.webviewService }
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.configService }

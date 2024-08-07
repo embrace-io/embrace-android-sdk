@@ -6,10 +6,10 @@ import android.os.Build
 import android.util.Base64
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.FakeDeliveryService
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService

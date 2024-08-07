@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class SessionModuleImpl(
@@ -77,8 +78,8 @@ internal class SessionModuleImpl(
         )
     }
 
-    private val sessionSpanAttrPopulator by singleton {
-        SessionSpanAttrPopulator(
+    override val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
+        SessionSpanAttrPopulatorImpl(
             openTelemetryModule.currentSessionSpan,
             dataContainerModule.eventService,
             dataCaptureServiceModule.startupService,

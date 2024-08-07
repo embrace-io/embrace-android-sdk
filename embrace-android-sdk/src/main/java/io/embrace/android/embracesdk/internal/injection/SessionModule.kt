@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCac
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
 internal interface SessionModule {
     val payloadFactory: PayloadFactory
@@ -14,4 +15,5 @@ internal interface SessionModule {
     val sessionOrchestrator: SessionOrchestrator
     val periodicSessionCacher: PeriodicSessionCacher
     val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
+    val sessionSpanAttrPopulator: SessionSpanAttrPopulator
 }

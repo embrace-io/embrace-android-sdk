@@ -82,7 +82,11 @@ internal class EmbraceSessionProperties(
 
     private fun size(): Int = permanentProperties().size + temporary.size
 
-    fun clearTemporary(): Unit = temporary.clear()
+    fun clearTemporary(): Map<String, String> {
+        val copy = temporary.toMap()
+        temporary.clear()
+        return copy
+    }
 
     private companion object {
         private val NOT_LOADED = mutableMapOf<String, String>()

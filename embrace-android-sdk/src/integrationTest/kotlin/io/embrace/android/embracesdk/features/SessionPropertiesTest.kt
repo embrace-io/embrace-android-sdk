@@ -2,7 +2,11 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.recordSession
@@ -53,6 +57,37 @@ internal class SessionPropertiesTest {
             assertNull(attributesFromSdk["perm"])
             assertNull(attributesFromSdk["temp"])
             assertNull(attributesFromSdk["newTemp"])
+        }
+    }
+
+    @Test
+    fun `temp properties are cleared in next session`() {
+        val permKey = "perm"
+        val tempKey = "temp"
+        val permVal = "permVal"
+        val tempVal = "tempVal"
+        with(testRule) {
+            embrace.addSessionProperty(permKey, permVal, true)
+            val firstSession = checkNotNull(harness.recordSession {
+                embrace.addSessionProperty(tempKey, tempVal, false)
+            })
+            val secondSession = checkNotNull(harness.recordSession())
+            val bgActivities = harness.getSentBackgroundActivities()
+            assertEquals(2, bgActivities.size)
+            val firstBg = bgActivities.first()
+            val secondBg = bgActivities.last()
+
+            // check perm property is in all payloads
+            assertEquals(permVal, firstBg.findSessionSpan().getSessionProperty(permKey))
+            assertEquals(permVal, firstSession.findSessionSpan().getSessionProperty(permKey))
+            assertEquals(permVal, secondBg.findSessionSpan().getSessionProperty(permKey))
+            assertEquals(permVal, secondSession.findSessionSpan().getSessionProperty(permKey))
+
+            // check temp property is only in first session payload
+            assertNull(firstBg.findSessionSpan().getSessionProperty(tempKey))
+            assertEquals(tempVal, firstSession.findSessionSpan().getSessionProperty(tempKey))
+            assertNull(secondBg.findSessionSpan().getSessionProperty(tempKey))
+            assertNull(secondSession.findSessionSpan().getSessionProperty(tempKey))
         }
     }
 }

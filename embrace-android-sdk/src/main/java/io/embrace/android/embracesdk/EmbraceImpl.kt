@@ -36,6 +36,7 @@ import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.worker.WorkerName
@@ -150,7 +151,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
             startImpl(context, appFramework, configServiceProvider)
             endSynchronous()
         } catch (t: Throwable) {
-            logger.logError("Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t)
+            runCatching {
+                logger.trackInternalError(InternalErrorType.SDK_START_FAIL, t)
+                logger.logError("Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t)
+            }
         }
     }
 

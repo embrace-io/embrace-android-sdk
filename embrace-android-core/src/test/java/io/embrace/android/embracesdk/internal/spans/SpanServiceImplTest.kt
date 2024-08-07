@@ -514,7 +514,7 @@ internal class SpanServiceImplTest {
         }
 
         val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 100L, attributesMap)))
-        repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 1) {
+        repeat(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT - 1) {
             events.add(checkNotNull(EmbraceSpanEvent.create("event", 100L, null)))
         }
         assertTrue(

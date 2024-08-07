@@ -134,7 +134,7 @@ public class SpanServiceImpl(
         attributes: Map<String, String>? = null
     ): Boolean {
         return name.isValidName() &&
-            ((events == null) || (events.size <= EmbraceSpanImpl.MAX_EVENT_COUNT)) &&
+            ((events == null) || (events.size <= EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT)) &&
             ((attributes == null) || (attributes.size <= EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT))
     }
 

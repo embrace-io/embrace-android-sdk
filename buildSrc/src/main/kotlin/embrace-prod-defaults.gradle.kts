@@ -19,6 +19,11 @@ android {
     defaultConfig {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // The following argument makes the Android Test Orchestrator run its
+        // "pm clear" command after each test invocation. This command ensures
+        // that the app's state is completely cleared between tests.
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+
         aarMetadata {
             minCompileSdk = Versions.MIN_COMPILE_SDK
         }
@@ -38,6 +43,7 @@ android {
                 test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
             }
         }
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
 
     buildTypes {
@@ -79,6 +85,7 @@ dependencies {
 
     androidTestImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
     androidTestImplementation("androidx.test:runner:${Versions.ANDROIDX_TEST}")
+    androidTestUtil("androidx.test:orchestrator:${Versions.ANDROIDX_TEST}")
 }
 
 checkstyle {

@@ -11,13 +11,13 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.ThreadUtils
 import java.util.concurrent.atomic.AtomicBoolean
 
-// IMPORTANT: This class is referenced by anr.c. Move or rename both at the same time, or it will break.
 public class SigquitDataSource(
     private val sharedObjectLoader: SharedObjectLoader,
     private val anrThreadIdDelegate: AnrThreadIdDelegate,
     private val anrBehavior: AnrBehavior,
     private val logger: EmbLogger,
-    writer: SessionSpanWriter
+    writer: SessionSpanWriter,
+    private val sigquitNdkDelegate: SigquitNdkDelegate = EmbraceSigquitNdkDelegate()
 ) : DataSourceImpl<SessionSpanWriter>(
     writer,
     logger,
@@ -42,7 +42,7 @@ public class SigquitDataSource(
 
     private fun install(googleThreadId: Int): Int {
         return try {
-            val res = installGoogleAnrHandler(googleThreadId)
+            val res = sigquitNdkDelegate.installGoogleAnrHandler(googleThreadId)
             if (res > 0) {
                 googleAnrTrackerInstalled.set(false)
                 logger.logError("Could not initialize Google ANR tracking {code=$res}")
@@ -73,6 +73,4 @@ public class SigquitDataSource(
         // they were called.
         install(googleThreadId)
     }
-
-    private external fun installGoogleAnrHandler(googleThreadId: Int): Int
 }

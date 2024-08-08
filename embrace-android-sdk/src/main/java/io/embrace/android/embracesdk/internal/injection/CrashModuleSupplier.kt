@@ -7,31 +7,22 @@ internal typealias CrashModuleSupplier = (
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    nativeModule: NativeModule,
-    sessionModule: SessionModule,
-    anrModule: AnrModule,
     androidServicesModule: AndroidServicesModule,
-    logModule: CustomerLogModule,
+    unityCrashIdProvider: () -> String?
 ) -> CrashModule
 
 internal fun createCrashModule(
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    nativeModule: NativeModule,
-    sessionModule: SessionModule,
-    anrModule: AnrModule,
     androidServicesModule: AndroidServicesModule,
-    logModule: CustomerLogModule,
+    unityCrashIdProvider: () -> String?
 ): CrashModule {
     return CrashModuleImpl(
         initModule,
         storageModule,
         essentialServiceModule,
-        nativeModule,
-        sessionModule,
-        anrModule,
         androidServicesModule,
-        logModule,
+        unityCrashIdProvider,
     )
 }

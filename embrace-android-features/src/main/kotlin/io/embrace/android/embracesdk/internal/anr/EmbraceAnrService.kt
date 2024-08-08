@@ -99,7 +99,7 @@ public class EmbraceAnrService(
         }
     }
 
-    override fun forceAnrTrackingStopOnCrash() {
+    override fun handleCrash(crashId: String) {
         this.anrMonitorWorker.submit {
             targetThreadHeartbeatScheduler.stopMonitoringThread()
         }

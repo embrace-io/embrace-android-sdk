@@ -8,15 +8,15 @@ import io.embrace.android.embracesdk.internal.payload.AnrInterval
 public class FakeAnrService : AnrService {
 
     public var data: List<AnrInterval> = mutableListOf()
-    public var forceAnrTrackingStopOnCrashCount: Int = 0
+    public var crashCount: Int = 0
 
     override fun cleanCollections() {
     }
 
     override fun getCapturedData(): List<AnrInterval> = data
 
-    override fun forceAnrTrackingStopOnCrash() {
-        forceAnrTrackingStopOnCrashCount++
+    override fun handleCrash(crashId: String) {
+        crashCount++
     }
 
     override fun finishInitialization(

@@ -8,21 +8,21 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class SessionSpanAttrPopulatorTest {
+internal class SessionSpanAttrPopulatorImplTest {
 
     private val zygote = SessionZygote("id", 1, 5, ApplicationState.FOREGROUND, false, LifeEventType.STATE)
-    private lateinit var populator: SessionSpanAttrPopulator
+    private lateinit var populator: SessionSpanAttrPopulatorImpl
     private lateinit var writer: FakeCurrentSessionSpan
 
     @Before
     fun setUp() {
         writer = FakeCurrentSessionSpan()
-        populator = SessionSpanAttrPopulator(
+        populator = SessionSpanAttrPopulatorImpl(
             writer,
             FakeEventService(),
             FakeStartupService(),

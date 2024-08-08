@@ -198,7 +198,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         startSynchronous("send-cached-sessions")
         // Send any sessions that were cached and not yet sent.
-        deliveryModule.deliveryService.sendCachedSessions(crashModule::nativeCrashService, essentialServiceModule.sessionIdTracker)
+        deliveryModule.deliveryService.sendCachedSessions(
+            bootstrapper.nativeModule::nativeCrashService,
+            essentialServiceModule.sessionIdTracker
+        )
         endSynchronous()
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -210,7 +213,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 bootstrapper.initModule,
                 bootstrapper.openTelemetryModule,
                 essentialServiceModule,
-                bootstrapper.customerLogModule,
+                bootstrapper.logModule,
                 bootstrapper.dataContainerModule,
                 this,
                 crashModule

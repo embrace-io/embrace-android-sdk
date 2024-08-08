@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -50,7 +50,7 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
-            customerLogModuleProvider = ::FakeCustomerLogModule,
+            logModuleProvider = ::FakeLogModule,
             framework = AppFramework.NATIVE,
             featureModuleProvider = { FakeFeatureModule() },
         ) { null }
@@ -89,7 +89,7 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = null,
-            customerLogModuleProvider = ::FakeCustomerLogModule,
+            logModuleProvider = ::FakeLogModule,
             framework = AppFramework.NATIVE,
             featureModuleProvider = { FakeFeatureModule() },
         ) { fakeConfigService }

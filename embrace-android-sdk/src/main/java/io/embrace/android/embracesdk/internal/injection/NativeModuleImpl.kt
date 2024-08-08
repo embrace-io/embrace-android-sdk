@@ -8,8 +8,11 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
 import io.embrace.android.embracesdk.internal.ndk.NdkService
+import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class NativeModuleImpl(
@@ -77,6 +80,22 @@ internal class NativeModuleImpl(
             } else {
                 null
             }
+        }
+    }
+
+    override val nativeCrashService: NativeCrashService by singleton {
+        if (!essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+            NoopNativeCrashService()
+        } else {
+            NativeCrashDataSourceImpl(
+                sessionProperties = essentialServiceModule.sessionProperties,
+                ndkService = ndkService,
+                preferencesService = androidServicesModule.preferencesService,
+                logWriter = essentialServiceModule.logWriter,
+                configService = essentialServiceModule.configService,
+                serializer = initModule.jsonSerializer,
+                logger = initModule.logger,
+            )
         }
     }
 

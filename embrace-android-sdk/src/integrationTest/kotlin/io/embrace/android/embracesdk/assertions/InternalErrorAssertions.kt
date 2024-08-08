@@ -14,7 +14,7 @@ internal fun assertInternalErrorLogged(
     exceptionClassName: String,
     errorMessage: String
 ) {
-    bootstrapper.customerLogModule.logOrchestrator.flush(false)
+    bootstrapper.logModule.logOrchestrator.flush(false)
     val deliveryService = bootstrapper.deliveryModule.deliveryService as FakeDeliveryService
     val logs = deliveryService.lastSentLogPayloads.mapNotNull { it.data.logs }
         .flatten()

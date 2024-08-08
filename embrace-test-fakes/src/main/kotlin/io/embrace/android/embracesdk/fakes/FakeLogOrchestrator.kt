@@ -9,4 +9,8 @@ public class FakeLogOrchestrator : LogOrchestrator {
     override fun flush(saveOnly: Boolean) {
         flushCalled = true
     }
+
+    override fun handleCrash(crashId: String) {
+        flush(true)
+    }
 }

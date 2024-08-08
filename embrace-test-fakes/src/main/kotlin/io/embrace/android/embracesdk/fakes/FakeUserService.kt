@@ -66,4 +66,7 @@ public class FakeUserService : UserService {
     override fun clearUsername() {
         this.name = null
     }
+
+    override fun addUserInfoListener(listener: () -> Unit) {
+    }
 }

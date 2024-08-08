@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.injection.FakeCrashModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import org.junit.Assert.assertNotNull
@@ -20,7 +20,7 @@ internal class InternalInterfaceModuleImplTest {
             initModule,
             initModule.openTelemetryModule,
             FakeEssentialServiceModule(),
-            FakeCustomerLogModule(),
+            FakeLogModule(),
             FakeDataContainerModule(),
             EmbraceImpl(),
             FakeCrashModule()

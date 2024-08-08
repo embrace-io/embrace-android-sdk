@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -37,7 +36,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorBoundaryDelegate
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
@@ -56,7 +55,6 @@ internal class SessionOrchestratorTest {
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var userService: FakeUserService
-    private lateinit var ndkService: FakeNdkService
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -236,7 +234,6 @@ internal class SessionOrchestratorTest {
 
         orchestrator.endSessionWithManual(true)
         assertEquals(1, userService.clearedCount)
-        assertEquals(1, ndkService.userUpdateCount)
     }
 
     @Test
@@ -276,7 +273,7 @@ internal class SessionOrchestratorTest {
             backgroundActivityCaptureEnabled = true,
         )
         createOrchestrator(true)
-        orchestrator.endSessionWithCrash("crashId")
+        orchestrator.handleCrash("crashId")
         assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
     }
 
@@ -286,7 +283,7 @@ internal class SessionOrchestratorTest {
             backgroundActivityCaptureEnabled = true,
         )
         createOrchestrator(false)
-        orchestrator.endSessionWithCrash("crashId")
+        orchestrator.handleCrash("crashId")
         assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
     }
 
@@ -317,7 +314,7 @@ internal class SessionOrchestratorTest {
     fun `test session span with crash`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
-        orchestrator.endSessionWithCrash("my-crash-id")
+        orchestrator.handleCrash("my-crash-id")
         checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
     }
 
@@ -335,7 +332,7 @@ internal class SessionOrchestratorTest {
         assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
 
         // end with crash
-        orchestrator.endSessionWithCrash("my-crash-id")
+        orchestrator.handleCrash("my-crash-id")
         assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
     }
 
@@ -352,7 +349,7 @@ internal class SessionOrchestratorTest {
         assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
 
         // end with crash
-        orchestrator.endSessionWithCrash("my-crash-id")
+        orchestrator.handleCrash("my-crash-id")
         assertEquals("false", currentSessionSpan.getAttribute("emb.terminated"))
     }
 
@@ -374,7 +371,6 @@ internal class SessionOrchestratorTest {
         memoryCleanerService = FakeMemoryCleanerService()
         sessionProperties = fakeEmbraceSessionProperties()
         userService = FakeUserService()
-        ndkService = FakeNdkService()
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
@@ -404,7 +400,6 @@ internal class SessionOrchestratorTest {
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
-                ndkService,
                 sessionProperties,
                 FakeNetworkConnectivityService()
             ),
@@ -413,7 +408,7 @@ internal class SessionOrchestratorTest {
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,
             currentSessionSpan,
-            SessionSpanAttrPopulator(
+            SessionSpanAttrPopulatorImpl(
                 currentSessionSpan,
                 FakeEventService(),
                 FakeStartupService(),

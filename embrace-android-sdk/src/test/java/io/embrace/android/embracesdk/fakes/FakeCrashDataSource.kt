@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
+import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.JsException
 
 internal class FakeCrashDataSource : CrashDataSource {
@@ -25,6 +26,9 @@ internal class FakeCrashDataSource : CrashDataSource {
 
     override fun resetDataCaptureLimits() {
         TODO("Not yet implemented")
+    }
+
+    override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
     }
 
     override fun handleCrash(exception: Throwable) {

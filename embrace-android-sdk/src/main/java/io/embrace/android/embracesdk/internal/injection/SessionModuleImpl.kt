@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.OrchestratorB
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class SessionModuleImpl(
@@ -26,7 +27,7 @@ internal class SessionModuleImpl(
     payloadModule: PayloadModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     dataContainerModule: DataContainerModule,
-    customerLogModule: CustomerLogModule
+    logModule: LogModule
 ) : SessionModule {
 
     override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
@@ -43,13 +44,6 @@ internal class SessionModuleImpl(
             nativeModule.ndkService::onSessionPropertiesUpdate,
             essentialServiceModule.sessionProperties
         ) { featureModule.sessionPropertiesDataSource.dataSource }
-    }
-
-    private val ndkService by singleton {
-        when {
-            essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled() -> nativeModule.ndkService
-            else -> null
-        }
     }
 
     override val periodicSessionCacher: PeriodicSessionCacher by singleton {
@@ -79,18 +73,17 @@ internal class SessionModuleImpl(
         OrchestratorBoundaryDelegate(
             essentialServiceModule.memoryCleanerService,
             essentialServiceModule.userService,
-            ndkService,
             essentialServiceModule.sessionProperties,
             essentialServiceModule.networkConnectivityService
         )
     }
 
-    private val sessionSpanAttrPopulator by singleton {
-        SessionSpanAttrPopulator(
+    override val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
+        SessionSpanAttrPopulatorImpl(
             openTelemetryModule.currentSessionSpan,
             dataContainerModule.eventService,
             dataCaptureServiceModule.startupService,
-            customerLogModule.logService,
+            logModule.logService,
             essentialServiceModule.metadataService
         )
     }

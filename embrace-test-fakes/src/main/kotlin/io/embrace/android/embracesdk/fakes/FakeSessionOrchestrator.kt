@@ -12,7 +12,7 @@ public class FakeSessionOrchestrator : SessionOrchestrator {
         manualEndCount++
     }
 
-    override fun endSessionWithCrash(crashId: String) {
+    override fun handleCrash(crashId: String) {
         this.crashId = crashId
     }
 

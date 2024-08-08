@@ -120,6 +120,7 @@ internal class BackgroundActivityDisabledTest {
                 runLoggingThread()
             }
 
+            assertEquals(0, harness.getSentBackgroundActivities().size)
             checkNotNull(session)
 
             flushLogBatch()
@@ -213,19 +214,21 @@ internal class BackgroundActivityDisabledTest {
     ) {
         assertEquals(startMs, startTimeNanos?.nanosToMillis())
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
-        assertEquals(sessionNumber.toString(), attributes?.findAttributeValue(embSessionNumber.attributeKey.key))
-        assertEquals(sequenceId.toString(), attributes?.findAttributeValue(embSequenceId.attributeKey.key))
-        assertEquals(coldStart.toString(), attributes?.findAttributeValue(embColdStart.attributeKey.key))
-        assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
-        assertEquals("true", attributes?.findAttributeValue(embCleanExit.attributeKey.key))
-        assertEquals("false", attributes?.findAttributeValue(embTerminated.attributeKey.key))
-        assertEquals("state", attributes?.findAttributeValue(embSessionStartType.attributeKey.key))
-        assertEquals("state", attributes?.findAttributeValue(embSessionEndType.attributeKey.key))
-        listOf(
-            SessionIncubatingAttributes.SESSION_ID,
-            embProcessIdentifier.attributeKey,
-        ).forEach {
-            assertFalse(attributes?.findAttributeValue(it.key).isNullOrBlank())
+        with(checkNotNull(attributes)) {
+            assertEquals(sessionNumber.toString(), findAttributeValue(embSessionNumber.attributeKey.key))
+            assertEquals(sequenceId.toString(), findAttributeValue(embSequenceId.attributeKey.key))
+            assertEquals(coldStart.toString(), findAttributeValue(embColdStart.attributeKey.key))
+            assertEquals("foreground", findAttributeValue(embState.attributeKey.key))
+            assertEquals("true", findAttributeValue(embCleanExit.attributeKey.key))
+            assertEquals("false", findAttributeValue(embTerminated.attributeKey.key))
+            assertEquals("state", findAttributeValue(embSessionStartType.attributeKey.key))
+            assertEquals("state", findAttributeValue(embSessionEndType.attributeKey.key))
+            listOf(
+                SessionIncubatingAttributes.SESSION_ID,
+                embProcessIdentifier.attributeKey,
+            ).forEach {
+                assertFalse(findAttributeValue(it.key).isNullOrBlank())
+            }
         }
     }
 }

@@ -39,17 +39,14 @@ public class SessionPropertiesDataSource(
             }
         )
 
-    public fun removeProperty(key: String): Boolean {
-        var success = false
+    public fun removeProperty(key: String): Boolean =
         captureData(
             inputValidation = NoInputValidation,
             captureAction = {
-                success = removeCustomAttribute(key.toSessionPropertyAttributeName())
+                removeSystemAttribute(key.toSessionPropertyAttributeName())
             }
         )
-        return success
-    }
 
     private fun SessionSpanWriter.addAttribute(key: String, value: String) =
-        addCustomAttribute(SpanAttributeData(key.toSessionPropertyAttributeName(), value))
+        addSystemAttribute(SpanAttributeData(key.toSessionPropertyAttributeName(), value))
 }

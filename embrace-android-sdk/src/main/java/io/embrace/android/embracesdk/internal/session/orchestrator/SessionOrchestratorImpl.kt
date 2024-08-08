@@ -200,7 +200,7 @@ internal class SessionOrchestratorImpl(
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
-            sessionIdTracker.setActiveSessionId(sessionId, inForeground)
+            sessionIdTracker.setActiveSession(sessionId, inForeground)
             newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
 
             // initiate periodic caching of the payload if required
@@ -290,8 +290,8 @@ internal class SessionOrchestratorImpl(
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()
         val attr = SpanAttributeData(embHeartbeatTimeUnixNano.name, now.toString())
-        sessionSpanWriter.addCustomAttribute(attr)
-        sessionSpanWriter.addCustomAttribute(SpanAttributeData(embTerminated.name, true.toString()))
+        sessionSpanWriter.addSystemAttribute(attr)
+        sessionSpanWriter.addSystemAttribute(SpanAttributeData(embTerminated.name, true.toString()))
     }
 
     private fun logSessionStateChange(

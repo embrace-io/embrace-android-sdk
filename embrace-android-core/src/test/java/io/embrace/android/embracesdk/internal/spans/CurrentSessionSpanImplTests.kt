@@ -17,7 +17,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_SYSTEM_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_ATTRIBUTE_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -368,7 +369,7 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum events on session span`() {
-        repeat(MAX_SYSTEM_EVENT_COUNT + 1) {
+        repeat(MAX_TOTAL_EVENT_COUNT + 1) {
             currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
         }
 
@@ -376,14 +377,14 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        assertEquals(MAX_SYSTEM_EVENT_COUNT, span.toNewPayload().events?.size)
+        assertEquals(MAX_TOTAL_EVENT_COUNT, span.toNewPayload().events?.size)
     }
 
     @Test
     fun `add and remove attribute forwarded to span`() {
-        currentSessionSpan.addCustomAttribute(SpanAttributeData("my_key", "my_value"))
-        currentSessionSpan.addCustomAttribute(SpanAttributeData("missing", "my_value"))
-        currentSessionSpan.removeCustomAttribute("missing")
+        currentSessionSpan.addSystemAttribute(SpanAttributeData("my_key", "my_value"))
+        currentSessionSpan.addSystemAttribute(SpanAttributeData("missing", "my_value"))
+        currentSessionSpan.removeSystemAttribute("missing")
         val span = currentSessionSpan.endSession(true).single()
         assertEquals("emb-session", span.name)
 
@@ -392,23 +393,37 @@ internal class CurrentSessionSpanImplTests {
         assertNull(span.attributes["missing"])
     }
 
+    @Test
+    fun `validate maximum attributes on session span`() {
+        repeat(MAX_TOTAL_ATTRIBUTE_COUNT + 1) {
+            currentSessionSpan.addSystemAttribute(SpanAttributeData("attribute-$it", "value"))
+        }
+
+        val span = currentSessionSpan.endSession(true).single()
+        assertEquals("emb-session", span.name)
+
+        // verify event was added to the span
+        assertEquals(MAX_TOTAL_ATTRIBUTE_COUNT, span.toNewPayload().attributes?.size)
+    }
+
     private fun CurrentSessionSpan.assertNoSessionSpan() {
         assertEquals("", getSessionId())
         assertFalse(canStartNewSpan(parent = null, internal = true))
         assertTrue(endSession(true).isEmpty())
-        assertFalse(addCustomAttribute(attribute = SpanAttributeData("test", "test")))
-        assertFalse(removeCustomAttribute("test"))
         assertFalse(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
         // check doesn't throw exception
+        addSystemAttribute(attribute = SpanAttributeData("test", "test"))
+        removeSystemAttribute("test")
         removeEvents(EmbType.System.Breadcrumb)
     }
 
     private fun CurrentSessionSpan.assertSessionSpan() {
         assertTrue(getSessionId().isNotBlank())
         assertTrue(canStartNewSpan(parent = null, internal = true))
-        assertTrue(addCustomAttribute(attribute = SpanAttributeData("test", "test")))
-        assertTrue(removeCustomAttribute("test"))
         assertTrue(addEvent(SchemaType.Breadcrumb("test"), clock.now()))
+        // check doesn't throw exception
+        addSystemAttribute(attribute = SpanAttributeData("test", "test"))
+        removeSystemAttribute("test")
         removeEvents(EmbType.System.Breadcrumb)
     }
 

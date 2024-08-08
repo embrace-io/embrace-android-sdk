@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
@@ -263,7 +264,7 @@ internal class EmbraceDeliveryServiceTest {
     fun `ignore current session when sending previously cached sessions`() {
         assertNotNull(cacheService.writeSession(sessionFileName, envelope))
         assertNotNull(cacheService.writeSession(anotherMessageFileName, anotherMessage))
-        sessionIdTracker.sessionId = anotherMessage.getSessionId()
+        sessionIdTracker.sessionData = SessionData(anotherMessage.getSessionId(), true)
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertEquals(1, apiService.sessionRequests.size)
     }

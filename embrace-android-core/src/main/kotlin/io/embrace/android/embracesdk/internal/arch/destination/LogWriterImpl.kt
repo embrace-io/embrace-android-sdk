@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
+import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -32,11 +34,17 @@ public class LogWriterImpl(
 
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
-        sessionIdTracker.getActiveSessionId()?.let { sessionId ->
-            builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+        var sessionState: String? = null
+        sessionIdTracker.getActiveSession()?.let { session ->
+            builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, session.id)
+            sessionState = if (session.isForeground) {
+                FOREGROUND_STATE
+            } else {
+                BACKGROUND_STATE
+            }
         }
 
-        builder.setAttribute(embState.attributeKey, processStateService.getAppState())
+        builder.setAttribute(embState.attributeKey, sessionState ?: processStateService.getAppState())
 
         if (isPrivate) {
             builder.setFixedAttribute(PrivateSpan)

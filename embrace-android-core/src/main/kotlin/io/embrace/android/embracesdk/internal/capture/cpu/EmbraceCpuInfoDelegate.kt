@@ -9,13 +9,14 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
  */
 public class EmbraceCpuInfoDelegate(
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
+    private val cpuInfoNdkDelegate: CpuInfoNdkDelegate = EmbraceCpuInfoNdkDelegate()
 ) : CpuInfoDelegate {
 
     override fun getCpuName(): String? {
         return if (sharedObjectLoader.loadEmbraceNative()) {
             try {
-                getNativeCpuName()
+                cpuInfoNdkDelegate.getNativeCpuName()
             } catch (exception: LinkageError) {
                 logger.logWarning("Could not get the CPU name.", exception)
                 null
@@ -28,7 +29,7 @@ public class EmbraceCpuInfoDelegate(
     override fun getEgl(): String? {
         return if (sharedObjectLoader.loadEmbraceNative()) {
             try {
-                getNativeEgl()
+                cpuInfoNdkDelegate.getNativeEgl()
             } catch (exception: LinkageError) {
                 logger.logWarning("Could not get the EGL name.", exception)
                 null
@@ -37,8 +38,4 @@ public class EmbraceCpuInfoDelegate(
             null
         }
     }
-
-    private external fun getNativeCpuName(): String
-
-    private external fun getNativeEgl(): String
 }

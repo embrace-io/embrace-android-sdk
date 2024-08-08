@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_CUSTOM_ATTRIBUTE_COUNT
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -261,7 +262,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 5) {
+            repeat(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(
@@ -285,17 +286,22 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
-    fun `check adding and removing custom attributes`() {
+    fun `check adding and removing system attributes not affected by custom attributes`() {
         with(embraceSpan) {
             assertTrue(start())
-            assertTrue(addAttribute("test", "value"))
-            assertTrue(removeCustomAttribute("test"))
-            assertFalse(removeCustomAttribute("test"))
+            repeat(MAX_CUSTOM_ATTRIBUTE_COUNT) {
+                assertTrue(addAttribute(key = "key$it", value = "value"))
+            }
+            assertFalse(addAttribute(key = "failed", value = "value"))
+            addSystemAttribute("system-attribute", "value")
+            assertEquals("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
+            removeSystemAttribute("system-attribute")
+            assertNull("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
         }
     }
 
     @Test
-    fun `check attribute limits`() {
+    fun `check custom attribute limits`() {
         with(embraceSpan) {
             assertTrue(start())
             assertFalse(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY, value = "value"))
@@ -303,7 +309,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY, value = "value"))
             assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
             assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
-            repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT - 3) {
+            repeat(MAX_CUSTOM_ATTRIBUTE_COUNT - 3) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))

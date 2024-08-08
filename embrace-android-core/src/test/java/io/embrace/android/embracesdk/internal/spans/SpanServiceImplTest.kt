@@ -514,7 +514,7 @@ internal class SpanServiceImplTest {
         }
 
         val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 100L, attributesMap)))
-        repeat(EmbraceSpanImpl.MAX_EVENT_COUNT - 1) {
+        repeat(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT - 1) {
             events.add(checkNotNull(EmbraceSpanEvent.create("event", 100L, null)))
         }
         assertTrue(
@@ -557,7 +557,7 @@ internal class SpanServiceImplTest {
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
             Pair("key", TOO_LONG_ATTRIBUTE_VALUE),
         )
-        repeat(EmbraceSpanImpl.MAX_ATTRIBUTE_COUNT - 2) {
+        repeat(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT - 2) {
             attributesMap["key$it"] = "value"
         }
 

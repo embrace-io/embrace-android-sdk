@@ -32,6 +32,7 @@ public class SigquitDataSource(
         }
     }
 
+    // IMPORTANT: This class and method are referenced by anr.c. Move or rename both at the same time, or it will break.
     public fun saveSigquit(timestamp: Long) {
         if (anrBehavior.isGoogleAnrCaptureEnabled()) {
             captureData(NoInputValidation) {

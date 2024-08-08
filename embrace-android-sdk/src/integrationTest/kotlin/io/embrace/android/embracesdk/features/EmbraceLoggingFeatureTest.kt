@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import org.junit.Rule
 import org.junit.Test
@@ -30,28 +31,31 @@ internal class EmbraceLoggingFeatureTest {
     }
 
     @Test
-    fun `log info message sent`() {
+    fun `log info message sent in foreground`() {
         with(testRule) {
-            embrace.logInfo("test message")
-            flushLogs()
-            val log = harness.getLastSentLog()
+            harness.recordSession {
+                embrace.logInfo("test message")
+                flushLogs()
+            }
+            val log = checkNotNull(harness.getLastSentLog())
             assertOtelLogReceived(
-                log,
+                logReceived = log,
                 expectedMessage = "test message",
                 expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.INFO).severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name
+                expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name,
+                expectedState = "foreground",
             )
         }
     }
 
     @Test
-    fun `log warning message sent`() {
+    fun `log warning message sent in background`() {
         with(testRule) {
             embrace.logWarning("test message")
             flushLogs()
-            val log = harness.getLastSentLog()
+            val log = checkNotNull(harness.getLastSentLog())
             assertOtelLogReceived(
-                log,
+                logReceived = log,
                 expectedMessage = "test message",
                 expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.WARNING).severityNumber,
                 expectedSeverityText = io.embrace.android.embracesdk.Severity.WARNING.name

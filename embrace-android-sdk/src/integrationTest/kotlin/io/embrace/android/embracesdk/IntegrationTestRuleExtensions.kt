@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import org.json.JSONObject
 import org.junit.Assert
 import org.robolectric.Robolectric
@@ -119,6 +119,13 @@ internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<Session
  */
 internal fun IntegrationTestRule.Harness.getLastSentSession(): Envelope<SessionPayload>? {
     return getSentSessions().lastOrNull()
+}
+
+/**
+ * Returns the last background session that was sent by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSentBackgroundActivity(): Envelope<SessionPayload>? {
+    return getSentBackgroundActivities().lastOrNull()
 }
 
 /**

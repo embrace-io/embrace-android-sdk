@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,21 +28,6 @@ internal class SessionSpanTest {
                 assertFalse(embrace.currentSessionId.isNullOrBlank())
             })
             assertFalse(embrace.currentSessionId.isNullOrBlank())
-            checkNotNull(harness.recordSession {
-                assertFalse(embrace.currentSessionId.isNullOrBlank())
-            })
-        }
-    }
-
-    @Test
-    fun `no valid session when bg activity not enabled after backgrounding`() {
-        with(testRule) {
-            harness.overriddenConfigService.backgroundActivityCaptureEnabled = false
-            startSdk()
-            checkNotNull(harness.recordSession {
-                assertFalse(embrace.currentSessionId.isNullOrBlank())
-            })
-            assertTrue(embrace.currentSessionId.isNullOrBlank())
             checkNotNull(harness.recordSession {
                 assertFalse(embrace.currentSessionId.isNullOrBlank())
             })

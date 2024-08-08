@@ -202,7 +202,7 @@ internal class BackgroundActivityDisabledTest {
     }
 
     private fun flushLogBatch() {
-        testRule.bootstrapper.customerLogModule.logOrchestrator.flush(false)
+        testRule.bootstrapper.logModule.logOrchestrator.flush(false)
     }
 
     private fun Span.assertExpectedSessionSpanAttributes(

@@ -60,8 +60,9 @@ internal class SessionPropertiesServiceImplTest {
             ::dataSource
         )
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())
+        service.addProperty("temp", "value", false)
         assertTrue(service.populateCurrentSession())
-        assertEquals(1, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(2, fakeCurrentSessionSpan.attributeCount())
     }
 
     @Test

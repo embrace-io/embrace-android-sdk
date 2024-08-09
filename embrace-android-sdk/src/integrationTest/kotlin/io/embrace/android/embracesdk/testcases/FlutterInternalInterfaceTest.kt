@@ -153,7 +153,7 @@ internal class FlutterInternalInterfaceTest {
             val log = checkNotNull(harness.getLastSentLog())
 
             assertOtelLogReceived(
-                log,
+                logReceived = log,
                 expectedMessage = "Dart error",
                 expectedSeverityNumber = Severity.ERROR.severityNumber,
                 expectedSeverityText = Severity.ERROR.name,
@@ -161,6 +161,7 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionName = expectedName,
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
+                expectedState = "foreground",
             )
             val attrs = checkNotNull(log.attributes)
             assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
@@ -190,7 +191,7 @@ internal class FlutterInternalInterfaceTest {
             val log = checkNotNull(harness.getLastSentLog())
 
             assertOtelLogReceived(
-                log,
+                logReceived = log,
                 expectedMessage = "Dart error",
                 expectedSeverityNumber = Severity.ERROR.severityNumber,
                 expectedSeverityText = Severity.ERROR.name,
@@ -198,6 +199,7 @@ internal class FlutterInternalInterfaceTest {
                 expectedExceptionName = expectedName,
                 expectedExceptionMessage = expectedMessage,
                 expectedEmbType = "sys.flutter_exception",
+                expectedState = "foreground",
             )
             val attrs = checkNotNull(log.attributes)
             assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))

@@ -59,6 +59,12 @@ public class SdkLocalConfig(
     @Json(name = "networking")
     public val networking: NetworkLocalConfig? = null,
 
+    /**
+     * List of string or regexes for sensitive keys that should be redacted when they are sent to the server.
+     */
+    @Json(name = "sensitive_keys_denylist")
+    public val sensitiveKeysDenylist: List<String>? = null,
+
     @Json(name = "capture_public_key")
     public val capturePublicKey: String? = null,
 

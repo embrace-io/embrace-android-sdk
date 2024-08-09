@@ -2,7 +2,15 @@ name: Generate Baseline Profile
 
 on:
   workflow_dispatch:
+    inputs:
+      sdk_version:
+        description: 'SDK version'
+        required: false
   workflow_call:
+    inputs:
+      sdk_version:
+        required: false
+        type: string
     secrets:
       token:
         required: true
@@ -68,6 +76,12 @@ jobs:
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set Version
+        if: ${{ github.event.inputs.sdk_version != "" }}
+        run: |
+          cd android-sdk-benchmark
+          sed -i -r "s#swazzler_version = ([^\']+)#swazzler_version = ${{ github.event.inputs.next_version }}#" gradle.properties
 
       - name: Generate Baseline Profile
         run: |

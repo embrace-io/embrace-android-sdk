@@ -63,7 +63,7 @@ internal class EnvelopeResourceSourceImplTest {
         val source = EnvelopeResourceSourceImpl(
             hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
-            BuildInfo("100", "release", "oem"),
+            BuildInfo("100", "release", "oem", "bundle-id"),
             packageInfo,
             AppFramework.NATIVE,
             fakeArchitecture,

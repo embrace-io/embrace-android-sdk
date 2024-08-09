@@ -52,7 +52,7 @@ internal class EmbraceMetadataReactNativeTest {
             every { getSystemService("window") } returns mockk<WindowManager>(relaxed = true)
         }
         assetManager = mockk(relaxed = true)
-        buildInfo = BuildInfo("device-id", null, null)
+        buildInfo = BuildInfo("device-id", null, null, "bundle-id")
         configService = FakeConfigService().apply {
             appFramework = AppFramework.REACT_NATIVE
         }

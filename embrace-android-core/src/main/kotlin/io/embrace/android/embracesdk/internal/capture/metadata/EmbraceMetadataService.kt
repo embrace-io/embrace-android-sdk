@@ -309,7 +309,7 @@ public class EmbraceMetadataService private constructor(
                 val bundleId = computeReactNativeBundleId(
                     context,
                     jsBundleUrl,
-                    buildInfo.buildId,
+                    buildInfo.bundleId,
                     logger
                 )
                 if (forceUpdate != null) {
@@ -413,7 +413,7 @@ public class EmbraceMetadataService private constructor(
                         return@submit computeReactNativeBundleId(
                             context,
                             lastKnownJsBundleUrl,
-                            buildInfo.buildId,
+                            buildInfo.bundleId,
                             logger
                         )
                     }

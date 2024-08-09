@@ -29,15 +29,10 @@ public class SessionPropertiesDataSource(
             }
         )
 
-    public fun addProperties(properties: Map<String, String>): Boolean =
-        captureData(
-            inputValidation = NoInputValidation,
-            captureAction = {
-                properties.forEach { property ->
-                    addAttribute(property.key, property.value)
-                }
-            }
-        )
+    public fun addProperties(properties: Map<String, String>): Boolean {
+        properties.entries.forEach { (key, value) -> addProperty(key, value) }
+        return true
+    }
 
     public fun removeProperty(key: String): Boolean =
         captureData(

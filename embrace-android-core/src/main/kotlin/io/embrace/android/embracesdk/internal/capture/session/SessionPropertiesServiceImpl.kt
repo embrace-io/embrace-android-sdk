@@ -28,9 +28,7 @@ public class SessionPropertiesServiceImpl(
 
         val added = props.add(sanitizedKey, sanitizedValue, permanent)
         if (added) {
-            dataSourceProvider()?.apply {
-                addProperty(sanitizedKey, sanitizedValue)
-            }
+            dataSourceProvider()?.addProperty(sanitizedKey, sanitizedValue)
             listener?.invoke(props.get())
         }
         return added
@@ -44,9 +42,7 @@ public class SessionPropertiesServiceImpl(
 
         val removed = props.remove(sanitizedKey)
         if (removed) {
-            dataSourceProvider()?.apply {
-                removeProperty(sanitizedKey)
-            }
+            dataSourceProvider()?.removeProperty(sanitizedKey)
             listener?.invoke(props.get())
         }
         return removed
@@ -54,10 +50,15 @@ public class SessionPropertiesServiceImpl(
 
     override fun getProperties(): Map<String, String> = props.get()
 
-    override fun populateCurrentSession(): Boolean = dataSourceProvider()?.addProperties(getProperties()) ?: false
+    override fun populateCurrentSession(): Boolean {
+        return dataSourceProvider()?.addProperties(getProperties()) ?: false
+    }
 
     override fun clearTemporary() {
-        props.clearTemporary()
+        val removedProps = props.clearTemporary()
+        removedProps.forEach { (key, _) ->
+            dataSourceProvider()?.removeProperty(key)
+        }
     }
 
     override fun addChangeListener(listener: (Map<String, String>) -> Unit) {

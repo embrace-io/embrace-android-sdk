@@ -354,7 +354,6 @@ internal class ModuleInitBootstrapper(
                             nativeModule,
                             openTelemetryModule,
                             anrModule,
-                            essentialServiceModule.sessionPropertiesService
                         )
                     }
 
@@ -410,10 +409,6 @@ internal class ModuleInitBootstrapper(
                             dataContainerModule,
                             logModule
                         )
-                    }
-
-                    workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit {
-                        essentialServiceModule.sessionPropertiesService.populateCurrentSession()
                     }
 
                     crashModule = init(CrashModule::class) {

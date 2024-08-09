@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
@@ -16,18 +17,21 @@ import org.junit.Test
 internal class SessionSpanAttrPopulatorImplTest {
 
     private val zygote = SessionZygote("id", 1, 5, ApplicationState.FOREGROUND, false, LifeEventType.STATE)
+    private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var populator: SessionSpanAttrPopulatorImpl
     private lateinit var writer: FakeCurrentSessionSpan
 
     @Before
     fun setUp() {
+        sessionPropertiesService = FakeSessionPropertiesService()
         writer = FakeCurrentSessionSpan()
         populator = SessionSpanAttrPopulatorImpl(
             writer,
             FakeEventService(),
             FakeStartupService(),
             FakeLogService(),
-            FakeMetadataService()
+            FakeMetadataService(),
+            sessionPropertiesService
         )
     }
 
@@ -35,7 +39,7 @@ internal class SessionSpanAttrPopulatorImplTest {
     fun `start attributes populated`() {
         populator.populateSessionSpanStartAttrs(zygote)
 
-        val attrs = getSpanAttrs()
+        val attrs = writer.attributes
         val expected = mapOf(
             "emb.cold_start" to "false",
             "emb.session_number" to "5",
@@ -51,7 +55,7 @@ internal class SessionSpanAttrPopulatorImplTest {
     fun `end attributes populated`() {
         populator.populateSessionSpanEndAttrs(LifeEventType.STATE, "crashId", false)
 
-        val attrs = getSpanAttrs()
+        val attrs = writer.attributes
         val expected = mapOf(
             "emb.clean_exit" to "true",
             "emb.terminated" to "false",
@@ -62,6 +66,4 @@ internal class SessionSpanAttrPopulatorImplTest {
         )
         assertEquals(expected, attrs)
     }
-
-    private fun getSpanAttrs() = writer.addedAttributes.associateBy { it.key }.mapValues { it.value.value }
 }

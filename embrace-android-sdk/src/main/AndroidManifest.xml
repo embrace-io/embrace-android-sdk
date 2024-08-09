@@ -9,14 +9,5 @@
         <meta-data
             android:name="hostAppId"
             android:value="${applicationId}" />
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="io.embrace.android.embracesdk.internal.EmbraceCoreInitializer"
-                android:value="androidx.startup" />
-        </provider>
     </application>
 </manifest>

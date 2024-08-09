@@ -310,6 +310,9 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule.sessionIdTracker.addListener {
                                 nativeModule.ndkService.updateSessionId(it ?: "")
                             }
+                            essentialServiceModule.sessionPropertiesService.addChangeListener(
+                                nativeModule.ndkService::onSessionPropertiesUpdate
+                            )
                         }
 
                         if (nativeModule.nativeThreadSamplerInstaller != null) {
@@ -351,7 +354,7 @@ internal class ModuleInitBootstrapper(
                             nativeModule,
                             openTelemetryModule,
                             anrModule,
-                            { sessionModule.sessionPropertiesService }
+                            essentialServiceModule.sessionPropertiesService
                         )
                     }
 
@@ -399,11 +402,9 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             androidServicesModule,
                             essentialServiceModule,
-                            nativeModule,
                             deliveryModule,
                             workerThreadModule,
                             dataSourceModule,
-                            featureModule,
                             payloadModule,
                             dataCaptureServiceModule,
                             dataContainerModule,
@@ -412,7 +413,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit {
-                        sessionModule.sessionPropertiesService.populateCurrentSession()
+                        essentialServiceModule.sessionPropertiesService.populateCurrentSession()
                     }
 
                     crashModule = init(CrashModule::class) {

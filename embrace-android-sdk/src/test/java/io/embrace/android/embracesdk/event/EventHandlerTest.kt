@@ -6,15 +6,15 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -55,7 +55,7 @@ internal class EventHandlerTest {
         private lateinit var configService: ConfigService
         private lateinit var userService: UserService
         private lateinit var gatingService: GatingService
-        private lateinit var sessionProperties: EmbraceSessionProperties
+        private lateinit var sessionPropertiesService: SessionPropertiesService
         private lateinit var logger: EmbLogger
         private lateinit var mockStartup: StartupEventInfo
         private lateinit var mockLateTimer: ScheduledFuture<*>
@@ -87,7 +87,7 @@ internal class EventHandlerTest {
             sessionBehavior = fakeSessionBehavior { cfg },
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior { cfg }
         )
-        sessionProperties = EmbraceSessionProperties(FakePreferenceService(), configService, logger)
+        sessionPropertiesService = FakeSessionPropertiesService()
 
         clock = FakeClock()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
@@ -207,7 +207,7 @@ internal class EventHandlerTest {
             originEventDescription,
             false,
             eventProperties,
-            sessionProperties
+            sessionPropertiesService
         )
 
         verify { mockLateTimer.cancel(false) }
@@ -255,7 +255,7 @@ internal class EventHandlerTest {
             originEventDescription,
             true,
             eventProperties,
-            sessionProperties
+            sessionPropertiesService
         )
 
         verify { mockLateTimer.cancel(false) }
@@ -303,7 +303,7 @@ internal class EventHandlerTest {
             eventId,
             eventName,
             startTime,
-            sessionProperties,
+            sessionPropertiesService,
             mapOf()
         ) {
             hasCallableBeenInvoked = true
@@ -335,7 +335,7 @@ internal class EventHandlerTest {
             eventId,
             eventName,
             startTime,
-            sessionProperties,
+            sessionPropertiesService,
             mapOf(),
             mockTimeoutCallback
         )
@@ -362,7 +362,7 @@ internal class EventHandlerTest {
             eventId,
             eventName,
             startTime,
-            sessionProperties,
+            sessionPropertiesService,
             mapOf(),
             mockTimeoutCallback
         )
@@ -391,7 +391,7 @@ internal class EventHandlerTest {
             eventId,
             eventName,
             startTime,
-            sessionProperties,
+            sessionPropertiesService,
             mapOf(),
             mockTimeoutCallback
         )
@@ -418,7 +418,7 @@ internal class EventHandlerTest {
             eventId,
             eventName,
             startTime,
-            sessionProperties,
+            sessionPropertiesService,
             mapOf(),
             mockTimeoutCallback
         )
@@ -448,7 +448,7 @@ internal class EventHandlerTest {
             originEventDescription,
             false,
             eventProperties,
-            sessionProperties
+            sessionPropertiesService
         )
         assertTrue(deliveryService.sentMoments.isEmpty())
     }
@@ -475,7 +475,7 @@ internal class EventHandlerTest {
             originEventDescription,
             false,
             eventProperties,
-            sessionProperties
+            sessionPropertiesService
         )
         assertEquals(result, deliveryService.sentMoments.last())
     }
@@ -502,7 +502,7 @@ internal class EventHandlerTest {
             originEventDescription,
             false,
             eventProperties,
-            sessionProperties
+            sessionPropertiesService
         )
 
         assertTrue(deliveryService.sentMoments.isEmpty())
@@ -530,7 +530,7 @@ internal class EventHandlerTest {
             originEventDescription,
             false,
             eventProperties,
-            sessionProperties
+            sessionPropertiesService
         )
         assertEquals(result, deliveryService.sentMoments.last())
     }

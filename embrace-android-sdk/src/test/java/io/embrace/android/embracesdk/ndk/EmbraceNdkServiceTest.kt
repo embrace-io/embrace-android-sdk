@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
@@ -22,7 +23,7 @@ import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -88,7 +89,7 @@ internal class EmbraceNdkServiceTest {
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var userService: UserService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var sharedObjectLoader: SharedObjectLoader
     private lateinit var logger: EmbLogger
     private lateinit var delegate: NdkServiceDelegate.NdkDelegate
@@ -118,7 +119,7 @@ internal class EmbraceNdkServiceTest {
         deliveryService = FakeDeliveryService()
         userService = FakeUserService()
         preferencesService = FakePreferenceService()
-        sessionProperties = EmbraceSessionProperties(preferencesService, configService, EmbLoggerImpl())
+        sessionPropertiesService = FakeSessionPropertiesService()
         sharedObjectLoader = mockk()
         logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
@@ -153,7 +154,7 @@ internal class EmbraceNdkServiceTest {
                 deliveryService,
                 userService,
                 preferencesService,
-                sessionProperties,
+                sessionPropertiesService,
                 sharedObjectLoader,
                 logger,
                 repository,
@@ -204,7 +205,7 @@ internal class EmbraceNdkServiceTest {
     fun `test onSessionPropertiesUpdate where _updateMetaData was not executed and isInstalled false`() {
         enableNdk(false)
         initializeService()
-        embraceNdkService.onSessionPropertiesUpdate(sessionProperties.get())
+        embraceNdkService.onSessionPropertiesUpdate(sessionPropertiesService.getProperties())
         verify(exactly = 0) { delegate._updateMetaData(any()) }
     }
 
@@ -213,13 +214,13 @@ internal class EmbraceNdkServiceTest {
         enableNdk(true)
 
         initializeService()
-        embraceNdkService.onSessionPropertiesUpdate(sessionProperties.get())
+        embraceNdkService.onSessionPropertiesUpdate(sessionPropertiesService.getProperties())
         val newDeviceMetaData =
             NativeCrashMetadata(
                 metadataService.getAppInfo(),
                 metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
-                sessionProperties.get().toMap()
+                sessionPropertiesService.getProperties()
             )
 
         val expected = serializer.toJson(newDeviceMetaData)
@@ -258,7 +259,7 @@ internal class EmbraceNdkServiceTest {
                 metadataService.getAppInfo(),
                 metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
-                sessionProperties.get().toMap()
+                sessionPropertiesService.getProperties()
             )
         )
 
@@ -276,7 +277,7 @@ internal class EmbraceNdkServiceTest {
                 metadataService.getLightweightAppInfo(),
                 metadataService.getLightweightDeviceInfo(),
                 userService.getUserInfo(),
-                sessionProperties.get().toMap()
+                sessionPropertiesService.getProperties()
             )
         )
 
@@ -347,7 +348,7 @@ internal class EmbraceNdkServiceTest {
                 metadataService.getAppInfo(),
                 metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
-                sessionProperties.get().toMap()
+                sessionPropertiesService.getProperties()
             )
 
         verify(exactly = 0) { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
@@ -372,7 +373,7 @@ internal class EmbraceNdkServiceTest {
                 metadataService.getAppInfo(),
                 metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
-                sessionProperties.get().toMap()
+                sessionPropertiesService.getProperties()
             )
 
         val expected = serializer.toJson(newDeviceMetaData)

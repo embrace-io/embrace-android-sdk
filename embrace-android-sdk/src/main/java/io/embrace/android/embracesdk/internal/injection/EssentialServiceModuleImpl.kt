@@ -14,7 +14,8 @@ import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
@@ -297,13 +298,13 @@ internal class EssentialServiceModuleImpl(
         SessionIdTrackerImpl(systemServiceModule.activityManager, initModule.logger)
     }
 
-    override val sessionProperties: EmbraceSessionProperties by singleton {
+    override val sessionPropertiesService: SessionPropertiesService by singleton {
         Systrace.traceSynchronous("session-properties-init") {
-            EmbraceSessionProperties(
-                androidServicesModule.preferencesService,
-                configService,
-                initModule.logger
-            )
+            SessionPropertiesServiceImpl(
+                preferencesService = androidServicesModule.preferencesService,
+                configService = configService,
+                logger = initModule.logger,
+            ) { featureModuleProvider().sessionPropertiesDataSource.dataSource }
         }
     }
 

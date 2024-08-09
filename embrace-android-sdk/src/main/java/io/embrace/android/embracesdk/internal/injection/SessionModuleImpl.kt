@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
@@ -19,11 +17,9 @@ internal class SessionModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
-    nativeModule: NativeModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    featureModule: FeatureModule,
     payloadModule: PayloadModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
     dataContainerModule: DataContainerModule,
@@ -37,13 +33,6 @@ internal class SessionModuleImpl(
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan
         )
-    }
-
-    override val sessionPropertiesService: SessionPropertiesService by singleton {
-        EmbraceSessionPropertiesService(
-            nativeModule.ndkService::onSessionPropertiesUpdate,
-            essentialServiceModule.sessionProperties
-        ) { featureModule.sessionPropertiesDataSource.dataSource }
     }
 
     override val periodicSessionCacher: PeriodicSessionCacher by singleton {
@@ -73,7 +62,7 @@ internal class SessionModuleImpl(
         OrchestratorBoundaryDelegate(
             essentialServiceModule.memoryCleanerService,
             essentialServiceModule.userService,
-            essentialServiceModule.sessionProperties,
+            essentialServiceModule.sessionPropertiesService,
             essentialServiceModule.networkConnectivityService
         )
     }

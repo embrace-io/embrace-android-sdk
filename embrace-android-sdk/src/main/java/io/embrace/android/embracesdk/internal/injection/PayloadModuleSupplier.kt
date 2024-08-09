@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Function that returns an instance of [PayloadModule]. Matches the signature of the constructor for [PayloadModuleImpl]
@@ -16,7 +15,7 @@ internal typealias PayloadModuleSupplier = (
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
+    sessionPropertiesService: SessionPropertiesService
 ) -> PayloadModule
 
 internal fun createPayloadModule(
@@ -29,7 +28,7 @@ internal fun createPayloadModule(
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
+    sessionPropertiesService: SessionPropertiesService
 ): PayloadModule = PayloadModuleImpl(
     initModule,
     coreModule,
@@ -40,5 +39,5 @@ internal fun createPayloadModule(
     nativeModule,
     otelModule,
     anrModule,
-    sessionPropertiesServiceProvider
+    sessionPropertiesService
 )

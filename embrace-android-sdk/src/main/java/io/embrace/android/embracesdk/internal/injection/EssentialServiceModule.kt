@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
@@ -42,6 +42,6 @@ internal interface EssentialServiceModule {
     val networkConnectivityService: NetworkConnectivityService
     val pendingApiCallsSender: PendingApiCallsSender
     val sessionIdTracker: SessionIdTracker
-    val sessionProperties: EmbraceSessionProperties
+    val sessionPropertiesService: SessionPropertiesService
     val logWriter: LogWriter
 }

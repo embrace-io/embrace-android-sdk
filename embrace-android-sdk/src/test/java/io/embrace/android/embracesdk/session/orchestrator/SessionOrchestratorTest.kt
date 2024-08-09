@@ -14,15 +14,15 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
-import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -56,7 +56,7 @@ internal class SessionOrchestratorTest {
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var userService: FakeUserService
     private lateinit var deliveryService: FakeDeliveryService
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var periodicSessionCacher: PeriodicSessionCacher
     private lateinit var periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
@@ -369,7 +369,7 @@ internal class SessionOrchestratorTest {
             logger = logger
         )
         memoryCleanerService = FakeMemoryCleanerService()
-        sessionProperties = fakeEmbraceSessionProperties()
+        sessionPropertiesService = FakeSessionPropertiesService()
         userService = FakeUserService()
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
@@ -400,7 +400,7 @@ internal class SessionOrchestratorTest {
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
-                sessionProperties,
+                sessionPropertiesService,
                 FakeNetworkConnectivityService()
             ),
             deliveryService,
@@ -418,7 +418,7 @@ internal class SessionOrchestratorTest {
             logger
         )
         orchestratorStartTimeMs = clock.now()
-        sessionProperties.add("key", "value", false)
+        sessionPropertiesService.addProperty("key", "value", false)
     }
 
     private fun validateSession(

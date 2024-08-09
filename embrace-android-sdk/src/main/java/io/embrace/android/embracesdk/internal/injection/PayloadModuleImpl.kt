@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class PayloadModuleImpl(
@@ -25,7 +24,7 @@ internal class PayloadModuleImpl(
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-    sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
+    sessionPropertiesService: SessionPropertiesService
 ) : PayloadModule {
 
     private val backgroundWorker =
@@ -64,7 +63,7 @@ internal class PayloadModuleImpl(
             OtelPayloadMapperImpl(
                 anrModule.anrOtelMapper,
                 nativeModule.nativeAnrOtelMapper,
-                sessionPropertiesServiceProvider
+                sessionPropertiesService
             ),
             initModule.logger,
 

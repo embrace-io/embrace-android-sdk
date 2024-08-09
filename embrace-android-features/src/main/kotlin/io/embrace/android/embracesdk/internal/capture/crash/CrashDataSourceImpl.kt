@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embAndroidThreads
@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Intercept and track uncaught Android Runtime exceptions
  */
 public class CrashDataSourceImpl(
-    private val sessionProperties: EmbraceSessionProperties,
+    private val sessionPropertiesService: SessionPropertiesService,
     private val unityCrashIdProvider: () -> String?,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
@@ -71,7 +71,7 @@ public class CrashDataSourceImpl(
             val crashNumber = preferencesService.incrementAndGetCrashNumber()
             val crashAttributes = TelemetryAttributes(
                 configService = configService,
-                sessionPropertiesProvider = sessionProperties::get,
+                sessionPropertiesProvider = sessionPropertiesService::getProperties,
             )
 
             val crashException = LegacyExceptionInfo.ofThrowable(exception)

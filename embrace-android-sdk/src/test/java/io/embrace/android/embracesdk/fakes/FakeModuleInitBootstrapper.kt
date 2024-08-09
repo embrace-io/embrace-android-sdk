@@ -51,7 +51,7 @@ internal fun fakeModuleInitBootstrapper(
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },
     nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
     dataContainerModuleSupplier: DataContainerModuleSupplier = { _, _, _, _, _ -> FakeDataContainerModule() },
-    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
+    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _ -> FakeCrashModule() },
     payloadModuleSupplier: PayloadModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakePayloadModule() }
 ) = ModuleInitBootstrapper(

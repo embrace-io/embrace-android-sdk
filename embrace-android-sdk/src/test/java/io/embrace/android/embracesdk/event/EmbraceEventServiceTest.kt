@@ -8,12 +8,13 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
@@ -47,7 +48,7 @@ internal class EmbraceEventServiceTest {
     private lateinit var configService: FakeConfigService
     private lateinit var gatingService: GatingService
     private lateinit var fakeWorkerThreadModule: FakeWorkerThreadModule
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var eventService: EmbraceEventService
     private lateinit var fakeClock: FakeClock
     private lateinit var eventHandler: EventHandler
@@ -101,11 +102,7 @@ internal class EmbraceEventServiceTest {
             startupBehavior = fakeStartupBehavior { startupMomentLocalConfig },
             dataCaptureEventBehavior = fakeDataCaptureEventBehavior { remoteConfig }
         )
-        sessionProperties = EmbraceSessionProperties(
-            FakePreferenceService(),
-            configService,
-            logger
-        )
+        sessionPropertiesService = FakeSessionPropertiesService()
         gatingService = FakeGatingService(configService)
         val initModule = FakeInitModule(clock = fakeClock)
         fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule, name = WorkerName.BACKGROUND_REGISTRATION)
@@ -128,7 +125,7 @@ internal class EmbraceEventServiceTest {
             processStateService,
             sessionIdTracker,
             userService,
-            sessionProperties,
+            sessionPropertiesService,
             logger,
             fakeWorkerThreadModule,
             fakeClock

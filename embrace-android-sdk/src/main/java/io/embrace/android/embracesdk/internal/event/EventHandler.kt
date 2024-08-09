@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.event
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
@@ -43,7 +43,7 @@ internal class EventHandler(
         eventId: String,
         eventName: String,
         startTime: Long,
-        sessionProperties: EmbraceSessionProperties,
+        sessionPropertiesService: SessionPropertiesService,
         eventProperties: Map<String, Any>?,
         timeoutCallback: Runnable
     ): EventDescription {
@@ -53,7 +53,7 @@ internal class EventHandler(
             eventName,
             startTime,
             threshold,
-            sessionProperties,
+            sessionPropertiesService,
             eventProperties
         )
 
@@ -82,7 +82,7 @@ internal class EventHandler(
         originEventDescription: EventDescription,
         late: Boolean,
         eventProperties: Map<String, Any>?,
-        sessionProperties: EmbraceSessionProperties
+        sessionPropertiesService: SessionPropertiesService
     ): EventMessage {
         val event: Event = originEventDescription.event
         val startTime = event.timestamp ?: 0
@@ -96,7 +96,7 @@ internal class EventHandler(
             endTime,
             duration,
             late,
-            sessionProperties,
+            sessionPropertiesService,
             eventProperties
         )
         val endEventMessage = buildEndEventMessage(endEvent)
@@ -165,7 +165,7 @@ internal class EventHandler(
         eventName: String,
         startTime: Long,
         threshold: Long,
-        sessionProperties: EmbraceSessionProperties,
+        sessionPropertiesService: SessionPropertiesService,
         eventProperties: Map<String, Any>?
     ): Event {
         return Event(
@@ -176,7 +176,7 @@ internal class EventHandler(
             appState = processStateService.getAppState(),
             lateThreshold = threshold,
             timestamp = startTime,
-            sessionProperties = sessionProperties.get().toMap(),
+            sessionProperties = sessionPropertiesService.getProperties(),
             customProperties = eventProperties?.toMap()
         )
     }
@@ -186,7 +186,7 @@ internal class EventHandler(
         endTime: Long,
         duration: Long,
         late: Boolean,
-        sessionProperties: EmbraceSessionProperties,
+        sessionPropertiesService: SessionPropertiesService,
         eventProperties: Map<String, Any>?
     ): Event {
         return Event(
@@ -198,7 +198,7 @@ internal class EventHandler(
             appState = processStateService.getAppState(),
             type = if (late) EventType.LATE else EventType.END,
             customProperties = eventProperties?.toMap(),
-            sessionProperties = sessionProperties.get().toMap()
+            sessionProperties = sessionPropertiesService.getProperties()
         )
     }
 

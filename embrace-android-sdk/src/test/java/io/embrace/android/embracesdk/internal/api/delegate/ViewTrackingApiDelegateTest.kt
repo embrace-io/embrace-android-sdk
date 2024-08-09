@@ -28,7 +28,7 @@ internal class ViewTrackingApiDelegateTest {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
-        sessionPropertiesService = moduleInitBootstrapper.sessionModule.sessionPropertiesService as FakeSessionPropertiesService
+        sessionPropertiesService = moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
         spanSink = moduleInitBootstrapper.openTelemetryModule.spanSink
         logger = moduleInitBootstrapper.logger as FakeEmbLogger
 

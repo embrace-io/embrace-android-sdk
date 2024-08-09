@@ -2,9 +2,7 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakePayloadFactory
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeSessionSpanAttrPopulator
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.injection.SessionModule
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
@@ -15,7 +13,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAt
 
 internal class FakeSessionModule(
     override val payloadFactory: PayloadFactory = FakePayloadFactory(),
-    override val sessionPropertiesService: SessionPropertiesService = FakeSessionPropertiesService(),
     override val sessionOrchestrator: SessionOrchestrator = FakeSessionOrchestrator(),
     override val sessionSpanAttrPopulator: SessionSpanAttrPopulator = FakeSessionSpanAttrPopulator()
 ) : SessionModule {

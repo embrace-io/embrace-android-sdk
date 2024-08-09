@@ -1,13 +1,12 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -19,7 +18,7 @@ import org.junit.Test
 internal class TelemetryAttributesTest {
 
     private lateinit var customAttributes: Map<String, String>
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var telemetryAttributes: TelemetryAttributes
     private lateinit var sessionId: String
     private lateinit var configService: ConfigService
@@ -27,11 +26,7 @@ internal class TelemetryAttributesTest {
     @Before
     fun setup() {
         customAttributes = mapOf("custom" to "attributeValue")
-        sessionProperties = EmbraceSessionProperties(
-            FakePreferenceService(),
-            FakeConfigService(),
-            EmbLoggerImpl()
-        )
+        sessionPropertiesService = FakeSessionPropertiesService()
         sessionId = Uuid.getEmbUuid()
         configService = FakeConfigService()
     }
@@ -55,19 +50,19 @@ internal class TelemetryAttributesTest {
     fun `all attributes types`() {
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionProperties::get,
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
-        sessionProperties.add("perm", "permVal", true)
-        sessionProperties.add("temp", "tempVal", false)
+        sessionPropertiesService.addProperty("perm", "permVal", true)
+        sessionPropertiesService.addProperty("temp", "tempVal", false)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals("attributeValue", attributes["custom"])
         assertEquals("permVal", attributes.getSessionProperty("perm"))
         assertEquals("tempVal", attributes.getSessionProperty("temp"))
         assertEquals(sessionId, attributes[SessionIncubatingAttributes.SESSION_ID.key])
-        sessionProperties.add("temp", "newVal", false)
+        sessionPropertiesService.addProperty("temp", "newVal", false)
         assertEquals("newVal", telemetryAttributes.snapshot().getSessionProperty("temp"))
     }
 
@@ -76,14 +71,14 @@ internal class TelemetryAttributesTest {
         val newSessionId = Uuid.getEmbUuid()
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionProperties::get,
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
         )
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, newSessionId)
-        sessionProperties.add("perm", "permVal", true)
-        sessionProperties.add("temp", "tempVal", false)
-        sessionProperties.add("perm", "newPermVal", true)
-        sessionProperties.add("temp", "newTempVal", false)
+        sessionPropertiesService.addProperty("perm", "permVal", true)
+        sessionPropertiesService.addProperty("temp", "tempVal", false)
+        sessionPropertiesService.addProperty("perm", "newPermVal", true)
+        sessionPropertiesService.addProperty("temp", "newTempVal", false)
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(3, attributes.size)
@@ -119,12 +114,12 @@ internal class TelemetryAttributesTest {
                 }
             )
         )
-        sessionProperties.add("perm", "permVal", true)
-        sessionProperties.add("temp", "tempVal", false)
+        sessionPropertiesService.addProperty("perm", "permVal", true)
+        sessionPropertiesService.addProperty("temp", "tempVal", false)
 
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionProperties::get,
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
@@ -147,12 +142,12 @@ internal class TelemetryAttributesTest {
                 }
             )
         )
-        sessionProperties.add("perm", "permVal", true)
-        sessionProperties.add("temp", "tempVal", false)
+        sessionPropertiesService.addProperty("perm", "permVal", true)
+        sessionPropertiesService.addProperty("temp", "tempVal", false)
 
         telemetryAttributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionProperties::get,
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customAttributes
         )
         telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)

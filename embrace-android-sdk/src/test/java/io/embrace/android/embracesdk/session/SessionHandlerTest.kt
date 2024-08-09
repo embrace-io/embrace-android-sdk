@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SessionLocalConfig
@@ -44,10 +44,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -59,8 +55,6 @@ internal class SessionHandlerTest {
         private val clock = FakeClock()
         private const val NOW = 123L
         private var sessionNumber = 5
-        private val sessionProperties: EmbraceSessionProperties = mockk(relaxed = true)
-        private val emptyMapSessionProperties: Map<String, String> = emptyMap()
     }
 
     private val initial = fakeSessionZygote().copy(startTime = NOW)
@@ -85,6 +79,7 @@ internal class SessionHandlerTest {
     private lateinit var logger: EmbLogger
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
+    private lateinit var sessionPropertiesService: SessionPropertiesService
 
     @Before
     fun before() {
@@ -92,7 +87,7 @@ internal class SessionHandlerTest {
         scheduledWorker = ScheduledWorker(executorService)
         logger = EmbLoggerImpl()
         clock.setCurrentTime(NOW)
-        every { sessionProperties.get() } returns emptyMapSessionProperties
+        sessionPropertiesService = FakeSessionPropertiesService()
         ndkService = FakeNdkService()
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
@@ -140,7 +135,7 @@ internal class SessionHandlerTest {
                     OtelPayloadMapperImpl(
                         fakeAnrOtelMapper(),
                         fakeNativeAnrOtelMapper(),
-                        ::FakeSessionPropertiesService,
+                        FakeSessionPropertiesService(),
                     ),
                     logger
                 )
@@ -149,11 +144,6 @@ internal class SessionHandlerTest {
             currentSessionSpan
         )
         payloadFactory = PayloadFactoryImpl(collator, configService, logger)
-    }
-
-    @After
-    fun after() {
-        clearAllMocks(answers = false)
     }
 
     @Test

@@ -9,10 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.config.local.CrashHandlerLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -33,7 +32,7 @@ internal class CrashDataSourceImplTest {
     private lateinit var crashDataSource: CrashDataSourceImpl
     private lateinit var logOrchestrator: FakeLogOrchestrator
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var anrService: FakeAnrService
     private lateinit var ndkService: FakeNdkService
     private lateinit var preferencesService: FakePreferenceService
@@ -49,7 +48,7 @@ internal class CrashDataSourceImplTest {
     fun setUp() {
         logOrchestrator = FakeLogOrchestrator()
         sessionOrchestrator = FakeSessionOrchestrator()
-        sessionProperties = fakeEmbraceSessionProperties()
+        sessionPropertiesService = FakeSessionPropertiesService()
         anrService = FakeAnrService()
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService()
@@ -80,7 +79,7 @@ internal class CrashDataSourceImplTest {
             )
         )
         crashDataSource = CrashDataSourceImpl(
-            sessionProperties,
+            sessionPropertiesService,
             ndkService::getUnityCrashId,
             preferencesService,
             logWriter,

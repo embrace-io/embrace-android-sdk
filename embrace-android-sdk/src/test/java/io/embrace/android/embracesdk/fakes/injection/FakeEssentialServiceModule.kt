@@ -15,16 +15,16 @@ import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.NoOpNetworkConnectivityService
-import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
@@ -57,9 +57,7 @@ internal class FakeEssentialServiceModule(
     override val pendingApiCallsSender: PendingApiCallsSender = FakePendingApiCallsSender(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService()),
-    override val sessionProperties: EmbraceSessionProperties = fakeEmbraceSessionProperties(),
-    override val logWriter: LogWriter = FakeLogWriter()
-) : EssentialServiceModule {
-
-    override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate()
-}
+    override val logWriter: LogWriter = FakeLogWriter(),
+    override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate(),
+    override val sessionPropertiesService: SessionPropertiesService = FakeSessionPropertiesService()
+) : EssentialServiceModule

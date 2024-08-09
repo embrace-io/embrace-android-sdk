@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH
@@ -35,7 +35,7 @@ import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 public class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
-    private val sessionProperties: EmbraceSessionProperties,
+    private val sessionPropertiesService: SessionPropertiesService,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
     clock: Clock,
@@ -230,7 +230,7 @@ public class EmbraceLogService(
     private fun createTelemetryAttributes(customProperties: Map<String, Any>?): TelemetryAttributes {
         val attributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionProperties::get,
+            sessionPropertiesProvider = sessionPropertiesService::getProperties,
             customAttributes = customProperties?.mapValues { it.value.toString() } ?: emptyMap()
         )
 

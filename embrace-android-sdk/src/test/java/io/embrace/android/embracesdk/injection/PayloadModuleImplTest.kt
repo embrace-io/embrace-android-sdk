@@ -30,7 +30,7 @@ internal class PayloadModuleImplTest {
             FakeNativeModule(),
             FakeOpenTelemetryModule(),
             FakeAnrModule(),
-            ::FakeSessionPropertiesService
+            FakeSessionPropertiesService()
         )
         assertNotNull(module.sessionEnvelopeSource)
         assertNotNull(module.logEnvelopeSource)

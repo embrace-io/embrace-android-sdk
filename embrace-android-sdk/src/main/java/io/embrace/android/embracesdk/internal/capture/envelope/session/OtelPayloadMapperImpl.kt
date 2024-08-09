@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Handles logic for features that are not fully integrated into the OTel pipeline.
@@ -14,7 +13,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 internal class OtelPayloadMapperImpl(
     private val anrOtelMapper: AnrOtelMapper,
     private val nativeAnrOtelMapper: NativeAnrOtelMapper,
-    private val sessionPropertiesServiceProvider: Provider<SessionPropertiesService>
+    private val sessionPropertiesService: SessionPropertiesService
 ) : OtelPayloadMapper {
 
     override fun getSessionPayload(endType: SessionSnapshotType, crashId: String?): List<Span> {
@@ -25,7 +24,7 @@ internal class OtelPayloadMapperImpl(
         }
         if (!cacheAttempt) {
             if (appTerminationCause == null) {
-                sessionPropertiesServiceProvider().populateCurrentSession()
+                sessionPropertiesService.populateCurrentSession()
             }
         }
         return anrOtelMapper.snapshot(!cacheAttempt)

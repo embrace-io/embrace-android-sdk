@@ -10,7 +10,7 @@ internal class SessionApiDelegate(
 ) : SessionApi {
 
     private val sessionPropertiesService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.sessionModule.sessionPropertiesService
+        bootstrapper.essentialServiceModule.sessionPropertiesService
     }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
 
@@ -34,6 +34,7 @@ internal class SessionApiDelegate(
         return false
     }
 
+    @Deprecated("This method will be removed in a future release.")
     override fun getSessionProperties(): Map<String, String>? {
         if (sdkCallChecker.check("get_session_properties")) {
             return sessionPropertiesService?.getProperties()

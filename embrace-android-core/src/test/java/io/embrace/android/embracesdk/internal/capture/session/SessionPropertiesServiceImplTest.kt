@@ -1,13 +1,9 @@
-package io.embrace.android.embracesdk.session.properties
+package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeNdkService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,51 +11,57 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-internal class EmbraceSessionPropertiesServiceTest {
+internal class SessionPropertiesServiceImplTest {
 
     private lateinit var service: SessionPropertiesService
-    private lateinit var props: EmbraceSessionProperties
     private lateinit var dataSource: SessionPropertiesDataSource
-    private lateinit var ndkService: FakeNdkService
     private lateinit var fakeCurrentSessionSpan: FakeCurrentSessionSpan
+    private lateinit var propState: Map<String, String>
 
     @Before
     fun setUp() {
         val logger = EmbLoggerImpl()
         val fakeConfigService = FakeConfigService()
-        props = EmbraceSessionProperties(FakePreferenceService(), fakeConfigService, logger)
-        ndkService = FakeNdkService()
         fakeCurrentSessionSpan = FakeCurrentSessionSpan()
         dataSource = SessionPropertiesDataSource(
             sessionBehavior = fakeConfigService.sessionBehavior,
             writer = fakeCurrentSessionSpan,
             logger = logger,
         )
-        service = EmbraceSessionPropertiesService(ndkService::onSessionPropertiesUpdate, props) { dataSource }
+        service = SessionPropertiesServiceImpl(
+            FakePreferenceService(),
+            FakeConfigService(),
+            FakeEmbLogger(),
+            ::dataSource
+        )
+        propState = emptyMap()
+        service.addChangeListener { propState = it }
     }
 
     @Test
     fun testAddSessionProp() {
         service.addProperty("key", "value", false)
         val expected = mapOf("key" to "value")
-        assertEquals(expected, props.get())
-        assertEquals(expected, ndkService.propUpdates.single())
+        assertEquals(expected, propState)
         assertEquals(expected, service.getProperties())
         assertEquals(1, fakeCurrentSessionSpan.attributeCount())
 
         service.removeProperty("key")
-        assertEquals(emptyMap<String, String>(), props.get())
-        assertEquals(emptyMap<String, String>(), ndkService.propUpdates.last())
+        assertEquals(emptyMap<String, String>(), propState)
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())
     }
 
     @Test
     fun `populate session span with all set properties`() {
-        props.add("key", "value", true)
-        props.add("tempKey", "tempValue", false)
+        service = SessionPropertiesServiceImpl(
+            FakePreferenceService().apply { permanentSessionProperties = mapOf("key" to "value") },
+            FakeConfigService(),
+            FakeEmbLogger(),
+            ::dataSource
+        )
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())
         assertTrue(service.populateCurrentSession())
-        assertEquals(2, fakeCurrentSessionSpan.attributeCount())
+        assertEquals(1, fakeCurrentSessionSpan.attributeCount())
     }
 
     @Test

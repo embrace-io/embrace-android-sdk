@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.fakeEmbraceSessionProperties
+import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeC
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
@@ -38,7 +38,7 @@ import org.junit.Test
 
 internal class NativeCrashDataSourceImplTest {
     private val errorSerializerType = Types.newParameterizedType(List::class.java, NativeCrashDataError::class.java)
-    private lateinit var sessionProperties: EmbraceSessionProperties
+    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var fakeNdkService: FakeNdkService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var configService: FakeConfigService
@@ -53,7 +53,7 @@ internal class NativeCrashDataSourceImplTest {
 
     @Before
     fun setUp() {
-        sessionProperties = fakeEmbraceSessionProperties()
+        sessionPropertiesService = FakeSessionPropertiesService()
         fakeNdkService = FakeNdkService()
         preferencesService = FakePreferenceService()
         logger = EmbLoggerImpl()
@@ -69,7 +69,7 @@ internal class NativeCrashDataSourceImplTest {
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
-            sessionProperties = sessionProperties,
+            sessionPropertiesService = sessionPropertiesService,
             ndkService = fakeNdkService,
             preferencesService = preferencesService,
             logWriter = logWriter,

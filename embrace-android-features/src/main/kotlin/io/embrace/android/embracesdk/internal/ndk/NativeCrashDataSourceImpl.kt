@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 public class NativeCrashDataSourceImpl(
-    private val sessionProperties: EmbraceSessionProperties,
+    private val sessionPropertiesService: SessionPropertiesService,
     private val ndkService: NdkService,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
@@ -42,7 +42,7 @@ public class NativeCrashDataSourceImpl(
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionProperties::get
+            sessionPropertiesProvider = sessionPropertiesService::getProperties
         )
         crashAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, nativeCrash.sessionId)
         crashAttributes.setAttribute(embCrashNumber, nativeCrashNumber.toString())

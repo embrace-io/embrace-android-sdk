@@ -60,7 +60,7 @@ internal class LogModuleImpl(
         EmbraceLogService(
             essentialServiceModule.logWriter,
             essentialServiceModule.configService,
-            essentialServiceModule.sessionProperties,
+            essentialServiceModule.sessionPropertiesService,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,
             initModule.clock,

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.event
 import io.embrace.android.embracesdk.internal.EventDescription
 import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
@@ -39,7 +39,7 @@ internal class EmbraceEventService(
     processStateService: ProcessStateService,
     sessionIdTracker: SessionIdTracker,
     userService: UserService,
-    private val sessionProperties: EmbraceSessionProperties,
+    private val sessionPropertiesService: SessionPropertiesService,
     private val logger: EmbLogger,
     workerThreadModule: WorkerThreadModule,
     private val clock: Clock
@@ -155,7 +155,7 @@ internal class EmbraceEventService(
                 eventId,
                 name,
                 sanitizedStartTime,
-                sessionProperties,
+                sessionPropertiesService,
                 properties,
                 Runnable { endEvent(name, identifier, true, null) }
             )
@@ -213,7 +213,7 @@ internal class EmbraceEventService(
                 originEventDescription,
                 late,
                 properties,
-                sessionProperties
+                sessionPropertiesService
             )
             if (isStartupEvent(name)) {
                 startupEventInfo = eventHandler.buildStartupEventInfo(

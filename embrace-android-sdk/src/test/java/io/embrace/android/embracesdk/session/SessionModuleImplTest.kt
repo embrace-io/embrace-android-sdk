@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakePayloadModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
@@ -10,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.SessionModuleImpl
 import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
@@ -41,18 +39,15 @@ internal class SessionModuleImplTest {
             initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
             essentialServiceModule,
-            FakeNativeModule(),
             FakeDeliveryModule(),
             workerThreadModule,
             dataSourceModule,
-            FakeFeatureModule(),
             FakePayloadModule(),
             FakeDataCaptureServiceModule(),
             FakeDataContainerModule(),
             FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
-        assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
         assertNotNull(module.periodicSessionCacher)
@@ -77,18 +72,15 @@ internal class SessionModuleImplTest {
             initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
             essentialServiceModule,
-            FakeNativeModule(),
             FakeDeliveryModule(),
             workerThreadModule,
             dataSourceModule,
-            FakeFeatureModule(),
             FakePayloadModule(),
             FakeDataCaptureServiceModule(),
             FakeDataContainerModule(),
             FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
-        assertNotNull(module.sessionPropertiesService)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }

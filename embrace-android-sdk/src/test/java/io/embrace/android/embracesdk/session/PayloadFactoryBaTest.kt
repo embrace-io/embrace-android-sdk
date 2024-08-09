@@ -161,7 +161,7 @@ internal class PayloadFactoryBaTest {
                 OtelPayloadMapperImpl(
                     fakeAnrOtelMapper(),
                     fakeNativeAnrOtelMapper(),
-                    ::FakeSessionPropertiesService,
+                    FakeSessionPropertiesService(),
                 ),
                 logger
             )

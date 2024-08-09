@@ -19,4 +19,11 @@ public class FakeSessionPropertiesService : SessionPropertiesService {
     override fun getProperties(): Map<String, String> = props
 
     override fun populateCurrentSession(): Boolean = true
+
+    override fun clearTemporary() {
+        props.clear()
+    }
+
+    override fun addChangeListener(listener: (Map<String, String>) -> Unit) {
+    }
 }

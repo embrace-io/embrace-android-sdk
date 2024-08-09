@@ -23,7 +23,7 @@ internal class CrashModuleImpl(
 
     override val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
-            essentialServiceModule.sessionProperties,
+            essentialServiceModule.sessionPropertiesService,
             unityCrashIdProvider,
             androidServicesModule.preferencesService,
             essentialServiceModule.logWriter,

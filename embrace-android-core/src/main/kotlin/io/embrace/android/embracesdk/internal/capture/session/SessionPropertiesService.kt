@@ -27,9 +27,7 @@ public interface SessionPropertiesService {
     public fun removeProperty(originalKey: String): Boolean
 
     /**
-     * Get a read-only representation of the currently set session properties. You can query and
-     * read from this representation however setting values in this object will not modify the
-     * actual properties in the session. To modify session properties see addProperty.
+     * Get a read-only representation of the currently set session properties.
      */
     public fun getProperties(): Map<String, String>
 
@@ -37,4 +35,16 @@ public interface SessionPropertiesService {
      * Populate the current session with the existing session properties
      */
     public fun populateCurrentSession(): Boolean
+
+    /**
+     * Clears any temporary properties
+     */
+    public fun clearTemporary()
+
+    /**
+     * Adds a listener that will be invoked with a Map representation of all the session properties
+     * whenever the session properties change. The listener is also invoked when it is first added
+     * with the current state.
+     */
+    public fun addChangeListener(listener: (Map<String, String>) -> Unit)
 }

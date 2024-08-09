@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.EmbraceSessionProperties
+import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -52,7 +52,7 @@ public class EmbraceNdkService(
     private val deliveryService: DeliveryService,
     private val userService: UserService,
     private val preferencesService: PreferencesService,
-    private val sessionProperties: EmbraceSessionProperties,
+    private val sessionPropertiesService: SessionPropertiesService,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
     private val repository: EmbraceNdkServiceRepository,
@@ -221,7 +221,7 @@ public class EmbraceNdkService(
                     metadataService.getLightweightAppInfo(),
                     metadataService.getLightweightDeviceInfo(),
                     userService.getUserInfo(),
-                    sessionProperties.get().toMap()
+                    sessionPropertiesService.getProperties()
                 )
             )
         }
@@ -552,7 +552,7 @@ public class EmbraceNdkService(
                 metadataService.getAppInfo(),
                 metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
-                if (includeSessionProperties) sessionProperties.get().toMap() else null
+                if (includeSessionProperties) sessionPropertiesService.getProperties() else null
             )
         )
     }

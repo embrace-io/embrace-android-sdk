@@ -36,7 +36,7 @@ internal class NativeModuleImpl(
                 deliveryModule.deliveryService,
                 essentialServiceModule.userService,
                 androidServicesModule.preferencesService,
-                essentialServiceModule.sessionProperties,
+                essentialServiceModule.sessionPropertiesService,
                 essentialServiceModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,
@@ -88,7 +88,7 @@ internal class NativeModuleImpl(
             NoopNativeCrashService()
         } else {
             NativeCrashDataSourceImpl(
-                sessionProperties = essentialServiceModule.sessionProperties,
+                sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
                 ndkService = ndkService,
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,

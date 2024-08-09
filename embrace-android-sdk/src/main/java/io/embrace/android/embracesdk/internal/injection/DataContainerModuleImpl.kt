@@ -20,7 +20,7 @@ internal class DataContainerModuleImpl(
             essentialServiceModule.processStateService,
             essentialServiceModule.sessionIdTracker,
             essentialServiceModule.userService,
-            essentialServiceModule.sessionProperties,
+            essentialServiceModule.sessionPropertiesService,
             initModule.logger,
             workerThreadModule,
             initModule.clock

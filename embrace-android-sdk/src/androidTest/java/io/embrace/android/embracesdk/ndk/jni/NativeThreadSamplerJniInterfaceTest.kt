@@ -30,6 +30,11 @@ internal class NativeThreadSamplerJniInterfaceTest : NativeTestSuite() {
         assertEquals(Unit.javaClass, result.javaClass)
     }
 
+    /**
+     * Besides testing finishSampling(), this is also verifying that the JNI FindClass method called in populate_jni_cache works.
+     * We are currently looking for NativeThreadAnrSample and NativeThreadAnrStackframe, so if any of those classes are moved or renamed,
+     * this test will fail.
+     */
     @Test
     fun finishSamplingTest() {
         val result = nativeThreadSamplerNdkDelegate.finishSampling()

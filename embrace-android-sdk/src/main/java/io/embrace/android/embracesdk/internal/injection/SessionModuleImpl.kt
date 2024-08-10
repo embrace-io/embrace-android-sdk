@@ -73,7 +73,8 @@ internal class SessionModuleImpl(
             dataContainerModule.eventService,
             dataCaptureServiceModule.startupService,
             logModule.logService,
-            essentialServiceModule.metadataService
+            essentialServiceModule.metadataService,
+            essentialServiceModule.sessionPropertiesService
         )
     }
 

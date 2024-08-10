@@ -17,7 +17,7 @@ public class FakeCurrentSessionSpan(
 ) : CurrentSessionSpan {
     public var initializedCallCount: Int = 0
     public var addedEvents: MutableList<SpanEventData> = mutableListOf()
-    public var addedAttributes: MutableList<SpanAttributeData> = mutableListOf()
+    public var attributes: MutableMap<String, String> = mutableMapOf()
     public var sessionSpan: FakeSpanData? = null
 
     private val sessionIteration = AtomicInteger(1)
@@ -36,12 +36,11 @@ public class FakeCurrentSessionSpan(
     }
 
     override fun addSystemAttribute(attribute: SpanAttributeData) {
-        addedAttributes.add(attribute)
+        attributes[attribute.key] = attribute.value
     }
 
     override fun removeSystemAttribute(key: String) {
-        val attributeToRemove = addedAttributes.find { it.key == key } ?: return
-        addedAttributes.remove(attributeToRemove)
+        attributes.remove(key)
     }
 
     override fun initialized(): Boolean {
@@ -71,9 +70,9 @@ public class FakeCurrentSessionSpan(
         return "testSessionId$sessionIteration"
     }
 
-    public fun getAttribute(key: String): String? = addedAttributes.lastOrNull { it.key == key }?.value
+    public fun getAttribute(key: String): String? = attributes[key]
 
-    public fun attributeCount(): Int = addedAttributes.size
+    public fun attributeCount(): Int = attributes.size
 
     private fun newSessionSpan(startTimeMs: Long) =
         FakeSpanData(

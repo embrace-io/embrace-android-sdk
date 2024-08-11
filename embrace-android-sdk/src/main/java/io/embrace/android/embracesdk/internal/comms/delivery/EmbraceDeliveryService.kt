@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
+import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
@@ -20,11 +21,13 @@ import io.embrace.android.embracesdk.internal.payload.toFailedSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
 
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
@@ -191,8 +194,18 @@ internal class EmbraceDeliveryService(
         }
     }
 
-    private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPayload>) =
-        envelope.getSessionSpan()?.endTimeNanos?.nanosToMillis() ?: -1
+    /**
+     * To approximate the time of any snapshot to be converted into a failed span, we look to the session span of the payload and take
+     * either the end time or the last heartbeat time, whichever exists and is later. If the session span itself is a snapshot, it will
+     * not have an end time, in which case it will fall back to the last heartbeat time. If either exists, it means we can't find a better
+     * time, so we just leave it at 0.
+     */
+    private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPayload>): Long {
+        return envelope.getSessionSpan()?.run {
+            max(endTimeNanos ?: 0L, attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull() ?: 0L)
+                .nanosToMillis()
+        } ?: 0L
+    }
 
     override fun sendMoment(eventMessage: EventMessage) {
         apiService.sendEvent(eventMessage)

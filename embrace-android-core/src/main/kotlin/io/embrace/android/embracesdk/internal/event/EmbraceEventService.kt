@@ -154,7 +154,7 @@ internal class EmbraceEventService(
                 name,
                 sanitizedStartTime,
                 sessionPropertiesService,
-                properties,
+                redactSensitiveProperties(properties),
                 Runnable { endEvent(name, identifier, true, null) }
             )
 
@@ -210,7 +210,7 @@ internal class EmbraceEventService(
             val (event) = eventHandler.onEventEnded(
                 originEventDescription,
                 late,
-                properties,
+                redactSensitiveProperties(properties),
                 sessionPropertiesService
             )
             if (isStartupEvent(name)) {
@@ -225,6 +225,12 @@ internal class EmbraceEventService(
                 ex
             )
             logger.trackInternalError(InternalErrorType.END_EVENT_FAIL, ex)
+        }
+    }
+
+    private fun redactSensitiveProperties(properties: Map<String, Any>?): Map<String, Any>? {
+        return properties?.mapValues { (key, value) ->
+            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) "<redacted>" else value
         }
     }
 

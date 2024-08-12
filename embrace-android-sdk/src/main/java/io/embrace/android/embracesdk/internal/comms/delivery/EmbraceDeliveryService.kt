@@ -201,10 +201,11 @@ internal class EmbraceDeliveryService(
      * time, so we just leave it at 0.
      */
     private fun getFailedSpanEndTimeMs(envelope: Envelope<SessionPayload>): Long {
-        return envelope.getSessionSpan()?.run {
-            max(endTimeNanos ?: 0L, attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull() ?: 0L)
-                .nanosToMillis()
-        } ?: 0L
+        val sessionSpan = envelope.getSessionSpan() ?: return 0L
+        val endTimeMs = sessionSpan.endTimeNanos ?: 0L
+        val lastHeartbeatTimeMs =
+            sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull() ?: 0L
+        return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
     }
 
     override fun sendMoment(eventMessage: EventMessage) {

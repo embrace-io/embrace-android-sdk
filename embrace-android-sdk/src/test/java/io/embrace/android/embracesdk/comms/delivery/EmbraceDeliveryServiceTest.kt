@@ -12,10 +12,10 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.fakeCachedSessionEnvelopeWithHeartbeatTime
-import io.embrace.android.embracesdk.fakes.fakeCachedSessionEnvelopeWithTerminationTime
+import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getLastHeartbeatTimeMs
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.getStartTime
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -157,16 +157,14 @@ internal class EmbraceDeliveryServiceTest {
     }
 
     @Test
-    fun `missing end time in session will find appropriate fallback for end time of failed span`() {
-        assertNotNull(cacheService.writeSession(sessionWithTerminationTimeFileName, sessionWithTerminationTime))
+    fun `complete cached session with snapshot will be sent with snapshot as failed span with the right end time`() {
+        assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
-        val sentSessionWithTerminationTime = apiService.sessionRequests.single()
-        assertNotNull(cacheService.writeSession(sessionWithLastHeartbeatTimeFileName, sessionWithLastHeartbeatTime))
-        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
-        val sentSessionWithLastHeartbeatTime = apiService.sessionRequests.last()
+        val cachedSession = apiService.sessionRequests.single()
 
-        checkNotNull(sessionWithTerminationTime.data.spanSnapshots).single().let { snapshot ->
-            val span = sentSessionWithTerminationTime.data.spans?.single { it.spanId == snapshot.spanId }
+        checkNotNull(sessionWithSnapshot.data.spanSnapshots).single().let { snapshot ->
+            val span = cachedSession.data.spans?.single { it.spanId == snapshot.spanId }
+            assertEquals(0, cachedSession.data.spanSnapshots?.size)
             assertEmbraceSpanData(
                 span = span,
                 expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
@@ -178,20 +176,43 @@ internal class EmbraceDeliveryServiceTest {
                 )
             )
         }
+    }
 
-        checkNotNull(sessionWithLastHeartbeatTime.data.spanSnapshots).single().let { snapshot ->
-            val span = sentSessionWithLastHeartbeatTime.data.spans?.single { it.spanId == snapshot.spanId }
-            assertEmbraceSpanData(
-                span = span,
-                expectedStartTimeMs = checkNotNull(snapshot.startTimeNanos?.nanosToMillis()),
-                expectedEndTimeMs = checkNotNull(sessionWithSnapshot.findSessionSpan().endTimeNanos?.nanosToMillis()),
-                expectedParentId = SpanId.getInvalid(),
-                expectedErrorCode = ErrorCode.FAILURE,
-                expectedCustomAttributes = mapOf(
-                    EmbType.Performance.Default.toEmbraceKeyValuePair()
-                )
+    @Test
+    fun `incomplete cached session will be sent with appropriate fallback end time`() {
+        assertNotNull(cacheService.writeSession(incompleteSessionFileName, incompleteSessionEnvelope))
+        deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
+        val incompleteSession = apiService.sessionRequests.single()
+        val spans = checkNotNull(incompleteSession.data.spans)
+        assertEquals(2, spans.size)
+        assertEquals(0, incompleteSession.data.spanSnapshots?.size)
+
+        val sessionSpan = spans.find { it.name == "emb-session" }
+        val failedSpan = spans.find { it.name != "emb-session" }
+        val expectedStartTimeMs = incompleteSessionEnvelope.getStartTime()
+        val expectedEndTimeMs = incompleteSessionEnvelope.getLastHeartbeatTimeMs()
+
+        assertEmbraceSpanData(
+            span = sessionSpan,
+            expectedStartTimeMs = expectedStartTimeMs,
+            expectedEndTimeMs = expectedEndTimeMs,
+            expectedParentId = SpanId.getInvalid(),
+            expectedErrorCode = ErrorCode.FAILURE,
+            expectedCustomAttributes = mapOf(
+                EmbType.Ux.Session.toEmbraceKeyValuePair()
             )
-        }
+        )
+
+        assertEmbraceSpanData(
+            span = failedSpan,
+            expectedStartTimeMs = expectedStartTimeMs,
+            expectedEndTimeMs = expectedEndTimeMs,
+            expectedParentId = SpanId.getInvalid(),
+            expectedErrorCode = ErrorCode.FAILURE,
+            expectedCustomAttributes = mapOf(
+                EmbType.Performance.Default.toEmbraceKeyValuePair()
+            )
+        )
     }
 
     @Test
@@ -322,25 +343,16 @@ internal class EmbraceDeliveryServiceTest {
         private val anotherMessageFileName = CachedSession.create(
             anotherMessage.getSessionId(),
             anotherMessage.getStartTime(),
-            false
         ).filename
         private val sessionWithSnapshot = fakeSessionEnvelope()
         private val sessionWithSnapshotFileName = CachedSession.create(
             sessionWithSnapshot.getSessionId(),
             sessionWithSnapshot.getStartTime(),
-            false
         ).filename
-        private val sessionWithTerminationTime = fakeCachedSessionEnvelopeWithTerminationTime()
-        private val sessionWithTerminationTimeFileName = CachedSession.create(
-            sessionWithTerminationTime.getSessionId(),
-            sessionWithTerminationTime.getStartTime(),
-            false
-        ).filename
-        private val sessionWithLastHeartbeatTime = fakeCachedSessionEnvelopeWithHeartbeatTime()
-        private val sessionWithLastHeartbeatTimeFileName = CachedSession.create(
-            sessionWithLastHeartbeatTime.getSessionId(),
-            sessionWithLastHeartbeatTime.getStartTime(),
-            false
+        private val incompleteSessionEnvelope = fakeIncompleteSessionEnvelope()
+        private val incompleteSessionFileName = CachedSession.create(
+            incompleteSessionEnvelope.getSessionId(),
+            incompleteSessionEnvelope.getStartTime(),
         ).filename
         private val logsEnvelope = Envelope(
             resource = FakeEnvelopeResourceSource().resource,

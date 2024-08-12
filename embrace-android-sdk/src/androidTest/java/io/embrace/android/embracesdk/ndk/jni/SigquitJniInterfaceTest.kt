@@ -9,6 +9,11 @@ internal class SigquitJniInterfaceTest : NativeTestSuite() {
 
     private val sigquitNdkDelegate = EmbraceSigquitNdkDelegate()
 
+    /**
+     * Besides testing installGoogleAnrHandler(), this is also verifying that the JNI FindClass method called
+     * in anr.c -> configure_reporting works.
+     * We are currently looking for SigquitDataSource, so if any of it's moved or renamed, this test will fail.
+     */
     @Test
     fun installGoogleAnrHandlerTest() {
         val result = sigquitNdkDelegate.installGoogleAnrHandler(1)

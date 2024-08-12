@@ -93,14 +93,14 @@ internal class EmbraceMetadataReactNativeTest {
     @Test
     fun `test React Native bundle ID setting as a default value`() {
         val metadataService = getMetadataService()
-        assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
     }
 
     @Test
     fun `test React Native bundle ID setting as a default value if jsBundleIdUrl is empty`() {
         val metadataService = getMetadataService()
         metadataService.setReactNativeBundleId(context, "")
-        assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
     }
 
     @Test
@@ -109,7 +109,7 @@ internal class EmbraceMetadataReactNativeTest {
         val metadataService = getMetadataService()
 
         metadataService.setReactNativeBundleId(context, "javaScriptBundleURL")
-        assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
     }
 
     @Test
@@ -118,7 +118,7 @@ internal class EmbraceMetadataReactNativeTest {
         val metadataService = getMetadataService()
 
         metadataService.setReactNativeBundleId(context, "newJavaScriptBundleURL")
-        assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
     }
 
     @Test
@@ -135,7 +135,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
-        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 
@@ -154,7 +154,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
-        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", preferencesService.javaScriptBundleId)
     }
@@ -172,7 +172,7 @@ internal class EmbraceMetadataReactNativeTest {
         val metadataService = getMetadataService()
         metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", false)
 
-        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("persistedBundleId", metadataService.getReactNativeBundleId())
         assertEquals("persistedBundleId", preferencesService.javaScriptBundleId)
     }
@@ -190,7 +190,7 @@ internal class EmbraceMetadataReactNativeTest {
         val metadataService = getMetadataService()
         metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", null)
 
-        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
         assertEquals(null, preferencesService.javaScriptBundleId)
     }
@@ -203,7 +203,7 @@ internal class EmbraceMetadataReactNativeTest {
             context,
             bundleIdFile.absolutePath
         )
-        assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
+        assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
 
@@ -215,7 +215,7 @@ internal class EmbraceMetadataReactNativeTest {
 
         // computing is null, so reactNativeBundleID should be set to the default value
         val metadataService = getMetadataService()
-        assertEquals(metadataService.getReactNativeBundleId(), buildInfo.buildId)
+        assertEquals(metadataService.getReactNativeBundleId(), buildInfo.rnBundleId)
     }
 
     @Test
@@ -223,6 +223,6 @@ internal class EmbraceMetadataReactNativeTest {
         preferencesService.javaScriptBundleURL = "wrongFilePath"
 
         // computing is null, so reactNativeBundleID should be set to the default value
-        assertEquals(getMetadataService().getReactNativeBundleId(), buildInfo.buildId)
+        assertEquals(getMetadataService().getReactNativeBundleId(), buildInfo.rnBundleId)
     }
 }

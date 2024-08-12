@@ -245,6 +245,8 @@ int emb_install_google_anr_handler(JNIEnv *env, jobject anr_service, jint _googl
             anr_service_obj = (*env)->NewGlobalRef(env, anr_service);
             res = install_signal_handler();
             installed = true;
+        } else {
+            res = EMB_ANR_INSTALL_REPORTING_CONFIGURATION_FAIL;
         }
     }
     pthread_mutex_unlock(&emb_anr_install_lock);

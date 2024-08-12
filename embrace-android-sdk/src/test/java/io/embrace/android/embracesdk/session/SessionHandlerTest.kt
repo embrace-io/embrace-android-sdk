@@ -135,7 +135,6 @@ internal class SessionHandlerTest {
                     OtelPayloadMapperImpl(
                         fakeAnrOtelMapper(),
                         fakeNativeAnrOtelMapper(),
-                        FakeSessionPropertiesService(),
                     ),
                     logger
                 )

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAnrOtelMapper
 import io.embrace.android.embracesdk.fakes.fakeNativeAnrOtelMapper
@@ -161,7 +160,6 @@ internal class PayloadFactoryBaTest {
                 OtelPayloadMapperImpl(
                     fakeAnrOtelMapper(),
                     fakeNativeAnrOtelMapper(),
-                    FakeSessionPropertiesService(),
                 ),
                 logger
             )

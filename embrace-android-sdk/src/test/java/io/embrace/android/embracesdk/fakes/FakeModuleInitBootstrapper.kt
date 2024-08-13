@@ -49,11 +49,11 @@ internal fun fakeModuleInitBootstrapper(
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },
-    nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
-    momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _ -> FakeMomentsModule() },
+    nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeNativeModule() },
+    momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _, _ -> FakeMomentsModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _ -> FakeCrashModule() },
-    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _ -> FakePayloadSourceModule() }
+    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() }
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
     initModule = fakeInitModule,

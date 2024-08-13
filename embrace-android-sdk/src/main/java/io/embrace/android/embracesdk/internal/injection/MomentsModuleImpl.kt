@@ -7,6 +7,7 @@ internal class MomentsModuleImpl(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     sdkStartTimeMs: Long
@@ -16,7 +17,7 @@ internal class MomentsModuleImpl(
         EmbraceEventService(
             sdkStartTimeMs,
             deliveryModule.deliveryService,
-            essentialServiceModule.configService,
+            configModule.configService,
             payloadSourceModule.metadataService,
             essentialServiceModule.processStateService,
             essentialServiceModule.sessionIdTracker,

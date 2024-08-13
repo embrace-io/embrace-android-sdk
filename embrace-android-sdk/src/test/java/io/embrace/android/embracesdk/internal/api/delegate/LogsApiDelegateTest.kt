@@ -29,7 +29,7 @@ internal class LogsApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            logModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
+            logModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator

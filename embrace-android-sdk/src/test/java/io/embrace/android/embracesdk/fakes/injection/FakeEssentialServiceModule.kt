@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeApiUrlBuilder
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
@@ -22,7 +21,6 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -33,7 +31,6 @@ internal class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),
     override val activityLifecycleTracker: ActivityTracker = FakeActivityTracker(),
     override val sessionIdTracker: SessionIdTracker = FakeSessionIdTracker(),
-    override val configService: ConfigService = FakeConfigService(),
     override val apiClient: ApiClient = FakeApiClient(),
     override val userService: UserService = FakeUserService(),
     override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(EmbLoggerImpl()),

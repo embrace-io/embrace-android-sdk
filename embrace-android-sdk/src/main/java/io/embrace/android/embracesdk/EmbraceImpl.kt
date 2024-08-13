@@ -106,7 +106,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     val internalErrorService by embraceImplInject { bootstrapper.initModule.internalErrorService }
 
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
-    private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
+    private val configService by embraceImplInject { bootstrapper.configModule.configService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
 
@@ -179,15 +179,15 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val coreModule = bootstrapper.coreModule
         application = coreModule.application
 
-        val essentialServiceModule = bootstrapper.essentialServiceModule
-        if (essentialServiceModule.configService.isSdkDisabled()) {
+        val configModule = bootstrapper.configModule
+        if (configModule.configService.isSdkDisabled()) {
             logger.logInfo("Interrupting SDK start because it is disabled", null)
             stop()
             return
         }
-        logger.logInfo("Starting SDK for framework " + essentialServiceModule.configService.appFramework.name)
+        logger.logInfo("Starting SDK for framework " + configModule.configService.appFramework.name)
 
-        if (essentialServiceModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
+        if (configModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule.application)
         }
 
@@ -198,6 +198,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         startSynchronous("send-cached-sessions")
         // Send any sessions that were cached and not yet sent.
+        val essentialServiceModule = bootstrapper.essentialServiceModule
         deliveryModule.deliveryService.sendCachedSessions(
             bootstrapper.nativeModule::nativeCrashService,
             essentialServiceModule.sessionIdTracker
@@ -212,7 +213,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             InternalInterfaceModuleImpl(
                 bootstrapper.initModule,
                 bootstrapper.openTelemetryModule,
-                essentialServiceModule,
+                configModule,
                 bootstrapper.payloadSourceModule,
                 bootstrapper.logModule,
                 bootstrapper.momentsModule,
@@ -230,7 +231,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
             null -> {}
         }
-        val appId = essentialServiceModule.configService.sdkModeBehavior.appId
+        val appId = configModule.configService.appId
         val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME
         logger.logInfo(startMsg, null)
 

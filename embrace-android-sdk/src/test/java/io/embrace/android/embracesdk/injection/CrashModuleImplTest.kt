@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -26,6 +27,7 @@ internal class CrashModuleImplTest {
             FakeInitModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
+            FakeConfigModule(),
             FakeAndroidServicesModule(),
             androidServicesModule.ndkService::getUnityCrashId,
         )
@@ -35,17 +37,18 @@ internal class CrashModuleImplTest {
 
     @Test
     fun `default config turns on v2 native crash service`() {
-        val androidServicesModule = FakeNativeModule()
+        val nativeModule = FakeNativeModule()
         val module = CrashModuleImpl(
             FakeInitModule(),
             FakeStorageModule(),
-            FakeEssentialServiceModule(
+            FakeEssentialServiceModule(),
+            FakeConfigModule(
                 configService = FakeConfigService(
                     autoDataCaptureBehavior = autoDataCaptureBehaviorWithNdkEnabled
                 )
             ),
             FakeAndroidServicesModule(),
-            androidServicesModule.ndkService::getUnityCrashId,
+            nativeModule.ndkService::getUnityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)

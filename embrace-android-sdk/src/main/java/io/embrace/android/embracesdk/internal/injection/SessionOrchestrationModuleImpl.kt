@@ -21,6 +21,7 @@ internal class SessionOrchestrationModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
@@ -32,7 +33,7 @@ internal class SessionOrchestrationModuleImpl(
 
     override val gatingService: GatingService by singleton {
         EmbraceGatingService(
-            essentialServiceModule.configService,
+            configModule.configService,
             logModule.logService,
             initModule.logger
         )
@@ -69,7 +70,7 @@ internal class SessionOrchestrationModuleImpl(
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
             payloadMessageCollatorImpl,
-            essentialServiceModule.configService,
+            configModule.configService,
             initModule.logger
         )
     }
@@ -99,7 +100,7 @@ internal class SessionOrchestrationModuleImpl(
             essentialServiceModule.processStateService,
             payloadFactory,
             initModule.clock,
-            essentialServiceModule.configService,
+            configModule.configService,
             essentialServiceModule.sessionIdTracker,
             boundaryDelegate,
             deliveryModule.deliveryService,

@@ -46,9 +46,8 @@ import kotlin.math.min
 /**
  * Loads configuration for the app from the Embrace API.
  */
-public class EmbraceConfigService @JvmOverloads constructor(
+public class EmbraceConfigService(
     private val localConfig: LocalConfig,
-    private val remoteConfigSource: RemoteConfigSource?,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: EmbLogger,
@@ -65,6 +64,12 @@ public class EmbraceConfigService @JvmOverloads constructor(
      */
     private val listeners: MutableSet<() -> Unit> = CopyOnWriteArraySet()
     private val lock = Any()
+    override var remoteConfigSource: RemoteConfigSource? = null
+        set(value) {
+            field = value
+            performInitialConfigLoad()
+            attemptConfigRefresh()
+        }
 
     @Volatile
     private var configProp = RemoteConfig()
@@ -171,14 +176,11 @@ public class EmbraceConfigService @JvmOverloads constructor(
             remoteSupplier = remoteSupplier
         )
 
-    init {
-        performInitialConfigLoad()
-        attemptConfigRefresh()
-    }
+    override val appId: String? by lazy(localConfig::appId)
 
     /**
      * Schedule an action that loads the config from the cache.
-     * This is deferred to lessen it´s impact upon startup.
+     * This is deferred to lessen its impact upon startup.
      */
     private fun performInitialConfigLoad() {
         backgroundWorker.submit(runnable = ::loadConfigFromCache)
@@ -187,7 +189,6 @@ public class EmbraceConfigService @JvmOverloads constructor(
     /**
      * Load Config from cache if present.
      */
-
     public fun loadConfigFromCache() {
         val cachedConfig = remoteConfigSource?.getCachedConfig()
         val obj = cachedConfig?.remoteConfig
@@ -244,7 +245,8 @@ public class EmbraceConfigService @JvmOverloads constructor(
     }
 
     private fun updateConfig(previousConfig: RemoteConfig, newConfig: RemoteConfig) {
-        if (newConfig != previousConfig) {
+        val b = newConfig != previousConfig
+        if (b) {
             configProp = newConfig
             persistConfig()
             // Only notify listeners if the config has actually changed value

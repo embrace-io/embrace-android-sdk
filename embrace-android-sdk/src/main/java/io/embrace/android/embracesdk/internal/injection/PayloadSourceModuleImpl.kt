@@ -29,6 +29,7 @@ internal class PayloadSourceModuleImpl(
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     nativeModuleProvider: Provider<NativeModule?>,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
@@ -38,7 +39,7 @@ internal class PayloadSourceModuleImpl(
         RnBundleIdTrackerImpl(
             coreModule.buildInfo,
             coreModule.context,
-            essentialServiceModule.configService,
+            configModule.configService,
             androidServicesModule.preferencesService,
             workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
             initModule.logger
@@ -75,7 +76,7 @@ internal class PayloadSourceModuleImpl(
     override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
         HostedSdkVersionInfo(
             androidServicesModule.preferencesService,
-            essentialServiceModule.configService.appFramework
+            configModule.configService.appFramework
         )
     }
 
@@ -85,7 +86,7 @@ internal class PayloadSourceModuleImpl(
             AppEnvironment(coreModule.context.applicationInfo).environment,
             coreModule.buildInfo,
             coreModule.packageVersionInfo,
-            essentialServiceModule.configService.appFramework,
+            configModule.configService.appFramework,
             deviceArchitecture,
             DeviceImpl(
                 systemServiceModule.windowManager,
@@ -110,7 +111,7 @@ internal class PayloadSourceModuleImpl(
                 metadataSource,
                 coreModule.context,
                 systemServiceModule.storageManager,
-                essentialServiceModule.configService,
+                configModule.configService,
                 androidServicesModule.preferencesService,
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 initModule.clock,

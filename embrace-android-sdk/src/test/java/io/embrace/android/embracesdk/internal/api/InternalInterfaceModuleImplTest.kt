@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCrashModule
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
@@ -20,7 +20,7 @@ internal class InternalInterfaceModuleImplTest {
         val module: InternalInterfaceModule = InternalInterfaceModuleImpl(
             initModule,
             initModule.openTelemetryModule,
-            FakeEssentialServiceModule(),
+            FakeConfigModule(),
             FakePayloadSourceModule(),
             FakeLogModule(),
             FakeMomentsModule(),

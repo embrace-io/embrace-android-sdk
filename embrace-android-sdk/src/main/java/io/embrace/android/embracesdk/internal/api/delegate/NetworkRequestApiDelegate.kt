@@ -12,7 +12,7 @@ internal class NetworkRequestApiDelegate(
     private val sdkCallChecker: SdkCallChecker
 ) : NetworkRequestApi {
 
-    private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.configService }
+    private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configModule.configService }
     private val networkLoggingService by embraceImplInject(sdkCallChecker) {
         bootstrapper.logModule.networkLoggingService
     }

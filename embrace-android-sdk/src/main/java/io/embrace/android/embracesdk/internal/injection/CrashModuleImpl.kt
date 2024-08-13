@@ -10,6 +10,7 @@ internal class CrashModuleImpl(
     initModule: InitModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
     private val unityCrashIdProvider: () -> String?
 ) : CrashModule {
@@ -27,7 +28,7 @@ internal class CrashModuleImpl(
             unityCrashIdProvider,
             androidServicesModule.preferencesService,
             essentialServiceModule.logWriter,
-            essentialServiceModule.configService,
+            configModule.configService,
             initModule.jsonSerializer,
             initModule.logger,
         ).apply {

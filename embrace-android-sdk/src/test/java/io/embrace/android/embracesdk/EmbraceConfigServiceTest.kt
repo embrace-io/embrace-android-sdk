@@ -319,7 +319,6 @@ internal class EmbraceConfigServiceTest {
     private fun createService(worker: BackgroundWorker, action: ConfigService.() -> Unit): EmbraceConfigService =
         EmbraceConfigService(
             localConfig,
-            mockApiService,
             fakePreferenceService,
             fakeClock,
             logger,
@@ -327,5 +326,7 @@ internal class EmbraceConfigServiceTest {
             false,
             AppFramework.NATIVE,
             action
-        )
+        ).apply {
+            remoteConfigSource = mockApiService
+        }
 }

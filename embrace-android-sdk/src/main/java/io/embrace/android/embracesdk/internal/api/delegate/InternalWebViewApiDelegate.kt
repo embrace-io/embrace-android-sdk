@@ -15,7 +15,7 @@ internal class InternalWebViewApiDelegate(
         bootstrapper.featureModule.webViewUrlDataSource.dataSource
     }
     private val webviewService by embraceImplInject(sdkCallChecker) { bootstrapper.dataCaptureServiceModule.webviewService }
-    private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.configService }
+    private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configModule.configService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
     }

@@ -37,7 +37,7 @@ internal class PayloadModuleImpl(
             essentialServiceModule.hostedSdkVersionInfo,
             AppEnvironment(coreModule.context.applicationInfo).environment,
             coreModule.buildInfo,
-            coreModule.packageInfo,
+            coreModule.packageVersionInfo,
             essentialServiceModule.configService.appFramework,
             essentialServiceModule.deviceArchitecture,
             DeviceImpl(

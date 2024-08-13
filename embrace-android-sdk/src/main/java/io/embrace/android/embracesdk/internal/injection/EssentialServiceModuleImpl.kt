@@ -44,11 +44,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-/**
- * Default string value for app info missing strings
- */
-private const val UNKNOWN_VALUE = "UNKNOWN"
-
 internal class EssentialServiceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -75,28 +70,6 @@ internal class EssentialServiceModuleImpl(
             openTelemetryModule.openTelemetryConfiguration,
             initModule.logger
         )
-    }
-
-    private val lazyPackageInfo = lazy {
-        coreModule.packageInfo
-    }
-
-    private val lazyAppVersionName = lazy {
-        try {
-            // some customers have trailing white-space for the app version.
-            lazyPackageInfo.value.versionName.toString().trim { it <= ' ' }
-        } catch (e: Exception) {
-            UNKNOWN_VALUE
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private val lazyAppVersionCode: Lazy<String> = lazy {
-        try {
-            lazyPackageInfo.value.versionCode.toString()
-        } catch (e: Exception) {
-            UNKNOWN_VALUE
-        }
     }
 
     private val appId = localConfig.appId
@@ -182,17 +155,14 @@ internal class EssentialServiceModuleImpl(
                 initModule.systemInfo,
                 coreModule.buildInfo,
                 configService,
-                lazyAppVersionName,
-                lazyAppVersionCode,
+                lazy { coreModule.packageVersionInfo },
                 androidServicesModule.preferencesService,
                 hostedSdkVersionInfo,
                 backgroundWorker,
                 initModule.clock,
                 cpuInfoDelegate,
                 deviceArchitecture,
-                initModule.logger,
-                io.embrace.android.embracesdk.BuildConfig.VERSION_NAME,
-                io.embrace.android.embracesdk.BuildConfig.VERSION_CODE,
+                initModule.logger
             )
         }
     }
@@ -214,7 +184,7 @@ internal class EssentialServiceModuleImpl(
                 configBaseUrl = configBaseUrl,
                 appId = appId,
                 lazyDeviceId = lazyDeviceId,
-                lazyAppVersionName = lazyAppVersionName
+                lazyAppVersionName = lazy(coreModule.packageVersionInfo::versionName)
             )
         }
     }
@@ -243,9 +213,8 @@ internal class EssentialServiceModuleImpl(
                 initModule.clock,
                 backgroundWorker,
                 initModule.logger,
-                systemServiceModule.connectivityManager,
-                { featureModuleProvider().networkStatusDataSource.dataSource }
-            )
+                systemServiceModule.connectivityManager
+            ) { featureModuleProvider().networkStatusDataSource.dataSource }
         }
     }
 

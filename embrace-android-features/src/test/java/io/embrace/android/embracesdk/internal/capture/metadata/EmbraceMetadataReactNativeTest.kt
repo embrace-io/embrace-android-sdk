@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -77,17 +78,14 @@ internal class EmbraceMetadataReactNativeTest {
         SystemInfo(),
         buildInfo,
         configService,
-        lazy { "" },
-        lazy { "" },
+        lazy { PackageVersionInfo(mockk(relaxed = true)) },
         preferencesService,
         hostedSdkVersionInfo,
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,
-        FakeEmbLogger(),
-        "1",
-        "33"
+        FakeEmbLogger()
     )
 
     @Test

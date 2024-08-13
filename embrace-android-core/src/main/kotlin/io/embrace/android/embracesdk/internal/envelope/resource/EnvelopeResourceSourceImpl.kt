@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
@@ -9,12 +8,13 @@ import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 
 public class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
     private val environment: AppEnvironment.Environment,
     private val buildInfo: BuildInfo,
-    private val packageInfo: PackageInfo,
+    private val packageVersionInfo: PackageVersionInfo,
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
     private val device: Device,
@@ -24,9 +24,9 @@ public class EnvelopeResourceSourceImpl(
     @Suppress("DEPRECATION")
     override fun getEnvelopeResource(): EnvelopeResource {
         return EnvelopeResource(
-            appVersion = packageInfo.versionName?.toString()?.trim { it <= ' ' } ?: "",
-            bundleVersion = packageInfo.versionCode.toString(),
-            appEcosystemId = packageInfo.packageName,
+            appVersion = packageVersionInfo.versionName,
+            bundleVersion = packageVersionInfo.versionCode,
+            appEcosystemId = packageVersionInfo.packageName,
             appFramework = appFramework,
             buildId = buildInfo.buildId,
             buildType = buildInfo.buildType,

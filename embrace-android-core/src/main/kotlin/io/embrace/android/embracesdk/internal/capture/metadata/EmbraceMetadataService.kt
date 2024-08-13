@@ -11,6 +11,7 @@ import android.os.StatFs
 import android.os.storage.StorageManager
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -24,6 +25,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
 import io.embrace.android.embracesdk.internal.payload.DiskUsage
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -47,8 +49,7 @@ public class EmbraceMetadataService(
     private val systemInfo: SystemInfo,
     private val buildInfo: BuildInfo,
     private val configService: ConfigService,
-    private val lazyAppVersionName: Lazy<String>,
-    private val lazyAppVersionCode: Lazy<String>,
+    private val packageVersionInfo: Lazy<PackageVersionInfo>,
     private val preferencesService: PreferencesService,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val metadataBackgroundWorker: BackgroundWorker,
@@ -56,25 +57,22 @@ public class EmbraceMetadataService(
     private val embraceCpuInfoDelegate: CpuInfoDelegate,
     private val deviceArchitecture: DeviceArchitecture,
     private val logger: EmbLogger,
-    private val versionName: String,
-    private val versionCode: String
 ) : MetadataService, StartupListener {
 
-    private val packageManager: PackageManager = context.packageManager
-    private val environment = AppEnvironment(context.applicationInfo).environment
-    private val packageName: String = context.packageName
-    private val appFramework: AppFramework = configService.appFramework
+    private val packageManager by lazy { context.packageManager }
+    private val environment by lazy(AppEnvironment(context.applicationInfo)::environment)
+    private val packageName by lazy { context.packageName }
 
-    private val appUpdated = lazy {
+    private val appUpdated by lazy {
         val lastKnownAppVersion = preferencesService.appVersion
         val appUpdated = (
             lastKnownAppVersion != null &&
-                !lastKnownAppVersion.equals(lazyAppVersionName.value, ignoreCase = true)
+                !lastKnownAppVersion.equals(packageVersionInfo.value.versionName, ignoreCase = true)
             )
         appUpdated
     }
 
-    private val osUpdated = lazy {
+    private val osUpdated by lazy {
         val lastKnownOsVersion = preferencesService.osVersion
         val osUpdated = (
             lastKnownOsVersion != null &&
@@ -85,7 +83,9 @@ public class EmbraceMetadataService(
             )
         osUpdated
     }
-    private val deviceId = lazy(preferencesService::deviceIdentifier)
+
+    private val deviceId by lazy(preferencesService::deviceIdentifier)
+
     private var reactNativeBundleId: Future<String?> = if (configService.appFramework == AppFramework.REACT_NATIVE) {
         metadataBackgroundWorker.submit<String?> {
             val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
@@ -108,7 +108,7 @@ public class EmbraceMetadataService(
         metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
     }
 
-    private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
+    private val statFs by lazy { StatFs(Environment.getDataDirectory().path) }
 
     @Volatile
     private var diskUsage: DiskUsage? = null
@@ -203,7 +203,7 @@ public class EmbraceMetadataService(
 
     private fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
         metadataBackgroundWorker.submit {
-            val free = statFs.value.freeBytes
+            val free = statFs.freeBytes
             if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     storageStatsManager,
@@ -250,7 +250,7 @@ public class EmbraceMetadataService(
      * This way, we avoid blocking the main thread to wait for the value.
      */
     override fun getReactNativeBundleId(): String? =
-        if (appFramework == AppFramework.REACT_NATIVE && reactNativeBundleId.isDone) {
+        if (configService.appFramework == AppFramework.REACT_NATIVE && reactNativeBundleId.isDone) {
             reactNativeBundleId.get()
         } else {
             null
@@ -258,7 +258,7 @@ public class EmbraceMetadataService(
 
     override fun getDeviceInfo(lightweight: Boolean): DeviceInfo {
         val storageCapacityBytes = when {
-            !lightweight -> statFs.value.totalBytes
+            !lightweight -> statFs.totalBytes
             else -> 0
         }
         return DeviceInfo(
@@ -281,31 +281,31 @@ public class EmbraceMetadataService(
 
     override fun getAppInfo(lightweight: Boolean): AppInfo {
         return AppInfo(
-            lazyAppVersionName.value,
-            appFramework.value,
+            packageVersionInfo.value.versionName,
+            configService.appFramework.value,
             buildInfo.buildId,
             buildInfo.buildType,
             buildInfo.buildFlavor,
             environment.value,
             when {
-                !lightweight -> appUpdated.value
+                !lightweight -> appUpdated
                 else -> false
             },
             when {
-                !lightweight -> appUpdated.value
+                !lightweight -> appUpdated
                 else -> false
             },
-            lazyAppVersionCode.value,
+            packageVersionInfo.value.versionCode,
             when {
-                !lightweight -> osUpdated.value
+                !lightweight -> osUpdated
                 else -> false
             },
             when {
-                !lightweight -> osUpdated.value
+                !lightweight -> osUpdated
                 else -> false
             },
-            versionName,
-            versionCode,
+            BuildConfig.VERSION_NAME,
+            BuildConfig.VERSION_CODE,
             getReactNativeBundleId(),
             hostedSdkVersionInfo.javaScriptPatchNumber,
             hostedSdkVersionInfo.hostedPlatformVersion,
@@ -342,9 +342,8 @@ public class EmbraceMetadataService(
     }
 
     override fun applicationStartupComplete() {
-        val appVersion = lazyAppVersionName.value
+        val appVersion = packageVersionInfo.value.versionName
         val osVersion = systemInfo.osVersion
-        val localDeviceId = deviceId.value
         val installDate = clock.now()
         logger.logDebug(
             String.format(
@@ -353,13 +352,13 @@ public class EmbraceMetadataService(
                     "App version: {%s}, OS version {%s}, device ID: {%s}, install date: {%d}",
                 appVersion,
                 osVersion,
-                localDeviceId,
+                deviceId,
                 installDate
             )
         )
         preferencesService.appVersion = appVersion
         preferencesService.osVersion = osVersion
-        preferencesService.deviceIdentifier = localDeviceId
+        preferencesService.deviceIdentifier = deviceId
         if (preferencesService.installDate == null) {
             preferencesService.installDate = installDate
         }

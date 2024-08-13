@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -30,8 +31,8 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
-import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -77,6 +78,7 @@ internal class EmbraceMetadataServiceTest {
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
+            packageInfo.packageName = "com.embrace.fake"
 
             every { context.getSystemService(Context.WINDOW_SERVICE) }.returns(mockk<WindowManager>())
             every { context.getSystemService(Context.STORAGE_STATS_SERVICE) }.returns(mockk<StorageStatsManager>())
@@ -128,17 +130,14 @@ internal class EmbraceMetadataServiceTest {
             SystemInfo(),
             buildInfo,
             configService,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
+            lazy { PackageVersionInfo(packageInfo) },
             preferencesService,
             hostedSdkVersionInfo,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
-            FakeEmbLogger(),
-            "1",
-            "33"
+            FakeEmbLogger()
         ).apply { precomputeValues() }
     }
 
@@ -186,9 +185,9 @@ internal class EmbraceMetadataServiceTest {
 
         val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
 
-        Assert.assertTrue(deviceInfo.contains("\"jb\":true"))
-        Assert.assertTrue(deviceInfo.contains("\"sr\":\"200x300\""))
-        Assert.assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
+        assertTrue(deviceInfo.contains("\"jb\":true"))
+        assertTrue(deviceInfo.contains("\"sr\":\"200x300\""))
+        assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
     @Suppress("DEPRECATION")
@@ -203,22 +202,19 @@ internal class EmbraceMetadataServiceTest {
             SystemInfo(),
             buildInfo,
             configService,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
+            lazy { PackageVersionInfo(packageInfo) },
             preferencesService,
             hostedSdkVersionInfo,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
-            FakeEmbLogger(),
-            "1",
-            "33"
+            FakeEmbLogger()
         )
 
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
 
-        Assert.assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
+        assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
     @Test

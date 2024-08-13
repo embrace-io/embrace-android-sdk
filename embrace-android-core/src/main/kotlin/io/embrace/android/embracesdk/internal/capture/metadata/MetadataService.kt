@@ -19,13 +19,7 @@ public interface MetadataService {
      *
      * @return the application information
      */
-    public fun getAppInfo(): AppInfo
-
-    /**
-     * Same as [.getAppInfo] but does not search for information (in preferences, for example) that is
-     * not already loaded in memory in the service.
-     */
-    public fun getLightweightAppInfo(): AppInfo
+    public fun getAppInfo(lightweight: Boolean = false): AppInfo
 
     /**
      * Gets information and specifications of the current device. This is sent with the following
@@ -40,12 +34,7 @@ public interface MetadataService {
      *
      * @return the device information
      */
-    public fun getDeviceInfo(): DeviceInfo
-
-    /**
-     * Same as [.getDeviceInfo] but does not get storage information from the file system.
-     */
-    public fun getLightweightDeviceInfo(): DeviceInfo
+    public fun getDeviceInfo(lightweight: Boolean = false): DeviceInfo
 
     /**
      * Gets the current device's disk usage and space available.

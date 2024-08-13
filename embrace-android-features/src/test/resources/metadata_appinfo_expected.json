@@ -4,7 +4,7 @@
   "bi": "1234",
   "bt": "debug",
   "fl": "free",
-  "e": "UNKNOWN",
+  "e": "prod",
   "vu": false,
   "vul": false,
   "bv": "10",

@@ -40,26 +40,16 @@ import java.util.concurrent.Future
  * Provides information about the state of the device, retrieved from Android system services,
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
-public class EmbraceMetadataService private constructor(
+public class EmbraceMetadataService(
+    context: Context,
     private val windowManager: WindowManager?,
-    private val packageManager: PackageManager,
     private val storageStatsManager: StorageStatsManager?,
     private val systemInfo: SystemInfo,
     private val buildInfo: BuildInfo,
     private val configService: ConfigService,
-    private val environment: AppEnvironment.Environment,
-    private val deviceId: Lazy<String>,
-    private val packageName: String,
     private val lazyAppVersionName: Lazy<String>,
     private val lazyAppVersionCode: Lazy<String>,
-    private val appFramework: AppFramework,
-    /**
-     * This field is defined during instantiation as by the end of the startup
-     */
-    private val appUpdated: Lazy<Boolean>,
-    private val osUpdated: Lazy<Boolean>,
     private val preferencesService: PreferencesService,
-    reactNativeBundleId: Future<String?>,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
@@ -70,8 +60,55 @@ public class EmbraceMetadataService private constructor(
     private val versionCode: String
 ) : MetadataService, StartupListener {
 
+    private val packageManager: PackageManager = context.packageManager
+    private val environment = AppEnvironment(context.applicationInfo).environment
+    private val packageName: String = context.packageName
+    private val appFramework: AppFramework = configService.appFramework
+
+    private val appUpdated = lazy {
+        val lastKnownAppVersion = preferencesService.appVersion
+        val appUpdated = (
+            lastKnownAppVersion != null &&
+                !lastKnownAppVersion.equals(lazyAppVersionName.value, ignoreCase = true)
+            )
+        appUpdated
+    }
+
+    private val osUpdated = lazy {
+        val lastKnownOsVersion = preferencesService.osVersion
+        val osUpdated = (
+            lastKnownOsVersion != null &&
+                !lastKnownOsVersion.equals(
+                    systemInfo.osVersion,
+                    ignoreCase = true
+                )
+            )
+        osUpdated
+    }
+    private val deviceId = lazy(preferencesService::deviceIdentifier)
+    private var reactNativeBundleId: Future<String?> = if (configService.appFramework == AppFramework.REACT_NATIVE) {
+        metadataBackgroundWorker.submit<String?> {
+            val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
+            val lastKnownJsBundleId = preferencesService.javaScriptBundleId
+            if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
+                // If we have a lastKnownJsBundleId, we use that as the last known bundle ID.
+                return@submit lastKnownJsBundleId
+            } else {
+                // If we don't have a lastKnownJsBundleId, we compute the bundle ID from the last known JS bundle URL.
+                // If the last known JS bundle URL is null, we set React Native bundle ID to the buildId.
+                return@submit computeReactNativeBundleId(
+                    context,
+                    lastKnownJsBundleUrl,
+                    buildInfo.buildId,
+                    logger
+                )
+            }
+        }
+    } else {
+        metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
+    }
+
     private val statFs = lazy { StatFs(Environment.getDataDirectory().path) }
-    private var reactNativeBundleId: Future<String?>
 
     @Volatile
     private var diskUsage: DiskUsage? = null
@@ -87,14 +124,6 @@ public class EmbraceMetadataService private constructor(
 
     @Volatile
     private var isJailbroken: Boolean? = null
-
-    init {
-        if (appFramework == AppFramework.REACT_NATIVE) {
-            this.reactNativeBundleId = reactNativeBundleId
-        } else {
-            this.reactNativeBundleId = metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
-        }
-    }
 
     /**
      * Queues in a single thread executor callables to retrieve values in background
@@ -227,11 +256,9 @@ public class EmbraceMetadataService private constructor(
             null
         }
 
-    override fun getDeviceInfo(): DeviceInfo = getDeviceInfo(true)
-
-    private fun getDeviceInfo(populateAllFields: Boolean): DeviceInfo {
+    override fun getDeviceInfo(lightweight: Boolean): DeviceInfo {
         val storageCapacityBytes = when {
-            populateAllFields -> statFs.value.totalBytes
+            !lightweight -> statFs.value.totalBytes
             else -> 0
         }
         return DeviceInfo(
@@ -247,17 +274,12 @@ public class EmbraceMetadataService private constructor(
             screenResolution,
             TimeZone.getDefault().id,
             Runtime.getRuntime().availableProcessors(),
-            if (populateAllFields) cpuName else null,
-            if (populateAllFields) egl else null
+            if (!lightweight) cpuName else null,
+            if (!lightweight) egl else null
         )
     }
 
-    override fun getLightweightDeviceInfo(): DeviceInfo = getDeviceInfo(false)
-
-    override fun getAppInfo(): AppInfo = getAppInfo(true)
-
-    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
-    private fun getAppInfo(populateAllFields: Boolean): AppInfo {
+    override fun getAppInfo(lightweight: Boolean): AppInfo {
         return AppInfo(
             lazyAppVersionName.value,
             appFramework.value,
@@ -266,20 +288,20 @@ public class EmbraceMetadataService private constructor(
             buildInfo.buildFlavor,
             environment.value,
             when {
-                populateAllFields -> appUpdated.value
+                !lightweight -> appUpdated.value
                 else -> false
             },
             when {
-                populateAllFields -> appUpdated.value
+                !lightweight -> appUpdated.value
                 else -> false
             },
             lazyAppVersionCode.value,
             when {
-                populateAllFields -> osUpdated.value
+                !lightweight -> osUpdated.value
                 else -> false
             },
             when {
-                populateAllFields -> osUpdated.value
+                !lightweight -> osUpdated.value
                 else -> false
             },
             versionName,
@@ -292,8 +314,6 @@ public class EmbraceMetadataService private constructor(
             hostedSdkVersionInfo.hostedSdkVersion
         )
     }
-
-    override fun getLightweightAppInfo(): AppInfo = getAppInfo(false)
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
 
@@ -346,108 +366,6 @@ public class EmbraceMetadataService private constructor(
     }
 
     public companion object {
-
-        /**
-         * Creates an instance of the [EmbraceMetadataService] from the device's [Context]
-         * for creating Android system services.
-         *
-         * @param context            the [Context]
-         * @param buildInfo          the build information
-         * @param appFramework       the framework used by the app
-         * @param preferencesService the preferences service
-         * @return an instance
-         */
-        @JvmStatic
-        @Suppress("LongParameterList")
-        public fun ofContext(
-            context: Context,
-            environment: AppEnvironment.Environment,
-            systemInfo: SystemInfo,
-            buildInfo: BuildInfo,
-            configService: ConfigService,
-            preferencesService: PreferencesService,
-            metadataBackgroundWorker: BackgroundWorker,
-            storageStatsManager: StorageStatsManager?,
-            windowManager: WindowManager?,
-            clock: Clock,
-            embraceCpuInfoDelegate: CpuInfoDelegate,
-            deviceArchitecture: DeviceArchitecture,
-            lazyAppVersionName: Lazy<String>,
-            lazyAppVersionCode: Lazy<String>,
-            hostedSdkVersionInfo: HostedSdkVersionInfo,
-            logger: EmbLogger,
-            versionName: String,
-            versionCode: String
-        ): EmbraceMetadataService {
-            val isAppUpdated = lazy {
-                val lastKnownAppVersion = preferencesService.appVersion
-                val appUpdated = (
-                    lastKnownAppVersion != null &&
-                        !lastKnownAppVersion.equals(lazyAppVersionName.value, ignoreCase = true)
-                    )
-                appUpdated
-            }
-            val isOsUpdated = lazy {
-                val lastKnownOsVersion = preferencesService.osVersion
-                val osUpdated = (
-                    lastKnownOsVersion != null &&
-                        !lastKnownOsVersion.equals(
-                            systemInfo.osVersion,
-                            ignoreCase = true
-                        )
-                    )
-                osUpdated
-            }
-            val deviceIdentifier = lazy(preferencesService::deviceIdentifier)
-            val reactNativeBundleId: Future<String?>
-            if (configService.appFramework == AppFramework.REACT_NATIVE) {
-                reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
-                    val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
-                    val lastKnownJsBundleId = preferencesService.javaScriptBundleId
-                    if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
-                        // If we have a lastKnownJsBundleId, we use that as the last known bundle ID.
-                        return@submit lastKnownJsBundleId
-                    } else {
-                        // If we don't have a lastKnownJsBundleId, we compute the bundle ID from the last known JS bundle URL.
-                        // If the last known JS bundle URL is null, we set React Native bundle ID to the buildId.
-                        return@submit computeReactNativeBundleId(
-                            context,
-                            lastKnownJsBundleUrl,
-                            buildInfo.buildId,
-                            logger
-                        )
-                    }
-                }
-            } else {
-                reactNativeBundleId = metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
-            }
-            return EmbraceMetadataService(
-                windowManager,
-                context.packageManager,
-                storageStatsManager,
-                systemInfo,
-                buildInfo,
-                configService,
-                environment,
-                deviceIdentifier,
-                context.packageName,
-                lazyAppVersionName,
-                lazyAppVersionCode,
-                configService.appFramework,
-                isAppUpdated,
-                isOsUpdated,
-                preferencesService,
-                reactNativeBundleId,
-                hostedSdkVersionInfo,
-                metadataBackgroundWorker,
-                clock,
-                embraceCpuInfoDelegate,
-                deviceArchitecture,
-                logger,
-                versionName,
-                versionCode
-            )
-        }
 
         private fun getBundleAssetName(bundleUrl: String): String {
             return bundleUrl.substring(bundleUrl.indexOf("://") + 3)

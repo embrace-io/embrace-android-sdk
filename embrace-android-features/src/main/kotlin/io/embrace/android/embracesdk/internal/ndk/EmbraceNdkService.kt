@@ -218,8 +218,8 @@ public class EmbraceNdkService(
         val initialMetaData = Systrace.traceSynchronous("init-native-crash-metadata") {
             serializer.toJson(
                 NativeCrashMetadata(
-                    metadataService.getLightweightAppInfo(),
-                    metadataService.getLightweightDeviceInfo(),
+                    metadataService.getAppInfo(true),
+                    metadataService.getDeviceInfo(true),
                     userService.getUserInfo(),
                     sessionPropertiesService.getProperties()
                 )

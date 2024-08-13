@@ -7,11 +7,11 @@ import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -52,7 +51,6 @@ internal class EmbraceMetadataServiceTest {
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
         private val windowManager = mockk<WindowManager>()
-        private val logger = EmbLoggerImpl()
 
         @BeforeClass
         @JvmStatic
@@ -123,23 +121,22 @@ internal class EmbraceMetadataServiceTest {
     @Suppress("DEPRECATION")
     private fun getMetadataService(framework: AppFramework = AppFramework.NATIVE): EmbraceMetadataService {
         configService.appFramework = framework
-        return EmbraceMetadataService.ofContext(
+        return EmbraceMetadataService(
             context,
-            AppEnvironment.Environment.UNKNOWN,
+            windowManager,
+            storageStatsManager,
             SystemInfo(),
             buildInfo,
             configService,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() },
             preferencesService,
+            hostedSdkVersionInfo,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            storageStatsManager,
-            windowManager,
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo,
-            EmbLoggerImpl(),
+            FakeEmbLogger(),
             "1",
             "33"
         ).apply { precomputeValues() }
@@ -199,23 +196,22 @@ internal class EmbraceMetadataServiceTest {
     fun `test device info without running async operations`() {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
 
-        val metadataService = EmbraceMetadataService.ofContext(
+        val metadataService = EmbraceMetadataService(
             context,
-            AppEnvironment.Environment.PROD,
+            windowManager,
+            storageStatsManager,
             SystemInfo(),
             buildInfo,
             configService,
+            lazy { packageInfo.versionName },
+            lazy { packageInfo.versionCode.toString() },
             preferencesService,
-            BackgroundWorker(BlockingScheduledExecutorService()),
-            mockk(relaxed = true),
-            mockk(relaxed = true),
+            hostedSdkVersionInfo,
+            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             fakeClock,
             cpuInfoDelegate,
             fakeArchitecture,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo,
-            logger,
+            FakeEmbLogger(),
             "1",
             "33"
         )

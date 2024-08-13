@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.BuildInfo
@@ -69,23 +70,22 @@ internal class EmbraceMetadataReactNativeTest {
         )
     }
 
-    private fun getMetadataService() = EmbraceMetadataService.ofContext(
+    private fun getMetadataService() = EmbraceMetadataService(
         context,
-        AppEnvironment.Environment.PROD,
+        mockk(relaxed = true),
+        mockk(relaxed = true),
         SystemInfo(),
         buildInfo,
         configService,
+        lazy { "" },
+        lazy { "" },
         preferencesService,
+        hostedSdkVersionInfo,
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-        mockk(relaxed = true),
-        mockk(relaxed = true),
         fakeClock,
         cpuInfoDelegate,
         deviceArchitecture,
-        lazy { "" },
-        lazy { "" },
-        hostedSdkVersionInfo,
-        EmbLoggerImpl(),
+        FakeEmbLogger(),
         "1",
         "33"
     )

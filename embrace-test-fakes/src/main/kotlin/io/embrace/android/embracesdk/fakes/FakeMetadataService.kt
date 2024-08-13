@@ -84,13 +84,9 @@ public class FakeMetadataService(sessionId: String? = null) : MetadataService {
         appState = APP_STATE_BACKGROUND
     }
 
-    override fun getAppInfo(): AppInfo = androidAppInfo
+    override fun getAppInfo(lightweight: Boolean): AppInfo = androidAppInfo
 
-    override fun getLightweightAppInfo(): AppInfo = androidAppInfo
-
-    override fun getDeviceInfo(): DeviceInfo = androidDeviceInfo
-
-    override fun getLightweightDeviceInfo(): DeviceInfo = androidDeviceInfo
+    override fun getDeviceInfo(lightweight: Boolean): DeviceInfo = androidDeviceInfo
 
     override fun getDiskUsage(): DiskUsage = diskUsage
 

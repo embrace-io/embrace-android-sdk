@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetwor
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -176,22 +175,21 @@ internal class EssentialServiceModuleImpl(
 
     override val metadataService: MetadataService by singleton {
         Systrace.traceSynchronous("metadata-service-init") {
-            EmbraceMetadataService.ofContext(
+            EmbraceMetadataService(
                 coreModule.context,
-                AppEnvironment(coreModule.context.applicationInfo).environment,
+                systemServiceModule.windowManager,
+                systemServiceModule.storageManager,
                 initModule.systemInfo,
                 coreModule.buildInfo,
                 configService,
+                lazyAppVersionName,
+                lazyAppVersionCode,
                 androidServicesModule.preferencesService,
+                hostedSdkVersionInfo,
                 backgroundWorker,
-                systemServiceModule.storageManager,
-                systemServiceModule.windowManager,
                 initModule.clock,
                 cpuInfoDelegate,
                 deviceArchitecture,
-                lazyAppVersionName,
-                lazyAppVersionCode,
-                hostedSdkVersionInfo,
                 initModule.logger,
                 io.embrace.android.embracesdk.BuildConfig.VERSION_NAME,
                 io.embrace.android.embracesdk.BuildConfig.VERSION_CODE,

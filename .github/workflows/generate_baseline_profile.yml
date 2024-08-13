@@ -12,8 +12,8 @@ permissions:
 
 jobs:
   test:
-    runs-on: macos-latest
-    timeout-minutes: 30
+    runs-on: macos-12
+    timeout-minutes: 45
     strategy:
       matrix:
         jdk-version: [ "17" ]
@@ -52,6 +52,7 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.jdk-version }}
 
+      # Cache the emulator
       - name: AVD cache
         uses: actions/cache@v4
         id: avd-cache
@@ -60,6 +61,15 @@ jobs:
             ~/.android/avd/*
             ~/.android/adb*
           key: avd-${{ matrix.api-level }}
+
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: embrace-io/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          force-avd-creation: false
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
 
       - name: Clean Managed Devices
         run: |
@@ -70,9 +80,15 @@ jobs:
         uses: gradle/actions/wrapper-validation@v4
 
       - name: Generate Baseline Profile
-        run: |
-          cd android-sdk-benchmark
-          ./gradlew -Dorg.gradle.workers.max=4 -i :macrobenchmark:nexus6Api31BaselineProfileAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+        uses: embrace-io/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          profile: Nexus 6
+          script: |
+            cd android-sdk-benchmark
+            ./gradlew -Dorg.gradle.workers.max=4 -i :macrobenchmark:nexus6Api31BaselineProfileAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
 
       # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles

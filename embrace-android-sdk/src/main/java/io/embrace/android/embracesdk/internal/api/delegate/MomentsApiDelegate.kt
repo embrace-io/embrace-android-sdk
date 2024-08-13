@@ -13,8 +13,10 @@ internal class MomentsApiDelegate(
 ) : MomentsApi {
 
     private val logger = bootstrapper.initModule.logger
-    private val eventService by embraceImplInject(sdkCallChecker) { bootstrapper.dataContainerModule.eventService }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val eventService by embraceImplInject(sdkCallChecker) { bootstrapper.momentsModule.eventService }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
 
     override fun startMoment(name: String) = startMoment(name, null)
     override fun startMoment(name: String, identifier: String?) = startMoment(name, identifier, null)

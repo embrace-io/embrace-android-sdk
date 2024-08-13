@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAt
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-internal class SessionModuleImpl(
+internal class SessionOrchestrationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
@@ -20,16 +20,16 @@ internal class SessionModuleImpl(
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
-    dataContainerModule: DataContainerModule,
+    momentsModule: MomentsModule,
     logModule: LogModule
-) : SessionModule {
+) : SessionOrchestrationModule {
 
     override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             essentialServiceModule.gatingService,
-            payloadModule.sessionEnvelopeSource,
+            payloadSourceModule.sessionEnvelopeSource,
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan
         )
@@ -70,7 +70,7 @@ internal class SessionModuleImpl(
     override val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
         SessionSpanAttrPopulatorImpl(
             openTelemetryModule.currentSessionSpan,
-            dataContainerModule.eventService,
+            momentsModule.eventService,
             dataCaptureServiceModule.startupService,
             logModule.logService,
             essentialServiceModule.metadataService,

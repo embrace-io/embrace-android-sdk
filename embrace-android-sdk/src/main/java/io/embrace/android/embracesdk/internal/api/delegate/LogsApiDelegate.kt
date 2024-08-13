@@ -20,7 +20,9 @@ internal class LogsApiDelegate(
 
     private val logger = bootstrapper.initModule.logger
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.logModule.logService }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
     private val pushNotificationDataSource by embraceImplInject(sdkCallChecker) {
         bootstrapper.featureModule.pushNotificationDataSource.dataSource
     }

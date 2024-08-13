@@ -15,7 +15,7 @@ internal class InternalInterfaceModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     logModule: LogModule,
-    dataContainerModule: DataContainerModule,
+    momentsModule: MomentsModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
 ) : InternalInterfaceModule {
@@ -25,7 +25,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             initModule,
             logModule.networkCaptureService,
-            dataContainerModule.eventService,
+            momentsModule.eventService,
             initModule.internalErrorService,
             essentialServiceModule.configService,
             openTelemetryModule.internalTracer

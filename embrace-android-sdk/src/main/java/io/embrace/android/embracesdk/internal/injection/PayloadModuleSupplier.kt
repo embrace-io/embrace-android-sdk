@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.internal.injection
 
 /**
- * Function that returns an instance of [PayloadModule]. Matches the signature of the constructor for [PayloadModuleImpl]
+ * Function that returns an instance of [PayloadSourceModule]. Matches the signature of the constructor for [PayloadSourceModuleImpl]
  */
-internal typealias PayloadModuleSupplier = (
+internal typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-) -> PayloadModule
+) -> PayloadSourceModule
 
-internal fun createPayloadModule(
+internal fun createPayloadSourceModule(
     initModule: InitModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-): PayloadModule = PayloadModuleImpl(
+): PayloadSourceModule = PayloadSourceModuleImpl(
     initModule,
     essentialServiceModule,
     nativeModule,

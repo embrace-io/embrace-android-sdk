@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
-import io.embrace.android.embracesdk.internal.injection.PayloadModule
+import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 
-internal class FakePayloadModule(
+internal class FakePayloadSourceModule(
     sessionPayloadSource: SessionPayloadSource = FakeSessionPayloadSource(),
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource()
-) : PayloadModule {
+) : PayloadSourceModule {
 
     override val sessionEnvelopeSource: SessionEnvelopeSource = SessionEnvelopeSourceImpl(
         FakeEnvelopeMetadataSource(),

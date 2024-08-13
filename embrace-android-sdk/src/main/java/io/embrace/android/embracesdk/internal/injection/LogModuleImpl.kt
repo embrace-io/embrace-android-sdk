@@ -20,7 +20,7 @@ internal class LogModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
 ) : LogModule {
 
     override val networkCaptureService: NetworkCaptureService by singleton {
@@ -74,7 +74,7 @@ internal class LogModuleImpl(
             initModule.clock,
             openTelemetryModule.logSink,
             deliveryModule.deliveryService,
-            payloadModule.logEnvelopeSource,
+            payloadSourceModule.logEnvelopeSource,
         )
     }
 }

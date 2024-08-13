@@ -10,7 +10,7 @@ internal typealias LogModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
 ) -> LogModule
 
 internal fun createLogModule(
@@ -20,7 +20,7 @@ internal fun createLogModule(
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
 ): LogModule = LogModuleImpl(
     initModule,
     openTelemetryModule,
@@ -28,5 +28,5 @@ internal fun createLogModule(
     essentialServiceModule,
     deliveryModule,
     workerThreadModule,
-    payloadModule,
+    payloadSourceModule,
 )

@@ -8,13 +8,13 @@ import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 
-internal class PayloadModuleImpl(
+internal class PayloadSourceModuleImpl(
     initModule: InitModule,
     essentialServiceModule: EssentialServiceModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-) : PayloadModule {
+) : PayloadSourceModule {
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(

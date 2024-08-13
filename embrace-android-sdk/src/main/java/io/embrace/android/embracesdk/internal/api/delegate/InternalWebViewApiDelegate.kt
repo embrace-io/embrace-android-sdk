@@ -16,7 +16,9 @@ internal class InternalWebViewApiDelegate(
     }
     private val webviewService by embraceImplInject(sdkCallChecker) { bootstrapper.dataCaptureServiceModule.webviewService }
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.configService }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
 
     override fun logWebView(url: String?) {
         if (sdkCallChecker.check("log_web_view")) {

@@ -34,7 +34,7 @@ internal class NetworkRequestApiDelegateTest {
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         configService = moduleInitBootstrapper.essentialServiceModule.configService as FakeConfigService
         networkLoggingService = moduleInitBootstrapper.logModule.networkLoggingService as FakeNetworkLoggingService
-        orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
+        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

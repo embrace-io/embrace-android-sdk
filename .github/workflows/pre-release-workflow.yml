@@ -17,10 +17,16 @@ jobs:
     secrets: inherit
     with:
       version_to_release: ${{ github.event.inputs.version_to_release }}
+
+  update-main-versions:
+    name: Update Main Versions
+    uses: ./.github/workflows/update-main-versions.yml
+    secrets: inherit
+    with:
       next_version: ${{ github.event.inputs.next_version }}
 
   release-candidate:
-    name: Create Release Candidate
+    name: Build Release Candidates
     needs: release-branch
     uses: ./.github/workflows/build-rc-workflow.yml
     secrets: inherit

@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetwor
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
-import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTrackerImpl
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesServiceImpl
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
@@ -28,11 +26,7 @@ import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
-import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
-import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
@@ -50,7 +44,6 @@ internal class EssentialServiceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    logModuleProvider: Provider<LogModule>,
     featureModuleProvider: Provider<FeatureModule>,
     framework: AppFramework,
     private val configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
@@ -86,10 +79,6 @@ internal class EssentialServiceModuleImpl(
 
     private val pendingApiCallsWorker =
         workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
-
-    override val memoryCleanerService: MemoryCleanerService by singleton {
-        EmbraceMemoryCleanerService(logger = initModule.logger)
-    }
 
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
@@ -132,17 +121,6 @@ internal class EssentialServiceModuleImpl(
         EmbraceCpuInfoDelegate(sharedObjectLoader, initModule.logger)
     }
 
-    override val rnBundleIdTracker: RnBundleIdTracker by singleton {
-        RnBundleIdTrackerImpl(
-            coreModule.buildInfo,
-            coreModule.context,
-            configService,
-            androidServicesModule.preferencesService,
-            backgroundWorker,
-            initModule.logger
-        )
-    }
-
     override val urlBuilder by singleton {
         Systrace.traceSynchronous("url-builder-init") {
             // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
@@ -163,14 +141,6 @@ internal class EssentialServiceModuleImpl(
                 lazyAppVersionName = lazy(coreModule.packageVersionInfo::versionName)
             )
         }
-    }
-
-    override val gatingService: GatingService by singleton {
-        EmbraceGatingService(
-            configService,
-            logModuleProvider().logService,
-            initModule.logger
-        )
     }
 
     override val userService: UserService by singleton {

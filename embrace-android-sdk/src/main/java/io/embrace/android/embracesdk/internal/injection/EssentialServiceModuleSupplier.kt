@@ -16,7 +16,6 @@ internal typealias EssentialServiceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    logModuleProvider: Provider<LogModule>,
     featureModuleProvider: Provider<FeatureModule>,
     framework: AppFramework,
     configServiceProvider: (framework: AppFramework) -> ConfigService?
@@ -31,7 +30,6 @@ internal fun createEssentialServiceModule(
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     customAppId: String?,
-    logModuleProvider: Provider<LogModule>,
     featureModuleProvider: Provider<FeatureModule>,
     framework: AppFramework,
     configServiceProvider: (framework: AppFramework) -> ConfigService?
@@ -44,7 +42,6 @@ internal fun createEssentialServiceModule(
     androidServicesModule,
     storageModule,
     customAppId,
-    logModuleProvider,
     featureModuleProvider,
     framework,
     configServiceProvider

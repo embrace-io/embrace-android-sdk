@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
@@ -29,7 +28,6 @@ internal class FakeLogModule(
         FakeSessionPropertiesService(),
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
         EmbLoggerImpl(),
-        FakeClock(),
         EmbraceSerializer()
     )
 ) : LogModule {

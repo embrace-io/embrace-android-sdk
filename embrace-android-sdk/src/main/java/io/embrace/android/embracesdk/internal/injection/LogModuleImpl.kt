@@ -64,7 +64,6 @@ internal class LogModuleImpl(
             essentialServiceModule.sessionPropertiesService,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,
-            initModule.clock,
             initModule.jsonSerializer
         )
     }

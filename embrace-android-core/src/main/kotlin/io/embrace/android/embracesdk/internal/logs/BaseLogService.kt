@@ -3,10 +3,11 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 
 public interface BaseLogService : MemoryCleanerListener {
+
     /**
-     * Finds all IDs of log events at error level within the given time window.
+     * Gets the number of error logs that have been recorded.
      *
-     * @return the list of log IDs within the specified range
+     * @return the error logs count
      */
-    public fun findErrorLogIds(): List<String>
+    public fun getErrorLogsCount(): Int
 }

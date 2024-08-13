@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterExce
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -38,26 +37,22 @@ public class EmbraceLogService(
     private val sessionPropertiesService: SessionPropertiesService,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
-    clock: Clock,
     private val serializer: PlatformSerializer
 ) : LogService {
 
     private val logCounters = mapOf(
         Severity.INFO to LogCounter(
             Severity.INFO.name,
-            clock,
             configService.logMessageBehavior::getInfoLogLimit,
             logger
         ),
         Severity.WARNING to LogCounter(
             Severity.WARNING.name,
-            clock,
             configService.logMessageBehavior::getWarnLogLimit,
             logger
         ),
         Severity.ERROR to LogCounter(
             Severity.ERROR.name,
-            clock,
             configService.logMessageBehavior::getErrorLogLimit,
             logger
         )
@@ -216,8 +211,8 @@ public class EmbraceLogService(
         }
     }
 
-    override fun findErrorLogIds(): List<String> {
-        return logCounters.getValue(Severity.ERROR).findLogIds()
+    override fun getErrorLogsCount(): Int {
+        return logCounters.getValue(Severity.ERROR).getCount()
     }
 
     override fun cleanCollections() {
@@ -263,7 +258,7 @@ public class EmbraceLogService(
         }
 
         val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID)
-        if (logId == null || !logCounters.getValue(severity).addIfAllowed(logId)) {
+        if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
 

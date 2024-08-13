@@ -48,14 +48,6 @@ jobs:
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
           git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
 
-      - name: Set next SDK version
-        run: |
-          git checkout master
-          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
-          git add gradle.properties
-          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
-          git push
-
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
@@ -73,6 +65,26 @@ jobs:
           git add gradle.properties
           git commit -m "CI/CD: change version to be released: ${{ github.event.inputs.version_to_release }}.0"
           git push --set-upstream origin release/${{ github.event.inputs.version_to_release }}
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set next SDK version
+        run: |
+          git checkout master
+          sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
+          git add gradle.properties
+          git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
+          git push
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: master
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Set Next Swazzler Version
         run: |

@@ -185,10 +185,10 @@ public data class EnvelopeResource(
     /* (Android) The name of the primary CPU of the device, obtained with the system call 'ro.board.platform'.
     Previous name: d.pt */
     @Json(name = "cpu_name")
-    val cpuName: Int? = null,
+    val cpuName: String? = null,
 
     /* (Android) The EGL (Embedded-System Graphics Library) information obtained with the system call
     'ro.hardware.egl'. Previous name: d.gp */
     @Json(name = "egl_info")
-    val eglInfo: Int? = null
+    val eglInfo: String? = null
 )

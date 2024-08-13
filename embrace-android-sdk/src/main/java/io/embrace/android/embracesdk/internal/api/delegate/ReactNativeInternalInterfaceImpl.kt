@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.capture.crash.CrashService
-import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.EventType
@@ -16,7 +16,7 @@ internal class ReactNativeInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val crashService: CrashService,
-    private val metadataService: MetadataService,
+    private val rnBundleIdTracker: RnBundleIdTracker,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: EmbLogger
 ) : EmbraceInternalInterface by impl, ReactNativeInternalInterface {
@@ -98,16 +98,16 @@ internal class ReactNativeInternalInterfaceImpl(
     }
 
     override fun setJavaScriptBundleUrl(context: Context, url: String) {
-        setJavaScriptBundleUrl(context, url, null)
+        setJavaScriptBundleUrl(url, null)
     }
 
     override fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean) {
-        setJavaScriptBundleUrl(context, url, didUpdate)
+        setJavaScriptBundleUrl(url, didUpdate)
     }
 
-    private fun setJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean? = null) {
+    private fun setJavaScriptBundleUrl(url: String, didUpdate: Boolean? = null) {
         if (embrace.isStarted) {
-            metadataService.setReactNativeBundleId(context, url, didUpdate)
+            rnBundleIdTracker.setReactNativeBundleId(url, didUpdate)
         } else {
             logger.logSdkNotInitialized("set JavaScript bundle URL")
         }

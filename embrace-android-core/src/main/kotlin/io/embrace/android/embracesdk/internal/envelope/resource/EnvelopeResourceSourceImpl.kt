@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -18,7 +18,7 @@ public class EnvelopeResourceSourceImpl(
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
     private val device: Device,
-    private val metadataService: MetadataService
+    private val rnBundleIdTracker: RnBundleIdTracker
 ) : EnvelopeResourceSource {
 
     @Suppress("DEPRECATION")
@@ -36,7 +36,7 @@ public class EnvelopeResourceSourceImpl(
             sdkSimpleVersion = BuildConfig.VERSION_CODE.toIntOrNull(),
             hostedPlatformVersion = hosted.hostedPlatformVersion,
             hostedSdkVersion = hosted.hostedSdkVersion,
-            reactNativeBundleId = metadataService.getReactNativeBundleId(),
+            reactNativeBundleId = rnBundleIdTracker.getReactNativeBundleId(),
             javascriptPatchNumber = hosted.javaScriptPatchNumber,
             unityBuildId = hosted.unityBuildIdNumber,
             deviceManufacturer = device.systemInfo.deviceManufacturer,
@@ -49,7 +49,9 @@ public class EnvelopeResourceSourceImpl(
             osVersion = device.systemInfo.osVersion,
             osCode = device.systemInfo.androidOsApiLevel,
             screenResolution = device.screenResolution,
-            numCores = device.numberOfCores
+            numCores = device.numberOfCores,
+            cpuName = device.cpuName,
+            eglInfo = device.eglInfo
         )
     }
 }

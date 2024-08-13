@@ -9,103 +9,51 @@ import android.os.Environment
 import android.os.Process
 import android.os.StatFs
 import android.os.storage.StorageManager
-import android.util.DisplayMetrics
-import android.view.WindowManager
 import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
 import io.embrace.android.embracesdk.internal.payload.DiskUsage
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.io.ByteArrayOutputStream
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.InputStream
-import java.security.MessageDigest
-import java.util.Locale
-import java.util.TimeZone
-import java.util.concurrent.Future
 
 /**
  * Provides information about the state of the device, retrieved from Android system services,
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
 public class EmbraceMetadataService(
-    context: Context,
-    private val windowManager: WindowManager?,
+    resourceSource: EnvelopeResourceSource,
+    metadataSource: EnvelopeMetadataSource,
+    private val context: Context,
     private val storageStatsManager: StorageStatsManager?,
-    private val systemInfo: SystemInfo,
-    private val buildInfo: BuildInfo,
     private val configService: ConfigService,
-    private val packageVersionInfo: Lazy<PackageVersionInfo>,
     private val preferencesService: PreferencesService,
-    private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
-    private val embraceCpuInfoDelegate: CpuInfoDelegate,
-    private val deviceArchitecture: DeviceArchitecture,
-    private val logger: EmbLogger,
+    private val logger: EmbLogger
 ) : MetadataService, StartupListener {
 
-    private val packageManager by lazy { context.packageManager }
-    private val environment by lazy(AppEnvironment(context.applicationInfo)::environment)
-    private val packageName by lazy { context.packageName }
+    private val res by lazy(resourceSource::getEnvelopeResource)
+    private val meta by lazy(metadataSource::getEnvelopeMetadata)
 
     private val appUpdated by lazy {
         val lastKnownAppVersion = preferencesService.appVersion
-        val appUpdated = (
-            lastKnownAppVersion != null &&
-                !lastKnownAppVersion.equals(packageVersionInfo.value.versionName, ignoreCase = true)
-            )
+        val appUpdated = lastKnownAppVersion != null &&
+            !lastKnownAppVersion.equals(res.appVersion, ignoreCase = true)
         appUpdated
     }
 
     private val osUpdated by lazy {
         val lastKnownOsVersion = preferencesService.osVersion
-        val osUpdated = (
-            lastKnownOsVersion != null &&
-                !lastKnownOsVersion.equals(
-                    systemInfo.osVersion,
-                    ignoreCase = true
-                )
-            )
+        val osUpdated = lastKnownOsVersion != null &&
+            !lastKnownOsVersion.equals(res.osVersion, ignoreCase = true)
         osUpdated
-    }
-
-    private val deviceId by lazy(preferencesService::deviceIdentifier)
-
-    private var reactNativeBundleId: Future<String?> = if (configService.appFramework == AppFramework.REACT_NATIVE) {
-        metadataBackgroundWorker.submit<String?> {
-            val lastKnownJsBundleUrl = preferencesService.javaScriptBundleURL
-            val lastKnownJsBundleId = preferencesService.javaScriptBundleId
-            if (!lastKnownJsBundleUrl.isNullOrEmpty() && !lastKnownJsBundleId.isNullOrEmpty()) {
-                // If we have a lastKnownJsBundleId, we use that as the last known bundle ID.
-                return@submit lastKnownJsBundleId
-            } else {
-                // If we don't have a lastKnownJsBundleId, we compute the bundle ID from the last known JS bundle URL.
-                // If the last known JS bundle URL is null, we set React Native bundle ID to the buildId.
-                return@submit computeReactNativeBundleId(
-                    context,
-                    lastKnownJsBundleUrl,
-                    buildInfo.buildId,
-                    logger
-                )
-            }
-        }
-    } else {
-        metadataBackgroundWorker.submit<String?> { buildInfo.buildId }
     }
 
     private val statFs by lazy { StatFs(Environment.getDataDirectory().path) }
@@ -113,102 +61,17 @@ public class EmbraceMetadataService(
     @Volatile
     private var diskUsage: DiskUsage? = null
 
-    @Volatile
-    private var screenResolution: String? = null
-
-    @Volatile
-    private var cpuName: String? = null
-
-    @Volatile
-    private var egl: String? = null
-
-    @Volatile
-    private var isJailbroken: Boolean? = null
-
     /**
      * Queues in a single thread executor callables to retrieve values in background
      */
     override fun precomputeValues() {
-        asyncRetrieveIsJailbroken()
-        asyncRetrieveScreenResolution()
-        asyncRetrieveAdditionalDeviceInfo()
-
-        // Always retrieve the DiskUsage last because it can take the longest to run
-        asyncRetrieveDiskUsage(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-    }
-
-    private fun asyncRetrieveAdditionalDeviceInfo() {
-        if (!cpuName.isNullOrEmpty() && !egl.isNullOrEmpty()) {
-            return
-        }
-        metadataBackgroundWorker.submit {
-            val storedCpuName = preferencesService.cpuName
-            val storedEgl = preferencesService.egl
-            if (storedCpuName != null) {
-                cpuName = storedCpuName
-            } else {
-                cpuName = embraceCpuInfoDelegate.getCpuName()
-                preferencesService.cpuName = cpuName
-            }
-            if (storedEgl != null) {
-                egl = storedEgl
-            } else {
-                egl = embraceCpuInfoDelegate.getEgl()
-                preferencesService.egl = egl
-            }
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun asyncRetrieveScreenResolution() {
-        // if the screenResolution exists in memory, don't try to retrieve it
-        if (!screenResolution.isNullOrEmpty()) {
-            return
-        }
-        metadataBackgroundWorker.submit {
-            val storedScreenResolution = preferencesService.screenResolution
-            // get from shared preferences
-            if (storedScreenResolution != null) {
-                screenResolution = storedScreenResolution
-            } else if (windowManager != null) {
-                screenResolution = try {
-                    val display = windowManager.defaultDisplay
-                    val displayMetrics = DisplayMetrics()
-                    display?.getMetrics(displayMetrics)
-                    String.format(Locale.US, "%dx%d", displayMetrics.widthPixels, displayMetrics.heightPixels)
-                } catch (ex: Exception) {
-                    null
-                }
-                preferencesService.screenResolution = screenResolution
-            }
-        }
-    }
-
-    private fun asyncRetrieveIsJailbroken() {
-        // if the isJailbroken property exists in memory, don't try to retrieve it
-        if (isJailbroken != null) {
-            return
-        }
-        metadataBackgroundWorker.submit {
-            val storedIsJailbroken = preferencesService.jailbroken
-            // load value from shared preferences
-            if (storedIsJailbroken != null) {
-                isJailbroken = storedIsJailbroken
-            } else {
-                isJailbroken = isJailbroken
-                preferencesService.jailbroken = isJailbroken
-            }
-        }
-    }
-
-    private fun asyncRetrieveDiskUsage(isAndroid26OrAbove: Boolean) {
         metadataBackgroundWorker.submit {
             val free = statFs.freeBytes
-            if (isAndroid26OrAbove && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     storageStatsManager,
-                    packageManager,
-                    packageName
+                    context.packageManager,
+                    context.packageName
                 )
                 if (deviceDiskAppUsage != null) {
                     diskUsage = DiskUsage(deviceDiskAppUsage, free)
@@ -245,204 +108,58 @@ public class EmbraceMetadataService(
         return null
     }
 
-    /**
-     * Return the bundle Id if it was already calculated in background or null if it's not ready yet.
-     * This way, we avoid blocking the main thread to wait for the value.
-     */
-    override fun getReactNativeBundleId(): String? =
-        if (configService.appFramework == AppFramework.REACT_NATIVE && reactNativeBundleId.isDone) {
-            reactNativeBundleId.get()
-        } else {
-            null
-        }
-
-    override fun getDeviceInfo(lightweight: Boolean): DeviceInfo {
-        val storageCapacityBytes = when {
-            !lightweight -> statFs.totalBytes
-            else -> 0
-        }
-        return DeviceInfo(
-            systemInfo.deviceManufacturer,
-            systemInfo.deviceModel,
-            deviceArchitecture.architecture,
-            isJailbroken,
-            Locale.getDefault().language + "_" + Locale.getDefault().country,
-            storageCapacityBytes,
-            systemInfo.osName,
-            systemInfo.osVersion,
-            systemInfo.androidOsApiLevel.toInt(),
-            screenResolution,
-            TimeZone.getDefault().id,
-            Runtime.getRuntime().availableProcessors(),
-            if (!lightweight) cpuName else null,
-            if (!lightweight) egl else null
+    override fun getDeviceInfo(): DeviceInfo = with(res) {
+        DeviceInfo(
+            manufacturer = deviceManufacturer,
+            model = deviceModel,
+            architecture = deviceArchitecture,
+            jailbroken = jailbroken,
+            locale = meta.locale,
+            internalStorageTotalCapacity = statFs.totalBytes,
+            operatingSystemType = osName,
+            operatingSystemVersion = osVersion,
+            operatingSystemVersionCode = osCode?.toInt(),
+            screenResolution = screenResolution,
+            timezoneDescription = meta.timezoneDescription,
+            cores = numCores,
+            cpuName = cpuName,
+            egl = eglInfo
         )
     }
 
-    override fun getAppInfo(lightweight: Boolean): AppInfo {
-        return AppInfo(
-            packageVersionInfo.value.versionName,
-            configService.appFramework.value,
-            buildInfo.buildId,
-            buildInfo.buildType,
-            buildInfo.buildFlavor,
-            environment.value,
-            when {
-                !lightweight -> appUpdated
-                else -> false
-            },
-            when {
-                !lightweight -> appUpdated
-                else -> false
-            },
-            packageVersionInfo.value.versionCode,
-            when {
-                !lightweight -> osUpdated
-                else -> false
-            },
-            when {
-                !lightweight -> osUpdated
-                else -> false
-            },
-            BuildConfig.VERSION_NAME,
-            BuildConfig.VERSION_CODE,
-            getReactNativeBundleId(),
-            hostedSdkVersionInfo.javaScriptPatchNumber,
-            hostedSdkVersionInfo.hostedPlatformVersion,
-            hostedSdkVersionInfo.hostedPlatformVersion,
-            hostedSdkVersionInfo.unityBuildIdNumber,
-            hostedSdkVersionInfo.hostedSdkVersion
+    override fun getAppInfo(): AppInfo = with(res) {
+        AppInfo(
+            appVersion = appVersion,
+            appFramework = appFramework?.value,
+            buildId = buildId,
+            buildType = buildType,
+            buildFlavor = buildFlavor,
+            environment = environment,
+            appUpdated = appUpdated,
+            appUpdatedThisLaunch = appUpdated,
+            bundleVersion = bundleVersion,
+            osUpdated = osUpdated,
+            osUpdatedThisLaunch = osUpdated,
+            sdkVersion = BuildConfig.VERSION_NAME,
+            sdkSimpleVersion = BuildConfig.VERSION_CODE,
+            reactNativeBundleId = reactNativeBundleId,
+            javaScriptPatchNumber = javascriptPatchNumber,
+            reactNativeVersion = hostedPlatformVersion,
+            hostedPlatformVersion = hostedPlatformVersion,
+            buildGuid = unityBuildId,
+            hostedSdkVersion = hostedSdkVersion
         )
     }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
 
-    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
-        val currentUrl = preferencesService.javaScriptBundleURL
-
-        if (currentUrl != jsBundleUrl || forceUpdate == true) {
-            // It`s a new JS bundle URL, save the new value in preferences.
-            preferencesService.javaScriptBundleURL = jsBundleUrl
-
-            // Calculate the bundle ID for the new bundle URL
-            reactNativeBundleId = metadataBackgroundWorker.submit<String?> {
-                val bundleId = computeReactNativeBundleId(
-                    context,
-                    jsBundleUrl,
-                    buildInfo.buildId,
-                    logger
-                )
-                if (forceUpdate != null) {
-                    // if we have a value for forceUpdate, it means the bundleId is cacheable and we should store it.
-                    preferencesService.javaScriptBundleId = bundleId
-                }
-                bundleId
-            }
-        }
-    }
-
     override fun applicationStartupComplete() {
-        val appVersion = packageVersionInfo.value.versionName
-        val osVersion = systemInfo.osVersion
-        val installDate = clock.now()
-        logger.logDebug(
-            String.format(
-                Locale.getDefault(),
-                "Setting metadata on preferences service. " +
-                    "App version: {%s}, OS version {%s}, device ID: {%s}, install date: {%d}",
-                appVersion,
-                osVersion,
-                deviceId,
-                installDate
-            )
-        )
-        preferencesService.appVersion = appVersion
-        preferencesService.osVersion = osVersion
-        preferencesService.deviceIdentifier = deviceId
-        if (preferencesService.installDate == null) {
-            preferencesService.installDate = installDate
-        }
-    }
-
-    public companion object {
-
-        private fun getBundleAssetName(bundleUrl: String): String {
-            return bundleUrl.substring(bundleUrl.indexOf("://") + 3)
-        }
-
-        private fun getBundleAsset(context: Context, bundleUrl: String, logger: EmbLogger): InputStream? {
-            try {
-                return context.assets.open(getBundleAssetName(bundleUrl))
-            } catch (e: Exception) {
-                logger.logError("Failed to retrieve RN bundle file from assets.", e)
+        with(preferencesService) {
+            appVersion = res.appVersion
+            osVersion = res.osVersion
+            if (installDate == null) {
+                installDate = clock.now()
             }
-            return null
-        }
-
-        private fun getCustomBundleStream(bundleUrl: String, logger: EmbLogger): InputStream? {
-            try {
-                return FileInputStream(bundleUrl)
-            } catch (e: NullPointerException) {
-                logger.logError("Failed to retrieve the custom RN bundle file.", e)
-            } catch (e: FileNotFoundException) {
-                logger.logError("Failed to retrieve the custom RN bundle file.", e)
-            }
-            return null
-        }
-
-        internal fun computeReactNativeBundleId(
-            context: Context,
-            bundleUrl: String?,
-            defaultBundleId: String?,
-            logger: EmbLogger
-        ): String? {
-            if (bundleUrl == null) {
-                // If JS bundle URL is null, we set React Native bundle ID to the defaultBundleId.
-                return defaultBundleId
-            }
-
-            val bundleStream: InputStream?
-
-            // checks if the bundle url is an asset
-            if (bundleUrl.contains("assets")) {
-                // looks for the bundle file in assets
-                bundleStream = getBundleAsset(context, bundleUrl, logger)
-            } else {
-                // looks for the bundle file from the custom path
-                bundleStream = getCustomBundleStream(bundleUrl, logger)
-            }
-            if (bundleStream == null) {
-                return defaultBundleId
-            }
-            try {
-                bundleStream.use { inputStream ->
-                    ByteArrayOutputStream().use { buffer ->
-                        var read: Int
-                        // The hash size for the MD5 algorithm is 128 bits - 16 bytes.
-                        val data = ByteArray(16)
-                        while (inputStream.read(data, 0, data.size).also { read = it } != -1) {
-                            buffer.write(data, 0, read)
-                        }
-                        return hashBundleToMd5(buffer.toByteArray())
-                    }
-                }
-            } catch (e: Exception) {
-                logger.logError("Failed to compute the RN bundle file.", e)
-            }
-            // if the hashing of the JS bundle URL fails, returns the default bundle ID
-            return defaultBundleId
-        }
-
-        private fun hashBundleToMd5(bundle: ByteArray): String {
-            val hashBundle: String
-            val md = MessageDigest.getInstance("MD5")
-            val bundleHashed = md.digest(bundle)
-            val sb = StringBuilder()
-            for (b in bundleHashed) {
-                sb.append(String.format(Locale.getDefault(), "%02x", b.toInt() and 0xff))
-            }
-            hashBundle = sb.toString().toUpperCase(Locale.getDefault())
-            return hashBundle
         }
     }
 }

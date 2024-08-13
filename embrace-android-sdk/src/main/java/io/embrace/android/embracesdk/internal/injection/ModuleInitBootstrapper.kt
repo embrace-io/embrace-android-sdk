@@ -346,11 +346,7 @@ internal class ModuleInitBootstrapper(
                     payloadModule = init(PayloadModule::class) {
                         payloadModuleSupplier(
                             initModule,
-                            coreModule,
-                            androidServicesModule,
                             essentialServiceModule,
-                            systemServiceModule,
-                            workerThreadModule,
                             nativeModule,
                             openTelemetryModule,
                             anrModule,

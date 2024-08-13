@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
-import android.content.Context
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
 import io.embrace.android.embracesdk.internal.payload.DiskUsage
@@ -19,7 +18,7 @@ public interface MetadataService {
      *
      * @return the application information
      */
-    public fun getAppInfo(lightweight: Boolean = false): AppInfo
+    public fun getAppInfo(): AppInfo
 
     /**
      * Gets information and specifications of the current device. This is sent with the following
@@ -34,7 +33,7 @@ public interface MetadataService {
      *
      * @return the device information
      */
-    public fun getDeviceInfo(lightweight: Boolean = false): DeviceInfo
+    public fun getDeviceInfo(): DeviceInfo
 
     /**
      * Gets the current device's disk usage and space available.
@@ -42,16 +41,6 @@ public interface MetadataService {
      * @return the device's disk usage statistics
      */
     public fun getDiskUsage(): DiskUsage?
-
-    /**
-     * Sets React Native Bundle ID from a custom JavaScript Bundle URL.
-     * @param context the context
-     * @param jsBundleUrl the JavaScript bundle URL
-     * @param forceUpdate if the bundle was updated and we need to recompute the bundleId
-     */
-    public fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean? = null)
-
-    public fun getReactNativeBundleId(): String?
 
     /**
      * Queues in a single thread executor callables to retrieve values in background

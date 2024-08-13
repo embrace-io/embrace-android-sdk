@@ -37,7 +37,7 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             crashModule.crashDataSource,
-            essentialServiceModule.metadataService,
+            essentialServiceModule.rnBundleIdTracker,
             essentialServiceModule.hostedSdkVersionInfo,
             initModule.logger
         )

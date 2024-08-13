@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.capture.crash.CrashService
@@ -26,7 +26,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var embrace: EmbraceImpl
     private lateinit var preferencesService: PreferencesService
     private lateinit var crashService: CrashService
-    private lateinit var metadataService: FakeMetadataService
+    private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
     private lateinit var logger: EmbLogger
     private lateinit var context: Context
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
@@ -36,7 +36,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         embrace = mockk(relaxed = true)
         preferencesService = FakePreferenceService()
         crashService = mockk(relaxed = true)
-        metadataService = FakeMetadataService()
+        rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
             AppFramework.REACT_NATIVE
@@ -47,7 +47,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             crashService,
-            metadataService,
+            rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
         )
@@ -119,7 +119,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun testSetJavaScriptBundleURL() {
         every { embrace.isStarted } returns true
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
-        assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
+        assertEquals("index.android.bundle", rnBundleIdTracker.fakeReactNativeBundleId)
     }
 
     @Test
@@ -137,7 +137,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             crashService,
-            metadataService,
+            rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
         )
@@ -145,8 +145,8 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns true
         impl.setCacheableJavaScriptBundleUrl(context, "index.android.bundle", true)
         // Test that the metadata service was called with the correct parameters
-        assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
-        assertEquals(true, metadataService.forceUpdate)
+        assertEquals("index.android.bundle", rnBundleIdTracker.fakeReactNativeBundleId)
+        assertEquals(true, rnBundleIdTracker.forceUpdate)
     }
 
     @Test
@@ -155,7 +155,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             embrace,
             mockk(),
             crashService,
-            metadataService,
+            rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger
         )
@@ -163,8 +163,8 @@ internal class ReactNativeInternalInterfaceImplTest {
         every { embrace.isStarted } returns true
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         // Test that the metadata service was called with the correct parameters
-        assertEquals("index.android.bundle", metadataService.fakeReactNativeBundleId)
-        assertEquals(null, metadataService.forceUpdate)
+        assertEquals("index.android.bundle", rnBundleIdTracker.fakeReactNativeBundleId)
+        assertEquals(null, rnBundleIdTracker.forceUpdate)
     }
 
     @Test

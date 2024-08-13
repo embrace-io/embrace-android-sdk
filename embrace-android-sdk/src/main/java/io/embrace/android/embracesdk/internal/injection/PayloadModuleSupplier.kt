@@ -5,11 +5,7 @@ package io.embrace.android.embracesdk.internal.injection
  */
 internal typealias PayloadModuleSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
-    systemServiceModule: SystemServiceModule,
-    workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
@@ -17,21 +13,13 @@ internal typealias PayloadModuleSupplier = (
 
 internal fun createPayloadModule(
     initModule: InitModule,
-    coreModule: CoreModule,
-    androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
-    systemServiceModule: SystemServiceModule,
-    workerThreadModule: WorkerThreadModule,
     nativeModule: NativeModule,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
 ): PayloadModule = PayloadModuleImpl(
     initModule,
-    coreModule,
-    androidServicesModule,
     essentialServiceModule,
-    systemServiceModule,
-    workerThreadModule,
     nativeModule,
     otelModule,
     anrModule,

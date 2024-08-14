@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.FakePayloadModule
+import io.embrace.android.embracesdk.fakes.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -21,9 +22,10 @@ internal class LogModuleImplTest {
             FakeOpenTelemetryModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
+            FakeConfigModule(),
             FakeDeliveryModule(),
             FakeWorkerThreadModule(),
-            FakePayloadModule(),
+            FakePayloadSourceModule(),
         )
 
         assertNotNull(module.networkCaptureService)

@@ -8,9 +8,10 @@ internal typealias LogModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
 ) -> LogModule
 
 internal fun createLogModule(
@@ -18,15 +19,17 @@ internal fun createLogModule(
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
 ): LogModule = LogModuleImpl(
     initModule,
     openTelemetryModule,
     androidServicesModule,
     essentialServiceModule,
+    configModule,
     deliveryModule,
     workerThreadModule,
-    payloadModule,
+    payloadSourceModule,
 )

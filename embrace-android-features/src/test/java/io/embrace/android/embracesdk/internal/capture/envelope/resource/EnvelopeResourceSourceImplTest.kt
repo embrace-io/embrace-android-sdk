@@ -4,13 +4,14 @@ import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
@@ -24,6 +25,7 @@ internal class EnvelopeResourceSourceImplTest {
 
     companion object {
         private val packageInfo = PackageInfo()
+        private lateinit var packageVersionInfo: PackageVersionInfo
         private val fakeArchitecture = FakeDeviceArchitecture()
 
         @BeforeClass
@@ -47,12 +49,12 @@ internal class EnvelopeResourceSourceImplTest {
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
+            packageVersionInfo = PackageVersionInfo(packageInfo)
         }
     }
 
     @Test
     fun getEnvelopeResource() {
-        val metadataService = FakeMetadataService()
         val hostedSdkVersionInfo = HostedSdkVersionInfo(
             FakePreferenceService()
         )
@@ -64,11 +66,11 @@ internal class EnvelopeResourceSourceImplTest {
             hostedSdkVersionInfo,
             AppEnvironment.Environment.PROD,
             BuildInfo("100", "release", "oem", "bundle-id"),
-            packageInfo,
+            packageVersionInfo,
             AppFramework.NATIVE,
             fakeArchitecture,
             FakeDevice(),
-            metadataService
+            FakeRnBundleIdTracker()
         )
         val envelope = source.getEnvelopeResource()
 

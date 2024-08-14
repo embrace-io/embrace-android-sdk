@@ -1,44 +1,47 @@
 package io.embrace.android.embracesdk.internal.injection
 
 /**
- * Function that returns an instance of [SessionModule]. Matches the signature of the constructor for [SessionModuleImpl]
+ * Function that returns an instance of [SessionOrchestrationModule]. Matches the signature of the constructor for [SessionOrchestrationModuleImpl]
  */
-internal typealias SessionModuleSupplier = (
+internal typealias SessionOrchestrationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
-    dataContainerModule: DataContainerModule,
+    momentsModule: MomentsModule,
     logModule: LogModule
-) -> SessionModule
+) -> SessionOrchestrationModule
 
-internal fun createSessionModule(
+internal fun createSessionOrchestrationModule(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
     dataCaptureServiceModule: DataCaptureServiceModule,
-    dataContainerModule: DataContainerModule,
+    momentsModule: MomentsModule,
     logModule: LogModule
-): SessionModule = SessionModuleImpl(
+): SessionOrchestrationModule = SessionOrchestrationModuleImpl(
     initModule,
     openTelemetryModule,
     androidServicesModule,
     essentialServiceModule,
+    configModule,
     deliveryModule,
     workerThreadModule,
     dataSourceModule,
-    payloadModule,
+    payloadSourceModule,
     dataCaptureServiceModule,
-    dataContainerModule,
+    momentsModule,
     logModule
 )

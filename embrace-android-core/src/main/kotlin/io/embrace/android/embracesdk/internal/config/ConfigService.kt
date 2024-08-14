@@ -24,6 +24,8 @@ import java.io.Closeable
  */
 public interface ConfigService : Closeable {
 
+    public var remoteConfigSource: RemoteConfigSource?
+
     /**
      * How background activity functionality should behave.
      */
@@ -98,6 +100,11 @@ public interface ConfigService : Closeable {
      * The app framework that is currently in use.
      */
     public val appFramework: AppFramework
+
+    /**
+     * The Embrace app ID. This is used to identify the app within the database.
+     */
+    public val appId: String?
 
     /**
      * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the

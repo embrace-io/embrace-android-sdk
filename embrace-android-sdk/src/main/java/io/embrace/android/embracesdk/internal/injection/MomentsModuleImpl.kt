@@ -3,20 +3,22 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.event.EmbraceEventService
 import io.embrace.android.embracesdk.internal.event.EventService
 
-internal class DataContainerModuleImpl(
+internal class MomentsModuleImpl(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
+    payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     sdkStartTimeMs: Long
-) : DataContainerModule {
+) : MomentsModule {
 
     override val eventService: EventService by singleton {
         EmbraceEventService(
             sdkStartTimeMs,
             deliveryModule.deliveryService,
-            essentialServiceModule.configService,
-            essentialServiceModule.metadataService,
+            configModule.configService,
+            payloadSourceModule.metadataService,
             essentialServiceModule.processStateService,
             essentialServiceModule.sessionIdTracker,
             essentialServiceModule.userService,

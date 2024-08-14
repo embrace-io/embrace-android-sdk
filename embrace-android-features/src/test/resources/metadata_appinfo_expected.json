@@ -4,12 +4,13 @@
   "bi": "1234",
   "bt": "debug",
   "fl": "free",
-  "e": "UNKNOWN",
+  "e": "prod",
   "vu": false,
   "vul": false,
   "bv": "10",
   "ou": false,
   "oul": false,
   "sdk": "{versionName}",
-  "sdc": "{versionCode}"
+  "sdc": "{versionCode}",
+  "rn": "fakeReactNativeBundleId"
 }

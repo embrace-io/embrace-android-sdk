@@ -100,13 +100,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private var embraceInternalInterface: EmbraceInternalInterface? = null
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
-    val metadataService by embraceImplInject { bootstrapper.essentialServiceModule.metadataService }
+    val metadataService by embraceImplInject { bootstrapper.payloadSourceModule.metadataService }
     val activityService by embraceImplInject { bootstrapper.essentialServiceModule.processStateService }
     val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
     val internalErrorService by embraceImplInject { bootstrapper.initModule.internalErrorService }
 
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
-    private val configService by embraceImplInject { bootstrapper.essentialServiceModule.configService }
+    private val configService by embraceImplInject { bootstrapper.configModule.configService }
     private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
     private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
 
@@ -179,25 +179,26 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val coreModule = bootstrapper.coreModule
         application = coreModule.application
 
-        val essentialServiceModule = bootstrapper.essentialServiceModule
-        if (essentialServiceModule.configService.isSdkDisabled()) {
+        val configModule = bootstrapper.configModule
+        if (configModule.configService.isSdkDisabled()) {
             logger.logInfo("Interrupting SDK start because it is disabled", null)
             stop()
             return
         }
-        logger.logInfo("Starting SDK for framework " + essentialServiceModule.configService.appFramework.name)
+        logger.logInfo("Starting SDK for framework " + configModule.configService.appFramework.name)
 
-        if (essentialServiceModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
+        if (configModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule.application)
         }
 
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         val deliveryModule = bootstrapper.deliveryModule
-        val dataContainerModule = bootstrapper.dataContainerModule
+        val momentsModule = bootstrapper.momentsModule
         val crashModule = bootstrapper.crashModule
 
         startSynchronous("send-cached-sessions")
         // Send any sessions that were cached and not yet sent.
+        val essentialServiceModule = bootstrapper.essentialServiceModule
         deliveryModule.deliveryService.sendCachedSessions(
             bootstrapper.nativeModule::nativeCrashService,
             essentialServiceModule.sessionIdTracker
@@ -212,9 +213,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
             InternalInterfaceModuleImpl(
                 bootstrapper.initModule,
                 bootstrapper.openTelemetryModule,
-                essentialServiceModule,
+                configModule,
+                bootstrapper.payloadSourceModule,
                 bootstrapper.logModule,
-                bootstrapper.dataContainerModule,
+                bootstrapper.momentsModule,
                 this,
                 crashModule
             )
@@ -229,7 +231,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             AppFramework.FLUTTER -> internalInterfaceModuleImpl.flutterInternalInterface
             null -> {}
         }
-        val appId = essentialServiceModule.configService.sdkModeBehavior.appId
+        val appId = configModule.configService.appId
         val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME
         logger.logInfo(startMsg, null)
 
@@ -242,7 +244,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
         if (inForeground) {
-            dataContainerModule.eventService.sendStartupMoment()
+            momentsModule.eventService.sendStartupMoment()
         }
 
         startSynchronous("startup-tracking")

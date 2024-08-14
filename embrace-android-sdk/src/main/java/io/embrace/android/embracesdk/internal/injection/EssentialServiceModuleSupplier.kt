@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -9,43 +7,34 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 internal typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,
+    configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
-    customAppId: String?,
-    logModuleProvider: Provider<LogModule>,
-    featureModuleProvider: Provider<FeatureModule>,
-    framework: AppFramework,
-    configServiceProvider: (framework: AppFramework) -> ConfigService?
+    featureModuleProvider: Provider<FeatureModule>
 ) -> EssentialServiceModule
 
 internal fun createEssentialServiceModule(
     initModule: InitModule,
+    configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
-    customAppId: String?,
-    logModuleProvider: Provider<LogModule>,
     featureModuleProvider: Provider<FeatureModule>,
-    framework: AppFramework,
-    configServiceProvider: (framework: AppFramework) -> ConfigService?
 ): EssentialServiceModule = EssentialServiceModuleImpl(
     initModule,
+    configModule,
     openTelemetryModule,
     coreModule,
     workerThreadModule,
     systemServiceModule,
     androidServicesModule,
     storageModule,
-    customAppId,
-    logModuleProvider,
-    featureModuleProvider,
-    framework,
-    configServiceProvider
+    featureModuleProvider
 )

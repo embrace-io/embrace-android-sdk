@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock
@@ -29,22 +30,24 @@ public class FakeCoreModule(
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
     override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName),
-    override val packageInfo: PackageInfo = fakePackageInfo
+    override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo
 ) : CoreModule {
 
     public companion object {
 
-        @Suppress("DEPRECATION")
         private val fakePackageInfo = PackageInfo().apply {
             packageName = "com.fake.package"
             versionName = "2.5.1"
             versionCode = 99
         }
 
+        @Suppress("DEPRECATION")
+        private val fakePackageVersionInfo = PackageVersionInfo(fakePackageInfo)
+
         public fun getMockedContext(): Context {
             val mockContext = mockk<Context>(relaxed = true)
-            every { mockContext.packageName }.returns(fakePackageInfo.packageName)
-            every { mockContext.packageManager.getPackageInfo(fakePackageInfo.packageName, 0) }.returns(fakePackageInfo)
+            every { mockContext.packageName }.returns(fakePackageVersionInfo.packageName)
+            every { mockContext.packageManager.getPackageInfo(fakePackageVersionInfo.packageName, 0) }.returns(fakePackageInfo)
             return mockContext
         }
     }

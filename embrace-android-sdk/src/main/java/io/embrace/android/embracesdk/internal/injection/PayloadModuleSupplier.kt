@@ -1,38 +1,43 @@
 package io.embrace.android.embracesdk.internal.injection
 
-/**
- * Function that returns an instance of [PayloadModule]. Matches the signature of the constructor for [PayloadModuleImpl]
- */
-internal typealias PayloadModuleSupplier = (
-    initModule: InitModule,
-    coreModule: CoreModule,
-    androidServicesModule: AndroidServicesModule,
-    essentialServiceModule: EssentialServiceModule,
-    systemServiceModule: SystemServiceModule,
-    workerThreadModule: WorkerThreadModule,
-    nativeModule: NativeModule,
-    otelModule: OpenTelemetryModule,
-    anrModule: AnrModule,
-) -> PayloadModule
+import io.embrace.android.embracesdk.internal.utils.Provider
 
-internal fun createPayloadModule(
+/**
+ * Function that returns an instance of [PayloadSourceModule]. Matches the signature of the constructor for [PayloadSourceModuleImpl]
+ */
+internal typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
+    workerThreadModule: WorkerThreadModule,
+    systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
-    systemServiceModule: SystemServiceModule,
-    workerThreadModule: WorkerThreadModule,
-    nativeModule: NativeModule,
+    configModule: ConfigModule,
+    nativeModuleProvider: Provider<NativeModule?>,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
-): PayloadModule = PayloadModuleImpl(
+) -> PayloadSourceModule
+
+internal fun createPayloadSourceModule(
+    initModule: InitModule,
+    coreModule: CoreModule,
+    workerThreadModule: WorkerThreadModule,
+    systemServiceModule: SystemServiceModule,
+    androidServicesModule: AndroidServicesModule,
+    essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
+    nativeModuleProvider: Provider<NativeModule?>,
+    otelModule: OpenTelemetryModule,
+    anrModule: AnrModule,
+): PayloadSourceModule = PayloadSourceModuleImpl(
     initModule,
     coreModule,
+    workerThreadModule,
+    systemServiceModule,
     androidServicesModule,
     essentialServiceModule,
-    systemServiceModule,
-    workerThreadModule,
-    nativeModule,
+    configModule,
+    nativeModuleProvider,
     otelModule,
     anrModule,
 )

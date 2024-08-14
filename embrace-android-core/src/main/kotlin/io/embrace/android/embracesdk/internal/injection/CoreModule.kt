@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 /**
@@ -18,7 +18,7 @@ public interface CoreModule {
      */
     public val context: Context
 
-    public val packageInfo: PackageInfo
+    public val packageVersionInfo: PackageVersionInfo
 
     /**
      * Reference to the current application.

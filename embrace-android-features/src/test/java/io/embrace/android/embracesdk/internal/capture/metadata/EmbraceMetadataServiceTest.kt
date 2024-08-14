@@ -7,20 +7,25 @@ import android.os.Environment
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
+import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -31,8 +36,8 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
-import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -46,13 +51,12 @@ internal class EmbraceMetadataServiceTest {
         private val packageInfo = PackageInfo()
         private val serializer = EmbraceSerializer()
         private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
+        private lateinit var ref: EmbraceMetadataService
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
         private val cpuInfoDelegate: FakeCpuInfoDelegate = FakeCpuInfoDelegate()
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
-        private val windowManager = mockk<WindowManager>()
-        private val logger = EmbLoggerImpl()
 
         @BeforeClass
         @JvmStatic
@@ -79,6 +83,7 @@ internal class EmbraceMetadataServiceTest {
             packageInfo.versionName = "1.0.0"
             @Suppress("DEPRECATION")
             packageInfo.versionCode = 10
+            packageInfo.packageName = "com.embrace.fake"
 
             every { context.getSystemService(Context.WINDOW_SERVICE) }.returns(mockk<WindowManager>())
             every { context.getSystemService(Context.STORAGE_STATS_SERVICE) }.returns(mockk<StorageStatsManager>())
@@ -121,28 +126,42 @@ internal class EmbraceMetadataServiceTest {
     }
 
     @Suppress("DEPRECATION")
-    private fun getMetadataService(framework: AppFramework = AppFramework.NATIVE): EmbraceMetadataService {
+    private fun getMetadataService(
+        framework: AppFramework = AppFramework.NATIVE,
+        precompute: Boolean = true
+    ): EmbraceMetadataService {
         configService.appFramework = framework
-        return EmbraceMetadataService.ofContext(
+        ref = EmbraceMetadataService(
+            EnvelopeResourceSourceImpl(
+                hostedSdkVersionInfo,
+                AppEnvironment.Environment.PROD,
+                buildInfo,
+                PackageVersionInfo(packageInfo),
+                framework,
+                fakeArchitecture,
+                DeviceImpl(
+                    mockk(relaxed = true),
+                    preferencesService,
+                    BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+                    SystemInfo(),
+                    cpuInfoDelegate,
+                    FakeEmbLogger()
+                ),
+                FakeRnBundleIdTracker()
+            ),
+            EnvelopeMetadataSourceImpl(::UserInfo),
             context,
-            AppEnvironment.Environment.UNKNOWN,
-            SystemInfo(),
-            buildInfo,
+            storageStatsManager,
             configService,
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            storageStatsManager,
-            windowManager,
             fakeClock,
-            cpuInfoDelegate,
-            fakeArchitecture,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo,
-            EmbLoggerImpl(),
-            "1",
-            "33"
-        ).apply { precomputeValues() }
+            FakeEmbLogger()
+        )
+        if (precompute) {
+            ref.precomputeValues()
+        }
+        return ref
     }
 
     @Test
@@ -172,7 +191,6 @@ internal class EmbraceMetadataServiceTest {
 
         verify(exactly = 1) { preferencesService.appVersion = any() }
         verify(exactly = 1) { preferencesService.osVersion = any() }
-        verify(exactly = 1) { preferencesService.deviceIdentifier = any() }
         verify(exactly = 1) { preferencesService.installDate = any() }
     }
 
@@ -189,40 +207,18 @@ internal class EmbraceMetadataServiceTest {
 
         val deviceInfo = serializer.toJson(getMetadataService().getDeviceInfo())
 
-        Assert.assertTrue(deviceInfo.contains("\"jb\":true"))
-        Assert.assertTrue(deviceInfo.contains("\"sr\":\"200x300\""))
-        Assert.assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
+        assertTrue(deviceInfo.contains("\"jb\":true"))
+        assertTrue(deviceInfo.contains("\"sr\":\"200x300\""))
+        assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
     @Suppress("DEPRECATION")
     @Test
     fun `test device info without running async operations`() {
         every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-
-        val metadataService = EmbraceMetadataService.ofContext(
-            context,
-            AppEnvironment.Environment.PROD,
-            SystemInfo(),
-            buildInfo,
-            configService,
-            preferencesService,
-            BackgroundWorker(BlockingScheduledExecutorService()),
-            mockk(relaxed = true),
-            mockk(relaxed = true),
-            fakeClock,
-            cpuInfoDelegate,
-            fakeArchitecture,
-            lazy { packageInfo.versionName },
-            lazy { packageInfo.versionCode.toString() },
-            hostedSdkVersionInfo,
-            logger,
-            "1",
-            "33"
-        )
-
+        val metadataService = getMetadataService(precompute = false)
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
-
-        Assert.assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
+        assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
     }
 
     @Test

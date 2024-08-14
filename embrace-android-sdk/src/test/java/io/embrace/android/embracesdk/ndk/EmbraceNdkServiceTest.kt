@@ -274,8 +274,8 @@ internal class EmbraceNdkServiceTest {
 
         val metaData = serializer.toJson(
             NativeCrashMetadata(
-                metadataService.getLightweightAppInfo(),
-                metadataService.getLightweightDeviceInfo(),
+                metadataService.getAppInfo(),
+                metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
                 sessionPropertiesService.getProperties()
             )
@@ -289,8 +289,8 @@ internal class EmbraceNdkServiceTest {
             storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
 
         verifyOrder {
-            metadataService.getLightweightAppInfo()
-            metadataService.getLightweightDeviceInfo()
+            metadataService.getAppInfo()
+            metadataService.getDeviceInfo()
 
             delegate._installSignalHandlers(
                 reportBasePath,

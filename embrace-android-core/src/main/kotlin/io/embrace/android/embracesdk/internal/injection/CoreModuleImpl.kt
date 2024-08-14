@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 internal class CoreModuleImpl(
@@ -22,9 +22,9 @@ internal class CoreModuleImpl(
         }
     }
 
-    @Suppress("DEPRECATION")
-    override val packageInfo: PackageInfo
-        get() = context.packageManager.getPackageInfo(context.packageName, 0)
+    override val packageVersionInfo: PackageVersionInfo by singleton {
+        PackageVersionInfo(context.packageManager.getPackageInfo(context.packageName, 0))
+    }
 
     override val application: Application by singleton { context as Application }
 

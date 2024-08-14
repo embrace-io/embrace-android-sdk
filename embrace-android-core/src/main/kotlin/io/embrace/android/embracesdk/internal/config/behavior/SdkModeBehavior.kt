@@ -15,11 +15,6 @@ public interface SdkModeBehavior {
     public fun isServiceInitDeferred(): Boolean
 
     /**
-     * The Embrace app ID. This is used to identify the app within the database.
-     */
-    public val appId: String?
-
-    /**
      * Given a Config instance, computes if the SDK is enabled based on the threshold and the offset.
      *
      * @return true if the sdk is enabled, false otherwise

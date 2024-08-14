@@ -20,6 +20,7 @@ internal class NativeModuleImpl(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule
@@ -30,7 +31,7 @@ internal class NativeModuleImpl(
             EmbraceNdkService(
                 coreModule.context,
                 storageModule.storageService,
-                essentialServiceModule.metadataService,
+                payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
                 essentialServiceModule.configService,
                 deliveryModule.deliveryService,
@@ -43,7 +44,7 @@ internal class NativeModuleImpl(
                 NdkDelegateImpl(),
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT),
-                essentialServiceModule.deviceArchitecture,
+                payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer
             )
         }
@@ -57,7 +58,7 @@ internal class NativeModuleImpl(
                     symbols = lazy { ndkService.getSymbolsForCurrentArch() },
                     logger = initModule.logger,
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
-                    deviceArchitecture = essentialServiceModule.deviceArchitecture,
+                    deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = essentialServiceModule.sharedObjectLoader,
                 )
             } else {

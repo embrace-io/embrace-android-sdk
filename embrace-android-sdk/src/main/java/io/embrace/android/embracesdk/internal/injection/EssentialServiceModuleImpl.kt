@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.internal.DeviceArchitecture
-import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
@@ -11,10 +9,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetwor
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
-import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
-import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTrackerImpl
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -34,9 +28,6 @@ import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
-import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
-import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -141,41 +132,6 @@ internal class EssentialServiceModuleImpl(
         EmbraceCpuInfoDelegate(sharedObjectLoader, initModule.logger)
     }
 
-    override val deviceArchitecture: DeviceArchitecture by singleton {
-        DeviceArchitectureImpl()
-    }
-
-    override val hostedSdkVersionInfo: HostedSdkVersionInfo by singleton {
-        HostedSdkVersionInfo(
-            androidServicesModule.preferencesService,
-            configService.appFramework
-        )
-    }
-
-    override val resourceSource by singleton {
-        EnvelopeResourceSourceImpl(
-            hostedSdkVersionInfo,
-            AppEnvironment(coreModule.context.applicationInfo).environment,
-            coreModule.buildInfo,
-            coreModule.packageVersionInfo,
-            configService.appFramework,
-            deviceArchitecture,
-            DeviceImpl(
-                systemServiceModule.windowManager,
-                androidServicesModule.preferencesService,
-                backgroundWorker,
-                initModule.systemInfo,
-                cpuInfoDelegate,
-                initModule.logger
-            ),
-            rnBundleIdTracker
-        )
-    }
-
-    override val metadataSource by singleton {
-        EnvelopeMetadataSourceImpl(userService::getUserInfo)
-    }
-
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
             coreModule.buildInfo,
@@ -185,22 +141,6 @@ internal class EssentialServiceModuleImpl(
             backgroundWorker,
             initModule.logger
         )
-    }
-
-    override val metadataService: MetadataService by singleton {
-        Systrace.traceSynchronous("metadata-service-init") {
-            EmbraceMetadataService(
-                resourceSource,
-                metadataSource,
-                coreModule.context,
-                systemServiceModule.storageManager,
-                configService,
-                androidServicesModule.preferencesService,
-                backgroundWorker,
-                initModule.clock,
-                initModule.logger
-            )
-        }
     }
 
     override val urlBuilder by singleton {

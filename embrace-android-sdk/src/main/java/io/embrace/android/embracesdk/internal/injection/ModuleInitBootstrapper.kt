@@ -182,7 +182,6 @@ internal class ModuleInitBootstrapper(
                     postInit(EssentialServiceModule::class) {
                         serviceRegistry.registerServices(
                             essentialServiceModule.processStateService,
-                            essentialServiceModule.metadataService,
                             essentialServiceModule.configService,
                             essentialServiceModule.activityLifecycleTracker,
                             essentialServiceModule.networkConnectivityService,
@@ -193,9 +192,6 @@ internal class ModuleInitBootstrapper(
                         if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
                             registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                         }
-
-                        // only call after ConfigService has initialized.
-                        essentialServiceModule.metadataService.precomputeValues()
                     }
 
                     anrModule = init(AnrModule::class) {
@@ -276,12 +272,31 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
+                    payloadSourceModule = init(PayloadSourceModule::class) {
+                        payloadSourceModuleSupplier(
+                            initModule,
+                            coreModule,
+                            workerThreadModule,
+                            systemServiceModule,
+                            androidServicesModule,
+                            essentialServiceModule,
+                            { nativeModule },
+                            openTelemetryModule,
+                            anrModule,
+                        )
+                    }
+                    postInit(PayloadSourceModule::class) {
+                        serviceRegistry.registerServices(payloadSourceModule.metadataService)
+                        payloadSourceModule.metadataService.precomputeValues()
+                    }
+
                     nativeModule = init(NativeModule::class) {
                         nativeModuleSupplier(
                             initModule,
                             coreModule,
                             storageModule,
                             essentialServiceModule,
+                            payloadSourceModule,
                             deliveryModule,
                             androidServicesModule,
                             workerThreadModule
@@ -343,16 +358,6 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
-                    payloadSourceModule = init(PayloadSourceModule::class) {
-                        payloadSourceModuleSupplier(
-                            initModule,
-                            essentialServiceModule,
-                            nativeModule,
-                            openTelemetryModule,
-                            anrModule,
-                        )
-                    }
-
                     logModule = init(LogModule::class) {
                         logModuleSupplier(
                             initModule,
@@ -380,6 +385,7 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             workerThreadModule,
                             essentialServiceModule,
+                            payloadSourceModule,
                             deliveryModule,
                             sdkStartTimeMs
                         )

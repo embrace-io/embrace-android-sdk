@@ -7,6 +7,7 @@ internal class MomentsModuleImpl(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     sdkStartTimeMs: Long
 ) : MomentsModule {
@@ -16,7 +17,7 @@ internal class MomentsModuleImpl(
             sdkStartTimeMs,
             deliveryModule.deliveryService,
             essentialServiceModule.configService,
-            essentialServiceModule.metadataService,
+            payloadSourceModule.metadataService,
             essentialServiceModule.processStateService,
             essentialServiceModule.sessionIdTracker,
             essentialServiceModule.userService,

@@ -100,7 +100,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private var embraceInternalInterface: EmbraceInternalInterface? = null
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
-    val metadataService by embraceImplInject { bootstrapper.essentialServiceModule.metadataService }
+    val metadataService by embraceImplInject { bootstrapper.payloadSourceModule.metadataService }
     val activityService by embraceImplInject { bootstrapper.essentialServiceModule.processStateService }
     val activityLifecycleTracker by embraceImplInject { bootstrapper.essentialServiceModule.activityLifecycleTracker }
     val internalErrorService by embraceImplInject { bootstrapper.initModule.internalErrorService }
@@ -213,6 +213,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 bootstrapper.initModule,
                 bootstrapper.openTelemetryModule,
                 essentialServiceModule,
+                bootstrapper.payloadSourceModule,
                 bootstrapper.logModule,
                 bootstrapper.momentsModule,
                 this,

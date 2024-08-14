@@ -134,7 +134,7 @@ internal class SessionHandlerTest {
                     spanRepository,
                     OtelPayloadMapperImpl(
                         fakeAnrOtelMapper(),
-                        fakeNativeAnrOtelMapper(),
+                        ::fakeNativeAnrOtelMapper,
                     ),
                     logger
                 )

@@ -14,6 +14,7 @@ internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
+    payloadSourceModule: PayloadSourceModule,
     logModule: LogModule,
     momentsModule: MomentsModule,
     embrace: EmbraceImpl,
@@ -38,7 +39,7 @@ internal class InternalInterfaceModuleImpl(
             embraceInternalInterface,
             crashModule.crashDataSource,
             essentialServiceModule.rnBundleIdTracker,
-            essentialServiceModule.hostedSdkVersionInfo,
+            payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger
         )
     }
@@ -47,7 +48,7 @@ internal class InternalInterfaceModuleImpl(
         UnityInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            essentialServiceModule.hostedSdkVersionInfo,
+            payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger
         )
     }
@@ -56,7 +57,7 @@ internal class InternalInterfaceModuleImpl(
         FlutterInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            essentialServiceModule.hostedSdkVersionInfo,
+            payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger
         )
     }

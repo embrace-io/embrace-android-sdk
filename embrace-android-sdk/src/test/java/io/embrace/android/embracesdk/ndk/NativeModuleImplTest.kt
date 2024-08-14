@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.injection.NativeModuleImpl
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import org.junit.Assert.assertNotNull
@@ -37,5 +38,7 @@ internal class NativeModuleImplTest {
         assertNull(module.nativeThreadSamplerInstaller)
         assertNotNull(module.nativeAnrOtelMapper)
         assertTrue(module.nativeCrashService is NoopNativeCrashService)
+        assertNotNull(module.sharedObjectLoader)
+        assertTrue(module.cpuInfoDelegate is EmbraceCpuInfoDelegate)
     }
 }

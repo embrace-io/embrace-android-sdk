@@ -93,7 +93,7 @@ internal class PayloadSourceModuleImpl(
                 androidServicesModule.preferencesService,
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 initModule.systemInfo,
-                essentialServiceModule.cpuInfoDelegate,
+                { nativeModuleProvider()?.cpuInfoDelegate },
                 initModule.logger
             ),
             rnBundleIdTracker

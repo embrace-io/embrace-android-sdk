@@ -63,14 +63,6 @@ internal class EssentialServiceModuleImpl(
         ActivityLifecycleTracker(coreModule.application, initModule.logger)
     }
 
-    override val sharedObjectLoader: SharedObjectLoader by singleton {
-        SharedObjectLoader(initModule.logger)
-    }
-
-    override val cpuInfoDelegate: CpuInfoDelegate by singleton {
-        EmbraceCpuInfoDelegate(sharedObjectLoader, initModule.logger)
-    }
-
     override val urlBuilder by singleton {
         Systrace.traceSynchronous("url-builder-init") {
             // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency

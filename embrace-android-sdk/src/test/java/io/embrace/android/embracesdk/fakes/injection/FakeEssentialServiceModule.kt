@@ -33,12 +33,10 @@ internal class FakeEssentialServiceModule(
     override val sessionIdTracker: SessionIdTracker = FakeSessionIdTracker(),
     override val apiClient: ApiClient = FakeApiClient(),
     override val userService: UserService = FakeUserService(),
-    override val sharedObjectLoader: SharedObjectLoader = SharedObjectLoader(EmbLoggerImpl()),
     override val apiService: ApiService = FakeApiService(),
     override val networkConnectivityService: NetworkConnectivityService = NoOpNetworkConnectivityService(),
     override val pendingApiCallsSender: PendingApiCallsSender = FakePendingApiCallsSender(),
     override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
     override val logWriter: LogWriter = FakeLogWriter(),
-    override val cpuInfoDelegate: CpuInfoDelegate = FakeCpuInfoDelegate(),
     override val sessionPropertiesService: FakeSessionPropertiesService = FakeSessionPropertiesService(),
 ) : EssentialServiceModule

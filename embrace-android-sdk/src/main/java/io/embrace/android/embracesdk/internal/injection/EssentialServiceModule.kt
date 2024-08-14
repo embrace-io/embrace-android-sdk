@@ -25,8 +25,6 @@ internal interface EssentialServiceModule {
     val urlBuilder: ApiUrlBuilder
     val apiClient: ApiClient
     val apiService: ApiService?
-    val sharedObjectLoader: SharedObjectLoader
-    val cpuInfoDelegate: CpuInfoDelegate
     val networkConnectivityService: NetworkConnectivityService
     val pendingApiCallsSender: PendingApiCallsSender
     val sessionIdTracker: SessionIdTracker

@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -41,7 +43,13 @@ internal class EmbraceLogServiceTest {
 
     @Before
     fun setUp() {
-        fakeConfigService = FakeConfigService()
+        fakeConfigService = FakeConfigService(
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                SdkLocalConfig(
+                    sensitiveKeysDenylist = listOf("password")
+                )
+            )
+        )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         fakeLogWriter = FakeLogWriter()
 
@@ -67,6 +75,20 @@ internal class EmbraceLogServiceTest {
 
         // then the message is not be logged
         assertEquals(0, fakeLogWriter.logEvents.size)
+    }
+
+    @Test
+    fun `sensitive properties are redacted`() {
+        // given custom properties with a sensitive key
+        val properties = mapOf("password" to "123456", "status" to "success")
+
+        // when logging a message with those properties
+        logService.log("message", EventType.INFO_LOG, LogExceptionType.NONE, properties)
+
+        // then the sensitive key is redacted
+        val log = fakeLogWriter.logEvents.single()
+        assertEquals("<redacted>", log.schemaType.attributes()["password"])
+        assertEquals("success", log.schemaType.attributes()["status"])
     }
 
     @Test

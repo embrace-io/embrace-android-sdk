@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.EXCEPTION_EVENT_NAME
@@ -21,6 +22,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.SpanContext
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
+import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
@@ -188,6 +190,27 @@ public class FakePersistableEmbraceSpan(
             FakePersistableEmbraceSpan(name = "stopped").apply {
                 start()
                 stop()
+            }
+
+        public fun sessionSpan(
+            sessionId: String,
+            startTimeMs: Long,
+            lastHeartbeatTimeMs: Long?,
+            endTimeMs: Long? = null
+        ): FakePersistableEmbraceSpan =
+            FakePersistableEmbraceSpan(
+                name = "emb-session",
+                type = EmbType.Ux.Session
+            ).apply {
+                start(startTimeMs)
+                setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+                setSystemAttribute(
+                    embHeartbeatTimeUnixNano.attributeKey,
+                    (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()
+                )
+                if (endTimeMs != null) {
+                    stop(endTimeMs)
+                }
             }
     }
 }

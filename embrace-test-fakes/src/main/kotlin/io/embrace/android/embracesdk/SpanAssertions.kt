@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -48,23 +48,38 @@ public fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
 /**
  * Returns the Session Span
  */
-public fun Envelope<SessionPayload>.findSessionSpan(): Span = findSpanOfType(EmbType.Ux.Session)
-
-public fun Envelope<SessionPayload>.getSessionId(): String {
-    val sessionSpan = checkNotNull(getSessionSpan()) {
-        "No session span found in session message"
-    }
-    return checkNotNull(sessionSpan.attributes?.findAttributeValue("session.id")) {
-        "No session id found in session message"
+public fun Envelope<SessionPayload>.findSessionSpan(): Span {
+    return checkNotNull(getSessionSpan()) {
+        "No session span found in session payload"
     }
 }
 
-public fun Envelope<SessionPayload>.getStartTime(): Long {
-    val sessionSpan = checkNotNull(getSessionSpan()) {
-        "No session span found in session message"
+/**
+ * Return the session ID from the session span in the payload
+ */
+public fun Envelope<SessionPayload>.getSessionId(): String {
+    return checkNotNull(findSessionSpan().attributes?.findAttributeValue("session.id")) {
+        "No session id found in session payload"
     }
-    return checkNotNull(sessionSpan.startTimeNanos?.nanosToMillis()) {
-        "No start time found in session message"
+}
+
+/**
+ * Return the session start time in milliseconds from the session span in the payload
+ */
+public fun Envelope<SessionPayload>.getStartTime(): Long {
+    return checkNotNull(findSessionSpan().startTimeNanos?.nanosToMillis()) {
+        "No start time found in session payload"
+    }
+}
+
+/**
+ * Return the last heartbeat time in milliseconds from the session span in the payload
+ */
+public fun Envelope<SessionPayload>.getLastHeartbeatTimeMs(): Long {
+    return checkNotNull(
+        findSessionSpan().attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull()?.nanosToMillis()
+    ) {
+        "No last heartbeat time found in session payload"
     }
 }
 

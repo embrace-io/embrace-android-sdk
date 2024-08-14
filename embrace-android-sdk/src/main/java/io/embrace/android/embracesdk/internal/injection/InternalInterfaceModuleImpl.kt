@@ -13,9 +13,10 @@ import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfac
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
+    payloadSourceModule: PayloadSourceModule,
     logModule: LogModule,
-    dataContainerModule: DataContainerModule,
+    momentsModule: MomentsModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
 ) : InternalInterfaceModule {
@@ -25,9 +26,9 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             initModule,
             logModule.networkCaptureService,
-            dataContainerModule.eventService,
+            momentsModule.eventService,
             initModule.internalErrorService,
-            essentialServiceModule.configService,
+            configModule.configService,
             openTelemetryModule.internalTracer
         )
     }
@@ -37,8 +38,8 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             embraceInternalInterface,
             crashModule.crashDataSource,
-            essentialServiceModule.metadataService,
-            essentialServiceModule.hostedSdkVersionInfo,
+            payloadSourceModule.rnBundleIdTracker,
+            payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger
         )
     }
@@ -47,7 +48,7 @@ internal class InternalInterfaceModuleImpl(
         UnityInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            essentialServiceModule.hostedSdkVersionInfo,
+            payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger
         )
     }
@@ -56,7 +57,7 @@ internal class InternalInterfaceModuleImpl(
         FlutterInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            essentialServiceModule.hostedSdkVersionInfo,
+            payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger
         )
     }

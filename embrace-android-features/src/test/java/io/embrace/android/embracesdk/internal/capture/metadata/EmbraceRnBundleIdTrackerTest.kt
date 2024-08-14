@@ -4,23 +4,14 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
-import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -33,19 +24,14 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.nio.file.Files
 
-internal class EmbraceMetadataReactNativeTest {
+internal class EmbraceRnBundleIdTrackerTest {
 
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
-    private val fakeClock = FakeClock()
     private lateinit var context: Context
     private lateinit var assetManager: AssetManager
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
     private lateinit var preferencesService: PreferencesService
-    private lateinit var processStateService: ProcessStateService
-    private lateinit var cpuInfoDelegate: EmbraceCpuInfoDelegate
-    private lateinit var mockSharedObjectLoader: SharedObjectLoader
-    private val deviceArchitecture = FakeDeviceArchitecture()
 
     @Before
     fun setUp() {
@@ -59,63 +45,52 @@ internal class EmbraceMetadataReactNativeTest {
             appFramework = AppFramework.REACT_NATIVE
         }
         preferencesService = FakePreferenceService()
-        processStateService = FakeProcessStateService()
         preferencesService.javaScriptBundleURL = null
         preferencesService.javaScriptPatchNumber = "patch-number"
         preferencesService.reactNativeVersionNumber = "rn-version-number"
-        mockSharedObjectLoader = mockk(relaxed = true)
-        cpuInfoDelegate = EmbraceCpuInfoDelegate(mockSharedObjectLoader, EmbLoggerImpl())
         hostedSdkVersionInfo = HostedSdkVersionInfo(
             preferencesService,
             AppFramework.REACT_NATIVE
         )
     }
 
-    private fun getMetadataService() = EmbraceMetadataService(
-        context,
-        mockk(relaxed = true),
-        mockk(relaxed = true),
-        SystemInfo(),
+    private fun createRnBundleIdTracker(): RnBundleIdTrackerImpl = RnBundleIdTrackerImpl(
         buildInfo,
+        context,
         configService,
-        lazy { PackageVersionInfo(mockk(relaxed = true)) },
         preferencesService,
-        hostedSdkVersionInfo,
         BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-        fakeClock,
-        cpuInfoDelegate,
-        deviceArchitecture,
         FakeEmbLogger()
     )
 
     @Test
     fun `test React Native bundle ID setting as a default value`() {
-        val metadataService = getMetadataService()
+        val metadataService = createRnBundleIdTracker()
         assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
     }
 
     @Test
     fun `test React Native bundle ID setting as a default value if jsBundleIdUrl is empty`() {
-        val metadataService = getMetadataService()
-        metadataService.setReactNativeBundleId(context, "")
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId("")
         assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
     }
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is the same as the value persisted `() {
         preferencesService.javaScriptBundleURL = "javaScriptBundleURL"
-        val metadataService = getMetadataService()
+        val metadataService = createRnBundleIdTracker()
 
-        metadataService.setReactNativeBundleId(context, "javaScriptBundleURL")
+        metadataService.setReactNativeBundleId("javaScriptBundleURL")
         assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
     }
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is a new value`() {
         preferencesService.javaScriptBundleURL = "oldJavaScriptBundleURL"
-        val metadataService = getMetadataService()
+        val metadataService = createRnBundleIdTracker()
 
-        metadataService.setReactNativeBundleId(context, "newJavaScriptBundleURL")
+        metadataService.setReactNativeBundleId("newJavaScriptBundleURL")
         assertEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
     }
 
@@ -128,8 +103,8 @@ internal class EmbraceMetadataReactNativeTest {
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
 
-        val metadataService = getMetadataService()
-        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle")
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId("assets://index.android.bundle")
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
@@ -147,8 +122,8 @@ internal class EmbraceMetadataReactNativeTest {
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
 
-        val metadataService = getMetadataService()
-        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", true)
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId("assets://index.android.bundle", true)
 
         verify(exactly = 1) { assetManager.open(eq("index.android.bundle")) }
 
@@ -167,8 +142,8 @@ internal class EmbraceMetadataReactNativeTest {
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
 
-        val metadataService = getMetadataService()
-        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", false)
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId("assets://index.android.bundle", false)
 
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("persistedBundleId", metadataService.getReactNativeBundleId())
@@ -185,8 +160,8 @@ internal class EmbraceMetadataReactNativeTest {
         every { context.assets } returns assetManager
         every { assetManager.open(any()) } returns inputStream
 
-        val metadataService = getMetadataService()
-        metadataService.setReactNativeBundleId(context, "assets://index.android.bundle", null)
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId("assets://index.android.bundle", null)
 
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
@@ -196,11 +171,8 @@ internal class EmbraceMetadataReactNativeTest {
     @Test
     fun `test React Native bundle ID url as a custom file`() {
         val bundleIdFile = Files.createTempFile("index.android.bundle", "temp").toFile()
-        val metadataService = getMetadataService()
-        metadataService.setReactNativeBundleId(
-            context,
-            bundleIdFile.absolutePath
-        )
+        val metadataService = createRnBundleIdTracker()
+        metadataService.setReactNativeBundleId(bundleIdFile.absolutePath)
         assertNotEquals(buildInfo.buildId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
     }
@@ -212,7 +184,7 @@ internal class EmbraceMetadataReactNativeTest {
         every { assetManager.open(any()) } throws IOException()
 
         // computing is null, so reactNativeBundleID should be set to the default value
-        val metadataService = getMetadataService()
+        val metadataService = createRnBundleIdTracker()
         assertEquals(metadataService.getReactNativeBundleId(), buildInfo.buildId)
     }
 
@@ -221,6 +193,6 @@ internal class EmbraceMetadataReactNativeTest {
         preferencesService.javaScriptBundleURL = "wrongFilePath"
 
         // computing is null, so reactNativeBundleID should be set to the default value
-        assertEquals(getMetadataService().getReactNativeBundleId(), buildInfo.buildId)
+        assertEquals(createRnBundleIdTracker().getReactNativeBundleId(), buildInfo.buildId)
     }
 }

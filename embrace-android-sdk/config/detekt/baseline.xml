@@ -2,7 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>LongParameterList:EssentialServiceModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, coreModule: CoreModule, workerThreadModule: WorkerThreadModule, systemServiceModule: SystemServiceModule, androidServicesModule: AndroidServicesModule, storageModule: StorageModule, customAppId: String?, logModuleProvider: Provider&lt;LogModule&gt;, featureModuleProvider: Provider&lt;FeatureModule&gt;, framework: AppFramework, configServiceProvider: (framework: AppFramework) -&gt; ConfigService? )</ID>
-    <ID>LongParameterList:SessionModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, deliveryModule: DeliveryModule, workerThreadModule: WorkerThreadModule, dataSourceModule: DataSourceModule, payloadModule: PayloadModule, dataCaptureServiceModule: DataCaptureServiceModule, dataContainerModule: DataContainerModule, logModule: LogModule )</ID>
+    <ID>CyclomaticComplexMethod:ModuleInitBootstrapper.kt$ModuleInitBootstrapper$@JvmOverloads fun init( context: Context, appFramework: AppFramework, sdkStartTimeMs: Long, customAppId: String? = null, configServiceProvider: (framework: AppFramework) -&gt; ConfigService? = { null }, versionChecker: VersionChecker = BuildVersionChecker, ): Boolean</ID>
+    <ID>LongParameterList:SessionOrchestrationModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, configModule: ConfigModule, deliveryModule: DeliveryModule, workerThreadModule: WorkerThreadModule, dataSourceModule: DataSourceModule, payloadSourceModule: PayloadSourceModule, dataCaptureServiceModule: DataCaptureServiceModule, momentsModule: MomentsModule, logModule: LogModule )</ID>
+    <ID>MaxLineLength:FakeModuleInitBootstrapper.kt$sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -&gt; FakeSessionOrchestrationModule() }</ID>
+    <ID>MaximumLineLength:FakeModuleInitBootstrapper.kt$ </ID>
   </CurrentIssues>
 </SmellBaseline>

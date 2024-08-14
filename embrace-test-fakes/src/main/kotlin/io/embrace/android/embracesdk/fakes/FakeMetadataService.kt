@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import android.content.Context
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
@@ -55,8 +54,6 @@ public class FakeMetadataService(sessionId: String? = null) : MetadataService {
     public var osUpdated: Boolean = false
     public var fakeAppId: String = "o0o0o"
     public var fakeDeviceId: String = "07D85B44E4E245F4A30E559BFC0D07FF"
-    public var fakeReactNativeBundleId: String? = "fakeReactNativeBundleId"
-    public var forceUpdate: Boolean? = null
     public var fakeFlutterSdkVersion: String? = "fakeFlutterSdkVersion"
     public var fakeDartVersion: String? = "fakeDartVersion"
     public var fakeReactNativeVersion: String? = "fakeReactNativeVersion"
@@ -84,20 +81,11 @@ public class FakeMetadataService(sessionId: String? = null) : MetadataService {
         appState = APP_STATE_BACKGROUND
     }
 
-    override fun getAppInfo(lightweight: Boolean): AppInfo = androidAppInfo
+    override fun getAppInfo(): AppInfo = androidAppInfo
 
-    override fun getDeviceInfo(lightweight: Boolean): DeviceInfo = androidDeviceInfo
+    override fun getDeviceInfo(): DeviceInfo = androidDeviceInfo
 
     override fun getDiskUsage(): DiskUsage = diskUsage
-
-    override fun setReactNativeBundleId(context: Context, jsBundleUrl: String?, forceUpdate: Boolean?) {
-        fakeReactNativeBundleId = jsBundleUrl
-        this.forceUpdate = forceUpdate
-    }
-
-    override fun getReactNativeBundleId(): String? {
-        return fakeReactNativeBundleId
-    }
 
     override fun precomputeValues() {}
 }

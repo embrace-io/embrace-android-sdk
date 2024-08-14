@@ -159,7 +159,7 @@ internal class PayloadFactoryBaTest {
                 spanRepository,
                 OtelPayloadMapperImpl(
                     fakeAnrOtelMapper(),
-                    fakeNativeAnrOtelMapper(),
+                    ::fakeNativeAnrOtelMapper,
                 ),
                 logger
             )

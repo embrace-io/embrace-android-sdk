@@ -18,9 +18,10 @@ internal class LogModuleImpl(
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     deliveryModule: DeliveryModule,
     workerThreadModule: WorkerThreadModule,
-    payloadModule: PayloadModule,
+    payloadSourceModule: PayloadSourceModule,
 ) : LogModule {
 
     override val networkCaptureService: NetworkCaptureService by singleton {
@@ -28,7 +29,7 @@ internal class LogModuleImpl(
             essentialServiceModule.sessionIdTracker,
             androidServicesModule.preferencesService,
             { networkCaptureDataSource },
-            essentialServiceModule.configService,
+            configModule.configService,
             initModule.jsonSerializer,
             initModule.logger
         )
@@ -43,7 +44,7 @@ internal class LogModuleImpl(
 
     private val embraceDomainCountLimiter: EmbraceDomainCountLimiter by singleton {
         EmbraceDomainCountLimiter(
-            essentialServiceModule.configService,
+            configModule.configService,
             initModule.logger
         )
     }
@@ -59,7 +60,7 @@ internal class LogModuleImpl(
     override val logService: LogService by singleton {
         EmbraceLogService(
             essentialServiceModule.logWriter,
-            essentialServiceModule.configService,
+            configModule.configService,
             essentialServiceModule.sessionPropertiesService,
             workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
             initModule.logger,
@@ -74,7 +75,7 @@ internal class LogModuleImpl(
             initModule.clock,
             openTelemetryModule.logSink,
             deliveryModule.deliveryService,
-            payloadModule.logEnvelopeSource,
+            payloadSourceModule.logEnvelopeSource,
         )
     }
 }

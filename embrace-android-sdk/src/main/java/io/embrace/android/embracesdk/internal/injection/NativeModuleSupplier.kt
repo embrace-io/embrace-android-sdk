@@ -8,6 +8,8 @@ internal typealias NativeModuleSupplier = (
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
+    payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule
@@ -18,6 +20,8 @@ internal fun createNativeModule(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
+    payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule
@@ -26,6 +30,8 @@ internal fun createNativeModule(
     coreModule,
     storageModule,
     essentialServiceModule,
+    configModule,
+    payloadSourceModule,
     deliveryModule,
     androidServicesModule,
     workerThreadModule

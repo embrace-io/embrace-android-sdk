@@ -11,5 +11,6 @@
   "ou": false,
   "oul": false,
   "sdk": "{versionName}",
-  "sdc": "{versionCode}"
+  "sdc": "{versionCode}",
+  "rn": "fakeReactNativeBundleId"
 }

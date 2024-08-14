@@ -29,10 +29,10 @@ internal class LogsApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            logModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
+            logModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
-        orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
+        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

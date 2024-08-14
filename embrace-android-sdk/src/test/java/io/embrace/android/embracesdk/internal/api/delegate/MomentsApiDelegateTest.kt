@@ -26,8 +26,8 @@ internal class MomentsApiDelegateTest {
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
-        orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
-        eventService = moduleInitBootstrapper.dataContainerModule.eventService as FakeEventService
+        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
+        eventService = moduleInitBootstrapper.momentsModule.eventService as FakeEventService
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

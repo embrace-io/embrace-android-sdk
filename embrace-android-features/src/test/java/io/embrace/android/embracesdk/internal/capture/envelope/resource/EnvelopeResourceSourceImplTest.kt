@@ -4,8 +4,8 @@ import android.content.pm.PackageInfo
 import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -55,7 +55,6 @@ internal class EnvelopeResourceSourceImplTest {
 
     @Test
     fun getEnvelopeResource() {
-        val metadataService = FakeMetadataService()
         val hostedSdkVersionInfo = HostedSdkVersionInfo(
             FakePreferenceService()
         )
@@ -71,7 +70,7 @@ internal class EnvelopeResourceSourceImplTest {
             AppFramework.NATIVE,
             fakeArchitecture,
             FakeDevice(),
-            metadataService
+            FakeRnBundleIdTracker()
         )
         val envelope = source.getEnvelopeResource()
 

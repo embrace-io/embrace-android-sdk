@@ -64,8 +64,6 @@ public class SdkModeBehaviorImpl(
         return thresholdCheck.isBehaviorEnabled(pct)
     }
 
-    override val appId: String? by lazy { local?.appId }
-
     /**
      * The % of devices that should be enabled.
      */

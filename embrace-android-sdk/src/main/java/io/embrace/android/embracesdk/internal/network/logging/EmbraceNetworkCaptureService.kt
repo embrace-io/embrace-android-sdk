@@ -42,7 +42,7 @@ internal class EmbraceNetworkCaptureService(
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
-        val appId = configService.sdkModeBehavior.appId
+        val appId = configService.appId
         if (url.contentEquals(configService.sdkEndpointBehavior.getData(appId))) {
             logger.logDebug("Cannot intercept Embrace endpoints")
             return emptySet()

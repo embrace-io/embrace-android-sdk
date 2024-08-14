@@ -286,7 +286,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
         pendingApiCalls.add(pendingApiCall1)
@@ -297,7 +298,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id",
             deviceId = "test_device_id",
             eventId = "request_2",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         fakeClock.tickSecond()
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
@@ -309,7 +311,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id",
             deviceId = "test_device_id",
             eventId = "request_3",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         fakeClock.tickSecond()
         val pendingApiCall3 = PendingApiCall(request3, "payload_3.json", fakeClock.now())
@@ -340,7 +343,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
         pendingApiCalls.add(pendingApiCall1)
@@ -351,7 +355,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id",
             deviceId = "test_device_id",
             eventId = "request_2",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         fakeClock.tickSecond()
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
@@ -363,7 +368,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id",
             deviceId = "test_device_id",
             eventId = "request_3",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         fakeClock.tickSecond()
         val pendingApiCall3 = PendingApiCall(request3, "payload_3.json", fakeClock.now())
@@ -397,7 +403,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
         pendingApiCallsQueue.add(pendingApiCall1)
@@ -408,7 +415,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             appId = "test_app_id",
             deviceId = "test_device_id",
             eventId = "request_2",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         fakeClock.tickSecond()
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())

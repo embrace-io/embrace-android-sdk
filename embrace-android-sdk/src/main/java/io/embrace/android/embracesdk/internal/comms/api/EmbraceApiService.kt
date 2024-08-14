@@ -208,7 +208,7 @@ internal class EmbraceApiService(
         val url = EmbraceUrl.create(request.url.url)
         val endpoint = url.endpoint()
 
-        if (lastNetworkStatus.isReachable && !endpoint.isRateLimited) {
+        if (lastNetworkStatus.isReachable && !endpoint.limiter.isRateLimited) {
             // Execute the request if the device is online and the endpoint is not rate limited.
             val response = executePost(request, action)
 

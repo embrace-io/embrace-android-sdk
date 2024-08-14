@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.mockk.clearMocks
 import io.mockk.every
@@ -28,15 +29,15 @@ internal class EndpointTest {
     @After
     fun tearDown() {
         clearMocks(mockExecuteApiCalls)
-        endpoint.clearRateLimit()
+        endpoint.limiter.clearRateLimit()
     }
 
     @Test
     fun `test setting a rate limit and scheduling a retry, clears rate limit after succeed`() {
         val retryAfter = 3L
         // clear rate limit after calling executeApiCalls
-        every { mockExecuteApiCalls.invoke() } answers { endpoint.clearRateLimit() }
-        with(endpoint) {
+        every { mockExecuteApiCalls.invoke() } answers { endpoint.limiter.clearRateLimit() }
+        with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
                 ScheduledWorker(scheduledExecutorService),
@@ -45,9 +46,9 @@ internal class EndpointTest {
             )
         }
 
-        assertTrue(endpoint.isRateLimited)
+        assertTrue(endpoint.limiter.isRateLimited)
         scheduledExecutorService.moveForwardAndRunBlocked(3000)
-        assertFalse(endpoint.isRateLimited)
+        assertFalse(endpoint.limiter.isRateLimited)
         verify(exactly = 1) { mockExecuteApiCalls.invoke() }
     }
 
@@ -56,7 +57,7 @@ internal class EndpointTest {
         val endpoint = Endpoint.EVENTS
         // emulate 2 rate limit responses and 1 success response
         every { mockExecuteApiCalls.invoke() } answers {
-            with(endpoint) {
+            with(endpoint.limiter) {
                 updateRateLimitStatus()
                 scheduleRetry(
                     ScheduledWorker(scheduledExecutorService),
@@ -65,7 +66,7 @@ internal class EndpointTest {
                 )
             }
         } andThenAnswer {
-            with(endpoint) {
+            with(endpoint.limiter) {
                 updateRateLimitStatus()
                 scheduleRetry(
                     ScheduledWorker(scheduledExecutorService),
@@ -74,11 +75,11 @@ internal class EndpointTest {
                 )
             }
         } andThenAnswer {
-            endpoint.clearRateLimit()
+            endpoint.limiter.clearRateLimit()
         }
 
         // set rate limit for the first call
-        with(endpoint) {
+        with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
                 ScheduledWorker(scheduledExecutorService),
@@ -88,24 +89,24 @@ internal class EndpointTest {
         }
 
         // asserts for the first call
-        assertTrue(endpoint.isRateLimited)
+        assertTrue(endpoint.limiter.isRateLimited)
         verify(exactly = 0) { mockExecuteApiCalls.invoke() }
         scheduledExecutorService.moveForwardAndRunBlocked(3000)
-        assertTrue(endpoint.isRateLimited)
+        assertTrue(endpoint.limiter.isRateLimited)
         verify(exactly = 1) { mockExecuteApiCalls.invoke() }
 
         // asserts for the second call
-        assertTrue(endpoint.isRateLimited)
+        assertTrue(endpoint.limiter.isRateLimited)
         verify(exactly = 1) { mockExecuteApiCalls.invoke() }
         scheduledExecutorService.moveForwardAndRunBlocked(9000)
-        assertTrue(endpoint.isRateLimited)
+        assertTrue(endpoint.limiter.isRateLimited)
         verify(exactly = 2) { mockExecuteApiCalls.invoke() }
 
         // asserts for the third call
-        assertTrue(endpoint.isRateLimited)
+        assertTrue(endpoint.limiter.isRateLimited)
         verify(exactly = 2) { mockExecuteApiCalls.invoke() }
         scheduledExecutorService.moveForwardAndRunBlocked(27000)
-        assertFalse(endpoint.isRateLimited)
+        assertFalse(endpoint.limiter.isRateLimited)
         verify(exactly = 3) { mockExecuteApiCalls.invoke() }
     }
 }

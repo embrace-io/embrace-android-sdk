@@ -157,7 +157,8 @@ internal class EmbraceCacheServiceTest {
     fun `test PendingApiCalls can be cached`() {
         val apiRequest = ApiRequest(
             httpMethod = HttpMethod.GET,
-            url = ApiRequestUrl("http://fake.url/sessions")
+            url = ApiRequestUrl("http://fake.url/sessions"),
+            userAgent = ""
         )
         val pendingApiCalls = PendingApiCalls()
         pendingApiCalls.add(PendingApiCall(apiRequest, "payload_id"))
@@ -301,14 +302,16 @@ internal class EmbraceCacheServiceTest {
             PendingApiCall(
                 ApiRequest(
                     httpMethod = HttpMethod.POST,
-                    url = ApiRequestUrl("http://fake.url/sessions")
+                    url = ApiRequestUrl("http://fake.url/sessions"),
+                    userAgent = ""
                 ),
                 "payload_id_1"
             ),
             PendingApiCall(
                 ApiRequest(
                     httpMethod = HttpMethod.POST,
-                    url = ApiRequestUrl("http://fake.url/sessions")
+                    url = ApiRequestUrl("http://fake.url/sessions"),
+                    userAgent = ""
                 ),
                 "payload_id_2"
             )

@@ -4,6 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.api.limiter
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -76,7 +77,7 @@ internal class PendingApiCalls(
      * Returns true if the queue has at least one pending API call and the endpoint is not rate limited.
      */
     private fun List<PendingApiCall>.hasPendingApiCallsToSend(endpoint: Endpoint): Boolean {
-        return this.isNotEmpty() && !endpoint.isRateLimited
+        return this.isNotEmpty() && !endpoint.limiter.isRateLimited
     }
 
     /**

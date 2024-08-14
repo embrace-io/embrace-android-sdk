@@ -50,7 +50,7 @@ internal class ApiClientImplTest {
     @Test
     fun testUnreachableHost() {
         // attempt some unreachable port
-        val request = ApiRequest(url = ApiRequestUrl("http://localhost:1565"))
+        val request = ApiRequest(url = ApiRequestUrl("http://localhost:1565"), userAgent = "test")
         val response = apiClient.executePost(request) {
             it.write("Hello world".toByteArray())
         }
@@ -212,7 +212,8 @@ internal class ApiClientImplTest {
         apiClient.executeGet(
             ApiRequest(
                 url = ApiRequestUrl(baseUrl),
-                httpMethod = HttpMethod.GET
+                httpMethod = HttpMethod.GET,
+                userAgent = "test"
             )
         )
 
@@ -222,7 +223,8 @@ internal class ApiClientImplTest {
         apiClient.executePost(
             ApiRequest(
                 url = ApiRequestUrl(baseUrl),
-                httpMethod = HttpMethod.POST
+                httpMethod = HttpMethod.POST,
+                userAgent = "test"
             )
         ) {
             ConditionalGzipOutputStream(it).use { stream ->
@@ -231,7 +233,7 @@ internal class ApiClientImplTest {
         }
 
     private fun createThrowingRequest(): ApiRequest {
-        return ApiRequest(url = ApiRequestUrl("my bad req"))
+        return ApiRequest(url = ApiRequestUrl("my bad req"), userAgent = "test")
     }
 
     private fun RecordedRequest.readCompressedRequestBody(): String {
@@ -244,15 +246,13 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
-            .minus("User-Agent")
             .minus("Connection")
-        val userAgent = delivered.headers.toMap()["User-Agent"]
-        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
                 "Content-Type" to "application/json",
                 "Content-Length" to "${delivered.bodySize}",
+                "User-Agent" to "test"
             ),
             headers
         )
@@ -263,14 +263,12 @@ internal class ApiClientImplTest {
         assertEquals("/test", delivered.path)
         val headers = delivered.headers.toMap()
             .minus("Host")
-            .minus("User-Agent")
             .minus("Connection")
-        val userAgent = delivered.headers.toMap()["User-Agent"]
-        assertTrue(userAgent.toString().startsWith("Embrace/a/"))
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "Content-Type" to "application/json"
+                "Content-Type" to "application/json",
+                "User-Agent" to "test",
             ),
             headers
         )

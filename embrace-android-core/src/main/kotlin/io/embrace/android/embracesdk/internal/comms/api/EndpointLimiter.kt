@@ -5,29 +5,22 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow
 
-internal enum class Endpoint(val path: String, val version: String) {
-    EVENTS("events", "v1"),
-    LOGGING("logging", "v1"),
-    LOGS("logs", "v2"),
-    NETWORK("network", "v1"),
-    SESSIONS("sessions", "v1"),
-    SESSIONS_V2("spans", "v2"),
-    UNKNOWN("unknown", "v1");
+public class EndpointLimiter {
 
     private var rateLimitRetryCount = AtomicInteger(0)
 
     @Volatile
-    var isRateLimited = false
+    public var isRateLimited: Boolean = false
         private set
 
-    fun updateRateLimitStatus() {
+    public fun updateRateLimitStatus() {
         synchronized(this) {
             isRateLimited = true
             rateLimitRetryCount.incrementAndGet()
         }
     }
 
-    fun clearRateLimit() {
+    public fun clearRateLimit() {
         synchronized(this) {
             isRateLimited = false
             rateLimitRetryCount.set(0)
@@ -38,7 +31,7 @@ internal enum class Endpoint(val path: String, val version: String) {
      * Schedules a task to execute the api calls ofter the given retry after time
      * or the exponential backoff delay calculated from the number of retries.
      */
-    fun scheduleRetry(
+    public fun scheduleRetry(
         scheduledWorker: ScheduledWorker,
         retryAfter: Long?,
         retryMethod: () -> Unit

@@ -329,7 +329,8 @@ internal class EmbracePendingApiCallsSenderTest {
 
         if (loadFailedRequest) {
             val request = ApiRequest(
-                url = ApiRequestUrl("https://fake.com/${Endpoint.SESSIONS.path}")
+                url = ApiRequestUrl("https://fake.com/${Endpoint.SESSIONS.path}"),
+                userAgent = ""
             )
             pendingApiCalls.add(PendingApiCall(request, "cached_payload_1"))
         }

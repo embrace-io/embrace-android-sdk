@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
@@ -33,7 +34,8 @@ internal class PendingApiCallsTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         pendingApiCalls.add(pendingApiCall1)
@@ -44,7 +46,8 @@ internal class PendingApiCallsTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_2",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall2 = PendingApiCall(request2, "payload_filename")
         pendingApiCalls.add(pendingApiCall2)
@@ -62,7 +65,8 @@ internal class PendingApiCallsTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
         pendingApiCalls.add(PendingApiCall(request1, "payload_filename"))
@@ -77,7 +81,8 @@ internal class PendingApiCallsTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         pendingApiCalls.add(pendingApiCall1)
@@ -88,7 +93,8 @@ internal class PendingApiCallsTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_2",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall2 = PendingApiCall(request2, "payload_filename")
         pendingApiCalls.add(pendingApiCall2)
@@ -116,7 +122,8 @@ internal class PendingApiCallsTest {
                     appId = "test_app_id_1",
                     deviceId = "test_device_id",
                     eventId = "request_$it",
-                    contentEncoding = "gzip"
+                    contentEncoding = "gzip",
+                    userAgent = ""
                 )
                 val pendingApiCall = PendingApiCall(request, "payload_filename")
 
@@ -129,7 +136,8 @@ internal class PendingApiCallsTest {
                 appId = "test_app_id_1",
                 deviceId = "test_device_id",
                 eventId = "request_exceeding",
-                contentEncoding = "gzip"
+                contentEncoding = "gzip",
+                userAgent = ""
             )
             val exceedingPendingApiCall = PendingApiCall(exceedingRequest, "payload_filename")
 
@@ -156,13 +164,14 @@ internal class PendingApiCallsTest {
             appId = "test_app_id_1",
             deviceId = "test_device_id",
             eventId = "request_1",
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         pendingApiCalls.add(pendingApiCall1)
 
         val endpoint = Endpoint.EVENTS
-        with(endpoint) {
+        with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
                 scheduledWorker = worker,
@@ -171,7 +180,7 @@ internal class PendingApiCallsTest {
         }
         assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
 
-        endpoint.clearRateLimit()
+        endpoint.limiter.clearRateLimit()
         assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
     }
 

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
@@ -84,7 +85,7 @@ internal class EmbraceApiServiceTest {
     @After
     fun tearDown() {
         Endpoint.values().forEach {
-            it.clearRateLimit()
+            it.limiter.clearRateLimit()
         }
     }
 
@@ -492,7 +493,7 @@ internal class EmbraceApiServiceTest {
     fun `test that requests to rate limited endpoint, do not execute the request and save a pending api call`() {
         val callback = mockk<() -> Unit>(relaxed = true)
         val endpoint = Endpoint.LOGGING
-        with(endpoint) {
+        with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
                 scheduledWorker = ScheduledWorker(testScheduledExecutor),

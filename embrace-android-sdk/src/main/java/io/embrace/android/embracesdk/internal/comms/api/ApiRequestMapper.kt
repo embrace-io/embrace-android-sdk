@@ -27,7 +27,8 @@ internal class ApiRequestMapper(
             httpMethod = HttpMethod.POST,
             appId = appId,
             deviceId = lazyDeviceId.value,
-            contentEncoding = "gzip"
+            contentEncoding = "gzip",
+            userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME
         )
     }
 

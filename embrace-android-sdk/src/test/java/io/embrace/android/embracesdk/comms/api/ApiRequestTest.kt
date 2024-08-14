@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.comms.api
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
+import io.embrace.android.embracesdk.internal.comms.api.getHeaders
+import io.embrace.android.embracesdk.internal.comms.api.isSessionRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,15 +48,14 @@ internal class ApiRequestTest {
 
     @Test
     fun testMinimalHeaders() {
-        val minimal = ApiRequest(url = ApiRequestUrl("https://google.com"))
-        assertTrue(minimal.getHeaders()["User-Agent"].toString().startsWith("Embrace/a/"))
-
+        val minimal = ApiRequest(url = ApiRequestUrl("https://google.com"), userAgent = "test")
         assertEquals(
             mapOf(
                 "Accept" to "application/json",
-                "Content-Type" to "application/json"
+                "Content-Type" to "application/json",
+                "User-Agent" to "test"
             ),
-            minimal.getHeaders().minus("User-Agent")
+            minimal.getHeaders()
         )
     }
 

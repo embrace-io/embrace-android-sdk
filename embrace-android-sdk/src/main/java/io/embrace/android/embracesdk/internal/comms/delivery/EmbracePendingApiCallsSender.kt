@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
@@ -58,7 +59,7 @@ internal class EmbracePendingApiCallsSender(
                 scheduleApiCallsDelivery(RETRY_PERIOD)
             }
             is ApiResponse.TooManyRequests -> {
-                with(response.endpoint) {
+                with(response.endpoint.limiter) {
                     updateRateLimitStatus()
                     scheduleRetry(
                         scheduledWorker,
@@ -151,7 +152,7 @@ internal class EmbracePendingApiCallsSender(
                     if (response.shouldRetry) {
                         when (response) {
                             is ApiResponse.TooManyRequests -> {
-                                with(response.endpoint) {
+                                with(response.endpoint.limiter) {
                                     updateRateLimitStatus()
                                     scheduleRetry(
                                         scheduledWorker,
@@ -225,7 +226,7 @@ internal class EmbracePendingApiCallsSender(
      */
     private fun clearRateLimitIfApplies(endpoint: Endpoint, response: ApiResponse) {
         if (response !is ApiResponse.TooManyRequests) {
-            endpoint.clearRateLimit()
+            endpoint.limiter.clearRateLimit()
         }
     }
 }

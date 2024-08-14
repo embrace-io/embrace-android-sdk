@@ -30,6 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: master
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
 
       - name: Set next SDK version
         run: |

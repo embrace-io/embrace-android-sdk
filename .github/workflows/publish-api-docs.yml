@@ -29,7 +29,6 @@ jobs:
     strategy:
       matrix:
         jdk-version: [ "17" ]
-        ndk-version: [ "21.4.7075529" ]
     steps:
       - name: Configure git
         run: |

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
+import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSessionOrchestrationModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSu
 import io.embrace.android.embracesdk.internal.injection.LogModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.MomentsModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.NativeModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
@@ -51,11 +51,11 @@ internal fun fakeModuleInitBootstrapper(
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule() },
-    nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeModule() },
+    nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _ -> FakeNativeCoreModule() },
     momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _, _, _ -> FakeMomentsModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _ -> FakeCrashModule() },
-    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() }
+    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() }
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
     initModule = fakeInitModule,
@@ -72,7 +72,7 @@ internal fun fakeModuleInitBootstrapper(
     deliveryModuleSupplier = deliveryModuleSupplier,
     anrModuleSupplier = anrModuleSupplier,
     logModuleSupplier = logModuleSupplier,
-    nativeModuleSupplier = nativeModuleSupplier,
+    nativeCoreModuleSupplier = nativeCoreModuleSupplier,
     momentsModuleSupplier = momentsModuleSupplier,
     sessionOrchestrationModuleSupplier = sessionOrchestrationModuleSupplier,
     crashModuleSupplier = crashModuleSupplier,

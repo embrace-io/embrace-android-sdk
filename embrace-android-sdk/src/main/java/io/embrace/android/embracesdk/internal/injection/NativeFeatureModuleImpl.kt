@@ -1,13 +1,10 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
-import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
-import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
@@ -18,7 +15,7 @@ import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-internal class NativeModuleImpl(
+internal class NativeFeatureModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -27,8 +24,9 @@ internal class NativeModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
-    workerThreadModule: WorkerThreadModule
-) : NativeModule {
+    workerThreadModule: WorkerThreadModule,
+    nativeCoreModule: NativeCoreModule
+) : NativeFeatureModule {
 
     override val ndkService: NdkService by singleton {
         Systrace.traceSynchronous("ndk-service-init") {
@@ -42,7 +40,7 @@ internal class NativeModuleImpl(
                 essentialServiceModule.userService,
                 androidServicesModule.preferencesService,
                 essentialServiceModule.sessionPropertiesService,
-                sharedObjectLoader,
+                nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
@@ -63,7 +61,7 @@ internal class NativeModuleImpl(
                     logger = initModule.logger,
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
-                    sharedObjectLoader = sharedObjectLoader,
+                    sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 )
             } else {
                 null
@@ -79,7 +77,7 @@ internal class NativeModuleImpl(
         Systrace.traceSynchronous("native-thread-sampler-installer-init") {
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 NativeThreadSamplerInstaller(
-                    sharedObjectLoader = sharedObjectLoader,
+                    sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                     logger = initModule.logger
                 )
             } else {
@@ -102,14 +100,6 @@ internal class NativeModuleImpl(
                 logger = initModule.logger,
             )
         }
-    }
-
-    override val sharedObjectLoader: SharedObjectLoader by singleton {
-        SharedObjectLoader(initModule.logger)
-    }
-
-    override val cpuInfoDelegate: CpuInfoDelegate by singleton {
-        EmbraceCpuInfoDelegate(sharedObjectLoader, initModule.logger)
     }
 
     private fun nativeThreadSamplingEnabled(configService: ConfigService) = configService.autoDataCaptureBehavior.isNdkEnabled()

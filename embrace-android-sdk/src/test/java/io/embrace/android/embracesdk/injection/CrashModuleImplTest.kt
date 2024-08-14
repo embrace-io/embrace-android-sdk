@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
+import io.embrace.android.embracesdk.fakes.injection.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
@@ -22,14 +22,14 @@ internal class CrashModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        val androidServicesModule = FakeNativeModule()
+        val nativeFeatureModule = FakeNativeFeatureModule()
         val module = CrashModuleImpl(
             FakeInitModule(),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             FakeAndroidServicesModule(),
-            androidServicesModule.ndkService::getUnityCrashId,
+            nativeFeatureModule.ndkService::getUnityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)
@@ -37,7 +37,7 @@ internal class CrashModuleImplTest {
 
     @Test
     fun `default config turns on v2 native crash service`() {
-        val nativeModule = FakeNativeModule()
+        val nativeFeatureModule = FakeNativeFeatureModule()
         val module = CrashModuleImpl(
             FakeInitModule(),
             FakeStorageModule(),
@@ -48,7 +48,7 @@ internal class CrashModuleImplTest {
                 )
             ),
             FakeAndroidServicesModule(),
-            nativeModule.ndkService::getUnityCrashId,
+            nativeFeatureModule.ndkService::getUnityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)

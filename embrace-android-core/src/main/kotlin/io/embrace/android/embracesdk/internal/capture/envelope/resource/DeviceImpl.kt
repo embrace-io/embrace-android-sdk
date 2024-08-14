@@ -129,7 +129,7 @@ public class DeviceImpl(
     override val internalStorageTotalCapacity: Lazy<Long> =
         lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
 
-    override val cpuName: String? by lazy { cpuInfoDelegate()?.getCpuName()}
+    override val cpuName: String? by lazy { cpuInfoDelegate()?.getCpuName() }
 
     override val eglInfo: String? by lazy { cpuInfoDelegate()?.getEgl() }
 }

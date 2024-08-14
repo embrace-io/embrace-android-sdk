@@ -30,7 +30,8 @@ internal class PayloadSourceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    nativeModuleProvider: Provider<NativeModule?>,
+    nativeCoreModuleProvider: Provider<NativeCoreModule?>,
+    nativeFeatureModuleProvider: Provider<NativeFeatureModule?>,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
 ) : PayloadSourceModule {
@@ -48,11 +49,11 @@ internal class PayloadSourceModuleImpl(
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(
-            { nativeModuleProvider()?.nativeThreadSamplerService?.getNativeSymbols() },
+            { nativeFeatureModuleProvider()?.nativeThreadSamplerService?.getNativeSymbols() },
             otelModule.spanSink,
             otelModule.currentSessionSpan,
             otelModule.spanRepository,
-            OtelPayloadMapperImpl(anrModule.anrOtelMapper) { nativeModuleProvider()?.nativeAnrOtelMapper },
+            OtelPayloadMapperImpl(anrModule.anrOtelMapper) { nativeFeatureModuleProvider()?.nativeAnrOtelMapper },
             initModule.logger
         )
     }
@@ -93,7 +94,7 @@ internal class PayloadSourceModuleImpl(
                 androidServicesModule.preferencesService,
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 initModule.systemInfo,
-                { nativeModuleProvider()?.cpuInfoDelegate },
+                { nativeCoreModuleProvider()?.cpuInfoDelegate },
                 initModule.logger
             ),
             rnBundleIdTracker

@@ -47,7 +47,7 @@ jobs:
         uses: gradle/actions/wrapper-validation@v4
 
       - name: Generate Documentation
-        run: ./gradlew dokkaHtmlMultiModule --clean --no-build-cache --no-configuration-cache
+        run: ./gradlew dokkaHtmlMultiModule clean --no-build-cache --no-configuration-cache
 
       - name: Configure git
         run: |

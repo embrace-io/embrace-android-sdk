@@ -5,16 +5,16 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
-import io.embrace.android.embracesdk.internal.injection.PayloadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
-internal class PayloadModuleImplTest {
+internal class PayloadSourceModuleImplTest {
 
     @Test
     fun `module default values`() {
         val initModule = FakeInitModule()
-        val module = PayloadModuleImpl(
+        val module = PayloadSourceModuleImpl(
             initModule,
             FakeEssentialServiceModule(),
             FakeNativeModule(),

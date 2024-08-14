@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSo
 /**
  * Modules containing classes that generate the payloads.
  */
-internal interface PayloadModule {
+internal interface PayloadSourceModule {
     val sessionEnvelopeSource: SessionEnvelopeSource
     val logEnvelopeSource: LogEnvelopeSource
 }

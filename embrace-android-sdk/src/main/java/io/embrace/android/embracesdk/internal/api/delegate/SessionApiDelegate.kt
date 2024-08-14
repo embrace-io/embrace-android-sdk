@@ -12,7 +12,9 @@ internal class SessionApiDelegate(
     private val sessionPropertiesService by embraceImplInject(sdkCallChecker) {
         bootstrapper.essentialServiceModule.sessionPropertiesService
     }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
 
     /**
      * Adds a property to the current session.

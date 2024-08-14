@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakePayloadModule
+import io.embrace.android.embracesdk.fakes.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
+import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.SessionModuleImpl
+import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class SessionModuleImplTest {
+internal class SessionOrchestrationModuleImplTest {
 
     private val initModule = FakeInitModule()
     private val configService = FakeConfigService()
@@ -34,7 +34,7 @@ internal class SessionModuleImplTest {
             configService,
             workerThreadModule
         )
-        val module = SessionModuleImpl(
+        val module = SessionOrchestrationModuleImpl(
             initModule,
             initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
@@ -42,9 +42,9 @@ internal class SessionModuleImplTest {
             FakeDeliveryModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule(),
+            FakePayloadSourceModule(),
             FakeDataCaptureServiceModule(),
-            FakeDataContainerModule(),
+            FakeMomentsModule(),
             FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)
@@ -67,7 +67,7 @@ internal class SessionModuleImplTest {
             workerThreadModule
         )
 
-        val module = SessionModuleImpl(
+        val module = SessionOrchestrationModuleImpl(
             initModule,
             initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
@@ -75,9 +75,9 @@ internal class SessionModuleImplTest {
             FakeDeliveryModule(),
             workerThreadModule,
             dataSourceModule,
-            FakePayloadModule(),
+            FakePayloadSourceModule(),
             FakeDataCaptureServiceModule(),
-            FakeDataContainerModule(),
+            FakeMomentsModule(),
             FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollatorImpl)

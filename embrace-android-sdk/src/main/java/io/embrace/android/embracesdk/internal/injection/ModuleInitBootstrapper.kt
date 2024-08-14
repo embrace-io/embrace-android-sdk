@@ -41,10 +41,10 @@ internal class ModuleInitBootstrapper(
     private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
     private val logModuleSupplier: LogModuleSupplier = ::createLogModule,
     private val nativeModuleSupplier: NativeModuleSupplier = ::createNativeModule,
-    private val dataContainerModuleSupplier: DataContainerModuleSupplier = ::createDataContainerModule,
-    private val sessionModuleSupplier: SessionModuleSupplier = ::createSessionModule,
+    private val momentsModuleSupplier: MomentsModuleSupplier = ::createMomentsModule,
+    private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
-    private val payloadModuleSupplier: PayloadModuleSupplier = ::createPayloadModule,
+    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -79,7 +79,7 @@ internal class ModuleInitBootstrapper(
     lateinit var nativeModule: NativeModule
         private set
 
-    lateinit var dataContainerModule: DataContainerModule
+    lateinit var momentsModule: MomentsModule
         private set
 
     lateinit var dataSourceModule: DataSourceModule
@@ -88,13 +88,13 @@ internal class ModuleInitBootstrapper(
     lateinit var featureModule: FeatureModule
         private set
 
-    lateinit var sessionModule: SessionModule
+    lateinit var sessionOrchestrationModule: SessionOrchestrationModule
         private set
 
     lateinit var crashModule: CrashModule
         private set
 
-    lateinit var payloadModule: PayloadModule
+    lateinit var payloadSourceModule: PayloadSourceModule
         private set
 
     private val asyncInitTask = AtomicReference<Future<*>?>(null)
@@ -343,8 +343,8 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
-                    payloadModule = init(PayloadModule::class) {
-                        payloadModuleSupplier(
+                    payloadSourceModule = init(PayloadSourceModule::class) {
+                        payloadSourceModuleSupplier(
                             initModule,
                             essentialServiceModule,
                             nativeModule,
@@ -361,7 +361,7 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             deliveryModule,
                             workerThreadModule,
-                            payloadModule
+                            payloadSourceModule
                         )
                     }
 
@@ -375,8 +375,8 @@ internal class ModuleInitBootstrapper(
                         logModule.logOrchestrator
                     }
 
-                    dataContainerModule = init(DataContainerModule::class) {
-                        dataContainerModuleSupplier(
+                    momentsModule = init(MomentsModule::class) {
+                        momentsModuleSupplier(
                             initModule,
                             workerThreadModule,
                             essentialServiceModule,
@@ -387,12 +387,12 @@ internal class ModuleInitBootstrapper(
 
                     postInit(NativeModule::class) {
                         serviceRegistry.registerServices(
-                            dataContainerModule.eventService,
+                            momentsModule.eventService,
                         )
                     }
 
-                    sessionModule = init(SessionModule::class) {
-                        sessionModuleSupplier(
+                    sessionOrchestrationModule = init(SessionOrchestrationModule::class) {
+                        sessionOrchestrationModuleSupplier(
                             initModule,
                             openTelemetryModule,
                             androidServicesModule,
@@ -400,9 +400,9 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             workerThreadModule,
                             dataSourceModule,
-                            payloadModule,
+                            payloadSourceModule,
                             dataCaptureServiceModule,
-                            dataContainerModule,
+                            momentsModule,
                             logModule
                         )
                     }
@@ -422,7 +422,7 @@ internal class ModuleInitBootstrapper(
                         with(crashModule.crashDataSource) {
                             addCrashTeardownHandler(anrModule.anrService)
                             addCrashTeardownHandler(logModule.logOrchestrator)
-                            addCrashTeardownHandler(sessionModule.sessionOrchestrator)
+                            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
                         }
                     }
 

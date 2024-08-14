@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.internal.injection
 
 /**
- * Function that returns an instance of [DataContainerModule]. Matches the signature of the constructor for [DataContainerModuleImpl]
+ * Function that returns an instance of [MomentsModule]. Matches the signature of the constructor for [MomentsModuleImpl]
  */
-internal typealias DataContainerModuleSupplier = (
+internal typealias MomentsModuleSupplier = (
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     startTime: Long
-) -> DataContainerModule
+) -> MomentsModule
 
-internal fun createDataContainerModule(
+internal fun createMomentsModule(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
     deliveryModule: DeliveryModule,
     startTime: Long
-): DataContainerModule = DataContainerModuleImpl(
+): MomentsModule = MomentsModuleImpl(
     initModule,
     workerThreadModule,
     essentialServiceModule,

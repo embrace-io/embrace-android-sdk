@@ -193,7 +193,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         val deliveryModule = bootstrapper.deliveryModule
-        val dataContainerModule = bootstrapper.dataContainerModule
+        val momentsModule = bootstrapper.momentsModule
         val crashModule = bootstrapper.crashModule
 
         startSynchronous("send-cached-sessions")
@@ -214,7 +214,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 bootstrapper.openTelemetryModule,
                 essentialServiceModule,
                 bootstrapper.logModule,
-                bootstrapper.dataContainerModule,
+                bootstrapper.momentsModule,
                 this,
                 crashModule
             )
@@ -242,7 +242,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
         // sending this, so to ensure the startup message is sent, we force it to be sent here.
         if (inForeground) {
-            dataContainerModule.eventService.sendStartupMoment()
+            momentsModule.eventService.sendStartupMoment()
         }
 
         startSynchronous("startup-tracking")

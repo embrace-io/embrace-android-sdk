@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCrashModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDataContainerModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
+import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
-import io.embrace.android.embracesdk.fakes.injection.FakeSessionModule
+import io.embrace.android.embracesdk.fakes.injection.FakeSessionOrchestrationModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -20,15 +20,15 @@ import io.embrace.android.embracesdk.internal.injection.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.CrashModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.DataContainerModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DataSourceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.LogModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.MomentsModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.NativeModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.PayloadModuleSupplier
-import io.embrace.android.embracesdk.internal.injection.SessionModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.StorageModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SystemServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleSupplier
@@ -50,10 +50,10 @@ internal fun fakeModuleInitBootstrapper(
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },
     nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeModule() },
-    dataContainerModuleSupplier: DataContainerModuleSupplier = { _, _, _, _, _ -> FakeDataContainerModule() },
-    sessionModuleSupplier: SessionModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionModule() },
+    momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _ -> FakeMomentsModule() },
+    sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _ -> FakeCrashModule() },
-    payloadModuleSupplier: PayloadModuleSupplier = { _, _, _, _, _ -> FakePayloadModule() }
+    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _ -> FakePayloadSourceModule() }
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
     initModule = fakeInitModule,
@@ -70,8 +70,8 @@ internal fun fakeModuleInitBootstrapper(
     anrModuleSupplier = anrModuleSupplier,
     logModuleSupplier = logModuleSupplier,
     nativeModuleSupplier = nativeModuleSupplier,
-    dataContainerModuleSupplier = dataContainerModuleSupplier,
-    sessionModuleSupplier = sessionModuleSupplier,
+    momentsModuleSupplier = momentsModuleSupplier,
+    sessionOrchestrationModuleSupplier = sessionOrchestrationModuleSupplier,
     crashModuleSupplier = crashModuleSupplier,
-    payloadModuleSupplier = payloadModuleSupplier,
+    payloadSourceModuleSupplier = payloadSourceModuleSupplier,
 )

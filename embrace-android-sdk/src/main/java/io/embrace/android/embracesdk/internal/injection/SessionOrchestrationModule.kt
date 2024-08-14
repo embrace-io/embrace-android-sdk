@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
-internal interface SessionModule {
+internal interface SessionOrchestrationModule {
     val payloadFactory: PayloadFactory
     val payloadMessageCollatorImpl: PayloadMessageCollatorImpl
     val sessionOrchestrator: SessionOrchestrator

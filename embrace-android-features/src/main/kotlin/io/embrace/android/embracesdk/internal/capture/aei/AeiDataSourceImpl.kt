@@ -25,7 +25,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
-public class AeiDataSourceImpl(
+internal class AeiDataSourceImpl(
     private val backgroundWorker: BackgroundWorker,
     private val appExitInfoBehavior: AppExitInfoBehavior,
     private val activityManager: ActivityManager?,

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import java.util.regex.Pattern
 
-public class ThreadInfoCollector(
+internal class ThreadInfoCollector(
     private val targetThread: Thread
 ) {
 
@@ -13,12 +13,12 @@ public class ThreadInfoCollector(
     /**
      * Clears the stacktrace cache for all threads.
      */
-    public fun clearStacktraceCache(): Unit = currentStacktraceStates.clear()
+    fun clearStacktraceCache(): Unit = currentStacktraceStates.clear()
 
     /**
      * Captures the thread traces required for the given sample.
      */
-    public fun captureSample(configService: ConfigService): List<ThreadInfo> {
+    fun captureSample(configService: ConfigService): List<ThreadInfo> {
         val threads = getAllowedThreads(configService)
         val sanitizedThreads = mutableListOf<ThreadInfo>()
 
@@ -43,7 +43,7 @@ public class ThreadInfoCollector(
      * @return filtered threads
      */
 
-    public fun getAllowedThreads(configService: ConfigService): Set<ThreadInfo> {
+    fun getAllowedThreads(configService: ConfigService): Set<ThreadInfo> {
         val allowed: MutableSet<ThreadInfo> = HashSet()
         val anrBehavior = configService.anrBehavior
         val blockList = anrBehavior.blockPatternList
@@ -94,5 +94,5 @@ public class ThreadInfoCollector(
         }
     }
 
-    public fun isAllowedByPriority(priority: Int, observedPriority: Int): Boolean = observedPriority >= priority
+    fun isAllowedByPriority(priority: Int, observedPriority: Int): Boolean = observedPriority >= priority
 }

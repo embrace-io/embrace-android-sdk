@@ -23,23 +23,23 @@ import java.util.concurrent.TimeUnit
  *  1. Using the 'monitoring' thread to message the target thread with a heartbeat
  *  1. Determining whether the target thread responds in time, and if not logging an ANR
  */
-public class EmbraceAnrService(
-    public var configService: ConfigService,
+internal class EmbraceAnrService(
+    var configService: ConfigService,
     looper: Looper,
     logger: EmbLogger,
     livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: ScheduledWorker,
     state: ThreadMonitoringState,
-    public val clock: Clock
+    val clock: Clock
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
     private val state: ThreadMonitoringState
     private val targetThread: Thread
-    public val stacktraceSampler: AnrStacktraceSampler
+    val stacktraceSampler: AnrStacktraceSampler
     private val logger: EmbLogger
     private val targetThreadHeartbeatScheduler: LivenessCheckScheduler
 
-    public val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
+    val listeners: CopyOnWriteArrayList<BlockedThreadListener> = CopyOnWriteArrayList<BlockedThreadListener>()
 
     init {
         targetThread = looper.thread
@@ -128,7 +128,7 @@ public class EmbraceAnrService(
         }
     }
 
-    public fun processAnrTick(timestamp: Long) {
+    fun processAnrTick(timestamp: Long) {
         // Check if ANR capture is enabled
         if (!configService.anrBehavior.isAnrCaptureEnabled()) {
             return

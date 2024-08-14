@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
-public class StartupServiceImpl(
+internal class StartupServiceImpl(
     private val spanService: SpanService,
     @Suppress("UnusedPrivateMember")
     private val backgroundWorker: BackgroundWorker

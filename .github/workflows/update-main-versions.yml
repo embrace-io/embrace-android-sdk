@@ -1,4 +1,4 @@
-name: Pre-Release - Update Main Versions
+name: Update Trunk Versions
 
 on:
   workflow_call:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   update-main-versions:
-    name: Update Main Versions
+    name: Update Trunk Versions
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:

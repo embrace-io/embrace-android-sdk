@@ -1,4 +1,4 @@
-name: Pre-Release - Cut Release Branch and Publish Release Candidate
+name: Prepare New Release
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-name: Pre-Release - Create New Release Candidate
+name: Build Release Candidates
 
 env:
   SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}

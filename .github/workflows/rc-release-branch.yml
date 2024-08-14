@@ -1,4 +1,4 @@
-name: Pre-Release - Create Release Branches
+name: Create Release Branches
 
 on:
   workflow_call:

@@ -47,7 +47,7 @@ internal class EmbraceMetadataServiceTest {
 
     companion object {
         private val context: Context = mockk(relaxed = true)
-        private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free")
+        private val buildInfo: BuildInfo = BuildInfo("1234", "debug", "free", "bundle-id")
         private val packageInfo = PackageInfo()
         private val serializer = EmbraceSerializer()
         private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo

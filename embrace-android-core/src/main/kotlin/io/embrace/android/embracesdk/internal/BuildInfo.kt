@@ -19,13 +19,19 @@ public class BuildInfo(
     /**
      * The Flavor name of the particular build, extracted at compile-time.
      */
-    public val buildFlavor: String?
+    public val buildFlavor: String?,
+
+    /**
+     * The ID of the particular js bundle, generated at compile-time.
+     */
+    public val rnBundleId: String?,
 ) {
 
     public companion object {
         public const val BUILD_INFO_BUILD_ID: String = "emb_build_id"
         public const val BUILD_INFO_BUILD_TYPE: String = "emb_build_type"
         public const val BUILD_INFO_BUILD_FLAVOR: String = "emb_build_flavor"
+        public const val BUILD_INFO_RN_BUNDLE_ID: String = "emb_rn_bundle_id"
         private const val RES_TYPE_STRING = "string"
 
         /**
@@ -39,7 +45,8 @@ public class BuildInfo(
             return BuildInfo(
                 getBuildResource(resources, packageName, BUILD_INFO_BUILD_ID),
                 getBuildResource(resources, packageName, BUILD_INFO_BUILD_TYPE),
-                getBuildResource(resources, packageName, BUILD_INFO_BUILD_FLAVOR)
+                getBuildResource(resources, packageName, BUILD_INFO_BUILD_FLAVOR),
+                getBuildResource(resources, packageName, BUILD_INFO_RN_BUNDLE_ID),
             )
         }
 

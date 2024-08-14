@@ -82,7 +82,7 @@ jobs:
 
       - name: Generate SDK RC - Publish and close Sonatype repository
         run: |
-          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Generate Swazzler RC - Publish and Close repository
         run: |
-          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Set version tag in Swazzler
         run: |

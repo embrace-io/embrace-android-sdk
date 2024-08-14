@@ -38,7 +38,7 @@ public class RnBundleIdTrackerImpl(
                     return@submit computeReactNativeBundleId(
                         context,
                         lastKnownJsBundleUrl,
-                        buildInfo.buildId,
+                        buildInfo.rnBundleId,
                         logger
                     )
                 }
@@ -73,7 +73,7 @@ public class RnBundleIdTrackerImpl(
                 val bundleId = computeReactNativeBundleId(
                     context,
                     jsBundleUrl,
-                    buildInfo.buildId,
+                    buildInfo.rnBundleId,
                     logger
                 )
                 if (forceUpdate != null) {

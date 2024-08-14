@@ -17,6 +17,7 @@ internal class FakePayloadSourceModule(
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService()),
     override val resourceSource: FakeEnvelopeResourceSource = FakeEnvelopeResourceSource(),
     override val metadataSource: FakeEnvelopeMetadataSource = FakeEnvelopeMetadataSource(),
+    override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
     sessionPayloadSource: SessionPayloadSource = FakeSessionPayloadSource(),
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource()
 ) : PayloadSourceModule {

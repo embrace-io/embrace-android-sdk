@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -17,10 +16,8 @@ import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
-import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.mockk.every
 import io.mockk.mockk
@@ -48,12 +45,10 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = "abcde",
-            logModuleProvider = ::FakeLogModule,
-            framework = AppFramework.NATIVE,
             featureModuleProvider = { FakeFeatureModule() },
+            framework = AppFramework.NATIVE,
         ) { null }
 
-        assertTrue(module.memoryCleanerService is EmbraceMemoryCleanerService)
         assertTrue(module.processStateService is EmbraceProcessStateService)
         assertNotNull(module.urlBuilder)
         assertNotNull(module.apiClient)
@@ -64,7 +59,6 @@ internal class EssentialServiceModuleImplTest {
         assertNotNull(module.sessionPropertiesService)
         assertTrue(module.userService is EmbraceUserService)
         assertTrue(module.configService is EmbraceConfigService)
-        assertTrue(module.gatingService is EmbraceGatingService)
         assertTrue(module.cpuInfoDelegate is EmbraceCpuInfoDelegate)
         assertTrue(module.networkConnectivityService is EmbraceNetworkConnectivityService)
         assertTrue(module.pendingApiCallsSender is EmbracePendingApiCallsSender)
@@ -85,9 +79,8 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             customAppId = null,
-            logModuleProvider = ::FakeLogModule,
-            framework = AppFramework.NATIVE,
             featureModuleProvider = { FakeFeatureModule() },
+            framework = AppFramework.NATIVE,
         ) { fakeConfigService }
 
         assertSame(fakeConfigService, module.configService)

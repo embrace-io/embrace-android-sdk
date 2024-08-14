@@ -173,7 +173,6 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             storageModule,
                             customAppId,
-                            { logModule },
                             { featureModule },
                             appFramework,
                             configServiceProvider
@@ -436,7 +435,7 @@ internal class ModuleInitBootstrapper(
                     // be added to the registry. It sets listeners for any services that were registered.
                     serviceRegistry.closeRegistration()
                     serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
-                    serviceRegistry.registerMemoryCleanerListeners(essentialServiceModule.memoryCleanerService)
+                    serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
                     serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
                     serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
 

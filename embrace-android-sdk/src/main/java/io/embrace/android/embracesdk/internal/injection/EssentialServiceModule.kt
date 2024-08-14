@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
-import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
@@ -12,8 +11,6 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.gating.GatingService
-import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
@@ -23,11 +20,9 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
  * the SDK during initialization.
  */
 internal interface EssentialServiceModule {
-    val memoryCleanerService: MemoryCleanerService
     val processStateService: ProcessStateService
     val activityLifecycleTracker: ActivityTracker
     val configService: ConfigService
-    val gatingService: GatingService
     val userService: UserService
     val urlBuilder: ApiUrlBuilder
     val apiClient: ApiClient
@@ -39,5 +34,4 @@ internal interface EssentialServiceModule {
     val sessionIdTracker: SessionIdTracker
     val sessionPropertiesService: SessionPropertiesService
     val logWriter: LogWriter
-    val rnBundleIdTracker: RnBundleIdTracker
 }

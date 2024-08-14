@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPa
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
+import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTrackerImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
@@ -31,6 +33,17 @@ internal class PayloadSourceModuleImpl(
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
 ) : PayloadSourceModule {
+
+    override val rnBundleIdTracker: RnBundleIdTracker by singleton {
+        RnBundleIdTrackerImpl(
+            coreModule.buildInfo,
+            coreModule.context,
+            essentialServiceModule.configService,
+            androidServicesModule.preferencesService,
+            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            initModule.logger
+        )
+    }
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(
@@ -82,7 +95,7 @@ internal class PayloadSourceModuleImpl(
                 essentialServiceModule.cpuInfoDelegate,
                 initModule.logger
             ),
-            essentialServiceModule.rnBundleIdTracker
+            rnBundleIdTracker
         )
     }
 

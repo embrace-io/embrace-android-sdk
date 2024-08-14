@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -19,4 +20,5 @@ internal interface PayloadSourceModule {
     val resourceSource: EnvelopeResourceSource
     val metadataService: MetadataService
     val hostedSdkVersionInfo: HostedSdkVersionInfo
+    val rnBundleIdTracker: RnBundleIdTracker
 }

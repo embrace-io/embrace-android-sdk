@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.gating.GatingService
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
@@ -14,4 +16,6 @@ internal interface SessionOrchestrationModule {
     val periodicSessionCacher: PeriodicSessionCacher
     val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
     val sessionSpanAttrPopulator: SessionSpanAttrPopulator
+    val memoryCleanerService: MemoryCleanerService
+    val gatingService: GatingService
 }

@@ -74,7 +74,7 @@ internal class SessionSpanAttrPopulatorImpl(
                 addSystemAttribute(SpanAttributeData(embSessionStartupThreshold.name, info.threshold.toString()))
             }
 
-            val logCount = logService.findErrorLogIds().size
+            val logCount = logService.getErrorLogsCount()
             addSystemAttribute(SpanAttributeData(embErrorLogCount.name, logCount.toString()))
 
             metadataService.getDiskUsage()?.deviceDiskFree?.let { free ->

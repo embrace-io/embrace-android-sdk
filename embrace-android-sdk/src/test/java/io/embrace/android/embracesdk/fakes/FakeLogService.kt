@@ -50,8 +50,8 @@ public class FakeLogService : LogService {
         )
     }
 
-    override fun findErrorLogIds(): List<String> {
-        return errorLogIds
+    override fun getErrorLogsCount(): Int {
+        return errorLogIds.count()
     }
 
     override fun cleanCollections() {

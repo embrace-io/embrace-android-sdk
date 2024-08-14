@@ -11,9 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.FlutterExce
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.behavior.LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -38,32 +36,26 @@ public class EmbraceLogService(
     private val sessionPropertiesService: SessionPropertiesService,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
-    clock: Clock,
     private val serializer: PlatformSerializer
 ) : LogService {
 
     private val logCounters = mapOf(
         Severity.INFO to LogCounter(
             Severity.INFO.name,
-            clock,
             configService.logMessageBehavior::getInfoLogLimit,
             logger
         ),
         Severity.WARNING to LogCounter(
             Severity.WARNING.name,
-            clock,
             configService.logMessageBehavior::getWarnLogLimit,
             logger
         ),
         Severity.ERROR to LogCounter(
             Severity.ERROR.name,
-            clock,
             configService.logMessageBehavior::getErrorLogLimit,
             logger
         )
     )
-
-    private var unhandledExceptionsCount = 0
 
     override fun log(
         message: String,
@@ -157,10 +149,6 @@ public class EmbraceLogService(
         exceptionMessage: String?,
     ) {
         backgroundWorker.submit {
-            if (logExceptionType == LogExceptionType.UNHANDLED) {
-                unhandledExceptionsCount++
-            }
-
             val attributes = createTelemetryAttributes(properties)
             populateLogExceptionAttributes(
                 attributes = attributes,
@@ -191,10 +179,6 @@ public class EmbraceLogService(
         library: String?,
     ) {
         backgroundWorker.submit {
-            if (logExceptionType == LogExceptionType.UNHANDLED) {
-                unhandledExceptionsCount++
-            }
-
             val attributes = createTelemetryAttributes(properties)
             populateLogExceptionAttributes(
                 attributes = attributes,
@@ -216,8 +200,8 @@ public class EmbraceLogService(
         }
     }
 
-    override fun findErrorLogIds(): List<String> {
-        return logCounters.getValue(Severity.ERROR).findLogIds()
+    override fun getErrorLogsCount(): Int {
+        return logCounters.getValue(Severity.ERROR).getCount()
     }
 
     override fun cleanCollections() {
@@ -263,7 +247,7 @@ public class EmbraceLogService(
         }
 
         val logId = attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID)
-        if (logId == null || !logCounters.getValue(severity).addIfAllowed(logId)) {
+        if (logId == null || !logCounters.getValue(severity).addIfAllowed()) {
             return
         }
 
@@ -286,25 +270,23 @@ public class EmbraceLogService(
     }
 
     private fun trimToMaxLength(message: String): String {
-        val maxLength =
-            if (configService.appFramework == AppFramework.UNITY) {
-                LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
-            } else {
-                configService.logMessageBehavior.getLogMessageMaximumAllowedLength()
-            }
+        val maxLength = if (configService.appFramework == AppFramework.UNITY) {
+            LOG_MESSAGE_UNITY_MAXIMUM_ALLOWED_LENGTH
+        } else {
+            configService.logMessageBehavior.getLogMessageMaximumAllowedLength()
+        }
 
-        return if (message.length > maxLength) {
+        if (message.length > maxLength) {
+            logger.logWarning("Truncating message of ${message.length} characters to $maxLength characters")
             val endChars = "..."
 
-            // ensure that we never end up with a negative offset when extracting substring, regardless of the config value set
-            val allowedLength = when {
-                maxLength >= endChars.length -> maxLength - endChars.length
-                else -> LOG_MESSAGE_MAXIMUM_ALLOWED_LENGTH - endChars.length
+            if (maxLength <= endChars.length) {
+                return message.take(maxLength)
             }
-            logger.logWarning("Truncating message to ${message.length} characters")
-            message.substring(0, allowedLength) + endChars
+
+            return message.take(maxLength - endChars.length) + endChars
         } else {
-            message
+            return message
         }
     }
 

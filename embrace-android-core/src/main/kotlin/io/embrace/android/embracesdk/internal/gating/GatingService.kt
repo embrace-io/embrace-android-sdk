@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
-internal interface GatingService {
+public interface GatingService {
 
     /**
      * Sanitizes a v2 session message before sending it to the backend based on the Gating configuration.
@@ -14,7 +14,7 @@ internal interface GatingService {
      * @param hasCrash if any crash occurred
      * @param envelope to be sanitized
      */
-    fun gateSessionEnvelope(
+    public fun gateSessionEnvelope(
         hasCrash: Boolean,
         envelope: Envelope<SessionPayload>
     ): Envelope<SessionPayload>
@@ -26,5 +26,5 @@ internal interface GatingService {
      *
      * @param eventMessage to be sanitized
      */
-    fun gateEventMessage(eventMessage: EventMessage): EventMessage
+    public fun gateEventMessage(eventMessage: EventMessage): EventMessage
 }

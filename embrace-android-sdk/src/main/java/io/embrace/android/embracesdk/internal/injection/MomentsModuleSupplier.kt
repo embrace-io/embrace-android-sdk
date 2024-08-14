@@ -7,6 +7,7 @@ internal typealias MomentsModuleSupplier = (
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     startTime: Long
@@ -16,6 +17,7 @@ internal fun createMomentsModule(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     startTime: Long
@@ -23,6 +25,7 @@ internal fun createMomentsModule(
     initModule,
     workerThreadModule,
     essentialServiceModule,
+    configModule,
     payloadSourceModule,
     deliveryModule,
     startTime

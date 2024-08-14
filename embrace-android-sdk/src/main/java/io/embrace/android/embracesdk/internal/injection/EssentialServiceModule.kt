@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
@@ -22,7 +21,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
 internal interface EssentialServiceModule {
     val processStateService: ProcessStateService
     val activityLifecycleTracker: ActivityTracker
-    val configService: ConfigService
     val userService: UserService
     val urlBuilder: ApiUrlBuilder
     val apiClient: ApiClient

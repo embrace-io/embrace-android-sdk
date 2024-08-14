@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfac
 internal class InternalInterfaceModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     logModule: LogModule,
     momentsModule: MomentsModule,
@@ -28,7 +28,7 @@ internal class InternalInterfaceModuleImpl(
             logModule.networkCaptureService,
             momentsModule.eventService,
             initModule.internalErrorService,
-            essentialServiceModule.configService,
+            configModule.configService,
             openTelemetryModule.internalTracer
         )
     }

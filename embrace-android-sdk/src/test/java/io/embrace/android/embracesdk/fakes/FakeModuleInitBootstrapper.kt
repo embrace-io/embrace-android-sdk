@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.AnrModuleSupplier
+import io.embrace.android.embracesdk.internal.injection.ConfigModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.CrashModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModuleSupplier
@@ -43,21 +44,23 @@ internal fun fakeModuleInitBootstrapper(
     androidServicesModuleSupplier: AndroidServicesModuleSupplier = { _, _, _ -> FakeAndroidServicesModule() },
     workerThreadModuleSupplier: WorkerThreadModuleSupplier = { _ -> FakeWorkerThreadModule() },
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
-    essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
+    essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
+    configModuleSupplier: ConfigModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeConfigModule() },
     dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _ -> FakeDataSourceModule() },
     dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
-    logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _ -> FakeLogModule() },
-    nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeNativeModule() },
-    momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _, _ -> FakeMomentsModule() },
-    sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
-    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _ -> FakeCrashModule() },
-    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() }
+    logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule() },
+    nativeModuleSupplier: NativeModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeModule() },
+    momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _, _, _ -> FakeMomentsModule() },
+    sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
+    crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _ -> FakeCrashModule() },
+    payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() }
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
     initModule = fakeInitModule,
     openTelemetryModule = fakeOpenTelemetryModule,
+    configModuleSupplier = configModuleSupplier,
     coreModuleSupplier = coreModuleSupplier,
     systemServiceModuleSupplier = systemServiceModuleSupplier,
     androidServicesModuleSupplier = androidServicesModuleSupplier,

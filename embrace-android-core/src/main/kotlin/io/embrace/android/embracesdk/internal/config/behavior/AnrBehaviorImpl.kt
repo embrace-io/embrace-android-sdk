@@ -108,8 +108,11 @@ public class AnrBehaviorImpl(
 
     override fun getMinDuration(): Int = remote?.minDuration ?: DEFAULT_ANR_MIN_CAPTURE_DURATION
 
-    override fun shouldCaptureMainThreadOnly(): Boolean =
-        remote?.mainThreadOnly ?: DEFAULT_ANR_MAIN_THREAD_ONLY
+    override fun shouldCaptureMainThreadOnly(): Boolean {
+        val r = remote
+        val mainThreadOnly = r?.mainThreadOnly
+        return mainThreadOnly ?: DEFAULT_ANR_MAIN_THREAD_ONLY
+    }
 
     override fun getNativeThreadAnrSamplingFactor(): Int =
         remote?.nativeThreadAnrSamplingFactor ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_FACTOR

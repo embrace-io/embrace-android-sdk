@@ -32,7 +32,7 @@ internal class NetworkRequestApiDelegateTest {
     fun setUp() {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
-        configService = moduleInitBootstrapper.essentialServiceModule.configService as FakeConfigService
+        configService = moduleInitBootstrapper.configModule.configService as FakeConfigService
         networkLoggingService = moduleInitBootstrapper.logModule.networkLoggingService as FakeNetworkLoggingService
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
 

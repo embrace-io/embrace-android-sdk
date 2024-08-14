@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.session
 
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -28,7 +29,6 @@ internal class SessionOrchestrationModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        val essentialServiceModule = FakeEssentialServiceModule(configService = configService)
         val dataSourceModule = createDataSourceModule(
             initModule,
             configService,
@@ -38,7 +38,8 @@ internal class SessionOrchestrationModuleImplTest {
             initModule,
             initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
-            essentialServiceModule,
+            FakeEssentialServiceModule(),
+            FakeConfigModule(configService = configService),
             FakeDeliveryModule(),
             workerThreadModule,
             dataSourceModule,
@@ -60,7 +61,7 @@ internal class SessionOrchestrationModuleImplTest {
 
     @Test
     fun testEnabledBehaviors() {
-        val essentialServiceModule = createEnabledBehavior()
+        val configModule = createEnabledBehavior()
         val dataSourceModule = createDataSourceModule(
             initModule,
             configService,
@@ -71,7 +72,8 @@ internal class SessionOrchestrationModuleImplTest {
             initModule,
             initModule.openTelemetryModule,
             FakeAndroidServicesModule(),
-            essentialServiceModule,
+            FakeEssentialServiceModule(),
+            configModule,
             FakeDeliveryModule(),
             workerThreadModule,
             dataSourceModule,
@@ -85,8 +87,8 @@ internal class SessionOrchestrationModuleImplTest {
         assertNotNull(module.sessionOrchestrator)
     }
 
-    private fun createEnabledBehavior(): FakeEssentialServiceModule {
-        return FakeEssentialServiceModule(
+    private fun createEnabledBehavior(): FakeConfigModule {
+        return FakeConfigModule(
             configService = FakeConfigService(
                 backgroundActivityCaptureEnabled = true
             )

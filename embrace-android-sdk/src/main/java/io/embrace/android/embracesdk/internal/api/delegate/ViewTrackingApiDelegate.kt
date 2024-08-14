@@ -21,7 +21,7 @@ internal class ViewTrackingApiDelegate(
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
     }
     private val appFramework by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.configService.appFramework
+        bootstrapper.configModule.configService.appFramework
     }
 
     /**

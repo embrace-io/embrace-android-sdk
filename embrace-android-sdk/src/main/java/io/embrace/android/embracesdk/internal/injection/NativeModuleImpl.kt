@@ -20,6 +20,7 @@ internal class NativeModuleImpl(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
@@ -33,7 +34,7 @@ internal class NativeModuleImpl(
                 storageModule.storageService,
                 payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
-                essentialServiceModule.configService,
+                configModule.configService,
                 deliveryModule.deliveryService,
                 essentialServiceModule.userService,
                 androidServicesModule.preferencesService,
@@ -52,9 +53,9 @@ internal class NativeModuleImpl(
 
     override val nativeThreadSamplerService: NativeThreadSamplerService? by singleton {
         Systrace.traceSynchronous("native-thread-sampler-init") {
-            if (nativeThreadSamplingEnabled(essentialServiceModule.configService)) {
+            if (nativeThreadSamplingEnabled(configModule.configService)) {
                 EmbraceNativeThreadSamplerService(
-                    configService = essentialServiceModule.configService,
+                    configService = configModule.configService,
                     symbols = lazy { ndkService.getSymbolsForCurrentArch() },
                     logger = initModule.logger,
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
@@ -73,7 +74,7 @@ internal class NativeModuleImpl(
 
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? by singleton {
         Systrace.traceSynchronous("native-thread-sampler-installer-init") {
-            if (nativeThreadSamplingEnabled(essentialServiceModule.configService)) {
+            if (nativeThreadSamplingEnabled(configModule.configService)) {
                 NativeThreadSamplerInstaller(
                     sharedObjectLoader = essentialServiceModule.sharedObjectLoader,
                     logger = initModule.logger
@@ -85,7 +86,7 @@ internal class NativeModuleImpl(
     }
 
     override val nativeCrashService: NativeCrashService by singleton {
-        if (!essentialServiceModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+        if (!configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
             NoopNativeCrashService()
         } else {
             NativeCrashDataSourceImpl(
@@ -93,7 +94,7 @@ internal class NativeModuleImpl(
                 ndkService = ndkService,
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,
-                configService = essentialServiceModule.configService,
+                configService = configModule.configService,
                 serializer = initModule.jsonSerializer,
                 logger = initModule.logger,
             )

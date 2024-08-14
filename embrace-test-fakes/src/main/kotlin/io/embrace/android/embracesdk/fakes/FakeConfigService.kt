@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
@@ -24,6 +25,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  */
 public class FakeConfigService(
     override var appFramework: AppFramework = AppFramework.NATIVE,
+    override var appId: String = "abcde",
     public var sdkDisabled: Boolean = false,
     public var backgroundActivityCaptureEnabled: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,
@@ -43,7 +45,9 @@ public class FakeConfigService(
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior()
 ) : ConfigService {
 
-    public val listeners: MutableSet<() -> Unit> = mutableSetOf<() -> Unit>()
+    override var remoteConfigSource: RemoteConfigSource? = null
+
+    public val listeners: MutableSet<() -> Unit> = mutableSetOf()
     override fun addListener(configListener: () -> Unit) {
         listeners.add(configListener)
     }

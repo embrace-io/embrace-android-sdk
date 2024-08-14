@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -28,6 +29,7 @@ internal class PayloadSourceModuleImplTest {
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
+            FakeConfigModule(),
             ::FakeNativeModule,
             FakeOpenTelemetryModule(),
             FakeAnrModule(),

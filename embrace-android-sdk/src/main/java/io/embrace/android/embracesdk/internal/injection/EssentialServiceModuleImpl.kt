@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
@@ -21,12 +20,6 @@ import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
-import io.embrace.android.embracesdk.internal.config.LocalConfigParser
-import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
@@ -37,39 +30,19 @@ import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class EssentialServiceModuleImpl(
     initModule: InitModule,
+    configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
-    customAppId: String?,
-    featureModuleProvider: Provider<FeatureModule>,
-    framework: AppFramework,
-    private val configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
+    featureModuleProvider: Provider<FeatureModule>
 ) : EssentialServiceModule {
 
-    // Many of these properties are temporarily here to break a circular dependency between services.
-    // When possible, we should try to move them into a new service or module.
-    private val localConfig = Systrace.traceSynchronous("local-config-init") {
-        LocalConfigParser.fromResources(
-            coreModule.resources,
-            coreModule.context.packageName,
-            customAppId,
-            initModule.jsonSerializer,
-            openTelemetryModule.openTelemetryConfiguration,
-            initModule.logger
-        )
-    }
-
-    private val appId = localConfig.appId
+    private val configService by lazy { configModule.configService }
 
     private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
-
-    private val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck(
-            androidServicesModule.preferencesService::deviceIdentifier
-        )
 
     private val backgroundWorker =
         workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
@@ -90,29 +63,6 @@ internal class EssentialServiceModuleImpl(
         ActivityLifecycleTracker(coreModule.application, initModule.logger)
     }
 
-    override val configService: ConfigService by singleton {
-        Systrace.traceSynchronous("config-service-init") {
-            configServiceProvider(framework)
-                ?: EmbraceConfigService(
-                    localConfig,
-                    apiService,
-                    androidServicesModule.preferencesService,
-                    initModule.clock,
-                    initModule.logger,
-                    backgroundWorker,
-                    coreModule.isDebug,
-                    framework,
-                    {
-                        if (Embrace.getInstance().isStarted && isSdkDisabled()) {
-                            Embrace.getInstance().internalInterface.stopSdk()
-                        }
-                    },
-                    thresholdCheck,
-
-                )
-        }
-    }
-
     override val sharedObjectLoader: SharedObjectLoader by singleton {
         SharedObjectLoader(initModule.logger)
     }
@@ -125,11 +75,8 @@ internal class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("url-builder-init") {
             // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
             // but we want to access behaviors from ConfigService when possible.
-            val sdkEndpointBehavior = SdkEndpointBehaviorImpl(
-                thresholdCheck = thresholdCheck,
-                localSupplier = localConfig.sdkConfig::baseUrls,
-            )
-            checkNotNull(appId)
+            val sdkEndpointBehavior = configService.sdkEndpointBehavior
+            val appId = checkNotNull(configService.appId)
             val coreBaseUrl = sdkEndpointBehavior.getData(appId)
             val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
 
@@ -177,9 +124,7 @@ internal class EssentialServiceModuleImpl(
     }
 
     override val apiService: ApiService? by singleton {
-        if (appId == null) {
-            return@singleton null
-        }
+        val appId = configService.appId ?: return@singleton null
         Systrace.traceSynchronous("api-service-init") {
             EmbraceApiService(
                 apiClient = apiClient,

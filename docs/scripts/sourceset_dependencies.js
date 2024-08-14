@@ -1,1 +1,1 @@
-sourceset_dependencies='{":embrace-android-sdk:dokkaHtml/debug":[],":embrace-android-sdk:dokkaHtml/main":[],":embrace-android-sdk:dokkaHtml/release":[]}'
+{"@class":"org.jetbrains.dokka.base.templating.AddToSourcesetDependencies","moduleName":"embrace-android-sdk","content":{":embrace-android-sdk:dokkaHtmlPartial/debug":[],":embrace-android-sdk:dokkaHtmlPartial/main":[],":embrace-android-sdk:dokkaHtmlPartial/release":[]}}

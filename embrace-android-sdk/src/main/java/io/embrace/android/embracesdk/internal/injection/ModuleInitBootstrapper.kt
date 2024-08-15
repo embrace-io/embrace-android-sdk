@@ -553,5 +553,5 @@ internal class ModuleInitBootstrapper(
 
     // This is called twice for each input - memoizing/caching is not worth the hassle
     private fun toSectionName(klass: KClass<*>): String =
-        klass.simpleName?.removeSuffix("Module")?.toLowerCase(Locale.ENGLISH) ?: "module"
+        klass.simpleName?.removeSuffix("Module")?.lowercase(Locale.ENGLISH) ?: "module"
 }

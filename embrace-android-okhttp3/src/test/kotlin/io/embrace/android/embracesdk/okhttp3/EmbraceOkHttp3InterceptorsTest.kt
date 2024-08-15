@@ -38,6 +38,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
@@ -644,8 +645,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
 
     private fun validateDefaultNonBodyNetworkCaptureData(networkCaptureData: NetworkCaptureData?) {
         with(checkNotNull(networkCaptureData)) {
-            assertEquals(requestHeaderValue, requestHeaders?.get(requestHeaderName.toLowerCase()))
-            assertEquals(responseHeaderValue, responseHeaders?.get(responseHeaderName.toLowerCase()))
+            assertEquals(requestHeaderValue, requestHeaders?.get(requestHeaderName.lowercase(Locale.ENGLISH)))
+            assertEquals(responseHeaderValue, responseHeaders?.get(responseHeaderName.lowercase(Locale.ENGLISH)))
             assertEquals(defaultQueryString, requestQueryParams)
             val buffer = Buffer()
             capturedRequestBody?.toRequestBody()?.writeTo(buffer)

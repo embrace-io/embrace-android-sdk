@@ -13,7 +13,7 @@ public sealed class ErrorCodeAttribute(
     errorCode: ErrorCode
 ) : FixedAttribute {
     override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "error_code")
-    override val value: String = errorCode.name.toLowerCase(Locale.ENGLISH)
+    override val value: String = errorCode.name.lowercase(Locale.ENGLISH)
 
     public object Failure : ErrorCodeAttribute(FAILURE)
 

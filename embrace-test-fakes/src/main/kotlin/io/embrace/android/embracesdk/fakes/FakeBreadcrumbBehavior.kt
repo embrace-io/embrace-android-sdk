@@ -12,7 +12,7 @@ public class FakeBreadcrumbBehavior(
     public var automaticActivityCaptureEnabled: Boolean = true,
     public var webViewBreadcrumbCaptureEnabled: Boolean = true,
     public var queryParamCaptureEnabled: Boolean = true,
-    public var captureFcmPiiDataEnabled: Boolean = true
+    public var captureFcmPiiDataEnabled: Boolean = false
 ) : BreadcrumbBehavior {
     override fun getCustomBreadcrumbLimit(): Int = customBreadcrumbLimitImpl
     override fun getFragmentBreadcrumbLimit(): Int = fragmentBreadcrumbLimitImpl

@@ -31,7 +31,7 @@ public class FakeConfigService(
     private var hasValidRemoteConfig: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = fakeBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = fakeAutoDataCaptureBehavior(),
-    override var breadcrumbBehavior: BreadcrumbBehavior = fakeBreadcrumbBehavior(),
+    override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
     override var logMessageBehavior: LogMessageBehavior = fakeLogMessageBehavior(),
     override var anrBehavior: AnrBehavior = fakeAnrBehavior(),
     override var sessionBehavior: SessionBehavior = fakeSessionBehavior(),

@@ -371,7 +371,7 @@ public class EmbraceNdkService(
             } catch (ex: Exception) {
                 logger.logError(
                     String.format(
-                        Locale.getDefault(),
+                        Locale.ENGLISH,
                         "Failed to decode symbols from resources {resourceId=%d}.",
                         resourceId
                     ),
@@ -382,7 +382,7 @@ public class EmbraceNdkService(
         } else {
             logger.logError(
                 String.format(
-                    Locale.getDefault(),
+                    Locale.ENGLISH,
                     "Failed to find symbols in resources {resourceId=%d}.",
                     resourceId
                 )

@@ -41,6 +41,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
+import java.util.Locale
 
 internal class EmbraceEventServiceTest {
 
@@ -363,7 +364,7 @@ internal class EmbraceEventServiceTest {
 
     @Test
     fun `startup event name is case sensitive`() {
-        eventService.startEvent(STARTUP_EVENT_NAME.toUpperCase())
+        eventService.startEvent(STARTUP_EVENT_NAME.uppercase(Locale.ENGLISH))
         assertNull(eventService.getActiveEvent(STARTUP_EVENT_NAME, null))
         eventService.applicationStartupComplete()
         val lastEvent = deliveryService.lastEventSentAsync

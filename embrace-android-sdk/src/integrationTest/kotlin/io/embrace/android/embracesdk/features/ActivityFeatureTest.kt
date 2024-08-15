@@ -3,11 +3,9 @@ package io.embrace.android.embracesdk.features
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.ViewLocalConfig
-import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
@@ -28,12 +26,8 @@ internal class ActivityFeatureTest {
     @Test
     fun `automatically capture activities`() {
         with(testRule) {
-            harness.overriddenConfigService.breadcrumbBehavior = fakeBreadcrumbBehavior(
-                localCfg = {
-                    SdkLocalConfig(
-                        viewConfig = ViewLocalConfig(enableAutomaticActivityCapture = true)
-                    )
-                }
+            harness.overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
+                automaticActivityCaptureEnabled = true
             )
             startSdk()
             var startTimeMs: Long = 0

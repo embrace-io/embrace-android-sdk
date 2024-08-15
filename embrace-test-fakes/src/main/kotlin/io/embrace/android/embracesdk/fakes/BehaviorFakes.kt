@@ -9,8 +9,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBeh
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.BackgroundActivityBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
@@ -91,16 +89,6 @@ public fun fakeAutoDataCaptureBehavior(
     localCfg: Provider<LocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null }
 ): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
-
-/**
- * A fake [BreadcrumbBehaviorImpl] that returns default values.
- */
-@Deprecated("Use FakeBreadcrumberBehavior class instead")
-public fun fakeBreadcrumbBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    localCfg: Provider<SdkLocalConfig?> = { null },
-    remoteCfg: Provider<RemoteConfig?> = { null }
-): BreadcrumbBehavior = BreadcrumbBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
  * A fake [LogMessageBehaviorImpl] that returns default values.

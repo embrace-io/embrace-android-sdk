@@ -4,13 +4,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.getSessionId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -18,6 +18,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 
 /**
  * Asserts that a stateful session can be recorded.
@@ -49,11 +50,15 @@ internal class StatefulSessionTest {
             val first = messages[0]
             val attrs = checkNotNull(first.findSessionSpan().attributes)
             assertEquals(
-                LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(
-                embSessionStartType.name))
+                LifeEventType.STATE.name.lowercase(Locale.ENGLISH), attrs.findAttributeValue(
+                    embSessionStartType.name
+                )
+            )
             assertEquals(
-                LifeEventType.STATE.name.toLowerCase(), attrs.findAttributeValue(
-                embSessionEndType.name))
+                LifeEventType.STATE.name.lowercase(Locale.ENGLISH), attrs.findAttributeValue(
+                    embSessionEndType.name
+                )
+            )
             assertEquals("0", attrs.findAttributeValue(embErrorLogCount.name))
 
             // verify second session

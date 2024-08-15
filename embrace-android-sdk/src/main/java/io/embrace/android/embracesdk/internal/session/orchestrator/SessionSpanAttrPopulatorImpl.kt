@@ -38,11 +38,11 @@ internal class SessionSpanAttrPopulatorImpl(
         with(sessionSpanWriter) {
             addSystemAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
             addSystemAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
-            addSystemAttribute(SpanAttributeData(embState.name, session.appState.name.toLowerCase(Locale.US)))
+            addSystemAttribute(SpanAttributeData(embState.name, session.appState.name.lowercase(Locale.US)))
             addSystemAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
             addSystemAttribute(SpanAttributeData(embTerminated.name, true.toString()))
 
-            session.startType.toString().toLowerCase(Locale.US).let {
+            session.startType.toString().lowercase(Locale.US).let {
                 addSystemAttribute(SpanAttributeData(embSessionStartType.name, it))
             }
         }
@@ -55,7 +55,7 @@ internal class SessionSpanAttrPopulatorImpl(
             crashId?.let {
                 addSystemAttribute(SpanAttributeData(embCrashId.name, crashId))
             }
-            endType?.toString()?.toLowerCase(Locale.US)?.let {
+            endType?.toString()?.lowercase(Locale.US)?.let {
                 addSystemAttribute(SpanAttributeData(embSessionEndType.name, it))
             }
 

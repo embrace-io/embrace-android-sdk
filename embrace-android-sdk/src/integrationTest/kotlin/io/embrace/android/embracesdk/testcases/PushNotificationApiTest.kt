@@ -3,11 +3,10 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.fakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.recordSession
@@ -75,8 +74,8 @@ internal class PushNotificationApiTest {
     @Test
     fun `log push notification with pii`() {
         with(testRule) {
-            harness.overriddenConfigService.breadcrumbBehavior = fakeBreadcrumbBehavior(
-                localCfg = { SdkLocalConfig(captureFcmPiiData = true) }
+            harness.overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
+                captureFcmPiiDataEnabled = true
             )
             startSdk()
             val payload = checkNotNull(harness.recordSession {

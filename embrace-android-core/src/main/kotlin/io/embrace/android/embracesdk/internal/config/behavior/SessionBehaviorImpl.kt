@@ -27,7 +27,7 @@ public class SessionBehaviorImpl(
 
     override fun getFullSessionEvents(): Set<String> {
         val strings = remote?.sessionConfig?.fullSessionEvents ?: local?.fullSessionEvents ?: emptySet()
-        return strings.map { it.toLowerCase(Locale.US) }.toSet()
+        return strings.map { it.lowercase(Locale.US) }.toSet()
     }
 
     override fun getSessionComponents(): Set<String>? =

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
+import java.util.Locale
 
 /**
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
@@ -83,7 +84,7 @@ internal open class FakeDeliveryService : DeliveryService {
     }
 
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
-        val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.toUpperCase()
+        val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.uppercase(Locale.ENGLISH)
         return ApplicationState.valueOf(checkNotNull(value))
     }
 

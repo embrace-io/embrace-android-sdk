@@ -36,10 +36,12 @@ public class FakeLogRecordData(
     }
 
     override fun getSpanContext(): SpanContext {
-        return if (log.traceId != null && log.spanId != null) {
+        val traceId = log.traceId
+        val spanId = log.spanId
+        return if (traceId != null && spanId != null) {
             ImmutableSpanContext.create(
-                log.traceId,
-                log.spanId,
+                traceId,
+                spanId,
                 TraceFlags.getDefault(),
                 TraceState.getDefault(),
                 false,

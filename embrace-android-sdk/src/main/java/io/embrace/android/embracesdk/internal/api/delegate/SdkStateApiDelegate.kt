@@ -62,13 +62,14 @@ internal class SdkStateApiDelegate(
         return true
     }
 
-    override fun getDeviceId(): String = when {
-        sdkCallChecker.check("get_device_id") ->
-            preferencesService?.deviceIdentifier
-                ?: ""
-
-        else -> ""
-    }
+    override val deviceId: String
+        get() {
+            return if (sdkCallChecker.check("get_device_id")) {
+                preferencesService?.deviceIdentifier ?: ""
+            } else {
+                ""
+            }
+        }
 
     override val currentSessionId: String?
         get() {

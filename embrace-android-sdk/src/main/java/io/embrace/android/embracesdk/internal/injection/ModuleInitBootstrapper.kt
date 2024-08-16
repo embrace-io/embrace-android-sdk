@@ -42,7 +42,8 @@ internal class ModuleInitBootstrapper(
     private val deliveryModuleSupplier: DeliveryModuleSupplier = ::createDeliveryModule,
     private val anrModuleSupplier: AnrModuleSupplier = ::createAnrModule,
     private val logModuleSupplier: LogModuleSupplier = ::createLogModule,
-    private val nativeModuleSupplier: NativeModuleSupplier = ::createNativeModule,
+    private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = ::createNativeCoreModule,
+    private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier = ::createNativeFeatureModule,
     private val momentsModuleSupplier: MomentsModuleSupplier = ::createMomentsModule,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
@@ -81,7 +82,10 @@ internal class ModuleInitBootstrapper(
     lateinit var logModule: LogModule
         private set
 
-    lateinit var nativeModule: NativeModule
+    lateinit var nativeCoreModule: NativeCoreModule
+        private set
+
+    lateinit var nativeFeatureModule: NativeFeatureModule
         private set
 
     lateinit var momentsModule: MomentsModule
@@ -319,7 +323,8 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             essentialServiceModule,
                             configModule,
-                            { nativeModule },
+                            { nativeCoreModule },
+                            { nativeFeatureModule },
                             openTelemetryModule,
                             anrModule,
                         )
@@ -329,8 +334,12 @@ internal class ModuleInitBootstrapper(
                         payloadSourceModule.metadataService.precomputeValues()
                     }
 
-                    nativeModule = init(NativeModule::class) {
-                        nativeModuleSupplier(
+                    nativeCoreModule = init(NativeCoreModule::class) {
+                        nativeCoreModuleSupplier(initModule)
+                    }
+
+                    nativeFeatureModule = init(NativeFeatureModule::class) {
+                        nativeFeatureModuleSupplier(
                             initModule,
                             coreModule,
                             storageModule,
@@ -339,12 +348,13 @@ internal class ModuleInitBootstrapper(
                             payloadSourceModule,
                             deliveryModule,
                             androidServicesModule,
-                            workerThreadModule
+                            workerThreadModule,
+                            nativeCoreModule
                         )
                     }
 
-                    postInit(NativeModule::class) {
-                        val ndkService = nativeModule.ndkService
+                    postInit(NativeFeatureModule::class) {
+                        val ndkService = nativeFeatureModule.ndkService
                         essentialServiceModule.userService.addUserInfoListener(ndkService::onUserInfoUpdate)
 
                         val initWorkerTaskQueueTime = initModule.clock.now()
@@ -358,28 +368,28 @@ internal class ModuleInitBootstrapper(
                         }
                         serviceRegistry.registerServices(
                             ndkService,
-                            nativeModule.nativeThreadSamplerService
+                            nativeFeatureModule.nativeThreadSamplerService
                         )
 
                         if (configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
                             essentialServiceModule.sessionIdTracker.addListener {
-                                nativeModule.ndkService.updateSessionId(it ?: "")
+                                nativeFeatureModule.ndkService.updateSessionId(it ?: "")
                             }
                             essentialServiceModule.sessionPropertiesService.addChangeListener(
-                                nativeModule.ndkService::onSessionPropertiesUpdate
+                                nativeFeatureModule.ndkService::onSessionPropertiesUpdate
                             )
                         }
 
-                        if (nativeModule.nativeThreadSamplerInstaller != null) {
+                        if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
                             // install the native thread sampler
-                            nativeModule.nativeThreadSamplerService?.let { nativeThreadSamplerService ->
+                            nativeFeatureModule.nativeThreadSamplerService?.let { nativeThreadSamplerService ->
                                 nativeThreadSamplerService.setupNativeSampler()
 
                                 // In Unity this should always run on the Unity thread.
                                 if (configModule.configService.appFramework == AppFramework.UNITY && isUnityMainThread()) {
                                     try {
-                                        if (nativeModule.nativeThreadSamplerInstaller != null) {
-                                            nativeModule.nativeThreadSamplerInstaller?.monitorCurrentThread(
+                                        if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
+                                            nativeFeatureModule.nativeThreadSamplerInstaller?.monitorCurrentThread(
                                                 nativeThreadSamplerService,
                                                 configModule.configService,
                                                 anrModule.anrService
@@ -439,7 +449,7 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    postInit(NativeModule::class) {
+                    postInit(NativeCoreModule::class) {
                         serviceRegistry.registerServices(
                             momentsModule.eventService,
                         )
@@ -469,7 +479,7 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             androidServicesModule,
-                            nativeModule.ndkService::getUnityCrashId
+                            nativeFeatureModule.ndkService::getUnityCrashId
                         )
                     }
 

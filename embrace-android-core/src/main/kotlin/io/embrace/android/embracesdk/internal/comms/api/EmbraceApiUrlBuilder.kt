@@ -2,14 +2,14 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import android.os.Build
 
-internal class EmbraceApiUrlBuilder(
+public class EmbraceApiUrlBuilder(
     private val coreBaseUrl: String,
     private val configBaseUrl: String,
     private val appId: String,
     private val lazyDeviceId: Lazy<String>,
     private val lazyAppVersionName: Lazy<String>
 ) : ApiUrlBuilder {
-    companion object {
+    public companion object {
         private const val CONFIG_API_VERSION = 2
     }
 

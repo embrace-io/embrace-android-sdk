@@ -64,7 +64,7 @@ internal class DeviceImplTest {
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
-            cpuInfoDelegate,
+            ::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 
@@ -78,7 +78,7 @@ internal class DeviceImplTest {
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
-            cpuInfoDelegate,
+            ::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 
@@ -92,7 +92,7 @@ internal class DeviceImplTest {
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
-            cpuInfoDelegate,
+            ::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 

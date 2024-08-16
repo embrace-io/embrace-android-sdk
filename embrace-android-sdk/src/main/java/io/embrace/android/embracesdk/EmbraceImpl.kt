@@ -107,8 +107,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     private val anrService by embraceImplInject { bootstrapper.anrModule.anrService }
     private val configService by embraceImplInject { bootstrapper.configModule.configService }
-    private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerService }
-    private val nativeThreadSamplerInstaller by embraceImplInject { bootstrapper.nativeModule.nativeThreadSamplerInstaller }
+    private val nativeThreadSampler by embraceImplInject { bootstrapper.nativeFeatureModule.nativeThreadSamplerService }
+    private val nativeThreadSamplerInstaller by embraceImplInject {
+        bootstrapper.nativeFeatureModule.nativeThreadSamplerInstaller
+    }
 
     @Suppress("DEPRECATION")
     override fun start(context: Context) = start(context, Embrace.AppFramework.NATIVE) { null }
@@ -200,7 +202,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // Send any sessions that were cached and not yet sent.
         val essentialServiceModule = bootstrapper.essentialServiceModule
         deliveryModule.deliveryService.sendCachedSessions(
-            bootstrapper.nativeModule::nativeCrashService,
+            bootstrapper.nativeFeatureModule::nativeCrashService,
             essentialServiceModule.sessionIdTracker
         )
         endSynchronous()

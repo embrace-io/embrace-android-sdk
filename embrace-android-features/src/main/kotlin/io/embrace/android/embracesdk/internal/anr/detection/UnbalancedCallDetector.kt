@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
-public class UnbalancedCallDetector(
+internal class UnbalancedCallDetector(
     private val logger: EmbLogger
 ) : BlockedThreadListener {
 

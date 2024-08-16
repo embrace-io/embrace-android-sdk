@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeModule
+import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
+import io.embrace.android.embracesdk.fakes.injection.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
@@ -30,7 +31,8 @@ internal class PayloadSourceModuleImplTest {
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),
-            ::FakeNativeModule,
+            ::FakeNativeCoreModule,
+            ::FakeNativeFeatureModule,
             FakeOpenTelemetryModule(),
             FakeAnrModule(),
         )

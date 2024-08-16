@@ -144,7 +144,7 @@ internal class EmbraceMetadataServiceTest {
                     preferencesService,
                     BackgroundWorker(MoreExecutors.newDirectExecutorService()),
                     SystemInfo(),
-                    cpuInfoDelegate,
+                    ::cpuInfoDelegate,
                     FakeEmbLogger()
                 ),
                 FakeRnBundleIdTracker()

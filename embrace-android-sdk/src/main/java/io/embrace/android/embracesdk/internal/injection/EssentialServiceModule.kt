@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
@@ -25,8 +23,6 @@ internal interface EssentialServiceModule {
     val urlBuilder: ApiUrlBuilder
     val apiClient: ApiClient
     val apiService: ApiService?
-    val sharedObjectLoader: SharedObjectLoader
-    val cpuInfoDelegate: CpuInfoDelegate
     val networkConnectivityService: NetworkConnectivityService
     val pendingApiCallsSender: PendingApiCallsSender
     val sessionIdTracker: SessionIdTracker

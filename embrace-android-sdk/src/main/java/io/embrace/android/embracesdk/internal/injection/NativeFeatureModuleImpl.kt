@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-internal class NativeModuleImpl(
+internal class NativeFeatureModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -24,8 +24,9 @@ internal class NativeModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
-    workerThreadModule: WorkerThreadModule
-) : NativeModule {
+    workerThreadModule: WorkerThreadModule,
+    nativeCoreModule: NativeCoreModule
+) : NativeFeatureModule {
 
     override val ndkService: NdkService by singleton {
         Systrace.traceSynchronous("ndk-service-init") {
@@ -39,7 +40,7 @@ internal class NativeModuleImpl(
                 essentialServiceModule.userService,
                 androidServicesModule.preferencesService,
                 essentialServiceModule.sessionPropertiesService,
-                essentialServiceModule.sharedObjectLoader,
+                nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
@@ -60,7 +61,7 @@ internal class NativeModuleImpl(
                     logger = initModule.logger,
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
-                    sharedObjectLoader = essentialServiceModule.sharedObjectLoader,
+                    sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 )
             } else {
                 null
@@ -76,7 +77,7 @@ internal class NativeModuleImpl(
         Systrace.traceSynchronous("native-thread-sampler-installer-init") {
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 NativeThreadSamplerInstaller(
-                    sharedObjectLoader = essentialServiceModule.sharedObjectLoader,
+                    sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                     logger = initModule.logger
                 )
             } else {

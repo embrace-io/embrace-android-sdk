@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
@@ -50,11 +49,9 @@ internal class EssentialServiceModuleImplTest {
         assertNotNull(module.apiClient)
         assertNotNull(module.apiService)
         assertNotNull(module.activityLifecycleTracker)
-        assertNotNull(module.sharedObjectLoader)
         assertNotNull(module.sessionIdTracker)
         assertNotNull(module.sessionPropertiesService)
         assertTrue(module.userService is EmbraceUserService)
-        assertTrue(module.cpuInfoDelegate is EmbraceCpuInfoDelegate)
         assertTrue(module.networkConnectivityService is EmbraceNetworkConnectivityService)
         assertTrue(module.pendingApiCallsSender is EmbracePendingApiCallsSender)
         assertTrue(module.logWriter is LogWriterImpl)

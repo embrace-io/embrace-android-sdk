@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 /**
- * Function that returns an instance of [NativeModule]. Matches the signature of the constructor for [NativeModuleImpl]
+ * Function that returns an instance of [NativeFeatureModule]. Matches the signature of the constructor for [NativeFeatureModuleImpl]
  */
-internal typealias NativeModuleSupplier = (
+internal typealias NativeFeatureModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -12,10 +12,11 @@ internal typealias NativeModuleSupplier = (
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
-    workerThreadModule: WorkerThreadModule
-) -> NativeModule
+    workerThreadModule: WorkerThreadModule,
+    nativeCoreModule: NativeCoreModule
+) -> NativeFeatureModule
 
-internal fun createNativeModule(
+internal fun createNativeFeatureModule(
     initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -24,8 +25,9 @@ internal fun createNativeModule(
     payloadSourceModule: PayloadSourceModule,
     deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
-    workerThreadModule: WorkerThreadModule
-): NativeModule = NativeModuleImpl(
+    workerThreadModule: WorkerThreadModule,
+    nativeCoreModule: NativeCoreModule
+): NativeFeatureModule = NativeFeatureModuleImpl(
     initModule,
     coreModule,
     storageModule,
@@ -34,5 +36,6 @@ internal fun createNativeModule(
     payloadSourceModule,
     deliveryModule,
     androidServicesModule,
-    workerThreadModule
+    workerThreadModule,
+    nativeCoreModule
 )

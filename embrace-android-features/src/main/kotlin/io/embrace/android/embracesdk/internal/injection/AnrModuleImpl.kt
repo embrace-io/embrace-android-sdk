@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.anr.sigquit.AnrThreadIdDelegate
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
+import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
@@ -47,7 +48,7 @@ internal class AnrModuleImpl(
     }
 
     override val sigquitDataSource: SigquitDataSource by singleton {
-        SigquitDataSource(
+        SigquitDataSourceImpl(
             sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
             anrThreadIdDelegate = AnrThreadIdDelegate(initModule.logger),
             anrBehavior = configService.anrBehavior,

@@ -7,21 +7,22 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.NativeModuleImpl
+import io.embrace.android.embracesdk.internal.injection.NativeFeatureModuleImpl
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class NativeModuleImplTest {
+internal class NativeFeatureModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
         val coreModule = FakeCoreModule()
-        val module = NativeModuleImpl(
+        val module = NativeFeatureModuleImpl(
             FakeInitModule(),
             coreModule,
             FakeStorageModule(),
@@ -30,7 +31,8 @@ internal class NativeModuleImplTest {
             FakePayloadSourceModule(),
             FakeDeliveryModule(),
             FakeAndroidServicesModule(),
-            FakeWorkerThreadModule()
+            FakeWorkerThreadModule(),
+            FakeNativeCoreModule()
         )
         assertNotNull(module.ndkService)
         assertNull(module.nativeThreadSamplerService)

@@ -5,6 +5,6 @@ public class EmbraceSigquitNdkDelegate : SigquitNdkDelegate {
     external override fun installGoogleAnrHandler(googleThreadId: Int): Int
 }
 
-public interface SigquitNdkDelegate {
-    public fun installGoogleAnrHandler(googleThreadId: Int): Int
+internal interface SigquitNdkDelegate {
+    fun installGoogleAnrHandler(googleThreadId: Int): Int
 }

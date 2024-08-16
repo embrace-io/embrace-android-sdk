@@ -10,9 +10,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
-internal class SigquitDataSourceTest {
+internal class SigquitDataSourceImplTest {
 
-    private lateinit var dataSource: SigquitDataSource
+    private lateinit var dataSource: SigquitDataSourceImpl
     private lateinit var sessionSpan: FakeCurrentSessionSpan
     private lateinit var config: AnrRemoteConfig
 
@@ -21,7 +21,7 @@ internal class SigquitDataSourceTest {
         val logger = EmbLoggerImpl()
         sessionSpan = FakeCurrentSessionSpan()
         config = AnrRemoteConfig()
-        dataSource = SigquitDataSource(
+        dataSource = SigquitDataSourceImpl(
             SharedObjectLoader(logger),
             AnrThreadIdDelegate(logger),
             fakeAnrBehavior(remoteCfg = { config }),

@@ -13,7 +13,8 @@ internal typealias PayloadSourceModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    nativeModuleProvider: Provider<NativeModule?>,
+    nativeCoreModuleProvider: Provider<NativeCoreModule?>,
+    nativeFeatureModuleProvider: Provider<NativeFeatureModule?>,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
 ) -> PayloadSourceModule
@@ -26,7 +27,8 @@ internal fun createPayloadSourceModule(
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    nativeModuleProvider: Provider<NativeModule?>,
+    nativeCoreModuleProvider: Provider<NativeCoreModule?>,
+    nativeFeatureModuleProvider: Provider<NativeFeatureModule?>,
     otelModule: OpenTelemetryModule,
     anrModule: AnrModule,
 ): PayloadSourceModule = PayloadSourceModuleImpl(
@@ -37,7 +39,8 @@ internal fun createPayloadSourceModule(
     androidServicesModule,
     essentialServiceModule,
     configModule,
-    nativeModuleProvider,
+    nativeCoreModuleProvider,
+    nativeFeatureModuleProvider,
     otelModule,
     anrModule,
 )

@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
  * target thread & scheduling regular checks on a background thread. The [BlockedThreadDetector]
  * class is responsible for the actual business logic that checks whether a thread is blocked or not.
  */
-public class LivenessCheckScheduler(
+internal class LivenessCheckScheduler(
     configService: ConfigService,
     private val anrMonitorWorker: ScheduledWorker,
     private val clock: Clock,
@@ -31,13 +31,13 @@ public class LivenessCheckScheduler(
     private val logger: EmbLogger
 ) {
 
-    public var configService: ConfigService
+    var configService: ConfigService
         set(value) {
             blockedThreadDetector.configService = value
         }
         get() = blockedThreadDetector.configService
 
-    public var listener: BlockedThreadListener?
+    var listener: BlockedThreadListener?
         set(value) {
             blockedThreadDetector.listener = value
         }
@@ -54,7 +54,7 @@ public class LivenessCheckScheduler(
     /**
      * Starts monitoring the target thread for blockages.
      */
-    public fun startMonitoringThread() {
+    fun startMonitoringThread() {
         if (!state.started.getAndSet(true)) {
             logger.logInfo("Start ANR detection...")
             scheduleRegularHeartbeats()
@@ -64,7 +64,7 @@ public class LivenessCheckScheduler(
     /**
      * Stops monitoring the target thread.
      */
-    public fun stopMonitoringThread() {
+    fun stopMonitoringThread() {
         if (state.started.get()) {
             if (stopHeartbeatTask()) {
                 state.started.set(false)
@@ -107,7 +107,7 @@ public class LivenessCheckScheduler(
      * Called at regular intervals on the monitor thread. This function posts a message to the
      * main thread that is used to check whether it is live or not.
      */
-    public fun checkHeartbeat() {
+    fun checkHeartbeat() {
         try {
             with(configService.anrBehavior.getMonitorThreadPriority()) {
                 android.os.Process.setThreadPriority(this)

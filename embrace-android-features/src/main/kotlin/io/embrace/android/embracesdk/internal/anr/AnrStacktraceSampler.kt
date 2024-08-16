@@ -13,23 +13,23 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * This class is responsible for tracking the state of JVM stacktraces sampled during an ANR.
  */
-public class AnrStacktraceSampler(
+internal class AnrStacktraceSampler(
     private var configService: ConfigService,
     private val clock: Clock,
     targetThread: Thread,
     private val anrMonitorWorker: ScheduledWorker
 ) : BlockedThreadListener, MemoryCleanerListener {
 
-    public val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
+    val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
     private val samples = mutableListOf<AnrSample>()
     private var lastUnblockedMs: Long = 0
     private val threadInfoCollector = ThreadInfoCollector(targetThread)
 
-    public fun setConfigService(configService: ConfigService) {
+    fun setConfigService(configService: ConfigService) {
         this.configService = configService
     }
 
-    public fun size(): Int = samples.size
+    fun size(): Int = samples.size
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
         threadInfoCollector.clearStacktraceCache()
@@ -86,7 +86,7 @@ public class AnrStacktraceSampler(
      * to pick the least valuable interval in this case.
      */
 
-    public fun findLeastValuableIntervalWithSamples(): AnrInterval? =
+    fun findLeastValuableIntervalWithSamples(): AnrInterval? =
         findIntervalsWithSamples().minByOrNull(AnrInterval::duration)
 
     override fun cleanCollections() {
@@ -95,7 +95,7 @@ public class AnrStacktraceSampler(
         }
     }
 
-    public fun reachedAnrStacktraceCaptureLimit(): Boolean {
+    fun reachedAnrStacktraceCaptureLimit(): Boolean {
         val limit = configService.anrBehavior.getMaxAnrIntervalsPerSession()
         val count = findIntervalsWithSamples().size
         return count > limit
@@ -106,7 +106,7 @@ public class AnrStacktraceSampler(
     /**
      * Retrieves ANR intervals that match the given start/time windows.
      */
-    public fun getAnrIntervals(
+    fun getAnrIntervals(
         state: ThreadMonitoringState,
         clock: Clock
     ): List<AnrInterval> {

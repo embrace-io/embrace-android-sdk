@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutorService
  * an ANR after a certain time threshold. Once [handleMessage] is invoked, the monitor thread
  * knows for sure that the target thread is responsive, so resets the timer for any ANRs.
  */
-public class TargetThreadHandler(
+internal class TargetThreadHandler(
     looper: Looper,
     private val anrMonitorWorker: ScheduledWorker,
     private val configService: ConfigService,
@@ -31,12 +31,12 @@ public class TargetThreadHandler(
     private val clock: Clock,
 ) : Handler(looper) {
 
-    public lateinit var action: (time: Long) -> Unit
+    lateinit var action: (time: Long) -> Unit
 
     @Volatile
-    public var installed: Boolean = false
+    var installed: Boolean = false
 
-    public fun start() {
+    fun start() {
         // set an IdleHandler that automatically gets invoked when the Handler
         // has processed all pending messages. We retain the callback to avoid
         // unnecessary allocations.
@@ -47,7 +47,7 @@ public class TargetThreadHandler(
         }
     }
 
-    public fun onIdleThread(): Boolean {
+    fun onIdleThread(): Boolean {
         onMainThreadUnblocked()
         return true
     }
@@ -74,11 +74,11 @@ public class TargetThreadHandler(
         }
     }
 
-    public companion object {
+    companion object {
 
         /**
          * Unique ID for message (arbitrary number).
          */
-        public const val HEARTBEAT_REQUEST: Int = 34593
+        const val HEARTBEAT_REQUEST: Int = 34593
     }
 }

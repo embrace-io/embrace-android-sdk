@@ -3,9 +3,11 @@ package io.embrace.android.embracesdk.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getLastSavedBackgroundActivity
 import io.embrace.android.embracesdk.getLastSentBackgroundActivity
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -117,6 +119,23 @@ internal class SessionPropertiesTest {
             assertEquals(TEMP_VAL, firstSession.findSessionSpan().getSessionProperty(TEMP_KEY))
             assertNull(secondBg.findSessionSpan().getSessionProperty(TEMP_KEY))
             assertNull(secondSession.findSessionSpan().getSessionProperty(TEMP_KEY))
+        }
+    }
+
+    @Test
+    fun `adding properties in bg activity modifications change the cached payload`() {
+        with(testRule) {
+            startSdk()
+            harness.recordSession()
+            embrace.addSessionProperty("temp", "value", false)
+            val bgSnapshot = checkNotNull(harness.getLastSavedBackgroundActivity())
+            checkNotNull(bgSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
+
+            val session = checkNotNull(harness.recordSession())
+            checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
+
+            val bg = checkNotNull(harness.getLastSentBackgroundActivity())
+            checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
         }
     }
 

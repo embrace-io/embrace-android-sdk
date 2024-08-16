@@ -21,7 +21,10 @@ internal class SessionApiDelegate(
      */
     override fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
         if (sdkCallChecker.check("add_session_property")) {
-            return sessionPropertiesService?.addProperty(key, value, permanent) ?: false
+            return sessionPropertiesService?.addProperty(key, value, permanent)
+                .apply {
+                    sessionOrchestrator?.reportBackgroundActivityStateChange()
+                } ?: false
         }
         return false
     }
@@ -31,7 +34,9 @@ internal class SessionApiDelegate(
      */
     override fun removeSessionProperty(key: String): Boolean {
         if (sdkCallChecker.check("remove_session_property")) {
-            return sessionPropertiesService?.removeProperty(key) ?: false
+            return sessionPropertiesService?.removeProperty(key).apply {
+                sessionOrchestrator?.reportBackgroundActivityStateChange()
+            } ?: false
         }
         return false
     }

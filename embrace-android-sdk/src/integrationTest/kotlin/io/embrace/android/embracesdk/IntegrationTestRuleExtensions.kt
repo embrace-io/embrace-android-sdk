@@ -115,6 +115,13 @@ internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<Session
 }
 
 /**
+ * Returns the last background activity that was saved by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
+    return overriddenDeliveryModule.deliveryService.getLastSavedBackgroundActivity()
+}
+
+/**
  * Returns the last session that was sent by the SDK.
  */
 internal fun IntegrationTestRule.Harness.getLastSentSession(): Envelope<SessionPayload>? {

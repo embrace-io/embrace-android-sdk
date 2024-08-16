@@ -138,14 +138,15 @@ internal class EmbraceDeliveryCacheManager(
     /**
      * Saves the [PendingApiCalls] map to a file named [PENDING_API_CALLS_FILE_NAME].
      */
-    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls, sync: Boolean) {
+    override fun savePendingApiCallQueue(queue: PendingApiCallQueue, sync: Boolean) {
+        val model = queue.toModel()
         if (sync) {
-            cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, pendingApiCalls, PendingApiCalls::class.java)
+            cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, model, PendingApiCalls::class.java)
         } else {
             backgroundWorker.submit {
                 cacheService.cacheObject(
                     PENDING_API_CALLS_FILE_NAME,
-                    pendingApiCalls,
+                    model,
                     PendingApiCalls::class.java
                 )
             }
@@ -157,12 +158,17 @@ internal class EmbraceDeliveryCacheManager(
      * If loadObject returns null, it tries to load the old version of the file which was storing
      * a list of [PendingApiCall] instead of [PendingApiCalls].
      */
-    override fun loadPendingApiCalls(): PendingApiCalls =
-        runCatching {
-            cacheService.loadObject<PendingApiCalls>(PENDING_API_CALLS_FILE_NAME, PendingApiCalls::class.java)
+    override fun loadPendingApiCallQueue(): PendingApiCallQueue {
+        val calls: PendingApiCalls = runCatching {
+            cacheService.loadObject<PendingApiCalls>(
+                PENDING_API_CALLS_FILE_NAME,
+                PendingApiCalls::class.java
+            )
         }.getOrNull()
             ?: loadPendingApiCallsOldVersion()
-            ?: PendingApiCalls()
+            ?: PendingApiCalls(emptyMap())
+        return PendingApiCallQueue(calls)
+    }
 
     /**
      * The caller of this method needs to be run in the [WorkerName.DELIVERY_CACHE] thread so all session writes are done serially
@@ -180,19 +186,15 @@ internal class EmbraceDeliveryCacheManager(
      * it was storing a list of [PendingApiCall] instead of [PendingApiCalls]
      */
     private fun loadPendingApiCallsOldVersion(): PendingApiCalls? {
-        var cachedApiCallsPerEndpoint: PendingApiCalls? = null
-        val loadPendingApiCallsQueue = runCatching {
+        val loadPendingApiCalls: List<PendingApiCall> = runCatching {
             cacheService.loadOldPendingApiCalls(PENDING_API_CALLS_FILE_NAME)
-        }
+        }.getOrNull() ?: return null
 
-        if (loadPendingApiCallsQueue.isSuccess) {
-            cachedApiCallsPerEndpoint = PendingApiCalls()
-            loadPendingApiCallsQueue.getOrNull()?.forEach { cachedApiCall ->
-                cachedApiCallsPerEndpoint.add(cachedApiCall)
-            }
+        val tempQueue = PendingApiCallQueue(PendingApiCalls(emptyMap()))
+        loadPendingApiCalls.forEach { cachedApiCall ->
+            tempQueue.add(cachedApiCall)
         }
-
-        return cachedApiCallsPerEndpoint
+        return tempQueue.toModel()
     }
 
     override fun close() {

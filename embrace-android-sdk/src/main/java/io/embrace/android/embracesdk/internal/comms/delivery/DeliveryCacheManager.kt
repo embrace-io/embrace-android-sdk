@@ -18,6 +18,6 @@ internal interface DeliveryCacheManager {
     fun savePayload(action: SerializationAction): String
     fun loadPayloadAsAction(name: String): SerializationAction
     fun deletePayload(name: String)
-    fun savePendingApiCalls(pendingApiCalls: PendingApiCalls, sync: Boolean = false)
-    fun loadPendingApiCalls(): PendingApiCalls
+    fun savePendingApiCallQueue(queue: PendingApiCallQueue, sync: Boolean = false)
+    fun loadPendingApiCallQueue(): PendingApiCallQueue
 }

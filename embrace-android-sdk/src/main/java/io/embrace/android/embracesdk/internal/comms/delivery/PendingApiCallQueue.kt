@@ -1,21 +1,18 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.api.limiter
 import java.util.concurrent.ConcurrentHashMap
 
-/**
- * A map containing a queue of pending API calls for each endpoint.
- */
-@JsonClass(generateAdapter = true)
-internal class PendingApiCalls(
-    @Json(name = "pendingApiCallsMap")
-    internal val pendingApiCallsMap: MutableMap<Endpoint, MutableList<PendingApiCall>> =
-        ConcurrentHashMap<Endpoint, MutableList<PendingApiCall>>()
+internal class PendingApiCallQueue(
+    private val pendingApiCalls: PendingApiCalls
 ) {
+
+    private val pendingApiCallsMap =
+        ConcurrentHashMap<Endpoint, MutableList<PendingApiCall>>(pendingApiCalls.pendingApiCallsMap)
+
+    fun toModel(): PendingApiCalls = PendingApiCalls(HashMap(pendingApiCallsMap))
 
     /**
      * Adds a pending API call in the corresponding endpoint's queue.

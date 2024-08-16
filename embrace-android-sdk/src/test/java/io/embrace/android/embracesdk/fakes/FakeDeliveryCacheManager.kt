@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
-import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallQueue
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -58,11 +58,11 @@ internal class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun savePendingApiCalls(pendingApiCalls: PendingApiCalls, sync: Boolean) {
+    override fun savePendingApiCallQueue(queue: PendingApiCallQueue, sync: Boolean) {
         TODO("Not yet implemented")
     }
 
-    override fun loadPendingApiCalls(): PendingApiCalls {
+    override fun loadPendingApiCallQueue(): PendingApiCallQueue {
         TODO("Not yet implemented")
     }
 

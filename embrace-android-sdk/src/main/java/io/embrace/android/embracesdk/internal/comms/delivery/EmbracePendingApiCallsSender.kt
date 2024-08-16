@@ -26,8 +26,8 @@ internal class EmbracePendingApiCallsSender(
     private val logger: EmbLogger
 ) : PendingApiCallsSender, NetworkConnectivityListener {
 
-    private val pendingApiCalls: PendingApiCalls by lazy {
-        cacheManager.loadPendingApiCalls()
+    private val pendingApiCallQueue: PendingApiCallQueue by lazy {
+        cacheManager.loadPendingApiCallQueue()
     }
     private var lastDeliveryTask: ScheduledFuture<*>? = null
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
@@ -49,8 +49,8 @@ internal class EmbracePendingApiCallsSender(
 
         // Save the pending api calls to disk.
         val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())
-        pendingApiCalls.add(pendingApiCall)
-        cacheManager.savePendingApiCalls(pendingApiCalls, sync)
+        pendingApiCallQueue.add(pendingApiCall)
+        cacheManager.savePendingApiCallQueue(pendingApiCallQueue, sync)
     }
 
     override fun scheduleRetry(response: ApiResponse) {
@@ -107,7 +107,7 @@ internal class EmbracePendingApiCallsSender(
      * Return true if the conditions are met for a delivery task to be scheduled
      */
     private fun shouldScheduleDelivery(): Boolean {
-        return !isDeliveryTaskActive() && pendingApiCalls.hasPendingApiCallsToSend()
+        return !isDeliveryTaskActive() && pendingApiCallQueue.hasPendingApiCallsToSend()
     }
 
     /**
@@ -143,7 +143,7 @@ internal class EmbracePendingApiCallsSender(
             var applyExponentialBackoff = false
 
             while (true) {
-                val pendingApiCall = pendingApiCalls.pollNextPendingApiCall() ?: break
+                val pendingApiCall = pendingApiCallQueue.pollNextPendingApiCall() ?: break
                 val response = sendPendingApiCall(pendingApiCall)
                 response?.let {
                     val url = EmbraceUrl.create(pendingApiCall.apiRequest.url.url)
@@ -173,17 +173,17 @@ internal class EmbracePendingApiCallsSender(
                     } else {
                         // Shouldn't retry, so delete the payload and save the pending api calls.
                         cacheManager.deletePayload(pendingApiCall.cachedPayloadFilename)
-                        cacheManager.savePendingApiCalls(pendingApiCalls)
+                        cacheManager.savePendingApiCallQueue(pendingApiCallQueue)
                     }
                 }
             }
 
             // Add back to the queue all retries that failed.
             failedApiCallsToRetry.forEach {
-                pendingApiCalls.add(it)
+                pendingApiCallQueue.add(it)
             }
 
-            if (pendingApiCalls.hasPendingApiCallsToSend()) {
+            if (pendingApiCallQueue.hasPendingApiCallsToSend()) {
                 scheduledWorker.submit {
                     scheduleNextApiCallsDelivery(
                         applyExponentialBackoff,

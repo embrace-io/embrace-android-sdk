@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallQueue
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -19,11 +20,13 @@ internal class PendingApiCallsTest {
 
     private lateinit var worker: ScheduledWorker
     private lateinit var pendingApiCalls: PendingApiCalls
+    private lateinit var queue: PendingApiCallQueue
 
     @Before
     fun setUp() {
         worker = ScheduledWorker(BlockingScheduledExecutorService(blockingMode = false))
         pendingApiCalls = PendingApiCalls()
+        queue = PendingApiCallQueue(pendingApiCalls)
     }
 
     @Test
@@ -38,7 +41,7 @@ internal class PendingApiCallsTest {
             userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        pendingApiCalls.add(pendingApiCall1)
+        queue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = ApiRequestUrl("http://test.url/events"),
@@ -50,11 +53,11 @@ internal class PendingApiCallsTest {
             userAgent = ""
         )
         val pendingApiCall2 = PendingApiCall(request2, "payload_filename")
-        pendingApiCalls.add(pendingApiCall2)
+        queue.add(pendingApiCall2)
 
-        assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
-        assertEquals(pendingApiCall2, pendingApiCalls.pollNextPendingApiCall())
-        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall1, queue.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, queue.pollNextPendingApiCall())
+        assertEquals(null, queue.pollNextPendingApiCall())
     }
 
     @Test
@@ -68,9 +71,9 @@ internal class PendingApiCallsTest {
             contentEncoding = "gzip",
             userAgent = ""
         )
-        assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
-        pendingApiCalls.add(PendingApiCall(request1, "payload_filename"))
-        assertTrue(pendingApiCalls.hasPendingApiCallsToSend())
+        assertFalse(queue.hasPendingApiCallsToSend())
+        queue.add(PendingApiCall(request1, "payload_filename"))
+        assertTrue(queue.hasPendingApiCallsToSend())
     }
 
     @Test
@@ -85,7 +88,7 @@ internal class PendingApiCallsTest {
             userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        pendingApiCalls.add(pendingApiCall1)
+        queue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = ApiRequestUrl("http://test.url/spans"),
@@ -97,16 +100,16 @@ internal class PendingApiCallsTest {
             userAgent = ""
         )
         val pendingApiCall2 = PendingApiCall(request2, "payload_filename")
-        pendingApiCalls.add(pendingApiCall2)
+        queue.add(pendingApiCall2)
 
-        assertEquals(pendingApiCall2, pendingApiCalls.pollNextPendingApiCall())
-        assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
-        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall2, queue.pollNextPendingApiCall())
+        assertEquals(pendingApiCall1, queue.pollNextPendingApiCall())
+        assertEquals(null, queue.pollNextPendingApiCall())
     }
 
     @Test
     fun `test pollNextPendingApiCall returns null if no pending api calls exist`() {
-        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(null, queue.pollNextPendingApiCall())
     }
 
     @Test
@@ -127,7 +130,7 @@ internal class PendingApiCallsTest {
                 )
                 val pendingApiCall = PendingApiCall(request, "payload_filename")
 
-                pendingApiCalls.add(pendingApiCall)
+                queue.add(pendingApiCall)
             }
 
             val exceedingRequest = ApiRequest(
@@ -141,18 +144,18 @@ internal class PendingApiCallsTest {
             )
             val exceedingPendingApiCall = PendingApiCall(exceedingRequest, "payload_filename")
 
-            pendingApiCalls.add(exceedingPendingApiCall)
+            queue.add(exceedingPendingApiCall)
 
-            val headApiCall = pendingApiCalls.pollNextPendingApiCall()
+            val headApiCall = queue.pollNextPendingApiCall()
 
             // Verify that after adding an api call when queue is full, the head of the queue is the second one added
             assertTrue(headApiCall?.apiRequest?.eventId == "request_1")
 
             // Verify that the exceeding api call was added to the queue
             repeat(queueLimit - 2) {
-                pendingApiCalls.pollNextPendingApiCall()
+                queue.pollNextPendingApiCall()
             }
-            assertEquals(exceedingPendingApiCall, pendingApiCalls.pollNextPendingApiCall())
+            assertEquals(exceedingPendingApiCall, queue.pollNextPendingApiCall())
         }
     }
 
@@ -168,7 +171,7 @@ internal class PendingApiCallsTest {
             userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
-        pendingApiCalls.add(pendingApiCall1)
+        queue.add(pendingApiCall1)
 
         val endpoint = Endpoint.EVENTS
         with(endpoint.limiter) {
@@ -178,10 +181,10 @@ internal class PendingApiCallsTest {
                 1000
             ) {}
         }
-        assertEquals(null, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(null, queue.pollNextPendingApiCall())
 
         endpoint.limiter.clearRateLimit()
-        assertEquals(pendingApiCall1, pendingApiCalls.pollNextPendingApiCall())
+        assertEquals(pendingApiCall1, queue.pollNextPendingApiCall())
     }
 
     private fun Endpoint.getMaxPendingApiCalls(): Int {

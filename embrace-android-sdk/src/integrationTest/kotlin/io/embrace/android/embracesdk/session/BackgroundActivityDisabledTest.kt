@@ -75,7 +75,7 @@ internal class BackgroundActivityDisabledTest {
             // Check what should and shouldn't be logged when there is no background activity and the app is in the background
             assertTrue(embrace.isStarted)
             assertTrue(embrace.currentSessionId.isNullOrBlank())
-            assertTrue(embrace.getDeviceId().isNotBlank())
+            assertTrue(embrace.deviceId.isNotBlank())
             assertNull(embrace.startSpan("test"))
             embrace.logError("error")
             runLoggingThread()

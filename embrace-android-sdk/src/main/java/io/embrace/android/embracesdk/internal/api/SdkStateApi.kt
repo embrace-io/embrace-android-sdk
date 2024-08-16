@@ -22,7 +22,7 @@ public interface SdkStateApi {
      */
     public fun setAppId(appId: String): Boolean
 
-    public fun getDeviceId(): String
+    public val deviceId: String
 
     public val currentSessionId: String?
 

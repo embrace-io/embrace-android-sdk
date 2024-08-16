@@ -59,7 +59,14 @@ internal class SdkStateApiDelegateTest {
     @Test
     fun getDeviceId() {
         preferencesService.deviceIdentifier = "foo"
-        assertEquals("foo", delegate.getDeviceId())
+        assertEquals("foo", delegate.deviceId)
+    }
+
+    @Test
+    fun `device ID not returned SDK is not enabled`() {
+        preferencesService.deviceIdentifier = "foo"
+        sdkCallChecker.started.set(false)
+        assertEquals("", delegate.deviceId)
     }
 
     @Test

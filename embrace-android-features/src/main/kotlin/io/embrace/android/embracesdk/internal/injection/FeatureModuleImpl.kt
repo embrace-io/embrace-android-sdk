@@ -234,11 +234,14 @@ internal class FeatureModuleImpl(
         DataSourceState(
             factory = {
                 NetworkStatusDataSource(
+                    clock = initModule.clock,
                     spanService = otelModule.spanService,
                     logger = initModule.logger
                 )
             },
-            configGate = { configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled() }
+            configGate = {
+                configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+            }
         )
     }
 

@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
@@ -57,7 +56,6 @@ internal class EmbraceApiServiceTest {
     private lateinit var fakeApiClient: FakeApiClient
     private lateinit var fakeCacheManager: DeliveryCacheManager
     private lateinit var testScheduledExecutor: ScheduledExecutorService
-    private lateinit var networkConnectivityService: FakeNetworkConnectivityService
     private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
     private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
@@ -75,7 +73,6 @@ internal class EmbraceApiServiceTest {
         cachedConfig = CachedConfig(
             remoteConfig = RemoteConfig()
         )
-        networkConnectivityService = FakeNetworkConnectivityService()
         testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
         fakePendingApiCallsSender = FakePendingApiCallsSender()
@@ -336,7 +333,7 @@ internal class EmbraceApiServiceTest {
 
     @Test
     fun `unsuccessful requests are queued for later`() {
-        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        apiService.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE)
         val event = EventMessage(
             event = Event(
                 eventId = "event-id",
@@ -521,7 +518,7 @@ internal class EmbraceApiServiceTest {
 
     @Test
     fun `test that requests with no connection, do not execute the request and save a pending api call`() {
-        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        apiService.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE)
         val event = EventMessage(
             event = Event(
                 eventId = "event-id",
@@ -587,7 +584,6 @@ internal class EmbraceApiServiceTest {
     }
 
     private fun initApiService() {
-        networkConnectivityService.networkStatus = NetworkStatus.WIFI
         apiService = EmbraceApiService(
             apiClient = fakeApiClient,
             serializer = serializer,
@@ -595,12 +591,12 @@ internal class EmbraceApiServiceTest {
             logger = EmbLoggerImpl(),
             backgroundWorker = BackgroundWorker(testScheduledExecutor),
             cacheManager = fakeCacheManager,
+            pendingApiCallsSender = fakePendingApiCallsSender,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,
-            pendingApiCallsSender = fakePendingApiCallsSender,
-            urlBuilder = apiUrlBuilder,
-            networkConnectivityService = networkConnectivityService
+            urlBuilder = apiUrlBuilder
         )
+        apiService.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
     }
 
     companion object {

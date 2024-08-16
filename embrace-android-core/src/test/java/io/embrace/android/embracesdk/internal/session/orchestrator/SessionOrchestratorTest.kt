@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -15,11 +16,9 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -40,7 +39,10 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RuntimeEnvironment
 
+@RunWith(AndroidJUnit4::class)
 internal class SessionOrchestratorTest {
 
     private lateinit var orchestrator: SessionOrchestratorImpl
@@ -373,7 +375,7 @@ internal class SessionOrchestratorTest {
         periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
         periodicBackgroundActivityCacher =
             PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
-        fakeDataSource = FakeDataSource(mockContext())
+        fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             configService,
             BackgroundWorker(BlockableExecutorService()),
@@ -407,7 +409,7 @@ internal class SessionOrchestratorTest {
             SessionSpanAttrPopulatorImpl(
                 currentSessionSpan,
                 FakeEventService(),
-                FakeStartupService(),
+                { 0L },
                 FakeLogService(),
                 FakeMetadataService()
             ),

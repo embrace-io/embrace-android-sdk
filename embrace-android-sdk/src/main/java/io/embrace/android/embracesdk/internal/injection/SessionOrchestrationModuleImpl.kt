@@ -88,7 +88,7 @@ internal class SessionOrchestrationModuleImpl(
         SessionSpanAttrPopulatorImpl(
             openTelemetryModule.currentSessionSpan,
             momentsModule.eventService,
-            dataCaptureServiceModule.startupService,
+            dataCaptureServiceModule.startupService::getSdkStartupDuration,
             logModule.logService,
             payloadSourceModule.metadataService
         )

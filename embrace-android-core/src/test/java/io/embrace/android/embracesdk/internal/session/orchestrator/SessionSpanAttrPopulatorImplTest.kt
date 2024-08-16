@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
@@ -27,7 +26,7 @@ internal class SessionSpanAttrPopulatorImplTest {
         populator = SessionSpanAttrPopulatorImpl(
             writer,
             FakeEventService(),
-            FakeStartupService(),
+            { 0L },
             FakeLogService(),
             FakeMetadataService()
         )

@@ -6,15 +6,15 @@ import io.embrace.android.embracesdk.internal.payload.SessionZygote
 /**
  * Populates the attributes of a session span.
  */
-internal interface SessionSpanAttrPopulator {
+public interface SessionSpanAttrPopulator {
 
     /**
      * Populates session span attributes at the start of the session.
      */
-    fun populateSessionSpanStartAttrs(session: SessionZygote)
+    public fun populateSessionSpanStartAttrs(session: SessionZygote)
 
     /**
      * Populates session span attributes at the end of the session.
      */
-    fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean)
+    public fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean)
 }

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
  * This class acts as a delegate to the SessionOrchestrator & is separated out because it
  * contains references to various services that are otherwise irrelevant to the SessionOrchestrator.
  */
-internal class OrchestratorBoundaryDelegate(
+public class OrchestratorBoundaryDelegate(
     private val memoryCleanerService: MemoryCleanerService,
     private val userService: UserService,
     private val sessionPropertiesService: SessionPropertiesService,
@@ -24,7 +24,7 @@ internal class OrchestratorBoundaryDelegate(
      * Prepares all services/state for a new session. Practically this involves
      * resetting collections in services etc.
      */
-    fun prepareForNewSession(clearUserInfo: Boolean = false) {
+    public fun prepareForNewSession(clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections()
         sessionPropertiesService.clearTemporary()
 
@@ -33,7 +33,7 @@ internal class OrchestratorBoundaryDelegate(
         }
     }
 
-    fun onSessionStarted(startTime: Long) {
+    public fun onSessionStarted(startTime: Long) {
         // Record the connection type at the start of the session.
         networkConnectivityService.networkStatusOnSessionStarted(startTime)
     }

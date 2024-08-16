@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -23,10 +22,10 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import java.util.Locale
 
-internal class SessionSpanAttrPopulatorImpl(
+public class SessionSpanAttrPopulatorImpl(
     private val sessionSpanWriter: SessionSpanWriter,
     private val eventService: EventService,
-    private val startupService: StartupService,
+    private val sdkStartupDurationProvider: (coldStart: Boolean) -> Long?,
     private val logService: LogService,
     private val metadataService: MetadataService
 ) : SessionSpanAttrPopulator {
@@ -64,7 +63,7 @@ internal class SessionSpanAttrPopulatorImpl(
                 addSystemAttribute(
                     SpanAttributeData(
                         embSdkStartupDuration.name,
-                        startupService.getSdkStartupDuration(coldStart).toString()
+                        sdkStartupDurationProvider(coldStart).toString()
                     )
                 )
                 addSystemAttribute(SpanAttributeData(embSessionStartupDuration.name, info.duration.toString()))

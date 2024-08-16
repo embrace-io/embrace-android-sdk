@@ -25,6 +25,7 @@ dependencies {
     compileOnly(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-payload"))
     testImplementation(project(":embrace-android-api"))
+    testImplementation(project(":embrace-android-features"))
 
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)

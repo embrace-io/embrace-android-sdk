@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
@@ -23,7 +22,6 @@ public class FakeFeatureModule : FeatureModule {
     override val tapDataSource: DataSourceState<TapDataSource> = DataSourceState({ null })
     override val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource> = DataSourceState({ null })
     override val pushNotificationDataSource: DataSourceState<PushNotificationDataSource> = DataSourceState({ null })
-    override val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource> = DataSourceState({ null })
     override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> = DataSourceState({ null })
     override val lowPowerDataSource: DataSourceState<LowPowerDataSource> = DataSourceState({ null })
     override val networkStatusDataSource: DataSourceState<NetworkStatusDataSource> = DataSourceState({ null })

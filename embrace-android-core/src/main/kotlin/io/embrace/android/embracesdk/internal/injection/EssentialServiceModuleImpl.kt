@@ -22,10 +22,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-internal class EssentialServiceModuleImpl(
+public class EssentialServiceModuleImpl(
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -33,8 +32,7 @@ internal class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule,
-    featureModuleProvider: Provider<FeatureModule>
+    storageModule: StorageModule
 ) : EssentialServiceModule {
 
     private val configService by lazy { configModule.configService }
@@ -60,7 +58,7 @@ internal class EssentialServiceModuleImpl(
         ActivityLifecycleTracker(coreModule.application, initModule.logger)
     }
 
-    override val urlBuilder by singleton {
+    override val urlBuilder: EmbraceApiUrlBuilder by singleton {
         Systrace.traceSynchronous("url-builder-init") {
             // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
             // but we want to access behaviors from ConfigService when possible.
@@ -148,7 +146,8 @@ internal class EssentialServiceModuleImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 configService = configService,
                 logger = initModule.logger,
-            ) { featureModuleProvider().sessionPropertiesDataSource.dataSource }
+                writer = openTelemetryModule.currentSessionSpan
+            )
         }
     }
 

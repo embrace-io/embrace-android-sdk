@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
 import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
@@ -125,18 +124,6 @@ internal class FeatureModuleImpl(
                     breadcrumbBehavior = configService.breadcrumbBehavior,
                     otelModule.spanService,
                     initModule.logger
-                )
-            }
-        )
-    }
-
-    override val sessionPropertiesDataSource: DataSourceState<SessionPropertiesDataSource> by dataSourceState {
-        DataSourceState(
-            factory = {
-                SessionPropertiesDataSource(
-                    sessionBehavior = configService.sessionBehavior,
-                    writer = otelModule.currentSessionSpan,
-                    logger = initModule.logger
                 )
             }
         )

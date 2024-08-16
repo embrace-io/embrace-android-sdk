@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,25 +13,17 @@ import org.junit.Test
 internal class SessionPropertiesServiceImplTest {
 
     private lateinit var service: SessionPropertiesService
-    private lateinit var dataSource: SessionPropertiesDataSource
     private lateinit var fakeCurrentSessionSpan: FakeCurrentSessionSpan
     private lateinit var propState: Map<String, String>
 
     @Before
     fun setUp() {
-        val logger = EmbLoggerImpl()
-        val fakeConfigService = FakeConfigService()
         fakeCurrentSessionSpan = FakeCurrentSessionSpan()
-        dataSource = SessionPropertiesDataSource(
-            sessionBehavior = fakeConfigService.sessionBehavior,
-            writer = fakeCurrentSessionSpan,
-            logger = logger,
-        )
         service = SessionPropertiesServiceImpl(
             FakePreferenceService(),
             FakeConfigService(),
             FakeEmbLogger(),
-            ::dataSource
+            fakeCurrentSessionSpan
         )
         propState = emptyMap()
         service.addChangeListener { propState = it }
@@ -57,11 +48,10 @@ internal class SessionPropertiesServiceImplTest {
             FakePreferenceService().apply { permanentSessionProperties = mapOf("key" to "value") },
             FakeConfigService(),
             FakeEmbLogger(),
-            ::dataSource
+            fakeCurrentSessionSpan
         )
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())
         service.addProperty("temp", "value", false)
-        assertTrue(service.populateCurrentSession())
         assertEquals(2, fakeCurrentSessionSpan.attributeCount())
     }
 

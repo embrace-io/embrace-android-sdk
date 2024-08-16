@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.logs.LogService
@@ -29,12 +28,10 @@ internal class SessionSpanAttrPopulatorImpl(
     private val eventService: EventService,
     private val startupService: StartupService,
     private val logService: LogService,
-    private val metadataService: MetadataService,
-    private val sessionPropertiesService: SessionPropertiesService
+    private val metadataService: MetadataService
 ) : SessionSpanAttrPopulator {
 
     override fun populateSessionSpanStartAttrs(session: SessionZygote) {
-        sessionPropertiesService.populateCurrentSession()
         with(sessionSpanWriter) {
             addSystemAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
             addSystemAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))

@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
+import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
+import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
+import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -9,7 +12,8 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
     private val configService: ConfigService,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
+    private val writer: SessionSpanWriter
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)
@@ -22,6 +26,7 @@ internal class EmbraceSessionProperties(
             synchronized(permanentPropertiesReference) {
                 if (permanentPropertiesReference.get() === NOT_LOADED) {
                     permanentPropertiesReference.set(permanentPropertiesProvider())
+                    addPermPropsToSessionSpan()
                 }
             }
         }
@@ -55,6 +60,12 @@ internal class EmbraceSessionProperties(
                 }
                 temporary[sanitizedKey] = sanitizedValue
             }
+            writer.addSystemAttribute(
+                SpanAttributeData(
+                    sanitizedKey.toSessionPropertyAttributeName(),
+                    sanitizedValue
+                )
+            )
             return true
         }
     }
@@ -72,6 +83,7 @@ internal class EmbraceSessionProperties(
                 preferencesService.permanentSessionProperties = permanentProperties()
                 existed = true
             }
+            writer.removeSystemAttribute(sanitizedKey.toSessionPropertyAttributeName())
             return existed
         }
     }
@@ -82,7 +94,23 @@ internal class EmbraceSessionProperties(
 
     private fun size(): Int = permanentProperties().size + temporary.size
 
-    fun clearTemporary(): Unit = temporary.clear()
+    fun clearTemporary() {
+        synchronized(permanentPropertiesReference) {
+            temporary.clear()
+            addPermPropsToSessionSpan()
+        }
+    }
+
+    private fun addPermPropsToSessionSpan() {
+        permanentPropertiesReference.get().entries.forEach {
+            writer.addSystemAttribute(
+                SpanAttributeData(
+                    it.key.toSessionPropertyAttributeName(),
+                    it.value
+                )
+            )
+        }
+    }
 
     private companion object {
         private val NOT_LOADED = mutableMapOf<String, String>()

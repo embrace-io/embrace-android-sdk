@@ -13,7 +13,7 @@ internal const val PERSONA_FIRST_DAY_USER = "first_day"
  * @param preferencesService the preferences service
  * @return user info created from the cache and configuration
  */
-internal fun PreferencesService.getStoredUserInfo(): UserInfo {
+public fun PreferencesService.getStoredUserInfo(): UserInfo {
     Systrace.traceSynchronous("load-user-info-from-pref") {
         val id = userIdentifier
         val name = username

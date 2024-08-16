@@ -19,6 +19,10 @@ import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+<<<<<<<< HEAD:embrace-android-core/src/test/java/io/embrace/android/embracesdk/internal/event/EmbraceEventServiceTest.kt
+========
+import io.embrace.android.embracesdk.internal.event.EmbraceEventService.Companion.STARTUP_EVENT_NAME
+>>>>>>>> 44a373943 (refactor: begin moving test code):embrace-android-sdk/src/test/java/io/embrace/android/embracesdk/internal/event/EmbraceEventServiceTest.kt
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl

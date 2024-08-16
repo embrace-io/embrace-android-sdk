@@ -10,19 +10,19 @@ import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-internal class PayloadFactoryImpl(
+public class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val configService: ConfigService,
     private val logger: EmbLogger
 ) : PayloadFactory {
 
-    override fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean) =
+    override fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean): SessionZygote? =
         when (state) {
             ProcessState.FOREGROUND -> startSessionWithState(timestamp, coldStart)
             ProcessState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
         }
 
-    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: SessionZygote) =
+    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>? =
         when (state) {
             ProcessState.FOREGROUND -> endSessionWithState(initial)
             ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial)
@@ -33,12 +33,12 @@ internal class PayloadFactoryImpl(
         timestamp: Long,
         initial: SessionZygote,
         crashId: String
-    ) = when (state) {
+    ): Envelope<SessionPayload>? = when (state) {
         ProcessState.FOREGROUND -> endSessionWithCrash(initial, crashId)
         ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
     }
 
-    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote) =
+    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>? =
         when (state) {
             ProcessState.FOREGROUND -> snapshotSession(initial)
             ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)

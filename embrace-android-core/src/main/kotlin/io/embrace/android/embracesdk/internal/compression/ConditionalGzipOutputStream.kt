@@ -7,7 +7,7 @@ import java.util.zip.GZIPOutputStream
  * This Output Stream will only compress the data if it's not already compressed.
  * If the data is already compressed, it will just write it to the output stream.
  */
-internal class ConditionalGzipOutputStream(
+public class ConditionalGzipOutputStream(
     private val outputStream: OutputStream,
 ) : OutputStream() {
 

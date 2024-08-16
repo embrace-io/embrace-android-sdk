@@ -11,14 +11,14 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 /**
  * Generates a V2 payload
  */
-internal class PayloadMessageCollatorImpl(
+public class PayloadMessageCollatorImpl(
     private val gatingService: GatingService,
     private val sessionEnvelopeSource: SessionEnvelopeSource,
     private val preferencesService: PreferencesService,
     private val currentSessionSpan: CurrentSessionSpan
 ) : PayloadMessageCollator {
 
-    override fun buildInitialSession(params: InitialEnvelopeParams) = with(params) {
+    override fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote = with(params) {
         currentSessionSpan.readySession()
         SessionZygote(
             sessionId = currentSessionSpan.getSessionId(),

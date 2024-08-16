@@ -12,8 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.EventDescription
-import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -316,7 +314,7 @@ internal class EventHandlerTest {
     @Test
     fun `verify onEventStarted prevents send the startup event if feature gating gates it`() {
         val eventId = "event-id"
-        val eventName = EmbraceEventService.STARTUP_EVENT_NAME
+        val eventName = STARTUP_EVENT_NAME
         val startTime = 123L
         val threshold = 100L
         val mockTimeoutCallback = Runnable {}
@@ -343,7 +341,7 @@ internal class EventHandlerTest {
     @Test
     fun `verify onEventStarted sends the startup event if feature gating allows it`() {
         val eventId = "event-id"
-        val eventName = EmbraceEventService.STARTUP_EVENT_NAME
+        val eventName = STARTUP_EVENT_NAME
         val startTime = 123L
         val threshold = 100L
         val mockTimeoutCallback = Runnable {}
@@ -485,7 +483,7 @@ internal class EventHandlerTest {
         val endTime = 300L
         clock.setCurrentTime(endTime)
         val originEventId = "origin-event-id"
-        val originEventName = EmbraceEventService.STARTUP_EVENT_NAME
+        val originEventName = STARTUP_EVENT_NAME
 
         val originEvent = Event(
             timestamp = startTime,
@@ -513,7 +511,7 @@ internal class EventHandlerTest {
         val endTime = 300L
         clock.setCurrentTime(endTime)
         val originEventId = "origin-event-id"
-        val originEventName = EmbraceEventService.STARTUP_EVENT_NAME
+        val originEventName = STARTUP_EVENT_NAME
 
         val originEvent = Event(
             timestamp = startTime,

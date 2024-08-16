@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal
+package io.embrace.android.embracesdk.internal.event
 
 import io.embrace.android.embracesdk.internal.payload.Event
 import java.util.concurrent.Future

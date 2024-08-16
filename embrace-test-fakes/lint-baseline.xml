@@ -359,6 +359,39 @@
         errorLine1="        TODO(&quot;Not yet implemented&quot;)"
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeEventService.kt"
+            line="68"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeEventService.kt"
+            line="72"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeEventService.kt"
+            line="76"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeLogService.kt"
             line="58"
             column="9"/>

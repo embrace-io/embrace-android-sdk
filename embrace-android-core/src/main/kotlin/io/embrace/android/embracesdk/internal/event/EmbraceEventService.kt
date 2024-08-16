@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.event
 
-import io.embrace.android.embracesdk.internal.EventDescription
-import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -262,7 +260,6 @@ internal class EmbraceEventService(
     }
 
     companion object {
-        const val STARTUP_EVENT_NAME = "_startup"
 
         internal fun getInternalEventKey(eventName: String, identifier: String?): String =
             when (identifier) {

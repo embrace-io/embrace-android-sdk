@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.event.EventService
+import io.embrace.android.embracesdk.internal.event.StartupEventInfo
 
-internal class FakeEventService : EventService {
+public class FakeEventService : EventService {
 
-    internal class EventParams(
-        val name: String,
-        val identifier: String? = null,
-        val properties: Map<String, Any>? = null,
-        val startTime: Long? = null
+    public class EventParams(
+        public val name: String,
+        public val identifier: String? = null,
+        public val properties: Map<String, Any>? = null,
+        public val startTime: Long? = null
     )
 
-    val startedEvents = mutableListOf<EventParams>()
-    val endedEvents = mutableListOf<EventParams>()
+    public val startedEvents: MutableList<EventParams> = mutableListOf()
+    public val endedEvents: MutableList<EventParams> = mutableListOf()
 
     override fun startEvent(name: String) {
         startedEvents.add(EventParams(name))

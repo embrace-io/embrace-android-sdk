@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.event
 
-import io.embrace.android.embracesdk.internal.EventDescription
-import io.embrace.android.embracesdk.internal.StartupEventInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -145,7 +143,7 @@ internal class EventHandler(
      * @return true if should be gated
      */
     private fun shouldSendMoment(name: String?): Boolean {
-        return if (name == EmbraceEventService.STARTUP_EVENT_NAME) {
+        return if (name == STARTUP_EVENT_NAME) {
             !configService.sessionBehavior.shouldGateStartupMoment()
         } else {
             !configService.sessionBehavior.shouldGateMoment()

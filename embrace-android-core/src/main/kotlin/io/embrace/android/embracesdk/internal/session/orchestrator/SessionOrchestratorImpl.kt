@@ -192,23 +192,23 @@ internal class SessionOrchestratorImpl(
                 processEndMessage(endMessage, transitionType)
             }
 
-            // third, clean up any previous session state
+            // the previous session has fully ended at this point
+            // now, we can clear the SDK state and prepare for the next session
             boundaryDelegate.prepareForNewSession(clearUserInfo)
 
-            // now, we can start the next session or background activity
-
+            // create the next session span if we should, and update the SDK state to reflect the transition
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
             sessionIdTracker.setActiveSession(sessionId, inForeground)
             newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
 
-            // initiate periodic caching of the payload if required
+            // initiate periodic caching of the payload if a new session has started
             if (transitionType != TransitionType.CRASH && newState != null) {
                 initiatePeriodicCaching(endProcessState, newState)
             }
 
-            // update the current state
+            // update the current state of the SDK. this should match the value in sessionIdTracker
             state = endProcessState
 
             // update data capture orchestrator

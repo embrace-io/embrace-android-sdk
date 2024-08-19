@@ -26,7 +26,7 @@ internal class OrchestratorBoundaryDelegate(
      */
     public fun prepareForNewSession(clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections()
-        sessionPropertiesService.clearTemporary()
+        sessionPropertiesService.prepareForNewSession()
 
         if (clearUserInfo) {
             userService.clearAllUserInfo()

@@ -32,9 +32,9 @@ public interface SessionPropertiesService {
     public fun getProperties(): Map<String, String>
 
     /**
-     * Clears any temporary properties
+     * Apply state change required when a new session starts
      */
-    public fun clearTemporary()
+    public fun prepareForNewSession()
 
     /**
      * Adds a listener that will be invoked with a Map representation of all the session properties

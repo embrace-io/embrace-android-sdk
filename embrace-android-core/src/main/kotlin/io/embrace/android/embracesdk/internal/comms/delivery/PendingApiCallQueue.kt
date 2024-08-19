@@ -87,9 +87,7 @@ public class PendingApiCallQueue(
     private fun Endpoint.getMaxPendingApiCalls(): Int {
         return when (this) {
             Endpoint.EVENTS -> 100
-            Endpoint.LOGGING -> 100
             Endpoint.LOGS -> 10
-            Endpoint.NETWORK -> 50
             Endpoint.SESSIONS -> 100
             Endpoint.SESSIONS_V2 -> 100
             Endpoint.UNKNOWN -> 50

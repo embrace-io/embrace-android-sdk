@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
@@ -21,16 +20,10 @@ public class NoopDeliveryService : DeliveryService {
     ) {
     }
 
-    override fun sendLog(eventMessage: EventMessage) {
-    }
-
     override fun sendLogs(logEnvelope: Envelope<LogPayload>) {
     }
 
     override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
-    }
-
-    override fun sendNetworkCall(networkEvent: NetworkEvent) {
     }
 
     override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {

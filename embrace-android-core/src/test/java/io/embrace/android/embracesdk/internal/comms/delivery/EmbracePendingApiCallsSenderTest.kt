@@ -260,12 +260,11 @@ internal class EmbracePendingApiCallsSenderTest {
             "appId"
         )
         repeat(105) { k ->
-            val request = mapper.logRequest(
+            val request = mapper.eventMessageRequest(
                 EventMessage(
                     Event(
                         type = EventType.INFO_LOG,
-                        eventId = "eventId",
-                        messageId = "message_id_$k"
+                        eventId = "message_id_$k"
                     )
                 )
             )
@@ -278,8 +277,8 @@ internal class EmbracePendingApiCallsSenderTest {
         }
 
         // verify logs were added to the queue, and oldest added requests are dropped
-        assertEquals("il:message_id_5", queue.pollNextPendingApiCall()?.apiRequest?.logId)
-        assertEquals("il:message_id_6", queue.pollNextPendingApiCall()?.apiRequest?.logId)
+        assertEquals("il:message_id_5", queue.pollNextPendingApiCall()?.apiRequest?.eventId)
+        assertEquals("il:message_id_6", queue.pollNextPendingApiCall()?.apiRequest?.eventId)
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")

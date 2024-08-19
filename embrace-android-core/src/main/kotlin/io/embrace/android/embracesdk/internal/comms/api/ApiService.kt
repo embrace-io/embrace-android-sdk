@@ -6,18 +6,9 @@ import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import java.util.concurrent.Future
 
 public interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
-
-    /**
-     * Sends a log message to the API.
-     *
-     * @param eventMessage the event message containing the log entry
-     * @return a future containing the response body from the server
-     */
-    public fun sendLog(eventMessage: EventMessage)
 
     /**
      * Sends a list of OTel Logs to the API.
@@ -32,13 +23,6 @@ public interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
      * @param logEnvelope containing the logs
      */
     public fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
-
-    /**
-     * Sends a network event to the API.
-     *
-     * @param networkEvent the event containing the network call information
-     */
-    public fun sendNetworkCall(networkEvent: NetworkEvent)
 
     /**
      * Sends an event to the API.

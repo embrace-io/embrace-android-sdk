@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getLastSavedBackgroundActivity
+import io.embrace.android.embracesdk.getLastSavedSession
 import io.embrace.android.embracesdk.getLastSentBackgroundActivity
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -136,6 +137,31 @@ internal class SessionPropertiesTest {
 
             val bg = checkNotNull(harness.getLastSentBackgroundActivity())
             checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
+        }
+    }
+
+    @Test
+    fun `permanent properties are persisted in cached payloads`() {
+        with(testRule) {
+            startSdk()
+            harness.recordSession()
+            embrace.addSessionProperty("perm", "value", true)
+            val bgSnapshot = checkNotNull(harness.getLastSavedBackgroundActivity())
+            checkNotNull(bgSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("perm"))
+
+            harness.recordSession {
+                val sessionSnapshot = checkNotNull(harness.getLastSavedSession())
+                checkNotNull(sessionSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("perm"))
+                embrace.addSessionProperty("perm2", "value", true)
+            }
+
+            val bgSnapshot2 = checkNotNull(harness.getLastSavedBackgroundActivity())
+            checkNotNull(bgSnapshot2.getSessionSpan()).assertPropertyExistence(exist = listOf("perm", "perm2"))
+
+            harness.recordSession {
+                val sessionSnapshot = checkNotNull(harness.getLastSavedSession())
+                checkNotNull(sessionSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("perm", "perm2"))
+            }
         }
     }
 

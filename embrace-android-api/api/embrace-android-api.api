@@ -1,3 +1,10 @@
+public abstract interface class io/embrace/android/embracesdk/FlutterInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logUnhandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setDartVersion (Ljava/lang/String;)V
+	public abstract fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
+}
+
 public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {
 	public static final field HANDLED Lio/embrace/android/embracesdk/LogExceptionType;
 	public static final field NONE Lio/embrace/android/embracesdk/LogExceptionType;
@@ -15,12 +22,33 @@ public final class io/embrace/android/embracesdk/LogType : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/LogType;
 }
 
+public abstract interface class io/embrace/android/embracesdk/ReactNativeInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logHandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
+	public abstract fun logRnView (Ljava/lang/String;)V
+	public abstract fun logUnhandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setCacheableJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;Z)V
+	public abstract fun setJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;)V
+	public abstract fun setJavaScriptPatchNumber (Ljava/lang/String;)V
+	public abstract fun setReactNativeSdkVersion (Ljava/lang/String;)V
+	public abstract fun setReactNativeVersionNumber (Ljava/lang/String;)V
+}
+
 public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static final field ERROR Lio/embrace/android/embracesdk/Severity;
 	public static final field INFO Lio/embrace/android/embracesdk/Severity;
 	public static final field WARNING Lio/embrace/android/embracesdk/Severity;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Severity;
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
+}
+
+public abstract interface class io/embrace/android/embracesdk/UnityInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun installUnityThreadSampler ()V
+	public abstract fun logHandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logUnhandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setUnityMetaData (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/BetaApi : java/lang/annotation/Annotation {
@@ -30,6 +58,28 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface : io/embrace/android/embracesdk/internal/InternalTracingApi {
+	public abstract fun getSdkCurrentTime ()J
+	public abstract fun isAnrCaptureEnabled ()Z
+	public abstract fun isInternalNetworkCaptureDisabled ()Z
+	public abstract fun isNdkEnabled ()Z
+	public abstract fun isNetworkSpanForwardingEnabled ()Z
+	public abstract fun logComposeTap (Lkotlin/Pair;Ljava/lang/String;)V
+	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
+	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
+	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
+	public abstract fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logInternalError (Ljava/lang/Throwable;)V
+	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public abstract fun setProcessStartedByNotification ()V
+	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
+	public abstract fun stopSdk ()V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/InternalTracingApi {
@@ -51,6 +101,13 @@ public final class io/embrace/android/embracesdk/internal/InternalTracingApi$Def
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
 	public abstract fun addBreadcrumb (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/api/InternalInterfaceApi {
+	public abstract fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
+	public abstract fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
+	public abstract fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
+	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {

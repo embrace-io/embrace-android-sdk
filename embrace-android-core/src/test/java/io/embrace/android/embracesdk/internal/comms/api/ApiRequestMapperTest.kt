@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Event
@@ -8,8 +7,6 @@ import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -44,21 +41,6 @@ internal class ApiRequestMapperTest {
             assertTrue(userAgent.startsWith("Embrace/a/"))
             assertEquals(HttpMethod.GET, httpMethod)
         }
-    }
-
-    @Test
-    fun testLogRequest() {
-        val request = mapper.logRequest(
-            EventMessage(
-                Event(
-                    type = EventType.INFO_LOG,
-                    eventId = "eventId",
-                    messageId = "messageId"
-                )
-            )
-        )
-        request.assertCoreFieldsPopulated("/v1/log/logging")
-        assertEquals("il:messageId", request.logId)
     }
 
     @Test
@@ -116,24 +98,6 @@ internal class ApiRequestMapperTest {
         )
         request.assertCoreFieldsPopulated("/v1/log/events")
         assertEquals("c:activeEventId1,activeEventId2", request.eventId)
-    }
-
-    @Test
-    fun testNetworkEventRequest() {
-        val request = mapper.networkEventRequest(
-            NetworkEvent(
-                "eventId",
-                AppInfo(),
-                deviceId.value,
-                "eventId",
-                NetworkCapturedCall(),
-                "timestamp",
-                null,
-                null
-            )
-        )
-        request.assertCoreFieldsPopulated("/v1/log/network")
-        assertEquals("n:eventId", request.logId)
     }
 
     private fun ApiRequest.assertCoreFieldsPopulated(endpoint: String) {

@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
-internal class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
+public class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 
-    val loggedCalls = mutableListOf<NetworkCapturedCall>()
+    public val loggedCalls: MutableList<NetworkCapturedCall> = mutableListOf()
 
     override fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall) {
         loggedCalls.add(networkCapturedCall)

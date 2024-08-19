@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.network.logging
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSource
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
-internal interface NetworkCaptureDataSource : LogDataSource {
+public interface NetworkCaptureDataSource : LogDataSource {
 
-    fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall)
+    public fun logNetworkCapturedCall(networkCapturedCall: NetworkCapturedCall)
 }

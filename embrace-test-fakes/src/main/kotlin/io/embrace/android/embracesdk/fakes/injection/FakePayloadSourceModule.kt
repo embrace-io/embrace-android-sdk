@@ -1,5 +1,13 @@
-package io.embrace.android.embracesdk.fakes
+package io.embrace.android.embracesdk.fakes.injection
 
+import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
+import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
@@ -11,7 +19,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSo
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 
-internal class FakePayloadSourceModule(
+public class FakePayloadSourceModule(
     override val metadataService: MetadataService = FakeMetadataService(),
     override val deviceArchitecture: DeviceArchitecture = FakeDeviceArchitecture(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService()),

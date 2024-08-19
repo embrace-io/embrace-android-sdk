@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeApiClient

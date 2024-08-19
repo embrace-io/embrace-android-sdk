@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
  * Logs network calls made by the application. The Embrace SDK intercepts the calls and reports
  * them to the API.
  */
-internal interface NetworkLoggingService {
+public interface NetworkLoggingService {
 
     /**
      * Logs a network request.
@@ -14,5 +14,5 @@ internal interface NetworkLoggingService {
      *
      * @param networkRequest the network request to log
      */
-    fun logNetworkRequest(networkRequest: EmbraceNetworkRequest)
+    public fun logNetworkRequest(networkRequest: EmbraceNetworkRequest)
 }

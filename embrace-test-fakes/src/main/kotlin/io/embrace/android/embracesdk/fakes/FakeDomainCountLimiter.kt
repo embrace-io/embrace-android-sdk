@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.network.logging.DomainCountLimiter
 
-internal class FakeDomainCountLimiter : DomainCountLimiter {
+public class FakeDomainCountLimiter : DomainCountLimiter {
 
-    var canLog = true
+    public var canLog: Boolean = true
     override fun canLogNetworkRequest(domain: String): Boolean {
         return canLog
     }

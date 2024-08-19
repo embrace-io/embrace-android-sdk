@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 /**
  * Function that returns an instance of [LogModule]. Matches the signature of the constructor for [LogModuleImpl]
  */
-internal typealias LogModuleSupplier = (
+public typealias LogModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
@@ -14,7 +14,7 @@ internal typealias LogModuleSupplier = (
     payloadSourceModule: PayloadSourceModule,
 ) -> LogModule
 
-internal fun createLogModule(
+public fun createLogModule(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,

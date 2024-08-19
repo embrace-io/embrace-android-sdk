@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManage
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallQueue
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -46,6 +47,7 @@ internal class EmbracePendingApiCallsSenderTest {
         private lateinit var mockCacheManager: DeliveryCacheManager
         private lateinit var worker: ScheduledWorker
         private lateinit var pendingApiCalls: PendingApiCalls
+        private lateinit var queue: PendingApiCallQueue
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
         private lateinit var mockRetryMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse
 
@@ -70,12 +72,13 @@ internal class EmbracePendingApiCallsSenderTest {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
         worker = ScheduledWorker(blockingScheduledExecutorService)
         pendingApiCalls = PendingApiCalls()
+        queue = PendingApiCallQueue(pendingApiCalls)
         mockRetryMethod = mockk(relaxUnitFun = true)
         clearApiPipeline()
         mockCacheManager = mockk(relaxUnitFun = true)
         every { mockCacheManager.loadPayloadAsAction("cached_payload_1") } returns { "{payload 1}".toByteArray() }
         every { mockCacheManager.savePayload(any()) } returns "fake_cache"
-        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
+        every { mockCacheManager.loadPendingApiCallQueue() } returns PendingApiCallQueue(pendingApiCalls)
     }
 
     @After
@@ -290,14 +293,14 @@ internal class EmbracePendingApiCallsSenderTest {
         }
 
         // verify logs were added to the queue, and oldest added requests are dropped
-        assertEquals("il:message_id_5", pendingApiCalls.pollNextPendingApiCall()?.apiRequest?.logId)
-        assertEquals("il:message_id_6", pendingApiCalls.pollNextPendingApiCall()?.apiRequest?.logId)
+        assertEquals("il:message_id_5", queue.pollNextPendingApiCall()?.apiRequest?.logId)
+        assertEquals("il:message_id_6", queue.pollNextPendingApiCall()?.apiRequest?.logId)
 
         // now add some sessions for retry and verify they are returned first
         val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
         pendingApiCallsSender.savePendingApiCall(sessionRequest, {}, false)
         pendingApiCallsSender.scheduleRetry(ApiResponse.Incomplete(Throwable()))
-        assertEquals(sessionRequest, pendingApiCalls.pollNextPendingApiCall()?.apiRequest)
+        assertEquals(sessionRequest, queue.pollNextPendingApiCall()?.apiRequest)
     }
 
     private fun clearApiPipeline() {
@@ -315,7 +318,7 @@ internal class EmbracePendingApiCallsSenderTest {
         every { networkConnectivityService.getCurrentNetworkStatus() } returns status
 
         pendingApiCalls = PendingApiCalls()
-        every { mockCacheManager.loadPendingApiCalls() } returns pendingApiCalls
+        every { mockCacheManager.loadPendingApiCallQueue() } returns queue
 
         pendingApiCallsSender = EmbracePendingApiCallsSender(
             scheduledWorker = worker,
@@ -332,7 +335,7 @@ internal class EmbracePendingApiCallsSenderTest {
                 url = ApiRequestUrl("https://fake.com/${Endpoint.SESSIONS.path}"),
                 userAgent = ""
             )
-            pendingApiCalls.add(PendingApiCall(request, "cached_payload_1"))
+            queue.add(PendingApiCall(request, "cached_payload_1"))
         }
 
         if (runRetryJobAfterScheduling) {

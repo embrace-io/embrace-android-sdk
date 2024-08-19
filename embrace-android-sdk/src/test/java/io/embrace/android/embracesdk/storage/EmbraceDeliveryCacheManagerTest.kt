@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.CachedSession
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallQueue
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -280,6 +281,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Test
     fun `save and load pending api calls`() {
         val pendingApiCalls = PendingApiCalls()
+        val queue = PendingApiCallQueue(pendingApiCalls)
         val request1 = ApiRequest(
             url = ApiRequestUrl("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -290,7 +292,7 @@ internal class EmbraceDeliveryCacheManagerTest {
             userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
-        pendingApiCalls.add(pendingApiCall1)
+        queue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = ApiRequestUrl("http://test.url/events"),
@@ -303,7 +305,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
         fakeClock.tickSecond()
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
-        pendingApiCalls.add(pendingApiCall2)
+        queue.add(pendingApiCall2)
 
         val request3 = ApiRequest(
             url = ApiRequestUrl("http://test.url/logging"),
@@ -316,10 +318,10 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
         fakeClock.tickSecond()
         val pendingApiCall3 = PendingApiCall(request3, "payload_3.json", fakeClock.now())
-        pendingApiCalls.add(pendingApiCall3)
+        queue.add(pendingApiCall3)
 
-        deliveryCacheManager.savePendingApiCalls(pendingApiCalls)
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        deliveryCacheManager.savePendingApiCallQueue(queue)
+        val cachedCalls = deliveryCacheManager.loadPendingApiCallQueue()
 
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
@@ -337,6 +339,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
 
         val pendingApiCalls = PendingApiCalls()
+        val queue = PendingApiCallQueue(pendingApiCalls)
         val request1 = ApiRequest(
             url = ApiRequestUrl("http://test.url/sessions"),
             httpMethod = HttpMethod.POST,
@@ -347,7 +350,7 @@ internal class EmbraceDeliveryCacheManagerTest {
             userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_1.json", fakeClock.now())
-        pendingApiCalls.add(pendingApiCall1)
+        queue.add(pendingApiCall1)
 
         val request2 = ApiRequest(
             url = ApiRequestUrl("http://test.url/events"),
@@ -360,7 +363,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
         fakeClock.tickSecond()
         val pendingApiCall2 = PendingApiCall(request2, "payload_2.json", fakeClock.now())
-        pendingApiCalls.add(pendingApiCall2)
+        queue.add(pendingApiCall2)
 
         val request3 = ApiRequest(
             url = ApiRequestUrl("http://test.url/logging"),
@@ -373,14 +376,14 @@ internal class EmbraceDeliveryCacheManagerTest {
         )
         fakeClock.tickSecond()
         val pendingApiCall3 = PendingApiCall(request3, "payload_3.json", fakeClock.now())
-        pendingApiCalls.add(pendingApiCall3)
+        queue.add(pendingApiCall3)
 
-        deliveryCacheManager.savePendingApiCalls(pendingApiCalls, true)
+        deliveryCacheManager.savePendingApiCallQueue(queue, true)
 
         // Verify that the caching was not done in a background worker
         verify(exactly = 0) { spyWorker.submit(any(), any()) }
 
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        val cachedCalls = deliveryCacheManager.loadPendingApiCallQueue()
 
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
@@ -424,7 +427,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
         cacheService.cacheObject("failed_api_calls.json", pendingApiCallsQueue, List::class.java)
 
-        val cachedCalls = deliveryCacheManager.loadPendingApiCalls()
+        val cachedCalls = deliveryCacheManager.loadPendingApiCallQueue()
         assertEquals(pendingApiCall1, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
         assertEquals(null, cachedCalls.pollNextPendingApiCall())
@@ -432,7 +435,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `load empty set of delivery calls if non cached`() {
-        val pendingApiCalls = deliveryCacheManager.loadPendingApiCalls()
+        val pendingApiCalls = deliveryCacheManager.loadPendingApiCallQueue()
         assertFalse(pendingApiCalls.hasPendingApiCallsToSend())
     }
 }

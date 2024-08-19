@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService.Companion.OLD_COPY_SUFFIX
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService.Companion.TEMP_COPY_SUFFIX
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCall
+import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallQueue
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCalls
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -160,21 +161,21 @@ internal class EmbraceCacheServiceTest {
             url = ApiRequestUrl("http://fake.url/sessions"),
             userAgent = ""
         )
-        val pendingApiCalls = PendingApiCalls()
-        pendingApiCalls.add(PendingApiCall(apiRequest, "payload_id"))
+        val queue = PendingApiCallQueue(PendingApiCalls())
+        queue.add(PendingApiCall(apiRequest, "payload_id"))
 
         val cacheKey = "test_pending_calls_cache"
         service.cacheObject(
             cacheKey,
-            pendingApiCalls,
+            queue.toModel(),
             PendingApiCalls::class.java
         )
         val cachedPendingCalls =
-            service.loadObject<PendingApiCalls>(cacheKey, PendingApiCalls::class.java)
+            checkNotNull(service.loadObject<PendingApiCalls>(cacheKey, PendingApiCalls::class.java))
+        val cachedQueue = PendingApiCallQueue(cachedPendingCalls)
 
-        checkNotNull(cachedPendingCalls)
-        assertTrue(cachedPendingCalls.hasPendingApiCallsToSend())
-        val cachedApiRequest = cachedPendingCalls.pollNextPendingApiCall()?.apiRequest
+        assertTrue(cachedQueue.hasPendingApiCallsToSend())
+        val cachedApiRequest = cachedQueue.pollNextPendingApiCall()?.apiRequest
         assertNotNull(cachedApiRequest)
         assertEquals(apiRequest.contentType, cachedApiRequest?.contentType)
         assertEquals(apiRequest.userAgent, cachedApiRequest?.userAgent)

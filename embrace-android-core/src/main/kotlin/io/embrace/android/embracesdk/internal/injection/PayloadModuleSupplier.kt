@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Function that returns an instance of [PayloadSourceModule]. Matches the signature of the constructor for [PayloadSourceModuleImpl]
  */
-internal typealias PayloadSourceModuleSupplier = (
+public typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
@@ -14,12 +15,12 @@ internal typealias PayloadSourceModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeCoreModuleProvider: Provider<NativeCoreModule?>,
-    nativeFeatureModuleProvider: Provider<NativeFeatureModule?>,
+    nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    anrModule: AnrModule,
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper>
 ) -> PayloadSourceModule
 
-internal fun createPayloadSourceModule(
+public fun createPayloadSourceModule(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
@@ -28,9 +29,9 @@ internal fun createPayloadSourceModule(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeCoreModuleProvider: Provider<NativeCoreModule?>,
-    nativeFeatureModuleProvider: Provider<NativeFeatureModule?>,
+    nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    anrModule: AnrModule,
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper>
 ): PayloadSourceModule = PayloadSourceModuleImpl(
     initModule,
     coreModule,
@@ -40,7 +41,7 @@ internal fun createPayloadSourceModule(
     essentialServiceModule,
     configModule,
     nativeCoreModuleProvider,
-    nativeFeatureModuleProvider,
+    nativeSymbolsProvider,
     otelModule,
-    anrModule,
+    otelPayloadMapperProvider
 )

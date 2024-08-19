@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
@@ -21,9 +20,7 @@ import java.util.Locale
  * invocations. Please add additional tracking functionality as tests require them.
  */
 public open class FakeDeliveryService : DeliveryService {
-    public var lastSentNetworkCall: NetworkEvent? = null
     public var lastSentCrash: EventMessage? = null
-    public val lastSentLogs: MutableList<EventMessage> = mutableListOf()
     public val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     public val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     public val sentMoments: MutableList<EventMessage> = mutableListOf()
@@ -54,20 +51,12 @@ public open class FakeDeliveryService : DeliveryService {
         sentMoments.add(eventMessage)
     }
 
-    override fun sendLog(eventMessage: EventMessage) {
-        lastSentLogs.add(eventMessage)
-    }
-
     override fun sendLogs(logEnvelope: Envelope<LogPayload>) {
         lastSentLogPayloads.add(logEnvelope)
     }
 
     override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
         lastSavedLogPayloads.add(logEnvelope)
-    }
-
-    override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        lastSentNetworkCall = networkEvent
     }
 
     override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {

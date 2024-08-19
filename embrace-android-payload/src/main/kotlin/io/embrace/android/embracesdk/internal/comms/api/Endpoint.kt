@@ -5,9 +5,7 @@ public enum class Endpoint(
     public val version: String
 ) {
     EVENTS("events", "v1"),
-    LOGGING("logging", "v1"),
     LOGS("logs", "v2"),
-    NETWORK("network", "v1"),
     SESSIONS("sessions", "v1"),
     SESSIONS_V2("spans", "v2"),
     UNKNOWN("unknown", "v1")

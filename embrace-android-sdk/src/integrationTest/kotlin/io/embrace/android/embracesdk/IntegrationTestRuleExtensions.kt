@@ -19,22 +19,6 @@ import java.util.concurrent.TimeoutException
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
 /**
- * Returns a list of [EventMessage] logs that were sent by the SDK since startup. If [expectedSize] is specified, it will wait up to
- * 1 second to validate the number of sent log message equal that size. If a second passes that the size requirement is not met, a
- * [TimeoutException] will be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right
- * away.
- */
-internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? = null): List<EventMessage> {
-    val logs = overriddenDeliveryModule.deliveryService.lastSentLogs
-    return when (expectedSize) {
-        null -> logs
-        else -> returnIfConditionMet({ logs }) {
-            logs.size == expectedSize
-        }
-    }
-}
-
-/**
  * Wait for there to at least be [minSize] number of log envelopes to be sent and return all the ones sent. Times out at 1 second.
  */
 internal fun IntegrationTestRule.Harness.getSentLogPayloads(minSize: Int? = null): List<Envelope<LogPayload>> {
@@ -82,15 +66,6 @@ internal fun IntegrationTestRule.Harness.getSentMoments(expectedSize: Int? = nul
  */
 internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = null): Log? {
     return getSentLogs(expectedSize)?.last()
-}
-
-/**
- * Returns the last [EventMessage] log that was sent by the SDK. If [expectedSize] is specified, it will wait up to 1 second to validate
- * the number of sent log message equal that size. If a second passes that the size requirement is not met, a [TimeoutException] will
- * be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right away.
- */
-internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int? = null): EventMessage {
-    return getSentLogMessages(expectedSize).last()
 }
 
 /**

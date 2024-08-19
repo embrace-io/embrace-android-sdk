@@ -1,10 +1,5 @@
-package io.embrace.android.embracesdk.fakes.injection
+package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
-import io.embrace.android.embracesdk.fakes.FakePayloadFactory
-import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
-import io.embrace.android.embracesdk.fakes.FakeSessionSpanAttrPopulator
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModule
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
@@ -15,7 +10,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
-internal class FakeSessionOrchestrationModule(
+public class FakeSessionOrchestrationModule(
     override val payloadFactory: PayloadFactory = FakePayloadFactory(),
     override val sessionOrchestrator: SessionOrchestrator = FakeSessionOrchestrator(),
     override val sessionSpanAttrPopulator: SessionSpanAttrPopulator = FakeSessionSpanAttrPopulator(),

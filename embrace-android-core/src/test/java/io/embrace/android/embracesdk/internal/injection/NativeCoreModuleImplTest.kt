@@ -1,7 +1,7 @@
-package io.embrace.android.embracesdk.fakes.injection
+package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.cpu.EmbraceCpuInfoDelegate
-import io.embrace.android.embracesdk.internal.injection.createNativeCoreModule
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test

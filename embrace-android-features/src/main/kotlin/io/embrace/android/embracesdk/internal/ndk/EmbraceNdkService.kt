@@ -43,7 +43,7 @@ import java.io.InputStreamReader
 import java.util.LinkedList
 import java.util.Locale
 
-public class EmbraceNdkService(
+internal class EmbraceNdkService(
     private val context: Context,
     private val storageService: StorageService,
     private val metadataService: MetadataService,
@@ -562,7 +562,7 @@ public class EmbraceNdkService(
         delegate._uninstallSignals()
     }
 
-    public companion object {
+    internal companion object {
         /**
          * Signals to the API that the application was in the foreground.
          */

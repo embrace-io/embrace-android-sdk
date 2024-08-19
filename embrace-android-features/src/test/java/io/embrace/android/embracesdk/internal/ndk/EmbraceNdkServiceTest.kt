@@ -5,7 +5,6 @@ import android.content.res.Resources
 import android.os.Build
 import android.util.Base64
 import com.google.common.util.concurrent.MoreExecutors
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -19,8 +18,6 @@ import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
-import io.embrace.android.embracesdk.fakes.system.mockContext
-import io.embrace.android.embracesdk.fakes.system.mockResources
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -65,7 +62,6 @@ internal class EmbraceNdkServiceTest {
         fun beforeClass() {
             mockkStatic(ExecutorService::class)
             mockkStatic(Uuid::class)
-            mockkStatic(Embrace::class)
         }
 
         @AfterClass
@@ -98,7 +94,7 @@ internal class EmbraceNdkServiceTest {
 
     @Before
     fun setup() {
-        context = mockContext()
+        context = mockk(relaxed = true)
         storageManager = FakeStorageService()
         metadataService = FakeMetadataService()
         localConfig = LocalConfig("", false, SdkLocalConfig())
@@ -121,7 +117,7 @@ internal class EmbraceNdkServiceTest {
         logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
         repository = mockk(relaxUnitFun = true)
-        resources = mockResources()
+        resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         every { sharedObjectLoader.loadEmbraceNative() } returns true
     }

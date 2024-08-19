@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
+import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
@@ -58,7 +59,7 @@ public class EssentialServiceModuleImpl(
         ActivityLifecycleTracker(coreModule.application, initModule.logger)
     }
 
-    override val urlBuilder: EmbraceApiUrlBuilder by singleton {
+    override val urlBuilder: ApiUrlBuilder by singleton {
         Systrace.traceSynchronous("url-builder-init") {
             // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
             // but we want to access behaviors from ConfigService when possible.

@@ -28,7 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Intercept and track uncaught Android Runtime exceptions
  */
-public class CrashDataSourceImpl(
+internal class CrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
     private val unityCrashIdProvider: () -> String?,
     private val preferencesService: PreferencesService,

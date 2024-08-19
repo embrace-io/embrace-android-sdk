@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNdkService
@@ -10,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
+import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -36,7 +36,7 @@ import org.junit.Before
 import org.junit.Test
 
 internal class NativeCrashDataSourceImplTest {
-    private val errorSerializerType = Types.newParameterizedType(List::class.java, NativeCrashDataError::class.java)
+    private val errorSerializerType = TypeUtils.typedList(NativeCrashDataError::class)
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var fakeNdkService: FakeNdkService
     private lateinit var preferencesService: FakePreferenceService

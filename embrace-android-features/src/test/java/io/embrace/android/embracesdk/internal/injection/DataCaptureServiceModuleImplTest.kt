@@ -7,11 +7,8 @@ import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.capture.startup.AppStartupTraceEmitter
-import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class DataCaptureServiceModuleImplTest {
@@ -30,9 +27,9 @@ internal class DataCaptureServiceModuleImplTest {
             FakeFeatureModule()
         )
 
-        assertTrue(module.webviewService is EmbraceWebViewService)
+        assertNotNull(module.webviewService)
         assertNotNull(module.activityBreadcrumbTracker)
-        assertTrue(module.appStartupDataCollector is AppStartupTraceEmitter)
+        assertNotNull(module.appStartupDataCollector)
         assertNotNull(module.pushNotificationService)
         assertNotNull(module.startupService)
     }

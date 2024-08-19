@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.Tracer
@@ -10,6 +11,7 @@ internal class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
+    private val sensitiveKeysBehavior: SensitiveKeysBehavior
 ) : EmbraceSpanFactory {
 
     override fun create(
@@ -32,6 +34,7 @@ internal class EmbraceSpanFactoryImpl(
         EmbraceSpanImpl(
             spanBuilder = embraceSpanBuilder,
             openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository
+            spanRepository = spanRepository,
+            sensitiveKeysBehavior = sensitiveKeysBehavior
         )
 }

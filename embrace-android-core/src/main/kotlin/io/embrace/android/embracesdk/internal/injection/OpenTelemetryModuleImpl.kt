@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
@@ -68,7 +70,10 @@ internal class OpenTelemetryModuleImpl(
         EmbraceSpanFactoryImpl(
             tracer = sdkTracer,
             openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository
+            spanRepository = spanRepository,
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                SdkLocalConfig(sensitiveKeysDenylist = listOf("password"))
+            ), // todo: add dependency on config module
         )
     }
 

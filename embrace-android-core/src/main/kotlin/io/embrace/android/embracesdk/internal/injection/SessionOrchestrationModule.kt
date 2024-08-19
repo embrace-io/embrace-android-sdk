@@ -9,13 +9,13 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
-internal interface SessionOrchestrationModule {
-    val payloadFactory: PayloadFactory
-    val payloadMessageCollatorImpl: PayloadMessageCollatorImpl
-    val sessionOrchestrator: SessionOrchestrator
-    val periodicSessionCacher: PeriodicSessionCacher
-    val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
-    val sessionSpanAttrPopulator: SessionSpanAttrPopulator
-    val memoryCleanerService: MemoryCleanerService
-    val gatingService: GatingService
+public interface SessionOrchestrationModule {
+    public val payloadFactory: PayloadFactory
+    public val payloadMessageCollatorImpl: PayloadMessageCollatorImpl
+    public val sessionOrchestrator: SessionOrchestrator
+    public val periodicSessionCacher: PeriodicSessionCacher
+    public val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
+    public val sessionSpanAttrPopulator: SessionSpanAttrPopulator
+    public val memoryCleanerService: MemoryCleanerService
+    public val gatingService: GatingService
 }

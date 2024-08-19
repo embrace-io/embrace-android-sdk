@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -64,7 +63,7 @@ internal class ModuleInitBootstrapperTest {
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertNotNull(dataCaptureServiceModule)
             assertNotNull(deliveryModule)
-            assertTrue(payloadSourceModule is PayloadSourceModuleImpl)
+            assertNotNull(payloadSourceModule)
         }
     }
 

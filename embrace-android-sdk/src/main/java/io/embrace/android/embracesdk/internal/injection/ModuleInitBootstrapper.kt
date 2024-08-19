@@ -4,6 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -326,9 +327,9 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             { nativeCoreModule },
-                            { nativeFeatureModule },
+                            { nativeFeatureModule.nativeThreadSamplerService?.getNativeSymbols() },
                             openTelemetryModule,
-                            anrModule,
+                            { OtelPayloadMapperImpl(anrModule.anrOtelMapper, nativeFeatureModule.nativeAnrOtelMapper) }
                         )
                     }
                     postInit(PayloadSourceModule::class) {
@@ -468,7 +469,7 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             dataSourceModule,
                             payloadSourceModule,
-                            dataCaptureServiceModule,
+                            dataCaptureServiceModule.startupService::getSdkStartupDuration,
                             momentsModule,
                             logModule
                         )

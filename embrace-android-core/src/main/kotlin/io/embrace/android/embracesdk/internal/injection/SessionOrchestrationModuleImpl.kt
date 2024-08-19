@@ -26,7 +26,7 @@ internal class SessionOrchestrationModuleImpl(
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
+    startupDurationProvider: (coldStart: Boolean) -> Long?,
     momentsModule: MomentsModule,
     logModule: LogModule
 ) : SessionOrchestrationModule {
@@ -88,7 +88,7 @@ internal class SessionOrchestrationModuleImpl(
         SessionSpanAttrPopulatorImpl(
             openTelemetryModule.currentSessionSpan,
             momentsModule.eventService,
-            dataCaptureServiceModule.startupService::getSdkStartupDuration,
+            startupDurationProvider,
             logModule.logService,
             payloadSourceModule.metadataService
         )

@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingServ
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
-internal class FakeLogModule(
+public class FakeLogModule(
     override val networkLoggingService: NetworkLoggingService = FakeNetworkLoggingService(),
 
     override val logService: LogService = EmbraceLogService(

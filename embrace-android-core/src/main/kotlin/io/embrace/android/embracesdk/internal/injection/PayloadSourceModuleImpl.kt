@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
-import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
+import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.capture.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
@@ -31,9 +31,9 @@ internal class PayloadSourceModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     nativeCoreModuleProvider: Provider<NativeCoreModule?>,
-    nativeFeatureModuleProvider: Provider<NativeFeatureModule?>,
+    nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    anrModule: AnrModule,
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper>
 ) : PayloadSourceModule {
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
@@ -49,11 +49,11 @@ internal class PayloadSourceModuleImpl(
 
     private val sessionPayloadSource by singleton {
         SessionPayloadSourceImpl(
-            { nativeFeatureModuleProvider()?.nativeThreadSamplerService?.getNativeSymbols() },
+            nativeSymbolsProvider,
             otelModule.spanSink,
             otelModule.currentSessionSpan,
             otelModule.spanRepository,
-            OtelPayloadMapperImpl(anrModule.anrOtelMapper) { nativeFeatureModuleProvider()?.nativeAnrOtelMapper },
+            otelPayloadMapperProvider(),
             initModule.logger
         )
     }

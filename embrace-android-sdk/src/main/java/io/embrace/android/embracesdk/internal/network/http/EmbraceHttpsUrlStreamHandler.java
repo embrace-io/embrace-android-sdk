@@ -8,8 +8,6 @@ import java.net.URLStreamHandler;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import io.embrace.android.embracesdk.Embrace;
-
 /**
  * HTTPS-specific implementation of EmbraceUrlStreamHandler.
  */
@@ -23,8 +21,8 @@ final class EmbraceHttpsUrlStreamHandler extends EmbraceUrlStreamHandler {
         super(handler);
     }
 
-    EmbraceHttpsUrlStreamHandler(URLStreamHandler handler, Embrace embrace) {
-        super(handler, embrace);
+    EmbraceHttpsUrlStreamHandler(URLStreamHandler handler, InternalNetworkApi internalNetworkApi) {
+        super(handler, internalNetworkApi);
     }
 
     @Override

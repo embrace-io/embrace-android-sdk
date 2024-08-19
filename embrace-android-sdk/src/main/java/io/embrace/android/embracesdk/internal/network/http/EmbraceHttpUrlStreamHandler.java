@@ -7,8 +7,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
-import io.embrace.android.embracesdk.Embrace;
-
 /**
  * HTTP-specific implementation of EmbraceURLStreamHandler.
  */
@@ -22,8 +20,8 @@ final class EmbraceHttpUrlStreamHandler extends EmbraceUrlStreamHandler {
         super(handler);
     }
 
-    EmbraceHttpUrlStreamHandler(URLStreamHandler handler, Embrace embrace) {
-        super(handler, embrace);
+    EmbraceHttpUrlStreamHandler(URLStreamHandler handler, InternalNetworkApi internalNetworkApi) {
+        super(handler, internalNetworkApi);
     }
 
     @Override

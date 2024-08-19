@@ -1,23 +1,25 @@
-package io.embrace.android.embracesdk.injection
+package io.embrace.android.embracesdk.internal.injection
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.DeviceArchitectureImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
-import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RuntimeEnvironment
 
+@RunWith(AndroidJUnit4::class)
 internal class PayloadSourceModuleImplTest {
 
     @Test
@@ -25,16 +27,16 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
-            FakeCoreModule(),
+            CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             ::FakeNativeCoreModule,
-            ::FakeNativeFeatureModule,
+            ::HashMap,
             FakeOpenTelemetryModule(),
-            FakeAnrModule(),
+            ::FakeOtelPayloadMapper,
         )
         assertTrue(module.metadataService is EmbraceMetadataService)
         assertNotNull(module.sessionEnvelopeSource)

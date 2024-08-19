@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 /**
  * Function that returns an instance of [NativeFeatureModule]. Matches the signature of the constructor for [NativeFeatureModuleImpl]
  */
-internal typealias NativeFeatureModuleSupplier = (
+public typealias NativeFeatureModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -16,7 +16,7 @@ internal typealias NativeFeatureModuleSupplier = (
     nativeCoreModule: NativeCoreModule
 ) -> NativeFeatureModule
 
-internal fun createNativeFeatureModule(
+public fun createNativeFeatureModule(
     initModule: InitModule,
     coreModule: CoreModule,
     storageModule: StorageModule,

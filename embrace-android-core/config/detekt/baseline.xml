@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
+    <ID>LongParameterList:PayloadModuleSupplier.kt$( initModule: InitModule, coreModule: CoreModule, workerThreadModule: WorkerThreadModule, systemServiceModule: SystemServiceModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, configModule: ConfigModule, nativeCoreModuleProvider: Provider&lt;NativeCoreModule?&gt;, nativeSymbolsProvider: Provider&lt;Map&lt;String, String&gt;?&gt;, otelModule: OpenTelemetryModule, otelPayloadMapperProvider: Provider&lt;OtelPayloadMapper&gt; )</ID>
     <ID>LongParameterList:SessionOrchestrationModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, configModule: ConfigModule, deliveryModule: DeliveryModule, workerThreadModule: WorkerThreadModule, dataSourceModule: DataSourceModule, payloadSourceModule: PayloadSourceModule, startupDurationProvider: (coldStart: Boolean) -&gt; Long?, momentsModule: MomentsModule, logModule: LogModule )</ID>
   </CurrentIssues>
 </SmellBaseline>

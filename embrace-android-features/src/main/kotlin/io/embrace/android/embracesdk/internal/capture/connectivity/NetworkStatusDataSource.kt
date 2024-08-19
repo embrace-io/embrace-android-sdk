@@ -5,15 +5,17 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.startSpanCapture
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 public class NetworkStatusDataSource(
+    private val clock: Clock,
     spanService: SpanService,
     logger: EmbLogger
-) : SpanDataSourceImpl(
+) : NetworkConnectivityListener, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_NETWORK_STATUS }
@@ -24,8 +26,9 @@ public class NetworkStatusDataSource(
 
     private var span: EmbraceSpan? = null
 
-    public fun networkStatusChange(networkStatus: NetworkStatus, timestamp: Long) {
+    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         // close previous span
+        val timestamp = clock.now()
         if (span != null) {
             captureSpanData(
                 countsTowardsLimits = false,
@@ -40,7 +43,7 @@ public class NetworkStatusDataSource(
             countsTowardsLimits = true,
             inputValidation = NoInputValidation
         ) {
-            startSpanCapture(SchemaType.NetworkStatus(networkStatus), timestamp).apply {
+            startSpanCapture(SchemaType.NetworkStatus(status), timestamp).apply {
                 span = this
             }
         }

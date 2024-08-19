@@ -6,10 +6,8 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.system.mockContext
 import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -21,6 +19,7 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -29,6 +28,7 @@ import org.junit.Test
 internal class EmbraceNetworkConnectivityServiceTest {
 
     private lateinit var service: EmbraceNetworkConnectivityService
+    private var networkStatus: NetworkStatus? = null
 
     companion object {
         private lateinit var context: Context
@@ -69,11 +69,10 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
         service = EmbraceNetworkConnectivityService(
             context,
-            fakeClock,
             worker,
             logger,
             mockConnectivityManager,
-        ) { FakeFeatureModule().networkStatusDataSource.dataSource }
+        )
     }
 
     /**
@@ -99,66 +98,63 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     @Test
     fun `test listener get notified when connectivity status changes to WIFI`() {
-        // add the connectivity listener
-        val listener = mockk<NetworkConnectivityListener>()
-        service.addNetworkConnectivityListener(listener)
+        service.addNetworkConnectivityListener {
+            networkStatus = it
+        }
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
         service.onReceive(context, mockIntent)
-
-        verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI) }
+        assertEquals(NetworkStatus.WIFI, networkStatus)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes to MOBILE`() {
-        // add the connectivity listener
-        val listener = mockk<NetworkConnectivityListener>()
-        service.addNetworkConnectivityListener(listener)
+        service.addNetworkConnectivityListener {
+            networkStatus = it
+        }
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
         service.onReceive(context, mockIntent)
-
-        verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.WAN) }
+        assertEquals(NetworkStatus.WAN, networkStatus)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes to no connectivity`() {
-        // add the connectivity listener
-        val listener = mockk<NetworkConnectivityListener>()
-        service.addNetworkConnectivityListener(listener)
+        service.addNetworkConnectivityListener {
+            networkStatus = it
+        }
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
         service.onReceive(context, mockIntent)
-
-        verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.NOT_REACHABLE) }
+        assertEquals(NetworkStatus.NOT_REACHABLE, networkStatus)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes and no info obtained`() {
-        // add the connectivity listener
-        val listener = mockk<NetworkConnectivityListener>()
-        service.addNetworkConnectivityListener(listener)
+        service.addNetworkConnectivityListener {
+            networkStatus = it
+        }
 
         // call onReceive to emulate a connectivity status change
         val mockIntent = mockk<Intent>()
         every { mockConnectivityManager.activeNetworkInfo } throws Exception("")
         service.onReceive(context, mockIntent)
-
-        verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.UNKNOWN) }
+        assertEquals(NetworkStatus.UNKNOWN, networkStatus)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes and not notified when removed`() {
-        // add the connectivity listener
-        val listener = mockk<NetworkConnectivityListener>()
+        val listener: (status: NetworkStatus) -> Unit = {
+            networkStatus = it
+        }
         service.addNetworkConnectivityListener(listener)
 
         // call onReceive to emulate a connectivity status change
@@ -167,12 +163,13 @@ internal class EmbraceNetworkConnectivityServiceTest {
         every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
         service.onReceive(context, mockIntent)
 
-        verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(NetworkStatus.WAN) }
+        assertEquals(NetworkStatus.WAN, networkStatus)
 
         // remove listener and call onReceive again
         service.removeNetworkConnectivityListener(listener)
+        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
         service.onReceive(context, mockIntent)
 
-        verify(exactly = 1) { listener.onNetworkConnectivityStatusChanged(any()) }
+        assertEquals(NetworkStatus.WAN, networkStatus)
     }
 }

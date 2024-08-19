@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
-import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -40,8 +39,7 @@ internal class EssentialServiceModuleImplTest {
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
-            configModule = FakeConfigModule(),
-            featureModuleProvider = { FakeFeatureModule() }
+            configModule = FakeConfigModule()
         )
 
         assertTrue(module.processStateService is EmbraceProcessStateService)

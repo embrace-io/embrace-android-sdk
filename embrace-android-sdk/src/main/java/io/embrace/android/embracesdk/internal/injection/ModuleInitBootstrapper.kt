@@ -203,8 +203,7 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             systemServiceModule,
                             androidServicesModule,
-                            storageModule,
-                            { featureModule }
+                            storageModule
                         )
                     }
                     postInit(EssentialServiceModule::class) {

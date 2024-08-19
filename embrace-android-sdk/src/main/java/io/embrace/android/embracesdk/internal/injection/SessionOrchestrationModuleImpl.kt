@@ -90,8 +90,7 @@ internal class SessionOrchestrationModuleImpl(
             momentsModule.eventService,
             dataCaptureServiceModule.startupService,
             logModule.logService,
-            payloadSourceModule.metadataService,
-            essentialServiceModule.sessionPropertiesService
+            payloadSourceModule.metadataService
         )
     }
 

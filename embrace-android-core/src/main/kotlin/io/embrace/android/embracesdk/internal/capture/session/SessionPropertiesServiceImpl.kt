@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
+import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 public class SessionPropertiesServiceImpl(
     preferencesService: PreferencesService,
     configService: ConfigService,
     logger: EmbLogger,
-    private val dataSourceProvider: Provider<SessionPropertiesDataSource?>
+    writer: SessionSpanWriter
 ) : SessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
-    private val props = EmbraceSessionProperties(preferencesService, configService, logger)
+    private val props = EmbraceSessionProperties(preferencesService, configService, logger, writer)
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         if (!isValidKey(originalKey)) {
@@ -28,9 +28,6 @@ public class SessionPropertiesServiceImpl(
 
         val added = props.add(sanitizedKey, sanitizedValue, permanent)
         if (added) {
-            dataSourceProvider()?.apply {
-                addProperty(sanitizedKey, sanitizedValue)
-            }
             listener?.invoke(props.get())
         }
         return added
@@ -44,17 +41,12 @@ public class SessionPropertiesServiceImpl(
 
         val removed = props.remove(sanitizedKey)
         if (removed) {
-            dataSourceProvider()?.apply {
-                removeProperty(sanitizedKey)
-            }
             listener?.invoke(props.get())
         }
         return removed
     }
 
     override fun getProperties(): Map<String, String> = props.get()
-
-    override fun populateCurrentSession(): Boolean = dataSourceProvider()?.addProperties(getProperties()) ?: false
 
     override fun clearTemporary() {
         props.clearTemporary()

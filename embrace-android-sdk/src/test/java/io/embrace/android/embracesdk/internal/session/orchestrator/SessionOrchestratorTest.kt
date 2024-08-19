@@ -409,8 +409,7 @@ internal class SessionOrchestratorTest {
                 FakeEventService(),
                 FakeStartupService(),
                 FakeLogService(),
-                FakeMetadataService(),
-                FakeSessionPropertiesService()
+                FakeMetadataService()
             ),
             logger
         )

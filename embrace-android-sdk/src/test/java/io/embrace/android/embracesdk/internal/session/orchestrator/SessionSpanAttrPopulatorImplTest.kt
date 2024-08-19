@@ -29,8 +29,7 @@ internal class SessionSpanAttrPopulatorImplTest {
             FakeEventService(),
             FakeStartupService(),
             FakeLogService(),
-            FakeMetadataService(),
-            sessionPropertiesService
+            FakeMetadataService()
         )
     }
 

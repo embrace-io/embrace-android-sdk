@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.utils.Provider
-
 /**
  * Function that returns an instance of [EssentialServiceModule]. Matches the signature of the constructor for [EssentialServiceModuleImpl]
  */
-internal typealias EssentialServiceModuleSupplier = (
+public typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -13,11 +11,10 @@ internal typealias EssentialServiceModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule,
-    featureModuleProvider: Provider<FeatureModule>
+    storageModule: StorageModule
 ) -> EssentialServiceModule
 
-internal fun createEssentialServiceModule(
+public fun createEssentialServiceModule(
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -25,8 +22,7 @@ internal fun createEssentialServiceModule(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule,
-    featureModuleProvider: Provider<FeatureModule>,
+    storageModule: StorageModule
 ): EssentialServiceModule = EssentialServiceModuleImpl(
     initModule,
     configModule,
@@ -35,6 +31,5 @@ internal fun createEssentialServiceModule(
     workerThreadModule,
     systemServiceModule,
     androidServicesModule,
-    storageModule,
-    featureModuleProvider
+    storageModule
 )

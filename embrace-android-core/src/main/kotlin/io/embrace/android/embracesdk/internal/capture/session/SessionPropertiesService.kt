@@ -32,11 +32,6 @@ public interface SessionPropertiesService {
     public fun getProperties(): Map<String, String>
 
     /**
-     * Populate the current session with the existing session properties
-     */
-    public fun populateCurrentSession(): Boolean
-
-    /**
      * Clears any temporary properties
      */
     public fun clearTemporary()

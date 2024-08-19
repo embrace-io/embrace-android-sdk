@@ -468,7 +468,7 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             dataSourceModule,
                             payloadSourceModule,
-                            dataCaptureServiceModule,
+                            dataCaptureServiceModule.startupService::getSdkStartupDuration,
                             momentsModule,
                             logModule
                         )

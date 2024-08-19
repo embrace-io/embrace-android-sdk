@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 /**
  * Function that returns an instance of [SessionOrchestrationModule]. Matches the signature of the constructor for [SessionOrchestrationModuleImpl]
  */
-internal typealias SessionOrchestrationModuleSupplier = (
+public typealias SessionOrchestrationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
@@ -13,12 +13,12 @@ internal typealias SessionOrchestrationModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
+    startupDurationProvider: (coldStart: Boolean) -> Long?,
     momentsModule: MomentsModule,
     logModule: LogModule
 ) -> SessionOrchestrationModule
 
-internal fun createSessionOrchestrationModule(
+public fun createSessionOrchestrationModule(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
@@ -28,7 +28,7 @@ internal fun createSessionOrchestrationModule(
     workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
-    dataCaptureServiceModule: DataCaptureServiceModule,
+    startupDurationProvider: (coldStart: Boolean) -> Long?,
     momentsModule: MomentsModule,
     logModule: LogModule
 ): SessionOrchestrationModule = SessionOrchestrationModuleImpl(
@@ -41,7 +41,7 @@ internal fun createSessionOrchestrationModule(
     workerThreadModule,
     dataSourceModule,
     payloadSourceModule,
-    dataCaptureServiceModule,
+    startupDurationProvider,
     momentsModule,
     logModule
 )

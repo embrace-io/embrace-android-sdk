@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -44,7 +43,7 @@ internal class SessionOrchestrationModuleImplTest {
             workerThreadModule,
             dataSourceModule,
             FakePayloadSourceModule(),
-            FakeDataCaptureServiceModule(),
+            { 0L },
             FakeMomentsModule(),
             FakeLogModule()
         )
@@ -78,7 +77,7 @@ internal class SessionOrchestrationModuleImplTest {
             workerThreadModule,
             dataSourceModule,
             FakePayloadSourceModule(),
-            FakeDataCaptureServiceModule(),
+            { 0L },
             FakeMomentsModule(),
             FakeLogModule()
         )

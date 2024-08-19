@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:SessionOrchestrationModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, configModule: ConfigModule, deliveryModule: DeliveryModule, workerThreadModule: WorkerThreadModule, dataSourceModule: DataSourceModule, payloadSourceModule: PayloadSourceModule, startupDurationProvider: (coldStart: Boolean) -&gt; Long?, momentsModule: MomentsModule, logModule: LogModule )</ID>
+  </CurrentIssues>
+</SmellBaseline>

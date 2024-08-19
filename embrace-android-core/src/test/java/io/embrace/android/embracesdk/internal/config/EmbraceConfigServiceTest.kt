@@ -1,15 +1,12 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.config
 
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -24,10 +21,8 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -254,18 +249,13 @@ internal class EmbraceConfigServiceTest {
 
     @Test
     fun `test onForeground() with sdk started and config sdkDisabled=true stops the SDK`() {
+        var stopped = false
         service = createService(worker) {
-            io.embrace.android.embracesdk.Embrace.getInstance().internalInterface.stopSdk()
+            stopped = true
         }
-        val mockInternalInterface: EmbraceInternalInterface = mockk(relaxed = true)
-        mockkObject(Embrace.getImpl())
-        every { Embrace.getImpl().isStarted } returns true
-        every { Embrace.getImpl().internalInterface } returns mockInternalInterface
         fakePreferenceService.sdkDisabled = true
-
         service.onForeground(true, 1100L)
-
-        verify(exactly = 1) { mockInternalInterface.stopSdk() }
+        assertTrue(stopped)
     }
 
     @Test

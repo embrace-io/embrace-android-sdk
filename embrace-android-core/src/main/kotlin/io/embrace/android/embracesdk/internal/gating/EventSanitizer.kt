@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys.SESSION_P
 import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventType
 
-internal class EventSanitizer(
+public class EventSanitizer(
     private val event: Event,
     private val enabledComponents: Set<String>
 ) : Sanitizable<Event> {

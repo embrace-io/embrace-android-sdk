@@ -33,7 +33,7 @@ internal class NetworkStatusFeatureTest {
                 val dataSource =
                     checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
                 harness.overriddenClock.tick(tickTimeMs)
-                dataSource.networkStatusChange(NetworkStatus.WIFI, startTimeMs + tickTimeMs)
+                dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
             })
 
             val spans = message.findSpansOfType(EmbType.System.NetworkStatus)

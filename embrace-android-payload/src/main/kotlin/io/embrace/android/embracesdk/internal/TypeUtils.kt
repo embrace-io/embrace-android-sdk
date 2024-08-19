@@ -6,6 +6,9 @@ import kotlin.reflect.KClass
 
 public object TypeUtils {
 
+    public fun parameterizedType(clz: KClass<*>, another: KClass<*>): ParameterizedType =
+        Types.newParameterizedType(clz.java, another.java)
+
     public fun typedList(clz: KClass<*>): ParameterizedType =
         Types.newParameterizedType(List::class.java, clz.java)
 

@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.moshi)
     ksp(libs.moshi.kotlin.codegen)
 
+    implementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-core"))
     testImplementation(project(":embrace-android-payload"))

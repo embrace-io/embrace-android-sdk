@@ -209,19 +209,22 @@ internal class ModuleInitBootstrapper(
                     }
                     postInit(EssentialServiceModule::class) {
                         // Allow config service to start making HTTP requests
-                        configModule.configService.remoteConfigSource =
-                            essentialServiceModule.apiService
+                        with(essentialServiceModule) {
+                            configModule.configService.remoteConfigSource = apiService
 
-                        serviceRegistry.registerServices(
-                            essentialServiceModule.processStateService,
-                            essentialServiceModule.activityLifecycleTracker,
-                            essentialServiceModule.networkConnectivityService,
-                            essentialServiceModule.userService
-                        )
+                            serviceRegistry.registerServices(
+                                processStateService,
+                                activityLifecycleTracker,
+                                networkConnectivityService,
+                                userService
+                            )
 
-                        val networkBehavior = configModule.configService.networkBehavior
-                        if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
-                            registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
+                            val networkBehavior = configModule.configService.networkBehavior
+                            if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
+                                registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
+                            }
+                            networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
+                            apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
                         }
                     }
 
@@ -470,6 +473,12 @@ internal class ModuleInitBootstrapper(
                             momentsModule,
                             logModule
                         )
+                    }
+
+                    postInit(FeatureModule::class) {
+                        essentialServiceModule.networkConnectivityService.addNetworkConnectivityListener {
+                            featureModule.networkStatusDataSource.dataSource?.onNetworkConnectivityStatusChanged(it)
+                        }
                     }
 
                     crashModule = init(CrashModule::class) {

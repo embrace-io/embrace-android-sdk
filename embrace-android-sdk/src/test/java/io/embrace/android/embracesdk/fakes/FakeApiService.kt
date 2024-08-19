@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -74,6 +75,9 @@ internal class FakeApiService : ApiService {
         sessionRequests.add(obj)
         onFinish?.invoke(true)
         return ObservableFutureTask { }
+    }
+
+    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
     }
 
     private fun readBodyAsSessionEnvelope(inputStream: InputStream): Envelope<SessionPayload> {

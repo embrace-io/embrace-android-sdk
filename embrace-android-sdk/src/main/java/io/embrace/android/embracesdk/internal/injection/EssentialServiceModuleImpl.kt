@@ -92,18 +92,16 @@ internal class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("network-connectivity-service-init") {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
-                initModule.clock,
                 backgroundWorker,
                 initModule.logger,
                 systemServiceModule.connectivityManager
-            ) { featureModuleProvider().networkStatusDataSource.dataSource }
+            )
         }
     }
 
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         Systrace.traceSynchronous("pending-call-sender-init") {
             EmbracePendingApiCallsSender(
-                networkConnectivityService,
                 pendingApiCallsWorker,
                 storageModule.deliveryCacheManager,
                 initModule.clock,
@@ -129,8 +127,7 @@ internal class EssentialServiceModuleImpl(
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,
-                urlBuilder = urlBuilder,
-                networkConnectivityService = Systrace.traceSynchronous("network-connectivity") { networkConnectivityService }
+                urlBuilder = urlBuilder
             )
         }
     }

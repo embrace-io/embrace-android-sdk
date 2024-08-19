@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import java.io.ByteArrayOutputStream
@@ -27,5 +28,8 @@ internal class FakePendingApiCallsSender : PendingApiCallsSender {
         val stream = ByteArrayOutputStream()
         action(stream)
         retryQueue.add(Pair(request, stream.toByteArray()))
+    }
+
+    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
     }
 }

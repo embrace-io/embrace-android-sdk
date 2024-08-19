@@ -5,12 +5,12 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
-internal class SessionSanitizerFacade(
+public class SessionSanitizerFacade(
     private val envelope: Envelope<SessionPayload>,
     private val components: Set<String>
 ) {
 
-    fun getSanitizedMessage(): Envelope<SessionPayload> {
+    public fun getSanitizedMessage(): Envelope<SessionPayload> {
         val sanitizedSpans = SpanSanitizer(envelope.data.spans, components).sanitize()
 
         return envelope.copy(

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 /**
  * Contains dependencies that capture crashes
  */
-internal interface CrashModule {
-    val lastRunCrashVerifier: LastRunCrashVerifier
-    val crashDataSource: CrashDataSource
+public interface CrashModule {
+    public val lastRunCrashVerifier: LastRunCrashVerifier
+    public val crashDataSource: CrashDataSource
 }

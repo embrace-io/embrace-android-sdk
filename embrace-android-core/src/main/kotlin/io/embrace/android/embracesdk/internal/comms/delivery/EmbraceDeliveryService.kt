@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
@@ -81,20 +80,12 @@ public class EmbraceDeliveryService(
         }
     }
 
-    override fun sendLog(eventMessage: EventMessage) {
-        apiService.sendLog(eventMessage)
-    }
-
     override fun sendLogs(logEnvelope: Envelope<LogPayload>) {
         apiService.sendLogEnvelope(logEnvelope)
     }
 
     override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
         apiService.saveLogEnvelope(logEnvelope)
-    }
-
-    override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        apiService.sendNetworkCall(networkEvent)
     }
 
     override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {

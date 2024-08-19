@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
@@ -114,10 +113,6 @@ public class EmbraceApiService(
         lastNetworkStatus = status
     }
 
-    override fun sendLog(eventMessage: EventMessage) {
-        post(eventMessage, mapper::logRequest)
-    }
-
     override fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>) {
         val parameterizedType = TypeUtils.parameterizedType(Envelope::class, LogPayload::class)
         post(logEnvelope, mapper::logsEnvelopeRequest, parameterizedType)
@@ -132,10 +127,6 @@ public class EmbraceApiService(
             }
         }
         pendingApiCallsSender.savePendingApiCall(request, action, sync = true)
-    }
-
-    override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        post(networkEvent, mapper::networkEventRequest)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {

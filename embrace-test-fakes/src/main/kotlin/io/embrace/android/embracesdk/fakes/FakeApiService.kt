@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import java.io.ByteArrayOutputStream
@@ -23,10 +22,8 @@ public class FakeApiService : ApiService {
 
     public var throwExceptionSendSession: Boolean = false
     private val serializer = EmbraceSerializer()
-    public val logRequests: MutableList<EventMessage> = mutableListOf()
     public val sentLogPayloads: MutableList<LogPayload> = mutableListOf()
     public val savedLogPayloads: MutableList<LogPayload> = mutableListOf()
-    public val networkCallRequests: MutableList<NetworkEvent> = mutableListOf()
     public val eventRequests: MutableList<EventMessage> = mutableListOf()
     public val crashRequests: MutableList<EventMessage> = mutableListOf()
     public val sessionRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
@@ -40,20 +37,12 @@ public class FakeApiService : ApiService {
         TODO("Not yet implemented")
     }
 
-    override fun sendLog(eventMessage: EventMessage) {
-        logRequests.add(eventMessage)
-    }
-
     override fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>) {
         sentLogPayloads.add(logEnvelope.data)
     }
 
     override fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>) {
         savedLogPayloads.add(logEnvelope.data)
-    }
-
-    override fun sendNetworkCall(networkEvent: NetworkEvent) {
-        networkCallRequests.add(networkEvent)
     }
 
     override fun sendEvent(eventMessage: EventMessage) {

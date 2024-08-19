@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NetworkEvent
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
@@ -40,19 +39,6 @@ public class ApiRequestMapper(
         httpMethod = HttpMethod.GET,
     )
 
-    public fun logRequest(
-        eventMessage: EventMessage
-    ): ApiRequest {
-        checkNotNull(eventMessage.event) { "event must be set" }
-        val event = eventMessage.event
-        val type = checkNotNull(event.type) { "event type must be set" }
-        checkNotNull(event.eventId) { "event ID must be set" }
-        val url = Endpoint.LOGGING.asEmbraceUrl()
-        val abbreviation = type.abbreviation
-        val logIdentifier = abbreviation + ":" + event.messageId
-        return requestBuilder(url).copy(logId = logIdentifier)
-    }
-
     @Suppress("UNUSED_PARAMETER")
     public fun logsEnvelopeRequest(envelope: Envelope<LogPayload>): ApiRequest {
         val url = Endpoint.LOGS.asEmbraceUrl()
@@ -83,13 +69,6 @@ public class ApiRequestMapper(
             abbreviation + ":" + event.eventId
         }
         return requestBuilder(url).copy(eventId = eventIdentifier)
-    }
-
-    public fun networkEventRequest(networkEvent: NetworkEvent): ApiRequest {
-        val url = Endpoint.NETWORK.asEmbraceUrl()
-        val abbreviation = EventType.NETWORK_LOG.abbreviation
-        val networkIdentifier = "$abbreviation:${networkEvent.eventId}"
-        return requestBuilder(url).copy(logId = networkIdentifier)
     }
 
     /**

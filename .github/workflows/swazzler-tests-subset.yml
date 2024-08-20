@@ -25,19 +25,6 @@ jobs:
       - name: "Publish SDK locally"
         run: ./gradlew publishToMavenLocal --no-daemon
 
-      - name: Checkout Swazzler
-        uses: actions/checkout@v4
-        with:
-          repository: embrace-io/embrace-swazzler3
-          ref: master
-          path: ./embrace-swazzler3
-          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
-
-      - name: "Publish Swazzler locally"
-        run: |
-          cd ./embrace-swazzler3
-          ./gradlew publishToMavenLocal --no-daemon
-
       - name: Checkout Swazzler-Test
         uses: actions/checkout@v4
         with:
@@ -46,6 +33,19 @@ jobs:
           path: ./swazzler-test
           submodules: recursive
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }}
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: master
+          path: ./swazzler-test/embrace-swazzler3
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
+
+      - name: "Publish Swazzler locally"
+        run: |
+          cd ./swazzler-test/embrace-swazzler3
+          ./gradlew publishToMavenLocal --no-daemon
 
       - name: "Run Gradle Tests"
         run: |

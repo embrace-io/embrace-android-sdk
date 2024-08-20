@@ -22,8 +22,8 @@ jobs:
           java-version: 17
 
       # make sure version in gradle.properties matches the version of embrace-swazzler3 version
-#      - name: "Publish SDK locally"
-#        run: ./gradlew publishToMavenLocal --no-daemon
+      - name: "Publish SDK locally"
+        run: ./gradlew publishToMavenLocal --no-daemon
 
       - name: Checkout Swazzler-Test
         uses: actions/checkout@v4

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-public class PayloadFactoryImpl(
+internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val configService: ConfigService,
     private val logger: EmbLogger

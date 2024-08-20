@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
  * Creates instances of [PersistableEmbraceSpan] for internal usage. Using this factory is preferred to invoking the constructor
  * because of the it requires several services that may not be easily available.
  */
-public interface EmbraceSpanFactory {
-    public fun create(
+internal interface EmbraceSpanFactory {
+    fun create(
         name: String,
         type: TelemetryType,
         internal: Boolean,
@@ -16,5 +16,5 @@ public interface EmbraceSpanFactory {
         parent: EmbraceSpan? = null
     ): PersistableEmbraceSpan
 
-    public fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan
+    fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan
 }

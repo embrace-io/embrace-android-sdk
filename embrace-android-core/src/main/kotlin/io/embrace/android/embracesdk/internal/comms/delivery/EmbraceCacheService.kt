@@ -22,7 +22,7 @@ import kotlin.concurrent.write
 /**
  * Handles the reading and writing of objects from the app's cache.
  */
-public class EmbraceCacheService(
+internal class EmbraceCacheService(
     private val storageService: StorageService,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger
@@ -256,7 +256,7 @@ public class EmbraceCacheService(
             fileLocks.getOrPut(name, ::ReentrantReadWriteLock)
         }
 
-    public companion object {
+    companion object {
         /**
          * File names for all cached sessions start with this prefix
          */
@@ -268,9 +268,9 @@ public class EmbraceCacheService(
          */
         private const val OLD_VERSION_FILE_NAME = "last_session.json"
 
-        public const val EMBRACE_PREFIX: String = "emb_"
-        public const val OLD_COPY_SUFFIX: String = "-old"
-        public const val TEMP_COPY_SUFFIX: String = "-tmp"
-        public const val NEW_COPY_SUFFIX: String = "-new"
+        const val EMBRACE_PREFIX: String = "emb_"
+        const val OLD_COPY_SUFFIX: String = "-old"
+        const val TEMP_COPY_SUFFIX: String = "-tmp"
+        const val NEW_COPY_SUFFIX: String = "-new"
     }
 }

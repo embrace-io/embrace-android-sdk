@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.capture.connectivity
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -6,8 +6,6 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.system.mockContext
-import io.embrace.android.embracesdk.internal.capture.connectivity.EmbraceNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -43,7 +41,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @BeforeClass
         @JvmStatic
         fun setupBeforeAll() {
-            context = mockContext()
+            context = mockk(relaxed = true)
             logger = EmbLoggerImpl()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()

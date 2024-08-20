@@ -11,33 +11,29 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-public class EmbracePreferencesService(
+internal class EmbracePreferencesService(
     private val backgroundWorker: BackgroundWorker,
-    lazyPrefs: Lazy<SharedPreferences>,
+    private val lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
     private val serializer: PlatformSerializer
 ) : PreferencesService, StartupListener {
 
-    private val preferences: Future<SharedPreferences>
-    private val lazyPrefs: Lazy<SharedPreferences>
+    // We get SharedPreferences on a background thread because it loads data from disk
+    // and can block. When client code needs to set/get a preference, getSharedPrefs() will
+    // block if necessary with Future.get(). Eagerly offloading buys us more time
+    // for SharedPreferences to load the File and reduces the likelihood of blocking
+    // when invoked by client code.
+    private val preferences: Future<SharedPreferences> = Systrace.traceSynchronous("trigger-load-prefs") {
+        backgroundWorker.submit(
+            callable = Callable {
+                Systrace.traceSynchronous("load-prefs") {
+                    lazyPrefs.value
+                }
+            }
+        )
+    }
 
     init {
-        this.lazyPrefs = lazyPrefs
-
-        // We get SharedPreferences on a background thread because it loads data from disk
-        // and can block. When client code needs to set/get a preference, getSharedPrefs() will
-        // block if necessary with Future.get(). Eagerly offloading buys us more time
-        // for SharedPreferences to load the File and reduces the likelihood of blocking
-        // when invoked by client code.
-        preferences = Systrace.traceSynchronous("trigger-load-prefs") {
-            backgroundWorker.submit(
-                callable = Callable {
-                    Systrace.traceSynchronous("load-prefs") {
-                        lazyPrefs.value
-                    }
-                }
-            )
-        }
         alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
     }
 

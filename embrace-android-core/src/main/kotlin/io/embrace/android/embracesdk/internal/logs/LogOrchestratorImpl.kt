@@ -9,7 +9,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-public class LogOrchestratorImpl(
+internal class LogOrchestratorImpl(
     private val logOrchestratorScheduledWorker: ScheduledWorker,
     private val clock: Clock,
     private val sink: LogSink,

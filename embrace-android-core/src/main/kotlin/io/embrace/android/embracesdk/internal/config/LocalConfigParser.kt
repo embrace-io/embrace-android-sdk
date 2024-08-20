@@ -9,12 +9,12 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
-public object LocalConfigParser {
+internal object LocalConfigParser {
 
     /**
      * Build info app id name.
      */
-    public const val BUILD_INFO_APP_ID: String = "emb_app_id"
+    private const val BUILD_INFO_APP_ID: String = "emb_app_id"
 
     /**
      * Build info sdk config id name.
@@ -24,12 +24,12 @@ public object LocalConfigParser {
     /**
      * Build info ndk enabled.
      */
-    public const val BUILD_INFO_NDK_ENABLED: String = "emb_ndk_enabled"
+    private const val BUILD_INFO_NDK_ENABLED: String = "emb_ndk_enabled"
 
     /**
      * The default value for native crash capture enabling
      */
-    public const val NDK_ENABLED_DEFAULT: Boolean = false
+    const val NDK_ENABLED_DEFAULT: Boolean = false
 
     /**
      * Loads the build information from resources provided by the config file packaged within the application by Gradle at
@@ -38,7 +38,7 @@ public object LocalConfigParser {
      * @return the local configuration
      */
     @JvmStatic
-    public fun fromResources(
+    fun fromResources(
         resources: AndroidResourcesService,
         packageName: String,
         customAppId: String?,
@@ -94,7 +94,7 @@ public object LocalConfigParser {
         }
     }
 
-    public fun buildConfig(
+    fun buildConfig(
         appId: String?,
         ndkEnabled: Boolean,
         sdkConfigs: String?,

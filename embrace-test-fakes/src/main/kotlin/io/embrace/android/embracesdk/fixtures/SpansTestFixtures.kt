@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
@@ -75,18 +75,18 @@ private fun createEventsListOfSize(size: Int): List<EmbraceSpanEvent> {
 private const val MAX_EVENT_NAME_LENGTH = 100
 private const val MAX_EVENT_ATTRIBUTE_COUNT = 10
 
-public val MAX_LENGTH_SPAN_NAME: String = "s".repeat(EmbraceSpanImpl.MAX_NAME_LENGTH)
-public val TOO_LONG_SPAN_NAME: String = "s".repeat(EmbraceSpanImpl.MAX_NAME_LENGTH + 1)
+public val MAX_LENGTH_SPAN_NAME: String = "s".repeat(EmbraceSpanLimits.MAX_NAME_LENGTH)
+public val TOO_LONG_SPAN_NAME: String = "s".repeat(EmbraceSpanLimits.MAX_NAME_LENGTH + 1)
 public val MAX_LENGTH_EVENT_NAME: String = "s".repeat(MAX_EVENT_NAME_LENGTH)
 public val TOO_LONG_EVENT_NAME: String = "s".repeat(MAX_EVENT_NAME_LENGTH + 1)
-public val MAX_LENGTH_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH)
-public val TOO_LONG_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH + 1)
-public val MAX_LENGTH_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH)
-public val TOO_LONG_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH + 1)
+public val MAX_LENGTH_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH)
+public val TOO_LONG_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH + 1)
+public val MAX_LENGTH_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH)
+public val TOO_LONG_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH + 1)
 
-public val maxSizeAttributes: Map<String, String> = createMapOfSize(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT)
-public val tooBigAttributes: Map<String, String> = createMapOfSize(EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT + 1)
+public val maxSizeAttributes: Map<String, String> = createMapOfSize(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT)
+public val tooBigAttributes: Map<String, String> = createMapOfSize(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT + 1)
 public val maxSizeEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT)
 public val tooBigEventAttributes: Map<String, String> = createMapOfSize(MAX_EVENT_ATTRIBUTE_COUNT + 1)
-public val maxSizeEvents: List<EmbraceSpanEvent> = createEventsListOfSize(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT)
-public val tooBigEvents: List<EmbraceSpanEvent> = createEventsListOfSize(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT + 1)
+public val maxSizeEvents: List<EmbraceSpanEvent> = createEventsListOfSize(EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT)
+public val tooBigEvents: List<EmbraceSpanEvent> = createEventsListOfSize(EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT + 1)

@@ -47,11 +47,9 @@ internal class SessionOrchestrationModuleImplTest {
             FakeMomentsModule(),
             FakeLogModule()
         )
-        assertNotNull(module.payloadMessageCollatorImpl)
+        assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
-        assertNotNull(module.periodicSessionCacher)
-        assertNotNull(module.periodicBackgroundActivityCacher)
         assertTrue(
             configService.listeners.single().javaClass.toString()
                 .contains("DataCaptureOrchestrator")
@@ -81,7 +79,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeMomentsModule(),
             FakeLogModule()
         )
-        assertNotNull(module.payloadMessageCollatorImpl)
+        assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
     }

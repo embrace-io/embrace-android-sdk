@@ -9,7 +9,7 @@ import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
-public class EmbraceUserService(
+internal class EmbraceUserService(
     private val preferencesService: PreferencesService,
     private val logger: EmbLogger
 ) : UserService {

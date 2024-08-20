@@ -6,7 +6,7 @@ import java.util.concurrent.Callable
  * An implementation of [Callable] that also contains priority information on how important the
  * task is.
  */
-public class PriorityCallable<T>(
-    public val priority: TaskPriority,
+internal class PriorityCallable<T>(
+    val priority: TaskPriority,
     impl: Callable<T>
 ) : Callable<T> by impl

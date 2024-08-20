@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Service for tracking usage of public APIs, and different internal metrics about the app.
  */
-public class EmbraceTelemetryService(
+internal class EmbraceTelemetryService(
     private val systemInfo: SystemInfo
 ) : TelemetryService {
 

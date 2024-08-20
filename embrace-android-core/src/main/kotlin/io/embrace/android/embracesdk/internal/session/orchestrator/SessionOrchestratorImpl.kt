@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-public class SessionOrchestratorImpl(
+internal class SessionOrchestratorImpl(
     processStateService: ProcessStateService,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,

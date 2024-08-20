@@ -21,7 +21,7 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
 /**
  * Return the appropriate name used for telemetry created by Embrace given the current value
  */
-public fun String.toEmbraceObjectName(): String = EMBRACE_OBJECT_NAME_PREFIX + this
+internal fun String.toEmbraceObjectName(): String = EMBRACE_OBJECT_NAME_PREFIX + this
 
 public fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity = when (this) {
     io.embrace.android.embracesdk.Severity.INFO -> Severity.INFO
@@ -37,7 +37,7 @@ internal fun String.toEmbraceUsageAttributeName(): String = EMBRACE_USAGE_ATTRIB
 /**
  * Returns the attributes as a new Map<String, String>
  */
-public fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
+internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.associate {
     it.key.key.toString() to it.value.toString()
 }
 
@@ -49,7 +49,7 @@ internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): 
     return this
 }
 
-public fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
+internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
 
 internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value

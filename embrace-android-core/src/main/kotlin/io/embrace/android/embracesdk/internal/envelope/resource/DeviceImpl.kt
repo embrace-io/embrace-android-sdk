@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.resource
+package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.os.Environment
 import android.os.StatFs
@@ -6,7 +6,6 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
-import io.embrace.android.embracesdk.internal.envelope.resource.Device
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -16,7 +15,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
 
-public class DeviceImpl(
+internal class DeviceImpl(
     private val windowManager: WindowManager?,
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,

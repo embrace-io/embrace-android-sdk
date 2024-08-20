@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
  * This class acts as a delegate to the SessionOrchestrator & is separated out because it
  * contains references to various services that are otherwise irrelevant to the SessionOrchestrator.
  */
-public class OrchestratorBoundaryDelegate(
+internal class OrchestratorBoundaryDelegate(
     private val memoryCleanerService: MemoryCleanerService,
     private val userService: UserService,
     private val sessionPropertiesService: SessionPropertiesService,

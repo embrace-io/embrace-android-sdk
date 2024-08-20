@@ -17,11 +17,11 @@ import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.capture.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
@@ -144,7 +144,7 @@ internal class EmbraceMetadataServiceTest {
                     preferencesService,
                     BackgroundWorker(MoreExecutors.newDirectExecutorService()),
                     SystemInfo(),
-                    ::cpuInfoDelegate,
+                    Companion::cpuInfoDelegate,
                     FakeEmbLogger()
                 ),
                 FakeRnBundleIdTracker()

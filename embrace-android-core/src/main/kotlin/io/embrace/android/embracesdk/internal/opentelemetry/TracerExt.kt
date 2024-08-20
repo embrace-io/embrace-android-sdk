@@ -9,7 +9,7 @@ import io.opentelemetry.api.trace.Tracer
 /**
  * Creates a new [SpanBuilder] that marks the resulting span as private if [internal] is true
  */
-public fun Tracer.embraceSpanBuilder(
+internal fun Tracer.embraceSpanBuilder(
     name: String,
     type: TelemetryType,
     internal: Boolean,

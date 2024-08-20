@@ -2,14 +2,8 @@ package io.embrace.android.embracesdk.internal.network.http
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.fakes.FakeInternalNetworkApi
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.mockk.CapturingSlot
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.slot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -23,22 +17,13 @@ import java.net.URL
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlStreamHandlerTest {
-    private lateinit var mockEmbrace: Embrace
-    private lateinit var mockInternalInterface: EmbraceInternalInterface
-    private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
-    private var isNetworkSpanForwardingEnabled = false
+
+    private lateinit var internalApi: FakeInternalNetworkApi
 
     @Before
     fun setup() {
-        mockEmbrace = mockk(relaxed = true)
-        mockInternalInterface = mockk(relaxed = true)
-        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
-        capturedEmbraceNetworkRequest = slot()
-        every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
-        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
-        every { mockEmbrace.generateW3cTraceparent() } answers { TRACEPARENT }
-        every { mockEmbrace.isStarted } returns true
-        isNetworkSpanForwardingEnabled = false
+        internalApi = FakeInternalNetworkApi()
+        instance = internalApi
     }
 
     @Test
@@ -50,7 +35,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -66,7 +51,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "secure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -75,7 +60,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check traceheader is injected into http request if feature flag is on`() {
-        isNetworkSpanForwardingEnabled = true
+        internalApi.internalInterface.networkSpanForwardingEnabled = true
         val url = URL(
             "http",
             "embrace.io",
@@ -83,7 +68,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -92,7 +77,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check traceheader is injected into https request if feature flag is on`() {
-        isNetworkSpanForwardingEnabled = true
+        internalApi.internalInterface.networkSpanForwardingEnabled = true
         val url = URL(
             "https",
             "embrace.io",
@@ -100,7 +85,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "secure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -116,7 +101,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -132,7 +117,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -141,7 +126,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check http connection is not intercepted by embrace if sdk is not started`() {
-        every { mockEmbrace.isStarted } returns false
+        internalApi.started = false
         val url = URL(
             "http",
             "embrace.io",
@@ -149,7 +134,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpUrlStreamHandler(
                 httpUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())
@@ -158,7 +143,7 @@ internal class EmbraceUrlStreamHandlerTest {
 
     @Test
     fun `check https connection is not intercepted by embrace if sdk is not started`() {
-        every { mockEmbrace.isStarted } returns false
+        internalApi.started = false
         val url = URL(
             "https",
             "embrace.io",
@@ -166,7 +151,7 @@ internal class EmbraceUrlStreamHandlerTest {
             "insecure.txt",
             EmbraceHttpsUrlStreamHandler(
                 httpsUrlStreamHandler,
-                mockEmbrace
+                internalApi
             )
         )
         val connection = checkNotNull(url.openConnection())

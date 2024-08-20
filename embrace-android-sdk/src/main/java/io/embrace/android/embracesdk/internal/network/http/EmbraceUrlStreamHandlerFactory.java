@@ -7,8 +7,6 @@ import java.net.URLStreamHandlerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.embrace.android.embracesdk.Embrace;
-
 /**
  * Custom implementation of URLStreamHandlerFactory that is able to return URLStreamHandlers that log network data to
  * Embrace.
@@ -42,8 +40,10 @@ final class EmbraceUrlStreamHandlerFactory implements URLStreamHandlerFactory {
         }
     }
 
+    private static final InternalNetworkApi internalNetworkApi = InternalNetworkApiImplKt.getInstance();
+
     private static void logError(@NonNull Throwable throwable) {
-        Embrace.getInstance().getInternalInterface().logInternalError(throwable);
+        internalNetworkApi.logInternalError(throwable);
     }
 
     @Override

@@ -31,11 +31,10 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
-import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
+import io.embrace.android.embracesdk.internal.utils.exceptions.function.CheckedSupplier;
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest;
 import io.embrace.android.embracesdk.network.http.HttpMethod;
-import io.embrace.android.embracesdk.internal.utils.exceptions.function.CheckedSupplier;
 import kotlin.jvm.functions.Function0;
 
 /**
@@ -86,7 +85,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     /**
      * Reference to the SDK that is mockable and fakeable in tests
      */
-    private final Embrace embrace;
+    private final InternalNetworkApi internalNetworkApi;
 
     /**
      * A reference to the output stream wrapped in a counter, so we can determine the bytes sent.
@@ -139,16 +138,16 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * @param enableWrapIoStreams true if we should transparently ungzip the response, else false
      */
     public EmbraceUrlConnectionDelegate(@NonNull T connection, boolean enableWrapIoStreams) {
-        this(connection, enableWrapIoStreams, Embrace.getInstance());
+        this(connection, enableWrapIoStreams, InternalNetworkApiImplKt.getInstance());
     }
 
     EmbraceUrlConnectionDelegate(@NonNull T connection, boolean enableWrapIoStreams,
-                                 @NonNull Embrace embrace) {
+                                 @NonNull InternalNetworkApi internalNetworkApi) {
         this.connection = connection;
         this.enableWrapIoStreams = enableWrapIoStreams;
-        this.embrace = embrace;
-        this.createdTime = embrace.getInternalInterface().getSdkCurrentTime();
-        this.isSDKStarted = embrace.isStarted();
+        this.internalNetworkApi = internalNetworkApi;
+        this.createdTime = internalNetworkApi.getSdkCurrentTime();
+        this.isSDKStarted = internalNetworkApi.isStarted();
     }
 
     @Override
@@ -161,7 +160,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         if (isSDKStarted) {
             identifyTraceId();
             try {
-                if (embrace.getInternalInterface().isNetworkSpanForwardingEnabled()) {
+                if (internalNetworkApi.isNetworkSpanForwardingEnabled()) {
                     traceparent = connection.getRequestProperty(TRACEPARENT_HEADER_NAME);
                 }
             } catch (Exception e) {
@@ -533,7 +532,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
             this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
-            long endTime = embrace.getInternalInterface().getSdkCurrentTime();
+            long endTime = internalNetworkApi.getSdkCurrentTime();
 
             String url = EmbraceHttpPathOverride.getURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
 
@@ -542,7 +541,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                 long contentLength = Math.max(0, responseSize.get());
 
                 if (inputStreamAccessException == null && lastConnectionAccessException == null && responseCode.get() != 0) {
-                    embrace.getInternalInterface().recordNetworkRequest(
+                    internalNetworkApi.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),
@@ -572,7 +571,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                     String errorType = exceptionClass != null ? exceptionClass : "UnknownState";
                     String errorMessage = exceptionMessage != null ? exceptionMessage : "HTTP response state unknown";
 
-                    embrace.getInternalInterface().recordNetworkRequest(
+                    internalNetworkApi.recordNetworkRequest(
                         EmbraceNetworkRequest.fromIncompleteRequest(
                             url,
                             HttpMethod.fromString(getRequestMethod()),
@@ -660,7 +659,9 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     private void identifyTraceId() {
         if (isSDKStarted && traceId == null) {
             try {
-                traceId = getRequestProperty(embrace.getTraceIdHeader());
+                String traceIdHeader = internalNetworkApi.getTraceIdHeader();
+                traceId = getRequestProperty(traceIdHeader);
+                traceId.toString();
             } catch (Exception e) {
                 // don't do anything
             }
@@ -754,7 +755,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        setStartTime(embrace.getInternalInterface().getSdkCurrentTime());
+        setStartTime(internalNetworkApi.getSdkCurrentTime());
         InputStream in = null;
         if (shouldUncompressGzip()) {
             try {
@@ -782,7 +783,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
         String url = this.connection.getURL().toString();
         String method = this.connection.getRequestMethod();
 
-        return embrace.getInternalInterface().shouldCaptureNetworkBody(url, method);
+        return internalNetworkApi.shouldCaptureNetworkBody(url, method);
     }
 
     private void cacheNetworkCallData() {
@@ -798,7 +799,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             return;
         }
 
-        setStartTime(embrace.getInternalInterface().getSdkCurrentTime());
+        setStartTime(internalNetworkApi.getSdkCurrentTime());
 
         if (headerFields.get() == null) {
             synchronized (headerFields) {
@@ -906,6 +907,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private void logError(@NonNull Throwable t) {
-        Embrace.getInstance().getInternalInterface().logInternalError(t);
+        internalNetworkApi.logInternalError(t);
     }
 }

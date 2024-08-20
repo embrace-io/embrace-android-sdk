@@ -18,7 +18,7 @@ public class FakeSessionPropertiesService : SessionPropertiesService {
 
     override fun getProperties(): Map<String, String> = props
 
-    override fun clearTemporary() {
+    override fun prepareForNewSession() {
         props.clear()
     }
 

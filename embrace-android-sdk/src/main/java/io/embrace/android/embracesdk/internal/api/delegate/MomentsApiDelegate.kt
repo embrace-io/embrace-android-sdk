@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.MomentsApi
-import io.embrace.android.embracesdk.internal.event.EmbraceEventService
+import io.embrace.android.embracesdk.internal.event.STARTUP_EVENT_NAME
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
@@ -67,7 +67,7 @@ internal class MomentsApiDelegate(
     }
 
     override fun endAppStartup() {
-        endMoment(EmbraceEventService.STARTUP_EVENT_NAME, null, null)
+        endMoment(STARTUP_EVENT_NAME, null, null)
     }
 
     /**
@@ -76,6 +76,6 @@ internal class MomentsApiDelegate(
      * @param properties properties to include as part of the startup moment
      */
     override fun endAppStartup(properties: Map<String, Any?>) {
-        endMoment(EmbraceEventService.STARTUP_EVENT_NAME, null, properties)
+        endMoment(STARTUP_EVENT_NAME, null, properties)
     }
 }

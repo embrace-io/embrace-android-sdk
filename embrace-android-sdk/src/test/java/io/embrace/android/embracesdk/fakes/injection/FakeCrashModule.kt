@@ -1,15 +1,19 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeCrashDataSource
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.injection.CrashModule
-import io.mockk.mockk
+import java.io.File
 
 internal class FakeCrashModule : CrashModule {
     override val lastRunCrashVerifier = LastRunCrashVerifier(
-        CrashFileMarkerImpl(mockk(relaxed = true), mockk(relaxed = true)),
-        mockk(relaxed = true)
+        CrashFileMarkerImpl(
+            lazy { File.createTempFile("embrace", "crash_marker") },
+            FakeEmbLogger()
+        ),
+        FakeEmbLogger()
     )
 
     override val crashDataSource = FakeCrashDataSource()

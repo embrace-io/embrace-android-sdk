@@ -6,15 +6,15 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCrashModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDataCaptureServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
+import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeSessionOrchestrationModule
+import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.AnrModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ConfigModuleSupplier

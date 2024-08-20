@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
@@ -123,6 +124,15 @@ internal class PublicApiTest {
             val backgroundSessionId = embrace.currentSessionId
             assertNotNull(backgroundSessionId)
             assertNotEquals(foregroundSessionId, backgroundSessionId)
+        }
+    }
+
+    @Test
+    fun `getLastRunEndState() behave as expected`() {
+        with(testRule) {
+            assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
+            startSdk()
+            assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState)
         }
     }
 

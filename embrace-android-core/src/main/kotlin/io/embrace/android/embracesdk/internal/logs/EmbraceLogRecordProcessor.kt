@@ -8,7 +8,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
 /**
  * [LogRecordProcessor] that exports log records it to the given [LogRecordExporter]
  */
-public class EmbraceLogRecordProcessor(
+internal class EmbraceLogRecordProcessor(
     private val logRecordExporter: LogRecordExporter
 ) : LogRecordProcessor {
 

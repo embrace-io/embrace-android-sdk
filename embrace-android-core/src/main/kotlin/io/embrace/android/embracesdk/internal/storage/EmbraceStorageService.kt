@@ -11,7 +11,7 @@ import java.io.FilenameFilter
  * Since v6.3.0, the files directory is used instead and the cache directory is only used for
  * cached config files.
  */
-public class EmbraceStorageService(
+internal class EmbraceStorageService(
     private val context: Context,
     private val telemetryService: TelemetryService,
     private val storageAvailabilityChecker: StorageAvailabilityChecker

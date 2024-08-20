@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 
-public class EnvelopeResourceSourceImpl(
+internal class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,
     private val environment: AppEnvironment.Environment,
     private val buildInfo: BuildInfo,

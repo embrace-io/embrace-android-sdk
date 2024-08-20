@@ -1,7 +1,6 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.session
+package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
-import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -13,7 +12,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanSink
 
-public class SessionPayloadSourceImpl(
+internal class SessionPayloadSourceImpl(
     private val symbolMapProvider: () -> Map<String, String>?,
     private val spanSink: SpanSink,
     private val currentSessionSpan: CurrentSessionSpan,

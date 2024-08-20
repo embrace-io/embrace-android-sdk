@@ -43,7 +43,7 @@ internal class SessionOrchestrationModuleImpl(
         EmbraceMemoryCleanerService(logger = initModule.logger)
     }
 
-    override val payloadMessageCollatorImpl: PayloadMessageCollatorImpl by singleton {
+    override val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
             gatingService,
             payloadSourceModule.sessionEnvelopeSource,
@@ -52,14 +52,14 @@ internal class SessionOrchestrationModuleImpl(
         )
     }
 
-    override val periodicSessionCacher: PeriodicSessionCacher by singleton {
+    private val periodicSessionCacher: PeriodicSessionCacher by singleton {
         PeriodicSessionCacher(
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
             initModule.logger
         )
     }
 
-    override val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
+    private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
         PeriodicBackgroundActivityCacher(
             initModule.clock,
             workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
@@ -69,7 +69,7 @@ internal class SessionOrchestrationModuleImpl(
 
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
-            payloadMessageCollatorImpl,
+            payloadMessageCollator,
             configModule.configService,
             initModule.logger
         )

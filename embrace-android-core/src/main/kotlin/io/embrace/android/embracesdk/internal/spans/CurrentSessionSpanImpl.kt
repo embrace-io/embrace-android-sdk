@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-public class CurrentSessionSpanImpl(
+internal class CurrentSessionSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: TelemetryService,
     private val spanRepository: SpanRepository,

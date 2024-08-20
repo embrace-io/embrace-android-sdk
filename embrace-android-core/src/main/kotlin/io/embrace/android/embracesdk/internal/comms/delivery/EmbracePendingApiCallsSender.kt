@@ -16,7 +16,7 @@ import kotlin.math.max
 private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds
 
-public class EmbracePendingApiCallsSender(
+internal class EmbracePendingApiCallsSender(
     private val scheduledWorker: ScheduledWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,

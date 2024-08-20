@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.Locale
 import java.util.TimeZone
 
-public class EnvelopeMetadataSourceImpl(
+internal class EnvelopeMetadataSourceImpl(
     private val userInfoProvider: Provider<UserInfo>
 ) : EnvelopeMetadataSource {
 

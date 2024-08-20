@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.resource
+package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.content.pm.PackageInfo
 import android.os.Environment
@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.mockk.every

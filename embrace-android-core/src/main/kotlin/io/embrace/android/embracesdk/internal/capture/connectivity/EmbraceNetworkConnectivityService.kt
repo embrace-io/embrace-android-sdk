@@ -13,7 +13,7 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
-public class EmbraceNetworkConnectivityService(
+internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,

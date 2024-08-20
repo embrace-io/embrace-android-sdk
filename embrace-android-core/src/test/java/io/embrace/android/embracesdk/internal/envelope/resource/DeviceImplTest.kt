@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.resource
+package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.os.Environment
 import android.view.WindowManager
@@ -64,7 +64,7 @@ internal class DeviceImplTest {
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
-            ::cpuInfoDelegate,
+            Companion::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 
@@ -78,7 +78,7 @@ internal class DeviceImplTest {
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
-            ::cpuInfoDelegate,
+            Companion::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 
@@ -92,7 +92,7 @@ internal class DeviceImplTest {
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
             SystemInfo(),
-            ::cpuInfoDelegate,
+            Companion::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 

@@ -17,8 +17,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_ATTRIBUTE_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_ATTRIBUTE_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode

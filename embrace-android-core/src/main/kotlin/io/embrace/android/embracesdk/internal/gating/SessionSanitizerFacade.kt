@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
-public class SessionSanitizerFacade(
+internal class SessionSanitizerFacade(
     private val envelope: Envelope<SessionPayload>,
     private val components: Set<String>
 ) {

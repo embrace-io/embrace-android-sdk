@@ -3,19 +3,19 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 
@@ -30,13 +30,13 @@ public class FakePayloadSourceModule(
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource()
 ) : PayloadSourceModule {
 
-    override val sessionEnvelopeSource: SessionEnvelopeSource = SessionEnvelopeSourceImpl(
+    override val sessionEnvelopeSource: SessionEnvelopeSource = FakeSessionEnvelopeSource(
         FakeEnvelopeMetadataSource(),
         FakeEnvelopeResourceSource(),
         sessionPayloadSource
     )
 
-    override val logEnvelopeSource: LogEnvelopeSource = LogEnvelopeSourceImpl(
+    override val logEnvelopeSource: LogEnvelopeSource = FakeLogEnvelopeSource(
         FakeEnvelopeMetadataSource(),
         FakeEnvelopeResourceSource(),
         logPayloadSource

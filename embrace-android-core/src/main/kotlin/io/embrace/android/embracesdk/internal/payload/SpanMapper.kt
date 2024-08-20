@@ -62,7 +62,7 @@ public fun Span.toOldPayload(): EmbraceSpanData {
     )
 }
 
-public fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
+internal fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
     val newAttributes = mutableMapOf<String, String>().apply {
         setFixedAttribute(ErrorCodeAttribute.Failure)
         if (hasFixedAttribute(EmbType.Ux.Session)) {
@@ -77,7 +77,7 @@ public fun EmbraceSpanData.toFailedSpan(endTimeMs: Long): EmbraceSpanData {
     )
 }
 
-public fun Span.toFailedSpan(endTimeMs: Long): Span {
+internal fun Span.toFailedSpan(endTimeMs: Long): Span {
     val newAttributes = mutableMapOf<String, String>().apply {
         setFixedAttribute(ErrorCodeAttribute.Failure)
         if (hasFixedAttribute(EmbType.Ux.Session)) {

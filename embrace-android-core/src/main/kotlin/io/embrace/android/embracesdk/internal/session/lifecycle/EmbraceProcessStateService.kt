@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Service tracking the app's current process state (foreground or background) as reported
  * by ProcessLifecycleOwner.
  */
-public class EmbraceProcessStateService(
+internal class EmbraceProcessStateService(
     private val clock: Clock,
     private val logger: EmbLogger,
     private val lifecycleOwner: LifecycleOwner = ProcessLifecycleOwner.get()

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.envelope.log
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-public class LogPayloadSourceImpl(
+internal class LogPayloadSourceImpl(
     private val logSink: LogSink
 ) : LogPayloadSource {
 

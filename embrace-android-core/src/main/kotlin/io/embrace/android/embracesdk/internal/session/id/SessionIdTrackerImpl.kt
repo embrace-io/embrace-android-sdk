@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.util.concurrent.CopyOnWriteArraySet
 
-public class SessionIdTrackerImpl(
+internal class SessionIdTrackerImpl(
     private val activityManager: ActivityManager?,
     private val logger: EmbLogger
 ) : SessionIdTracker {

@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import java.util.Locale
 
-public class SessionSpanAttrPopulatorImpl(
+internal class SessionSpanAttrPopulatorImpl(
     private val sessionSpanWriter: SessionSpanWriter,
     private val eventService: EventService,
     private val sdkStartupDurationProvider: (coldStart: Boolean) -> Long?,

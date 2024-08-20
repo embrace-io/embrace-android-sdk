@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.comms.api
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.io.IOException
 
-public fun ApiRequest.getHeaders(): Map<String, String> {
+internal fun ApiRequest.getHeaders(): Map<String, String> {
     val headers = mutableMapOf(
         "Accept" to accept,
         "User-Agent" to userAgent,
@@ -40,4 +40,4 @@ internal fun ApiRequest.toConnection(): EmbraceConnection {
  * Returns true if the request is a session request. This heuristic should not be widely used
  * - it is only used to prioritise session requests over other requests.
  */
-public fun ApiRequest.isSessionRequest(): Boolean = url.url.endsWith("spans")
+internal fun ApiRequest.isSessionRequest(): Boolean = url.url.endsWith("spans")

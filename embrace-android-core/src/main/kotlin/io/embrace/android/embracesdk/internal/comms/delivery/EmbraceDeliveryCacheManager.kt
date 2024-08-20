@@ -21,7 +21,7 @@ internal class EmbraceDeliveryCacheManager(
     private val logger: EmbLogger
 ) : Closeable, DeliveryCacheManager {
 
-    public companion object {
+    companion object {
         /**
          * File name to cache JVM crash information
          */
@@ -32,7 +32,7 @@ internal class EmbraceDeliveryCacheManager(
          */
         private const val PENDING_API_CALLS_FILE_NAME = "failed_api_calls.json"
 
-        public const val MAX_SESSIONS_CACHED: Int = 64
+        const val MAX_SESSIONS_CACHED: Int = 64
     }
 
     // The session id is used as key for this map

@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 /**
  * Generates a V2 payload
  */
-public class PayloadMessageCollatorImpl(
+internal class PayloadMessageCollatorImpl(
     private val gatingService: GatingService,
     private val sessionEnvelopeSource: SessionEnvelopeSource,
     private val preferencesService: PreferencesService,

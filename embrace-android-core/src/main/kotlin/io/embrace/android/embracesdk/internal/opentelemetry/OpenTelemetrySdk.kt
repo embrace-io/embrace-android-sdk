@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_ATTRIBUTE_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_TOTAL_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_ATTRIBUTE_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -16,11 +16,11 @@ import io.opentelemetry.sdk.trace.SpanLimits
  * the Embrace SDK can hook into its lifecycle. From this, the Embrace SDK can obtain an implementations of the OpenTelemetry API to
  * create OpenTelemetry primitives that it can use internally or export to any OpenTelemetry Collectors.
  */
-public class OpenTelemetrySdk(
+internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     configuration: OpenTelemetryConfiguration
 ) {
-    public val sdkTracerProvider: SdkTracerProvider by lazy {
+    val sdkTracerProvider: SdkTracerProvider by lazy {
         Systrace.traceSynchronous("otel-tracer-provider-init") {
             SdkTracerProvider
                 .builder()
@@ -39,13 +39,13 @@ public class OpenTelemetrySdk(
         }
     }
 
-    public val sdkTracer: Tracer by lazy {
+    val sdkTracer: Tracer by lazy {
         Systrace.traceSynchronous("otel-tracer-init") {
             sdk.getTracer(configuration.embraceSdkName, configuration.embraceSdkVersion)
         }
     }
 
-    public fun getOpenTelemetryLogger(): Logger = logger
+    fun getOpenTelemetryLogger(): Logger = logger
 
     private val sdk: OpenTelemetrySdk by lazy {
         Systrace.traceSynchronous("otel-sdk-init") {

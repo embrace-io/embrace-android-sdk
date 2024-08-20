@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.capture.envelope.session
+package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType

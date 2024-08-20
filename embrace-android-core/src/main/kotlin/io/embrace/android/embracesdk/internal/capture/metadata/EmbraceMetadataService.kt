@@ -27,7 +27,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
  * Provides information about the state of the device, retrieved from Android system services,
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
-public class EmbraceMetadataService(
+internal class EmbraceMetadataService(
     resourceSource: EnvelopeResourceSource,
     metadataSource: EnvelopeMetadataSource,
     private val context: Context,

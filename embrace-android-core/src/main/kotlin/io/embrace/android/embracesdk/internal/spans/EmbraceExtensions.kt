@@ -19,7 +19,7 @@ import io.opentelemetry.semconv.ExceptionAttributes
  * Note: there's no explicit tests for these extensions as their functionality will be validated as part of other tests.
  */
 
-public fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
+internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
     setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
     return this
 }
@@ -68,9 +68,9 @@ public fun Map<String, String>.getAttribute(key: AttributeKey<String>): String? 
 
 public fun Map<String, String>.getAttribute(key: EmbraceAttributeKey): String? = getAttribute(key.attributeKey)
 
-public fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(this)
+private fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.contains(this)
 
-public val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE.key)
+private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE.key)
 
 public fun StatusCode.toStatus(): io.embrace.android.embracesdk.internal.payload.Span.Status {
     return when (this) {

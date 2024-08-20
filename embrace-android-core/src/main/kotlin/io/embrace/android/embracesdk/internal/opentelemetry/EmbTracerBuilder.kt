@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.opentelemetry
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerBuilder
 
-public class EmbTracerBuilder(
+internal class EmbTracerBuilder(
     instrumentationScopeName: String,
     private val tracerSupplier: (tracerKey: TracerKey) -> Tracer
 ) : TracerBuilder {

@@ -7,11 +7,13 @@ import io.embrace.android.embracesdk.getLastSavedBackgroundActivity
 import io.embrace.android.embracesdk.getLastSavedSession
 import io.embrace.android.embracesdk.getLastSentBackgroundActivity
 import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -144,23 +146,87 @@ internal class SessionPropertiesTest {
     fun `permanent properties are persisted in cached payloads`() {
         with(testRule) {
             startSdk()
-            harness.recordSession()
+            var lastSessionSpanId = checkNotNull(harness.recordSession()).getSessionId()
             embrace.addSessionProperty("perm", "value", true)
-            val bgSnapshot = checkNotNull(harness.getLastSavedBackgroundActivity())
-            checkNotNull(bgSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("perm"))
-
-            harness.recordSession {
-                val sessionSnapshot = checkNotNull(harness.getLastSavedSession())
-                checkNotNull(sessionSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("perm"))
-                embrace.addSessionProperty("perm2", "value", true)
+            with(checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan())) {
+                assertNotEquals(lastSessionSpanId, spanId)
+                assertPropertyExistence(
+                    exist = listOf("perm")
+                )
+                lastSessionSpanId = checkNotNull(spanId)
             }
 
-            val bgSnapshot2 = checkNotNull(harness.getLastSavedBackgroundActivity())
-            checkNotNull(bgSnapshot2.getSessionSpan()).assertPropertyExistence(exist = listOf("perm", "perm2"))
+            harness.recordSession {
+                with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
+                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertPropertyExistence(
+                        exist = listOf("perm")
+                    )
+                    lastSessionSpanId = checkNotNull(spanId)
+                }
+                embrace.addSessionProperty("perm2", "value", true)
+                checkNotNull(harness.getLastSavedSession()?.getSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2")
+                )
+            }
+
+            with(checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan())) {
+                assertNotEquals(lastSessionSpanId, spanId)
+                assertPropertyExistence(
+                    exist = listOf("perm", "perm2")
+                )
+                lastSessionSpanId = checkNotNull(spanId)
+            }
+
+            embrace.addSessionProperty("perm3", "value", true)
+            checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan()).assertPropertyExistence(
+                exist = listOf("perm", "perm2", "perm3")
+            )
 
             harness.recordSession {
-                val sessionSnapshot = checkNotNull(harness.getLastSavedSession())
-                checkNotNull(sessionSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("perm", "perm2"))
+                with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
+                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertPropertyExistence(
+                        exist = listOf("perm", "perm2", "perm3")
+                    )
+                    lastSessionSpanId = checkNotNull(spanId)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `permanent properties are persisted in cached payloads when bg activities are disabled`() {
+        with(testRule) {
+            harness.overriddenConfigService.backgroundActivityCaptureEnabled = false
+            startSdk()
+            embrace.addSessionProperty("perm", "value", true)
+            var lastSessionSpanId = checkNotNull(harness.recordSession()).getSessionId()
+            harness.recordSession {
+                with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
+                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertPropertyExistence(
+                        exist = listOf("perm")
+                    )
+                    lastSessionSpanId = checkNotNull(spanId)
+                }
+                embrace.addSessionProperty("perm2", "value", true)
+                checkNotNull(harness.getLastSavedSession()?.getSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2")
+                )
+            }
+            harness.recordSession {
+                with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
+                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertPropertyExistence(
+                        exist = listOf("perm", "perm2")
+                    )
+                    lastSessionSpanId = checkNotNull(spanId)
+                }
+                embrace.addSessionProperty("perm3", "value", true)
+                checkNotNull(harness.getLastSavedSession()?.getSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2", "perm3")
+                )
             }
         }
     }

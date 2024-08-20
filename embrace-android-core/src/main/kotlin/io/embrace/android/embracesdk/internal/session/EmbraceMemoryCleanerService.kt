@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.stream
 import java.util.concurrent.CopyOnWriteArrayList
 
-public class EmbraceMemoryCleanerService(private val logger: EmbLogger) : MemoryCleanerService {
+internal class EmbraceMemoryCleanerService(private val logger: EmbLogger) : MemoryCleanerService {
 
     /**
      * List of listeners that subscribe to clean services collections.

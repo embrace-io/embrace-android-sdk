@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
  * the SDK has not been started ([UninitializedSdkSpanService]. When [initializeService] is called during SDK startup, it will
  * instantiate and initialize [SpanServiceImpl] to provide the span recording functionality.
  */
-public class EmbraceSpanService(
+internal class EmbraceSpanService(
     private val spanRepository: SpanRepository,
     private val currentSessionSpan: CurrentSessionSpan,
     private val embraceSpanFactorySupplier: Provider<EmbraceSpanFactory>,

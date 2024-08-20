@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.util.concurrent.atomic.AtomicInteger
 
-public class LogCounter(
+internal class LogCounter(
     private val name: String,
     private val getConfigLogLimit: (() -> Int),
     private val logger: EmbLogger

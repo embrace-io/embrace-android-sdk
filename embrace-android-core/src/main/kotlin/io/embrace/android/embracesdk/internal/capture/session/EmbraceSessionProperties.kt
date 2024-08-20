@@ -94,7 +94,7 @@ internal class EmbraceSessionProperties(
 
     private fun size(): Int = permanentProperties().size + temporary.size
 
-    fun clearTemporary() {
+    fun prepareForNewSession() {
         synchronized(permanentPropertiesReference) {
             temporary.clear()
             addPermPropsToSessionSpan()

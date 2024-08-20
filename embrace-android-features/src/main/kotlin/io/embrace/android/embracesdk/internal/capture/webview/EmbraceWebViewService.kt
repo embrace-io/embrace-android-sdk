@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.EnumMap
 
-public class EmbraceWebViewService(
+internal class EmbraceWebViewService(
     public val configService: ConfigService,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,

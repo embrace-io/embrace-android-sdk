@@ -14,12 +14,12 @@ import java.io.FilenameFilter
 /**
  * Encapsulates the logic of managing Files to get, sort and or delete them
  */
-public class EmbraceNdkServiceRepository(
+internal class EmbraceNdkServiceRepository(
     private val storageService: StorageService,
     private val logger: EmbLogger
 ) {
 
-    public fun sortNativeCrashes(byOldest: Boolean): List<File> {
+    fun sortNativeCrashes(byOldest: Boolean): List<File> {
         val nativeCrashFiles: Array<File> = getNativeCrashFiles()
         val nativeCrashList: MutableList<File> = mutableListOf()
 
@@ -80,15 +80,15 @@ public class EmbraceNdkServiceRepository(
         }
     }
 
-    public fun errorFileForCrash(crashFile: File): File? {
+    fun errorFileForCrash(crashFile: File): File? {
         return companionFileForCrash(crashFile, NATIVE_CRASH_ERROR_FILE_SUFFIX)
     }
 
-    public fun mapFileForCrash(crashFile: File): File? {
+    fun mapFileForCrash(crashFile: File): File? {
         return companionFileForCrash(crashFile, NATIVE_CRASH_MAP_FILE_SUFFIX)
     }
 
-    public fun deleteFiles(
+    fun deleteFiles(
         crashFile: File,
         errorFile: File?,
         mapFile: File?,

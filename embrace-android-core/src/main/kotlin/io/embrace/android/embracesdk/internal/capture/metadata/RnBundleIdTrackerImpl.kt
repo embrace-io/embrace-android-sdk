@@ -15,7 +15,7 @@ import java.security.MessageDigest
 import java.util.Locale
 import java.util.concurrent.Future
 
-public class RnBundleIdTrackerImpl(
+internal class RnBundleIdTrackerImpl(
     private val buildInfo: BuildInfo,
     private val context: Context,
     private val configService: ConfigService,

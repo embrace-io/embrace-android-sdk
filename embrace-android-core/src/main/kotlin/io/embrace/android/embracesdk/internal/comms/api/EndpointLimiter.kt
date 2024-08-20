@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow
 
-public class EndpointLimiter {
+internal class EndpointLimiter {
 
     private var rateLimitRetryCount = AtomicInteger(0)
 

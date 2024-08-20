@@ -7,7 +7,7 @@ import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.ConcurrentHashMap
 
-public class EmbTracerProvider(
+internal class EmbTracerProvider(
     private val sdkTracerProvider: TracerProvider,
     private val spanService: SpanService,
     private val clock: Clock,

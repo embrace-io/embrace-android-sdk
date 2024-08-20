@@ -10,6 +10,13 @@ import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.EXCEPTION_EVENT_NAME
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_NAME_LENGTH
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -29,7 +36,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-public class EmbraceSpanImpl(
+internal class EmbraceSpanImpl(
     private val spanBuilder: EmbraceSpanBuilder,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
@@ -307,18 +314,9 @@ public class EmbraceSpanImpl(
     private fun getSpanName() = synchronized(startedSpan) { updatedName ?: spanBuilder.spanName }
 
     public companion object {
-        public const val MAX_NAME_LENGTH: Int = 50
-        public const val MAX_CUSTOM_EVENT_COUNT: Int = 10
-        public const val MAX_TOTAL_EVENT_COUNT: Int = 11000
-        public const val MAX_CUSTOM_ATTRIBUTE_COUNT: Int = 50
-        public const val MAX_TOTAL_ATTRIBUTE_COUNT: Int = 300
-        public const val MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH: Int = 50
-        public const val MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH: Int = 500
-        public const val EXCEPTION_EVENT_NAME: String = "exception"
-
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
 
-        public fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
+        internal fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
     }
 }

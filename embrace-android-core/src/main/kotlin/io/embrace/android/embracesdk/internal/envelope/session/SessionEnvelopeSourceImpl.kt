@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-public class SessionEnvelopeSourceImpl(
+internal class SessionEnvelopeSourceImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
     private val sessionPayloadSource: SessionPayloadSource,

@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.MAX_CUSTOM_ATTRIBUTE_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -209,7 +209,7 @@ internal class EmbraceSpanImplTest {
             val sanitizedEvents = checkNotNull(events)
             assertEquals(2, sanitizedEvents.size)
             with(sanitizedEvents.first()) {
-                assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
+                assertEquals(EmbraceSpanLimits.EXCEPTION_EVENT_NAME, name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -223,7 +223,7 @@ internal class EmbraceSpanImplTest {
                 )
             }
             with(sanitizedEvents.last()) {
-                assertEquals(EmbraceSpanImpl.EXCEPTION_EVENT_NAME, name)
+                assertEquals(EmbraceSpanLimits.EXCEPTION_EVENT_NAME, name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -262,7 +262,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT - 5) {
+            repeat(EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(

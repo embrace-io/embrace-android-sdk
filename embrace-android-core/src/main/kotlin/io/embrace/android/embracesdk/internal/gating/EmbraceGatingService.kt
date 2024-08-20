@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
  * Event service, Session service and Crash service check if should gate data based on the gating config.
  * Also defines if a full session data should be sent under certain conditions based on configurations.
  */
-public class EmbraceGatingService(
+internal class EmbraceGatingService(
     private val configService: ConfigService,
     private val logService: LogService,
     private val logger: EmbLogger

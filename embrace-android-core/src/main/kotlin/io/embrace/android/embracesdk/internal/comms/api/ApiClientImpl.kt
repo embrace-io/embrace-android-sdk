@@ -17,7 +17,7 @@ import java.net.HttpURLConnection
  * The development endpoint is only used if the build is a debug build, and if integration
  * testing is enabled when calling [Embrace.start()].
  */
-public class ApiClientImpl(
+internal class ApiClientImpl(
     private val logger: EmbLogger
 ) : ApiClient {
 

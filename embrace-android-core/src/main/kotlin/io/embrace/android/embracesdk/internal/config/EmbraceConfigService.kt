@@ -46,7 +46,7 @@ import kotlin.math.min
 /**
  * Loads configuration for the app from the Embrace API.
  */
-public class EmbraceConfigService(
+internal class EmbraceConfigService(
     private val localConfig: LocalConfig,
     private val preferencesService: PreferencesService,
     private val clock: Clock,

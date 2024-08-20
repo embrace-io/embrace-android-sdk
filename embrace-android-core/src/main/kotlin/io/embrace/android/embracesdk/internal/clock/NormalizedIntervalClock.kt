@@ -7,12 +7,8 @@ package io.embrace.android.embracesdk.internal.clock
  * This is useful when it is necessary to perform interval timing but the results must be
  * sent to the API in a way that matches the device time.
  */
-public class NormalizedIntervalClock(systemClock: SystemClock) : Clock {
-    private val baseline: Long
-
-    init {
-        baseline = systemClock.now() - android.os.SystemClock.elapsedRealtime()
-    }
+internal class NormalizedIntervalClock(systemClock: SystemClock) : Clock {
+    private val baseline = systemClock.now() - android.os.SystemClock.elapsedRealtime()
 
     override fun now(): Long = baseline + android.os.SystemClock.elapsedRealtime()
 }

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-public class LogEnvelopeSourceImpl(
+internal class LogEnvelopeSourceImpl(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
     private val logPayloadSource: LogPayloadSource,

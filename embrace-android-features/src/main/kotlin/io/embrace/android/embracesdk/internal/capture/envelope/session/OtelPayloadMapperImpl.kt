@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.envelope.session
 
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
+import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
-public class ApiRequestMapper(
+internal class ApiRequestMapper(
     private val urlBuilder: ApiUrlBuilder,
     private val lazyDeviceId: Lazy<String>,
     private val appId: String

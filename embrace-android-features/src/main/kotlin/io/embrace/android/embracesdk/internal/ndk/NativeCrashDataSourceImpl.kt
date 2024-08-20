@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
-public class NativeCrashDataSourceImpl(
+internal class NativeCrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
     private val ndkService: NdkService,
     private val preferencesService: PreferencesService,

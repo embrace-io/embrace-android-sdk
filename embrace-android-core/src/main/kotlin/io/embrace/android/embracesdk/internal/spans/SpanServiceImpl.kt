@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Implementation of the core logic for [SpanService]
  */
-public class SpanServiceImpl(
+internal class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val currentSessionSpan: CurrentSessionSpan,
@@ -134,8 +134,8 @@ public class SpanServiceImpl(
         attributes: Map<String, String>? = null
     ): Boolean {
         return name.isValidName() &&
-            ((events == null) || (events.size <= EmbraceSpanImpl.MAX_CUSTOM_EVENT_COUNT)) &&
-            ((attributes == null) || (attributes.size <= EmbraceSpanImpl.MAX_CUSTOM_ATTRIBUTE_COUNT))
+            ((events == null) || (events.size <= EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT)) &&
+            ((attributes == null) || (attributes.size <= EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT))
     }
 
     public companion object {

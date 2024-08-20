@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.lang.reflect.ParameterizedType
 import java.util.concurrent.Future
 
-public class EmbraceApiService(
+internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: PlatformSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.anr.detection.UnbalancedCallDetector
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -55,7 +54,6 @@ internal class EmbraceAnrService(
 
         // add listeners
         listeners.add(stacktraceSampler)
-        listeners.add(UnbalancedCallDetector(logger))
         livenessCheckScheduler.listener = this
     }
 

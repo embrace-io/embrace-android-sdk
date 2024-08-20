@@ -18,7 +18,7 @@ private const val EMBRACE_SESSION_PROPERTY_NAME_PREFIX = "emb.properties."
 /**
  * Return the appropriate internal Embrace attribute name given the current string
  */
-public fun String.toEmbraceAttributeName(isPrivate: Boolean = false): String {
+internal fun String.toEmbraceAttributeName(isPrivate: Boolean = false): String {
     val prefix = if (isPrivate) {
         EMBRACE_PRIVATE_ATTRIBUTE_NAME_PREFIX
     } else {
@@ -27,4 +27,4 @@ public fun String.toEmbraceAttributeName(isPrivate: Boolean = false): String {
     return prefix + this
 }
 
-public fun String.toSessionPropertyAttributeName(): String = EMBRACE_SESSION_PROPERTY_NAME_PREFIX + this
+internal fun String.toSessionPropertyAttributeName(): String = EMBRACE_SESSION_PROPERTY_NAME_PREFIX + this

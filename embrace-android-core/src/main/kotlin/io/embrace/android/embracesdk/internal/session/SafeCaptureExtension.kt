@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * This is intended for use when building the session/background activity payloads. If an
  * exception is thrown during capture, then we still want to send the request.
  */
-public inline fun <R> captureDataSafely(logger: EmbLogger, result: Provider<R>): R? {
+internal inline fun <R> captureDataSafely(logger: EmbLogger, result: Provider<R>): R? {
     return try {
         result()
     } catch (exc: Throwable) {

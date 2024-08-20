@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
-import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCacheManager
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -32,6 +31,6 @@ internal class StorageModuleImplTest {
         assertNotNull(module.deliveryCacheManager)
         assertTrue(module.storageService is EmbraceStorageService)
         assertTrue(module.cacheService is EmbraceCacheService)
-        assertTrue(module.deliveryCacheManager is EmbraceDeliveryCacheManager)
+        assertNotNull(module.deliveryCacheManager)
     }
 }

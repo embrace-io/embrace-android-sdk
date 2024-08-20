@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
-public class SessionPropertiesServiceImpl(
+internal class SessionPropertiesServiceImpl(
     preferencesService: PreferencesService,
     configService: ConfigService,
     logger: EmbLogger,

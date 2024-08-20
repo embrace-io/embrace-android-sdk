@@ -1,0 +1,47 @@
+
+{
+  "ts": 1111,
+  "u": "https://embrace.io/",
+  "vt": [
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "CLS",
+      "st": 1111,
+      "d": 10,
+      "s": 0.1,
+      "p": {
+        "value1": 0.003,
+        "value2": true,
+        "value3": []
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "LCP",
+      "st": 2222,
+      "d": 0,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "FCP",
+      "st": 1111,
+      "d": 0,
+      "p": {
+      }
+    },
+    {
+      "key": "EMBRACE_METRIC",
+      "n": "layout-shift",
+      "t": "FID",
+      "st": 1111,
+      "d": 0,
+      "p": {
+      }
+    }
+  ]
+}

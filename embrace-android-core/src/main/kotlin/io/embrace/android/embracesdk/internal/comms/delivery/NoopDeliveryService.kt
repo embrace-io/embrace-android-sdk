@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-public class NoopDeliveryService : DeliveryService {
+internal class NoopDeliveryService : DeliveryService {
 
     override fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType) {
     }

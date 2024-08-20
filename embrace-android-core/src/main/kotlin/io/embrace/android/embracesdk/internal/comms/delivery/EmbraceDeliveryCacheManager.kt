@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.io.Closeable
 
-public class EmbraceDeliveryCacheManager(
+internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger

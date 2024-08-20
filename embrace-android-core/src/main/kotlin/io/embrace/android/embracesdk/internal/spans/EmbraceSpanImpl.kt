@@ -123,7 +123,9 @@ internal class EmbraceSpanImpl(
                     spanToStop.setAttribute(attribute.key, attribute.value)
                 }
 
-                (systemEvents + customEvents).forEach { event ->
+                val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
+
+                (systemEvents + redactedCustomEvents).forEach { event ->
                     val eventAttributes = if (event.attributes.isNotEmpty()) {
                         Attributes.builder().fromMap(event.attributes).build()
                     } else {
@@ -251,6 +253,7 @@ internal class EmbraceSpanImpl(
     override fun asNewContext(): Context? = startedSpan.get()?.run { spanBuilder.parentContext.with(this) }
 
     override fun snapshot(): Span? {
+        val redactedCustomEvents = customEvents.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
         return if (canSnapshot()) {
             Span(
                 traceId = traceId,
@@ -260,7 +263,7 @@ internal class EmbraceSpanImpl(
                 startTimeNanos = spanStartTimeMs?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs?.millisToNanos(),
                 status = status,
-                events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + customEvents.map(EmbraceSpanEvent::toNewPayload),
+                events = systemEvents.map(EmbraceSpanEvent::toNewPayload) + redactedCustomEvents.map(EmbraceSpanEvent::toNewPayload),
                 attributes = getAttributesPayload()
             )
         } else {

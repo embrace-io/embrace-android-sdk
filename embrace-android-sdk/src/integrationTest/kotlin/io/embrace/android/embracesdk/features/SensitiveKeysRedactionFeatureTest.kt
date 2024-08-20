@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.recordSession
 import junit.framework.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -45,6 +46,28 @@ internal class SensitiveKeysRedactionFeatureTest {
 
             assertEquals("<redacted>", sensitiveAttribute?.data)
             assertEquals("1234", notSensitiveAttribute?.data)
+        }
+    }
+
+    @Test
+    fun `custom span events are redacted if they are sensitive`() {
+        with(testRule) {
+            startSdk()
+            val session = harness.recordSession {
+                val span = embrace.startSpan("test span")
+                span?.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
+                span?.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
+                span?.stop()
+            }
+
+            val recordedSpan = session?.data?.spans?.find { it.name == "test span" }
+
+            val event = recordedSpan?.events?.first { it.name == "event" }
+            val anotherEvent = recordedSpan?.events?.first { it.name == "anotherEvent" }
+            assertTrue(event?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+            assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
+            assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+            assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
         }
     }
 }

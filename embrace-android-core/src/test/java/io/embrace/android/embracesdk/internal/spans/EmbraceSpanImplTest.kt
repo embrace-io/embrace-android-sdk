@@ -432,6 +432,27 @@ internal class EmbraceSpanImplTest {
         assertTrue(snapshot?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
     }
 
+    @Test
+    fun `event attributes are redacted if their key is sensitive when getting a span snapshot`() {
+        // given a span event with a sensitive key
+        val spanBuilder = createEmbraceSpanBuilder()
+        embraceSpan = createEmbraceSpanImpl(spanBuilder)
+        embraceSpan.start()
+        embraceSpan.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
+        embraceSpan.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
+
+        // when getting a span snapshot
+        val snapshot = embraceSpan.snapshot()
+
+        // then the sensitive keys should be redacted
+        val event = snapshot?.events?.first { it.name == "event" }
+        val anotherEvent = snapshot?.events?.first { it.name == "anotherEvent" }
+        assertTrue(event?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+        assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
+        assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+        assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
+    }
+
     private fun createEmbraceSpanBuilder() = tracer.embraceSpanBuilder(
         name = EXPECTED_SPAN_NAME,
         type = EmbType.System.LowPower,

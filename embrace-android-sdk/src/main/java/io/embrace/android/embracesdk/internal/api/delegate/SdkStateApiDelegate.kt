@@ -85,15 +85,18 @@ internal class SdkStateApiDelegate(
             return null
         }
 
-    override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted && crashVerifier != null) {
-        if (crashVerifier?.didLastRunCrash() == true) {
-            Embrace.LastRunEndState.CRASH
-        } else {
-            Embrace.LastRunEndState.CLEAN_EXIT
+    override val lastRunEndState: Embrace.LastRunEndState
+        get() {
+            return if (isStarted && crashVerifier != null) {
+                if (crashVerifier?.didLastRunCrash() == true) {
+                    Embrace.LastRunEndState.CRASH
+                } else {
+                    Embrace.LastRunEndState.CLEAN_EXIT
+                }
+            } else {
+                Embrace.LastRunEndState.INVALID
+            }
         }
-    } else {
-        Embrace.LastRunEndState.INVALID
-    }
 
     companion object {
         private val appIdPattern: Pattern = Pattern.compile("^[A-Za-z0-9]{5}$")

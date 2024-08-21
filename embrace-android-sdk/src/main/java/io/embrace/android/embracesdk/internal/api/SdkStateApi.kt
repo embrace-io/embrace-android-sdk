@@ -26,5 +26,5 @@ public interface SdkStateApi {
 
     public val currentSessionId: String?
 
-    public fun getLastRunEndState(): Embrace.LastRunEndState
+    public val lastRunEndState: Embrace.LastRunEndState
 }

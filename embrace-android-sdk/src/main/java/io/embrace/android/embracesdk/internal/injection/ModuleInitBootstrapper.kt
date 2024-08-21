@@ -221,10 +221,14 @@ internal class ModuleInitBootstrapper(
 
                             val networkBehavior = configModule.configService.networkBehavior
                             if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
-                                registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
+                                Systrace.traceSynchronous("network-monitoring-installation") {
+                                    registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
+                                }
                             }
-                            networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
-                            apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                            Systrace.traceSynchronous("network-connectivity-registration") {
+                                networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
+                                apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                            }
                         }
                     }
 
@@ -375,15 +379,18 @@ internal class ModuleInitBootstrapper(
                         )
 
                         if (configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+                            Systrace.startSynchronous("ndk-service-updates")
                             essentialServiceModule.sessionIdTracker.addListener {
                                 nativeFeatureModule.ndkService.updateSessionId(it ?: "")
                             }
                             essentialServiceModule.sessionPropertiesService.addChangeListener(
                                 nativeFeatureModule.ndkService::onSessionPropertiesUpdate
                             )
+                            Systrace.endSynchronous()
                         }
 
                         if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
+                            Systrace.startSynchronous("native-thread-sampler-init")
                             // install the native thread sampler
                             nativeFeatureModule.nativeThreadSamplerService?.let { nativeThreadSamplerService ->
                                 nativeThreadSamplerService.setupNativeSampler()
@@ -414,6 +421,7 @@ internal class ModuleInitBootstrapper(
                                     }
                                 }
                             }
+                            Systrace.endSynchronous()
                         }
                     }
 

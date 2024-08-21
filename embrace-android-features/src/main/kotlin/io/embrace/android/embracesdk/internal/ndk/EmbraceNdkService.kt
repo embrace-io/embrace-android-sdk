@@ -216,14 +216,17 @@ internal class EmbraceNdkService(
         val nativeCrashId: String = unityCrashId ?: Uuid.getEmbUuid()
         val is32bit = deviceArchitecture.is32BitDevice
         val initialMetaData = Systrace.traceSynchronous("init-native-crash-metadata") {
-            serializer.toJson(
+            val metadata = Systrace.traceSynchronous("gather-metadata") {
                 NativeCrashMetadata(
                     metadataService.getAppInfo(),
                     metadataService.getDeviceInfo(),
                     userService.getUserInfo(),
                     sessionPropertiesService.getProperties()
                 )
-            )
+            }
+            Systrace.traceSynchronous("serialize-metadata") {
+                serializer.toJson(metadata)
+            }
         }
         Systrace.traceSynchronous("native-install-handlers") {
             delegate._installSignalHandlers(

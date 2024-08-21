@@ -76,7 +76,7 @@ internal fun IntegrationTestRule.Harness.getSentSessions(): List<Envelope<Sessio
 }
 
 /**
- * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
+ * Returns a list of background activity payloads that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
     return overriddenDeliveryModule.deliveryService.getSentBackgroundActivities()

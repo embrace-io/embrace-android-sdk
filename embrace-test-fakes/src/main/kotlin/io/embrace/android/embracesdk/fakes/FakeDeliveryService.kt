@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.Locale
+import java.util.Queue
+import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
@@ -28,8 +30,10 @@ public open class FakeDeliveryService : DeliveryService {
     public var eventSentAsyncInvokedCount: Int = 0
     public var lastSavedCrash: EventMessage? = null
     public var lastSentCachedSession: String? = null
-    public val sentSessionEnvelopes: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
-    public val savedSessionEnvelopes: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
+    public val sentSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
+        ConcurrentLinkedQueue()
+    public val savedSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
+        ConcurrentLinkedQueue()
 
     override fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType) {
         if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {

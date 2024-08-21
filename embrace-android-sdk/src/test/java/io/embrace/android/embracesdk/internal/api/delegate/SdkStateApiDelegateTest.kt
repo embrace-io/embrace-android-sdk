@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -73,5 +74,11 @@ internal class SdkStateApiDelegateTest {
     fun getCurrentSessionId() {
         sessionIdTracker.sessionData = SessionData("test", true)
         assertEquals("test", delegate.currentSessionId)
+    }
+
+    @Test
+    fun `last end state is invalid if SDK not enabled`() {
+        sdkCallChecker.started.set(false)
+        assertEquals(LastRunEndState.INVALID, delegate.lastRunEndState)
     }
 }

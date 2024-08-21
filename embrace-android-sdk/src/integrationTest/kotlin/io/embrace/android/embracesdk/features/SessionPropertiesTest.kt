@@ -146,23 +146,23 @@ internal class SessionPropertiesTest {
     fun `permanent properties are persisted in cached payloads`() {
         with(testRule) {
             startSdk()
-            var lastSessionSpanId = checkNotNull(harness.recordSession()).getSessionId()
+            var lastSessionId = checkNotNull(harness.recordSession()).getSessionId()
             embrace.addSessionProperty("perm", "value", true)
             with(checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan())) {
-                assertNotEquals(lastSessionSpanId, spanId)
+                assertNotEquals(lastSessionId, embrace.currentSessionId)
                 assertPropertyExistence(
                     exist = listOf("perm")
                 )
-                lastSessionSpanId = checkNotNull(spanId)
+                lastSessionId = checkNotNull(embrace.currentSessionId)
             }
 
             harness.recordSession {
                 with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
-                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertNotEquals(lastSessionId, embrace.currentSessionId)
                     assertPropertyExistence(
                         exist = listOf("perm")
                     )
-                    lastSessionSpanId = checkNotNull(spanId)
+                    lastSessionId = checkNotNull(embrace.currentSessionId)
                 }
                 embrace.addSessionProperty("perm2", "value", true)
                 checkNotNull(harness.getLastSavedSession()?.getSessionSpan()).assertPropertyExistence(
@@ -171,11 +171,11 @@ internal class SessionPropertiesTest {
             }
 
             with(checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan())) {
-                assertNotEquals(lastSessionSpanId, spanId)
+                assertNotEquals(lastSessionId, embrace.currentSessionId)
                 assertPropertyExistence(
                     exist = listOf("perm", "perm2")
                 )
-                lastSessionSpanId = checkNotNull(spanId)
+                lastSessionId = checkNotNull(embrace.currentSessionId)
             }
 
             embrace.addSessionProperty("perm3", "value", true)
@@ -185,11 +185,11 @@ internal class SessionPropertiesTest {
 
             harness.recordSession {
                 with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
-                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertNotEquals(lastSessionId, embrace.currentSessionId)
                     assertPropertyExistence(
                         exist = listOf("perm", "perm2", "perm3")
                     )
-                    lastSessionSpanId = checkNotNull(spanId)
+                    lastSessionId = checkNotNull(embrace.currentSessionId)
                 }
             }
         }
@@ -201,14 +201,14 @@ internal class SessionPropertiesTest {
             harness.overriddenConfigService.backgroundActivityCaptureEnabled = false
             startSdk()
             embrace.addSessionProperty("perm", "value", true)
-            var lastSessionSpanId = checkNotNull(harness.recordSession()).getSessionId()
+            var lastSessionId = checkNotNull(harness.recordSession()).getSessionId()
             harness.recordSession {
                 with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
-                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertNotEquals(lastSessionId, embrace.currentSessionId)
                     assertPropertyExistence(
                         exist = listOf("perm")
                     )
-                    lastSessionSpanId = checkNotNull(spanId)
+                    lastSessionId = checkNotNull(embrace.currentSessionId)
                 }
                 embrace.addSessionProperty("perm2", "value", true)
                 checkNotNull(harness.getLastSavedSession()?.getSessionSpan()).assertPropertyExistence(
@@ -217,11 +217,11 @@ internal class SessionPropertiesTest {
             }
             harness.recordSession {
                 with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
-                    assertNotEquals(lastSessionSpanId, spanId)
+                    assertNotEquals(lastSessionId, embrace.currentSessionId)
                     assertPropertyExistence(
                         exist = listOf("perm", "perm2")
                     )
-                    lastSessionSpanId = checkNotNull(spanId)
+                    lastSessionId = checkNotNull(embrace.currentSessionId)
                 }
                 embrace.addSessionProperty("perm3", "value", true)
                 checkNotNull(harness.getLastSavedSession()?.getSessionSpan()).assertPropertyExistence(

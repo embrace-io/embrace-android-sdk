@@ -13,18 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'adopt'
-          java-version: 17
-
-      # make sure version in gradle.properties matches the version of embrace-swazzler3 version
-      - name: "Publish SDK locally"
-        run: ./gradlew publishToMavenLocal --no-daemon
-
       - name: Checkout Swazzler-Test
         uses: actions/checkout@v4
         with:
@@ -32,7 +20,30 @@ jobs:
           ref: master
           path: ./swazzler-test
           submodules: recursive
-          token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }}
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }} # NOTE: read swazzler-test (and its submodules)
+
+      - name: Checkout SDK
+        uses: actions/checkout@v4
+        with:
+          path: ./swazzler-test/embrace-android-sdk
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup NDK 21.4.7075529
+        run: |
+          export ANDROID_ROOT=/usr/local/lib/android
+          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
+          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
+          ln -sfn $ANDROID_SDK_ROOT/ndk/21.4.7075529 $ANDROID_NDK_ROOT
+
+      - name: "Publish SDK locally"
+        run: |
+          cd ./swazzler-test/embrace-android-sdk
+          ./gradlew publishToMavenLocal --no-daemon
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4
@@ -40,7 +51,7 @@ jobs:
           repository: embrace-io/embrace-swazzler3
           ref: master
           path: ./swazzler-test/embrace-swazzler3
-          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: "Publish Swazzler locally"
         run: |

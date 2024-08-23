@@ -41,7 +41,7 @@ internal class EmbraceSpanImpl(
     private val spanBuilder: EmbraceSpanBuilder,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private val sensitiveKeysBehavior: SensitiveKeysBehavior
+    private val sensitiveKeysBehavior: SensitiveKeysBehavior?
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
@@ -320,7 +320,7 @@ internal class EmbraceSpanImpl(
 
     private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
         return mapValues {
-            if (sensitiveKeysBehavior.isSensitiveKey(it.key)) {
+            if (sensitiveKeysBehavior != null && sensitiveKeysBehavior.isSensitiveKey(it.key)) {
                 "<redacted>"
             } else {
                 it.value

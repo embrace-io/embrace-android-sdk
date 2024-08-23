@@ -165,6 +165,7 @@ internal class ModuleInitBootstrapper(
                     }
                     postInit(ConfigModule::class) {
                         serviceRegistry.registerService(lazy { configModule.configService })
+                        openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
                     }
 
                     storageModule = init(StorageModule::class) {

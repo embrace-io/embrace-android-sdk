@@ -2,8 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.OpenTelemetryClock
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbOpenTelemetry
@@ -66,14 +65,19 @@ internal class OpenTelemetryModuleImpl(
         openTelemetrySdk.sdkTracer
     }
 
+    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
+
+    override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
+        this.sensitiveKeysBehavior = sensitiveKeysBehavior
+        embraceSpanFactory.setupSensitiveKeysBehavior(sensitiveKeysBehavior)
+    }
+
     private val embraceSpanFactory: EmbraceSpanFactory by singleton {
         EmbraceSpanFactoryImpl(
             tracer = sdkTracer,
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
-            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-                SdkLocalConfig(sensitiveKeysDenylist = listOf("password"))
-            ), // todo: add dependency on config module
+            sensitiveKeysBehavior = sensitiveKeysBehavior
         )
     }
 

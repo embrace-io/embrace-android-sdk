@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
@@ -22,6 +23,11 @@ public interface OpenTelemetryModule {
      * Configuration for the OpenTelemetry SDK
      */
     public val openTelemetryConfiguration: OpenTelemetryConfiguration
+
+    /**
+     * Setup configuration for redacting sensitive keys
+     */
+    public fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior)
 
     /**
      * Caches span instances that are in progress or completed in the current session

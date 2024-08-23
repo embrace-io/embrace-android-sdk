@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.registry
 
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
@@ -37,7 +38,9 @@ public class ServiceRegistry(
     public val startupListener: List<StartupListener> by lazy { registry.filterIsInstance<StartupListener>() }
 
     public fun registerServices(vararg services: Any?) {
-        services.forEach(::registerService)
+        Systrace.trace("register-services") {
+            services.forEach(::registerService)
+        }
     }
 
     public fun registerService(service: Any?) {

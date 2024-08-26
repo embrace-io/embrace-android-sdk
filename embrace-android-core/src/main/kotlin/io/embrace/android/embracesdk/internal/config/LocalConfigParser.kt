@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.config
 import android.content.res.Resources.NotFoundException
 import android.util.Base64
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -47,6 +48,7 @@ internal object LocalConfigParser {
         logger: EmbLogger
     ): LocalConfig {
         return try {
+            Systrace.startSynchronous("cfg-resolve-resources")
             val appId = resolveAppId(customAppId, resources, packageName)
             val ndkEnabledJsonId =
                 resources.getIdentifier(BUILD_INFO_NDK_ENABLED, "string", packageName)
@@ -61,16 +63,20 @@ internal object LocalConfigParser {
             }
             val sdkConfigJsonId =
                 resources.getIdentifier(BUILD_INFO_SDK_CONFIG, "string", packageName)
+            Systrace.endSynchronous()
 
             val sdkConfigJson: String? = when {
                 sdkConfigJsonId != 0 -> {
                     val encodedConfig = resources.getString(sdkConfigJsonId)
-                    String(Base64.decode(encodedConfig, Base64.DEFAULT))
+                    Systrace.traceSynchronous("base64-decode") {
+                        String(Base64.decode(encodedConfig, Base64.DEFAULT))
+                    }
                 }
-
                 else -> null
             }
-            buildConfig(appId, ndkEnabled, sdkConfigJson, serializer, openTelemetryCfg, logger)
+            Systrace.traceSynchronous("build-config") {
+                buildConfig(appId, ndkEnabled, sdkConfigJson, serializer, openTelemetryCfg, logger)
+            }
         } catch (ex: Exception) {
             throw IllegalStateException("Failed to load local config from resources.", ex)
         }
@@ -115,18 +121,17 @@ internal object LocalConfigParser {
         logger.logInfo("Native crash capture is $enabledStr")
         var configs: SdkLocalConfig? = null
         if (!sdkConfigs.isNullOrEmpty()) {
-            try {
-                configs = serializer.fromJson(sdkConfigs, SdkLocalConfig::class.java)
-            } catch (ex: Exception) {
-                logger.logError(
-                    "Failed to parse Embrace config from config json file.",
-                    ex
-                )
+            Systrace.traceSynchronous("deserialize-sdk-config") {
+                try {
+                    configs = serializer.fromJson(sdkConfigs, SdkLocalConfig::class.java)
+                } catch (ex: Exception) {
+                    logger.logError(
+                        "Failed to parse Embrace config from config json file.",
+                        ex
+                    )
+                }
             }
         }
-        if (configs == null) {
-            configs = SdkLocalConfig()
-        }
-        return LocalConfig(appId, ndkEnabled, configs)
+        return LocalConfig(appId, ndkEnabled, configs ?: SdkLocalConfig())
     }
 }

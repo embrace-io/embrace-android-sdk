@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.injection
 
 import android.preference.PreferenceManager

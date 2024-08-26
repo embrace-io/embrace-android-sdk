@@ -29,7 +29,6 @@ public class PushNotificationCaptureService(
         private const val RESERVED_MESSAGE_TYPE = "message_type"
         private const val RESERVED_COLLAPSE_KEY = "collapse_key"
         private const val RESERVED_GOOGLE_MESSAGE_ID = "google.message_id"
-        private const val RESERVED_GOOGLE_DELIVERED_PRIORITY = "google.delivered_priority"
 
         /**
          * This is so to have compatibility with com.google.firebase.messaging.RemoteMessage.
@@ -67,7 +66,6 @@ public class PushNotificationCaptureService(
      * @param topic    the notification topic (if a user subscribed to one), or null
      * @param id       A unique ID identifying the message
      * @param notificationPriority the priority of the message (as resolved on the device)
-     * @param messageDeliveredPriority the priority of the message (as resolved on the server)
      * @param type the notification type
      */
     public fun logPushNotification(
@@ -76,7 +74,6 @@ public class PushNotificationCaptureService(
         topic: String?,
         id: String?,
         notificationPriority: Int?,
-        messageDeliveredPriority: Int,
         type: PushNotificationBreadcrumb.NotificationType
     ) {
         pushNotificationDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
@@ -103,9 +100,6 @@ public class PushNotificationCaptureService(
                     // ** //
                     topic = getString(RESERVED_FROM),
                     id = getString(RESERVED_GOOGLE_MESSAGE_ID),
-                    messageDeliveredPriority = getMessagePriority(
-                        getString(RESERVED_GOOGLE_DELIVERED_PRIORITY)
-                    ),
                     type = determineNotificationType(this)
                 )
             }

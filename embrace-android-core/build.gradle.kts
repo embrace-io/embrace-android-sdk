@@ -35,12 +35,11 @@ dependencies {
     compileOnly(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)
 
-
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
     testImplementation(libs.lifecycle.common.java8)
-    implementation(libs.lifecycle.process)
+    testImplementation(libs.kotlin.reflect)
 }

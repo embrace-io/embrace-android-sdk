@@ -35,6 +35,7 @@ public class FakeCoreModule(
 
     public companion object {
 
+        @Suppress("DEPRECATION")
         private val fakePackageInfo = PackageInfo().apply {
             packageName = "com.fake.package"
             versionName = "2.5.1"

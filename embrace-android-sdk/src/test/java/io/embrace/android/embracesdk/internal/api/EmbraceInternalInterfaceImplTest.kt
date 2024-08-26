@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.api
 
 import android.net.Uri

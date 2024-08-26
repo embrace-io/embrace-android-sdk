@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.capture.session
 
 import android.content.Context

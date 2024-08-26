@@ -190,6 +190,7 @@ public final class Embrace implements SdkApi {
 
     @Override
     @Nullable
+    @Deprecated
     public Map<String, String> getSessionProperties() {
         return impl.getSessionProperties();
     }

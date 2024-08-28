@@ -25,6 +25,8 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
         object NativeThreadBlockageSample : Performance("native_thread_blockage_sample")
 
         object ThermalState : Performance("thermal_state")
+
+        object ActivityOpen : Performance("activity_open")
     }
 
     /**

@@ -18,7 +18,7 @@ The Embrace Android SDK builds on top of [OpenTelemetry](https://opentelemetry.i
 Android apps, enabling full-stack observability of your system by connecting mobile and backend telemetry in a seamless way.
 
 Telemetry recorded through this SDK can be consumed on the Embrace platform for Embrace customers, but it can also be used by those who are
-not Embrace customers to export collected data directly to any OTel Collector, either one that they host or is hosted by another vendors. 
+not Embrace customers to export collected data directly to any OTel Collector, either one that they host or is hosted by other vendors. 
 In effect, this SDK is an alternative to [opentelemetry-android](https://github.com/open-telemetry/opentelemetry-android) or using the [OpenTelemetry Java SDK](https://github.com/open-telemetry/opentelemetry-java) directly for Android apps that want to leverage the 
 OpenTelemetry ecosystem for observability, but also want all the advanced telemetry capture that Embrace is known for like ANR thread sampling, native crash
 capture, and so forth.
@@ -26,7 +26,6 @@ capture, and so forth.
 Currently, only Spans and Logs are supported, but other signals will be added in the future.
 
 # Getting Started
-## Non-Embrace Users
 ### Android Project Setup
 1. In your app's Gradle file, add a dependency to the latest version of the Embrace Swazzler Gradle plugin: `io.embrace:embrace-swazzler:<version>`.
    - This plugin is responsible for configuring your app at build time to auto-capture telemetry. This includes:
@@ -82,15 +81,12 @@ For details about the features the Embrace Android SDK supports, refer to our [f
 ## Existing Embrace Customers Upgrading from 5.x
 - For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/master/UPGRADING.md).
 
-# Contributing
-- See [CONTRIBUTING.md](CONTRIBUTING.md).
+## Support 
 
-# Support
-- Create a [bug report](https://github.com/embrace-io/embrace-android-sdk/issues/new?assignees=&labels=&projects=&template=bug_report.md&title=) or enter a [feature request](https://github.com/embrace-io/embrace-android-sdk/issues/new?assignees=&labels=&projects=&template=feature_request.md&title=) for the Embrace team to triage.
-- Join our [Community Slack](https://embraceio-community.slack.com/)
+We appreciate any feedback you have on the SDK and the APIs that is provides. To contribute to this project please see our [Contribution Guidelines](https://github.com/embrace-io/embrace-android-sdk/blob/master/CONTRIBUTING.md) there you'll be able to submit a feature request, create a bug report, or submit a pull request.
 
-# License
+For urgent matters (such as outages) or issues concerning the Embrace service or UI reach out in our [Community Slack](https://join.slack.com/t/embraceio-community/shared_invite/zt-ywr4jhzp-DLROX0ndN9a0soHMf6Ksow) for direct, faster assistance.
+
+Embrace Android SDK is published under the Apache-2.0 license. 
 
 [![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-orange)](./LICENSE.txt)
-
-Embrace Android SDK is published under the Apache-2.0 license.

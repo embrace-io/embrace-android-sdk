@@ -129,13 +129,13 @@ internal fun IntegrationTestRule.Harness.getLastSentBackgroundActivity(): Envelo
  * are guaranteed not to change in the start/end message.
  */
 internal fun IntegrationTestRule.Harness.recordSession(
-    simulateAppStartup: Boolean = false,
+    simulateActivityCreation: Boolean = false,
     action: () -> Unit = {}
 ): Envelope<SessionPayload>? {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
     val activityController =
-        if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
+        if (simulateActivityCreation) Robolectric.buildActivity(Activity::class.java) else null
 
     activityController?.create()
     activityController?.start()

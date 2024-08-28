@@ -25,7 +25,7 @@ class ActivityLifecycleTracker(
     /**
      * List of listeners that subscribe to activity events.
      */
-    val listeners: CopyOnWriteArrayList<ActivityLifecycleListener> =
+    val activityListeners: CopyOnWriteArrayList<ActivityLifecycleListener> =
         CopyOnWriteArrayList<ActivityLifecycleListener>()
 
     /**
@@ -64,7 +64,7 @@ class ActivityLifecycleTracker(
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         updateStateWithActivity(activity)
-        stream(listeners) { listener: ActivityLifecycleListener ->
+        stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
@@ -76,7 +76,7 @@ class ActivityLifecycleTracker(
 
     override fun onActivityStarted(activity: Activity) {
         updateStateWithActivity(activity)
-        stream(listeners) { listener: ActivityLifecycleListener ->
+        stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityStarted(activity)
             } catch (ex: Exception) {
@@ -103,7 +103,7 @@ class ActivityLifecycleTracker(
 
     override fun onActivityPaused(activity: Activity) {}
     override fun onActivityStopped(activity: Activity) {
-        stream(listeners) { listener: ActivityLifecycleListener ->
+        stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityStopped(activity)
             } catch (ex: Exception) {
@@ -118,8 +118,8 @@ class ActivityLifecycleTracker(
     override fun onActivityDestroyed(activity: Activity) {}
 
     override fun addListener(listener: ActivityLifecycleListener) {
-        if (!listeners.contains(listener)) {
-            listeners.addIfAbsent(listener)
+        if (!activityListeners.contains(listener)) {
+            activityListeners.addIfAbsent(listener)
         }
     }
 
@@ -133,7 +133,7 @@ class ActivityLifecycleTracker(
         try {
             logger.logDebug("Shutting down ActivityLifecycleTracker")
             application.unregisterActivityLifecycleCallbacks(this)
-            listeners.clear()
+            activityListeners.clear()
             startupListeners.clear()
         } catch (ex: Exception) {
             logger.logWarning("Error when closing ActivityLifecycleTracker", ex)

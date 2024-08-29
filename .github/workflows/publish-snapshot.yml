@@ -17,7 +17,7 @@ jobs:
     name: Update Baseline Profile
     uses: ./.github/workflows/generate_baseline_profile.yml
     secrets:
-      token: ${{ secrets.CD_GITHUB_TOKEN }}
+      token: ${{ secrets.GH_ANDROID_SDK_TOKEN }} # NOTE: read android-sdk-benchmark
   sdk:
     name: Publish SDK to Maven Internal
     needs: [functional, baseline-profile]
@@ -26,7 +26,6 @@ jobs:
     strategy:
       matrix:
         jdk-version: ["17"]
-        ndk-version: ["21.4.7075529"]
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
@@ -40,7 +39,7 @@ jobs:
             ~/.gradle/wrapper
             ~/.m2/repository
             ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml', 'gradle.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle
 
@@ -50,15 +49,8 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.jdk-version }}
 
-      - name: Setup NDK ${{ matrix.ndk-version }}
-        run: |
-          export ANDROID_ROOT=/usr/local/lib/android
-          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
-
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@v4
 
       # Build the entire project, run the tests, and run all static analysis
       - name: Gradle Build
@@ -81,12 +73,12 @@ jobs:
           repository: embrace-io/embrace-swazzler3
           ref: master
           path: ./embrace-swazzler3
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Swazzler Release
         run: |
           cd ./embrace-swazzler3
-          ./gradlew clean publishPluginMavenPublicationToSnapshotRepository --stacktrace          
+          ./gradlew clean publishPluginMavenPublicationToSnapshotRepository --stacktrace
 
       - name: Cleanup Gradle Cache
         # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies

@@ -1,0 +1,61 @@
+name: "Run subset of swazzler-tests"
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  ANDROID_BUILD_TOOLS_HOME: "/usr/local/lib/android/sdk/build-tools/32.0.0"
+
+jobs:
+  runSwazzlerTests:
+    name: "Run Gradle Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      # make sure version in gradle.properties matches the version of embrace-swazzler3 version
+      - name: "Publish SDK locally"
+        run: ./gradlew publishToMavenLocal --no-daemon
+
+      - name: Checkout Swazzler-Test
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/swazzler-test
+          ref: master
+          path: ./swazzler-test
+          submodules: recursive
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }}
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/embrace-swazzler3
+          ref: master
+          path: ./swazzler-test/embrace-swazzler3
+          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
+
+      - name: "Publish Swazzler locally"
+        run: |
+          cd ./swazzler-test/embrace-swazzler3
+          ./gradlew publishToMavenLocal --no-daemon
+
+      - name: "Run Gradle Tests"
+        run: |
+          echo "Running Gradle tests"
+          cd ./swazzler-test
+          ./gradlew :functional-tests:swazzlerTests --tests "io.embrace.android.gradle.swazzler.tests.MinimumSurvivalTests" --stacktrace
+
+      - name: "Test Results"
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: swazzler-test-results
+          path: ./swazzler-test/functional-tests/build/reports/tests/swazzlerTests/

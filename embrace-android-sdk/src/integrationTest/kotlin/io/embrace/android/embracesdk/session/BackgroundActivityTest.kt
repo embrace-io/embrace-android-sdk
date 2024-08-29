@@ -4,10 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.opentelemetry.embSessionNumber
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule

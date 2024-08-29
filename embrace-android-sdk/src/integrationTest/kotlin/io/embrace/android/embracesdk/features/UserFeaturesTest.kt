@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.prefs.PreferencesService
+import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -60,11 +60,12 @@ internal class UserFeaturesTest {
         userName: String?,
         email: String?
     ) {
-        assertEquals(userId, checkNotNull(metadata).userId)
+        val ref = checkNotNull(metadata)
+        assertEquals(userId, ref.userId)
         assertEquals(userId, preferencesService.userIdentifier)
-        assertEquals(userName, metadata.username)
+        assertEquals(userName, ref.username)
         assertEquals(userName, preferencesService.username)
-        assertEquals(email, metadata.email)
+        assertEquals(email, ref.email)
         assertEquals(email, preferencesService.userEmailAddress)
     }
 }

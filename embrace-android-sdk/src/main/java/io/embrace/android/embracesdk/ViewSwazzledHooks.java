@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
-import io.embrace.android.embracesdk.payload.TapBreadcrumb.TapBreadcrumbType;
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb.TapBreadcrumbType;
 import kotlin.Pair;
 
 /**

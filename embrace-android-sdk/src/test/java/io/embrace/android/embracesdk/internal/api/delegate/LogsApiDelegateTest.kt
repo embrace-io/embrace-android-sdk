@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EventType
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
@@ -10,8 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
-import io.embrace.android.embracesdk.fakes.injection.FakeCustomerLogModule
+import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.payload.EventType
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -29,10 +29,10 @@ internal class LogsApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         val moduleInitBootstrapper = fakeModuleInitBootstrapper(
-            customerLogModuleSupplier = { _, _, _, _, _, _, _ -> FakeCustomerLogModule(logService = logService) }
+            logModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule(logService = logService) }
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
-        orchestrator = moduleInitBootstrapper.sessionModule.sessionOrchestrator as FakeSessionOrchestrator
+        orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)

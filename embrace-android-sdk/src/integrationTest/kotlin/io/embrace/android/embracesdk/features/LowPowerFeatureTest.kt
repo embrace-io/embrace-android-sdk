@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -29,7 +29,7 @@ internal class LowPowerFeatureTest {
 
                 // look inside embrace internals as there isn't a good way to trigger this E2E
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.lowPowerDataSource.dataSource)
+                    checkNotNull(bootstrapper.featureModule.lowPowerDataSource.dataSource)
                 dataSource.onPowerSaveModeChanged(true)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.onPowerSaveModeChanged(false)

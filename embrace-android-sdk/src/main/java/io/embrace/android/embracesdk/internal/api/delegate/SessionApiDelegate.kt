@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.SessionApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class SessionApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -10,16 +10,21 @@ internal class SessionApiDelegate(
 ) : SessionApi {
 
     private val sessionPropertiesService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.sessionModule.sessionPropertiesService
+        bootstrapper.essentialServiceModule.sessionPropertiesService
     }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
 
     /**
      * Adds a property to the current session.
      */
     override fun addSessionProperty(key: String, value: String, permanent: Boolean): Boolean {
         if (sdkCallChecker.check("add_session_property")) {
-            return sessionPropertiesService?.addProperty(key, value, permanent) ?: false
+            return sessionPropertiesService?.addProperty(key, value, permanent)
+                .apply {
+                    sessionOrchestrator?.reportBackgroundActivityStateChange()
+                } ?: false
         }
         return false
     }
@@ -29,11 +34,14 @@ internal class SessionApiDelegate(
      */
     override fun removeSessionProperty(key: String): Boolean {
         if (sdkCallChecker.check("remove_session_property")) {
-            return sessionPropertiesService?.removeProperty(key) ?: false
+            return sessionPropertiesService?.removeProperty(key).apply {
+                sessionOrchestrator?.reportBackgroundActivityStateChange()
+            } ?: false
         }
         return false
     }
 
+    @Deprecated("This method will be removed in a future release.")
     override fun getSessionProperties(): Map<String, String>? {
         if (sdkCallChecker.check("get_session_properties")) {
             return sessionPropertiesService?.getProperties()

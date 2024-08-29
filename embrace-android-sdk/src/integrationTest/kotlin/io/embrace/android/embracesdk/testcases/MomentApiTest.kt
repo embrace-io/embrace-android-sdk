@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EventType
+import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentMoments
 import org.junit.Assert.assertEquals

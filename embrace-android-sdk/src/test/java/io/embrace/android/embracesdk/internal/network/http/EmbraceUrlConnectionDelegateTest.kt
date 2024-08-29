@@ -1,22 +1,19 @@
 package io.embrace.android.embracesdk.internal.network.http
 
-import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.config.behavior.NetworkBehavior.Companion.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
-import io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.Companion.TRACEPARENT_HEADER_NAME
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.fakes.FakeInternalNetworkApi
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl.Companion.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride.PATH_OVERRIDE
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_ENCODING
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_LENGTH
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -30,34 +27,15 @@ import javax.net.ssl.HttpsURLConnection
 
 internal class EmbraceUrlConnectionDelegateTest {
 
-    private lateinit var mockEmbrace: Embrace
-    private lateinit var mockInternalInterface: EmbraceInternalInterface
-    private lateinit var capturedEmbraceNetworkRequest: CapturingSlot<EmbraceNetworkRequest>
-    private var fakeTimeMs = REQUEST_TIME
-    private var isSDKStarted = false
-    private var shouldCaptureNetworkBody = true
-    private var isNetworkSpanForwardingEnabled = false
     private var traceIdHeaderName = CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+
+    private lateinit var internalApi: FakeInternalNetworkApi
 
     @Before
     fun setup() {
-        mockEmbrace = mockk(relaxed = true)
-        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
-        every { mockEmbrace.isStarted } answers { isSDKStarted }
-        every { mockEmbrace.traceIdHeader } answers { traceIdHeaderName }
-        fakeTimeMs = REQUEST_TIME
-        isSDKStarted = true
-        shouldCaptureNetworkBody = true
-        isNetworkSpanForwardingEnabled = false
-        traceIdHeaderName = CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
-        capturedEmbraceNetworkRequest = slot()
-        mockInternalInterface = mockk(relaxed = true)
-        every { mockInternalInterface.shouldCaptureNetworkBody(any(), any()) } answers { shouldCaptureNetworkBody }
-        every {
-            mockInternalInterface.recordNetworkRequest(capture(capturedEmbraceNetworkRequest))
-        } answers { }
-        every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
-        every { mockInternalInterface.getSdkCurrentTime() } answers { fakeTimeMs }
+        internalApi = FakeInternalNetworkApi()
+        instance = internalApi
+        internalApi.internalInterface.captureNetworkBody = true
     }
 
     @Test
@@ -272,23 +250,23 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     @Test
     fun `completed requests are not recorded if the SDK has not started`() {
-        isSDKStarted = false
+        internalApi.started = false
         executeRequest(
             connection = createMockGzipConnection(),
             wrappedIoStream = true
         )
-        verify(exactly = 0) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertTrue(internalApi.internalInterface.networkRequests.isEmpty())
     }
 
     @Test
     fun `incomplete requests are not recorded if the SDK has not started`() {
-        isSDKStarted = false
+        internalApi.started = false
         executeRequest(
             connection = createMockGzipConnection(),
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        verify(exactly = 0) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertTrue(internalApi.internalInterface.networkRequests.isEmpty())
     }
 
     @Test
@@ -297,7 +275,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockUncompressedConnection(),
             wrappedIoStream = true
         )
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
@@ -306,7 +284,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockUncompressedConnection(),
             wrappedIoStream = false
         )
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
@@ -316,15 +294,15 @@ internal class EmbraceUrlConnectionDelegateTest {
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
     fun `disconnect called with previously not connected connection results in error request capture and no response access`() {
         val mockConnection = createMockUncompressedConnection()
-        EmbraceUrlConnectionDelegate(mockConnection, true, mockEmbrace).disconnect()
+        EmbraceUrlConnectionDelegate(mockConnection, true).disconnect()
         verifyIncompleteRequestLogged(mockConnection)
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
@@ -334,7 +312,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
         verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
@@ -344,7 +322,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
         verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
@@ -354,7 +332,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
         verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
-        verify(exactly = 1) { mockInternalInterface.recordNetworkRequest(any()) }
+        assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
     @Test
@@ -363,7 +341,8 @@ internal class EmbraceUrlConnectionDelegateTest {
         every { (mockConnection.outputStream as CountingOutputStream).requestBody } answers { throw NullPointerException() }
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
-        with(capturedEmbraceNetworkRequest.captured) {
+        val request = retrieveNetworkRequest()
+        with(request) {
             assertEquals(HTTP_OK, responseCode)
             assertNull(errorType)
         }
@@ -375,8 +354,9 @@ internal class EmbraceUrlConnectionDelegateTest {
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true
         )
-        assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
-        assertEquals(HTTP_OK, capturedEmbraceNetworkRequest.captured.responseCode)
+        val request = retrieveNetworkRequest()
+        assertNull(request.w3cTraceparent)
+        assertEquals(HTTP_OK, request.responseCode)
     }
 
     @Test
@@ -386,46 +366,51 @@ internal class EmbraceUrlConnectionDelegateTest {
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(IO_ERROR, capturedEmbraceNetworkRequest.captured.errorType)
-        assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        val request = retrieveNetworkRequest()
+        assertNull(request.responseCode)
+        assertEquals(IO_ERROR, request.errorType)
+        assertNull(request.w3cTraceparent)
     }
 
     @Test
     fun `check traceparents are forwarded if feature flag is on`() {
-        isNetworkSpanForwardingEnabled = true
+        internalApi.internalInterface.networkSpanForwardingEnabled = true
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true
         )
-        assertEquals(HTTP_OK, capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
+        val request = retrieveNetworkRequest()
+        assertEquals(HTTP_OK, request.responseCode)
+        assertEquals(TRACEPARENT, request.w3cTraceparent)
     }
 
     @Test
     fun `check traceparents are forwarded on errors if feature flag is on`() {
-        isNetworkSpanForwardingEnabled = true
+        internalApi.internalInterface.networkSpanForwardingEnabled = true
         executeRequest(
             connection = createMockConnectionWithTraceparent(),
             wrappedIoStream = true,
             exceptionOnInputStream = true
         )
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
-        assertEquals(IO_ERROR, capturedEmbraceNetworkRequest.captured.errorType)
+        val request = retrieveNetworkRequest()
+        assertNull(request.responseCode)
+        assertEquals(TRACEPARENT, request.w3cTraceparent)
+        assertEquals(IO_ERROR, request.errorType)
     }
 
     @Test
     fun `check traceIds are logged if a custom header name is specified`() {
         traceIdHeaderName = "my-trace-id-header"
+        internalApi.traceHeader = traceIdHeaderName
         executeRequest(
             connection = createMockGzipConnection(
-                extraRequestHeaders = mapOf(Pair("my-trace-id-header", listOf(customTraceId)))
+                extraRequestHeaders = mapOf(Pair(traceIdHeaderName, listOf(customTraceId)))
             ),
             wrappedIoStream = true
         )
-        assertEquals(HTTP_OK, capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(customTraceId, capturedEmbraceNetworkRequest.captured.traceId)
+        val request = retrieveNetworkRequest()
+        assertEquals(HTTP_OK, request.responseCode)
+        assertEquals(customTraceId, request.traceId)
     }
 
     private fun createMockConnectionWithPathOverride() = createMockGzipConnection(
@@ -519,7 +504,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         wrappedIoStream: Boolean = false,
         exceptionOnInputStream: Boolean = false
     ) {
-        val delegate = EmbraceUrlConnectionDelegate<HttpsURLConnection>(connection, wrappedIoStream, mockEmbrace)
+        val delegate = EmbraceUrlConnectionDelegate<HttpsURLConnection>(connection, wrappedIoStream, internalApi)
         with(delegate) {
             connect()
             setRequestProperty(requestHeaderName, requestHeaderValue)
@@ -555,28 +540,30 @@ internal class EmbraceUrlConnectionDelegateTest {
         networkDataCaptured: Boolean = false,
         responseBody: String? = null
     ) {
-        with(capturedEmbraceNetworkRequest) {
-            assertEquals(url, captured.url)
-            assertEquals(httpMethod, captured.httpMethod)
-            assertEquals(startTime, captured.startTime)
-            assertEquals(endTime, captured.endTime)
-            assertEquals(httpStatus, captured.responseCode)
-            assertEquals(requestSize?.toLong(), captured.bytesOut)
-            assertEquals(responseBodySize?.toLong(), captured.bytesIn)
-            assertEquals(errorType, captured.errorType)
-            assertEquals(errorMessage, captured.errorMessage)
-            assertEquals(traceId, captured.traceId)
-            assertEquals(w3cTraceparent, captured.w3cTraceparent)
+        val request = retrieveNetworkRequest()
+        with(request) {
+            assertEquals(url, url)
+            assertEquals(httpMethod, httpMethod)
+            assertEquals(startTime, startTime)
+            assertEquals(endTime, endTime)
+            assertEquals(httpStatus, responseCode)
+            assertEquals(requestSize?.toLong(), bytesOut)
+            assertEquals(responseBodySize?.toLong(), bytesIn)
+            assertEquals(errorType, errorType)
+            assertEquals(errorMessage, errorMessage)
+            assertEquals(traceId, traceId)
+            assertEquals(w3cTraceparent, w3cTraceparent)
             if (networkDataCaptured) {
                 validateNetworkCaptureData(responseBody)
             } else {
-                assertNull(captured.networkCaptureData)
+                assertNull(networkCaptureData)
             }
         }
     }
 
     private fun validateNetworkCaptureData(responseBody: String?) {
-        with(checkNotNull(capturedEmbraceNetworkRequest.captured.networkCaptureData)) {
+        val request = retrieveNetworkRequest()
+        with(checkNotNull(request.networkCaptureData)) {
             assertEquals(requestHeaderValue, checkNotNull(requestHeaders)[requestHeaderName])
             assertEquals(responseHeaderValue, checkNotNull(responseHeaders)[responseHeaderName])
             assertEquals(defaultQueryString, requestQueryParams)
@@ -601,9 +588,12 @@ internal class EmbraceUrlConnectionDelegateTest {
             verify(exactly = 0) { mockConnection.contentLength }
             verify(exactly = 0) { mockConnection.headerFields }
         }
-        assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
-        assertEquals(errorType, capturedEmbraceNetworkRequest.captured.errorType)
+        val request = retrieveNetworkRequest()
+        assertNull(request.responseCode)
+        assertEquals(errorType, request.errorType)
     }
+
+    private fun retrieveNetworkRequest() = internalApi.internalInterface.networkRequests.single()
 
     companion object {
         private fun String.toGzipByteArray(): ByteArray {

@@ -1,5 +1,5 @@
 plugins {
-    id("embrace-defaults")
+    id("embrace-prod-defaults")
 }
 
 description = "Embrace Android SDK: OkHttp3"
@@ -10,6 +10,8 @@ android {
 
 dependencies {
     compileOnly(libs.okhttp)
+    compileOnly(project(":embrace-android-core"))
     compileOnly(project(":embrace-android-sdk"))
+    testImplementation(project(":embrace-android-core"))
     testImplementation(project(":embrace-android-sdk"))
 }

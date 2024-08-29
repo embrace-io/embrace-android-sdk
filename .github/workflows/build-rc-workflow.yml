@@ -1,4 +1,4 @@
-name: Pre-Release - Create New Release Candidate
+name: Build Release Candidates
 
 env:
   SONATYPE_USERNAME: ${{ secrets.SONATYPE_TOKEN_USER }}
@@ -25,6 +25,9 @@ on:
         default: '0'
         required: true
 
+permissions:
+  contents: write
+
 jobs:
   release:
     timeout-minutes: 60
@@ -32,7 +35,6 @@ jobs:
     strategy:
       matrix:
         jdk-version: [ "17" ]
-        ndk-version: [ "21.4.7075529" ]
     steps:
       - name: Decode Keystore
         run: |
@@ -49,7 +51,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: release/${{ github.event.inputs.version_of_rc }}
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
 
       - uses: actions/cache@v4
         with:
@@ -58,7 +59,7 @@ jobs:
             ~/.gradle/wrapper
             ~/.m2/repository
             ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml', 'gradle.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle
 
@@ -68,19 +69,12 @@ jobs:
           distribution: 'adopt'
           java-version: ${{ matrix.jdk-version }}
 
-      - name: Setup NDK ${{ matrix.ndk-version }}
-        run: |
-          export ANDROID_ROOT=/usr/local/lib/android
-          export ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          export ANDROID_NDK_ROOT=${ANDROID_SDK_ROOT}/ndk-bundle
-          ln -sfn $ANDROID_SDK_ROOT/ndk/${{ matrix.ndk-version }} $ANDROID_NDK_ROOT
-
       - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v3
+        uses: gradle/actions/wrapper-validation@v4
 
       - name: Generate SDK RC - Publish and close Sonatype repository
         run: |
-          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+          ./gradlew clean publishReleasePublicationToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Archive Test Results
         if: ${{ always() }}
@@ -100,11 +94,11 @@ jobs:
         with:
           repository: embrace-io/embrace-swazzler3
           ref: release/${{ github.event.inputs.version_of_rc }}
-          token: ${{ secrets.CD_GITHUB_TOKEN }}
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Generate Swazzler RC - Publish and Close repository
         run: |
-          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --stacktrace
+          ./gradlew clean check publishToSonatype closeSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
 
       - name: Set version tag in Swazzler
         run: |

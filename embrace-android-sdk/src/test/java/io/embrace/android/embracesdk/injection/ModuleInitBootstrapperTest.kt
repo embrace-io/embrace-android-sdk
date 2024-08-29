@@ -6,12 +6,14 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.worker.WorkerName
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.worker.WorkerName
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -33,7 +35,8 @@ internal class ModuleInitBootstrapperTest {
     fun setup() {
         logger = EmbLoggerImpl()
         coreModule = FakeCoreModule(logger = logger)
-        moduleInitBootstrapper = ModuleInitBootstrapper(coreModuleSupplier = { _, _ -> coreModule }, logger = logger)
+        moduleInitBootstrapper =
+            ModuleInitBootstrapper(coreModuleSupplier = { _, _ -> coreModule }, logger = logger)
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
@@ -51,16 +54,16 @@ internal class ModuleInitBootstrapperTest {
                     sdkStartTimeMs = 0L,
                 )
             )
-            assertTrue(initModule is InitModuleImpl)
-            assertTrue(openTelemetryModule is OpenTelemetryModuleImpl)
-            assertTrue(workerThreadModule is WorkerThreadModuleImpl)
-            assertTrue(systemServiceModule is SystemServiceModuleImpl)
-            assertTrue(androidServicesModule is AndroidServicesModuleImpl)
-            assertTrue(storageModule is StorageModuleImpl)
+            assertNotNull(initModule)
+            assertNotNull(openTelemetryModule)
+            assertNotNull(workerThreadModule)
+            assertNotNull(systemServiceModule)
+            assertNotNull(androidServicesModule)
+            assertNotNull(storageModule)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
-            assertTrue(dataCaptureServiceModule is DataCaptureServiceModuleImpl)
-            assertTrue(deliveryModule is DeliveryModuleImpl)
-            assertTrue(payloadModule is PayloadModuleImpl)
+            assertNotNull(dataCaptureServiceModule)
+            assertNotNull(deliveryModule)
+            assertNotNull(payloadSourceModule)
         }
     }
 

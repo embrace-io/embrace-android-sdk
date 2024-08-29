@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -31,9 +31,9 @@ internal class NetworkStatusFeatureTest {
 
                 // look inside embrace internals as there isn't a good way to trigger this E2E
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.networkStatusDataSource.dataSource)
+                    checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
                 harness.overriddenClock.tick(tickTimeMs)
-                dataSource.networkStatusChange(NetworkStatus.WIFI, startTimeMs + tickTimeMs)
+                dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
             })
 
             val spans = message.findSpansOfType(EmbType.System.NetworkStatus)

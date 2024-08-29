@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.event.EmbraceEventService
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.MomentsApi
+import io.embrace.android.embracesdk.internal.event.STARTUP_EVENT_NAME
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
+import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
-import io.embrace.android.embracesdk.utils.PropertyUtils
 
 internal class MomentsApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -13,8 +13,10 @@ internal class MomentsApiDelegate(
 ) : MomentsApi {
 
     private val logger = bootstrapper.initModule.logger
-    private val eventService by embraceImplInject(sdkCallChecker) { bootstrapper.dataContainerModule.eventService }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val eventService by embraceImplInject(sdkCallChecker) { bootstrapper.momentsModule.eventService }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
 
     override fun startMoment(name: String) = startMoment(name, null)
     override fun startMoment(name: String, identifier: String?) = startMoment(name, identifier, null)
@@ -65,7 +67,7 @@ internal class MomentsApiDelegate(
     }
 
     override fun endAppStartup() {
-        endMoment(EmbraceEventService.STARTUP_EVENT_NAME, null, null)
+        endMoment(STARTUP_EVENT_NAME, null, null)
     }
 
     /**
@@ -74,6 +76,6 @@ internal class MomentsApiDelegate(
      * @param properties properties to include as part of the startup moment
      */
     override fun endAppStartup(properties: Map<String, Any?>) {
-        endMoment(EmbraceEventService.STARTUP_EVENT_NAME, null, properties)
+        endMoment(STARTUP_EVENT_NAME, null, properties)
     }
 }

@@ -4,18 +4,16 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,11 +31,6 @@ internal class ReactNativeInternalInterfaceTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE)
-    }
-
-    @Before
-    fun setup() {
-        ApkToolsConfig.IS_NETWORK_CAPTURE_DISABLED = false
     }
 
     @Test

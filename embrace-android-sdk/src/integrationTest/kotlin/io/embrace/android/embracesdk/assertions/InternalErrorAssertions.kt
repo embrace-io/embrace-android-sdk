@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.FakeDeliveryService
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.opentelemetry.semconv.incubating.ExceptionIncubatingAttributes
+import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.fail
 
 /**
@@ -14,7 +14,7 @@ internal fun assertInternalErrorLogged(
     exceptionClassName: String,
     errorMessage: String
 ) {
-    bootstrapper.customerLogModule.logOrchestrator.flush(false)
+    bootstrapper.logModule.logOrchestrator.flush(false)
     val deliveryService = bootstrapper.deliveryModule.deliveryService as FakeDeliveryService
     val logs = deliveryService.lastSentLogPayloads.mapNotNull { it.data.logs }
         .flatten()
@@ -27,8 +27,9 @@ internal fun assertInternalErrorLogged(
     }
 
     val matchingLogs = logs.filter { log ->
-        log.attributes?.findAttributeValue(ExceptionIncubatingAttributes.EXCEPTION_TYPE.key) == exceptionClassName &&
-            log.attributes.findAttributeValue(ExceptionIncubatingAttributes.EXCEPTION_MESSAGE.key) == errorMessage
+        val attrs = log.attributes
+        attrs?.findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE.key) == exceptionClassName &&
+                attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key) == errorMessage
     }
     if (matchingLogs.isEmpty()) {
         fail("No internal errors found matching the expected exception")

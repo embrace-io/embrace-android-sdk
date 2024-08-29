@@ -1,0 +1,16 @@
+{
+  "v": "1.0.0",
+  "f": 1,
+  "bi": "1234",
+  "bt": "debug",
+  "fl": "free",
+  "e": "prod",
+  "vu": false,
+  "vul": false,
+  "bv": "10",
+  "ou": false,
+  "oul": false,
+  "sdk": "{versionName}",
+  "sdc": "{versionCode}",
+  "rn": "fakeReactNativeBundleId"
+}

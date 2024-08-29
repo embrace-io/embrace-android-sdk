@@ -3,14 +3,15 @@ package io.embrace.android.embracesdk.fakes.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
-import io.embrace.android.embracesdk.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
-import io.embrace.android.embracesdk.injection.CoreModule
 import io.embrace.android.embracesdk.internal.BuildInfo
-import io.embrace.android.embracesdk.logging.EmbLogger
-import io.embrace.android.embracesdk.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.registry.ServiceRegistry
+import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
+import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockk
@@ -19,8 +20,8 @@ import org.robolectric.RuntimeEnvironment
 /**
  * If used in a Robolectric test, [application] and [context] will be fakes supplied by the Robolectric framework
  */
-internal class FakeCoreModule(
-    val logger: EmbLogger = EmbLoggerImpl(),
+public class FakeCoreModule(
+    private val logger: EmbLogger = EmbLoggerImpl(),
     override val application: Application =
         if (RuntimeEnvironment.getApplication() == null) mockApplication() else RuntimeEnvironment.getApplication(),
     override val context: Context =
@@ -29,21 +30,25 @@ internal class FakeCoreModule(
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
     override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName),
-    @Suppress("DEPRECATION")
-    override val packageInfo: PackageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo
 ) : CoreModule {
 
-    companion object {
+    public companion object {
 
         @Suppress("DEPRECATION")
-        fun getMockedContext(): Context {
-            val packageInfo = PackageInfo()
-            packageInfo.versionName = "1.0.0"
-            packageInfo.versionCode = 10
+        private val fakePackageInfo = PackageInfo().apply {
+            packageName = "com.fake.package"
+            versionName = "2.5.1"
+            versionCode = 99
+        }
 
+        @Suppress("DEPRECATION")
+        private val fakePackageVersionInfo = PackageVersionInfo(fakePackageInfo)
+
+        public fun getMockedContext(): Context {
             val mockContext = mockk<Context>(relaxed = true)
-            every { mockContext.packageName }.returns("package-info")
-            every { mockContext.packageManager.getPackageInfo("package-info", 0) }.returns(packageInfo)
+            every { mockContext.packageName }.returns(fakePackageVersionInfo.packageName)
+            every { mockContext.packageManager.getPackageInfo(fakePackageVersionInfo.packageName, 0) }.returns(fakePackageInfo)
             return mockContext
         }
     }

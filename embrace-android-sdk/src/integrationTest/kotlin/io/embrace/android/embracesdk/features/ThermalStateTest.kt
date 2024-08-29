@@ -4,14 +4,14 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -43,7 +43,7 @@ internal class ThermalStateFeatureTest {
                 startTimeMs = harness.overriddenClock.now()
 
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.thermalStateDataSource?.dataSource)
+                    checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
             })
 
@@ -68,7 +68,7 @@ internal class ThermalStateFeatureTest {
                 startTimeMs = harness.overriddenClock.now()
 
                 val dataSource =
-                    checkNotNull(bootstrapper.dataSourceModule.thermalStateDataSource?.dataSource)
+                    checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_MODERATE)

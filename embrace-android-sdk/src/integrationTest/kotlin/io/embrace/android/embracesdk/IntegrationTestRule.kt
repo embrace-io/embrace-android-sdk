@@ -1,18 +1,13 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk
 
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
-import io.embrace.android.embracesdk.config.ConfigService
-import io.embrace.android.embracesdk.config.local.LocalConfig
-import io.embrace.android.embracesdk.config.local.NetworkLocalConfig
-import io.embrace.android.embracesdk.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.config.remote.DataRemoteConfig
-import io.embrace.android.embracesdk.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
@@ -21,19 +16,27 @@ import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.injection.AndroidServicesModule
-import io.embrace.android.embracesdk.injection.AndroidServicesModuleImpl
-import io.embrace.android.embracesdk.injection.AnrModule
-import io.embrace.android.embracesdk.injection.CoreModule
-import io.embrace.android.embracesdk.injection.DeliveryModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.injection.EssentialServiceModuleImpl
-import io.embrace.android.embracesdk.injection.InitModule
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.AnrModule
+import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.DeliveryModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
+import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.worker.WorkerThreadModule
-import io.embrace.android.embracesdk.worker.WorkerThreadModuleImpl
 import org.junit.rules.ExternalResource
 
 /**
@@ -151,7 +154,7 @@ internal class IntegrationTestRule(
         val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
             logger = overriddenInitModule.logger
         ),
-        val overriddenWorkerThreadModule: WorkerThreadModule = WorkerThreadModuleImpl(overriddenInitModule),
+        val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(overriddenInitModule),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
             sdkModeBehavior = fakeSdkModeBehavior(
@@ -174,7 +177,7 @@ internal class IntegrationTestRule(
                 }
             )
         ),
-        val overriddenAndroidServicesModule: AndroidServicesModule = AndroidServicesModuleImpl(
+        val overriddenAndroidServicesModule: AndroidServicesModule = createAndroidServicesModule(
             initModule = overriddenInitModule,
             coreModule = overriddenCoreModule,
             workerThreadModule = overriddenWorkerThreadModule

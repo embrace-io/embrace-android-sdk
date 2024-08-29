@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.UserApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class UserApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -10,7 +10,6 @@ internal class UserApiDelegate(
 ) : UserApi {
 
     private val userService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.userService }
-    private val ndkService by embraceImplInject(sdkCallChecker) { bootstrapper.nativeModule.ndkService }
 
     /**
      * Sets the user ID. This would typically be some form of unique identifier such as a UUID or
@@ -21,8 +20,6 @@ internal class UserApiDelegate(
     override fun setUserIdentifier(userId: String?) {
         if (sdkCallChecker.check("set_user_identifier")) {
             userService?.setUserIdentifier(userId)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -32,7 +29,6 @@ internal class UserApiDelegate(
     override fun clearUserIdentifier() {
         if (sdkCallChecker.check("clear_user_identifier")) {
             userService?.clearUserIdentifier()
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -44,8 +40,6 @@ internal class UserApiDelegate(
     override fun setUserEmail(email: String?) {
         if (sdkCallChecker.check("set_user_email")) {
             userService?.setUserEmail(email)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -55,8 +49,6 @@ internal class UserApiDelegate(
     override fun clearUserEmail() {
         if (sdkCallChecker.check("clear_user_email")) {
             userService?.clearUserEmail()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -66,8 +58,6 @@ internal class UserApiDelegate(
     override fun setUserAsPayer() {
         if (sdkCallChecker.check("set_user_as_payer")) {
             userService?.setUserAsPayer()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -78,8 +68,6 @@ internal class UserApiDelegate(
     override fun clearUserAsPayer() {
         if (sdkCallChecker.check("clear_user_as_payer")) {
             userService?.clearUserAsPayer()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -91,8 +79,6 @@ internal class UserApiDelegate(
     override fun addUserPersona(persona: String) {
         if (sdkCallChecker.check("add_user_persona")) {
             userService?.addUserPersona(persona)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -104,8 +90,6 @@ internal class UserApiDelegate(
     override fun clearUserPersona(persona: String) {
         if (sdkCallChecker.check("clear_user_persona")) {
             userService?.clearUserPersona(persona)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -115,8 +99,6 @@ internal class UserApiDelegate(
     override fun clearAllUserPersonas() {
         if (sdkCallChecker.check("clear_user_personas")) {
             userService?.clearAllUserPersonas()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -128,8 +110,6 @@ internal class UserApiDelegate(
     override fun setUsername(username: String?) {
         if (sdkCallChecker.check("set_username")) {
             userService?.setUsername(username)
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 
@@ -139,8 +119,6 @@ internal class UserApiDelegate(
     override fun clearUsername() {
         if (sdkCallChecker.check("clear_username")) {
             userService?.clearUsername()
-            // Update user info in NDK service
-            ndkService?.onUserInfoUpdate()
         }
     }
 }

@@ -1,10 +1,13 @@
 include(
+    ":embrace-android-api",
     ":embrace-android-sdk",
     ":embrace-android-core",
     ":embrace-android-features",
+    ":embrace-android-payload",
     ":embrace-android-okhttp3",
     ":embrace-android-fcm",
     ":embrace-android-compose",
     ":embrace-lint",
-    ":embrace-test-common"
+    ":embrace-test-common",
+    ":embrace-test-fakes"
 )

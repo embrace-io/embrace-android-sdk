@@ -1,8 +1,13 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.spans.TracingApi
 
-internal interface SdkApi :
+/**
+ * @suppress
+ */
+@InternalApi
+public interface SdkApi :
     LogsApi,
     MomentsApi,
     NetworkRequestApi,

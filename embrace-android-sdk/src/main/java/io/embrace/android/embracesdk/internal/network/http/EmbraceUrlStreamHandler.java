@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
-import static io.embrace.android.embracesdk.config.behavior.NetworkSpanForwardingBehavior.TRACEPARENT_HEADER_NAME;
+import static io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
 
 import androidx.annotation.NonNull;
 
@@ -10,8 +10,6 @@ import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-
-import io.embrace.android.embracesdk.Embrace;
 
 /**
  * Custom implementation of URLStreamHandler that wraps a base URLStreamHandler and provides a context for executing
@@ -23,7 +21,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     protected static final String MSG_ERROR_OPEN_CONNECTION =
         "An exception was thrown while attempting to open a connection";
 
-    protected final Embrace embrace;
+    protected final InternalNetworkApi internalNetworkApi;
 
     protected final URLStreamHandler handler;
 
@@ -46,12 +44,12 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
      * Given the base URLStreamHandler that will be wrapped, constructs the instance.
      */
     public EmbraceUrlStreamHandler(@NonNull URLStreamHandler handler) {
-        this(handler, Embrace.getInstance());
+        this(handler, InternalNetworkApiImplKt.getInstance());
     }
 
-    EmbraceUrlStreamHandler(@NonNull URLStreamHandler handler, @NonNull Embrace embrace) {
+    EmbraceUrlStreamHandler(@NonNull URLStreamHandler handler, @NonNull InternalNetworkApi internalNetworkApi) {
         this.handler = handler;
-        this.embrace = embrace;
+        this.internalNetworkApi = internalNetworkApi;
         try {
             this.methodOpenConnection1 = getMethodOpenConnection(URL.class);
             this.methodOpenConnection2 = getMethodOpenConnection(URL.class, Proxy.class);
@@ -113,9 +111,9 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     }
 
     protected void injectTraceparent(@NonNull URLConnection connection) {
-        boolean networkSpanForwardingEnabled = embrace.getInternalInterface().isNetworkSpanForwardingEnabled();
+        boolean networkSpanForwardingEnabled = internalNetworkApi.isNetworkSpanForwardingEnabled();
         if (networkSpanForwardingEnabled && !connection.getRequestProperties().containsKey(TRACEPARENT_HEADER_NAME)) {
-            connection.addRequestProperty(TRACEPARENT_HEADER_NAME, embrace.generateW3cTraceparent());
+            connection.addRequestProperty(TRACEPARENT_HEADER_NAME, internalNetworkApi.generateW3cTraceparent());
         }
     }
 
@@ -125,7 +123,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
      * @return
      */
     private URLConnection newUrlConnection(URLConnection connection) {
-        if (embrace.isStarted()) {
+        if (internalNetworkApi.isStarted()) {
             return wrapUrlConnection(connection);
         } else {
             return connection;

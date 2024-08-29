@@ -4,17 +4,18 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.arch.schema.EmbType
-import io.embrace.android.embracesdk.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.config.remote.WebViewVitals
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.payload.WebVital
-import io.embrace.android.embracesdk.payload.WebVitalType
+import io.embrace.android.embracesdk.internal.payload.WebVital
+import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -54,7 +55,7 @@ internal class WebviewFeatureTest {
             val attrs = checkNotNull(event.attributes)
             assertEquals("emb-webview-info", event.name)
             assertEquals("myWebView", attrs.findAttributeValue("emb.webview_info.tag"))
-            assertEquals("https://embrace.io/", attrs.findAttributeValue("emb.webview_info.url"))
+            assertEquals("https://embrace.io/", attrs.findAttributeValue(URL_FULL.key))
 
             val webVitalsAttr = checkNotNull(attrs.findAttributeValue("emb.webview_info.web_vitals"))
             val type = Types.newParameterizedType(List::class.java, WebVital::class.java)

@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import java.util.regex.Pattern
 
 internal class SdkStateApiDelegate(
@@ -62,13 +62,14 @@ internal class SdkStateApiDelegate(
         return true
     }
 
-    override fun getDeviceId(): String = when {
-        sdkCallChecker.check("get_device_id") ->
-            preferencesService?.deviceIdentifier
-                ?: ""
-
-        else -> ""
-    }
+    override val deviceId: String
+        get() {
+            return if (sdkCallChecker.check("get_device_id")) {
+                preferencesService?.deviceIdentifier ?: ""
+            } else {
+                ""
+            }
+        }
 
     override val currentSessionId: String?
         get() {
@@ -84,15 +85,18 @@ internal class SdkStateApiDelegate(
             return null
         }
 
-    override fun getLastRunEndState(): Embrace.LastRunEndState = if (isStarted && crashVerifier != null) {
-        if (crashVerifier?.didLastRunCrash() == true) {
-            Embrace.LastRunEndState.CRASH
-        } else {
-            Embrace.LastRunEndState.CLEAN_EXIT
+    override val lastRunEndState: Embrace.LastRunEndState
+        get() {
+            return if (isStarted && crashVerifier != null) {
+                if (crashVerifier?.didLastRunCrash() == true) {
+                    Embrace.LastRunEndState.CRASH
+                } else {
+                    Embrace.LastRunEndState.CLEAN_EXIT
+                }
+            } else {
+                Embrace.LastRunEndState.INVALID
+            }
         }
-    } else {
-        Embrace.LastRunEndState.INVALID
-    }
 
     companion object {
         private val appIdPattern: Pattern = Pattern.compile("^[A-Za-z0-9]{5}$")

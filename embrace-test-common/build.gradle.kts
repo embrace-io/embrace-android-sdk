@@ -1,9 +1,7 @@
 plugins {
-    id("java-library")
-    id("kotlin")
+    id("embrace-test-defaults")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+android {
+    namespace = "io.embrace.android.embracesdk.test.common"
 }

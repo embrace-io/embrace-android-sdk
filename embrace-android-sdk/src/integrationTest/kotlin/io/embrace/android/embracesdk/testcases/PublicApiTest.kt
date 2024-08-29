@@ -5,9 +5,10 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
+import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.ApkToolsConfig
-import io.embrace.android.embracesdk.internal.IdGeneratorTest.Companion.validPattern
+import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,7 +16,6 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,15 +27,20 @@ import org.robolectric.annotation.Config
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class PublicApiTest {
+
+    companion object {
+        val validPattern = Regex("^00-" + "[0-9a-fA-F]{32}" + "-" + "[0-9a-fA-F]{16}" + "-01$")
+    }
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
-    }
-
-    @Before
-    fun before() {
-        ApkToolsConfig.IS_SDK_DISABLED = false
+        IntegrationTestRule.Harness(startImmediately = false).apply {
+            overriddenConfigService.networkSpanForwardingBehavior =
+                fakeNetworkSpanForwardingBehavior {
+                    NetworkSpanForwardingRemoteConfig(100f)
+                }
+        }
     }
 
     @Test
@@ -56,15 +61,6 @@ internal class PublicApiTest {
             startSdk(context = harness.overriddenCoreModule.context)
             assertEquals(AppFramework.NATIVE, harness.appFramework)
             assertTrue(embrace.isStarted)
-        }
-    }
-
-    @Test
-    fun `SDK disabled via the binary cannot start`() {
-        with(testRule) {
-            ApkToolsConfig.IS_SDK_DISABLED = true
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertFalse(embrace.isStarted)
         }
     }
 
@@ -108,7 +104,10 @@ internal class PublicApiTest {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
             harness.recordSession {
-                assertEquals(embrace.currentSessionId, harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId())
+                assertEquals(
+                    embrace.currentSessionId,
+                    harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId()
+                )
                 assertNotNull(embrace.currentSessionId)
             }
         }
@@ -129,10 +128,20 @@ internal class PublicApiTest {
     }
 
     @Test
+    fun `getLastRunEndState() behave as expected`() {
+        with(testRule) {
+            assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
+            startSdk()
+            assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState)
+        }
+    }
+
+    @Test
     fun `ensure all generated W3C traceparent conforms to the expected format`() {
         with(testRule) {
+            startSdk()
             repeat(100) {
-                assertTrue(validPattern.matches(embrace.generateW3cTraceparent()))
+                assertTrue(validPattern.matches(checkNotNull(embrace.generateW3cTraceparent())))
             }
         }
     }

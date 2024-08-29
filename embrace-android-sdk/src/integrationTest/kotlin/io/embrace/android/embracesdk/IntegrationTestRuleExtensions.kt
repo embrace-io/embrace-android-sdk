@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.capture.internal.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.payload.EventMessage
 import org.json.JSONObject
 import org.junit.Assert
 import org.robolectric.Robolectric
@@ -17,22 +17,6 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
-
-/**
- * Returns a list of [EventMessage] logs that were sent by the SDK since startup. If [expectedSize] is specified, it will wait up to
- * 1 second to validate the number of sent log message equal that size. If a second passes that the size requirement is not met, a
- * [TimeoutException] will be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right
- * away.
- */
-internal fun IntegrationTestRule.Harness.getSentLogMessages(expectedSize: Int? = null): List<EventMessage> {
-    val logs = overriddenDeliveryModule.deliveryService.lastSentLogs
-    return when (expectedSize) {
-        null -> logs
-        else -> returnIfConditionMet({ logs }) {
-            logs.size == expectedSize
-        }
-    }
-}
 
 /**
  * Wait for there to at least be [minSize] number of log envelopes to be sent and return all the ones sent. Times out at 1 second.
@@ -85,15 +69,6 @@ internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = nul
 }
 
 /**
- * Returns the last [EventMessage] log that was sent by the SDK. If [expectedSize] is specified, it will wait up to 1 second to validate
- * the number of sent log message equal that size. If a second passes that the size requirement is not met, a [TimeoutException] will
- * be thrown. If [expectedSize] is null or not specified, the correct sent log messages will be returned right away.
- */
-internal fun IntegrationTestRule.Harness.getLastSentLogMessage(expectedSize: Int? = null): EventMessage {
-    return getSentLogMessages(expectedSize).last()
-}
-
-/**
  * Returns a list of session that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentSessions(): List<Envelope<SessionPayload>> {
@@ -101,7 +76,7 @@ internal fun IntegrationTestRule.Harness.getSentSessions(): List<Envelope<Sessio
 }
 
 /**
- * Returns a list of [BackgroundActivityMessage] that were sent by the SDK since startup.
+ * Returns a list of background activity payloads that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
     return overriddenDeliveryModule.deliveryService.getSentBackgroundActivities()
@@ -115,10 +90,24 @@ internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<Session
 }
 
 /**
+ * Returns the last background activity that was saved by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
+    return overriddenDeliveryModule.deliveryService.getLastSavedBackgroundActivity()
+}
+
+/**
  * Returns the last session that was sent by the SDK.
  */
 internal fun IntegrationTestRule.Harness.getLastSentSession(): Envelope<SessionPayload>? {
     return getSentSessions().lastOrNull()
+}
+
+/**
+ * Returns the last background session that was sent by the SDK.
+ */
+internal fun IntegrationTestRule.Harness.getLastSentBackgroundActivity(): Envelope<SessionPayload>? {
+    return getSentBackgroundActivities().lastOrNull()
 }
 
 /**

@@ -221,7 +221,7 @@ static bool configure_reporting(JNIEnv *env) {
         return false;
     }
 
-    jclass anr_class = emb_jni_find_class(env, "io/embrace/android/embracesdk/anr/sigquit/SigquitDataSource");
+    jclass anr_class = emb_jni_find_class(env, "io/embrace/android/embracesdk/internal/anr/sigquit/SigquitDataSourceImpl");
     if (anr_class == NULL) {
         EMB_LOGERROR("Reporting config failed, could not find SigquitDataSource class");
         return false;
@@ -245,6 +245,8 @@ int emb_install_google_anr_handler(JNIEnv *env, jobject anr_service, jint _googl
             anr_service_obj = (*env)->NewGlobalRef(env, anr_service);
             res = install_signal_handler();
             installed = true;
+        } else {
+            res = EMB_ANR_INSTALL_REPORTING_CONFIGURATION_FAIL;
         }
     }
     pthread_mutex_unlock(&emb_anr_install_lock);

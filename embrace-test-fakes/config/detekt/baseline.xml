@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues></ManuallySuppressedIssues>
+  <CurrentIssues>
+    <ID>LongParameterList:SpanAssertions.kt$( span: Span?, expectedStartTimeMs: Long, expectedEndTimeMs: Long?, expectedParentId: String, expectedTraceId: String? = null, expectedStatus: Span.Status = Span.Status.UNSET, expectedErrorCode: ErrorCode? = null, expectedCustomAttributes: Map&lt;String, String&gt; = emptyMap(), expectedEvents: List&lt;SpanEvent&gt; = emptyList(), private: Boolean = false, key: Boolean = false, )</ID>
+    <ID>TooGenericExceptionThrown:FakeSharedPreferences.kt$FakeSharedPreferences$throw Exception("test exception")</ID>
+  </CurrentIssues>
+</SmellBaseline>

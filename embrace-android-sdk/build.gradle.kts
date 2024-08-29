@@ -1,12 +1,8 @@
 import io.embrace.gradle.Versions
-import org.jetbrains.dokka.base.DokkaBase
-import org.jetbrains.dokka.base.DokkaBaseConfiguration
-import org.jetbrains.dokka.gradle.DokkaTask
 
 plugins {
-    id("embrace-defaults")
-    id("org.jetbrains.kotlin.kapt")
-    id("org.jetbrains.dokka")
+    id("embrace-prod-defaults")
+    id("com.google.devtools.ksp")
 }
 
 description = "Embrace Android SDK: Core"
@@ -48,6 +44,8 @@ dependencies {
     kover(project(":embrace-android-okhttp3"))
     kover(project(":embrace-android-core"))
     kover(project(":embrace-android-features"))
+    kover(project(":embrace-android-payload"))
+    kover(project(":embrace-android-api"))
 }
 
 kover {
@@ -65,8 +63,10 @@ kover {
 }
 
 dependencies {
+    api(project(":embrace-android-api"))
     implementation(project(":embrace-android-core"))
     implementation(project(":embrace-android-features"))
+    implementation(project(":embrace-android-payload"))
 
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)
@@ -74,7 +74,7 @@ dependencies {
 
     // json
     implementation(libs.moshi)
-    kapt(libs.moshi.kotlin.codegen)
+    ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)
@@ -86,37 +86,10 @@ dependencies {
     // Please, don"t update it until we update compileSdk.
     implementation(libs.profileinstaller)
 
+    testImplementation(project(":embrace-test-fakes"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
-
-    dokkaHtmlPlugin(libs.dokka.convert)
-    dokkaHtmlPlugin(libs.dokka.docs)
-}
-
-tasks.withType<DokkaTask>().configureEach {
-    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
-        outputDirectory.set(rootProject.file("docs"))
-        dokkaSourceSets {
-            configureEach {
-                perPackageOption {
-                    skipDeprecated.set(false)
-                    reportUndocumented.set(true) // Emit warnings about not documented members
-                    includeNonPublic.set(false)
-
-                    // Suppress files in the internal package
-                    perPackageOption {
-                        matchingRegex.set(".*.internal.*?")
-                        suppress.set(true)
-                    }
-                }
-            }
-            named("main") {
-                noAndroidSdkLink.set(false)
-            }
-        }
-        suppressObviousFunctions.set(true)
-    }
 }
 
 project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }

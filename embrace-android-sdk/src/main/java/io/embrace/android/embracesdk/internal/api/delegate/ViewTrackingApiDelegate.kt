@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.app.Application
-import io.embrace.android.embracesdk.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.payload.TapBreadcrumb
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 
 internal class ViewTrackingApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
@@ -14,12 +14,14 @@ internal class ViewTrackingApiDelegate(
 
     private val logger = bootstrapper.initModule.logger
     private val sdkClock = bootstrapper.initModule.clock
-    private val breadcrumbService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataCaptureServiceModule.breadcrumbService
+    private val featureModule by embraceImplInject(sdkCallChecker) {
+        bootstrapper.featureModule
     }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) { bootstrapper.sessionModule.sessionOrchestrator }
+    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
+        bootstrapper.sessionOrchestrationModule.sessionOrchestrator
+    }
     private val appFramework by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.configService.appFramework
+        bootstrapper.configModule.configService.appFramework
     }
 
     /**
@@ -49,21 +51,21 @@ internal class ViewTrackingApiDelegate(
 
     override fun startView(name: String): Boolean {
         if (sdkCallChecker.check("start_view")) {
-            return breadcrumbService?.startView(name) ?: false
+            return featureModule?.viewDataSource?.dataSource?.startView(name) ?: false
         }
         return false
     }
 
     override fun endView(name: String): Boolean {
         if (sdkCallChecker.check("end_view")) {
-            return breadcrumbService?.endView(name) ?: false
+            return featureModule?.viewDataSource?.dataSource?.endView(name) ?: false
         }
         return false
     }
 
     override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
         if (sdkCallChecker.check("log_tap")) {
-            breadcrumbService?.logTap(point, elementName, sdkClock.now(), type)
+            featureModule?.tapDataSource?.dataSource?.logTap(point, elementName, sdkClock.now(), type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }
@@ -77,7 +79,7 @@ internal class ViewTrackingApiDelegate(
         output: String
     ) {
         if (sdkCallChecker.check("log_react_native_action")) {
-            breadcrumbService?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+            featureModule?.rnActionDataSource?.dataSource?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
         }
     }
 
@@ -88,7 +90,7 @@ internal class ViewTrackingApiDelegate(
         }
 
         if (sdkCallChecker.check("log RN view")) {
-            breadcrumbService?.logView(screen, sdkClock.now())
+            featureModule?.viewDataSource?.dataSource?.changeView(screen)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
     }

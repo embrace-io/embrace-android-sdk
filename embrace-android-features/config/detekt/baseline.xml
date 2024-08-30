@@ -9,7 +9,6 @@
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _reinstallSignalHandlers(): Boolean</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _testNativeCrash_C()</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _testNativeCrash_CPP()</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _uninstallSignals()</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _updateAppState(new_app_state: String?)</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _updateMetaData(new_device_meta_data: String?)</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _updateSessionId(new_session_id: String?)</ID>

@@ -65,12 +65,6 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
     }
 
     @Test
-    fun uninstallSignalsTest() {
-        val result = ndkDelegate._uninstallSignals()
-        assertEquals(Unit.javaClass, result.javaClass)
-    }
-
-    @Test
     fun reinstallSignalHandlersTest() {
         val result = ndkDelegate._reinstallSignalHandlers()
         assertEquals(false, result)

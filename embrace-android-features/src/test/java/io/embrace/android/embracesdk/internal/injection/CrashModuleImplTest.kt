@@ -28,7 +28,7 @@ internal class CrashModuleImplTest {
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             FakeAndroidServicesModule(),
-            nativeFeatureModule.ndkService::getUnityCrashId,
+            nativeFeatureModule.ndkService::unityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)
@@ -47,7 +47,7 @@ internal class CrashModuleImplTest {
                 )
             ),
             FakeAndroidServicesModule(),
-            nativeFeatureModule.ndkService::getUnityCrashId,
+            nativeFeatureModule.ndkService::unityCrashId,
         )
         assertNotNull(module.lastRunCrashVerifier)
         assertNotNull(module.crashDataSource)

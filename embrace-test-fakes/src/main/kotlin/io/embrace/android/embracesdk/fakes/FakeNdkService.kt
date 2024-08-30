@@ -24,9 +24,10 @@ public class FakeNdkService : NdkService {
         userUpdateCount++
     }
 
-    override fun getUnityCrashId(): String? {
-        return lastUnityCrashId
-    }
+    override val unityCrashId: String?
+        get() {
+            return lastUnityCrashId
+        }
 
     override fun getNativeCrash(): NativeCrashData? {
         val data = nativeCrashData
@@ -39,9 +40,10 @@ public class FakeNdkService : NdkService {
         return getNativeCrash()
     }
 
-    override fun getSymbolsForCurrentArch(): Map<String, String>? {
-        TODO("Not yet implemented")
-    }
+    override val symbolsForCurrentArch: Map<String, String>?
+        get() {
+            TODO("Not yet implemented")
+        }
 
     public fun hasNativeCrash(): Boolean = nativeCrashData != null
 

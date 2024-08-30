@@ -57,7 +57,7 @@ internal class NativeFeatureModuleImpl(
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 EmbraceNativeThreadSamplerService(
                     configService = configModule.configService,
-                    symbols = lazy { ndkService.getSymbolsForCurrentArch() },
+                    symbols = lazy { ndkService.symbolsForCurrentArch },
                     logger = initModule.logger,
                     scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,

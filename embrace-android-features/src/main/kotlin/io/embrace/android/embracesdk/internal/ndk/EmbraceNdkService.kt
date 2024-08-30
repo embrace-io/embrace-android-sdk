@@ -58,13 +58,11 @@ internal class EmbraceNdkService(
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
     private val backgroundWorker: BackgroundWorker,
-    highPriorityWorker: BackgroundWorker,
-    /**
-     * The device architecture.
-     */
+    private val highPriorityWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer
 ) : NdkService, ProcessStateListener {
+
     /**
      * Synchronization lock.
      */
@@ -74,18 +72,17 @@ internal class EmbraceNdkService(
      * Whether or not the NDK has been installed.
      */
     private var isInstalled = false
-    private var unityCrashId: String? = null
-    private val symbolsForArch: Lazy<Map<String, String>?>
+    override var unityCrashId: String? = null
+    override val symbolsForCurrentArch by lazy {
+        val nativeSymbols = getNativeSymbols()
+        if (nativeSymbols != null) {
+            val arch = deviceArchitecture.architecture
+            return@lazy nativeSymbols.getSymbolByArchitecture(arch)
+        }
+        null
+    }
 
     init {
-        this.symbolsForArch = lazy {
-            val nativeSymbols = getNativeSymbols()
-            if (nativeSymbols != null) {
-                val arch = deviceArchitecture.architecture
-                return@lazy nativeSymbols.getSymbolByArchitecture(arch)
-            }
-            null
-        }
         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
             // Workaround to load native symbols synchronously so the main thread won't be blocked by the background
             // thread doing this when the native ANR monitoring tries to load this
@@ -98,6 +95,20 @@ internal class EmbraceNdkService(
             } else {
                 initializeService(processStateService, configService.appFramework)
             }
+        }
+    }
+
+    private fun initializeService(
+        processStateService: ProcessStateService,
+        appFramework: AppFramework
+    ) {
+        Systrace.traceSynchronous("init-ndk-service") {
+            processStateService.addListener(this)
+            if (appFramework == AppFramework.UNITY) {
+                unityCrashId = Uuid.getEmbUuid()
+            }
+            startNativeCrashMonitoring()
+            cleanOldCrashFiles()
         }
     }
 
@@ -121,10 +132,6 @@ internal class EmbraceNdkService(
                 updateDeviceMetaData()
             }
         }
-    }
-
-    override fun getUnityCrashId(): String? {
-        return unityCrashId
     }
 
     override fun onBackground(timestamp: Long) {
@@ -287,7 +294,7 @@ internal class EmbraceNdkService(
 
     /**
      * Check if a native crash file exists. Also checks for the symbols file in the build dir.
-     * If so, attempt to send an event message and call [SessionService] to update the crash
+     * If so, attempt to send an event message and update the crash
      * report id in the appropriate pending session.
      *
      * @return Crash data, if a native crash file was found
@@ -322,7 +329,7 @@ internal class EmbraceNdkService(
 
                 // Retrieve deobfuscated symbols
                 if (nativeCrash != null) {
-                    val symbols = getSymbolsForCurrentArch()
+                    val symbols = symbolsForCurrentArch
                     if (symbols == null) {
                         logger.logError("Failed to find symbols for native crash - stacktraces will not symbolicate correctly.")
                     } else {
@@ -340,24 +347,6 @@ internal class EmbraceNdkService(
             }
         }
         return nativeCrash
-    }
-
-    override fun getSymbolsForCurrentArch(): Map<String, String>? {
-        return symbolsForArch.value
-    }
-
-    private fun initializeService(
-        processStateService: ProcessStateService,
-        appFramework: AppFramework
-    ) {
-        Systrace.traceSynchronous("init-ndk-service") {
-            processStateService.addListener(this)
-            if (appFramework == AppFramework.UNITY) {
-                unityCrashId = Uuid.getEmbUuid()
-            }
-            startNativeCrashMonitoring()
-            cleanOldCrashFiles()
-        }
     }
 
     @SuppressLint("DiscouragedApi")
@@ -558,11 +547,6 @@ internal class EmbraceNdkService(
                 if (includeSessionProperties) sessionPropertiesService.getProperties() else null
             )
         )
-    }
-
-    @Suppress("UnusedPrivateMember")
-    private fun uninstallSignals() {
-        delegate._uninstallSignals()
     }
 
     internal companion object {

@@ -141,21 +141,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateAppState
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1uninstallSignals(JNIEnv *env,
-                                                                          jobject thiz) {
-    if (!__emb_env) {
-        EMB_LOGINFO("can't uninstall, not installed.");
-        return;
-    }
-    EMB_LOGINFO("Uninstalling C++ signal handler.");
-    emb_remove_cpp_sig_handler();
-
-    EMB_LOGINFO("Uninstalling C signal handlers.");
-    emb_remove_c_sig_handlers();
-    __emb_env = NULL;
-}
-
-JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1testNativeCrash_1C(JNIEnv *env,
                                                                             jobject thiz) {
     abort();

@@ -257,7 +257,7 @@ internal class EmbraceNdkServiceTest {
         )
 
         verify(exactly = 1) { delegate._updateMetaData(newDeviceMetaData) }
-        assertEquals(embraceNdkService.getUnityCrashId(), Uuid.getEmbUuid())
+        assertEquals(embraceNdkService.unityCrashId, Uuid.getEmbUuid())
     }
 
     @Test
@@ -311,7 +311,7 @@ internal class EmbraceNdkServiceTest {
         configService.appFramework = AppFramework.UNITY
         every { Uuid.getEmbUuid() } returns "unityId"
         initializeService()
-        val uuid = embraceNdkService.getUnityCrashId()
+        val uuid = embraceNdkService.unityCrashId
         assertEquals(uuid, "unityId")
     }
 
@@ -329,7 +329,7 @@ internal class EmbraceNdkServiceTest {
                 "{}",
                 "null",
                 "foreground",
-                embraceNdkService.getUnityCrashId(),
+                embraceNdkService.unityCrashId,
                 Build.VERSION.SDK_INT,
                 deviceArchitecture.is32BitDevice,
                 false
@@ -437,7 +437,7 @@ internal class EmbraceNdkServiceTest {
         } returns nativeSymbolsJson.encodeToByteArray()
         initializeService()
 
-        val result = embraceNdkService.getSymbolsForCurrentArch()
+        val result = embraceNdkService.symbolsForCurrentArch
         assert(result != null)
         assert(result?.containsKey("symbol1") ?: false)
         assert(result?.getOrDefault("symbol1", "") == "test")
@@ -490,7 +490,7 @@ internal class EmbraceNdkServiceTest {
 
         configService.appFramework = AppFramework.UNITY
         initializeService()
-        every { embraceNdkService.getSymbolsForCurrentArch() } returns mockk()
+        every { embraceNdkService.symbolsForCurrentArch } returns mockk()
 
         val result = embraceNdkService.getAndSendNativeCrash()
         assertNotNull(result)

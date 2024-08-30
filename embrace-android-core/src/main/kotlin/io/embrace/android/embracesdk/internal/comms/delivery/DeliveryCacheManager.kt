@@ -15,7 +15,7 @@ public interface DeliveryCacheManager {
     public fun saveCrash(crash: EventMessage)
     public fun loadCrash(): EventMessage?
     public fun deleteCrash()
-    public fun savePayload(action: SerializationAction): String
+    public fun savePayload(action: SerializationAction, sync: Boolean = false): String
     public fun loadPayloadAsAction(name: String): SerializationAction
     public fun deletePayload(name: String)
     public fun savePendingApiCallQueue(queue: PendingApiCallQueue, sync: Boolean = false)

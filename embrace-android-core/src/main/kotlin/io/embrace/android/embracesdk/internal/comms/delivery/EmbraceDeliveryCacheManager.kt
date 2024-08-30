@@ -116,10 +116,15 @@ internal class EmbraceDeliveryCacheManager(
         cacheService.deleteFile(CRASH_FILE_NAME)
     }
 
-    override fun savePayload(action: SerializationAction): String {
+    override fun savePayload(action: SerializationAction, sync: Boolean): String {
         val name = "payload_" + Uuid.getEmbUuid()
-        backgroundWorker.submit {
+        val runnable = {
             cacheService.cachePayload(name, action)
+        }
+        if (sync) {
+            runnable()
+        } else {
+            backgroundWorker.submit(runnable = runnable)
         }
         return name
     }

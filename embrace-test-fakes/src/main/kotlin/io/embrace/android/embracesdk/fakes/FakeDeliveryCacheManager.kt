@@ -66,7 +66,7 @@ public class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun savePayload(action: SerializationAction): String {
+    override fun savePayload(action: SerializationAction, sync: Boolean): String {
         TODO("Not yet implemented")
     }
 

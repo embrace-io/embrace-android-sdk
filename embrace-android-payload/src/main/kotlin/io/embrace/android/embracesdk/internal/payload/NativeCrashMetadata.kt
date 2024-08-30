@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class NativeCrashMetadata(
+public data class NativeCrashMetadata(
     @Json(name = "a") public val appInfo: AppInfo,
     @Json(name = "d") public val deviceInfo: DeviceInfo,
     @Json(name = "u") public val userInfo: UserInfo,

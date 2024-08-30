@@ -14,7 +14,6 @@ internal class SessionPropertiesServiceImplTest {
 
     private lateinit var service: SessionPropertiesService
     private lateinit var fakeCurrentSessionSpan: FakeCurrentSessionSpan
-    private lateinit var propState: Map<String, String>
 
     @Before
     fun setUp() {
@@ -25,20 +24,16 @@ internal class SessionPropertiesServiceImplTest {
             FakeEmbLogger(),
             fakeCurrentSessionSpan
         )
-        propState = emptyMap()
-        service.addChangeListener { propState = it }
     }
 
     @Test
     fun testAddSessionProp() {
         service.addProperty("key", "value", false)
         val expected = mapOf("key" to "value")
-        assertEquals(expected, propState)
         assertEquals(expected, service.getProperties())
         assertEquals(1, fakeCurrentSessionSpan.attributeCount())
 
         service.removeProperty("key")
-        assertEquals(emptyMap<String, String>(), propState)
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())
     }
 

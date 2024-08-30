@@ -9,7 +9,6 @@ public class NativeCrashData(
     @Json(name = "sid") public val sessionId: String,
     @Json(name = "ts") public val timestamp: Long,
     @Json(name = "state") public val appState: String?,
-    @Json(name = "meta") public val metadata: NativeCrashMetadata?,
     @Json(name = "ue") public val unwindError: Int?,
     @Json(name = "crash") public val crash: String?,
     @Json(name = "symbols") public var symbols: Map<String?, String?>?,

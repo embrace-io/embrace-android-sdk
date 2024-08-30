@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
-import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
@@ -18,7 +17,6 @@ internal class EmbraceUserService(
      */
     private val userInfoReference = AtomicReference(DEFAULT_USER)
     private val userInfoProvider: Provider<UserInfo> = { preferencesService.getStoredUserInfo() }
-    private val listeners = CopyOnWriteArraySet<() -> Unit>()
 
     override fun loadUserInfoFromDisk(): UserInfo? {
         return try {
@@ -141,10 +139,6 @@ internal class EmbraceUserService(
         clearAllUserPersonas()
     }
 
-    override fun addUserInfoListener(listener: () -> Unit) {
-        listeners.add(listener)
-    }
-
     private fun userInfo(): UserInfo {
         if (userInfoReference.get() === DEFAULT_USER) {
             synchronized(userInfoReference) {
@@ -161,7 +155,6 @@ internal class EmbraceUserService(
         synchronized(userInfoReference) {
             userInfoReference.set(newUserInfo)
         }
-        listeners.forEach { it() }
     }
 
     private companion object {

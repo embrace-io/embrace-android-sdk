@@ -13,7 +13,6 @@ public class NdkDelegateImpl : NdkServiceDelegate.NdkDelegate {
         dev_logging: Boolean
     )
 
-    external override fun _updateMetaData(new_device_meta_data: String?)
     external override fun _updateSessionId(new_session_id: String?)
     external override fun _updateAppState(new_app_state: String?)
     external override fun _testNativeCrash_C()

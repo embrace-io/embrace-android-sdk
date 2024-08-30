@@ -21,7 +21,4 @@ public class FakeSessionPropertiesService : SessionPropertiesService {
     override fun prepareForNewSession() {
         props.clear()
     }
-
-    override fun addChangeListener(listener: (Map<String, String>) -> Unit) {
-    }
 }

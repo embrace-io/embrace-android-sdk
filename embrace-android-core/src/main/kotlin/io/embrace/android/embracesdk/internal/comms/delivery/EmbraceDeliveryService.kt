@@ -38,7 +38,6 @@ internal class EmbraceDeliveryService(
 
     private companion object {
         private const val SEND_SESSION_TIMEOUT = 1L
-        private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
 
     /**
@@ -88,22 +87,10 @@ internal class EmbraceDeliveryService(
         apiService.saveLogEnvelope(logEnvelope)
     }
 
-    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
-        runCatching {
-            cacheManager.saveCrash(crash)
-            val future = apiService.sendCrash(crash)
-
-            if (processTerminating) {
-                future.get(CRASH_TIMEOUT, TimeUnit.SECONDS)
-            }
-        }
-    }
-
     override fun sendCachedSessions(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         sessionIdTracker: SessionIdTracker
     ) {
-        sendCachedCrash()
         backgroundWorker.submit(TaskPriority.HIGH) {
             val allSessions = cacheManager.getAllCachedSessionIds().filter {
                 it.sessionId != sessionIdTracker.getActiveSessionId()
@@ -133,13 +120,6 @@ internal class EmbraceDeliveryService(
                 }
             }
             sendCachedSessions(allSessions)
-        }
-    }
-
-    private fun sendCachedCrash() {
-        val crash = cacheManager.loadCrash()
-        crash?.let {
-            apiService.sendCrash(it)
         }
     }
 

@@ -35,11 +35,4 @@ public interface SessionPropertiesService {
      * Apply state change required when a new session starts
      */
     public fun prepareForNewSession()
-
-    /**
-     * Adds a listener that will be invoked with a Map representation of all the session properties
-     * whenever the session properties change. The listener is also invoked when it is first added
-     * with the current state.
-     */
-    public fun addChangeListener(listener: (Map<String, String>) -> Unit)
 }

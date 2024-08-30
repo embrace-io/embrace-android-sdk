@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.comms.api
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
@@ -26,7 +25,6 @@ internal class EmbraceApiService(
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
-    private val cacheManager: DeliveryCacheManager,
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
     appId: String,
@@ -131,10 +129,6 @@ internal class EmbraceApiService(
 
     override fun sendEvent(eventMessage: EventMessage) {
         post(eventMessage, mapper::eventMessageRequest)
-    }
-
-    override fun sendCrash(crash: EventMessage): Future<*> {
-        return post(crash, mapper::eventMessageRequest) { cacheManager.deleteCrash() }
     }
 
     override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {

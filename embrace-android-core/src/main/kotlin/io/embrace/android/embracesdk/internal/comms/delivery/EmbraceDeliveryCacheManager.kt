@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
@@ -22,10 +21,6 @@ internal class EmbraceDeliveryCacheManager(
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
-        /**
-         * File name to cache JVM crash information
-         */
-        private const val CRASH_FILE_NAME = "crash.json"
 
         /**
          * File name for pending api calls
@@ -102,18 +97,6 @@ internal class EmbraceDeliveryCacheManager(
         }
 
         return cachedSessions.values.toList()
-    }
-
-    override fun saveCrash(crash: EventMessage) {
-        cacheService.cacheObject(CRASH_FILE_NAME, crash, EventMessage::class.java)
-    }
-
-    override fun loadCrash(): EventMessage? {
-        return cacheService.loadObject(CRASH_FILE_NAME, EventMessage::class.java)
-    }
-
-    override fun deleteCrash() {
-        cacheService.deleteFile(CRASH_FILE_NAME)
     }
 
     override fun savePayload(action: SerializationAction): String {

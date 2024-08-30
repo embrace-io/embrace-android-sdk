@@ -13,7 +13,6 @@ internal class NdkServiceDelegate {
             dev_logging: Boolean
         )
 
-        fun _updateMetaData(new_device_meta_data: String?)
         fun _updateSessionId(new_session_id: String?)
         fun _updateAppState(new_app_state: String?)
         fun _testNativeCrash_C()

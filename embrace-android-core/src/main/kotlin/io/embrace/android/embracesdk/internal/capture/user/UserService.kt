@@ -90,6 +90,4 @@ public interface UserService {
      * Removes the user's username.
      */
     public fun clearUsername()
-
-    public fun addUserInfoListener(listener: () -> Unit)
 }

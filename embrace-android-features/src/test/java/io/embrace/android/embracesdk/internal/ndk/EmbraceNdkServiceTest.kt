@@ -29,8 +29,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -47,7 +45,6 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -90,7 +87,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
     private val deviceArchitecture = FakeDeviceArchitecture()
-    private val serializer = EmbraceSerializer()
 
     @Before
     fun setup() {
@@ -141,13 +137,8 @@ internal class EmbraceNdkServiceTest {
             EmbraceNdkService(
                 context,
                 storageManager,
-                metadataService,
                 activityService,
                 configService,
-                deliveryService,
-                userService,
-                preferencesService,
-                sessionPropertiesService,
                 sharedObjectLoader,
                 logger,
                 repository,
@@ -195,32 +186,6 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test onSessionPropertiesUpdate where _updateMetaData was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.onSessionPropertiesUpdate(sessionPropertiesService.getProperties())
-        verify(exactly = 0) { delegate._updateMetaData(any()) }
-    }
-
-    @Test
-    fun `test onSessionPropertiesUpdate where _updateMetaData was executed and isInstalled true`() {
-        enableNdk(true)
-
-        initializeService()
-        embraceNdkService.onSessionPropertiesUpdate(sessionPropertiesService.getProperties())
-        val newDeviceMetaData =
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-
-        val expected = serializer.toJson(newDeviceMetaData)
-        verify { delegate._updateMetaData(expected) }
-    }
-
-    @Test
     fun `test initialization with unity id and ndk enabled runs installSignals and updateDeviceMetaData`() {
         val unityId = "unityId"
         every { Uuid.getEmbUuid() } returns unityId
@@ -245,17 +210,6 @@ internal class EmbraceNdkServiceTest {
                 false
             )
         }
-
-        val newDeviceMetaData = serializer.toJson(
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-        )
-
-        verify(exactly = 1) { delegate._updateMetaData(newDeviceMetaData) }
         assertEquals(embraceNdkService.unityCrashId, Uuid.getEmbUuid())
     }
 
@@ -282,7 +236,6 @@ internal class EmbraceNdkServiceTest {
                 deviceArchitecture.is32BitDevice,
                 false
             )
-            delegate._updateMetaData(any())
         }
     }
 
@@ -316,33 +269,6 @@ internal class EmbraceNdkServiceTest {
                 false
             )
         }
-        verify(exactly = 0) { delegate._updateMetaData(any()) }
-    }
-
-    @Test
-    fun `test onUserInfoUpdate where _updateMetaData was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.onUserInfoUpdate()
-        verify(exactly = 0) { delegate._updateMetaData(any()) }
-    }
-
-    @Test
-    fun `test onUserInfoUpdate where _updateMetaData was executed and isInstalled true`() {
-        enableNdk(true)
-
-        initializeService()
-        embraceNdkService.onUserInfoUpdate()
-        val newDeviceMetaData =
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-
-        val expected = serializer.toJson(newDeviceMetaData)
-        verify { delegate._updateMetaData(expected) }
     }
 
     @Test
@@ -360,27 +286,6 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         embraceNdkService.onForeground(true, 100)
         verify(exactly = 0) { delegate._updateAppState("foreground") }
-    }
-
-    @Test
-    fun `test checkForNativeCrash does nothing if there are no matchingFiles`() {
-        every { repository.sortNativeCrashes(false) } returns listOf()
-        initializeService()
-        val result = embraceNdkService.getAndSendNativeCrash()
-        assertNull(result)
-        verify { repository.sortNativeCrashes(false) }
-        verify(exactly = 0) { delegate._getCrashReport(any()) }
-        verify(exactly = 0) { repository.errorFileForCrash(any()) }
-        verify(exactly = 0) { repository.mapFileForCrash(any()) }
-        verify(exactly = 0) {
-            repository.deleteFiles(
-                any(),
-                any(),
-                any(),
-                any() as NativeCrashData
-            )
-        }
-        assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
     @Test
@@ -416,17 +321,17 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test checkForNativeCrash catches an exception if _getCrashReport returns an empty string`() {
+    fun `test checkForNativeCrash returns null`() {
         val crashFile = File.createTempFile("test", "test")
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
         every { delegate._getCrashReport(any()) } returns ""
         initializeService()
-        val crashData = embraceNdkService.getAndSendNativeCrash()
+        val crashData = embraceNdkService.getNativeCrash()
         assertNull(crashData)
     }
 
     @Test
-    fun `test checkForNativeCrash catches an exception if _getCrashReport returns invalid json syntax`() {
+    fun `test checkForNativeCrash returns null if file is invalid json syntax`() {
         val crashFile = File.createTempFile("test", "test")
         every { Uuid.getEmbUuid() } returns "unityId"
         enableNdk(true)
@@ -441,7 +346,7 @@ internal class EmbraceNdkServiceTest {
         every { delegate._getCrashReport(any()) } returns json
 
         initializeService()
-        val crashData = embraceNdkService.getAndSendNativeCrash()
+        val crashData = embraceNdkService.getNativeCrash()
         assertNull(crashData)
     }
 
@@ -464,40 +369,8 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         every { embraceNdkService.symbolsForCurrentArch } returns mockk()
 
-        val result = embraceNdkService.getAndSendNativeCrash()
+        val result = embraceNdkService.getNativeCrash()
         assertNotNull(result)
-
-        verify { embraceNdkService["getNativeCrashErrors"](any() as NativeCrashData, errorFile) }
-        verify(exactly = 1) { repository.sortNativeCrashes(false) }
-        verify(exactly = 1) { delegate._getCrashReport(any()) }
-        verify(exactly = 1) { repository.errorFileForCrash(crashFile) }
-        verify(exactly = 1) { repository.mapFileForCrash(crashFile) }
-    }
-
-    @Test
-    fun `test checkForNativeCrash when there is no native crash does not execute crash files logic`() {
-        every { repository.sortNativeCrashes(false) } returns listOf()
-
-        configService.appFramework = AppFramework.UNITY
-        initializeService()
-
-        val result = embraceNdkService.getAndSendNativeCrash()
-        assertNull(result)
-
-        verify(exactly = 1) { repository.sortNativeCrashes(false) }
-        verify(exactly = 0) { delegate._getCrashReport(any()) }
-        verify(exactly = 0) { repository.errorFileForCrash(any()) }
-        verify(exactly = 0) { repository.mapFileForCrash(any()) }
-        assertTrue(deliveryService.sentMoments.isEmpty())
-        verify(exactly = 0) {
-            repository.deleteFiles(
-                any() as File,
-                any() as File,
-                any() as File,
-                any() as NativeCrashData
-            )
-        }
-        assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
     @Test

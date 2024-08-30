@@ -12,10 +12,13 @@ internal class SessionPropertiesServiceImpl(
     writer: SessionSpanWriter
 ) : SessionPropertiesService {
 
-    private var listener: ((Map<String, String>) -> Unit)? = null
     private val props = EmbraceSessionProperties(preferencesService, configService, logger, writer)
 
-    override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
+    override fun addProperty(
+        originalKey: String,
+        originalValue: String,
+        permanent: Boolean
+    ): Boolean {
         if (!isValidKey(originalKey)) {
             return false
         }
@@ -26,11 +29,7 @@ internal class SessionPropertiesServiceImpl(
         }
         val sanitizedValue = enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
 
-        val added = props.add(sanitizedKey, sanitizedValue, permanent)
-        if (added) {
-            listener?.invoke(props.get())
-        }
-        return added
+        return props.add(sanitizedKey, sanitizedValue, permanent)
     }
 
     override fun removeProperty(originalKey: String): Boolean {
@@ -39,21 +38,13 @@ internal class SessionPropertiesServiceImpl(
         }
         val sanitizedKey = enforceLength(originalKey, SESSION_PROPERTY_KEY_LIMIT)
 
-        val removed = props.remove(sanitizedKey)
-        if (removed) {
-            listener?.invoke(props.get())
-        }
-        return removed
+        return props.remove(sanitizedKey)
     }
 
     override fun getProperties(): Map<String, String> = props.get()
 
     override fun prepareForNewSession() {
         props.prepareForNewSession()
-    }
-
-    override fun addChangeListener(listener: (Map<String, String>) -> Unit) {
-        this.listener = listener
     }
 
     private fun isValidKey(key: String?): Boolean = !key.isNullOrEmpty()

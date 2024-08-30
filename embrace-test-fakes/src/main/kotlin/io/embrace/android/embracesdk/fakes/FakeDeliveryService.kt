@@ -63,11 +63,6 @@ public open class FakeDeliveryService : DeliveryService {
         lastSavedLogPayloads.add(logEnvelope)
     }
 
-    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
-        lastSavedCrash = crash
-        lastSentCrash = crash
-    }
-
     public fun getSentSessions(): List<Envelope<SessionPayload>> {
         return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.FOREGROUND }.map { it.first }
     }

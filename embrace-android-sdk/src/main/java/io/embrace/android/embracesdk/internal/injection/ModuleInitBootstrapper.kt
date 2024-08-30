@@ -353,7 +353,6 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             payloadSourceModule,
-                            deliveryModule,
                             androidServicesModule,
                             workerThreadModule,
                             nativeCoreModule
@@ -362,7 +361,6 @@ internal class ModuleInitBootstrapper(
 
                     postInit(NativeFeatureModule::class) {
                         val ndkService = nativeFeatureModule.ndkService
-                        essentialServiceModule.userService.addUserInfoListener(ndkService::onUserInfoUpdate)
 
                         val initWorkerTaskQueueTime = initModule.clock.now()
                         workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT).submit {
@@ -383,9 +381,6 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule.sessionIdTracker.addListener {
                                 nativeFeatureModule.ndkService.updateSessionId(it ?: "")
                             }
-                            essentialServiceModule.sessionPropertiesService.addChangeListener(
-                                nativeFeatureModule.ndkService::onSessionPropertiesUpdate
-                            )
                             Systrace.endSynchronous()
                         }
 

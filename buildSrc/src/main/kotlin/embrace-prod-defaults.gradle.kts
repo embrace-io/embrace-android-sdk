@@ -60,6 +60,10 @@ android {
             withSourcesJar()
             withJavadocJar()
         }
+
+        // Create component with single publication variant for local debugging (without Javadoc)
+        singleVariant("debug") {
+        }
     }
 
     sourceSets {
@@ -101,42 +105,51 @@ project.tasks.register("checkstyle", Checkstyle::class.java).configure {
     maxWarnings = 0
 }
 
+fun addPublication(publication: MavenPublication, componentName: String) = with(publication) {
+    groupId = "io.embrace"
+    artifactId = project.name
+    version = project.version.toString()
+
+    afterEvaluate {
+        from(components[componentName])
+    }
+
+    // append some license metadata to the POM.
+    pom {
+        name = project.name
+        description = "Embrace Android SDK"
+        url = "https://github.com/embrace-io/embrace-android-sdk"
+        licenses {
+            license {
+                name = "Embrace License"
+                url = "https://embrace.io/docs/terms-of-service/"
+            }
+        }
+        developers {
+            developer {
+                id = "dev1"
+                name = "Embrace"
+                email = "support@embrace.io"
+            }
+        }
+        scm {
+            connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
+            developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
+            url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
+        }
+    }
+}
+
 // https://developer.android.com/studio/publish-library/upload-library
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = "io.embrace"
-            artifactId = project.name
-            version = project.version.toString()
+            addPublication(this, "release")
+        }
 
-            afterEvaluate {
-                from(components["release"])
-            }
-
-            // append some license metadata to the POM.
-            pom {
-                name = project.name
-                description = "Embrace Android SDK"
-                url = "https://github.com/embrace-io/embrace-android-sdk"
-                licenses {
-                    license {
-                        name = "Embrace License"
-                        url = "https://embrace.io/docs/terms-of-service/"
-                    }
-                }
-                developers {
-                    developer {
-                        id = "dev1"
-                        name = "Embrace"
-                        email = "support@embrace.io"
-                    }
-                }
-                scm {
-                    connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
-                    developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
-                    url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
-                }
-            }
+        // debug publication without Javadoc generation (optimizes build time)
+        register<MavenPublication>("debugLocal") {
+            addPublication(this, "debug")
         }
     }
 
@@ -173,6 +186,11 @@ signing {
 
 project.tasks.withType(Sign::class).configureEach {
     enabled = !project.version.toString().endsWith("-SNAPSHOT")
+}
+
+// alias for publishing debugLocal variant to mavenLocal
+project.tasks.register("publishDebugSdk") {
+    dependsOn("publishDebugLocalPublicationToMavenLocal")
 }
 
 // workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c

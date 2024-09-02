@@ -225,9 +225,11 @@ internal class ModuleInitBootstrapper(
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
                             }
-                            Systrace.traceSynchronous("network-connectivity-registration") {
-                                networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
-                                apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit {
+                                Systrace.traceSynchronous("network-connectivity-registration") {
+                                    networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
+                                    apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                                }
                             }
                         }
                     }

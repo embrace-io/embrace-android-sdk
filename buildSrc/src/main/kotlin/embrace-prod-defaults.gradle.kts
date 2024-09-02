@@ -60,6 +60,10 @@ android {
             withSourcesJar()
             withJavadocJar()
         }
+
+        // Create component with single publication variant for local debugging (without Javadoc)
+        singleVariant("debug") {
+        }
     }
 
     sourceSets {
@@ -114,6 +118,42 @@ publishing {
             }
 
             // append some license metadata to the POM.
+            pom {
+                name = project.name
+                description = "Embrace Android SDK"
+                url = "https://github.com/embrace-io/embrace-android-sdk"
+                licenses {
+                    license {
+                        name = "Embrace License"
+                        url = "https://embrace.io/docs/terms-of-service/"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "dev1"
+                        name = "Embrace"
+                        email = "support@embrace.io"
+                    }
+                }
+                scm {
+                    connection = "scm:git:github.com/embrace-io/embrace-android-sdk.git"
+                    developerConnection = "scm:git:ssh://github.com/embrace-io/embrace-android-sdk.git"
+                    url = "https://github.com/embrace-io/embrace-android-sdk/tree/main"
+                }
+            }
+        }
+
+        // New debugLocal publication (without Javadoc)
+        register<MavenPublication>("debugLocal") { // TODO: extract function to avoid repetition
+            groupId = "io.embrace"
+            artifactId = project.name
+            version = project.version.toString()
+
+            afterEvaluate {
+                from(components["debug"])
+            }
+
+            // Append some license metadata to the POM.
             pom {
                 name = project.name
                 description = "Embrace Android SDK"

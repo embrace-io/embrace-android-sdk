@@ -10,11 +10,6 @@ public interface SdkModeBehavior {
     public fun isBetaFeaturesEnabled(): Boolean
 
     /**
-     * Checks if an expanded list of services' initialization during startup will be done on a background thread
-     */
-    public fun isServiceInitDeferred(): Boolean
-
-    /**
      * Given a Config instance, computes if the SDK is enabled based on the threshold and the offset.
      *
      * @return true if the sdk is enabled, false otherwise

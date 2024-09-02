@@ -108,12 +108,5 @@ public data class RemoteConfig(
      * Web view vitals settings
      */
     @Json(name = "webview_vitals_beta")
-    val webViewVitals: WebViewVitals? = null,
-
-    /**
-     * Enable deferral of initialization of some services to a background thread during startup.
-     * Currently, the only feature that uses this is native crash capture
-     */
-    @Json(name = "pct_defer_service_init")
-    val pctDeferServiceInitEnabled: Float? = null,
+    val webViewVitals: WebViewVitals? = null
 )

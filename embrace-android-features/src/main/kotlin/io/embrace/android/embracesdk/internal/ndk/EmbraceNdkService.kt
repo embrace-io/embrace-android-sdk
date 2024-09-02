@@ -58,20 +58,12 @@ internal class EmbraceNdkService(
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
     private val backgroundWorker: BackgroundWorker,
-    private val highPriorityWorker: BackgroundWorker,
+    @Suppress("unused") private val highPriorityWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
-    private val serializer: PlatformSerializer
+    private val serializer: PlatformSerializer,
+    private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper()))
 ) : NdkService, ProcessStateListener {
 
-    /**
-     * Synchronization lock.
-     */
-    private val lock = Any()
-
-    /**
-     * Whether or not the NDK has been installed.
-     */
-    private var isInstalled = false
     override var unityCrashId: String? = null
     override val symbolsForCurrentArch by lazy {
         val nativeSymbols = getNativeSymbols()
@@ -88,13 +80,7 @@ internal class EmbraceNdkService(
             // thread doing this when the native ANR monitoring tries to load this
             // Remove this once the native ANR initialization is done on the background thread too.
             sharedObjectLoader.loadEmbraceNative()
-            if (configService.sdkModeBehavior.isServiceInitDeferred()) {
-                highPriorityWorker.submit {
-                    initializeService(processStateService, configService.appFramework)
-                }
-            } else {
-                initializeService(processStateService, configService.appFramework)
-            }
+            initializeService(processStateService, configService.appFramework)
         }
     }
 
@@ -113,49 +99,34 @@ internal class EmbraceNdkService(
     }
 
     override fun updateSessionId(newSessionId: String) {
-        if (isInstalled) {
-            delegate._updateSessionId(newSessionId)
-        }
+        delegate._updateSessionId(newSessionId)
     }
 
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
-        if (isInstalled) {
-            backgroundWorker.submit {
-                updateDeviceMetaData()
-            }
+        backgroundWorker.submit {
+            updateDeviceMetaData()
         }
     }
 
     override fun onUserInfoUpdate() {
-        if (isInstalled) {
-            backgroundWorker.submit {
-                updateDeviceMetaData()
-            }
+        backgroundWorker.submit {
+            updateDeviceMetaData()
         }
     }
 
     override fun onBackground(timestamp: Long) {
-        synchronized(lock) {
-            if (isInstalled) {
-                updateAppState(APPLICATION_STATE_BACKGROUND)
-            }
-        }
+        updateAppState(APPLICATION_STATE_BACKGROUND)
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
-        synchronized(lock) {
-            if (isInstalled) {
-                updateAppState(APPLICATION_STATE_FOREGROUND)
-            }
-        }
+        updateAppState(APPLICATION_STATE_FOREGROUND)
     }
 
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                installSignals()
                 createCrashReportDirectory()
-                val handler = Handler(checkNotNull(Looper.myLooper()))
+                installSignals()
                 handler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()
@@ -224,7 +195,6 @@ internal class EmbraceNdkService(
             )
         }
         backgroundWorker.submit(runnable = ::updateDeviceMetaData)
-        isInstalled = true
     }
 
     /**

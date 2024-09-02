@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
@@ -108,7 +109,8 @@ internal class IntegrationTestRule(
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
                 deliveryModuleSupplier = { _, _, _, _ -> overriddenDeliveryModule },
-                anrModuleSupplier = { _, _, _, _ -> fakeAnrModule }
+                anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
+                nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
             )
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
@@ -186,7 +188,8 @@ internal class IntegrationTestRule(
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             ),
-        val fakeAnrModule: AnrModule = FakeAnrModule()
+        val fakeAnrModule: AnrModule = FakeAnrModule(),
+        val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()
     ) {
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)

@@ -10,7 +10,9 @@ import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.api.common.AttributeKey
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -50,7 +52,7 @@ internal class SpanExporterTest {
                 val exportedSpans = fakeSpanExporter.exportedSpans.associateBy { it.name }
                 val testSpan = checkNotNull(exportedSpans["test"])
                 testSpan.assertHasEmbraceAttribute(embSequenceId, "5")
-                testSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.overriddenInitModule.processIdentifier)
+                assertNotNull(testSpan.attributes.get(embProcessIdentifier.attributeKey))
                 testSpan.resource.assertExpectedAttributes(
                     expectedServiceName = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
                     expectedServiceVersion = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
@@ -58,7 +60,7 @@ internal class SpanExporterTest {
                 )
                 val sessionSpan = checkNotNull(exportedSpans["emb-session"])
                 sessionSpan.assertHasEmbraceAttribute(embSequenceId, "1")
-                testSpan.assertHasEmbraceAttribute(embProcessIdentifier, harness.overriddenInitModule.processIdentifier)
+                assertNotNull(sessionSpan.attributes.get(embProcessIdentifier.attributeKey))
             }
         }
     }

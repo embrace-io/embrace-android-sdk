@@ -21,8 +21,7 @@ internal class LocalConfigTest {
     private val cfg = OpenTelemetryConfiguration(
         SpanSinkImpl(),
         LogSinkImpl(),
-        SystemInfo(),
-        "my-id"
+        SystemInfo()
     )
 
     @Test(expected = IllegalArgumentException::class)

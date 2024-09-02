@@ -31,13 +31,6 @@ public interface InitModule {
     public val systemInfo: SystemInfo
 
     /**
-     * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.
-     * This allows us to explicitly relate all the sessions associated with a particular app launch rather than having the backend figure
-     * this out by proximity for stitched sessions.
-     */
-    public val processIdentifier: String
-
-    /**
      * Tracks internal errors
      */
     public val internalErrorService: InternalErrorService

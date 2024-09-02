@@ -25,9 +25,11 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    public val logger: EmbLogger = EmbLoggerImpl(),
-    val initModule: InitModule = createInitModule(logger = logger),
-    val openTelemetryModule: OpenTelemetryModule = createOpenTelemetryModule(initModule),
+    public val logger: EmbLogger = Systrace.traceSynchronous("logger-init", ::EmbLoggerImpl),
+    val initModule: InitModule = Systrace.traceSynchronous("init-module", { createInitModule(logger = logger) }),
+    val openTelemetryModule: OpenTelemetryModule = Systrace.traceSynchronous("otel-module", {
+        createOpenTelemetryModule(initModule)
+    }),
     private val coreModuleSupplier: CoreModuleSupplier = ::createCoreModule,
     private val configModuleSupplier: ConfigModuleSupplier = ::createConfigModule,
     private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::createSystemServiceModule,

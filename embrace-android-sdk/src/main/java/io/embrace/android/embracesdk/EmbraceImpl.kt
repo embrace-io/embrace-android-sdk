@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
 import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
@@ -52,7 +53,7 @@ import io.embrace.android.embracesdk.spans.TracingApi
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl @JvmOverloads constructor(
-    private val bootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper(),
+    private val bootstrapper: ModuleInitBootstrapper = Systrace.traceSynchronous("bootstrapper-init", ::ModuleInitBootstrapper),
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),

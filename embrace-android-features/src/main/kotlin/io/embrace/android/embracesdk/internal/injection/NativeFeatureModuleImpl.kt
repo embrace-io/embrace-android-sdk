@@ -45,7 +45,6 @@ internal class NativeFeatureModuleImpl(
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT),
                 payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer
             )

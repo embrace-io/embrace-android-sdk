@@ -3,12 +3,10 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -363,31 +361,17 @@ internal class ModuleInitBootstrapper(
                     postInit(NativeFeatureModule::class) {
                         val configService = configModule.configService
                         val ndkService = nativeFeatureModule.ndkService
-                        serviceRegistry.registerServices(ndkService)
+                        serviceRegistry.registerServices(ndkService, nativeFeatureModule.nativeThreadSamplerService)
 
                         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-                            with(essentialServiceModule) {
-                                userService.addUserInfoListener(ndkService::onUserInfoUpdate)
-                                sessionIdTracker.addListener { ndkService.updateSessionId(it ?: "") }
-                                sessionPropertiesService.addChangeListener(ndkService::onSessionPropertiesUpdate)
-                            }
-                        }
+                            val worker = workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT)
 
-                        val installer = nativeFeatureModule.nativeThreadSamplerInstaller ?: return@postInit
-                        val threadSamplerService = nativeFeatureModule.nativeThreadSamplerService ?: return@postInit
-                        serviceRegistry.registerServices(threadSamplerService)
-
-                        Systrace.traceSynchronous("native-thread-sampler-init") {
-                            // install the native thread sampler
-                            threadSamplerService.setupNativeSampler()
-
-                            // In Unity this should always run on the Unity thread.
-                            if (configService.appFramework == AppFramework.UNITY && isUnityMainThread()) {
-                                try {
-                                    installer.monitorCurrentThread(threadSamplerService, configService, anrModule.anrService)
-                                } catch (t: Throwable) {
-                                    initModule.logger.logError("Failed to sample current thread during ANRs", t)
-                                    logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
+                            worker.submit(TaskPriority.HIGH) {
+                                ndkService.initializeService()
+                                with(essentialServiceModule) {
+                                    userService.addUserInfoListener(ndkService::onUserInfoUpdate)
+                                    sessionIdTracker.addListener { ndkService.updateSessionId(it ?: "") }
+                                    sessionPropertiesService.addChangeListener(ndkService::onSessionPropertiesUpdate)
                                 }
                             }
                         }

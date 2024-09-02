@@ -12,6 +12,9 @@ public class FakeNdkService : NdkService {
     public var lastUnityCrashId: String? = null
     private var nativeCrashData: NativeCrashData? = null
 
+    override fun initializeService() {
+    }
+
     override fun updateSessionId(newSessionId: String) {
         sessionId = newSessionId
     }

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -293,7 +294,7 @@ public class EmbraceLogService(
 
     private fun redactSensitiveProperties(properties: Map<String, Any>?): Map<String, Any>? {
         return properties?.mapValues { (key, value) ->
-            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) "<redacted>" else value
+            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) REDACTED_LABEL else value
         }
     }
 

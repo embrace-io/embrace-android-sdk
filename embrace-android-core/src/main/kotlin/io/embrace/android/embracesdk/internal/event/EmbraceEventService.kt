@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -230,7 +231,7 @@ internal class EmbraceEventService(
 
     private fun redactSensitiveProperties(properties: Map<String, Any>?): Map<String, Any>? {
         return properties?.mapValues { (key, value) ->
-            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) "<redacted>" else value
+            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) REDACTED_LABEL else value
         }
     }
 

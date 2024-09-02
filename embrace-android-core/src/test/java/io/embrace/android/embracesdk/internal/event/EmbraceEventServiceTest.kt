@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
@@ -370,7 +371,7 @@ internal class EmbraceEventServiceTest {
         val customProperties = mapOf("password" to "123456", "non-sensitive-key" to "hello")
         eventService.startEvent(eventName, null, customProperties)
         val eventDescription = eventService.getActiveEvent(eventName, null)
-        assertEquals("<redacted>", eventDescription?.event?.customProperties?.get("password"))
+        assertEquals(REDACTED_LABEL, eventDescription?.event?.customProperties?.get("password"))
         assertEquals("hello", eventDescription?.event?.customProperties?.get("non-sensitive-key"))
     }
 
@@ -381,7 +382,7 @@ internal class EmbraceEventServiceTest {
         eventService.startEvent(eventName)
         eventService.endEvent(eventName, customProperties)
         val event = deliveryService.lastEventSentAsync?.event
-        assertEquals("<redacted>", event?.customProperties?.get("password"))
+        assertEquals(REDACTED_LABEL, event?.customProperties?.get("password"))
         assertEquals("hello", event?.customProperties?.get("non-sensitive-key"))
     }
 }

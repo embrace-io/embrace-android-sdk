@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
@@ -87,8 +88,9 @@ internal class EmbraceLogServiceTest {
 
         // then the sensitive key is redacted
         val log = fakeLogWriter.logEvents.single()
-        assertEquals("<redacted>", log.schemaType.attributes()["password"])
-        assertEquals("success", log.schemaType.attributes()["status"])
+        val attributes = log.schemaType.attributes()
+        assertEquals(REDACTED_LABEL, attributes["password"])
+        assertEquals("success", attributes["status"])
     }
 
     @Test
@@ -102,10 +104,9 @@ internal class EmbraceLogServiceTest {
 
         // then the telemetry attributes are set correctly
         val log = fakeLogWriter.logEvents.single()
-        assertEquals("someValue", log.schemaType.attributes()["emb.properties.someProperty"])
-        assertTrue(
-            log.schemaType.attributes().containsKey(LogIncubatingAttributes.LOG_RECORD_UID.key)
-        )
+        val attributes = log.schemaType.attributes()
+        assertEquals("someValue", attributes["emb.properties.someProperty"])
+        assertTrue(attributes.containsKey(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
     @Test
@@ -312,19 +313,11 @@ internal class EmbraceLogServiceTest {
         val log = fakeLogWriter.logEvents.single()
         assertEquals(message, log.message)
         assertEquals(Severity.WARN, log.severity)
-        Assert.assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertEquals(
-            LogExceptionType.HANDLED.value,
-            log.schemaType.attributes()[embExceptionHandling.name]
-        )
-        assertEquals(
-            exception.javaClass.simpleName,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key]
-        )
-        assertEquals(
-            exception.message,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key]
-        )
+        val attributes = log.schemaType.attributes()
+        Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
+        assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
+        assertEquals(exception.javaClass.simpleName, attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals(exception.message, attributes[ExceptionAttributes.EXCEPTION_MESSAGE.key])
         log.assertIsType(EmbType.System.Exception)
     }
 
@@ -354,27 +347,13 @@ internal class EmbraceLogServiceTest {
         val log = fakeLogWriter.logEvents.single()
         assertEquals(flutterMessage, log.message)
         assertEquals(Severity.ERROR, log.severity)
-        Assert.assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertEquals(
-            LogExceptionType.HANDLED.value,
-            log.schemaType.attributes()[embExceptionHandling.name]
-        )
-        assertEquals(
-            flutterException.javaClass.simpleName,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key]
-        )
-        assertEquals(
-            flutterException.message,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key]
-        )
-        assertEquals(
-            flutterContext,
-            log.schemaType.attributes()[EmbType.System.FlutterException.embFlutterExceptionContext.name]
-        )
-        assertEquals(
-            flutterLibrary,
-            log.schemaType.attributes()[EmbType.System.FlutterException.embFlutterExceptionLibrary.name]
-        )
+        val attributes = log.schemaType.attributes()
+        Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
+        assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
+        assertEquals(flutterException.javaClass.simpleName, attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals(flutterException.message, attributes[ExceptionAttributes.EXCEPTION_MESSAGE.key])
+        assertEquals(flutterContext, attributes[EmbType.System.FlutterException.embFlutterExceptionContext.name])
+        assertEquals(flutterLibrary, attributes[EmbType.System.FlutterException.embFlutterExceptionLibrary.name])
         log.assertIsType(EmbType.System.FlutterException)
     }
 

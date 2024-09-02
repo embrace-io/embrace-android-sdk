@@ -21,8 +21,6 @@ import io.embrace.android.embracesdk.fixtures.tooBigEvents
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -55,11 +53,6 @@ internal class SpanServiceImplTest {
                 tracer = initModule.openTelemetryModule.sdkTracer,
                 openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock,
                 spanRepository = initModule.openTelemetryModule.spanRepository,
-                sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-                    SdkLocalConfig(
-                        sensitiveKeysDenylist = listOf("password")
-                    )
-                )
             )
         )
         spansService.initializeService(initModule.clock.now())

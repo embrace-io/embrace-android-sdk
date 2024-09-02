@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import org.junit.Assert.assertEquals
@@ -55,7 +56,7 @@ internal class SessionPropertiesServiceImplTest {
     @Test
     fun testAddRedactedSessionProp() {
         service.addProperty("password", "value", false)
-        val expected = mapOf("password" to "<redacted>")
+        val expected = mapOf("password" to REDACTED_LABEL)
         assertEquals(expected, service.getProperties())
         assertEquals(1, fakeCurrentSessionSpan.attributeCount())
 

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.recordSession
@@ -44,7 +45,7 @@ internal class SensitiveKeysRedactionFeatureTest {
             val sensitiveAttribute = recordedSpan?.attributes?.first { it.key == "password" }
             val notSensitiveAttribute = recordedSpan?.attributes?.first { it.key == "not a password" }
 
-            assertEquals("<redacted>", sensitiveAttribute?.data)
+            assertEquals(REDACTED_LABEL, sensitiveAttribute?.data)
             assertEquals("1234", notSensitiveAttribute?.data)
         }
     }
@@ -64,9 +65,9 @@ internal class SensitiveKeysRedactionFeatureTest {
 
             val event = recordedSpan?.events?.first { it.name == "event" }
             val anotherEvent = recordedSpan?.events?.first { it.name == "anotherEvent" }
-            assertTrue(event?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+            assertTrue(event?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
             assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
-            assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+            assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
             assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
         }
     }

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
@@ -428,7 +429,7 @@ internal class EmbraceSpanImplTest {
         val snapshot = embraceSpan.snapshot()
 
         // then the sensitive keys should be redacted
-        assertTrue(snapshot?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+        assertTrue(snapshot?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
         assertTrue(snapshot?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
     }
 
@@ -447,9 +448,9 @@ internal class EmbraceSpanImplTest {
         // then the sensitive keys should be redacted
         val event = snapshot?.events?.first { it.name == "event" }
         val anotherEvent = snapshot?.events?.first { it.name == "anotherEvent" }
-        assertTrue(event?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+        assertTrue(event?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
         assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
-        assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == "<redacted>" } ?: false)
+        assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
         assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
     }
 

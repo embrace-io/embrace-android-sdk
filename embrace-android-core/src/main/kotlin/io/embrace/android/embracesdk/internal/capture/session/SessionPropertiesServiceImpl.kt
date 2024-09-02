@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
@@ -26,7 +27,7 @@ internal class SessionPropertiesServiceImpl(
         }
 
         val sanitizedValue = if (configService.sensitiveKeysBehavior.isSensitiveKey(sanitizedKey)) {
-            "<redacted>"
+            REDACTED_LABEL
         } else {
             enforceLength(originalValue, SESSION_PROPERTY_VALUE_LIMIT)
         }

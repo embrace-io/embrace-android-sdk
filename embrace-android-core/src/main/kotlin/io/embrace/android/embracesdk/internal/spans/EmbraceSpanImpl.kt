@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -321,7 +322,7 @@ internal class EmbraceSpanImpl(
     private fun Map<String, String>.redactIfSensitive(): Map<String, String> {
         return mapValues {
             if (sensitiveKeysBehavior != null && sensitiveKeysBehavior.isSensitiveKey(it.key)) {
-                "<redacted>"
+                REDACTED_LABEL
             } else {
                 it.value
             }

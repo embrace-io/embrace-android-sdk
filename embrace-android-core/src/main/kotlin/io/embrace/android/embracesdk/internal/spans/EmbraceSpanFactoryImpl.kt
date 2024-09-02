@@ -11,7 +11,7 @@ internal class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    public var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
+    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
 ) : EmbraceSpanFactory {
 
     override fun create(

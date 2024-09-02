@@ -43,27 +43,6 @@ internal class EmbracePreferencesServiceTest {
         )
     }
 
-    /**
-     * Asserts that the startup state preference is updated when creating a PreferenceService.
-     */
-    @Test
-    @Throws(InterruptedException::class)
-    fun testStartupStatePersistence() {
-        // move through two states: startup in progress + startup complete.
-        assertEquals(
-            "startup_entered",
-            service.sdkStartupStatus
-        )
-
-        service.applicationStartupComplete()
-
-        // assert the entered startup and completed startup preferences were set
-        assertEquals(
-            "startup_completed",
-            service.sdkStartupStatus
-        )
-    }
-
     @Test
     fun `test app version is saved`() {
         assertNull(service.appVersion)

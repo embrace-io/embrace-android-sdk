@@ -23,11 +23,6 @@ public interface PreferencesService {
     public var deviceIdentifier: String
 
     /**
-     * The last SDK startup status registered.
-     */
-    public val sdkStartupStatus: String?
-
-    /**
      * If the sdk is disabled
      */
     public var sdkDisabled: Boolean

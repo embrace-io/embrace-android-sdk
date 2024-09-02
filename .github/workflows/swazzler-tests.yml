@@ -45,7 +45,7 @@ jobs:
           node-version: 20.x
 
       - name: "Publish SDK locally"
-        run: ./gradlew publishToMavenLocal --no-daemon
+        run: ./gradlew publishDebugSdk --no-daemon
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4

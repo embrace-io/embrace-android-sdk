@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
@@ -131,7 +132,12 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `return serialized current session even if cache fails`() {
-        every { cacheService.writeSession(any(), eq(testSessionEnvelopeOneMinuteLater)) } throws Exception()
+        every {
+            cacheService.writeSession(
+                any(),
+                eq(testSessionEnvelopeOneMinuteLater)
+            )
+        } throws Exception()
         deliveryCacheManager.saveSession(testSessionEnvelope, PERIODIC_CACHE)
         val original = ByteArrayOutputStream()
         original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionEnvelope.getSessionId())))
@@ -217,7 +223,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             fakeClock.tick()
         }
 
-        val cachedSessions = deliveryCacheManager.getAllCachedSessionIds().map(CachedSession::sessionId)
+        val cachedSessions =
+            deliveryCacheManager.getAllCachedSessionIds().map(CachedSession::sessionId)
         assertEquals(EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED, cachedSessions.size)
         for (i in (100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)..99) {
             assertTrue(cachedSessions.contains("test$i"))
@@ -326,6 +333,59 @@ internal class EmbraceDeliveryCacheManagerTest {
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall3, cachedCalls.pollNextPendingApiCall())
         assertNull(cachedCalls.pollNextPendingApiCall())
+    }
+
+    @Test
+    fun `save payload sync`() {
+        deliveryCacheManager = EmbraceDeliveryCacheManager(
+            cacheService,
+            BackgroundWorker(BlockableExecutorService(blockingMode = true)),
+            logger
+        )
+        val expected = "test".toByteArray()
+        val id = deliveryCacheManager.savePayload({ it.write(expected) }, true)
+        val output = ByteArrayOutputStream().use {
+            deliveryCacheManager.loadPayloadAsAction(id).invoke(it)
+            it.toByteArray()
+        }
+        val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(id))
+        val stream = ByteArrayOutputStream()
+        returnedAction(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = GZIPInputStream(compressed.inputStream()).readBytes()
+        assertArrayEquals(expected, uncompressed)
+        assertNotNull(output)
+    }
+
+    @Test
+    fun `save payload async`() {
+        val executorService = BlockableExecutorService(blockingMode = true)
+        deliveryCacheManager = EmbraceDeliveryCacheManager(
+            cacheService,
+            BackgroundWorker(executorService),
+            logger
+        )
+        val expected = "test".toByteArray()
+        val id = deliveryCacheManager.savePayload({ it.write(expected) }, false)
+        val output = ByteArrayOutputStream().use {
+            deliveryCacheManager.loadPayloadAsAction(id).invoke(it)
+            it.toByteArray()
+        }
+
+        val emptyAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(id))
+        val emptyStream = ByteArrayOutputStream()
+        emptyAction(emptyStream)
+        assertEquals(0, emptyStream.toByteArray().size)
+
+        // unblock pending executor task
+        executorService.runCurrentlyBlocked()
+        val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(id))
+        val stream = ByteArrayOutputStream()
+        returnedAction(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = GZIPInputStream(compressed.inputStream()).readBytes()
+        assertArrayEquals(expected, uncompressed)
+        assertNotNull(output)
     }
 
     @Test

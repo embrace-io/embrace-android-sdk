@@ -41,7 +41,7 @@ internal class EmbracePendingApiCallsSender(
 
     override fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean) {
         // Save the payload to disk.
-        val cachedPayloadName = cacheManager.savePayload(action)
+        val cachedPayloadName = cacheManager.savePayload(action, sync)
 
         // Save the pending api calls to disk.
         val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())

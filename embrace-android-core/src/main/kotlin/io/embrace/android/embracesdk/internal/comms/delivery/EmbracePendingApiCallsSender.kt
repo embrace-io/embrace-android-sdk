@@ -31,12 +31,9 @@ internal class EmbracePendingApiCallsSender(
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
     private val sendMethodRef: AtomicReference<SendMethod?> = AtomicReference(null)
 
-    init {
-        scheduledWorker.submit(this::scheduleApiCallsDelivery)
-    }
-
-    override fun setSendMethod(sendMethod: SendMethod) {
+    override fun initializeRetrySchedule(sendMethod: SendMethod) {
         sendMethodRef.set(sendMethod)
+        scheduledWorker.submit(this::scheduleApiCallsDelivery)
     }
 
     override fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean) {

@@ -88,7 +88,6 @@ internal class EmbraceDeliveryServiceTest {
         deliveryService = EmbraceDeliveryService(
             deliveryCacheManager,
             apiService,
-            worker,
             testPlatformSerializer,
             logger
         )
@@ -315,13 +314,6 @@ internal class EmbraceDeliveryServiceTest {
         val obj = EventMessage(Event(eventId = "abc", type = EventType.END))
         deliveryService.sendMoment(obj)
         assertEquals(obj, apiService.eventRequests.single())
-    }
-
-    @Test
-    fun testSaveCrash() {
-        val obj = EventMessage(Event(eventId = "abc", type = EventType.CRASH))
-        deliveryService.sendCrash(obj, true)
-        assertEquals(obj, apiService.crashRequests.single())
     }
 
     @Test

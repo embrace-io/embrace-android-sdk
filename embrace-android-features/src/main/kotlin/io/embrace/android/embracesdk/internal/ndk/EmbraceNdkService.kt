@@ -13,20 +13,15 @@ import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.Event
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
-import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
@@ -49,9 +44,7 @@ internal class EmbraceNdkService(
     private val metadataService: MetadataService,
     private val processStateService: ProcessStateService,
     private val configService: ConfigService,
-    private val deliveryService: DeliveryService,
     private val userService: UserService,
-    private val preferencesService: PreferencesService,
     private val sessionPropertiesService: SessionPropertiesService,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
@@ -221,17 +214,6 @@ internal class EmbraceNdkService(
             }
         }
         return null
-    }
-
-    /**
-     * Check if a native crash file exists. Also checks for the symbols file in the build dir.
-     * If so, attempt to send an event message and update the crash
-     * report id in the appropriate pending session.
-     *
-     * @return Crash data, if a native crash file was found
-     */
-    override fun getAndSendNativeCrash(): NativeCrashData? {
-        return getNativeCrash()?.apply { sendNativeCrash(this) }
     }
 
     override fun getNativeCrash(): NativeCrashData? {
@@ -410,49 +392,6 @@ internal class EmbraceNdkService(
         return crashFile.exists()
     }
 
-    private fun sendNativeCrash(nativeCrash: NativeCrashData) {
-        val metadata = nativeCrash.metadata
-
-        val nativeCrashEvent = Event(
-            CRASH_REPORT_EVENT_NAME,
-            null,
-            Uuid.getEmbUuid(),
-            nativeCrash.sessionId,
-            EventType.CRASH,
-            nativeCrash.timestamp,
-            null,
-            false,
-            null,
-            nativeCrash.appState,
-            null,
-            metadata?.sessionProperties,
-            null,
-            null,
-            null,
-            null,
-            null
-        )
-        val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
-        val nativeCrashMessageEvent = EventMessage(
-            nativeCrashEvent,
-            metadata?.deviceInfo,
-            metadata?.appInfo,
-            metadata?.userInfo,
-            null,
-            13,
-            nativeCrash.getCrash(nativeCrashNumber)
-        )
-        try {
-            deliveryService.sendCrash(nativeCrashMessageEvent, false)
-        } catch (ex: Exception) {
-            logger.logError(
-                "Failed to report native crash to the api {sessionId=" + nativeCrash.sessionId +
-                    ", crashId=" + nativeCrash.nativeCrashId,
-                ex
-            )
-        }
-    }
-
     private fun updateAppState(newAppState: String) {
         delegate._updateAppState(newAppState)
     }
@@ -502,7 +441,6 @@ internal class EmbraceNdkService(
          * The NDK symbols name that matches with the resource name injected by the plugin.
          */
         private const val KEY_NDK_SYMBOLS = "emb_ndk_symbols"
-        internal const val CRASH_REPORT_EVENT_NAME = "_crash_report"
         internal const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
         internal const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
         internal const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"

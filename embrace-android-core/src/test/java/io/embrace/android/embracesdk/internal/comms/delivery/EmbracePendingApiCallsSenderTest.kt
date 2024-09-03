@@ -334,7 +334,7 @@ internal class EmbracePendingApiCallsSenderTest {
         )
 
         if (sendMethod != null) {
-            pendingApiCallsSender.setSendMethod(mockRetryMethod)
+            pendingApiCallsSender.initializeRetrySchedule(mockRetryMethod)
         }
 
         if (loadFailedRequest) {

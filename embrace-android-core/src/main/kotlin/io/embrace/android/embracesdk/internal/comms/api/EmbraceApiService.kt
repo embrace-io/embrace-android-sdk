@@ -47,7 +47,7 @@ internal class EmbraceApiService(
 
     init {
         Systrace.traceSynchronous("api-service-init-block") {
-            pendingApiCallsSender.setSendMethod(this::executePost)
+            pendingApiCallsSender.initializeRetrySchedule(this::executePost)
         }
     }
 

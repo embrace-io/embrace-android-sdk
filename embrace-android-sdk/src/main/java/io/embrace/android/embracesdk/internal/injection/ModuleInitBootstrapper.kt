@@ -213,6 +213,9 @@ internal class ModuleInitBootstrapper(
                             }
                             workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit {
                                 Systrace.traceSynchronous("network-connectivity-registration") {
+                                    essentialServiceModule.networkConnectivityService.register()
+                                }
+                                Systrace.traceSynchronous("network-connectivity-listeners") {
                                     networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
                                     apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
                                 }
@@ -253,9 +256,6 @@ internal class ModuleInitBootstrapper(
                     }
                     postInit(FeatureModule::class) {
                         featureModule.registerFeatures()
-                    }
-                    Systrace.traceSynchronous("network-connectivity-registration") {
-                        essentialServiceModule.networkConnectivityService.register()
                     }
                     initModule.internalErrorService.handler =
                         { featureModule.internalErrorDataSource.dataSource }

@@ -201,8 +201,7 @@ internal class ModuleInitBootstrapper(
                             serviceRegistry.registerServices(
                                 processStateService,
                                 activityLifecycleTracker,
-                                networkConnectivityService,
-                                userService
+                                networkConnectivityService
                             )
 
                             val networkBehavior = configModule.configService.networkBehavior
@@ -324,7 +323,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(PayloadSourceModule::class) {
-                        serviceRegistry.registerServices(payloadSourceModule.metadataService)
                         payloadSourceModule.metadataService.precomputeValues()
                     }
 
@@ -379,11 +377,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(LogModule::class) {
-                        serviceRegistry.registerServices(
-                            logModule.logService,
-                            logModule.networkCaptureService,
-                            logModule.networkLoggingService
-                        )
+                        serviceRegistry.registerServices(logModule.logService)
                         // Start the log orchestrator
                         logModule.logOrchestrator
                     }

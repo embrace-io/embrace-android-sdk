@@ -9,14 +9,6 @@ import java.io.Closeable
 public interface NetworkConnectivityService : Closeable {
 
     /**
-     * Record the connection type at the start of the session and open a connectivity interval with it,
-     * with a start time that matches the session start time.
-     *
-     * @param startTime of the session
-     */
-    public fun networkStatusOnSessionStarted(startTime: Long)
-
-    /**
      * Adds a listener for changes in the connectivity status.
      */
     public fun addNetworkConnectivityListener(listener: NetworkConnectivityListener)

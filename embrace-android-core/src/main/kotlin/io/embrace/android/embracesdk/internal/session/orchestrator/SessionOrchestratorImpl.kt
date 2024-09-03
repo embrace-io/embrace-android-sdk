@@ -244,9 +244,6 @@ internal class SessionOrchestratorImpl(
             Systrace.endSynchronous()
 
             // et voila! a new session is born
-            Systrace.startSynchronous("boundary-delegate")
-            boundaryDelegate.onSessionStarted(timestamp)
-            Systrace.endSynchronous()
             Systrace.endSynchronous()
         }
     }

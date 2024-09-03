@@ -59,8 +59,6 @@ public class FakeConfigService(
     override fun hasValidRemoteConfig(): Boolean = hasValidRemoteConfig
     override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isEnabled()
 
-    override fun close() {}
-
     public fun updateListeners() {
         listeners.forEach {
             it()

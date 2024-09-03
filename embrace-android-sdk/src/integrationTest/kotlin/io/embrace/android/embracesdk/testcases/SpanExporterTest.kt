@@ -39,8 +39,8 @@ internal class SpanExporterTest {
                 "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
                 fakeSpanExporter.awaitSpanExport(1)
             )
-            // Verify that 4 spans have been logged - the exported ones and 3 private diagnostic traces
-            assertEquals(3, harness.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
+            // Verify that 2 spans have been logged - the exported ones and 1 private diagnostic traces
+            assertEquals(2, harness.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
 
             harness.recordSession {
                 assertTrue(
@@ -51,7 +51,7 @@ internal class SpanExporterTest {
                 assertEquals(2, fakeSpanExporter.exportedSpans.size)
                 val exportedSpans = fakeSpanExporter.exportedSpans.associateBy { it.name }
                 val testSpan = checkNotNull(exportedSpans["test"])
-                testSpan.assertHasEmbraceAttribute(embSequenceId, "5")
+                testSpan.assertHasEmbraceAttribute(embSequenceId, "4")
                 assertNotNull(testSpan.attributes.get(embProcessIdentifier.attributeKey))
                 testSpan.resource.assertExpectedAttributes(
                     expectedServiceName = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,

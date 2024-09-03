@@ -132,26 +132,28 @@ internal class EmbraceMetadataServiceTest {
     ): EmbraceMetadataService {
         configService.appFramework = framework
         ref = EmbraceMetadataService(
-            EnvelopeResourceSourceImpl(
-                hostedSdkVersionInfo,
-                AppEnvironment.Environment.PROD,
-                buildInfo,
-                PackageVersionInfo(packageInfo),
-                framework,
-                fakeArchitecture,
-                DeviceImpl(
-                    mockk(relaxed = true),
-                    preferencesService,
-                    BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-                    SystemInfo(),
-                    Companion::cpuInfoDelegate,
-                    FakeEmbLogger()
-                ),
-                FakeRnBundleIdTracker()
-            ),
+            lazy {
+                EnvelopeResourceSourceImpl(
+                    hostedSdkVersionInfo,
+                    AppEnvironment.Environment.PROD,
+                    buildInfo,
+                    PackageVersionInfo(packageInfo),
+                    framework,
+                    fakeArchitecture,
+                    DeviceImpl(
+                        mockk(relaxed = true),
+                        preferencesService,
+                        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+                        SystemInfo(),
+                        Companion::cpuInfoDelegate,
+                        FakeEmbLogger()
+                    ),
+                    FakeRnBundleIdTracker()
+                )
+            },
             EnvelopeMetadataSourceImpl(::UserInfo),
             context,
-            storageStatsManager,
+            lazy { storageStatsManager },
             configService,
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),

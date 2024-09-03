@@ -130,9 +130,6 @@ internal class ModuleInitBootstrapper(
                     coreModule = init(CoreModule::class) { coreModuleSupplier(context, logger) }
 
                     val serviceRegistry = coreModule.serviceRegistry
-                    postInit(InitModule::class) {
-                        serviceRegistry.registerService(initModule.internalErrorService)
-                    }
                     workerThreadModule =
                         init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
 
@@ -141,10 +138,6 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
                         }
                     }
-                    postInit(OpenTelemetryModule::class) {
-                        serviceRegistry.registerService(initModule.telemetryService)
-                        serviceRegistry.registerService(openTelemetryModule.spanService)
-                    }
 
                     systemServiceModule = init(SystemServiceModule::class) {
                         systemServiceModuleSupplier(coreModule, versionChecker)
@@ -152,9 +145,6 @@ internal class ModuleInitBootstrapper(
 
                     androidServicesModule = init(AndroidServicesModule::class) {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
-                    }
-                    postInit(AndroidServicesModule::class) {
-                        serviceRegistry.registerService(androidServicesModule.preferencesService)
                     }
 
                     configModule = init(ConfigModule::class) {
@@ -174,7 +164,7 @@ internal class ModuleInitBootstrapper(
                         }
                     }
                     postInit(ConfigModule::class) {
-                        serviceRegistry.registerService(configModule.configService)
+                        serviceRegistry.registerService(lazy { configModule.configService })
                     }
 
                     storageModule = init(StorageModule::class) {
@@ -199,9 +189,9 @@ internal class ModuleInitBootstrapper(
                             configModule.configService.remoteConfigSource = apiService
 
                             serviceRegistry.registerServices(
-                                processStateService,
-                                activityLifecycleTracker,
-                                networkConnectivityService
+                                lazy { essentialServiceModule.processStateService },
+                                lazy { activityLifecycleTracker },
+                                lazy { networkConnectivityService }
                             )
 
                             val networkBehavior = configModule.configService.networkBehavior
@@ -278,9 +268,9 @@ internal class ModuleInitBootstrapper(
 
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
-                            dataCaptureServiceModule.webviewService,
-                            dataCaptureServiceModule.activityBreadcrumbTracker,
-                            dataCaptureServiceModule.pushNotificationService
+                            lazy { dataCaptureServiceModule.webviewService },
+                            lazy { dataCaptureServiceModule.activityBreadcrumbTracker },
+                            lazy { dataCaptureServiceModule.pushNotificationService }
                         )
                     }
 
@@ -292,13 +282,9 @@ internal class ModuleInitBootstrapper(
                         )
                     }
 
-                    postInit(DeliveryModule::class) {
-                        serviceRegistry.registerService(deliveryModule.deliveryService)
-                    }
-
                     postInit(AnrModule::class) {
                         serviceRegistry.registerServices(
-                            anrModule.anrService
+                            lazy { anrModule.anrService }
                         )
 
                         // set callbacks and pass in non-placeholder config.
@@ -347,7 +333,10 @@ internal class ModuleInitBootstrapper(
                     postInit(NativeFeatureModule::class) {
                         val configService = configModule.configService
                         val ndkService = nativeFeatureModule.ndkService
-                        serviceRegistry.registerServices(ndkService, nativeFeatureModule.nativeThreadSamplerService)
+                        serviceRegistry.registerServices(
+                            lazy { ndkService },
+                            lazy { nativeFeatureModule.nativeThreadSamplerService }
+                        )
 
                         if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT)
@@ -377,7 +366,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(LogModule::class) {
-                        serviceRegistry.registerServices(logModule.logService)
+                        serviceRegistry.registerService(lazy { logModule.logService })
                         // Start the log orchestrator
                         logModule.logOrchestrator
                     }
@@ -395,8 +384,8 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeCoreModule::class) {
-                        serviceRegistry.registerServices(
-                            momentsModule.eventService,
+                        serviceRegistry.registerService(
+                            lazy { momentsModule.eventService },
                         )
                     }
 
@@ -435,7 +424,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(CrashModule::class) {
-                        serviceRegistry.registerService(crashModule.crashDataSource)
+                        serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
                             addCrashTeardownHandler(anrModule.anrService)
                             addCrashTeardownHandler(logModule.logOrchestrator)

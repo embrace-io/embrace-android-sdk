@@ -68,6 +68,17 @@
     </issue>
 
     <issue
+        id="SyntheticAccessor"
+        message="Access to `private` method `getAppIdPattern` of class `Companion` requires synthetic accessor"
+        errorLine1="        if (!appIdPattern.matcher(appId).find()) {"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/io/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate.kt"
+            line="53"
+            column="14"/>
+    </issue>
+
+    <issue
         id="LambdaLast"
         message="Functional interface parameters (such as parameter 1, &quot;thiz&quot;, in io.embrace.android.embracesdk.ViewSwazzledHooks.OnClickListener._preOnClick) should be last to improve Kotlin interoperability; see https://kotlinlang.org/docs/reference/java-interop.html#sam-conversions"
         errorLine1="        public static void _preOnClick(android.view.View.OnClickListener thiz, android.view.View view) {"

@@ -99,6 +99,6 @@ internal class SdkStateApiDelegate(
         }
 
     companion object {
-        private val appIdPattern: Pattern = Pattern.compile("^[A-Za-z0-9]{5}$")
+        private val appIdPattern: Pattern by lazy { Pattern.compile("^[A-Za-z0-9]{5}$") }
     }
 }

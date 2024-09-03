@@ -176,38 +176,51 @@ internal class SessionOrchestratorImpl(
                 return
             }
 
+            Systrace.startSynchronous("transition-state-start")
+
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
+            Systrace.startSynchronous("periodic-cache-stop")
             val endProcessState = transitionType.endState(state)
             val inForeground = endProcessState == ProcessState.FOREGROUND
             when (endProcessState) {
                 ProcessState.FOREGROUND -> periodicBackgroundActivityCacher.stop()
                 ProcessState.BACKGROUND -> periodicSessionCacher.stop()
             }
+            Systrace.endSynchronous()
 
             // second, end the current session or background activity, if either exist.
+            Systrace.startSynchronous("end-current-session")
             val initial = activeSession
             if (initial != null) {
                 sessionSpanAttrPopulator.populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId, initial.isColdStart)
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
+            Systrace.endSynchronous()
 
             // the previous session has fully ended at this point
             // now, we can clear the SDK state and prepare for the next session
+            Systrace.startSynchronous("prepare-new-session")
             boundaryDelegate.prepareForNewSession(clearUserInfo)
+            Systrace.endSynchronous()
 
             // create the next session span if we should, and update the SDK state to reflect the transition
+            Systrace.startSynchronous("create-new-session")
             val newState = newSessionAction?.invoke()
             activeSession = newState
             val sessionId = newState?.sessionId
             sessionIdTracker.setActiveSession(sessionId, inForeground)
             newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
+            Systrace.endSynchronous()
 
             // initiate periodic caching of the payload if a new session has started
+            Systrace.startSynchronous("initiate-periodic-caching")
             if (transitionType != TransitionType.CRASH && newState != null) {
                 initiatePeriodicCaching(endProcessState, newState)
             }
+            Systrace.endSynchronous()
 
+            Systrace.startSynchronous("alter-session-state")
             // update the current state of the SDK. this should match the value in sessionIdTracker
             state = endProcessState
 
@@ -217,8 +230,10 @@ internal class SessionOrchestratorImpl(
                 ProcessState.BACKGROUND -> SessionType.BACKGROUND
             }
             dataCaptureOrchestrator.currentSessionType = sessionType
+            Systrace.endSynchronous()
 
             // log the state change
+            Systrace.startSynchronous("log-session-state")
             logSessionStateChange(
                 sessionId,
                 timestamp,
@@ -226,9 +241,13 @@ internal class SessionOrchestratorImpl(
                 transitionType.name,
                 logger
             )
+            Systrace.endSynchronous()
 
             // et voila! a new session is born
+            Systrace.startSynchronous("boundary-delegate")
             boundaryDelegate.onSessionStarted(timestamp)
+            Systrace.endSynchronous()
+            Systrace.endSynchronous()
         }
     }
 

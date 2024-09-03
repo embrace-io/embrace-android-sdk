@@ -28,10 +28,10 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
 internal class EmbraceMetadataService(
-    resourceSource: EnvelopeResourceSource,
+    resourceSource: Lazy<EnvelopeResourceSource>,
     metadataSource: EnvelopeMetadataSource,
     private val context: Context,
-    private val storageStatsManager: StorageStatsManager?,
+    private val storageStatsManager: Lazy<StorageStatsManager?>,
     private val configService: ConfigService,
     private val preferencesService: PreferencesService,
     private val metadataBackgroundWorker: BackgroundWorker,
@@ -39,7 +39,7 @@ internal class EmbraceMetadataService(
     private val logger: EmbLogger
 ) : MetadataService, StartupListener {
 
-    private val res by lazy(resourceSource::getEnvelopeResource)
+    private val res by lazy { resourceSource.value.getEnvelopeResource() }
     private val meta by lazy(metadataSource::getEnvelopeMetadata)
 
     private val appUpdated by lazy {
@@ -69,7 +69,7 @@ internal class EmbraceMetadataService(
             val free = statFs.freeBytes
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
-                    storageStatsManager,
+                    storageStatsManager.value,
                     context.packageManager,
                     context.packageName
                 )

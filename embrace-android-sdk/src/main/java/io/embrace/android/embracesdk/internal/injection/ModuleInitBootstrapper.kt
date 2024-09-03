@@ -467,12 +467,13 @@ internal class ModuleInitBootstrapper(
 
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can
                     // be added to the registry. It sets listeners for any services that were registered.
-                    serviceRegistry.closeRegistration()
-                    serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
-                    serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
-                    serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-                    serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
-
+                    Systrace.traceSynchronous("service-registration") {
+                        serviceRegistry.closeRegistration()
+                        serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
+                        serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
+                        serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
+                        serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
+                    }
                     asyncInitTask.set(initTask)
                     synchronousInitCompletionMs = initModule.clock.now()
                     true

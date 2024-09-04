@@ -361,67 +361,35 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeFeatureModule::class) {
+                        val configService = configModule.configService
                         val ndkService = nativeFeatureModule.ndkService
-                        essentialServiceModule.userService.addUserInfoListener(ndkService::onUserInfoUpdate)
+                        serviceRegistry.registerServices(ndkService)
 
-                        val initWorkerTaskQueueTime = initModule.clock.now()
-                        workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT).submit {
-                            openTelemetryModule.spanService.recordCompletedSpan(
-                                name = "init-worker-schedule-delay",
-                                startTimeMs = initWorkerTaskQueueTime,
-                                endTimeMs = initModule.clock.now(),
-                                private = true,
-                            )
-                        }
-                        serviceRegistry.registerServices(
-                            ndkService,
-                            nativeFeatureModule.nativeThreadSamplerService
-                        )
-
-                        if (configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
-                            Systrace.startSynchronous("ndk-service-updates")
-                            essentialServiceModule.sessionIdTracker.addListener {
-                                nativeFeatureModule.ndkService.updateSessionId(it ?: "")
+                        if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
+                            with(essentialServiceModule) {
+                                userService.addUserInfoListener(ndkService::onUserInfoUpdate)
+                                sessionIdTracker.addListener { ndkService.updateSessionId(it ?: "") }
+                                sessionPropertiesService.addChangeListener(ndkService::onSessionPropertiesUpdate)
                             }
-                            essentialServiceModule.sessionPropertiesService.addChangeListener(
-                                nativeFeatureModule.ndkService::onSessionPropertiesUpdate
-                            )
-                            Systrace.endSynchronous()
                         }
 
-                        if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
-                            Systrace.startSynchronous("native-thread-sampler-init")
-                            // install the native thread sampler
-                            nativeFeatureModule.nativeThreadSamplerService?.let { nativeThreadSamplerService ->
-                                nativeThreadSamplerService.setupNativeSampler()
+                        val installer = nativeFeatureModule.nativeThreadSamplerInstaller ?: return@postInit
+                        val threadSamplerService = nativeFeatureModule.nativeThreadSamplerService ?: return@postInit
+                        serviceRegistry.registerServices(threadSamplerService)
 
-                                // In Unity this should always run on the Unity thread.
-                                if (configModule.configService.appFramework == AppFramework.UNITY && isUnityMainThread()) {
-                                    try {
-                                        if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
-                                            nativeFeatureModule.nativeThreadSamplerInstaller?.monitorCurrentThread(
-                                                nativeThreadSamplerService,
-                                                configModule.configService,
-                                                anrModule.anrService
-                                            )
-                                        } else {
-                                            initModule.logger.logWarning(
-                                                "nativeThreadSamplerInstaller not started, cannot sample current thread"
-                                            )
-                                        }
-                                    } catch (t: Throwable) {
-                                        initModule.logger.logError(
-                                            "Failed to sample current thread during ANRs",
-                                            t
-                                        )
-                                        logger.trackInternalError(
-                                            InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL,
-                                            t
-                                        )
-                                    }
+                        Systrace.traceSynchronous("native-thread-sampler-init") {
+                            // install the native thread sampler
+                            threadSamplerService.setupNativeSampler()
+
+                            // In Unity this should always run on the Unity thread.
+                            if (configService.appFramework == AppFramework.UNITY && isUnityMainThread()) {
+                                try {
+                                    installer.monitorCurrentThread(threadSamplerService, configService, anrModule.anrService)
+                                } catch (t: Throwable) {
+                                    initModule.logger.logError("Failed to sample current thread during ANRs", t)
+                                    logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
                                 }
                             }
-                            Systrace.endSynchronous()
                         }
                     }
 

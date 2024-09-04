@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.ndk
 import android.content.Context
 import android.content.res.Resources
 import android.os.Build
+import android.os.Handler
 import android.util.Base64
 import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
@@ -38,6 +39,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -73,6 +75,7 @@ internal class EmbraceNdkServiceTest {
 
     private lateinit var embraceNdkService: EmbraceNdkService
     private lateinit var context: Context
+    private lateinit var handler: Handler
     private lateinit var storageManager: FakeStorageService
     private lateinit var metadataService: MetadataService
     private lateinit var configService: FakeConfigService
@@ -95,6 +98,13 @@ internal class EmbraceNdkServiceTest {
     @Before
     fun setup() {
         context = mockk(relaxed = true)
+        val slot = slot<Runnable>()
+        handler = mockk(relaxed = true) {
+            every { postAtFrontOfQueue(capture(slot)) } answers {
+                slot.captured.run()
+                true
+            }
+        }
         storageManager = FakeStorageService()
         metadataService = FakeMetadataService()
         localConfig = LocalConfig("", false, SdkLocalConfig())
@@ -155,18 +165,11 @@ internal class EmbraceNdkServiceTest {
                 BackgroundWorker(MoreExecutors.newDirectExecutorService()),
                 BackgroundWorker(blockableExecutorService),
                 deviceArchitecture,
-                EmbraceSerializer()
+                EmbraceSerializer(),
+                handler
             ),
             recordPrivateCalls = true
         )
-    }
-
-    @Test
-    fun `test updateSessionId where installSignals was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.updateSessionId("sessionId")
-        verify(exactly = 0) { delegate._updateSessionId("sessionId") }
     }
 
     @Test
@@ -178,28 +181,12 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test onBackground doesn't run _updateAppState when _updateMetaData was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.onBackground(0L)
-        verify(exactly = 0) { delegate._updateAppState("background") }
-    }
-
-    @Test
     fun `test onBackground runs _updateAppState when _updateMetaData was executed and isInstalled true`() {
         enableNdk(true)
 
         initializeService()
         embraceNdkService.onBackground(0L)
         verify(exactly = 1) { delegate._updateAppState("background") }
-    }
-
-    @Test
-    fun `test onSessionPropertiesUpdate where _updateMetaData was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.onSessionPropertiesUpdate(sessionPropertiesService.getProperties())
-        verify(exactly = 0) { delegate._updateMetaData(any()) }
     }
 
     @Test
@@ -320,14 +307,6 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test onUserInfoUpdate where _updateMetaData was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.onUserInfoUpdate()
-        verify(exactly = 0) { delegate._updateMetaData(any()) }
-    }
-
-    @Test
     fun `test onUserInfoUpdate where _updateMetaData was executed and isInstalled true`() {
         enableNdk(true)
 
@@ -352,14 +331,6 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         embraceNdkService.onForeground(true, 10)
         verify(exactly = 1) { delegate._updateAppState("foreground") }
-    }
-
-    @Test
-    fun `test onForeground doesn't run _updateAppState when _updateMetaData was not executed and isInstalled false`() {
-        enableNdk(false)
-        initializeService()
-        embraceNdkService.onForeground(true, 100)
-        verify(exactly = 0) { delegate._updateAppState("foreground") }
     }
 
     @Test
@@ -510,53 +481,15 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `initialization happens synchronously by default`() {
+    fun `initialization happens async`() {
         enableNdk(true)
         blockableExecutorService.blockingMode = true
         initializeService()
-        assertNativeSignalHandlerInstalled()
-        assertEquals(0, blockableExecutorService.tasksBlockedCount())
-    }
-
-    @Test
-    fun `initialization happens synchronously if feature flag disabled`() {
-        enableNdk(true)
-        blockableExecutorService.blockingMode = true
-        remoteConfig = RemoteConfig(pctDeferServiceInitEnabled = 0.0f)
-        initializeService()
-        assertNativeSignalHandlerInstalled()
-        assertEquals(0, blockableExecutorService.tasksBlockedCount())
-    }
-
-    @Test
-    fun `initialization happens async if feature flag enabled`() {
-        enableNdk(true)
-        blockableExecutorService.blockingMode = true
-        remoteConfig = RemoteConfig(pctDeferServiceInitEnabled = 100.0f)
-        initializeService()
-        assertNativeSignalHandlerNotInstalled()
-        assertEquals(1, blockableExecutorService.tasksBlockedCount())
-        blockableExecutorService.runCurrentlyBlocked()
         assertNativeSignalHandlerInstalled()
     }
 
     private fun assertNativeSignalHandlerInstalled() {
         verify(exactly = 1) {
-            delegate._installSignalHandlers(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-            )
-        }
-    }
-
-    private fun assertNativeSignalHandlerNotInstalled() {
-        verify(exactly = 0) {
             delegate._installSignalHandlers(
                 any(),
                 any(),

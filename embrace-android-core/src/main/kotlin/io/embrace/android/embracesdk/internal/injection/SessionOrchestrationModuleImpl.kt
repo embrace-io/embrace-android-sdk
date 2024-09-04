@@ -79,8 +79,7 @@ internal class SessionOrchestrationModuleImpl(
         OrchestratorBoundaryDelegate(
             memoryCleanerService,
             essentialServiceModule.userService,
-            essentialServiceModule.sessionPropertiesService,
-            essentialServiceModule.networkConnectivityService
+            essentialServiceModule.sessionPropertiesService
         )
     }
 

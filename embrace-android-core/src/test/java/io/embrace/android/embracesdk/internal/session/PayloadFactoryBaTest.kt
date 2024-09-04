@@ -82,8 +82,7 @@ internal class PayloadFactoryBaTest {
         val otelCfg = OpenTelemetryConfiguration(
             SpanSinkImpl(),
             LogSinkImpl(),
-            SystemInfo(),
-            "my-id"
+            SystemInfo()
         )
         localConfig = LocalConfigParser.buildConfig(
             "GrCPU",

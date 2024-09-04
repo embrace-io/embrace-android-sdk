@@ -16,7 +16,6 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
         val result = ndkDelegate._installSignalHandlers(
             "report_path",
             "markerFilePath",
-            "device_meta_data",
             "null",
             "app_state",
             "report_id",
@@ -62,12 +61,6 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
     fun checkForOverwrittenHandlersTest() {
         val result = ndkDelegate._checkForOverwrittenHandlers()
         assertEquals(null, result)
-    }
-
-    @Test
-    fun uninstallSignalsTest() {
-        val result = ndkDelegate._uninstallSignals()
-        assertEquals(Unit.javaClass, result.javaClass)
     }
 
     @Test

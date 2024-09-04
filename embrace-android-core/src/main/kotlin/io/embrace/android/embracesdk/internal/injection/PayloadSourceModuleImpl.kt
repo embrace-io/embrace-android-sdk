@@ -108,10 +108,10 @@ internal class PayloadSourceModuleImpl(
     override val metadataService: MetadataService by singleton {
         Systrace.traceSynchronous("metadata-service-init") {
             EmbraceMetadataService(
-                resourceSource,
+                lazy { resourceSource },
                 metadataSource,
                 coreModule.context,
-                systemServiceModule.storageManager,
+                lazy { systemServiceModule.storageManager },
                 configModule.configService,
                 androidServicesModule.preferencesService,
                 workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),

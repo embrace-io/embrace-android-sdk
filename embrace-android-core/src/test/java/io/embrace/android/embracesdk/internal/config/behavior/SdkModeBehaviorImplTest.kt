@@ -36,7 +36,6 @@ internal class SdkModeBehaviorImplTest {
         ) {
             assertFalse(isBetaFeaturesEnabled())
             assertFalse(isSdkDisabled())
-            assertFalse(isServiceInitDeferred())
         }
     }
 
@@ -85,28 +84,6 @@ internal class SdkModeBehaviorImplTest {
                 remoteCfg = { RemoteConfig(pctBetaFeaturesEnabled = 0f) }
             )
         assertFalse(behavior.isBetaFeaturesEnabled())
-    }
-
-    @Test
-    fun `verify defer service init checks`() {
-        // Default is disabled regardless of the deviceId
-        assertFalse(fakeSdkModeBehavior(thresholdCheck = enabled).isServiceInitDeferred())
-
-        // Enabled if remote flag set to 100%
-        assertTrue(
-            fakeSdkModeBehavior(
-                thresholdCheck = enabled,
-                remoteCfg = { RemoteConfig(pctDeferServiceInitEnabled = 100f) }
-            ).isServiceInitDeferred()
-        )
-
-        // Disabled if remote flag set to 0% regardless of deviceId
-        assertFalse(
-            fakeSdkModeBehavior(
-                thresholdCheck = enabled,
-                remoteCfg = { RemoteConfig(pctDeferServiceInitEnabled = 0f) }
-            ).isServiceInitDeferred()
-        )
     }
 
     @Test

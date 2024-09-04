@@ -73,7 +73,7 @@ public class EssentialServiceModuleImpl(
                 configBaseUrl = configBaseUrl,
                 appId = appId,
                 lazyDeviceId = lazyDeviceId,
-                lazyAppVersionName = lazy(coreModule.packageVersionInfo::versionName)
+                lazyAppVersionName = lazy { coreModule.packageVersionInfo.versionName }
             )
         }
     }
@@ -122,7 +122,6 @@ public class EssentialServiceModuleImpl(
                 },
                 logger = initModule.logger,
                 backgroundWorker = networkRequestWorker,
-                cacheManager = Systrace.traceSynchronous("cache-manager") { storageModule.deliveryCacheManager },
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,

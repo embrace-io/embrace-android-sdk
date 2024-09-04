@@ -11,9 +11,9 @@ import io.embrace.android.embracesdk.internal.injection.SerializationAction
 public interface PendingApiCallsSender : NetworkConnectivityListener {
 
     /**
-     * Sets the method to be used when sending an [ApiRequest].
+     * Initializes the retry scheduling with a method to be used when sending an [ApiRequest].
      */
-    public fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse)
+    public fun initializeRetrySchedule(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse)
 
     /**
      * Save an API call to be sent later.

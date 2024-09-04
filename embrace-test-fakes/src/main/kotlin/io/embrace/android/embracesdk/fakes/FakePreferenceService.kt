@@ -8,7 +8,6 @@ public class FakePreferenceService(
     override var osVersion: String? = null,
     override var installDate: Long? = 0,
     override var deviceIdentifier: String = "",
-    override val sdkStartupStatus: String? = null,
     override var sdkDisabled: Boolean = false,
     override var userPayer: Boolean = false,
     override var userIdentifier: String? = null,

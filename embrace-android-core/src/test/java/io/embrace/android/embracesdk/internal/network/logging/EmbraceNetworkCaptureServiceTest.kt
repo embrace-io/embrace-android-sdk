@@ -55,8 +55,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             val otelCfg = OpenTelemetryConfiguration(
                 SpanSinkImpl(),
                 LogSinkImpl(),
-                SystemInfo(),
-                "my-id"
+                SystemInfo()
             )
             mockLocalConfig =
                 LocalConfigParser.buildConfig(

@@ -26,9 +26,6 @@ internal class NoopDeliveryService : DeliveryService {
     override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
     }
 
-    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
-    }
-
     override fun sendMoment(eventMessage: EventMessage) {
     }
 }

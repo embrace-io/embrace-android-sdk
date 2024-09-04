@@ -316,10 +316,6 @@ internal class EmbraceConfigService(
         return clock.now() > lastRefreshConfigAttempt + configRetrySafeWindow * 1000
     }
 
-    override fun close() {
-        logger.logDebug("Shutting down EmbraceConfigService")
-    }
-
     override fun hasValidRemoteConfig(): Boolean = !configRequiresRefresh()
     override fun isAppExitInfoCaptureEnabled(): Boolean {
         return appExitInfoBehavior.isEnabled()

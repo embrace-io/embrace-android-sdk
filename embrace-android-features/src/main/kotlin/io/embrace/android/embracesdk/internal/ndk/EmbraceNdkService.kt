@@ -174,17 +174,6 @@ internal class EmbraceNdkService(
                 if (shouldIgnoreOverriddenHandler(culprit)) {
                     return
                 }
-                val errMsg = """
-                    Embrace detected that another signal handler has replaced our signal handler.
-                    This may lead to unexpected behaviour and lost NDK crashes.
-                    We will attempt to reinstall our signal handler but please consider disabling
-                    other signal handlers if you observed unexpected behaviour.
-                    If you believe this is a false positive, please contact support@embrace.io.
-                    Handler origin: $culprit
-                """.trimIndent()
-                val exc = RuntimeException(errMsg)
-                exc.stackTrace = arrayOfNulls(0)
-                logger.logWarning(errMsg, exc)
                 delegate._reinstallSignalHandlers()
             }
         }

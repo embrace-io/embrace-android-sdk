@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
@@ -31,7 +30,6 @@ internal class NativeFeatureModuleImplTest {
             FakeEssentialServiceModule(),
             FakeConfigModule(),
             FakePayloadSourceModule(),
-            FakeDeliveryModule(),
             FakeAndroidServicesModule(),
             FakeWorkerThreadModule(),
             FakeNativeCoreModule()

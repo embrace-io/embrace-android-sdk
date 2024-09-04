@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
 public class FakeNdkService : NdkService {
-    public var checkForNativeCrashCount: Int = 0
     public val propUpdates: MutableList<Map<String, String>> = mutableListOf()
 
     public var sessionId: String? = null
@@ -36,11 +35,6 @@ public class FakeNdkService : NdkService {
         val data = nativeCrashData
         nativeCrashData = null
         return data
-    }
-
-    override fun getAndSendNativeCrash(): NativeCrashData? {
-        checkForNativeCrashCount++
-        return getNativeCrash()
     }
 
     override val symbolsForCurrentArch: Map<String, String>?

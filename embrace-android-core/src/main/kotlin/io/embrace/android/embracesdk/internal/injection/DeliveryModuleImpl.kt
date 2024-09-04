@@ -4,11 +4,9 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
 
 internal class DeliveryModuleImpl(
     initModule: InitModule,
-    workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     apiService: ApiService?
 ) : DeliveryModule {
@@ -20,7 +18,6 @@ internal class DeliveryModuleImpl(
             EmbraceDeliveryService(
                 storageModule.deliveryCacheManager,
                 apiService,
-                workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
                 initModule.jsonSerializer,
                 initModule.logger
             )

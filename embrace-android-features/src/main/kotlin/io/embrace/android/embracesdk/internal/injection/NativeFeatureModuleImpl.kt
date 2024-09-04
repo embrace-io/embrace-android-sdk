@@ -22,7 +22,6 @@ internal class NativeFeatureModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
-    deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
     nativeCoreModule: NativeCoreModule
@@ -36,9 +35,7 @@ internal class NativeFeatureModuleImpl(
                 payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
                 configModule.configService,
-                deliveryModule.deliveryService,
                 essentialServiceModule.userService,
-                androidServicesModule.preferencesService,
                 essentialServiceModule.sessionPropertiesService,
                 nativeCoreModule.sharedObjectLoader,
                 initModule.logger,

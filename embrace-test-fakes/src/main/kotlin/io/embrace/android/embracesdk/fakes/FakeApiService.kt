@@ -49,11 +49,6 @@ public class FakeApiService : ApiService {
         eventRequests.add(eventMessage)
     }
 
-    override fun sendCrash(crash: EventMessage): Future<*> {
-        crashRequests.add(crash)
-        return ObservableFutureTask { }
-    }
-
     override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
         if (throwExceptionSendSession) {
             error("FakeApiService.sendSession")

@@ -38,7 +38,7 @@ internal class ModuleInitBootstrapperTest {
         coreModule = FakeCoreModule(logger = logger)
         moduleInitBootstrapper = ModuleInitBootstrapper(
             coreModuleSupplier = { _, _ -> coreModule },
-            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
+            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = logger
         )
         context = RuntimeEnvironment.getApplication().applicationContext
@@ -48,7 +48,7 @@ internal class ModuleInitBootstrapperTest {
     fun `test default implementation`() {
         val moduleInitBootstrapper = ModuleInitBootstrapper(
             coreModuleSupplier = { _, _ -> coreModule },
-            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
+            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = EmbLoggerImpl()
         )
         with(moduleInitBootstrapper) {
@@ -114,7 +114,7 @@ internal class ModuleInitBootstrapperTest {
             initModule = fakeInitModule,
             coreModuleSupplier = { _, _ -> fakeCoreModule },
             workerThreadModuleSupplier = { _ -> fakeWorkerThreadModule },
-            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
+            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = EmbLoggerImpl()
         )
         assertTrue(

@@ -170,23 +170,6 @@ internal class EmbraceApiServiceTest {
     }
 
     @Test
-    fun `send crash request is as expected`() {
-        val crash = EventMessage(
-            event = Event(
-                eventId = "crash-id",
-                activeEventIds = listOf("event-1", "event-2"),
-                type = EventType.CRASH
-            )
-        )
-        apiService.sendCrash(crash)
-        verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
-            expectedEventId = "c:event-1,event-2",
-            expectedPayload = getExpectedPayloadSerialized(crash, EventMessage::class.java)
-        )
-    }
-
-    @Test
     fun `send v2 session`() {
         fakeApiClient.queueResponse(successfulPostResponse)
         val payload = "".toByteArray(Charsets.UTF_8)
@@ -479,7 +462,6 @@ internal class EmbraceApiServiceTest {
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = EmbLoggerImpl(),
             backgroundWorker = BackgroundWorker(testScheduledExecutor),
-            cacheManager = fakeCacheManager,
             pendingApiCallsSender = fakePendingApiCallsSender,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,

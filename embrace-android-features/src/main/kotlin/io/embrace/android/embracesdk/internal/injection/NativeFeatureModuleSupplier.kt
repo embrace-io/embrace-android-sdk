@@ -10,7 +10,6 @@ public typealias NativeFeatureModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
-    deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
     nativeCoreModule: NativeCoreModule
@@ -23,7 +22,6 @@ public fun createNativeFeatureModule(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
-    deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
     nativeCoreModule: NativeCoreModule
@@ -34,7 +32,6 @@ public fun createNativeFeatureModule(
     essentialServiceModule,
     configModule,
     payloadSourceModule,
-    deliveryModule,
     androidServicesModule,
     workerThreadModule,
     nativeCoreModule

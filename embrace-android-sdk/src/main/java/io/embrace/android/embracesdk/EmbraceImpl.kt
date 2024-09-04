@@ -87,8 +87,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
     }
 
-    private val sdkClock = bootstrapper.initModule.clock
-    private val logger = bootstrapper.initModule.logger
+    private val sdkClock by lazy { bootstrapper.initModule.clock }
+    private val logger by lazy { bootstrapper.initModule.logger }
     private val customAppId: String?
         get() = sdkStateApiDelegate.customAppId
 

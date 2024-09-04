@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
@@ -16,25 +15,19 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 internal class OrchestratorBoundaryDelegate(
     private val memoryCleanerService: MemoryCleanerService,
     private val userService: UserService,
-    private val sessionPropertiesService: SessionPropertiesService,
-    private val networkConnectivityService: NetworkConnectivityService
+    private val sessionPropertiesService: SessionPropertiesService
 ) {
 
     /**
      * Prepares all services/state for a new session. Practically this involves
      * resetting collections in services etc.
      */
-    public fun prepareForNewSession(clearUserInfo: Boolean = false) {
+    fun prepareForNewSession(clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections()
         sessionPropertiesService.prepareForNewSession()
 
         if (clearUserInfo) {
             userService.clearAllUserInfo()
         }
-    }
-
-    public fun onSessionStarted(startTime: Long) {
-        // Record the connection type at the start of the session.
-        networkConnectivityService.networkStatusOnSessionStarted(startTime)
     }
 }

@@ -189,7 +189,7 @@ internal class EmbraceMetadataServiceTest {
     @Test
     fun `test startup complete`() {
         every { preferencesService.installDate }.returns(null)
-        getMetadataService().applicationStartupComplete()
+        getMetadataService()
 
         verify(exactly = 1) { preferencesService.appVersion = any() }
         verify(exactly = 1) { preferencesService.osVersion = any() }
@@ -199,7 +199,7 @@ internal class EmbraceMetadataServiceTest {
     @Test
     fun `test startup complete if it is not the first time`() {
         every { preferencesService.installDate }.returns(1234L)
-        getMetadataService().applicationStartupComplete()
+        getMetadataService()
         verify(exactly = 0) { preferencesService.installDate = any() }
     }
 

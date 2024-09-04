@@ -58,7 +58,6 @@ internal class EmbraceNdkService(
     private val repository: EmbraceNdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
     private val backgroundWorker: BackgroundWorker,
-    @Suppress("unused") private val highPriorityWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,
     private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper()))
@@ -74,23 +73,10 @@ internal class EmbraceNdkService(
         null
     }
 
-    init {
-        if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
-            // Workaround to load native symbols synchronously so the main thread won't be blocked by the background
-            // thread doing this when the native ANR monitoring tries to load this
-            // Remove this once the native ANR initialization is done on the background thread too.
-            sharedObjectLoader.loadEmbraceNative()
-            initializeService(processStateService, configService.appFramework)
-        }
-    }
-
-    private fun initializeService(
-        processStateService: ProcessStateService,
-        appFramework: AppFramework
-    ) {
+    override fun initializeService() {
         Systrace.traceSynchronous("init-ndk-service") {
             processStateService.addListener(this)
-            if (appFramework == AppFramework.UNITY) {
+            if (configService.appFramework == AppFramework.UNITY) {
                 unityCrashId = Uuid.getEmbUuid()
             }
             startNativeCrashMonitoring()
@@ -126,7 +112,7 @@ internal class EmbraceNdkService(
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 createCrashReportDirectory()
-                installSignals()
+                handler.postAtFrontOfQueue { installSignals() }
                 handler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()

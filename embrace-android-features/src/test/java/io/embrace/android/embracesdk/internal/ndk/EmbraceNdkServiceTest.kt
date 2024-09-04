@@ -163,13 +163,14 @@ internal class EmbraceNdkServiceTest {
                 repository,
                 delegate,
                 BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-                BackgroundWorker(blockableExecutorService),
                 deviceArchitecture,
                 EmbraceSerializer(),
                 handler
             ),
             recordPrivateCalls = true
-        )
+        ).apply {
+            initializeService()
+        }
     }
 
     @Test
@@ -282,28 +283,6 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         val uuid = embraceNdkService.unityCrashId
         assertEquals(uuid, "unityId")
-    }
-
-    @Test
-    fun `test initialization with ndk disabled runs _installSignalHandlers and _updateMetaData`() {
-        enableNdk(false)
-        initializeService()
-        val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
-        val markerFilePath = storageManager.filesDirectory.absolutePath + "/crash_file_marker"
-
-        verify(exactly = 0) {
-            delegate._installSignalHandlers(
-                reportBasePath,
-                markerFilePath,
-                "null",
-                "foreground",
-                embraceNdkService.unityCrashId,
-                Build.VERSION.SDK_INT,
-                deviceArchitecture.is32BitDevice,
-                false
-            )
-        }
-        verify(exactly = 0) { delegate._updateMetaData(any()) }
     }
 
     @Test
@@ -474,14 +453,14 @@ internal class EmbraceNdkServiceTest {
     @Test
     fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
         enableNdk(true)
-        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        every { sharedObjectLoader.loadEmbraceNative() } returns false
         initializeService()
         verify(exactly = 0) { embraceNdkService["installSignals"]() }
         verify(exactly = 0) { embraceNdkService["createCrashReportDirectory"]() }
     }
 
     @Test
-    fun `initialization happens async`() {
+    fun `initialization happens`() {
         enableNdk(true)
         blockableExecutorService.blockingMode = true
         initializeService()

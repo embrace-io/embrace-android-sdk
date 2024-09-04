@@ -20,4 +20,6 @@ public interface NdkService : NativeCrashService {
      * Retrieves symbol information for the current architecture.
      */
     public val symbolsForCurrentArch: Map<String, String>?
+
+    public fun initializeService()
 }

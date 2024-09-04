@@ -6,6 +6,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
@@ -328,15 +329,22 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     private fun sampleCurrentThreadDuringAnrs() {
         try {
-            val service = anrService
-            if (service != null && nativeThreadSamplerInstaller != null) {
-                nativeThreadSampler?.let { sampler ->
-                    configService?.let { cfg ->
-                        nativeThreadSamplerInstaller?.monitorCurrentThread(sampler, cfg, service)
-                    }
+            val service = anrService ?: return
+            val installer = nativeThreadSamplerInstaller ?: return
+            val sampler = nativeThreadSampler ?: return
+            val cfgService = configService ?: return
+
+            // install the native thread sampler
+            sampler.setupNativeSampler()
+
+            // In Unity this should always run on the Unity thread.
+            if (isUnityMainThread()) {
+                try {
+                    installer.monitorCurrentThread(sampler, cfgService, service)
+                } catch (t: Throwable) {
+                    logger.logError("Failed to sample current thread during ANRs", t)
+                    logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
                 }
-            } else {
-                logger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread", null)
             }
         } catch (exc: Exception) {
             logger.logError("Failed to sample current thread during ANRs", exc)

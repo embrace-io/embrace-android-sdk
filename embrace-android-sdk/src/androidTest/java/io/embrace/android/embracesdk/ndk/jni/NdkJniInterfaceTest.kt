@@ -16,7 +16,6 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
         val result = ndkDelegate._installSignalHandlers(
             "report_path",
             "markerFilePath",
-            "device_meta_data",
             "null",
             "app_state",
             "report_id",

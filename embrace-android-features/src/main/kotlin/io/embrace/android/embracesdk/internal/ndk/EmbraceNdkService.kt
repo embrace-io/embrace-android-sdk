@@ -211,24 +211,10 @@ internal class EmbraceNdkService(
         // Embrace crash service will set the unity crash id to the java crash.
         val nativeCrashId: String = unityCrashId ?: Uuid.getEmbUuid()
         val is32bit = deviceArchitecture.is32BitDevice
-        val initialMetaData = Systrace.traceSynchronous("init-native-crash-metadata") {
-            val metadata = Systrace.traceSynchronous("gather-metadata") {
-                NativeCrashMetadata(
-                    metadataService.getAppInfo(),
-                    metadataService.getDeviceInfo(),
-                    userService.getUserInfo(),
-                    sessionPropertiesService.getProperties()
-                )
-            }
-            Systrace.traceSynchronous("serialize-metadata") {
-                serializer.toJson(metadata)
-            }
-        }
         Systrace.traceSynchronous("native-install-handlers") {
             delegate._installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
-                initialMetaData,
                 "null",
                 processStateService.getAppState(),
                 nativeCrashId,
@@ -237,7 +223,7 @@ internal class EmbraceNdkService(
                 false
             )
         }
-        Systrace.traceSynchronous("update-metadata") { updateDeviceMetaData() }
+        backgroundWorker.submit(runnable = ::updateDeviceMetaData)
         isInstalled = true
     }
 
@@ -519,23 +505,30 @@ internal class EmbraceNdkService(
      * Compute NDK metadata
      */
     private fun updateDeviceMetaData() {
-        var newDeviceMetaData = getMetaData(true)
-        if (newDeviceMetaData.length >= EMB_DEVICE_META_DATA_SIZE) {
+        val src = captureMetaData(true)
+        var json = serializeMetadata(src)
+        if (json.length >= EMB_DEVICE_META_DATA_SIZE) {
             logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
-            newDeviceMetaData = getMetaData(false)
+            json = serializeMetadata(src.copy(sessionProperties = null))
         }
-        delegate._updateMetaData(newDeviceMetaData)
+        delegate._updateMetaData(json)
     }
 
-    private fun getMetaData(includeSessionProperties: Boolean): String {
-        return serializer.toJson(
+    private fun captureMetaData(includeSessionProperties: Boolean): NativeCrashMetadata {
+        return Systrace.trace("gather-native-metadata") {
             NativeCrashMetadata(
                 metadataService.getAppInfo(),
                 metadataService.getDeviceInfo(),
                 userService.getUserInfo(),
                 if (includeSessionProperties) sessionPropertiesService.getProperties() else null
             )
-        )
+        }
+    }
+
+    private fun serializeMetadata(newDeviceMetaData: NativeCrashMetadata): String {
+        return Systrace.trace("serialize-native-metadata") {
+            serializer.toJson(newDeviceMetaData)
+        }
     }
 
     internal companion object {

@@ -237,7 +237,6 @@ internal class EmbraceNdkServiceTest {
             delegate._installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
-                any(),
                 "null",
                 "foreground",
                 unityId,
@@ -265,15 +264,6 @@ internal class EmbraceNdkServiceTest {
         every { Uuid.getEmbUuid() } returns "uuid"
         enableNdk(true)
 
-        val metaData = serializer.toJson(
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-        )
-
         initializeService()
         assertEquals(1, activityService.listeners.size)
 
@@ -282,13 +272,9 @@ internal class EmbraceNdkServiceTest {
             storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
 
         verifyOrder {
-            metadataService.getAppInfo()
-            metadataService.getDeviceInfo()
-
             delegate._installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
-                metaData,
                 "null",
                 "foreground",
                 "uuid",
@@ -296,11 +282,7 @@ internal class EmbraceNdkServiceTest {
                 deviceArchitecture.is32BitDevice,
                 false
             )
-
-            metadataService.getAppInfo()
-            metadataService.getDeviceInfo()
-
-            delegate._updateMetaData(metaData)
+            delegate._updateMetaData(any())
         }
     }
 
@@ -316,7 +298,7 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test initialization with ndk disabled doesn't run _installSignalHandlers and _updateMetaData`() {
+    fun `test initialization with ndk disabled runs _installSignalHandlers and _updateMetaData`() {
         enableNdk(false)
         initializeService()
         val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
@@ -326,7 +308,6 @@ internal class EmbraceNdkServiceTest {
             delegate._installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
-                "{}",
                 "null",
                 "foreground",
                 embraceNdkService.unityCrashId,
@@ -335,16 +316,7 @@ internal class EmbraceNdkServiceTest {
                 false
             )
         }
-
-        val newDeviceMetaData =
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-
-        verify(exactly = 0) { delegate._updateMetaData(serializer.toJson(newDeviceMetaData)) }
+        verify(exactly = 0) { delegate._updateMetaData(any()) }
     }
 
     @Test
@@ -578,7 +550,6 @@ internal class EmbraceNdkServiceTest {
                 any(),
                 any(),
                 any(),
-                any(),
                 any()
             )
         }
@@ -587,7 +558,6 @@ internal class EmbraceNdkServiceTest {
     private fun assertNativeSignalHandlerNotInstalled() {
         verify(exactly = 0) {
             delegate._installSignalHandlers(
-                any(),
                 any(),
                 any(),
                 any(),

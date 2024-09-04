@@ -35,7 +35,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1installSignalH
                                                                                jobject thiz,
                                                                                jstring _base_path,
                                                                                jstring _crash_marker_path,
-                                                                               jstring _device_meta_data,
                                                                                jstring _session_id,
                                                                                jstring _app_state,
                                                                                jstring _report_id,
@@ -55,8 +54,7 @@ Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1installSignalH
     EMB_LOGDEV("unwinder args: apiLevel=%d, 32bit=%d", api_level, is_32bit);
 
     EMB_LOGDEV("Setting up initial state.");
-    const char *device_meta_data = (*env)->GetStringUTFChars(env, _device_meta_data, 0);
-    snprintf(__emb_env->crash.meta_data, EMB_DEVICE_META_DATA_SIZE, "%s", device_meta_data);
+    snprintf(__emb_env->crash.meta_data, EMB_DEVICE_META_DATA_SIZE, "%s", "{}");
     const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
     const char *report_id = (*env)->GetStringUTFChars(env, _report_id, 0);
@@ -101,10 +99,6 @@ JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateMetaData(JNIEnv *env,
                                                                         jobject thiz,
                                                                         jstring _device_meta_data) {
-    if (!__emb_env) {
-        EMB_LOGWARN("can't update device meta data until install is called.");
-        return;
-    }
     const char *device_meta_data = (*env)->GetStringUTFChars(env, _device_meta_data, 0);
 
     if (strlen(device_meta_data) >= EMB_DEVICE_META_DATA_SIZE) {
@@ -119,10 +113,6 @@ JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateSessionId(JNIEnv *env,
                                                                          jobject thiz,
                                                                          jstring _session_id) {
-    if (!__emb_env) {
-        EMB_LOGWARN("can't update session ID until install is called.");
-        return;
-    }
     const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
     emb_set_report_paths(__emb_env, session_id);
@@ -132,10 +122,6 @@ JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateAppState(JNIEnv *env,
                                                                         jobject thiz,
                                                                         jstring _app_state) {
-    if (!__emb_env) {
-        EMB_LOGWARN("can't update app state until install is called.");
-        return;
-    }
     const char *app_state = (*env)->GetStringUTFChars(env, _app_state, 0);
     snprintf(__emb_env->crash.app_state, EMB_APP_DATA_SIZE, "%s", app_state);
 }

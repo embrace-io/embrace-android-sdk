@@ -5,7 +5,6 @@ internal class NdkServiceDelegate {
         fun _installSignalHandlers(
             report_path: String?,
             markerFilePath: String?,
-            device_meta_data: String?,
             session_id: String?,
             app_state: String?,
             report_id: String?,

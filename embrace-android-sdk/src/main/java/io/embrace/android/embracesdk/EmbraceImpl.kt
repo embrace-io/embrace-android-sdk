@@ -258,10 +258,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         startSynchronous("startup-tracking")
         dataCaptureServiceModule.startupService.setSdkStartupInfo(startTimeMs, endTimeMs, inForeground, Thread.currentThread().name)
         endSynchronous()
-
-        // This should return immediately given that EmbraceSpansService initialization should be finished at this point
-        // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
-        bootstrapper.waitForAsyncInit()
     }
 
     /**

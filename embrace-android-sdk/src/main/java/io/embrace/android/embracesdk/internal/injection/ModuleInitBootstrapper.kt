@@ -15,10 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import java.util.Locale
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.max
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /**
@@ -107,13 +104,8 @@ internal class ModuleInitBootstrapper(
     lateinit var payloadSourceModule: PayloadSourceModule
         private set
 
-    private val asyncInitTask = AtomicReference<Future<*>?>(null)
-
     @Volatile
-    private var synchronousInitCompletionMs: Long = -1L
-
-    @Volatile
-    private var asyncInitCompletionMs: Long = -1L
+    var initialized: AtomicBoolean = AtomicBoolean(false)
 
     /**
      * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
@@ -133,8 +125,8 @@ internal class ModuleInitBootstrapper(
                 return false
             }
 
-            synchronized(asyncInitTask) {
-                return if (!isInitialized()) {
+            synchronized(initialized) {
+                val result = if (!isInitialized()) {
                     coreModule = init(CoreModule::class) { coreModuleSupplier(context, logger) }
 
                     val serviceRegistry = coreModule.serviceRegistry
@@ -144,16 +136,10 @@ internal class ModuleInitBootstrapper(
                     workerThreadModule =
                         init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
 
-                    val initTask = postInit(OpenTelemetryModule::class) {
-                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-                            .submit(
-                                TaskPriority.CRITICAL
-                            ) {
-                                Systrace.traceSynchronous("span-service-init") {
-                                    openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
-                                }
-                                asyncInitCompletionMs = initModule.clock.now()
-                            }
+                    postInit(OpenTelemetryModule::class) {
+                        Systrace.traceSynchronous("span-service-init") {
+                            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
+                        }
                     }
                     postInit(OpenTelemetryModule::class) {
                         serviceRegistry.registerService(initModule.telemetryService)
@@ -472,41 +458,15 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
                         serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
                     }
-                    asyncInitTask.set(initTask)
-                    synchronousInitCompletionMs = initModule.clock.now()
                     true
                 } else {
                     false
                 }
+                initialized.set(result)
+                return result
             }
         } finally {
             Systrace.endSynchronous()
-        }
-    }
-
-    /**
-     * A blocking get that returns when the async portion of initialization is complete. An exception will be thrown by the underlying
-     * [Future] if there is a timeout or if this failed for other reasons.
-     */
-    @JvmOverloads
-    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) {
-        Systrace.traceSynchronous("async-init-wait") {
-            asyncInitTask.get()?.get(timeout, unit)
-        }
-
-        Systrace.traceSynchronous("record-delay") {
-            // If async init finished after synchronous init, there's a delay so record that delay
-            // Otherwise, record a 0-duration span to signify there was no significant wait
-            val delayStartMs = synchronousInitCompletionMs
-            val delayEndMs = max(synchronousInitCompletionMs, asyncInitCompletionMs)
-            if (delayStartMs > 0) {
-                openTelemetryModule.spanService.recordCompletedSpan(
-                    name = "async-init-delay",
-                    startTimeMs = delayStartMs,
-                    endTimeMs = delayEndMs,
-                    private = true
-                )
-            }
         }
     }
 
@@ -514,18 +474,15 @@ internal class ModuleInitBootstrapper(
         if (!isInitialized()) {
             return
         }
-
-        synchronized(asyncInitTask) {
-            if (isInitialized()) {
-                coreModule.serviceRegistry.close()
-                workerThreadModule.close()
-                essentialServiceModule.processStateService.close()
-                asyncInitTask.set(null)
-            }
+        if (isInitialized()) {
+            coreModule.serviceRegistry.close()
+            workerThreadModule.close()
+            essentialServiceModule.processStateService.close()
+            initialized.set(false)
         }
     }
 
-    fun isInitialized(): Boolean = asyncInitTask.get() != null
+    fun isInitialized(): Boolean = initialized.get()
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
         Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }

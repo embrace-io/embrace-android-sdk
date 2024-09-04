@@ -26,7 +26,7 @@ public class FakeOpenTelemetryModule(
     override val spanRepository: SpanRepository = SpanRepository(),
 ) : OpenTelemetryModule {
     override val openTelemetryConfiguration: OpenTelemetryConfiguration =
-        OpenTelemetryConfiguration(spanSink, logSink, SystemInfo(), "my.example")
+        OpenTelemetryConfiguration(spanSink, logSink, SystemInfo())
     override val sdkTracer: Tracer
         get() = FakeTracer()
     override val spanService: SpanService

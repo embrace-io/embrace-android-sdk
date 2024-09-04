@@ -20,7 +20,6 @@ internal class InitModuleImplTest {
         assertNotNull(initModule.clock)
         assertTrue(initModule.telemetryService is EmbraceTelemetryService)
         assertEquals(initModule.systemInfo, SystemInfo())
-        assertEquals(initModule.processIdentifier.length, 16)
         assertNotNull(initModule.jsonSerializer)
     }
 

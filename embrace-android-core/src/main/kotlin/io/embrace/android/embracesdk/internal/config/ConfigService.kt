@@ -15,14 +15,13 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import java.io.Closeable
 
 /**
  * Provides access to the configuration for the customer's app.
  *
  * Configuration is configured for the user's app, and exposed via the API.
  */
-public interface ConfigService : Closeable {
+public interface ConfigService {
 
     public var remoteConfigSource: RemoteConfigSource?
 

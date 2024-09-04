@@ -42,18 +42,6 @@ public class FakeDeliveryCacheManager : DeliveryCacheManager {
         return cachedSessions.map { CachedSession.create(it.getSessionId(), 0, false) }
     }
 
-    override fun saveCrash(crash: EventMessage) {
-        saveCrashRequests.add(crash)
-    }
-
-    override fun loadCrash(): EventMessage? {
-        return null
-    }
-
-    override fun deleteCrash() {
-        TODO("Not yet implemented")
-    }
-
     override fun deletePayload(name: String) {
         TODO("Not yet implemented")
     }

@@ -153,8 +153,7 @@ internal class NetworkBehaviorImplTest {
         val otelCfg = OpenTelemetryConfiguration(
             SpanSinkImpl(),
             LogSinkImpl(),
-            SystemInfo(),
-            "my-id"
+            SystemInfo()
         )
         val json = ResourceReader.readResourceAsText("public_key_config.json")
         val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer(), otelCfg, EmbLoggerImpl())

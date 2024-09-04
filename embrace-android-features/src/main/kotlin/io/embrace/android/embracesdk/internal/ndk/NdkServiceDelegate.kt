@@ -5,7 +5,6 @@ internal class NdkServiceDelegate {
         fun _installSignalHandlers(
             report_path: String?,
             markerFilePath: String?,
-            device_meta_data: String?,
             session_id: String?,
             app_state: String?,
             report_id: String?,
@@ -17,7 +16,6 @@ internal class NdkServiceDelegate {
         fun _updateMetaData(new_device_meta_data: String?)
         fun _updateSessionId(new_session_id: String?)
         fun _updateAppState(new_app_state: String?)
-        fun _uninstallSignals()
         fun _testNativeCrash_C()
         fun _testNativeCrash_CPP()
         fun _getCrashReport(path: String?): String?

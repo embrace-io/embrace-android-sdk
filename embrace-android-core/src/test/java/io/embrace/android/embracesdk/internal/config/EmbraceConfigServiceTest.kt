@@ -108,7 +108,6 @@ internal class EmbraceConfigServiceTest {
     @After
     fun tearDown() {
         clearAllMocks()
-        service.close()
     }
 
     @Suppress("DEPRECATION")

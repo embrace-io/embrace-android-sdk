@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
@@ -31,8 +30,6 @@ internal class InitModuleImpl(
             systemInfo = systemInfo
         )
     }
-
-    override val processIdentifier: String = IdGenerator.generateLaunchInstanceId()
 
     override val jsonSerializer: PlatformSerializer by singleton {
         EmbraceSerializer()

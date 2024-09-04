@@ -22,13 +22,6 @@ public class FakeNetworkConnectivityService(
             notifyListeners()
         }
 
-    public var networkStatusOnSessionStartedCount: Int = 0
-
-    override fun networkStatusOnSessionStarted(startTime: Long) {
-        notifyListeners()
-        networkStatusOnSessionStartedCount += 1
-    }
-
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
         networkConnectivityListeners.add(listener)
     }
@@ -58,8 +51,6 @@ public class FakeNetworkConnectivityService(
 
 public class NoOpNetworkConnectivityService : NetworkConnectivityService {
     override fun close() {}
-
-    override fun networkStatusOnSessionStarted(startTime: Long) {}
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {}
 

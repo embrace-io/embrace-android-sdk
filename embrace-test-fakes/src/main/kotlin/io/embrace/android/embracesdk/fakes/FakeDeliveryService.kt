@@ -22,13 +22,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * invocations. Please add additional tracking functionality as tests require them.
  */
 public open class FakeDeliveryService : DeliveryService {
-    public var lastSentCrash: EventMessage? = null
     public val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     public val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     public val sentMoments: MutableList<EventMessage> = mutableListOf()
     public var lastEventSentAsync: EventMessage? = null
     public var eventSentAsyncInvokedCount: Int = 0
-    public var lastSavedCrash: EventMessage? = null
     public var lastSentCachedSession: String? = null
     public val sentSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
         ConcurrentLinkedQueue()
@@ -61,11 +59,6 @@ public open class FakeDeliveryService : DeliveryService {
 
     override fun saveLogs(logEnvelope: Envelope<LogPayload>) {
         lastSavedLogPayloads.add(logEnvelope)
-    }
-
-    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
-        lastSavedCrash = crash
-        lastSentCrash = crash
     }
 
     public fun getSentSessions(): List<Envelope<SessionPayload>> {

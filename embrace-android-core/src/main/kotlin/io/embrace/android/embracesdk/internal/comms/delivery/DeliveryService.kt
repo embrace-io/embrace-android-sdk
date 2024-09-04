@@ -17,6 +17,5 @@ public interface DeliveryService {
     )
     public fun sendLogs(logEnvelope: Envelope<LogPayload>)
     public fun saveLogs(logEnvelope: Envelope<LogPayload>)
-    public fun sendCrash(crash: EventMessage, processTerminating: Boolean)
     public fun sendMoment(eventMessage: EventMessage)
 }

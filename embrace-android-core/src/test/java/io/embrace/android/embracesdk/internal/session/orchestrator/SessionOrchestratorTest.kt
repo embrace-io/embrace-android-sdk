@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
@@ -398,8 +397,7 @@ internal class SessionOrchestratorTest {
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
-                sessionPropertiesService,
-                FakeNetworkConnectivityService()
+                sessionPropertiesService
             ),
             deliveryService,
             periodicSessionCacher,

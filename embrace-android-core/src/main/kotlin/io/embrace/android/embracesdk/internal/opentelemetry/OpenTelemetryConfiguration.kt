@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordExporter
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordProcessor
 import io.embrace.android.embracesdk.internal.logs.LogSink
@@ -22,8 +24,7 @@ import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 public class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
-    systemInfo: SystemInfo,
-    processIdentifier: String
+    systemInfo: SystemInfo
 ) {
     public val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
     public val embraceSdkVersion: String = BuildConfig.VERSION_NAME
@@ -41,6 +42,15 @@ public class OpenTelemetryConfiguration(
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_NAME, embraceSdkName)
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION, embraceSdkVersion)
         .build()
+
+    /**
+     * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.
+     * This allows us to explicitly relate all the sessions associated with a particular app launch rather than having the backend figure
+     * this out by proximity for stitched sessions.
+     */
+    private val processIdentifier: String by lazy {
+        Systrace.traceSynchronous("process-identifier-init", IdGenerator.Companion::generateLaunchInstanceId)
+    }
 
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()

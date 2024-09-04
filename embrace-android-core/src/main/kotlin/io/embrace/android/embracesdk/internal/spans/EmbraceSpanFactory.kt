@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -17,4 +18,6 @@ internal interface EmbraceSpanFactory {
     ): PersistableEmbraceSpan
 
     fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan
+
+    fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior)
 }

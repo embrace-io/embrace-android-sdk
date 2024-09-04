@@ -17,6 +17,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -46,6 +49,12 @@ internal class EmbraceSpanImplTest {
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
+    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+        SdkLocalConfig(
+            sensitiveKeysDenylist = listOf("password")
+        )
+    )
+
     @Before
     fun setup() {
         fakeClock = FakeClock()
@@ -53,15 +62,13 @@ internal class EmbraceSpanImplTest {
         openTelemetryClock = fakeInitModule.openTelemetryModule.openTelemetryClock
         spanRepository = SpanRepository()
         serializer = fakeInitModule.jsonSerializer
-        embraceSpan = EmbraceSpanImpl(
+        embraceSpan = createEmbraceSpanImpl(
             spanBuilder = tracer.embraceSpanBuilder(
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
                 internal = false,
                 private = false
-            ),
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
+            )
         )
         fakeClock.tick(100)
     }
@@ -318,15 +325,8 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate full snapshot`() {
-        embraceSpan = EmbraceSpanImpl(
-            spanBuilder = tracer.embraceSpanBuilder(
-                name = EXPECTED_SPAN_NAME,
-                type = EmbType.System.LowPower,
-                internal = true,
-                private = true
-            ),
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
+        embraceSpan = createEmbraceSpanImpl(
+            spanBuilder = createEmbraceSpanBuilder()
         )
         assertTrue(embraceSpan.start())
         assertNotNull(embraceSpan.snapshot())
@@ -370,18 +370,9 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `start time from span start method overrides all`() {
-        val spanBuilder = tracer.embraceSpanBuilder(
-            name = EXPECTED_SPAN_NAME,
-            type = EmbType.System.LowPower,
-            internal = true,
-            private = true
-        )
+        val spanBuilder = createEmbraceSpanBuilder()
         spanBuilder.startTimeMs = fakeClock.tick()
-        embraceSpan = EmbraceSpanImpl(
-            spanBuilder = spanBuilder,
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
-        )
+        embraceSpan = createEmbraceSpanImpl(spanBuilder)
 
         val timePassedIn = fakeClock.tick()
         fakeClock.tick()
@@ -392,17 +383,8 @@ internal class EmbraceSpanImplTest {
     @Test
     fun `OTel clock used if start time passed is zero`() {
         val fakeOpenTelemetryClock = FakeOpenTelemetryClock(fakeClock)
-        val spanBuilder = tracer.embraceSpanBuilder(
-            name = EXPECTED_SPAN_NAME,
-            type = EmbType.System.LowPower,
-            internal = true,
-            private = true
-        )
-        embraceSpan = EmbraceSpanImpl(
-            spanBuilder = spanBuilder,
-            openTelemetryClock = fakeOpenTelemetryClock,
-            spanRepository = spanRepository,
-        )
+        val spanBuilder = createEmbraceSpanBuilder()
+        embraceSpan = createEmbraceSpanImpl(spanBuilder, fakeOpenTelemetryClock)
 
         assertTrue(embraceSpan.start(startTimeMs = 0L))
         assertEquals(fakeOpenTelemetryClock.now(), embraceSpan.snapshot()?.startTimeNanos)
@@ -410,20 +392,11 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `start time from span builder used if no start time passed into start method`() {
-        val spanBuilder = tracer.embraceSpanBuilder(
-            name = EXPECTED_SPAN_NAME,
-            type = EmbType.System.LowPower,
-            internal = true,
-            private = true
-        )
+        val spanBuilder = createEmbraceSpanBuilder()
 
         val timeOnSpanBuilder = fakeClock.tick()
         spanBuilder.startTimeMs = timeOnSpanBuilder
-        embraceSpan = EmbraceSpanImpl(
-            spanBuilder = spanBuilder,
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
-        )
+        embraceSpan = createEmbraceSpanImpl(spanBuilder)
         fakeClock.tick()
         assertTrue(embraceSpan.start())
         assertEquals(timeOnSpanBuilder, embraceSpan.snapshot()?.startTimeNanos?.nanosToMillis())
@@ -431,26 +404,72 @@ internal class EmbraceSpanImplTest {
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val spanBuilder = tracer.embraceSpanBuilder(
-            name = EXPECTED_SPAN_NAME,
-            type = EmbType.System.LowPower,
-            internal = true,
-            private = true
-        )
+        val spanBuilder = createEmbraceSpanBuilder()
         val newParentContext = spanBuilder.parentContext.with(fakeContextKey, "fake-value")
         spanBuilder.setParentContext(newParentContext)
 
-        embraceSpan = EmbraceSpanImpl(
-            spanBuilder = spanBuilder,
-            openTelemetryClock = openTelemetryClock,
-            spanRepository = spanRepository,
-        )
+        embraceSpan = createEmbraceSpanImpl(spanBuilder)
 
         assertNull(embraceSpan.asNewContext())
         assertTrue(embraceSpan.start())
         val newSpanContext = checkNotNull(embraceSpan.asNewContext())
         assertEquals("fake-value", newSpanContext.get(fakeContextKey))
     }
+
+    @Test
+    fun `custom attributes are redacted if their key is sensitive when getting a span snapshot`() {
+        // given a span with a sensitive key
+        val spanBuilder = createEmbraceSpanBuilder()
+        spanBuilder.setCustomAttribute("password", "123456")
+        spanBuilder.setCustomAttribute("status", "ok")
+        embraceSpan = createEmbraceSpanImpl(spanBuilder)
+        embraceSpan.start()
+
+        // when getting a span snapshot
+        val snapshot = embraceSpan.snapshot()
+
+        // then the sensitive keys should be redacted
+        assertTrue(snapshot?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
+        assertTrue(snapshot?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
+    }
+
+    @Test
+    fun `event attributes are redacted if their key is sensitive when getting a span snapshot`() {
+        // given a span event with a sensitive key
+        val spanBuilder = createEmbraceSpanBuilder()
+        embraceSpan = createEmbraceSpanImpl(spanBuilder)
+        embraceSpan.start()
+        embraceSpan.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
+        embraceSpan.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
+
+        // when getting a span snapshot
+        val snapshot = embraceSpan.snapshot()
+
+        // then the sensitive keys should be redacted
+        val event = snapshot?.events?.first { it.name == "event" }
+        val anotherEvent = snapshot?.events?.first { it.name == "anotherEvent" }
+        assertTrue(event?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
+        assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
+        assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
+        assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
+    }
+
+    private fun createEmbraceSpanBuilder() = tracer.embraceSpanBuilder(
+        name = EXPECTED_SPAN_NAME,
+        type = EmbType.System.LowPower,
+        internal = true,
+        private = true
+    )
+
+    private fun createEmbraceSpanImpl(
+        spanBuilder: EmbraceSpanBuilder,
+        clock: Clock = openTelemetryClock
+    ) = EmbraceSpanImpl(
+        spanBuilder = spanBuilder,
+        openTelemetryClock = clock,
+        spanRepository = spanRepository,
+        sensitiveKeysBehavior = sensitiveKeysBehavior
+    )
 
     private fun EmbraceSpanImpl.assertSnapshot(
         expectedStartTimeMs: Long,

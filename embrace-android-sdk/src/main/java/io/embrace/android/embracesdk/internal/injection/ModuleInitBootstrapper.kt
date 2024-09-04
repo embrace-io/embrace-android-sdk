@@ -302,7 +302,6 @@ internal class ModuleInitBootstrapper(
                     deliveryModule = init(DeliveryModule::class) {
                         deliveryModuleSupplier(
                             initModule,
-                            workerThreadModule,
                             storageModule,
                             essentialServiceModule.apiService
                         )
@@ -355,7 +354,6 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             payloadSourceModule,
-                            deliveryModule,
                             androidServicesModule,
                             workerThreadModule,
                             nativeCoreModule

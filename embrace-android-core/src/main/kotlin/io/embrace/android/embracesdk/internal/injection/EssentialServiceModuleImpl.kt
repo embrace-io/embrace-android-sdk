@@ -122,7 +122,6 @@ public class EssentialServiceModuleImpl(
                 },
                 logger = initModule.logger,
                 backgroundWorker = networkRequestWorker,
-                cacheManager = Systrace.traceSynchronous("cache-manager") { storageModule.deliveryCacheManager },
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,

@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.spans.TracingApi
 
@@ -200,13 +201,16 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val momentsModule = bootstrapper.momentsModule
         val crashModule = bootstrapper.crashModule
 
-        startSynchronous("send-cached-sessions")
         // Send any sessions that were cached and not yet sent.
-        val essentialServiceModule = bootstrapper.essentialServiceModule
-        deliveryModule.deliveryService.sendCachedSessions(
-            bootstrapper.nativeFeatureModule::nativeCrashService,
-            essentialServiceModule.sessionIdTracker
-        )
+        startSynchronous("send-cached-sessions")
+        val worker = bootstrapper.workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE)
+        worker.submit(TaskPriority.HIGH) {
+            val essentialServiceModule = bootstrapper.essentialServiceModule
+            deliveryModule.deliveryService.sendCachedSessions(
+                bootstrapper.nativeFeatureModule::nativeCrashService,
+                essentialServiceModule.sessionIdTracker
+            )
+        }
         endSynchronous()
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -242,7 +246,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val endTimeMs = sdkClock.now()
         sdkCallChecker.started.set(true)
         endSynchronous()
-        val inForeground = !essentialServiceModule.processStateService.isInBackground
+        val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed

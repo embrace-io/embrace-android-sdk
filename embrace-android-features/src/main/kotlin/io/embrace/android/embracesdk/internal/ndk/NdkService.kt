@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
-public interface NdkService : NativeCrashService {
+public interface NdkService {
     public fun updateSessionId(newSessionId: String)
 
     public fun onSessionPropertiesUpdate(properties: Map<String, String>)

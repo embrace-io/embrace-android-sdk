@@ -154,9 +154,7 @@ internal class EmbraceNdkServiceTest {
                 metadataService,
                 activityService,
                 configService,
-                deliveryService,
                 userService,
-                preferencesService,
                 sessionPropertiesService,
                 sharedObjectLoader,
                 logger,
@@ -316,7 +314,7 @@ internal class EmbraceNdkServiceTest {
     fun `test checkForNativeCrash does nothing if there are no matchingFiles`() {
         every { repository.sortNativeCrashes(false) } returns listOf()
         initializeService()
-        val result = embraceNdkService.getAndSendNativeCrash()
+        val result = embraceNdkService.getNativeCrash()
         assertNull(result)
         verify { repository.sortNativeCrashes(false) }
         verify(exactly = 0) { delegate._getCrashReport(any()) }
@@ -371,7 +369,7 @@ internal class EmbraceNdkServiceTest {
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
         every { delegate._getCrashReport(any()) } returns ""
         initializeService()
-        val crashData = embraceNdkService.getAndSendNativeCrash()
+        val crashData = embraceNdkService.getNativeCrash()
         assertNull(crashData)
     }
 
@@ -391,7 +389,7 @@ internal class EmbraceNdkServiceTest {
         every { delegate._getCrashReport(any()) } returns json
 
         initializeService()
-        val crashData = embraceNdkService.getAndSendNativeCrash()
+        val crashData = embraceNdkService.getNativeCrash()
         assertNull(crashData)
     }
 
@@ -414,7 +412,7 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         every { embraceNdkService.symbolsForCurrentArch } returns mockk()
 
-        val result = embraceNdkService.getAndSendNativeCrash()
+        val result = embraceNdkService.getNativeCrash()
         assertNotNull(result)
 
         verify { embraceNdkService["getNativeCrashErrors"](any() as NativeCrashData, errorFile) }
@@ -431,7 +429,7 @@ internal class EmbraceNdkServiceTest {
         configService.appFramework = AppFramework.UNITY
         initializeService()
 
-        val result = embraceNdkService.getAndSendNativeCrash()
+        val result = embraceNdkService.getNativeCrash()
         assertNull(result)
 
         verify(exactly = 1) { repository.sortNativeCrashes(false) }

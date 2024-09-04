@@ -7,19 +7,16 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiService
  */
 public typealias DeliveryModuleSupplier = (
     initModule: InitModule,
-    workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     apiService: ApiService?,
 ) -> DeliveryModule
 
 public fun createDeliveryModule(
     initModule: InitModule,
-    workerThreadModule: WorkerThreadModule,
     storageModule: StorageModule,
     apiService: ApiService?,
 ): DeliveryModule = DeliveryModuleImpl(
     initModule,
-    workerThreadModule,
     storageModule,
     apiService,
 )

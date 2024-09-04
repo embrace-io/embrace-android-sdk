@@ -32,13 +32,6 @@ public interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
     public fun sendEvent(eventMessage: EventMessage)
 
     /**
-     * Sends a crash event to the API and reschedules it if the request times out
-     *
-     * @param crash the event message containing the crash
-     */
-    public fun sendCrash(crash: EventMessage): Future<*>
-
-    /**
      * Sends a session to the API. This can be either a v1 or v2 session - the implementation
      * is responsible for routing the payload correctly.
      */

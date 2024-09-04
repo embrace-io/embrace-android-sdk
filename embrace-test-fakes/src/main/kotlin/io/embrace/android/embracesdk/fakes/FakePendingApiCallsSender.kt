@@ -20,7 +20,7 @@ public class FakePendingApiCallsSender : PendingApiCallsSender {
         didScheduleApiCall = true
     }
 
-    override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
+    override fun initializeRetrySchedule(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
         this.sendMethod = sendMethod
     }
 

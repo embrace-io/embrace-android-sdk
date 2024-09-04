@@ -31,17 +31,14 @@ internal class EmbracePendingApiCallsSender(
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
     private val sendMethodRef: AtomicReference<SendMethod?> = AtomicReference(null)
 
-    init {
-        scheduledWorker.submit(this::scheduleApiCallsDelivery)
-    }
-
-    override fun setSendMethod(sendMethod: SendMethod) {
+    override fun initializeRetrySchedule(sendMethod: SendMethod) {
         sendMethodRef.set(sendMethod)
+        scheduledWorker.submit(this::scheduleApiCallsDelivery)
     }
 
     override fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean) {
         // Save the payload to disk.
-        val cachedPayloadName = cacheManager.savePayload(action)
+        val cachedPayloadName = cacheManager.savePayload(action, sync)
 
         // Save the pending api calls to disk.
         val pendingApiCall = PendingApiCall(request, cachedPayloadName, clock.now())

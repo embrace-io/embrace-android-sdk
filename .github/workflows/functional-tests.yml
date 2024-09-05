@@ -8,6 +8,10 @@ on:
   pull_request:
     branches: [ master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 60
 

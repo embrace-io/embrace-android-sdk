@@ -95,4 +95,9 @@ internal class OpenTelemetrySdkTest {
             assertEquals("url", schemaUrl)
         }
     }
+
+    @Test
+    fun `verify that the default StorageContext is used after OpenTelemetrySdk is initialized`() {
+        assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
+    }
 }

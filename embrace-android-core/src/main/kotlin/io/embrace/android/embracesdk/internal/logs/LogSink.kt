@@ -18,18 +18,18 @@ public interface LogSink {
     /**
      * Returns the list of currently stored [Log] objects, waiting to be sent in the next batch
      */
-    public fun completedLogs(): List<Log>
+    public fun logsForNextBatch(): List<Log>
 
     /**
      * Returns and clears the currently stored [Log] objects, to be used when the next batch is to be sent.
      * Implementations of this method must make sure the clearing and returning is atomic, i.e. logs cannot be added during this operation.
      */
-    public fun flushLogs(): List<Log>
+    public fun flushBatch(): List<Log>
 
     /**
-     * Return a [Log] that is to be sent immediately rather than batched
+     * Return a [Log] that is to be delivered in its own request
      */
-    public fun pollNonbatchedLog(): Log?
+    public fun pollUnbatchedLog(): LogRequest<Log>?
 
     /**
      * Registers a callback to be called after new logs are stored.

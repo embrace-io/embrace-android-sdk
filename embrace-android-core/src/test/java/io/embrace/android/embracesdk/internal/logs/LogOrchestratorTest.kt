@@ -188,7 +188,7 @@ internal class LogOrchestratorTest {
     }
 
     @Test
-    fun `logs with DEFER SendMode are saved by not sent`() {
+    fun `logs with DEFER SendMode are saved but not sent`() {
         logSink.storeLogs(listOf(deferredLogRecordData))
         executorService.runCurrentlyBlocked()
         // Verify the log is not in the LogSink but is saved

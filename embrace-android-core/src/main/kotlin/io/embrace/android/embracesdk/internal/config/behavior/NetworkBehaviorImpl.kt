@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.instrumented.NetworkCaptureConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -23,11 +24,6 @@ class NetworkBehaviorImpl(
     companion object {
 
         /**
-         * Sets the default name of the HTTP request header to extract trace ID from.
-         */
-        const val CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE: String = "x-emb-trace-id"
-
-        /**
          * Capture request content length by default.
          */
         const val CAPTURE_REQUEST_CONTENT_LENGTH: Boolean = false
@@ -49,7 +45,7 @@ class NetworkBehaviorImpl(
     }
 
     override fun getTraceIdHeader(): String =
-        local?.networking?.traceIdHeader ?: CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+        local?.networking?.traceIdHeader ?: NetworkCaptureConfig.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
         local?.networking?.captureRequestContentLength ?: CAPTURE_REQUEST_CONTENT_LENGTH

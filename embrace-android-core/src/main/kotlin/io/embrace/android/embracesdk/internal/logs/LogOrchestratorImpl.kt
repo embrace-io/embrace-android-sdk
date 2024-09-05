@@ -49,7 +49,7 @@ internal class LogOrchestratorImpl(
     }
 
     private fun onLogsAdded() {
-        logEnvelopeSource.getNonbatchedEnvelope().forEach { logRequest ->
+        logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
             if (logRequest.defer) {
                 deliveryService.saveLogs(logRequest.payload)
             } else {
@@ -99,7 +99,7 @@ internal class LogOrchestratorImpl(
     }
 
     private fun isMaxLogsPerBatchReached(): Boolean =
-        sink.completedLogs().size >= MAX_LOGS_PER_BATCH
+        sink.logsForNextBatch().size >= MAX_LOGS_PER_BATCH
 
     private fun isMaxInactivityTimeReached(now: Long): Boolean =
         now - lastLogTime.get() >= MAX_INACTIVITY_TIME

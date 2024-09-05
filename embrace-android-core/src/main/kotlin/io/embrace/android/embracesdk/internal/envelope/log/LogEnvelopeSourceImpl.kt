@@ -14,8 +14,8 @@ internal class LogEnvelopeSourceImpl(
 
     override fun getBatchedLogEnvelope(): Envelope<LogPayload> = getLogEnvelope(logPayloadSource.getBatchedLogPayload())
 
-    override fun getNonbatchedEnvelope(): List<LogRequest<Envelope<LogPayload>>> {
-        val payloads = logPayloadSource.getNonbatchedLogPayloads()
+    override fun getSingleLogEnvelopes(): List<LogRequest<Envelope<LogPayload>>> {
+        val payloads = logPayloadSource.getSingleLogPayloads()
         return if (payloads.isNotEmpty()) {
             payloads.map { LogRequest(payload = getLogEnvelope(it.payload), defer = it.defer) }
         } else {

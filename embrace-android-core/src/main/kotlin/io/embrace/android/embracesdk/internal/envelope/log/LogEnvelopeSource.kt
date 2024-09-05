@@ -7,5 +7,5 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 public interface LogEnvelopeSource {
     public fun getBatchedLogEnvelope(): Envelope<LogPayload>
 
-    public fun getNonbatchedEnvelope(): List<LogRequest<Envelope<LogPayload>>>
+    public fun getSingleLogEnvelopes(): List<LogRequest<Envelope<LogPayload>>>
 }

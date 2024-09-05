@@ -10,29 +10,29 @@ internal class LogPayloadSourceImpl(
 
     override fun getBatchedLogPayload(): LogPayload {
         return LogPayload(
-            logs = logSink.flushLogs()
+            logs = logSink.flushBatch()
         )
     }
 
-    override fun getNonbatchedLogPayloads(): List<LogRequest<LogPayload>> {
-        val nonbatchedLogs = mutableListOf<LogRequest<LogPayload>>()
-        var logRequest = logSink.pollNonbatchedLog()
+    override fun getSingleLogPayloads(): List<LogRequest<LogPayload>> {
+        val logRequests = mutableListOf<LogRequest<LogPayload>>()
+        var logRequest = logSink.pollUnbatchedLog()
 
         while (logRequest != null) {
-            nonbatchedLogs.add(
+            logRequests.add(
                 LogRequest(
                     payload = LogPayload(logs = listOf(logRequest.payload)),
                     defer = logRequest.defer
                 )
             )
-            logRequest = if (nonbatchedLogs.size < MAX_PAYLOADS) {
-                logSink.pollNonbatchedLog()
+            logRequest = if (logRequests.size < MAX_PAYLOADS) {
+                logSink.pollUnbatchedLog()
             } else {
                 null
             }
         }
 
-        return nonbatchedLogs
+        return logRequests
     }
 
     private companion object {

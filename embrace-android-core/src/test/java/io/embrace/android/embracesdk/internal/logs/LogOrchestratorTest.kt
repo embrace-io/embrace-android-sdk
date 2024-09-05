@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
-import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData
+import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
@@ -64,14 +64,14 @@ internal class LogOrchestratorTest {
         logSink.storeLogs(logs.toList())
 
         // Verify the logs are not sent
-        assertEquals(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1, logSink.completedLogs().size)
+        assertEquals(LogOrchestratorImpl.MAX_LOGS_PER_BATCH - 1, logSink.logsForNextBatch().size)
         verifyPayloadNotSent()
 
         // Add one more log to reach max batch size
         logSink.storeLogs(listOf(FakeLogRecordData()))
 
         // Verify the logs are sent
-        assertTrue(logSink.completedLogs().isEmpty())
+        assertTrue(logSink.logsForNextBatch().isEmpty())
         verifyPayload(LogOrchestratorImpl.MAX_LOGS_PER_BATCH)
     }
 
@@ -82,7 +82,7 @@ internal class LogOrchestratorTest {
         moveTimeAhead(2000L)
 
         // Verify the logs are sent
-        assertTrue(logSink.completedLogs().isEmpty())
+        assertTrue(logSink.logsForNextBatch().isEmpty())
         verifyPayload(1)
     }
 
@@ -96,13 +96,13 @@ internal class LogOrchestratorTest {
         }
 
         // Verify no logs have been sent
-        assertFalse(logSink.completedLogs().isEmpty())
+        assertFalse(logSink.logsForNextBatch().isEmpty())
         verifyPayloadNotSent()
 
         moveTimeAhead(500)
 
         // Verify the logs are sent
-        assertTrue(logSink.completedLogs().isEmpty())
+        assertTrue(logSink.logsForNextBatch().isEmpty())
         verifyPayload(9)
     }
 
@@ -116,14 +116,14 @@ internal class LogOrchestratorTest {
         }
 
         // Verify no logs have been sent
-        assertFalse(logSink.completedLogs().isEmpty())
+        assertFalse(logSink.logsForNextBatch().isEmpty())
         verifyPayloadNotSent()
 
         // flush the logs
         logOrchestrator.flush(false)
 
         // Verify the logs are sent
-        assertTrue(logSink.completedLogs().isEmpty())
+        assertTrue(logSink.logsForNextBatch().isEmpty())
         verifyPayload(4)
     }
 
@@ -137,14 +137,14 @@ internal class LogOrchestratorTest {
         }
 
         // Verify no logs have been sent
-        assertFalse(logSink.completedLogs().isEmpty())
+        assertFalse(logSink.logsForNextBatch().isEmpty())
         verifyPayloadNotSent()
 
         // flush the logs
         logOrchestrator.flush(true)
 
         // Verify the logs are sent
-        assertTrue(logSink.completedLogs().isEmpty())
+        assertTrue(logSink.logsForNextBatch().isEmpty())
         assertEquals(0, deliveryService.lastSentLogPayloads.size)
         assertEquals(1, deliveryService.lastSavedLogPayloads.size)
         assertEquals(4, deliveryService.lastSavedLogPayloads[0].data.logs?.size)
@@ -180,10 +180,10 @@ internal class LogOrchestratorTest {
 
     @Test
     fun `logs with IMMEDIATE SendMode are sent immediately`() {
-        logSink.storeLogs(listOf(unbatchableLogRecordData))
+        logSink.storeLogs(listOf(sendImmediatelyLogRecordData))
         executorService.runCurrentlyBlocked()
         // Verify the logs are sent
-        assertNull(logSink.pollNonbatchedLog())
+        assertNull(logSink.pollUnbatchedLog())
         verifyPayload(1)
     }
 
@@ -192,7 +192,7 @@ internal class LogOrchestratorTest {
         logSink.storeLogs(listOf(deferredLogRecordData))
         executorService.runCurrentlyBlocked()
         // Verify the log is not in the LogSink but is saved
-        assertNull(logSink.pollNonbatchedLog())
+        assertNull(logSink.pollUnbatchedLog())
         assertNotNull(deliveryService.lastSavedLogPayloads.single())
         assertEquals(0, deliveryService.lastSentLogPayloads.size)
     }

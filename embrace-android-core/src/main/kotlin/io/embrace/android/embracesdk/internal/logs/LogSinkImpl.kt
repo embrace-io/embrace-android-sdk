@@ -39,11 +39,11 @@ public class LogSinkImpl : LogSink {
         return CompletableResultCode.ofSuccess()
     }
 
-    override fun completedLogs(): List<Log> {
+    override fun logsForNextBatch(): List<Log> {
         return storedLogs.toList()
     }
 
-    override fun flushLogs(): List<Log> {
+    override fun flushBatch(): List<Log> {
         synchronized(flushLock) {
             val batchSize = minOf(storedLogs.size, MAX_LOGS_PER_BATCH)
             val flushedLogs = storedLogs.threadSafeTake(batchSize)
@@ -52,7 +52,7 @@ public class LogSinkImpl : LogSink {
         }
     }
 
-    override fun pollNonbatchedLog(): LogRequest<Log>? = logRequests.poll()
+    override fun pollUnbatchedLog(): LogRequest<Log>? = logRequests.poll()
 
     override fun registerLogStoredCallback(onLogsStored: () -> Unit) {
         this.onLogsStored = onLogsStored

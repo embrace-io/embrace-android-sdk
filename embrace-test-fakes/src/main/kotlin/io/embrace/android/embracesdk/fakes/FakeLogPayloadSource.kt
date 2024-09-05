@@ -1,17 +1,17 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.fixtures.nonbatchableLog
+import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
 public class FakeLogPayloadSource : LogPayloadSource {
 
-    public var logs: LogPayload = LogPayload()
-    public var nonbatchedLogs: List<LogRequest<LogPayload>> =
-        listOf(LogRequest(LogPayload(logs = listOf(nonbatchableLog))))
+    public var singleLogPayloadsSource: List<LogRequest<LogPayload>> =
+        listOf(LogRequest(LogPayload(logs = listOf(sendImmediatelyLog))))
+    private val batchedLogPayload: LogPayload = LogPayload()
 
-    override fun getBatchedLogPayload(): LogPayload = logs
+    override fun getBatchedLogPayload(): LogPayload = batchedLogPayload
 
-    override fun getNonbatchedLogPayloads(): List<LogRequest<LogPayload>> = nonbatchedLogs
+    override fun getSingleLogPayloads(): List<LogRequest<LogPayload>> = singleLogPayloadsSource
 }

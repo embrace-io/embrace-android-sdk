@@ -13,5 +13,5 @@ public interface LogPayloadSource {
     /**
      * Returns a list of [LogPayload] that each contain a single high priority log
      */
-    public fun getNonbatchedLogPayloads(): List<LogRequest<LogPayload>>
+    public fun getSingleLogPayloads(): List<LogRequest<LogPayload>>
 }

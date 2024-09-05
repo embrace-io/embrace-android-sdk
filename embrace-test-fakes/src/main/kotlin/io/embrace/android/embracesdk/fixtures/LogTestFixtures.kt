@@ -18,13 +18,13 @@ public val testLog: Log = Log(
     attributes = listOf(Attribute(key = "test1", data = "value1"), Attribute(key = "test2", data = "value2"))
 )
 
-public val nonbatchableLog: Log = Log(
+public val sendImmediatelyLog: Log = Log(
     traceId = null,
     spanId = null,
     timeUnixNano = 1681972471806000000L,
     severityNumber = 9,
     severityText = "INFO",
-    body = "unbatchable",
+    body = "sendImmediately",
     attributes = listOf(Attribute(embSendMode.name, SendMode.IMMEDIATE.name))
 )
 
@@ -38,7 +38,7 @@ public val deferredLog: Log = Log(
     attributes = listOf(Attribute(embSendMode.name, SendMode.DEFER.name))
 )
 
-public val unbatchableLogRecordData: FakeLogRecordData = FakeLogRecordData(log = nonbatchableLog)
+public val sendImmediatelyLogRecordData: FakeLogRecordData = FakeLogRecordData(log = sendImmediatelyLog)
 
 public val deferredLogRecordData: FakeLogRecordData = FakeLogRecordData(log = deferredLog)
 

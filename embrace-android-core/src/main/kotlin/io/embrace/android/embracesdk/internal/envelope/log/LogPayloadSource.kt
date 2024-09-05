@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.log
 
+import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
 public interface LogPayloadSource {
@@ -12,5 +13,5 @@ public interface LogPayloadSource {
     /**
      * Returns a list of [LogPayload] that each contain a single high priority log
      */
-    public fun getNonbatchedLogPayloads(): List<LogPayload>
+    public fun getNonbatchedLogPayloads(): List<LogRequest<LogPayload>>
 }

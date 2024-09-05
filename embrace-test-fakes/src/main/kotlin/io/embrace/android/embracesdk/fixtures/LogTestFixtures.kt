@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fixtures
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
-import io.embrace.android.embracesdk.internal.arch.schema.SendImmediately
-import io.embrace.android.embracesdk.internal.arch.schema.toPayload
+import io.embrace.android.embracesdk.internal.arch.schema.SendMode
+import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -25,10 +25,22 @@ public val nonbatchableLog: Log = Log(
     severityNumber = 9,
     severityText = "INFO",
     body = "unbatchable",
-    attributes = listOf(SendImmediately.toPayload())
+    attributes = listOf(Attribute(embSendMode.name, SendMode.IMMEDIATE.name))
+)
+
+public val deferredLog: Log = Log(
+    traceId = null,
+    spanId = null,
+    timeUnixNano = 1681972471807000000L,
+    severityNumber = 9,
+    severityText = "INFO",
+    body = "deferred",
+    attributes = listOf(Attribute(embSendMode.name, SendMode.DEFER.name))
 )
 
 public val unbatchableLogRecordData: FakeLogRecordData = FakeLogRecordData(log = nonbatchableLog)
+
+public val deferredLogRecordData: FakeLogRecordData = FakeLogRecordData(log = deferredLog)
 
 public val testNativeCrashData: NativeCrashData = NativeCrashData(
     nativeCrashId = "nativeCrashId",

@@ -27,9 +27,9 @@ public interface LogSink {
     public fun flushLogs(): List<Log>
 
     /**
-     * Return a [Log] that is to be sent immediately rather than batched
+     * Return a [Log] that is to be delivered in its own request
      */
-    public fun pollNonbatchedLog(): Log?
+    public fun pollNonbatchedLog(): LogRequest<Log>?
 
     /**
      * Registers a callback to be called after new logs are stored.

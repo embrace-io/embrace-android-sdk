@@ -97,3 +97,8 @@ public val embErrorLogCount: EmbraceAttributeKey = EmbraceAttributeKey("error_lo
  * Attribute name that identifies the number of free bytes on disk
  */
 public val embFreeDiskBytes: EmbraceAttributeKey = EmbraceAttributeKey("disk_free_bytes")
+
+/**
+ * Attribute name that identifies how a signal should be delivered to the Embrace backend
+ */
+public val embSendMode: EmbraceAttributeKey = EmbraceAttributeKey(id = "send_mode", isPrivate = true)

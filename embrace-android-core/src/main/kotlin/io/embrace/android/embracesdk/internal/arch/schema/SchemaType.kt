@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -23,8 +24,8 @@ public sealed class SchemaType(
     protected abstract val schemaAttributes: Map<String, String>
 
     private val commonAttributes: Map<String, String> = mutableMapOf<String, String>().apply {
-        if (telemetryType.sendImmediately) {
-            plusAssign(SendImmediately.toEmbraceKeyValuePair())
+        if (telemetryType.sendMode != SendMode.DEFAULT) {
+            plusAssign(embSendMode.name to telemetryType.sendMode.name)
         }
     }
 

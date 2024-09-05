@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 internal class LogOrchestratorImpl(
-    private val logOrchestratorScheduledWorker: ScheduledWorker,
+    private val worker: ScheduledWorker,
     private val clock: Clock,
     private val sink: LogSink,
     private val deliveryService: DeliveryService,
@@ -49,8 +49,14 @@ internal class LogOrchestratorImpl(
     }
 
     private fun onLogsAdded() {
-        logEnvelopeSource.getNonbatchedEnvelope().forEach { logEnvelope ->
-            deliveryService.sendLogs(logEnvelope)
+        logEnvelopeSource.getNonbatchedEnvelope().forEach { logRequest ->
+            if (logRequest.defer) {
+                deliveryService.saveLogs(logRequest.payload)
+            } else {
+                worker.submit {
+                    deliveryService.sendLogs(logRequest.payload)
+                }
+            }
         }
 
         lastLogTime.set(clock.now())
@@ -85,7 +91,7 @@ internal class LogOrchestratorImpl(
         val nextBatchCheck = MAX_BATCH_TIME - (now - firstLogInBatchTime.get())
         val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime.get())
         scheduledCheckFuture?.cancel(false)
-        scheduledCheckFuture = logOrchestratorScheduledWorker.schedule<Unit>(
+        scheduledCheckFuture = worker.schedule<Unit>(
             ::sendLogsIfNeeded,
             min(nextBatchCheck, nextInactivityCheck),
             TimeUnit.MILLISECONDS
@@ -103,8 +109,8 @@ internal class LogOrchestratorImpl(
         return firstLogInBatchTime != 0L && now - firstLogInBatchTime >= MAX_BATCH_TIME
     }
 
-    public companion object {
-        public const val MAX_LOGS_PER_BATCH: Int = 50
+    companion object {
+        const val MAX_LOGS_PER_BATCH: Int = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

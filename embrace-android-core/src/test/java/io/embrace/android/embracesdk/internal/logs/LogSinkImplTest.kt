@@ -1,12 +1,15 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
+import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.opentelemetry.sdk.common.CompletableResultCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -56,11 +59,33 @@ internal class LogSinkImplTest {
     }
 
     @Test
+    fun `logs with IMMEDIATE SendMode are stored in priority log queue`() {
+        val resultCode = logSink.storeLogs(listOf(unbatchableLogRecordData))
+        assertEquals(CompletableResultCode.ofSuccess(), resultCode)
+        assertEquals(0, logSink.completedLogs().size)
+        val logRequest = checkNotNull(logSink.pollNonbatchedLog())
+        assertEquals(unbatchableLogRecordData.log, logRequest.payload)
+        assertFalse(logRequest.defer)
+        assertNull(logSink.pollNonbatchedLog())
+    }
+
+    @Test
+    fun `logs with DEFER SendMode are stored in priority log queue`() {
+        val resultCode = logSink.storeLogs(listOf(deferredLogRecordData))
+        assertEquals(CompletableResultCode.ofSuccess(), resultCode)
+        assertEquals(0, logSink.completedLogs().size)
+        val logRequest = checkNotNull(logSink.pollNonbatchedLog())
+        assertEquals(deferredLogRecordData.log, logRequest.payload)
+        assertTrue(logRequest.defer)
+        assertNull(logSink.pollNonbatchedLog())
+    }
+
+    @Test
     fun `unbatchable logs are stored in priority log queue`() {
         val resultCode = logSink.storeLogs(listOf(unbatchableLogRecordData))
         assertEquals(CompletableResultCode.ofSuccess(), resultCode)
         assertEquals(0, logSink.completedLogs().size)
-        assertEquals(unbatchableLogRecordData.log, logSink.pollNonbatchedLog())
+        assertEquals(unbatchableLogRecordData.log, checkNotNull(logSink.pollNonbatchedLog()).payload)
         assertNull(logSink.pollNonbatchedLog())
     }
 }

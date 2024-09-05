@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.unbatchableLogRecordData
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
@@ -178,11 +179,22 @@ internal class LogOrchestratorTest {
     }
 
     @Test
-    fun `priority logs are sent immediately`() {
+    fun `logs with IMMEDIATE SendMode are sent immediately`() {
         logSink.storeLogs(listOf(unbatchableLogRecordData))
+        executorService.runCurrentlyBlocked()
         // Verify the logs are sent
         assertNull(logSink.pollNonbatchedLog())
         verifyPayload(1)
+    }
+
+    @Test
+    fun `logs with DEFER SendMode are saved by not sent`() {
+        logSink.storeLogs(listOf(deferredLogRecordData))
+        executorService.runCurrentlyBlocked()
+        // Verify the log is not in the LogSink but is saved
+        assertNull(logSink.pollNonbatchedLog())
+        assertNotNull(deliveryService.lastSavedLogPayloads.single())
+        assertEquals(0, deliveryService.lastSentLogPayloads.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {

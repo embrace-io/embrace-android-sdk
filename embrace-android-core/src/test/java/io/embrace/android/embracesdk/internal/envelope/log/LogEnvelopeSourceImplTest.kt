@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import io.embrace.android.embracesdk.fixtures.nonbatchableLog
+import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -31,10 +32,10 @@ internal class LogEnvelopeSourceImplTest {
 
     @Test
     fun getNonbatchedLogEnvelopes() {
-        with(source.getNonbatchedEnvelope().single()) {
+        with(source.getNonbatchedEnvelope().single().payload) {
             assertEquals(metadataSource.metadata, metadata)
             assertEquals(resourceSource.resource, resource)
-            assertEquals(logSource.nonbatchedLogs.single(), data)
+            assertEquals(logSource.nonbatchedLogs.single().payload, data)
             assertEquals("logs", type)
             assertEquals("0.1.0", version)
         }
@@ -43,9 +44,9 @@ internal class LogEnvelopeSourceImplTest {
     @Test
     fun `check maximum number of envelopes returned`() {
         val fakeLogPayloadSource = FakeLogPayloadSource()
-        val nonbatchedLogs = mutableListOf<LogPayload>()
+        val nonbatchedLogs = mutableListOf<LogRequest<LogPayload>>()
         repeat(5) {
-            nonbatchedLogs.add(LogPayload(listOf(nonbatchableLog.copy(body = "$it"))))
+            nonbatchedLogs.add(LogRequest(LogPayload(listOf(nonbatchableLog.copy(body = "$it")))))
         }
 
         fakeLogPayloadSource.nonbatchedLogs = nonbatchedLogs

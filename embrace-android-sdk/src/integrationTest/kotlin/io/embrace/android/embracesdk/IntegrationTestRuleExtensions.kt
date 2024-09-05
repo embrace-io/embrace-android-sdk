@@ -69,6 +69,14 @@ internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = nul
 }
 
 /**
+ * Returns the last [Log] that was saved by the delivery service.
+ */
+internal fun IntegrationTestRule.Harness.getLastSavedLogPayload(): Envelope<LogPayload>? {
+    return overriddenDeliveryModule.deliveryService.lastSavedLogPayloads.last()
+}
+
+
+/**
  * Returns a list of session that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentSessions(): List<Envelope<SessionPayload>> {

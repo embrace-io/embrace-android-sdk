@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.schema
 public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
     override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "type")
     override val value: String = type + (subtype?.run { ".$this" } ?: "")
-    override val sendImmediately: Boolean = false
+    override val sendMode: SendMode = SendMode.DEFAULT
 
     /**
      * Keys that track how fast a time interval is. Only applies to spans.
@@ -48,7 +48,7 @@ public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
      */
     public sealed class System(
         subtype: String,
-        override val sendImmediately: Boolean = false
+        override val sendMode: SendMode = SendMode.DEFAULT
     ) : EmbType("sys", subtype) {
 
         public object Breadcrumb : System("breadcrumb")
@@ -71,11 +71,11 @@ public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
             public val embFlutterExceptionLibrary: EmbraceAttributeKey = EmbraceAttributeKey("exception.library")
         }
 
-        public object Exit : System("exit", true)
+        public object Exit : System("exit", SendMode.IMMEDIATE)
 
         public object PushNotification : System("push_notification")
 
-        public object Crash : System("android.crash", true) {
+        public object Crash : System("android.crash", SendMode.DEFER) {
             /**
              * The list of [Throwable] that caused the exception responsible for a crash
              */
@@ -83,7 +83,7 @@ public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
                 EmbraceAttributeKey("android.crash.exception_cause")
         }
 
-        public object ReactNativeCrash : System("android.react_native_crash", true) {
+        public object ReactNativeCrash : System("android.react_native_crash", SendMode.DEFER) {
             /**
              * The JavaScript unhandled exception from the ReactNative layer
              */
@@ -92,9 +92,9 @@ public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
             )
         }
 
-        public object ReactNativeAction : System("rn_action", true)
+        public object ReactNativeAction : System("rn_action")
 
-        public object NativeCrash : System("android.native_crash", true) {
+        public object NativeCrash : System("android.native_crash", SendMode.DEFER) {
             /**
              * Exception coming from the native layer
              */
@@ -122,7 +122,7 @@ public sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         public object Sigquit : System("sigquit")
 
-        public object NetworkCapturedRequest : System("network_capture", true)
+        public object NetworkCapturedRequest : System("network_capture", SendMode.IMMEDIATE)
 
         public object NetworkStatus : System("network_status")
 

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.log
 
+import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
@@ -13,13 +14,18 @@ internal class LogPayloadSourceImpl(
         )
     }
 
-    override fun getNonbatchedLogPayloads(): List<LogPayload> {
-        val nonbatchedLogs = mutableListOf<LogPayload>()
-        var log = logSink.pollNonbatchedLog()
+    override fun getNonbatchedLogPayloads(): List<LogRequest<LogPayload>> {
+        val nonbatchedLogs = mutableListOf<LogRequest<LogPayload>>()
+        var logRequest = logSink.pollNonbatchedLog()
 
-        while (log != null) {
-            nonbatchedLogs.add(LogPayload(logs = listOf(log)))
-            log = if (nonbatchedLogs.size < MAX_PAYLOADS) {
+        while (logRequest != null) {
+            nonbatchedLogs.add(
+                LogRequest(
+                    payload = LogPayload(logs = listOf(logRequest.payload)),
+                    defer = logRequest.defer
+                )
+            )
+            logRequest = if (nonbatchedLogs.size < MAX_PAYLOADS) {
                 logSink.pollNonbatchedLog()
             } else {
                 null

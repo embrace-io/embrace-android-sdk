@@ -48,16 +48,15 @@ jobs:
 
       - name: Generate Baseline Profile
         working-directory: android-sdk-benchmark
-        run: ./gradlew -Dorg.gradle.workers.max=4 -i :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
+        run: ./gradlew :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
           -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
-          -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
-          -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=180
           -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
       # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles
-        run: cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
+        run: cat android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/pixel6Api34/BaselineProfileGenerator_startup-baseline-prof.txt 
+          | grep '^[^[]*io/embrace/android/embracesdk' > embrace-android-sdk/src/main/baseline-prof.txt
 
       # Commits the generated Baseline Profile to your origin/remote
       - name: Commit Baseline Profiles

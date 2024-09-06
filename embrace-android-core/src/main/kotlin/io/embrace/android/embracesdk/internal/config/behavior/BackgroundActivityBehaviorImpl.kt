@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Provides the behavior that the Background Activity feature should follow.
  */
-public class BackgroundActivityBehaviorImpl(
+class BackgroundActivityBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<BackgroundActivityLocalConfig?>,
     remoteSupplier: Provider<BackgroundActivityRemoteConfig?>

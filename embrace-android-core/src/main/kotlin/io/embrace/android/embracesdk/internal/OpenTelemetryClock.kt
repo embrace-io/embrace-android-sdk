@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  * The one caveat about this implementation is that the precision for obtaining the current time only goes to the millisecond, which is
  * considered enough for client side operation timings at this time.
  */
-public class OpenTelemetryClock(
+class OpenTelemetryClock(
     private val embraceClock: Clock
 ) : io.opentelemetry.sdk.common.Clock {
 

@@ -4,9 +4,9 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class JsException(
-    @Json(name = "n") public var name: String?,
-    @Json(name = "m") public var message: String?,
-    @Json(name = "t") public var type: String?,
-    @Json(name = "st") public var stacktrace: String?
+class JsException(
+    @Json(name = "n") var name: String?,
+    @Json(name = "m") var message: String?,
+    @Json(name = "t") var type: String?,
+    @Json(name = "st") var stacktrace: String?
 )

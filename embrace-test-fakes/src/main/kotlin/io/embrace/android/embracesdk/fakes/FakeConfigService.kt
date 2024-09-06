@@ -24,11 +24,11 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  * current config values of this object will be propagated, and you can trigger this fake update even if you have not changed the underlying
  * data. Beware of this difference in implementation compared to the real EmbraceConfigService
  */
-public class FakeConfigService(
+class FakeConfigService(
     override var appFramework: AppFramework = AppFramework.NATIVE,
     override var appId: String = "abcde",
-    public var sdkDisabled: Boolean = false,
-    public var backgroundActivityCaptureEnabled: Boolean = false,
+    var sdkDisabled: Boolean = false,
+    var backgroundActivityCaptureEnabled: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = fakeBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = fakeAutoDataCaptureBehavior(),
@@ -49,7 +49,7 @@ public class FakeConfigService(
 
     override var remoteConfigSource: RemoteConfigSource? = null
 
-    public val listeners: MutableSet<() -> Unit> = mutableSetOf()
+    val listeners: MutableSet<() -> Unit> = mutableSetOf()
     override fun addListener(configListener: () -> Unit) {
         listeners.add(configListener)
     }
@@ -61,7 +61,7 @@ public class FakeConfigService(
     override fun hasValidRemoteConfig(): Boolean = hasValidRemoteConfig
     override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isEnabled()
 
-    public fun updateListeners() {
+    fun updateListeners() {
         listeners.forEach {
             it()
         }

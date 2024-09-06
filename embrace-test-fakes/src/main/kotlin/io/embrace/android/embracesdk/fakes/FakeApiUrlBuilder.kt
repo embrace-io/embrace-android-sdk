@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 
-public class FakeApiUrlBuilder : ApiUrlBuilder {
+class FakeApiUrlBuilder : ApiUrlBuilder {
     override fun getConfigUrl(): String {
         return ""
     }

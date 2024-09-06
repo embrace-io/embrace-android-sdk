@@ -4,16 +4,12 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class AutomaticDataCaptureLocalConfig(
-    @Json(name = "memory_info")
-    public val memoryServiceEnabled: Boolean? = null,
+class AutomaticDataCaptureLocalConfig(
+    @Json(name = "memory_info") val memoryServiceEnabled: Boolean? = null,
 
-    @Json(name = "power_save_mode_info")
-    public val powerSaveModeServiceEnabled: Boolean? = null,
+    @Json(name = "power_save_mode_info") val powerSaveModeServiceEnabled: Boolean? = null,
 
-    @Json(name = "network_connectivity_info")
-    public val networkConnectivityServiceEnabled: Boolean? = null,
+    @Json(name = "network_connectivity_info") val networkConnectivityServiceEnabled: Boolean? = null,
 
-    @Json(name = "anr_info")
-    public val anrServiceEnabled: Boolean? = null
+    @Json(name = "anr_info") val anrServiceEnabled: Boolean? = null
 )

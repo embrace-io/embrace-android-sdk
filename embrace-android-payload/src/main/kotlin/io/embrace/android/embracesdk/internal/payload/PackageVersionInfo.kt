@@ -8,18 +8,18 @@ import android.content.pm.PackageInfo
 private const val UNKNOWN_VALUE = "UNKNOWN"
 
 @Suppress("DEPRECATION")
-public class PackageVersionInfo(
+class PackageVersionInfo(
     packageInfo: PackageInfo,
 
-    public val versionName: String = runCatching {
+    val versionName: String = runCatching {
         packageInfo.versionName.toString().trim { it <= ' ' }
     }.getOrDefault(UNKNOWN_VALUE),
 
-    public val versionCode: String = runCatching {
+    val versionCode: String = runCatching {
         packageInfo.versionCode.toString()
     }.getOrDefault(UNKNOWN_VALUE),
 
-    public val packageName: String = runCatching {
+    val packageName: String = runCatching {
         packageInfo.packageName
     }.getOrDefault(UNKNOWN_VALUE)
 )

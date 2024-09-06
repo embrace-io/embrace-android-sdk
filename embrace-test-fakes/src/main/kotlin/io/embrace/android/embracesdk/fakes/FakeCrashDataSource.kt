@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.capture.crash.CrashDataSource
 import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.JsException
 
-public class FakeCrashDataSource : CrashDataSource {
+class FakeCrashDataSource : CrashDataSource {
     internal var exception: Throwable? = null
     internal var jsException: JsException? = null
 

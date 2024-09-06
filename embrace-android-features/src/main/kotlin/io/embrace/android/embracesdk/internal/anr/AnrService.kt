@@ -9,7 +9,7 @@ import java.io.Closeable
 /**
  * Service which detects when the application is not responding.
  */
-public interface AnrService :
+interface AnrService :
     DataCaptureService<List<AnrInterval>>,
     CrashTeardownHandler,
     Closeable {
@@ -21,12 +21,12 @@ public interface AnrService :
      *
      * @param configService        the configService
      */
-    public fun finishInitialization(
+    fun finishInitialization(
         configService: ConfigService
     )
 
     /**
      * Adds a listener which is invoked when the thread becomes blocked/unblocked.
      */
-    public fun addBlockedThreadListener(listener: BlockedThreadListener)
+    fun addBlockedThreadListener(listener: BlockedThreadListener)
 }

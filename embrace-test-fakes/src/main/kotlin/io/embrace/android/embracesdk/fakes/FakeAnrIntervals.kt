@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 
-public val fakeAnrIntervalThreads: List<ThreadInfo> = listOf(
+val fakeAnrIntervalThreads: List<ThreadInfo> = listOf(
     ThreadInfo(
         5,
         Thread.State.BLOCKED,
@@ -15,7 +15,7 @@ public val fakeAnrIntervalThreads: List<ThreadInfo> = listOf(
     )
 )
 
-public val fakeCompletedAnrInterval: AnrInterval = AnrInterval(
+val fakeCompletedAnrInterval: AnrInterval = AnrInterval(
     1000,
     null,
     2000,
@@ -30,5 +30,5 @@ public val fakeCompletedAnrInterval: AnrInterval = AnrInterval(
     )
 )
 
-public val fakeInProgressAnrInterval: AnrInterval =
+val fakeInProgressAnrInterval: AnrInterval =
     fakeCompletedAnrInterval.copy(lastKnownTime = 2000, endTime = null)

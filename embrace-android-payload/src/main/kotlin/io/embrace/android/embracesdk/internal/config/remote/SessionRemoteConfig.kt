@@ -9,7 +9,7 @@ import com.squareup.moshi.JsonClass
  * session payload. This feature may be enabled/disabled.
  */
 @JsonClass(generateAdapter = true)
-public data class SessionRemoteConfig(
+data class SessionRemoteConfig(
     @Json(name = "enable")
     val isEnabled: Boolean? = null,
 

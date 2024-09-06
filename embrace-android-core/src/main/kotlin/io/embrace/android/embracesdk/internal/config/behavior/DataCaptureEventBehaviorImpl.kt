@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-public class DataCaptureEventBehaviorImpl(
+class DataCaptureEventBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?> = { null }
 ) : DataCaptureEventBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(

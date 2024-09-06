@@ -230,4 +230,4 @@ internal class EmbracePendingApiCallsSender(
     }
 }
 
-public typealias SendMethod = (request: ApiRequest, action: SerializationAction) -> ApiResponse
+typealias SendMethod = (request: ApiRequest, action: SerializationAction) -> ApiResponse

@@ -11,8 +11,8 @@ import io.opentelemetry.api.trace.TraceState
 import io.opentelemetry.sdk.trace.IdGenerator
 import java.util.concurrent.TimeUnit
 
-public class FakeSpan(
-    public val fakeSpanBuilder: FakeSpanBuilder
+class FakeSpan(
+    val fakeSpanBuilder: FakeSpanBuilder
 ) : Span {
 
     private val spanContext: SpanContext =

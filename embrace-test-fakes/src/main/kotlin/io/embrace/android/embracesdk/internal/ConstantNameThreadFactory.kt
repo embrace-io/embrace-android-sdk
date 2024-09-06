@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadFactory
  * same name. Use the uniquePerInstance parameter to use the instance's hashcode to provide relative uniqueness across instances
  * of this thread factory.
  */
-public class ConstantNameThreadFactory(
+class ConstantNameThreadFactory(
     namePrefix: String = "thread",
     uniquePerInstance: Boolean = false
 ) : ThreadFactory {

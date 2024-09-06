@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration values relating to the user interface of the app.
  */
 @JsonClass(generateAdapter = true)
-public data class UiRemoteConfig(
+data class UiRemoteConfig(
 
     /**
      * The maximum number of custom breadcrumbs to send per session.

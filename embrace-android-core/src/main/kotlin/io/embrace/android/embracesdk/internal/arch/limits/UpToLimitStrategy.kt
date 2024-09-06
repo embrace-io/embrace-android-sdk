@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Allows capturing data up until a limit, then stops capturing.
  */
-public class UpToLimitStrategy(
+class UpToLimitStrategy(
     private val limitProvider: Provider<Int>,
 ) : LimitStrategy {
 

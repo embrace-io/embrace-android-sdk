@@ -31,7 +31,7 @@ import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
-public class EmbraceLogService(
+class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,

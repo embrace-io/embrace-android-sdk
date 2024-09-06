@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.EnumMap
 
 internal class EmbraceWebViewService(
-    public val configService: ConfigService,
+    val configService: ConfigService,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
     private val webViewDataSourceProvider: Provider<WebViewDataSource?>,

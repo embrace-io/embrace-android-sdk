@@ -5,33 +5,33 @@ import android.content.res.Resources
 /**
  * Specifies the application ID and build ID.
  */
-public class BuildInfo(
+class BuildInfo(
     /**
      * The ID of the particular build, generated at compile-time.
      */
-    public val buildId: String?,
+    val buildId: String?,
 
     /**
      * The BuildType name of the particular build, extracted at compile-time.
      */
-    public val buildType: String?,
+    val buildType: String?,
 
     /**
      * The Flavor name of the particular build, extracted at compile-time.
      */
-    public val buildFlavor: String?,
+    val buildFlavor: String?,
 
     /**
      * The ID of the particular js bundle, generated at compile-time.
      */
-    public val rnBundleId: String?,
+    val rnBundleId: String?,
 ) {
 
-    public companion object {
-        public const val BUILD_INFO_BUILD_ID: String = "emb_build_id"
-        public const val BUILD_INFO_BUILD_TYPE: String = "emb_build_type"
-        public const val BUILD_INFO_BUILD_FLAVOR: String = "emb_build_flavor"
-        public const val BUILD_INFO_RN_BUNDLE_ID: String = "emb_rn_bundle_id"
+    companion object {
+        const val BUILD_INFO_BUILD_ID: String = "emb_build_id"
+        const val BUILD_INFO_BUILD_TYPE: String = "emb_build_type"
+        const val BUILD_INFO_BUILD_FLAVOR: String = "emb_build_flavor"
+        const val BUILD_INFO_RN_BUNDLE_ID: String = "emb_rn_bundle_id"
         private const val RES_TYPE_STRING = "string"
 
         /**
@@ -41,7 +41,7 @@ public class BuildInfo(
          * @return the build information
          */
         @JvmStatic
-        public fun fromResources(resources: AndroidResourcesService, packageName: String): BuildInfo {
+        fun fromResources(resources: AndroidResourcesService, packageName: String): BuildInfo {
             return BuildInfo(
                 getBuildResource(resources, packageName, BUILD_INFO_BUILD_ID),
                 getBuildResource(resources, packageName, BUILD_INFO_BUILD_TYPE),
@@ -53,7 +53,7 @@ public class BuildInfo(
         /**
          * Given a build property name and a build property type, retrieves the embrace build resource value.
          */
-        public fun getBuildResource(
+        fun getBuildResource(
             resources: AndroidResourcesService,
             packageName: String,
             buildProperty: String

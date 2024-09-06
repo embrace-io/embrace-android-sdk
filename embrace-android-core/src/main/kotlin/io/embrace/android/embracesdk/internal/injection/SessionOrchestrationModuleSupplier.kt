@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 /**
  * Function that returns an instance of [SessionOrchestrationModule]. Matches the signature of the constructor for [SessionOrchestrationModuleImpl]
  */
-public typealias SessionOrchestrationModuleSupplier = (
+typealias SessionOrchestrationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,
@@ -18,7 +18,7 @@ public typealias SessionOrchestrationModuleSupplier = (
     logModule: LogModule
 ) -> SessionOrchestrationModule
 
-public fun createSessionOrchestrationModule(
+fun createSessionOrchestrationModule(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     androidServicesModule: AndroidServicesModule,

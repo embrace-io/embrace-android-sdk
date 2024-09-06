@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-public class FakeLogEnvelopeSource(
+class FakeLogEnvelopeSource(
     private val metadataSource: EnvelopeMetadataSource,
     private val resourceSource: EnvelopeResourceSource,
     private val logPayloadSource: LogPayloadSource

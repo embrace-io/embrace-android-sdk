@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.payload
 /**
  * A precursor object that holds state associated with a newly started session.
  */
-public data class SessionZygote(
+data class SessionZygote(
 
     /**
      * A unique ID which identifies the session.

@@ -10,7 +10,7 @@ import kotlin.math.min
 /**
  * Provides the behavior that functionality relating to network call capture should follow.
  */
-public class NetworkBehaviorImpl(
+class NetworkBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<SdkLocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
@@ -20,23 +20,23 @@ public class NetworkBehaviorImpl(
     remoteSupplier
 ) {
 
-    public companion object {
+    companion object {
 
         /**
          * Sets the default name of the HTTP request header to extract trace ID from.
          */
-        public const val CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE: String = "x-emb-trace-id"
+        const val CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE: String = "x-emb-trace-id"
 
         /**
          * Capture request content length by default.
          */
-        public const val CAPTURE_REQUEST_CONTENT_LENGTH: Boolean = false
+        const val CAPTURE_REQUEST_CONTENT_LENGTH: Boolean = false
 
         /**
          * Enable native monitoring by default.
          */
-        public const val ENABLE_NATIVE_MONITORING_DEFAULT: Boolean = true
-        public const val DEFAULT_NETWORK_CALL_LIMIT: Int = 1000
+        const val ENABLE_NATIVE_MONITORING_DEFAULT: Boolean = true
+        const val DEFAULT_NETWORK_CALL_LIMIT: Int = 1000
 
         private val dirtyKeyList = listOf(
             "-----BEGIN PUBLIC KEY-----",

@@ -17,12 +17,12 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Breadcrumbs are limited at query-time by default to 100 per session, but this can be overridden
  * in server-side configuration. They are stored in an unbounded queue.
  */
-public class ActivityBreadcrumbTracker(
+class ActivityBreadcrumbTracker(
     private val configService: ConfigService,
     private val viewDataSourceProvider: Provider<ViewDataSource?>
 ) : ActivityLifecycleListener {
 
-    public fun logView(screen: String?) {
+    fun logView(screen: String?) {
         viewDataSourceProvider()?.changeView(screen)
     }
 

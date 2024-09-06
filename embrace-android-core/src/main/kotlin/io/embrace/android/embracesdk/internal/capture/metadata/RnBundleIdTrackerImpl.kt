@@ -85,7 +85,7 @@ internal class RnBundleIdTrackerImpl(
         }
     }
 
-    public companion object {
+    companion object {
 
         private fun getBundleAssetName(bundleUrl: String): String {
             return bundleUrl.substring(bundleUrl.indexOf("://") + 3)

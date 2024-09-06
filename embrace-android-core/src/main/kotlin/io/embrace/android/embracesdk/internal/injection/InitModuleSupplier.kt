@@ -11,12 +11,12 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 /**
  * Function that returns an instance of [InitModule]. Matches the signature of the constructor for [InitModuleImpl]
  */
-public typealias InitModuleSupplier = (
+typealias InitModuleSupplier = (
     context: Context,
     logger: EmbLogger
 ) -> InitModule
 
-public fun createInitModule(
+fun createInitModule(
     clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     logger: EmbLogger = EmbLoggerImpl(),
     systemInfo: SystemInfo = SystemInfo()

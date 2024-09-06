@@ -13,29 +13,29 @@ import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
  * to only include services whose main responsibility is just capturing data. It would be well
  * worth reassessing the grouping once this module grows larger.
  */
-public interface DataCaptureServiceModule {
+interface DataCaptureServiceModule {
 
     /**
      * Captures breadcrumbs
      */
-    public val activityBreadcrumbTracker: ActivityBreadcrumbTracker
+    val activityBreadcrumbTracker: ActivityBreadcrumbTracker
 
     /**
      * Captures information from webviews
      */
-    public val webviewService: WebViewService
+    val webviewService: WebViewService
 
     /**
      * Captures push notifications
      */
-    public val pushNotificationService: PushNotificationCaptureService
+    val pushNotificationService: PushNotificationCaptureService
 
     /**
      * Captures the startup time of the SDK
      */
-    public val startupService: StartupService
+    val startupService: StartupService
 
-    public val startupTracker: StartupTracker
+    val startupTracker: StartupTracker
 
-    public val appStartupDataCollector: AppStartupDataCollector
+    val appStartupDataCollector: AppStartupDataCollector
 }

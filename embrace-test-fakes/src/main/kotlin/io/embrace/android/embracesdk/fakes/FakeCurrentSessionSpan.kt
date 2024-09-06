@@ -12,13 +12,13 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.sdk.trace.data.StatusData
 import java.util.concurrent.atomic.AtomicInteger
 
-public class FakeCurrentSessionSpan(
+class FakeCurrentSessionSpan(
     private val clock: FakeClock = FakeClock()
 ) : CurrentSessionSpan {
-    public var initializedCallCount: Int = 0
-    public var addedEvents: MutableList<SpanEventData> = mutableListOf()
-    public var attributes: MutableMap<String, String> = mutableMapOf()
-    public var sessionSpan: FakeSpanData? = null
+    var initializedCallCount: Int = 0
+    var addedEvents: MutableList<SpanEventData> = mutableListOf()
+    var attributes: MutableMap<String, String> = mutableMapOf()
+    var sessionSpan: FakeSpanData? = null
 
     private val sessionIteration = AtomicInteger(1)
 
@@ -70,9 +70,9 @@ public class FakeCurrentSessionSpan(
         return "testSessionId$sessionIteration"
     }
 
-    public fun getAttribute(key: String): String? = attributes[key]
+    fun getAttribute(key: String): String? = attributes[key]
 
-    public fun attributeCount(): Int = attributes.size
+    fun attributeCount(): Int = attributes.size
 
     private fun newSessionSpan(startTimeMs: Long) =
         FakeSpanData(

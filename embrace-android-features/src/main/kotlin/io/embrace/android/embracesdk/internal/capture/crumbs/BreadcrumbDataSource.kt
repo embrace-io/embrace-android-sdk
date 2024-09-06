@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 /**
  * Captures breadcrumbs.
  */
-public class BreadcrumbDataSource(
+class BreadcrumbDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     logger: EmbLogger
@@ -20,7 +20,7 @@ public class BreadcrumbDataSource(
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
 ) {
 
-    public fun logCustom(message: String, timestamp: Long) {
+    fun logCustom(message: String, timestamp: Long) {
         captureData(
             inputValidation = {
                 message.isNotEmpty()
@@ -43,7 +43,7 @@ public class BreadcrumbDataSource(
         }
     }
 
-    public companion object {
+    companion object {
         private const val BREADCRUMB_MESSAGE_MAX_LENGTH = 256
     }
 }

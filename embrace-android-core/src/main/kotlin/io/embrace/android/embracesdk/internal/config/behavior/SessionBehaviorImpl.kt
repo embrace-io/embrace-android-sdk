@@ -11,7 +11,7 @@ import java.util.Locale
 /**
  * Provides the behavior that functionality relating to sessions should follow.
  */
-public class SessionBehaviorImpl(
+class SessionBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<SessionLocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
@@ -21,8 +21,8 @@ public class SessionBehaviorImpl(
     remoteSupplier
 ) {
 
-    public companion object {
-        public const val SESSION_PROPERTY_LIMIT: Int = 10
+    companion object {
+        const val SESSION_PROPERTY_LIMIT: Int = 10
     }
 
     override fun getFullSessionEvents(): Set<String> {
@@ -47,7 +47,7 @@ public class SessionBehaviorImpl(
 
     override fun shouldGateStartupMoment(): Boolean = shouldGateFeature(SessionGatingKeys.STARTUP_MOMENT)
 
-    public fun shouldSendFullMessage(eventMessage: EventMessage): Boolean {
+    fun shouldSendFullMessage(eventMessage: EventMessage): Boolean {
         val type = eventMessage.event.type
         return (type == EventType.ERROR_LOG && shouldSendFullForErrorLog()) ||
             (type == EventType.CRASH && shouldSendFullForCrash())

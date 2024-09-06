@@ -5,10 +5,10 @@ import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 
-public class FakeAnrService : AnrService {
+class FakeAnrService : AnrService {
 
-    public var data: List<AnrInterval> = mutableListOf()
-    public var crashCount: Int = 0
+    var data: List<AnrInterval> = mutableListOf()
+    var crashCount: Int = 0
 
     override fun cleanCollections() {
     }

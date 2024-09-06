@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData.Companion.fromEventData
 import io.opentelemetry.sdk.trace.data.SpanData
 
-public fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
+fun SpanData.toEmbraceSpanData(): EmbraceSpanData = EmbraceSpanData(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
     parentSpanId = parentSpanId,

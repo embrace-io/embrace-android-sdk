@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
-public class BreadcrumbBehaviorImpl(
+class BreadcrumbBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<SdkLocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>

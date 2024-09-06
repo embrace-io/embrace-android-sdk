@@ -12,7 +12,7 @@ import io.opentelemetry.context.Scope
 import io.opentelemetry.sdk.common.Clock
 import java.util.concurrent.TimeUnit
 
-public class EmbSpan(
+class EmbSpan(
     private val embraceSpan: PersistableEmbraceSpan,
     private val clock: Clock
 ) : Span {

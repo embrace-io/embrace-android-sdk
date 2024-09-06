@@ -9,15 +9,15 @@ import java.io.ByteArrayOutputStream
 import java.util.LinkedList
 import java.util.Queue
 
-public class FakeApiClient : ApiClient {
-    public val sentRequests: MutableList<Pair<ApiRequest, ByteArrayInputStream?>> = mutableListOf()
+class FakeApiClient : ApiClient {
+    val sentRequests: MutableList<Pair<ApiRequest, ByteArrayInputStream?>> = mutableListOf()
     private val queuedResponses: Queue<ApiResponse> = LinkedList()
 
     override fun executeGet(request: ApiRequest): ApiResponse = getNext(request) {}
 
     override fun executePost(request: ApiRequest, action: SerializationAction): ApiResponse = getNext(request, action)
 
-    public fun queueResponse(response: ApiResponse) {
+    fun queueResponse(response: ApiResponse) {
         queuedResponses.add(response)
     }
 

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Provides the behavior that the Startup moment feature should follow.
  */
-public class StartupBehaviorImpl(
+class StartupBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<StartupMomentLocalConfig?>
 ) : StartupBehavior, MergedConfigBehavior<StartupMomentLocalConfig, UnimplementedConfig>(

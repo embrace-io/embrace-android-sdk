@@ -7,8 +7,7 @@ import com.squareup.moshi.JsonClass
  * Represents the startup moment configuration element specified in the Embrace config file.
  */
 @JsonClass(generateAdapter = true)
-public class StartupMomentLocalConfig(
+class StartupMomentLocalConfig(
 
-    @Json(name = "automatically_end")
-    public val automaticallyEnd: Boolean? = null
+    @Json(name = "automatically_end") val automaticallyEnd: Boolean? = null
 )

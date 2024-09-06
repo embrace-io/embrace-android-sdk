@@ -4,12 +4,12 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class NativeCrash(
-    @Json(name = "id") public val id: String?,
-    @Json(name = "m") public val crashMessage: String?,
-    @Json(name = "sb") public val symbols: Map<String?, String?>?,
-    @Json(name = "er") public val errors: List<NativeCrashDataError?>?,
-    @Json(name = "ue") public val unwindError: Int?,
-    @Json(name = "ma") public val map: String?,
-    @Json(name = "crash_number") public val crashNumber: Int? = null
+class NativeCrash(
+    @Json(name = "id") val id: String?,
+    @Json(name = "m") val crashMessage: String?,
+    @Json(name = "sb") val symbols: Map<String?, String?>?,
+    @Json(name = "er") val errors: List<NativeCrashDataError?>?,
+    @Json(name = "ue") val unwindError: Int?,
+    @Json(name = "ma") val map: String?,
+    @Json(name = "crash_number") val crashNumber: Int? = null
 )

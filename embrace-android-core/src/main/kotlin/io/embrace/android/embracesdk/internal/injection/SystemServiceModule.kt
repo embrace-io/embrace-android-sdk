@@ -6,10 +6,10 @@ import android.net.ConnectivityManager
 import android.os.PowerManager
 import android.view.WindowManager
 
-public interface SystemServiceModule {
-    public val activityManager: ActivityManager?
-    public val powerManager: PowerManager?
-    public val connectivityManager: ConnectivityManager?
-    public val storageManager: StorageStatsManager?
-    public val windowManager: WindowManager?
+interface SystemServiceModule {
+    val activityManager: ActivityManager?
+    val powerManager: PowerManager?
+    val connectivityManager: ConnectivityManager?
+    val storageManager: StorageStatsManager?
+    val windowManager: WindowManager?
 }

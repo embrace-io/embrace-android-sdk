@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
-public class AutoDataCaptureBehaviorImpl(
+class AutoDataCaptureBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<LocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>

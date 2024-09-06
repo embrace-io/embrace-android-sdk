@@ -8,7 +8,7 @@ import io.opentelemetry.sdk.trace.data.EventData
 /**
  * Serializable representation of [EmbraceSpanData]
  */
-public data class EmbraceSpanData(
+data class EmbraceSpanData(
     val traceId: String,
 
     val spanId: String,
@@ -28,8 +28,8 @@ public data class EmbraceSpanData(
     val attributes: Map<String, String> = emptyMap()
 ) {
 
-    public companion object {
-        public fun fromEventData(eventDataList: List<EventData>?): List<EmbraceSpanEvent> {
+    companion object {
+        fun fromEventData(eventDataList: List<EventData>?): List<EmbraceSpanEvent> {
             val events = mutableListOf<EmbraceSpanEvent>()
             eventDataList?.forEach { eventData ->
                 val event = EmbraceSpanEvent.create(

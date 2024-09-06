@@ -7,7 +7,6 @@ import com.squareup.moshi.JsonClass
  * Represents the crash handler element specified in the Embrace config file.
  */
 @JsonClass(generateAdapter = true)
-public class CrashHandlerLocalConfig(
-    @Json(name = "enabled")
-    public val enabled: Boolean? = null
+class CrashHandlerLocalConfig(
+    @Json(name = "enabled") val enabled: Boolean? = null
 )

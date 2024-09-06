@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Information about the user of the app, provided by the developer performing the integration.
  */
 @JsonClass(generateAdapter = true)
-public data class UserInfo(
+data class UserInfo(
 
     @Json(name = "id")
     val userId: String? = null,

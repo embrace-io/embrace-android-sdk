@@ -4,29 +4,27 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class Stacktraces @JvmOverloads constructor(
+class Stacktraces @JvmOverloads constructor(
     stacktraces: List<String>? = null,
     customStacktrace: String? = null,
     framework: AppFramework = AppFramework.NATIVE,
 
-    @Json(name = "c")
-    public val context: String? = null,
+    @Json(name = "c") val context: String? = null,
 
-    @Json(name = "l")
-    public val library: String? = null
+    @Json(name = "l") val library: String? = null
 ) {
 
     @Json(name = "tt")
-    public var jvmStacktrace: List<String>?
+    var jvmStacktrace: List<String>?
 
     @Json(name = "jsk")
-    public var javascriptStacktrace: String?
+    var javascriptStacktrace: String?
 
     @Json(name = "u")
-    public var unityStacktrace: String?
+    var unityStacktrace: String?
 
     @Json(name = "f")
-    public var flutterStacktrace: String?
+    var flutterStacktrace: String?
 
     init {
         javascriptStacktrace = when (framework) {

@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 
-public class FakeSessionPropertiesService : SessionPropertiesService {
+class FakeSessionPropertiesService : SessionPropertiesService {
 
-    public var props: MutableMap<String, String> = mutableMapOf()
+    var props: MutableMap<String, String> = mutableMapOf()
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         props[originalKey] = originalValue

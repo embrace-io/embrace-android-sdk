@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.payload
 
-public enum class ApplicationState {
+enum class ApplicationState {
 
     /**
      * Signals to the API that the application was in the foreground.

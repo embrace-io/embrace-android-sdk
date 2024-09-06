@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration values relating to the ANR tracking on the app.
  */
 @JsonClass(generateAdapter = true)
-public data class AnrRemoteConfig(
+data class AnrRemoteConfig(
 
     @Json(name = "pct_enabled")
     val pctEnabled: Int? = null,

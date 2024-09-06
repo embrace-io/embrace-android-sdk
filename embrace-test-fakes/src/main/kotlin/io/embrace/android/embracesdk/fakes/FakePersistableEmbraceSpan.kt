@@ -26,23 +26,23 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 
-public class FakePersistableEmbraceSpan(
-    public var name: String = "fake-span",
-    public var parentContext: Context = Context.root(),
-    public val type: TelemetryType = EmbType.Performance.Default,
-    public val internal: Boolean = false,
-    public val private: Boolean = internal,
+class FakePersistableEmbraceSpan(
+    var name: String = "fake-span",
+    var parentContext: Context = Context.root(),
+    val type: TelemetryType = EmbType.Performance.Default,
+    val internal: Boolean = false,
+    val private: Boolean = internal,
     private val fakeClock: FakeClock = FakeClock(),
 ) : PersistableEmbraceSpan {
 
     private var sdkSpan: io.opentelemetry.api.trace.Span? = null
-    public var spanStartTimeMs: Long? = null
-    public var spanEndTimeMs: Long? = null
-    public var status: Span.Status = Span.Status.UNSET
-    public var statusDescription: String = ""
-    public var errorCode: ErrorCode? = null
-    public val attributes: MutableMap<String, String> = mutableMapOf(type.toEmbraceKeyValuePair())
-    public val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue<EmbraceSpanEvent>()
+    var spanStartTimeMs: Long? = null
+    var spanEndTimeMs: Long? = null
+    var status: Span.Status = Span.Status.UNSET
+    var statusDescription: String = ""
+    var errorCode: ErrorCode? = null
+    val attributes: MutableMap<String, String> = mutableMapOf(type.toEmbraceKeyValuePair())
+    val events: ConcurrentLinkedQueue<EmbraceSpanEvent> = ConcurrentLinkedQueue<EmbraceSpanEvent>()
 
     override val parent: EmbraceSpan?
         get() = parentContext.getEmbraceSpan()
@@ -170,10 +170,10 @@ public class FakePersistableEmbraceSpan(
 
     private fun started(): Boolean = sdkSpan != null
 
-    public companion object {
-        public fun notStarted(): FakePersistableEmbraceSpan = FakePersistableEmbraceSpan(name = "not-started")
+    companion object {
+        fun notStarted(): FakePersistableEmbraceSpan = FakePersistableEmbraceSpan(name = "not-started")
 
-        public fun started(
+        fun started(
             parent: PersistableEmbraceSpan? = null,
             parentContext: Context = parent?.run { parent.asNewContext() } ?: Context.root(),
             clock: FakeClock = FakeClock()
@@ -186,13 +186,13 @@ public class FakePersistableEmbraceSpan(
                 start()
             }
 
-        public fun stopped(): FakePersistableEmbraceSpan =
+        fun stopped(): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(name = "stopped").apply {
                 start()
                 stop()
             }
 
-        public fun sessionSpan(
+        fun sessionSpan(
             sessionId: String,
             startTimeMs: Long,
             lastHeartbeatTimeMs: Long?,

@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Bundle
 
-public interface ActivityLifeCycleCallbacks : ActivityLifecycleCallbacks {
+interface ActivityLifeCycleCallbacks : ActivityLifecycleCallbacks {
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         // no op
     }

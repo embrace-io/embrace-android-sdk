@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Represents thread information at a given point in time.
  */
 @JsonClass(generateAdapter = true)
-public data class ThreadInfo public constructor(
+data class ThreadInfo(
 
     /**
      * The thread ID
@@ -38,7 +38,7 @@ public data class ThreadInfo public constructor(
     val lines: List<String>?
 ) {
 
-    public companion object {
+    companion object {
 
         /**
          * Creates a [ThreadInfo] from the [Thread], [StackTraceElement][] pair,
@@ -57,7 +57,7 @@ public data class ThreadInfo public constructor(
          */
         @JvmStatic
         @JvmOverloads
-        public fun ofThread(
+        fun ofThread(
             thread: Thread,
             stackTraceElements: Array<StackTraceElement>,
             maxStacktraceSize: Int = Integer.MAX_VALUE

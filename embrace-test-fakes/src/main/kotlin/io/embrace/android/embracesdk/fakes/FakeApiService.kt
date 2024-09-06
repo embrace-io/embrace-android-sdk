@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
@@ -49,7 +50,7 @@ public class FakeApiService : ApiService {
         eventRequests.add(eventMessage)
     }
 
-    override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
+    override fun sendSession(action: SerializationAction, onFinish: ((response: ApiResponse) -> Unit)): Future<*> {
         if (throwExceptionSendSession) {
             error("FakeApiService.sendSession")
         }
@@ -57,7 +58,7 @@ public class FakeApiService : ApiService {
         action(stream)
         val obj = readBodyAsSessionEnvelope(stream.toByteArray().inputStream())
         sessionRequests.add(obj)
-        onFinish?.invoke(true)
+        onFinish(ApiResponse.None)
         return ObservableFutureTask { }
     }
 

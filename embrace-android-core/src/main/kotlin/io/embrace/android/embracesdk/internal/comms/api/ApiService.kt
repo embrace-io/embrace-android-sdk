@@ -35,5 +35,5 @@ public interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
      * Sends a session to the API. This can be either a v1 or v2 session - the implementation
      * is responsible for routing the payload correctly.
      */
-    public fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>?
+    public fun sendSession(action: SerializationAction, onFinish: ((response: ApiResponse) -> Unit)): Future<*>?
 }

@@ -6,6 +6,8 @@ on:
     secrets:
       token:
         required: true
+  schedule:
+    - cron: '0 3 * * *'
 
 permissions:
   contents: write

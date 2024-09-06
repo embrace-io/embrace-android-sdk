@@ -42,7 +42,12 @@ jobs:
 
       - name: Generate Baseline Profile
         working-directory: android-sdk-benchmark
-        run: ./gradlew -Dorg.gradle.workers.max=4 -i :macrobenchmark:pixel6Api34BaselineProfileAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+        run: ./gradlew -Dorg.gradle.workers.max=4 -i :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
+          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+          -Pandroid.experimental.testOptions.managedDevices.emulator.showKernelLogging=true
+          -Pandroid.experimental.testOptions.managedDevices.setupTimeoutMinutes=180
+          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
       # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles

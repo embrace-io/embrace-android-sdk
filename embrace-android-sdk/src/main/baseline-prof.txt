@@ -4941,8 +4941,8 @@ PLio/embrace/android/embracesdk/payload/DeviceInfo;->getTimezoneDescription()Lja
 Lio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;
 HSPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
 PLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;-><init>(Lcom/squareup/moshi/Moshi;)V
-HPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DeviceInfo;)V
 HSPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DeviceInfo;)V
+PLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Lio/embrace/android/embracesdk/payload/DeviceInfo;)V
 HSPLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 PLio/embrace/android/embracesdk/payload/DeviceInfoJsonAdapter;->toJson(Lcom/squareup/moshi/JsonWriter;Ljava/lang/Object;)V
 Lio/embrace/android/embracesdk/payload/DiskUsage;

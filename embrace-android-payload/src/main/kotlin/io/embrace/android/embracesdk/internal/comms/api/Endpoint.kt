@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = false)
 public enum class Endpoint(
     public val path: String,
     public val version: String

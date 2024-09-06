@@ -57,8 +57,8 @@ internal class EmbraceDeliveryService(
                         serializer.toJson(envelope, Envelope.sessionEnvelopeType)
                     }
                 }
-            val future = apiService.sendSession(action) { successful ->
-                if (!successful) {
+            val future = apiService.sendSession(action) { response ->
+                if (!response.shouldRetry) {
                     val message =
                         "Session deleted without request being sent: ID $sessionId"
                     logger.logWarning(message, SessionPurgeException(message))
@@ -144,8 +144,8 @@ internal class EmbraceDeliveryService(
                 val sessionId = cachedSession.sessionId
                 val action = cacheManager.loadSessionAsAction(sessionId)
                 if (action != null) {
-                    apiService.sendSession(action) { successful ->
-                        if (!successful) {
+                    apiService.sendSession(action) { response ->
+                        if (!response.shouldRetry) {
                             val message = "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
                             logger.logWarning(message, SessionPurgeException(message))
                         }

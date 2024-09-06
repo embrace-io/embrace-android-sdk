@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.clock.SystemClock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.serialization.DecoratedSerializer
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.EmbraceTelemetryService
@@ -32,6 +33,6 @@ internal class InitModuleImpl(
     }
 
     override val jsonSerializer: PlatformSerializer by singleton {
-        EmbraceSerializer()
+        DecoratedSerializer(EmbraceSerializer(), logger)
     }
 }

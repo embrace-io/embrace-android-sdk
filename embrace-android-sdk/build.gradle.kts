@@ -2,6 +2,7 @@ import io.embrace.gradle.Versions
 
 plugins {
     id("embrace-prod-defaults")
+    id("enable-explicit-api-mode")
     id("com.google.devtools.ksp")
 }
 

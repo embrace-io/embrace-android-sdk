@@ -31,7 +31,7 @@ internal class ApiRequestMapper(
         )
     }
 
-    public fun configRequest(url: String): ApiRequest = ApiRequest(
+    fun configRequest(url: String): ApiRequest = ApiRequest(
         contentType = "application/json",
         userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME,
         accept = "application/json",
@@ -40,23 +40,23 @@ internal class ApiRequestMapper(
     )
 
     @Suppress("UNUSED_PARAMETER")
-    public fun logsEnvelopeRequest(envelope: Envelope<LogPayload>): ApiRequest {
+    fun logsEnvelopeRequest(envelope: Envelope<LogPayload>): ApiRequest {
         val url = Endpoint.LOGS.asEmbraceUrl()
         return requestBuilder(url)
     }
 
     @Suppress("UNUSED_PARAMETER")
-    public fun sessionEnvelopeRequest(envelope: Envelope<SessionPayload>): ApiRequest {
+    fun sessionEnvelopeRequest(envelope: Envelope<SessionPayload>): ApiRequest {
         val url = Endpoint.SESSIONS_V2.asEmbraceUrl()
         return requestBuilder(url)
     }
 
-    public fun sessionRequest(): ApiRequest {
+    fun sessionRequest(): ApiRequest {
         val url = Endpoint.SESSIONS_V2
         return requestBuilder(url.asEmbraceUrl())
     }
 
-    public fun eventMessageRequest(eventMessage: EventMessage): ApiRequest {
+    fun eventMessageRequest(eventMessage: EventMessage): ApiRequest {
         checkNotNull(eventMessage.event) { "event must be set" }
         val event = eventMessage.event
         checkNotNull(event.type) { "event type must be set" }

@@ -11,7 +11,7 @@ internal class EmbraceMemoryCleanerService(private val logger: EmbLogger) : Memo
      * List of listeners that subscribe to clean services collections.
      */
 
-    public val listeners: CopyOnWriteArrayList<MemoryCleanerListener> = CopyOnWriteArrayList<MemoryCleanerListener>()
+    val listeners: CopyOnWriteArrayList<MemoryCleanerListener> = CopyOnWriteArrayList<MemoryCleanerListener>()
 
     override fun cleanServicesCollections() {
         stream(listeners) { listener: MemoryCleanerListener ->

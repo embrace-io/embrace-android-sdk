@@ -8,7 +8,7 @@ import java.lang.reflect.Type
 /**
  * Handles the caching of objects.
  */
-public interface CacheService {
+interface CacheService {
     /**
      * Writes a JSON-serializable object to a file.
      *
@@ -19,7 +19,7 @@ public interface CacheService {
      * @param type the type of the object to write
      * @param T    the class of the object to write
      */
-    public fun <T> cacheObject(name: String, objectToCache: T, type: Type)
+    fun <T> cacheObject(name: String, objectToCache: T, type: Type)
 
     /**
      * Reads the specified object from the cache, if it exists.
@@ -29,7 +29,7 @@ public interface CacheService {
      * @param <T>   the type of the cached object
      * @return optionally the object, if it can be read successfully
      */
-    public fun <T> loadObject(name: String, type: Type): T?
+    fun <T> loadObject(name: String, type: Type): T?
 
     /**
      * Caches a payload to disk.
@@ -37,7 +37,7 @@ public interface CacheService {
      * @param name   the name of this cache in disk
      * @param action action that writes bytes
      */
-    public fun cachePayload(name: String, action: SerializationAction)
+    fun cachePayload(name: String, action: SerializationAction)
 
     /**
      * Provides a function that writes the bytes from a cached file, if it exists, to an
@@ -46,14 +46,14 @@ public interface CacheService {
      * @param name  the name of the file to read
      * @return a function that writes the byte array, if it can be read successfully
      */
-    public fun loadPayload(name: String): SerializationAction
+    fun loadPayload(name: String): SerializationAction
 
     /**
      * Delete a file from the cache
      *
      * @param name  the name of the file to delete
      */
-    public fun deleteFile(name: String): Boolean
+    fun deleteFile(name: String): Boolean
 
     /**
      * Get file IDs for all cached session files. This method also normalizes the file names and removes and temporarily files left behind
@@ -61,22 +61,22 @@ public interface CacheService {
      *
      * @return list of file names
      */
-    public fun normalizeCacheAndGetSessionFileIds(): List<String>
+    fun normalizeCacheAndGetSessionFileIds(): List<String>
 
     /**
      * Loads the old format of pending API calls.
      */
-    public fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
+    fun loadOldPendingApiCalls(name: String): List<PendingApiCall>?
 
     /**
      * Serializes a session object to disk via a stream. This saves memory when the session is large & the return value isn't used
      * (e.g. for a crash & periodic caching). If an existing session already exists, it will only be replaced if the new session
      * is successfully written to disk
      */
-    public fun writeSession(name: String, envelope: Envelope<SessionPayload>)
+    fun writeSession(name: String, envelope: Envelope<SessionPayload>)
 
     /**
      * Transform the current saved session with the given name using the given [transformer] and save it in its place
      */
-    public fun transformSession(name: String, transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>)
+    fun transformSession(name: String, transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>)
 }

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SendMode.IMMEDIATE
 /**
  * How a given payload should be delivered to the Embrace server
  */
-public enum class SendMode {
+enum class SendMode {
     /**
      * Use the default delivery semantics - no customization required
      */
@@ -24,7 +24,7 @@ public enum class SendMode {
     DEFER
 }
 
-public fun String.toSendMode(): SendMode {
+fun String.toSendMode(): SendMode {
     return when (lowercase()) {
         "immediate" -> IMMEDIATE
         "defer" -> DEFER

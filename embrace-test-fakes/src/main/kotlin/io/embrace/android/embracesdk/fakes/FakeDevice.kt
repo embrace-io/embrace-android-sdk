@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.Device
 
-public class FakeDevice(
+class FakeDevice(
     override var isJailbroken: Boolean? = false,
     override var screenResolution: String = "1920x1080",
     override val numberOfCores: Int = 8,

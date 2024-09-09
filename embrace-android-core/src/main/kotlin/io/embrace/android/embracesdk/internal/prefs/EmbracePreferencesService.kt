@@ -320,7 +320,7 @@ internal class EmbracePreferencesService(
         return value ?: maxCount
     }
 
-    public companion object {
+    companion object {
         internal const val SDK_STARTUP_IN_PROGRESS = "startup_entered"
         internal const val SDK_STARTUP_COMPLETED = "startup_completed"
         private const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"

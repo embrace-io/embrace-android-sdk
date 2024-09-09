@@ -11,7 +11,7 @@ import com.squareup.moshi.JsonClass
  * @param attributes
  */
 @JsonClass(generateAdapter = true)
-public data class SpanEvent(
+data class SpanEvent(
 
     /* The name of the event */
     @Json(name = "name")

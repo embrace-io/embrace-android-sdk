@@ -9,19 +9,19 @@ import java.util.Locale
 /**
  * Attribute that stores the [ErrorCode] in an OpenTelemetry span
  */
-public sealed class ErrorCodeAttribute(
+sealed class ErrorCodeAttribute(
     errorCode: ErrorCode
 ) : FixedAttribute {
     override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "error_code")
     override val value: String = errorCode.name.lowercase(Locale.ENGLISH)
 
-    public object Failure : ErrorCodeAttribute(FAILURE)
+    object Failure : ErrorCodeAttribute(FAILURE)
 
-    public object UserAbandon : ErrorCodeAttribute(USER_ABANDON)
+    object UserAbandon : ErrorCodeAttribute(USER_ABANDON)
 
-    public object Unknown : ErrorCodeAttribute(UNKNOWN)
+    object Unknown : ErrorCodeAttribute(UNKNOWN)
 
-    public fun ErrorCode.fromErrorCode(): ErrorCodeAttribute = when (this) {
+    fun ErrorCode.fromErrorCode(): ErrorCodeAttribute = when (this) {
         FAILURE -> Failure
         USER_ABANDON -> UserAbandon
         UNKNOWN -> Unknown

@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public data class AppInfo(
+data class AppInfo(
 
     /**
      * The version of the app which has embedded the Embrace SDK.

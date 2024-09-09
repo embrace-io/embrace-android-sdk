@@ -7,16 +7,16 @@ import io.opentelemetry.context.Context
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-public class FakeLogRecordBuilder : LogRecordBuilder {
+class FakeLogRecordBuilder : LogRecordBuilder {
 
-    public var timestampEpochNanos: Long = 0
-    public var observedTimestampEpochNanos: Long = 0
-    public var context: Context? = null
-    public var severity: Severity = Severity.UNDEFINED_SEVERITY_NUMBER
-    public var severityText: String? = null
-    public var body: String? = null
-    public var attributes: MutableMap<String, String> = mutableMapOf()
-    public var emitCalled: Int = 0
+    var timestampEpochNanos: Long = 0
+    var observedTimestampEpochNanos: Long = 0
+    var context: Context? = null
+    var severity: Severity = Severity.UNDEFINED_SEVERITY_NUMBER
+    var severityText: String? = null
+    var body: String? = null
+    var attributes: MutableMap<String, String> = mutableMapOf()
+    var emitCalled: Int = 0
 
     override fun setTimestamp(timestamp: Long, unit: TimeUnit): LogRecordBuilder {
         timestampEpochNanos = unit.toNanos(timestamp)

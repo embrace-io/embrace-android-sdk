@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 /**
  * Base class for data sources.
  */
-public abstract class DataSourceImpl<T>(
+abstract class DataSourceImpl<T>(
     private val destination: T,
     private val logger: EmbLogger,
     private val limitStrategy: LimitStrategy,

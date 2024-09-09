@@ -3,15 +3,15 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 
-public class FakeUserService : UserService {
+class FakeUserService : UserService {
 
-    public var obj: UserInfo = UserInfo()
-    public var id: String? = null
-    public var email: String? = null
-    public var name: String? = null
-    public var payer: Boolean? = null
-    public var personas: MutableList<String> = mutableListOf()
-    public var clearedCount: Int = 0
+    var obj: UserInfo = UserInfo()
+    var id: String? = null
+    var email: String? = null
+    var name: String? = null
+    var payer: Boolean? = null
+    var personas: MutableList<String> = mutableListOf()
+    var clearedCount: Int = 0
 
     override fun getUserInfo(): UserInfo = obj
 

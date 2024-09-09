@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.worker
 /**
  * The key used to reference a specific shared [BackgroundWorker] or the [ScheduledWorker] that uses it
  */
-public enum class WorkerName(internal val threadName: String) {
+enum class WorkerName(internal val threadName: String) {
 
     /**
      * Used primarily to perform short-lived tasks that need to execute only once, or

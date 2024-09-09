@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.payload
 /**
  * Holds thread data taken during an [AnrInterval].
  */
-public data class AnrSample(
+data class AnrSample(
 
     /**
      * The timestamp in milliseconds at which this sample was captured
@@ -26,8 +26,8 @@ public data class AnrSample(
     val code: Int? = CODE_DEFAULT
 ) {
 
-    public companion object {
-        public const val CODE_DEFAULT: Int = 0
-        public const val CODE_SAMPLE_LIMIT_REACHED: Int = 1
+    companion object {
+        const val CODE_DEFAULT: Int = 0
+        const val CODE_SAMPLE_LIMIT_REACHED: Int = 1
     }
 }

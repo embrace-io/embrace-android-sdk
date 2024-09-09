@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
-public interface RemoteConfigSource {
+interface RemoteConfigSource {
 
     /**
      * Asynchronously gets the app's SDK configuration.
@@ -13,7 +13,7 @@ public interface RemoteConfigSource {
      *
      * @return a future containing the configuration.
      */
-    public fun getConfig(): RemoteConfig?
+    fun getConfig(): RemoteConfig?
 
-    public fun getCachedConfig(): CachedConfig
+    fun getCachedConfig(): CachedConfig
 }

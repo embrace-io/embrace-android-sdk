@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Provides the behavior that should be followed for remote log message functionality.
  */
-public class LogMessageBehaviorImpl(
+class LogMessageBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<LogRemoteConfig?>
 ) : LogMessageBehavior, MergedConfigBehavior<UnimplementedConfig, LogRemoteConfig>(

@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 /**
  * Provides the behavior that the ANR feature should follow.
  */
-public class AnrBehaviorImpl(
+class AnrBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<AnrLocalConfig?>,
     remoteSupplier: Provider<AnrRemoteConfig?>

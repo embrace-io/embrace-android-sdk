@@ -5,7 +5,7 @@ package io.embrace.android.embracesdk.internal.worker
  *
  * Tasks with higher priority will be executed first.
  */
-public enum class TaskPriority(
+enum class TaskPriority(
 
     /**
      * The delay threshold in milliseconds that should be added to the task's submit time
@@ -15,7 +15,7 @@ public enum class TaskPriority(
      *
      * See [PriorityThreadPoolExecutor] for further detail.
      */
-    public val delayThresholdMs: Long
+    val delayThresholdMs: Long
 ) {
     CRITICAL(0),
     HIGH(5_000),

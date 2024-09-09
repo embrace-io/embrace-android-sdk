@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
  * Intervals during which the UI thread was blocked for more than 1 second, which
  * determines that the application is not responding (ANR).
  */
-public data class AnrInterval @JvmOverloads constructor(
+data class AnrInterval @JvmOverloads constructor(
 
     /**
      * The time at which the application stopped responding.
@@ -43,12 +43,12 @@ public data class AnrInterval @JvmOverloads constructor(
      * The type of thread not responding. Currently only the UI thread is monitored.
      */
     @JsonClass(generateAdapter = false)
-    public enum class Type {
+    enum class Type {
         UI
     }
 
-    public companion object {
-        public const val CODE_DEFAULT: Int = 0
-        public const val CODE_SAMPLES_CLEARED: Int = 1
+    companion object {
+        const val CODE_DEFAULT: Int = 0
+        const val CODE_SAMPLES_CLEARED: Int = 1
     }
 }

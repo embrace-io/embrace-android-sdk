@@ -10,7 +10,7 @@ internal class SessionSanitizerFacade(
     private val components: Set<String>
 ) {
 
-    public fun getSanitizedMessage(): Envelope<SessionPayload> {
+    fun getSanitizedMessage(): Envelope<SessionPayload> {
         val sanitizedSpans = SpanSanitizer(envelope.data.spans, components).sanitize()
 
         return envelope.copy(

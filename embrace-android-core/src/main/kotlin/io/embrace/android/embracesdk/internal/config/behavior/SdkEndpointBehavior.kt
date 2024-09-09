@@ -1,14 +1,14 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-public interface SdkEndpointBehavior {
+interface SdkEndpointBehavior {
 
     /**
      * Data base URL.
      */
-    public fun getData(appId: String?): String
+    fun getData(appId: String?): String
 
     /**
      * Config base URL.
      */
-    public fun getConfig(appId: String?): String
+    fun getConfig(appId: String?): String
 }

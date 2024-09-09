@@ -10,9 +10,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.context.Context
 
-public class FakeSpanService : SpanService {
+class FakeSpanService : SpanService {
 
-    public val createdSpans: MutableList<FakePersistableEmbraceSpan> = mutableListOf<FakePersistableEmbraceSpan>()
+    val createdSpans: MutableList<FakePersistableEmbraceSpan> = mutableListOf<FakePersistableEmbraceSpan>()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }

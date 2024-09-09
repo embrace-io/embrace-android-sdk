@@ -6,7 +6,7 @@ package io.embrace.android.embracesdk.internal.utils
  * This allows us to send arbitrary binary data from the NDK
  * protobuf file without needing to encode it as Base64 (which compresses poorly).
  */
-public fun ByteArray.toUTF8String(): String {
+fun ByteArray.toUTF8String(): String {
     val encoded = ByteArray(this.size * 2)
     var i = 0
     for (b in this) {

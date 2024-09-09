@@ -8,20 +8,20 @@ import io.embrace.android.embracesdk.internal.injection.SerializationAction
 /**
  * Manages the Pending API calls and schedules them to be sent later.
  */
-public interface PendingApiCallsSender : NetworkConnectivityListener {
+interface PendingApiCallsSender : NetworkConnectivityListener {
 
     /**
      * Initializes the retry scheduling with a method to be used when sending an [ApiRequest].
      */
-    public fun initializeRetrySchedule(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse)
+    fun initializeRetrySchedule(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse)
 
     /**
      * Save an API call to be sent later.
      */
-    public fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean = false)
+    fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean = false)
 
     /**
      * Schedules the retry of all pending API calls.
      */
-    public fun scheduleRetry(response: ApiResponse)
+    fun scheduleRetry(response: ApiResponse)
 }

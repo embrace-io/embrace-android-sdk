@@ -11,7 +11,7 @@ import java.lang.reflect.Type
 /**
  * A wrapper around the JSON library to allow for thread-safe serialization.
  */
-public class EmbraceSerializer : PlatformSerializer {
+class EmbraceSerializer : PlatformSerializer {
 
     private val ref = object : ThreadLocal<Moshi>() {
         override fun initialValue(): Moshi = Moshi.Builder()

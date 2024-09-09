@@ -10,7 +10,7 @@ import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import java.util.concurrent.ConcurrentLinkedQueue
 
-public class LogSinkImpl : LogSink {
+class LogSinkImpl : LogSink {
     private val storedLogs: ConcurrentLinkedQueue<Log> = ConcurrentLinkedQueue()
     private val logRequests: ConcurrentLinkedQueue<LogRequest<Log>> = ConcurrentLinkedQueue()
     private var onLogsStored: (() -> Unit)? = null

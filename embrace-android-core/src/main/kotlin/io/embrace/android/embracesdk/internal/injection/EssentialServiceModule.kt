@@ -16,16 +16,16 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
  * This module contains services that are essential for bootstrapping other functionality in
  * the SDK during initialization.
  */
-public interface EssentialServiceModule {
-    public val processStateService: ProcessStateService
-    public val activityLifecycleTracker: ActivityTracker
-    public val userService: UserService
-    public val urlBuilder: ApiUrlBuilder
-    public val apiClient: ApiClient
-    public val apiService: ApiService?
-    public val networkConnectivityService: NetworkConnectivityService
-    public val pendingApiCallsSender: PendingApiCallsSender
-    public val sessionIdTracker: SessionIdTracker
-    public val sessionPropertiesService: SessionPropertiesService
-    public val logWriter: LogWriter
+interface EssentialServiceModule {
+    val processStateService: ProcessStateService
+    val activityLifecycleTracker: ActivityTracker
+    val userService: UserService
+    val urlBuilder: ApiUrlBuilder
+    val apiClient: ApiClient
+    val apiService: ApiService?
+    val networkConnectivityService: NetworkConnectivityService
+    val pendingApiCallsSender: PendingApiCallsSender
+    val sessionIdTracker: SessionIdTracker
+    val sessionPropertiesService: SessionPropertiesService
+    val logWriter: LogWriter
 }

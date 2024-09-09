@@ -9,7 +9,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
  *
  * See [EventDataSource], [SpanDataSource], and [LogDataSource] for more information.
  */
-public interface DataSource<T> {
+interface DataSource<T> {
 
     /**
      * The DataSource should call this function when it wants to capture some form of data.
@@ -24,7 +24,7 @@ public interface DataSource<T> {
      * This function returns true if data was successfully captured & false if not.
      * This is assumed to be the case if [captureAction] completed without throwing.
      */
-    public fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
+    fun captureData(inputValidation: () -> Boolean, captureAction: T.() -> Unit): Boolean
 
     /**
      * Enables data capture. This should include registering any listeners, and resetting
@@ -32,7 +32,7 @@ public interface DataSource<T> {
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    public fun enableDataCapture()
+    fun enableDataCapture()
 
     /**
      * Disables data capture. This should include unregistering any listeners, and resetting
@@ -40,10 +40,10 @@ public interface DataSource<T> {
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
      */
-    public fun disableDataCapture()
+    fun disableDataCapture()
 
     /**
      * Resets any data capture limits since the last time [enableDataCapture] was called.
      */
-    public fun resetDataCaptureLimits()
+    fun resetDataCaptureLimits()
 }

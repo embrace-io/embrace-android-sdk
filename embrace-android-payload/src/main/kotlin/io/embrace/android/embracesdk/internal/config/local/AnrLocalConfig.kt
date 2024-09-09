@@ -4,10 +4,8 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class AnrLocalConfig(
-    @Json(name = "capture_google")
-    public val captureGoogle: Boolean? = null,
+class AnrLocalConfig(
+    @Json(name = "capture_google") val captureGoogle: Boolean? = null,
 
-    @Json(name = "capture_unity_thread")
-    public val captureUnityThread: Boolean? = null
+    @Json(name = "capture_unity_thread") val captureUnityThread: Boolean? = null
 )

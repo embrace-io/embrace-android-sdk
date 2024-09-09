@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 /**
  * Function that returns an instance of [MomentsModule]. Matches the signature of the constructor for [MomentsModuleImpl]
  */
-public typealias MomentsModuleSupplier = (
+typealias MomentsModuleSupplier = (
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,
@@ -13,7 +13,7 @@ public typealias MomentsModuleSupplier = (
     startTime: Long
 ) -> MomentsModule
 
-public fun createMomentsModule(
+fun createMomentsModule(
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
     essentialServiceModule: EssentialServiceModule,

@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 
-public class FakeNetworkCaptureService : NetworkCaptureService {
+class FakeNetworkCaptureService : NetworkCaptureService {
 
-    public val urls: MutableList<String> = mutableListOf()
+    val urls: MutableList<String> = mutableListOf()
 
     override fun getNetworkCaptureRules(
         url: String,

@@ -7,11 +7,11 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
-public interface SessionOrchestrationModule {
-    public val payloadFactory: PayloadFactory
-    public val payloadMessageCollator: PayloadMessageCollator
-    public val sessionOrchestrator: SessionOrchestrator
-    public val sessionSpanAttrPopulator: SessionSpanAttrPopulator
-    public val memoryCleanerService: MemoryCleanerService
-    public val gatingService: GatingService
+interface SessionOrchestrationModule {
+    val payloadFactory: PayloadFactory
+    val payloadMessageCollator: PayloadMessageCollator
+    val sessionOrchestrator: SessionOrchestrator
+    val sessionSpanAttrPopulator: SessionSpanAttrPopulator
+    val memoryCleanerService: MemoryCleanerService
+    val gatingService: GatingService
 }

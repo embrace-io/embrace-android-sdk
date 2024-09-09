@@ -5,7 +5,7 @@ import com.squareup.moshi.JsonClass
 import java.util.UUID
 
 @JsonClass(generateAdapter = true)
-public data class NetworkCapturedCall(
+data class NetworkCapturedCall(
     /**
      * The duration of the network request in milliseconds.
      */

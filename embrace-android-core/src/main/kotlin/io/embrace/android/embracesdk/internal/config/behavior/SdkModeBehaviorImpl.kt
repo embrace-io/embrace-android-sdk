@@ -9,7 +9,7 @@ import kotlin.math.min
 /**
  * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
  */
-public class SdkModeBehaviorImpl(
+class SdkModeBehaviorImpl(
     private val isDebug: Boolean,
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<LocalConfig?>,

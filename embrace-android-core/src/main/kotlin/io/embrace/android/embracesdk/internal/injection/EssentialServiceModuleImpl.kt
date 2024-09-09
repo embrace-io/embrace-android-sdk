@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessSt
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-public class EssentialServiceModuleImpl(
+class EssentialServiceModuleImpl(
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,

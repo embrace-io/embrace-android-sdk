@@ -10,17 +10,17 @@ internal class EndpointLimiter {
     private var rateLimitRetryCount = AtomicInteger(0)
 
     @Volatile
-    public var isRateLimited: Boolean = false
+    var isRateLimited: Boolean = false
         private set
 
-    public fun updateRateLimitStatus() {
+    fun updateRateLimitStatus() {
         synchronized(this) {
             isRateLimited = true
             rateLimitRetryCount.incrementAndGet()
         }
     }
 
-    public fun clearRateLimit() {
+    fun clearRateLimit() {
         synchronized(this) {
             isRateLimited = false
             rateLimitRetryCount.set(0)
@@ -31,7 +31,7 @@ internal class EndpointLimiter {
      * Schedules a task to execute the api calls ofter the given retry after time
      * or the exponential backoff delay calculated from the number of retries.
      */
-    public fun scheduleRetry(
+    fun scheduleRetry(
         scheduledWorker: ScheduledWorker,
         retryAfter: Long?,
         retryMethod: () -> Unit

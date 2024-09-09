@@ -2,6 +2,6 @@ package io.embrace.android.embracesdk.internal.capture.crash
 
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSource
 
-public interface CrashDataSource : LogDataSource, CrashService {
-    public fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler>)
+interface CrashDataSource : LogDataSource, CrashService {
+    fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler>)
 }

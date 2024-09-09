@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration values relating to data capture of the SDK
  */
 @JsonClass(generateAdapter = true)
-public data class DataRemoteConfig(
+data class DataRemoteConfig(
 
     @Json(name = "pct_thermal_status_enabled")
     val pctThermalStatusEnabled: Float? = null

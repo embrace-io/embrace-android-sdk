@@ -33,13 +33,13 @@ import kotlin.math.abs
  * - Access to the Connection that carries the request.
  */
 @InternalApi
-public class EmbraceOkHttp3NetworkInterceptor internal constructor(
+class EmbraceOkHttp3NetworkInterceptor internal constructor(
     private val embrace: Embrace,
 
     // A clock that mirrors the one used by OkHttp to get timestamps
     private val systemClock: Clock
 ) : Interceptor {
-    public constructor() : this(Embrace.getInstance(), Clock { System.currentTimeMillis() })
+    constructor() : this(Embrace.getInstance(), Clock { System.currentTimeMillis() })
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {

@@ -9,7 +9,7 @@ import com.squareup.moshi.JsonClass
  * @param logs
  */
 @JsonClass(generateAdapter = true)
-public data class LogPayload(
+data class LogPayload(
 
     @Json(name = "logs")
     val logs: List<Log>? = null

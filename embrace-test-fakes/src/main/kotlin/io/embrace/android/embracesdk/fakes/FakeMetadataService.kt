@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.DiskUsage
  * Fake implementation of [MetadataService] that represents an Android device. A [UnsupportedOperationException] will be thrown
  * if you attempt set info about Flutter/Unity/ReactNative on this fake, which is decided for an Android device.
  */
-public class FakeMetadataService(sessionId: String? = null) : MetadataService {
+class FakeMetadataService(sessionId: String? = null) : MetadataService {
     private companion object {
         private val androidAppInfo = AppInfo(
             appVersion = "1.0.0",
@@ -47,19 +47,19 @@ public class FakeMetadataService(sessionId: String? = null) : MetadataService {
         private const val APP_STATE_BACKGROUND = "background"
     }
 
-    public var fakeUnityVersion: String = "fakeUnityVersion"
-    public var fakeUnityBuildIdNumber: String = "fakeUnityBuildIdNumber"
-    public var fakeUnitySdkVersion: String = "fakeUnitySdkVersion"
-    public var appUpdated: Boolean = false
-    public var osUpdated: Boolean = false
-    public var fakeAppId: String = "o0o0o"
-    public var fakeDeviceId: String = "07D85B44E4E245F4A30E559BFC0D07FF"
-    public var fakeFlutterSdkVersion: String? = "fakeFlutterSdkVersion"
-    public var fakeDartVersion: String? = "fakeDartVersion"
-    public var fakeReactNativeVersion: String? = "fakeReactNativeVersion"
-    public var fakeJavaScriptPatchNumber: String? = "fakeJavaScriptPatchNumber"
-    public var fakeRnSdkVersion: String? = "fakeRnSdkVersion"
-    public val fakePackageName: String = "com.embrace.fake"
+    var fakeUnityVersion: String = "fakeUnityVersion"
+    var fakeUnityBuildIdNumber: String = "fakeUnityBuildIdNumber"
+    var fakeUnitySdkVersion: String = "fakeUnitySdkVersion"
+    var appUpdated: Boolean = false
+    var osUpdated: Boolean = false
+    var fakeAppId: String = "o0o0o"
+    var fakeDeviceId: String = "07D85B44E4E245F4A30E559BFC0D07FF"
+    var fakeFlutterSdkVersion: String? = "fakeFlutterSdkVersion"
+    var fakeDartVersion: String? = "fakeDartVersion"
+    var fakeReactNativeVersion: String? = "fakeReactNativeVersion"
+    var fakeJavaScriptPatchNumber: String? = "fakeJavaScriptPatchNumber"
+    var fakeRnSdkVersion: String? = "fakeRnSdkVersion"
+    val fakePackageName: String = "com.embrace.fake"
 
     private lateinit var appState: String
     private var appSessionId: String? = null
@@ -69,15 +69,15 @@ public class FakeMetadataService(sessionId: String? = null) : MetadataService {
         appSessionId = sessionId
     }
 
-    public fun setAppForeground() {
+    fun setAppForeground() {
         appState = APP_STATE_FOREGROUND
     }
 
-    public fun setAppId(id: String) {
+    fun setAppId(id: String) {
         fakeAppId = id
     }
 
-    public fun setAppBackground() {
+    fun setAppBackground() {
         appState = APP_STATE_BACKGROUND
     }
 

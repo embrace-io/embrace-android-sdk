@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.lifecycle
 
-public enum class ProcessState {
+enum class ProcessState {
     FOREGROUND,
     BACKGROUND
 }

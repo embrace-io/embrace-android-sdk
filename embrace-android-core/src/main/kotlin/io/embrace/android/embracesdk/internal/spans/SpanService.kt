@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 /**
  * Internal service that supports the creation and recording of [EmbraceSpan]
  */
-public interface SpanService : Initializable {
+interface SpanService : Initializable {
 
     /**
      * Return an [EmbraceSpan] instance that can be used to record spans. Returns null if at least one input parameter is not valid or if
      * the SDK or session is not in a state where a new span can be recorded.
      */
-    public fun createSpan(
+    fun createSpan(
         name: String,
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
@@ -28,12 +28,12 @@ public interface SpanService : Initializable {
      * Return an [EmbraceSpan] instance that can be used to record spans given the [EmbraceSpanBuilder]. Returns null if the builder will
      * not build a valid span or if the SDK and session is not in a state where a new span can be recorded.
      */
-    public fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan?
+    fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan?
 
     /**
      * Create, start, and return a new [EmbraceSpan] with the given parameters
      */
-    public fun startSpan(
+    fun startSpan(
         name: String,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
@@ -60,7 +60,7 @@ public interface SpanService : Initializable {
      * Records a span around the execution of the given lambda. If the lambda throws an uncaught exception, it will be recorded as a
      * [ErrorCode.FAILURE]. The span will be the provided name, and the appropriate prefix will be prepended to it if [internal] is true.
      */
-    public fun <T> recordSpan(
+    fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
@@ -75,7 +75,7 @@ public interface SpanService : Initializable {
      * Record a completed span for an operation with the given start and end times. Returns true if the span was recorded or queued to be
      * recorded, false if it wasn't.
      */
-    public fun recordCompletedSpan(
+    fun recordCompletedSpan(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
@@ -91,5 +91,5 @@ public interface SpanService : Initializable {
     /**
      * Return the [EmbraceSpan] corresponding to the given spanId if it is active or it has completed in the current session
      */
-    public fun getSpan(spanId: String): EmbraceSpan?
+    fun getSpan(spanId: String): EmbraceSpan?
 }

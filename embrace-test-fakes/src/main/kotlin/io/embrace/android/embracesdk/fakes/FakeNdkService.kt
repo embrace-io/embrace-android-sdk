@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
-public class FakeNdkService : NdkService {
-    public val propUpdates: MutableList<Map<String, String>> = mutableListOf()
+class FakeNdkService : NdkService {
+    val propUpdates: MutableList<Map<String, String>> = mutableListOf()
 
-    public var sessionId: String? = null
-    public var userUpdateCount: Int = 0
-    public var lastUnityCrashId: String? = null
+    var sessionId: String? = null
+    var userUpdateCount: Int = 0
+    var lastUnityCrashId: String? = null
     private var nativeCrashData: NativeCrashData? = null
 
     override fun initializeService() {
@@ -42,9 +42,9 @@ public class FakeNdkService : NdkService {
             TODO("Not yet implemented")
         }
 
-    public fun hasNativeCrash(): Boolean = nativeCrashData != null
+    fun hasNativeCrash(): Boolean = nativeCrashData != null
 
-    public fun setNativeCrashData(data: NativeCrashData) {
+    fun setNativeCrashData(data: NativeCrashData) {
         nativeCrashData = data
     }
 }

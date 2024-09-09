@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 
-public class FakeNativeThreadSamplerService : NativeThreadSamplerService {
+class FakeNativeThreadSamplerService : NativeThreadSamplerService {
 
-    public var symbols: Map<String, String>? = mapOf("armeabi-v7a" to "my-symbols")
-    public var intervals: List<NativeThreadAnrInterval>? = null
+    var symbols: Map<String, String>? = mapOf("armeabi-v7a" to "my-symbols")
+    var intervals: List<NativeThreadAnrInterval>? = null
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
         TODO("Not yet implemented")

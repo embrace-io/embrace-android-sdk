@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 /**
  * Function that returns an instance of [EssentialServiceModule]. Matches the signature of the constructor for [EssentialServiceModuleImpl]
  */
-public typealias EssentialServiceModuleSupplier = (
+typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -14,7 +14,7 @@ public typealias EssentialServiceModuleSupplier = (
     storageModule: StorageModule
 ) -> EssentialServiceModule
 
-public fun createEssentialServiceModule(
+fun createEssentialServiceModule(
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,

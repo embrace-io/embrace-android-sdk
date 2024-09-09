@@ -19,16 +19,16 @@ import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
-public class FakeApiService : ApiService {
+class FakeApiService : ApiService {
 
-    public var throwExceptionSendSession: Boolean = false
+    var throwExceptionSendSession: Boolean = false
     private val serializer = EmbraceSerializer()
-    public val sentLogPayloads: MutableList<LogPayload> = mutableListOf()
-    public val savedLogPayloads: MutableList<LogPayload> = mutableListOf()
-    public val eventRequests: MutableList<EventMessage> = mutableListOf()
-    public val crashRequests: MutableList<EventMessage> = mutableListOf()
-    public val sessionRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
-    public var futureGetCount: Int = 0
+    val sentLogPayloads: MutableList<LogPayload> = mutableListOf()
+    val savedLogPayloads: MutableList<LogPayload> = mutableListOf()
+    val eventRequests: MutableList<EventMessage> = mutableListOf()
+    val crashRequests: MutableList<EventMessage> = mutableListOf()
+    val sessionRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
+    var futureGetCount: Int = 0
 
     override fun getConfig(): RemoteConfig? {
         TODO("Not yet implemented")
@@ -71,7 +71,7 @@ public class FakeApiService : ApiService {
         }
     }
 
-    public inner class ObservableFutureTask<T>(callable: Callable<T>) : FutureTask<T>(callable) {
+    inner class ObservableFutureTask<T>(callable: Callable<T>) : FutureTask<T>(callable) {
         override fun get(): T {
             futureGetCount++
             return super.get()

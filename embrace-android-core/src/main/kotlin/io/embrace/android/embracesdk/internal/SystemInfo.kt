@@ -5,7 +5,7 @@ import android.os.Build
 /**
  * Information about the the device or OS that can be retrieved without disk or platform API access
  */
-public data class SystemInfo(
+data class SystemInfo(
     /**
      * Name of the operating system of the device. To use the Android SDK, this has to be Android, so this is always "android"
      */
@@ -88,7 +88,7 @@ internal fun getDeviceModel(): String {
  *
  * @return true if the device is detected to be an emulator, false otherwise
  */
-public fun SystemInfo.isEmulator(): Boolean =
+fun SystemInfo.isEmulator(): Boolean =
     Build.FINGERPRINT.startsWith("generic") ||
         Build.FINGERPRINT.startsWith("unknown") ||
         Build.FINGERPRINT.contains("emulator") ||

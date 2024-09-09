@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  * Note that this implementation has benefited from the work of Pierre-Yves Ricau and his blog post about Android application launch time
  * that can be found here: https://blog.p-y.wtf/tracking-android-app-launch-in-production. PY's code was adapted and tweaked for use here.
  */
-public class StartupTracker(
+class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val logger: EmbLogger,
     private val versionChecker: VersionChecker,

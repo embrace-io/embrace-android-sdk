@@ -2,17 +2,17 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
 
-public class FakeBreadcrumbBehavior(
-    public var customBreadcrumbLimitImpl: Int = 100,
-    public var fragmentBreadcrumbLimitImpl: Int = 100,
-    public var tapBreadcrumbLimitImpl: Int = 100,
-    public var viewBreadcrumbLimitImpl: Int = 100,
-    public var webviewBreadcrumbLimitImpl: Int = 100,
-    public var tapCoordinateCaptureEnabled: Boolean = true,
-    public var automaticActivityCaptureEnabled: Boolean = true,
-    public var webViewBreadcrumbCaptureEnabled: Boolean = true,
-    public var queryParamCaptureEnabled: Boolean = true,
-    public var captureFcmPiiDataEnabled: Boolean = false
+class FakeBreadcrumbBehavior(
+    var customBreadcrumbLimitImpl: Int = 100,
+    var fragmentBreadcrumbLimitImpl: Int = 100,
+    var tapBreadcrumbLimitImpl: Int = 100,
+    var viewBreadcrumbLimitImpl: Int = 100,
+    var webviewBreadcrumbLimitImpl: Int = 100,
+    var tapCoordinateCaptureEnabled: Boolean = true,
+    var automaticActivityCaptureEnabled: Boolean = true,
+    var webViewBreadcrumbCaptureEnabled: Boolean = true,
+    var queryParamCaptureEnabled: Boolean = true,
+    var captureFcmPiiDataEnabled: Boolean = false
 ) : BreadcrumbBehavior {
     override fun getCustomBreadcrumbLimit(): Int = customBreadcrumbLimitImpl
     override fun getFragmentBreadcrumbLimit(): Int = fragmentBreadcrumbLimitImpl

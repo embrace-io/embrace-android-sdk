@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
-public class InternalTracer(
+class InternalTracer(
     private val spanRepository: SpanRepository,
     private val embraceTracer: EmbraceTracer,
 ) : InternalTracingApi {

@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 /**
  * Function that returns an instance of [CoreModule]. Matches the signature of the constructor for [CoreModuleImpl]
  */
-public typealias CoreModuleSupplier = (
+typealias CoreModuleSupplier = (
     context: Context,
     logger: EmbLogger
 ) -> CoreModule
 
-public fun createCoreModule(
+fun createCoreModule(
     context: Context,
     logger: EmbLogger
 ): CoreModule = CoreModuleImpl(context, logger)

@@ -10,7 +10,7 @@ internal class LogCounter(
 ) {
     private val count = AtomicInteger(0)
 
-    public fun addIfAllowed(): Boolean {
+    fun addIfAllowed(): Boolean {
         if (count.get() < getConfigLogLimit.invoke()) {
             count.incrementAndGet()
         } else {
@@ -20,9 +20,9 @@ internal class LogCounter(
         return true
     }
 
-    public fun getCount(): Int = count.get()
+    fun getCount(): Int = count.get()
 
-    public fun clear() {
+    fun clear() {
         count.set(0)
     }
 }

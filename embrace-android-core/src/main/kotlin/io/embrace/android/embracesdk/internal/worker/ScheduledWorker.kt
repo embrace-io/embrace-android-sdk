@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
  * This class is necessary because it hides aspects of the ExecutorService API that we don't want
  * to expose as part of the internal API.
  */
-public class ScheduledWorker(
+class ScheduledWorker(
     private val impl: ScheduledExecutorService
 ) {
 
@@ -20,7 +20,7 @@ public class ScheduledWorker(
      * Schedules a task for future execution and returns a [ScheduledFuture].
      */
     @Suppress("UNCHECKED_CAST")
-    public fun <T> schedule(
+    fun <T> schedule(
         command: Runnable?,
         delay: Long,
         unit: TimeUnit?
@@ -31,7 +31,7 @@ public class ScheduledWorker(
     /**
      * Schedules a task for recurring execution and returns a [ScheduledFuture].
      */
-    public fun scheduleWithFixedDelay(
+    fun scheduleWithFixedDelay(
         command: Runnable?,
         initialDelay: Long,
         delay: Long,
@@ -43,17 +43,17 @@ public class ScheduledWorker(
     /**
      * Submits a task for execution and returns a [Future].
      */
-    public fun submit(runnable: Runnable): Future<*> = impl.submit(runnable)
+    fun submit(runnable: Runnable): Future<*> = impl.submit(runnable)
 
     /**
      * Submits a task for execution and returns a [Future].
      */
-    public fun <T> submit(callable: Callable<T>): Future<T> = impl.submit(callable)
+    fun <T> submit(callable: Callable<T>): Future<T> = impl.submit(callable)
 
     @Deprecated(
         "Use scheduleWithFixedDelay instead.",
     )
-    public fun scheduleAtFixedRate(
+    fun scheduleAtFixedRate(
         runnable: Runnable,
         initialDelay: Long,
         intervalMs: Long,

@@ -57,7 +57,7 @@ internal class EmbraceConfigService(
     isDebug: Boolean,
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
-    public val thresholdCheck: BehaviorThresholdCheck =
+    val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck { preferencesService.deviceIdentifier }
 ) : ConfigService, ProcessStateListener {
 
@@ -77,7 +77,7 @@ internal class EmbraceConfigService(
     private var configProp = RemoteConfig()
 
     @Volatile
-    public var lastUpdated: Long = 0
+    var lastUpdated: Long = 0
 
     @Volatile
     private var lastRefreshConfigAttempt: Long = 0
@@ -193,7 +193,7 @@ internal class EmbraceConfigService(
     /**
      * Load Config from cache if present.
      */
-    public fun loadConfigFromCache() {
+    fun loadConfigFromCache() {
         val cachedConfig = remoteConfigSource?.getCachedConfig()
         val obj = cachedConfig?.remoteConfig
 

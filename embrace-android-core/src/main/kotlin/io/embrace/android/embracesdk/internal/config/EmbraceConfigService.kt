@@ -58,7 +58,7 @@ internal class EmbraceConfigService(
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
     val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck(preferencesService::deviceIdentifier)
+        BehaviorThresholdCheck { preferencesService.deviceIdentifier }
 ) : ConfigService, ProcessStateListener {
 
     /**

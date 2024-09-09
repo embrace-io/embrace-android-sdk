@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.internal.payload
 
+import com.squareup.moshi.JsonClass
+
 class PushNotificationBreadcrumb {
 
+    @JsonClass(generateAdapter = false)
     enum class NotificationType(val type: String) {
         NOTIFICATION("notif"),
         DATA("data"),

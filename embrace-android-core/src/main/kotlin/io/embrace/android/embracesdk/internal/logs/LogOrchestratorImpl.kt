@@ -25,10 +25,6 @@ internal class LogOrchestratorImpl(
     @Volatile
     private var scheduledCheckFuture: ScheduledFuture<*>? = null
 
-    init {
-        sink.registerLogStoredCallback(::onLogsAdded)
-    }
-
     override fun flush(saveOnly: Boolean) {
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = null
@@ -48,7 +44,7 @@ internal class LogOrchestratorImpl(
         flush(true)
     }
 
-    private fun onLogsAdded() {
+    override fun onLogsAdded() {
         logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
             if (logRequest.defer) {
                 deliveryService.saveLogs(logRequest.payload)

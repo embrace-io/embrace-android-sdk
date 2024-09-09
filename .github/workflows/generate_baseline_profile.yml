@@ -12,19 +12,27 @@ permissions:
 
 jobs:
   test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        jdk-version: [ "17" ]
-        api-level: [ 29 ]
-        target: [ default ]
 
     steps:
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Checkout Branch
         uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          fetch-depth: 0
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Checkout Android SDK Benchmark
         uses: actions/checkout@v4
@@ -34,49 +42,22 @@ jobs:
           path: ./android-sdk-benchmark
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }} # NOTE: read android-sdk-benchmark
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.m2/repository
-            ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml', 'gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
-
-      - name: Install JDK ${{ matrix.jdk-version }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'adopt'
-          java-version: ${{ matrix.jdk-version }}
-
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ matrix.api-level }}
-
       - name: Clean Managed Devices
-        run: |
-          cd android-sdk-benchmark
-          ./gradlew cleanManagedDevices --unused-only
-
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+        working-directory: android-sdk-benchmark
+        run: ./gradlew cleanManagedDevices --unused-only
 
       - name: Generate Baseline Profile
-        run: |
-          cd android-sdk-benchmark
-          ./gradlew -Dorg.gradle.workers.max=4 -i :macrobenchmark:nexus6Api31BaselineProfileAndroidTest -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect" -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+        working-directory: android-sdk-benchmark
+        run: ./gradlew :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
+          -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
+          -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
+          -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
 
       # Sets the Baseline Profile on its proper place so it gets correctly bundled into Play Store
       - name: Move & Rename Baseline Profiles
-        run:  |
-          cat /Users/runner/work/embrace-android-sdk/embrace-android-sdk/android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/nexus6Api31/BaselineProfileGenerator_startup-baseline-prof.txt | grep '^[^[]*io/embrace/android/embracesdk' > /Users/runner/work/embrace-android-sdk/embrace-android-sdk/embrace-android-sdk/src/main/baseline-prof.txt
+        run: cat android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/pixel6Api34/BaselineProfileGenerator_startup-baseline-prof.txt 
+          | grep '^[^[]*io/embrace/android/embracesdk' > embrace-android-sdk/src/main/baseline-prof.txt
+
       # Commits the generated Baseline Profile to your origin/remote
       - name: Commit Baseline Profiles
         run: |
@@ -85,11 +66,3 @@ jobs:
           git add embrace-android-sdk/src/main/baseline-prof.txt
           git commit -m "Generate baseline profiles"
           git push
-
-      - name: Cleanup Gradle Cache
-        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
-        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
-        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
-        run: |
-          rm -f ~/.gradle/caches/modules-2/modules-2.lock
-          rm -f ~/.gradle/caches/modules-2/gc.properties

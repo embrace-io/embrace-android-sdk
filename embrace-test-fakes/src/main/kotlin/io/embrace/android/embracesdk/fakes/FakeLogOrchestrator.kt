@@ -13,4 +13,7 @@ class FakeLogOrchestrator : LogOrchestrator {
     override fun handleCrash(crashId: String) {
         flush(true)
     }
+
+    override fun onLogsAdded() {
+    }
 }

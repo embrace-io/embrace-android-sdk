@@ -369,7 +369,9 @@ internal class ModuleInitBootstrapper(
                     postInit(LogModule::class) {
                         serviceRegistry.registerService(lazy { logModule.logService })
                         // Start the log orchestrator
-                        logModule.logOrchestrator
+                        openTelemetryModule.logSink.registerLogStoredCallback {
+                            logModule.logOrchestrator.onLogsAdded()
+                        }
                     }
 
                     momentsModule = init(MomentsModule::class) {
@@ -427,9 +429,9 @@ internal class ModuleInitBootstrapper(
                     postInit(CrashModule::class) {
                         serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-                            addCrashTeardownHandler(anrModule.anrService)
-                            addCrashTeardownHandler(logModule.logOrchestrator)
-                            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
+                            addCrashTeardownHandler(lazy { anrModule.anrService })
+                            addCrashTeardownHandler(lazy { logModule.logOrchestrator })
+                            addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
                         }
                     }
 

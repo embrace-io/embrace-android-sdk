@@ -12,6 +12,8 @@ sealed class ApiResponse {
         get() = when (this) {
             is TooManyRequests -> true
             is Incomplete -> true
+            is None -> true
+            is Failure -> code in 500..599
             else -> false
         }
 
@@ -44,4 +46,9 @@ sealed class ApiResponse {
      * Represents an exception thrown while making the API call.
      */
     data class Incomplete(val exception: Throwable) : ApiResponse()
+
+    /**
+     * No response was received
+     */
+    object None : ApiResponse()
 }

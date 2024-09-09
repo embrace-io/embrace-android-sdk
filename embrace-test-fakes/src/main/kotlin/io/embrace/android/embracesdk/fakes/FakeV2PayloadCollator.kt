@@ -9,12 +9,12 @@ import io.embrace.android.embracesdk.internal.session.message.InitialEnvelopePar
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollator
 import java.util.concurrent.atomic.AtomicInteger
 
-public class FakeV2PayloadCollator(
-    public val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan()
+class FakeV2PayloadCollator(
+    val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan()
 ) : PayloadMessageCollator {
 
-    public val sessionCount: AtomicInteger = AtomicInteger(0)
-    public val baCount: AtomicInteger = AtomicInteger(0)
+    val sessionCount: AtomicInteger = AtomicInteger(0)
+    val baCount: AtomicInteger = AtomicInteger(0)
 
     override fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote = with(params) {
         val sessionNumber = when (appState) {

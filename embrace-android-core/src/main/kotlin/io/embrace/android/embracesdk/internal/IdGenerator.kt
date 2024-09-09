@@ -4,7 +4,7 @@ import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.TraceId
 import kotlin.random.Random
 
-public class IdGenerator(
+class IdGenerator(
     private val random: Random = Random.Default
 ) {
     /**
@@ -12,10 +12,10 @@ public class IdGenerator(
      *
      * Note: because Embrace may be recording a span on our side for the given traceparent, we have set the "sampled" flag to indicate that.
      */
-    public fun generateTraceparent(): String =
+    fun generateTraceparent(): String =
         "00-" + TraceId.fromLongs(validRandomLong(), validRandomLong()) + "-" + SpanId.fromLong(validRandomLong()) + "-01"
 
-    public fun generateUUID(): String = SpanId.fromLong(validRandomLong())
+    fun generateUUID(): String = SpanId.fromLong(validRandomLong())
 
     private fun validRandomLong(): Long {
         var value: Long
@@ -25,12 +25,12 @@ public class IdGenerator(
         return value
     }
 
-    public companion object {
+    companion object {
         private val INSTANCE = IdGenerator()
 
         @JvmStatic
-        public fun generateW3CTraceparent(): String = INSTANCE.generateTraceparent()
+        fun generateW3CTraceparent(): String = INSTANCE.generateTraceparent()
 
-        public fun generateLaunchInstanceId(): String = INSTANCE.generateUUID()
+        fun generateLaunchInstanceId(): String = INSTANCE.generateUUID()
     }
 }

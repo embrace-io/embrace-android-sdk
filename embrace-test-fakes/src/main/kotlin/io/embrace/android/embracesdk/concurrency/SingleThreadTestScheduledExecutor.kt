@@ -13,11 +13,11 @@ import java.util.concurrent.atomic.AtomicReference
  * A single-threaded [java.util.concurrent.ScheduledExecutorService] used for tests that exposes the last [Throwable] that interrupted
  * the execution of a task
  */
-public class SingleThreadTestScheduledExecutor(
+class SingleThreadTestScheduledExecutor(
     threadFactory: ThreadFactory = defaultThreadFactory
 ) : ScheduledThreadPoolExecutor(1, threadFactory) {
 
-    public val executing: AtomicBoolean = AtomicBoolean(false)
+    val executing: AtomicBoolean = AtomicBoolean(false)
     private val lastThrowable = AtomicReference<Throwable?>()
 
     override fun beforeExecute(t: Thread?, r: Runnable?) {
@@ -50,12 +50,12 @@ public class SingleThreadTestScheduledExecutor(
      * there may be a time when the task is done but this function returns the wrong value - you have to check that [executing] is false to
      * make sure that we are not in the process of setting a new [lastThrowable] in order for this value to be truly valid.
      */
-    public fun lastThrowable(): Throwable? = synchronized(lastThrowable) { lastThrowable.get() }
+    fun lastThrowable(): Throwable? = synchronized(lastThrowable) { lastThrowable.get() }
 
     /**
      * Resets the error tracking
      */
-    public fun reset(): Unit = synchronized(lastThrowable) { lastThrowable.set(null) }
+    fun reset(): Unit = synchronized(lastThrowable) { lastThrowable.set(null) }
 
     private companion object {
         private val defaultThreadFactory = ConstantNameThreadFactory("test")

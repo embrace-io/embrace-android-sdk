@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 
-public class FakeTracingApi : TracingApi {
+class FakeTracingApi : TracingApi {
 
-    public val createdSpans: MutableList<String> = mutableListOf()
+    val createdSpans: MutableList<String> = mutableListOf()
 
     override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
         createdSpans.add(name)

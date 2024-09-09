@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 /**
  * Base class for data sources.
  */
-public abstract class SpanDataSourceImpl(
+abstract class SpanDataSourceImpl(
     destination: SpanService,
     logger: EmbLogger,
     limitStrategy: LimitStrategy

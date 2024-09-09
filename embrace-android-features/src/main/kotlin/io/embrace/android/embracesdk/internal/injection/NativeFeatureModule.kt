@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 
-public interface NativeFeatureModule {
-    public val ndkService: NdkService
-    public val nativeThreadSamplerService: NativeThreadSamplerService?
-    public val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller?
-    public val nativeAnrOtelMapper: NativeAnrOtelMapper
-    public val nativeCrashService: NativeCrashService
+interface NativeFeatureModule {
+    val ndkService: NdkService
+    val nativeThreadSamplerService: NativeThreadSamplerService?
+    val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller?
+    val nativeAnrOtelMapper: NativeAnrOtelMapper
+    val nativeCrashService: NativeCrashService
 }

@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateD
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.injection.FeatureModule
 
-public class FakeFeatureModule : FeatureModule {
+class FakeFeatureModule : FeatureModule {
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> = DataSourceState({ null })
     override val viewDataSource: DataSourceState<ViewDataSource> = DataSourceState({ null })
     override val tapDataSource: DataSourceState<TapDataSource> = DataSourceState({ null })

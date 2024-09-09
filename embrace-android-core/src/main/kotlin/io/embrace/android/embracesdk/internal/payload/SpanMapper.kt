@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 
-public fun EmbraceSpanData.toNewPayload(): Span = Span(
+fun EmbraceSpanData.toNewPayload(): Span = Span(
     traceId = traceId,
     spanId = spanId,
     parentSpanId = parentSpanId ?: SpanId.getInvalid(),
@@ -25,25 +25,25 @@ public fun EmbraceSpanData.toNewPayload(): Span = Span(
     attributes = attributes.toNewPayload()
 )
 
-public fun EmbraceSpanEvent.toNewPayload(): SpanEvent = SpanEvent(
+fun EmbraceSpanEvent.toNewPayload(): SpanEvent = SpanEvent(
     name = name,
     timestampNanos = timestampNanos,
     attributes = attributes.toNewPayload()
 )
 
-public fun SpanEvent.toOldPayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
+fun SpanEvent.toOldPayload(): EmbraceSpanEvent? = EmbraceSpanEvent.create(
     name = name ?: "",
     timestampMs = (timestampNanos ?: 0).nanosToMillis(),
     attributes = attributes?.toOldPayload() ?: emptyMap()
 )
 
-public fun Map<String, String>.toNewPayload(): List<Attribute> =
+fun Map<String, String>.toNewPayload(): List<Attribute> =
     map { (key, value) -> Attribute(key, value) }
 
-public fun List<Attribute>.toOldPayload(): Map<String, String> =
+fun List<Attribute>.toOldPayload(): Map<String, String> =
     associate { Pair(it.key ?: "", it.data ?: "") }.filterKeys { it.isNotBlank() }
 
-public fun Span.toOldPayload(): EmbraceSpanData {
+fun Span.toOldPayload(): EmbraceSpanData {
     return EmbraceSpanData(
         traceId = traceId ?: "",
         spanId = spanId ?: "",

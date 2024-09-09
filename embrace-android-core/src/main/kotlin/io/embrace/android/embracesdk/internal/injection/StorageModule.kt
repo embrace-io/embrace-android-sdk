@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 /**
  * Contains dependencies that are used to store data in the device's storage.
  */
-public interface StorageModule {
-    public val storageService: StorageService
-    public val cache: ApiResponseCache
-    public val cacheService: CacheService
-    public val deliveryCacheManager: DeliveryCacheManager
+interface StorageModule {
+    val storageService: StorageService
+    val cache: ApiResponseCache
+    val cacheService: CacheService
+    val deliveryCacheManager: DeliveryCacheManager
 }

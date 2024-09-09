@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * configs might not exist for every single field, as it doesn't always make sense for every value
  * to be configurable by end-users. However, there should always be a default value.
  */
-public open class MergedConfigBehavior<L, R>(
+open class MergedConfigBehavior<L, R>(
 
     /**
      * Checks whether percent-based thresholds should be enabled or not. We should always return

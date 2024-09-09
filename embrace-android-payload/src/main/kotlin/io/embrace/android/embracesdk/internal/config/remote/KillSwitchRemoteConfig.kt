@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * In normal circumstances these should never actually be used 🤞.
  */
 @JsonClass(generateAdapter = true)
-public data class KillSwitchRemoteConfig(
+data class KillSwitchRemoteConfig(
     @Json(name = "sig_handler_detection")
     val sigHandlerDetection: Boolean? = null,
     @Json(name = "jetpack_compose")

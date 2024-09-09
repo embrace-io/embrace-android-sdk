@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.opentelemetry.api.trace.SpanId
 
-public fun fakeSessionZygote(): SessionZygote = SessionZygote(
+fun fakeSessionZygote(): SessionZygote = SessionZygote(
     sessionId = "fakeSessionId",
     startTime = 160000000000L,
     number = 1,
@@ -22,7 +22,7 @@ public fun fakeSessionZygote(): SessionZygote = SessionZygote(
     startType = LifeEventType.STATE
 )
 
-public fun fakeSessionEnvelope(
+fun fakeSessionEnvelope(
     sessionId: String = "fakeSessionId",
     startMs: Long = 160000000000L,
     endMs: Long = 161000400000L
@@ -47,7 +47,7 @@ public fun fakeSessionEnvelope(
     )
 }
 
-public fun fakeIncompleteSessionEnvelope(
+fun fakeIncompleteSessionEnvelope(
     sessionId: String = "fakeIncompleteSessionId",
     startMs: Long = 1691000000000L,
     lastHeartbeatTimeMs: Long = 1691000300000L,
@@ -68,7 +68,7 @@ public fun fakeIncompleteSessionEnvelope(
     )
 }
 
-public fun Envelope<SessionPayload>.mutateSessionSpan(action: (original: Span) -> Span): Envelope<SessionPayload> {
+fun Envelope<SessionPayload>.mutateSessionSpan(action: (original: Span) -> Span): Envelope<SessionPayload> {
     val spans = data.spans
     val sessionSpan = checkNotNull(getSessionSpan())
     return copy(

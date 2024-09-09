@@ -11,7 +11,7 @@ import com.squareup.moshi.JsonClass
  * @param stacktrace String representation of each line in the stack trace. Previous name: s.e.rep.ex.tt
  */
 @JsonClass(generateAdapter = true)
-public data class ExceptionInfo(
+data class ExceptionInfo(
 
     /* The name of the class causing an error. Previous name: s.e.rep.ex.n */
     @Json(name = "name")

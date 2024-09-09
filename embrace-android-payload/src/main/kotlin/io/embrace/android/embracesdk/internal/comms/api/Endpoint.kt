@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-public enum class Endpoint(
-    public val path: String,
-    public val version: String
+enum class Endpoint(
+    val path: String,
+    val version: String
 ) {
     EVENTS("events", "v1"),
     LOGS("logs", "v2"),

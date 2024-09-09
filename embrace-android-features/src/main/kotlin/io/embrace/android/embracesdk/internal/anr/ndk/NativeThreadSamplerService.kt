@@ -10,21 +10,21 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
  * The NDK layer must be enabled in order to use this functionality as this class
  * calls native code.
  */
-public interface NativeThreadSamplerService :
+interface NativeThreadSamplerService :
     BlockedThreadListener,
     MemoryCleanerListener {
 
     /**
      * Performs one-time setup of the native stacktrace sampler (but doesn't start any monitoring).
      */
-    public fun setupNativeSampler(): Boolean
+    fun setupNativeSampler(): Boolean
 
     /**
      * Monitors the current thread.
      */
-    public fun monitorCurrentThread(): Boolean
+    fun monitorCurrentThread(): Boolean
 
-    public fun getNativeSymbols(): Map<String, String>?
+    fun getNativeSymbols(): Map<String, String>?
 
-    public fun getCapturedIntervals(receivedTermination: Boolean?): List<NativeThreadAnrInterval>?
+    fun getCapturedIntervals(receivedTermination: Boolean?): List<NativeThreadAnrInterval>?
 }

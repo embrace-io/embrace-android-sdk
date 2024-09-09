@@ -3,17 +3,17 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 /**
  * Defines the states in which a session can end.
  */
-public enum class SessionSnapshotType(
+enum class SessionSnapshotType(
 
     /**
      * Whether the session ended cleanly (i.e. not because of a crash).
      */
-    public val endedCleanly: Boolean,
+    val endedCleanly: Boolean,
 
     /**
      * Whether the session process experienced a force quit/unexpected termination.
      */
-    public val forceQuit: Boolean,
+    val forceQuit: Boolean,
 ) {
 
     /**

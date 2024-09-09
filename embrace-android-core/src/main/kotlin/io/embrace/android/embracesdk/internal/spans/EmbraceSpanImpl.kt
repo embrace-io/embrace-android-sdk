@@ -329,7 +329,7 @@ internal class EmbraceSpanImpl(
         }
     }
 
-    public companion object {
+    companion object {
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
 

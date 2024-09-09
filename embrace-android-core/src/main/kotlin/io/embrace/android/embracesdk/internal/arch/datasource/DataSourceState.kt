@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * that enable/disable the service, and creates new instances of the service as required.
  * It also is capable of disabling the service if the [SessionType] is not supported.
  */
-public class DataSourceState<T : DataSource<*>>(
+class DataSourceState<T : DataSource<*>>(
 
     /**
      * Provides instances of services. A service must define an interface
@@ -36,13 +36,13 @@ public class DataSourceState<T : DataSource<*>>(
      * If you enable this behavior please ensure your implementation is thread safe (e.g.
      * it can handle unbalanced calls to [enableDataCapture] and others).
      */
-    public val asyncInit: Boolean = false
+    val asyncInit: Boolean = false
 ) {
 
     /**
      * The type of session that contains the data.
      */
-    public var currentSessionType: SessionType? = null
+    var currentSessionType: SessionType? = null
         set(value) {
             field = value
             onSessionTypeChange()
@@ -50,7 +50,7 @@ public class DataSourceState<T : DataSource<*>>(
 
     private val factoryRef = lazy(factory)
 
-    public var dataSource: T? = null
+    var dataSource: T? = null
         private set
 
     init {
@@ -70,7 +70,7 @@ public class DataSourceState<T : DataSource<*>>(
     /**
      * Callback that is invoked when the config layer experiences a change.
      */
-    public fun onConfigChange() {
+    fun onConfigChange() {
         updateDataSource()
     }
 

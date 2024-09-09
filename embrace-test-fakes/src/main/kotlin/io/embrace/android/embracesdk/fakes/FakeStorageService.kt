@@ -5,12 +5,12 @@ import java.io.File
 import java.io.FilenameFilter
 import java.nio.file.Files
 
-public class FakeStorageService : StorageService {
+class FakeStorageService : StorageService {
 
-    public val cacheDirectory: File by lazy {
+    val cacheDirectory: File by lazy {
         Files.createTempDirectory("cache_temp").toFile()
     }
-    public val filesDirectory: File by lazy {
+    val filesDirectory: File by lazy {
         Files.createTempDirectory("files_temp").toFile()
     }
 

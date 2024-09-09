@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration values relating to the logs of the app.
  */
 @JsonClass(generateAdapter = true)
-public data class LogRemoteConfig(
+data class LogRemoteConfig(
 
     /**
      * Used to truncate log messages.

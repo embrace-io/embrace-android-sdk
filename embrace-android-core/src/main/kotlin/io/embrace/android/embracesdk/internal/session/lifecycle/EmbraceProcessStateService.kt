@@ -25,7 +25,7 @@ internal class EmbraceProcessStateService(
     /**
      * List of listeners that subscribe to process lifecycle events.
      */
-    public val listeners: CopyOnWriteArrayList<ProcessStateListener> = CopyOnWriteArrayList<ProcessStateListener>()
+    val listeners: CopyOnWriteArrayList<ProcessStateListener> = CopyOnWriteArrayList<ProcessStateListener>()
 
     private var sessionOrchestrator: SessionOrchestrator? = null
 
@@ -130,9 +130,9 @@ internal class EmbraceProcessStateService(
         else -> FOREGROUND_STATE
     }
 
-    public companion object {
-        public const val FOREGROUND_STATE: String = "foreground"
-        public const val BACKGROUND_STATE: String = "background"
+    companion object {
+        const val FOREGROUND_STATE: String = "foreground"
+        const val BACKGROUND_STATE: String = "background"
         private const val ERROR_FAILED_TO_NOTIFY =
             "Failed to notify EmbraceProcessStateService listener"
     }

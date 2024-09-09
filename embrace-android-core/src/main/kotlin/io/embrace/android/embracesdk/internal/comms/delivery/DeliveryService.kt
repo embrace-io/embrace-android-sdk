@@ -9,13 +9,13 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-public interface DeliveryService {
-    public fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType)
-    public fun sendCachedSessions(
+interface DeliveryService {
+    fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType)
+    fun sendCachedSessions(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         sessionIdTracker: SessionIdTracker
     )
-    public fun sendLogs(logEnvelope: Envelope<LogPayload>)
-    public fun saveLogs(logEnvelope: Envelope<LogPayload>)
-    public fun sendMoment(eventMessage: EventMessage)
+    fun sendLogs(logEnvelope: Envelope<LogPayload>)
+    fun saveLogs(logEnvelope: Envelope<LogPayload>)
+    fun sendMoment(eventMessage: EventMessage)
 }

@@ -7,17 +7,17 @@ import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 
-public class FakePayloadFactory : PayloadFactory {
+class FakePayloadFactory : PayloadFactory {
 
-    public val startSessionTimestamps: MutableList<Long> = mutableListOf<Long>()
-    public val endSessionTimestamps: MutableList<Long> = mutableListOf<Long>()
-    public var manualSessionEndCount: Int = 0
-    public var manualSessionStartCount: Int = 0
-    public var snapshotSessionCount: Int = 0
+    val startSessionTimestamps: MutableList<Long> = mutableListOf<Long>()
+    val endSessionTimestamps: MutableList<Long> = mutableListOf<Long>()
+    var manualSessionEndCount: Int = 0
+    var manualSessionStartCount: Int = 0
+    var snapshotSessionCount: Int = 0
     private var activeSession: SessionZygote? = null
-    public val endBaTimestamps: MutableList<Long> = mutableListOf<Long>()
-    public val startBaTimestamps: MutableList<Long> = mutableListOf<Long>()
-    public var baCrashId: String? = null
+    val endBaTimestamps: MutableList<Long> = mutableListOf<Long>()
+    val startBaTimestamps: MutableList<Long> = mutableListOf<Long>()
+    var baCrashId: String? = null
     private var snapshotBaCount: Int = 0
 
     override fun startPayloadWithState(
@@ -105,7 +105,7 @@ public class FakePayloadFactory : PayloadFactory {
         return fakeSessionEnvelope()
     }
 
-    public var crashId: String? = null
+    var crashId: String? = null
 
     private fun endSessionWithCrash(crashId: String): Envelope<SessionPayload> {
         this.crashId = crashId

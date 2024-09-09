@@ -8,17 +8,17 @@ import com.squareup.moshi.JsonClass
  * [LegacyExceptionInfo] for each nested cause.
  */
 @JsonClass(generateAdapter = true)
-public class LegacyExceptionInfo public constructor(
+class LegacyExceptionInfo(
 
     /**
      * The name of the class throwing the exception.
      */
-    @Json(name = "n") public val name: String,
+    @Json(name = "n") val name: String,
 
     /**
      * The exception message.
      */
-    @Json(name = "m") public val message: String?,
+    @Json(name = "m") val message: String?,
 
     lines: List<String>
 ) {
@@ -27,19 +27,19 @@ public class LegacyExceptionInfo public constructor(
      * String representation of each line of the stack trace.
      */
     @Json(name = "tt")
-    public val lines: List<String> = lines.take(STACK_FRAME_LIMIT)
+    val lines: List<String> = lines.take(STACK_FRAME_LIMIT)
 
     /**
      * The original length of the stack trace. This will be null if it has not been truncated.
      */
     @Json(name = "length")
-    public val originalLength: Int? = lines.size.takeIf { it > STACK_FRAME_LIMIT }
+    val originalLength: Int? = lines.size.takeIf { it > STACK_FRAME_LIMIT }
 
-    public fun toNewPayload(): ExceptionInfo {
+    fun toNewPayload(): ExceptionInfo {
         return ExceptionInfo(name, message, lines)
     }
 
-    public companion object {
+    companion object {
 
         /**
          * Maximum number of stackframes we are interested in serializing.
@@ -54,7 +54,7 @@ public class LegacyExceptionInfo public constructor(
          * @return the stacktrace instance
          */
         @JvmStatic
-        public fun ofThrowable(throwable: Throwable): LegacyExceptionInfo {
+        fun ofThrowable(throwable: Throwable): LegacyExceptionInfo {
             val name = throwable.javaClass.name
             val message = throwable.message ?: ""
             val lines = throwable.stackTrace.map(StackTraceElement::toString)

@@ -7,7 +7,7 @@ internal class EventSanitizerFacade(
     private val components: Set<String>
 ) {
 
-    public fun getSanitizedMessage(): EventMessage {
+    fun getSanitizedMessage(): EventMessage {
         val sanitizedEvent = EventSanitizer(eventMessage.event, components).sanitize()
         val sanitizedUserInfo = UserInfoSanitizer(eventMessage.userInfo, components).sanitize()
 

@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarker
 
-public class FakeCrashFileMarker : CrashFileMarker {
+class FakeCrashFileMarker : CrashFileMarker {
 
-    public var marked: Boolean = false
+    var marked: Boolean = false
 
     override fun mark() {
         marked = true

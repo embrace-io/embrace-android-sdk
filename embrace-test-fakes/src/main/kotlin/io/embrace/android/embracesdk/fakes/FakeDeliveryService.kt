@@ -21,16 +21,16 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * A [DeliveryService] that records the last parameters used to invoke each method, and for the ones that need it, count the number of
  * invocations. Please add additional tracking functionality as tests require them.
  */
-public open class FakeDeliveryService : DeliveryService {
-    public val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
-    public val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
-    public val sentMoments: MutableList<EventMessage> = mutableListOf()
-    public var lastEventSentAsync: EventMessage? = null
-    public var eventSentAsyncInvokedCount: Int = 0
-    public var lastSentCachedSession: String? = null
-    public val sentSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
+open class FakeDeliveryService : DeliveryService {
+    val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
+    val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
+    val sentMoments: MutableList<EventMessage> = mutableListOf()
+    var lastEventSentAsync: EventMessage? = null
+    var eventSentAsyncInvokedCount: Int = 0
+    var lastSentCachedSession: String? = null
+    val sentSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
         ConcurrentLinkedQueue()
-    public val savedSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
+    val savedSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
         ConcurrentLinkedQueue()
 
     override fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType) {
@@ -61,11 +61,11 @@ public open class FakeDeliveryService : DeliveryService {
         lastSavedLogPayloads.add(logEnvelope)
     }
 
-    public fun getSentSessions(): List<Envelope<SessionPayload>> {
+    fun getSentSessions(): List<Envelope<SessionPayload>> {
         return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.FOREGROUND }.map { it.first }
     }
 
-    public fun getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
+    fun getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
         return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
     }
 
@@ -74,21 +74,21 @@ public open class FakeDeliveryService : DeliveryService {
         return ApplicationState.valueOf(checkNotNull(value))
     }
 
-    public fun getLastSentSession(): Envelope<SessionPayload>? {
+    fun getLastSentSession(): Envelope<SessionPayload>? {
         return getSentSessions().lastOrNull()
     }
 
-    public fun getLastSentBackgroundActivity(): Envelope<SessionPayload>? {
+    fun getLastSentBackgroundActivity(): Envelope<SessionPayload>? {
         return getSentBackgroundActivities().lastOrNull()
     }
 
-    public fun getLastSavedSession(): Envelope<SessionPayload>? {
+    fun getLastSavedSession(): Envelope<SessionPayload>? {
         return savedSessionEnvelopes.map { it.first }.lastOrNull {
             it.findAppState() == ApplicationState.FOREGROUND
         }
     }
 
-    public fun getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
+    fun getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
         return savedSessionEnvelopes.map { it.first }.lastOrNull {
             it.findAppState() == ApplicationState.BACKGROUND
         }

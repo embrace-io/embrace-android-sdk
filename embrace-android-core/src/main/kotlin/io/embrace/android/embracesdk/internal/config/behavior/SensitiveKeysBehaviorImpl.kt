@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 private const val SENSITIVE_KEY_MAX_LENGTH = 128
 private const val SENSITIVE_KEYS_LIST_MAX_SIZE = 10000
 
-public const val REDACTED_LABEL: String = "<redacted>"
+const val REDACTED_LABEL: String = "<redacted>"
 
-public class SensitiveKeysBehaviorImpl(
+class SensitiveKeysBehaviorImpl(
     localConfig: SdkLocalConfig
 ) : SensitiveKeysBehavior {
 

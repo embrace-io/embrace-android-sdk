@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Allows the tracking of [EmbraceSpan] instances so that their references can be retrieved with its associated spanId
  */
-public class SpanRepository {
+class SpanRepository {
     private val activeSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
     private val completedSpans: MutableMap<String, PersistableEmbraceSpan> = mutableMapOf()
     private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
@@ -18,7 +18,7 @@ public class SpanRepository {
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
      */
-    public fun trackStartedSpan(embraceSpan: PersistableEmbraceSpan) {
+    fun trackStartedSpan(embraceSpan: PersistableEmbraceSpan) {
         val spanId = embraceSpan.spanId ?: return
 
         if (notTracked(spanId)) {
@@ -37,7 +37,7 @@ public class SpanRepository {
     /**
      * Transition active span to completed span if the span is tracked and the span is actually stopped.
      */
-    public fun trackedSpanStopped(spanId: String) {
+    fun trackedSpanStopped(spanId: String) {
         spanIdsInProcess.lockAndRun(spanId) {
             activeSpans[spanId]?.takeIf { !it.isRecording }?.let { activeSpans.remove(spanId) }?.let { embraceSpan ->
                 completedSpans[spanId] = embraceSpan
@@ -48,7 +48,7 @@ public class SpanRepository {
     /**
      * Return the [EmbraceSpan] with the corresponding [spanId] if it's tracked. Return null otherwise.
      */
-    public fun getSpan(spanId: String): EmbraceSpan? =
+    fun getSpan(spanId: String): EmbraceSpan? =
         spanIdsInProcess.lockAndRun(spanId) {
             activeSpans[spanId] ?: completedSpans[spanId]
         }
@@ -56,21 +56,21 @@ public class SpanRepository {
     /**
      * Get a list of active spans that are being tracked
      */
-    public fun getActiveSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
+    fun getActiveSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
         activeSpans.values.toList()
     }
 
     /**
      * Get a list of completed spans that are being tracked.
      */
-    public fun getCompletedSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
+    fun getCompletedSpans(): List<PersistableEmbraceSpan> = synchronized(spanIdsInProcess) {
         completedSpans.values.toList()
     }
 
     /**
      * Stop the existing active spans and mark them as failed
      */
-    public fun failActiveSpans(failureTimeMs: Long) {
+    fun failActiveSpans(failureTimeMs: Long) {
         getActiveSpans().filterNot { it.hasFixedAttribute(EmbType.Ux.Session) }.forEach { span ->
             span.stop(ErrorCode.FAILURE, failureTimeMs)
         }
@@ -79,7 +79,7 @@ public class SpanRepository {
     /**
      * Clear the spans this repository is tracking
      */
-    public fun clearCompletedSpans() {
+    fun clearCompletedSpans() {
         synchronized(spanIdsInProcess) {
             completedSpans.clear()
         }

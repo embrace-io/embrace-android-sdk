@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
-public fun Envelope<SessionPayload>.getSessionSpan(): Span? {
+fun Envelope<SessionPayload>.getSessionSpan(): Span? {
     return data.spans?.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) }
         ?: data.spanSnapshots?.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) }
 }

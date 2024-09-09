@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 
-public class FakeNativeFeatureModule(
+class FakeNativeFeatureModule(
     override val nativeThreadSamplerService: NativeThreadSamplerService? = null,
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? = null,
     override val ndkService: NdkService = FakeNdkService(),

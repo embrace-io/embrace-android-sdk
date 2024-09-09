@@ -11,7 +11,7 @@ import com.squareup.moshi.JsonClass
  * mode, meaning only specified domains will be tracked.
  */
 @JsonClass(generateAdapter = true)
-public data class NetworkRemoteConfig(
+data class NetworkRemoteConfig(
 
     /**
      * The default request capture limit for non-specified domains.

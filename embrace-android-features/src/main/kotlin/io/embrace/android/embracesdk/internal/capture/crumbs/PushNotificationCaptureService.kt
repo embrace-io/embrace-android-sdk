@@ -9,14 +9,14 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 /**
  * In charge of handling all notifications related functionality.
  */
-public class PushNotificationCaptureService(
+class PushNotificationCaptureService(
     private val pushNotificationDataSource: PushNotificationDataSource?,
     private val logger: EmbLogger
 ) : ActivityLifecycleListener {
 
-    public companion object Utils {
+    companion object Utils {
 
-        public enum class PRIORITY(public val priority: Int) {
+        enum class PRIORITY(val priority: Int) {
             PRIORITY_UNKNOWN(0),
             PRIORITY_HIGH(1),
             PRIORITY_NORMAL(2)
@@ -37,14 +37,14 @@ public class PushNotificationCaptureService(
          * add some more complex code.
          */
 
-        public fun getMessagePriority(priority: String?): Int =
+        fun getMessagePriority(priority: String?): Int =
             when (priority) {
                 "high" -> PRIORITY.PRIORITY_HIGH.priority
                 "normal" -> PRIORITY.PRIORITY_NORMAL.priority
                 else -> PRIORITY.PRIORITY_UNKNOWN.priority
             }
 
-        public fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
+        fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
             val keySet = bundle.keySet() ?: return emptyMap()
             return keySet.filter {
                 // let's filter all google reserved words, leaving us with user defined keys
@@ -68,7 +68,7 @@ public class PushNotificationCaptureService(
      * @param notificationPriority the priority of the message (as resolved on the device)
      * @param type the notification type
      */
-    public fun logPushNotification(
+    fun logPushNotification(
         title: String?,
         body: String?,
         topic: String?,

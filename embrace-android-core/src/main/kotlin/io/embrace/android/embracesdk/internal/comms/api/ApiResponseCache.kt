@@ -19,7 +19,7 @@ import java.net.URI
  * means the eTag can be set in the request header & we can avoid unnecessary work on the client
  * & on the server.
  */
-public class ApiResponseCache(
+class ApiResponseCache(
     private val serializer: PlatformSerializer,
     private val storageService: StorageService,
     private val logger: EmbLogger
@@ -56,7 +56,7 @@ public class ApiResponseCache(
         cache?.flush()
     }
 
-    public fun retrieveCachedConfig(url: String, request: ApiRequest): CachedConfig {
+    fun retrieveCachedConfig(url: String, request: ApiRequest): CachedConfig {
         val cachedResponse = retrieveCacheResponse(url, request)
         val obj = cachedResponse?.runCatching {
             serializer.fromJson(body, RemoteConfig::class.java)

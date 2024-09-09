@@ -16,7 +16,7 @@ import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.JvmAttributes
 import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes
 
-public class NativeAnrOtelMapper(
+class NativeAnrOtelMapper(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val serializer: PlatformSerializer,
     private val clock: Clock

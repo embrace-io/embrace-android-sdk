@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.injection.createInitModule
 import io.embrace.android.embracesdk.internal.injection.createOpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
-public class FakeInitModule(
+class FakeInitModule(
     clock: Clock = FakeClock(),
     logger: EmbLogger = FakeEmbLogger(),
     systemInfo: SystemInfo = SystemInfo(
@@ -24,7 +24,7 @@ public class FakeInitModule(
         systemInfo = systemInfo
     )
 ) : InitModule by initModule {
-    public val openTelemetryModule: OpenTelemetryModule = createOpenTelemetryModule(initModule)
+    val openTelemetryModule: OpenTelemetryModule = createOpenTelemetryModule(initModule)
 
-    public fun getFakeClock(): FakeClock? = clock as? FakeClock
+    fun getFakeClock(): FakeClock? = clock as? FakeClock
 }

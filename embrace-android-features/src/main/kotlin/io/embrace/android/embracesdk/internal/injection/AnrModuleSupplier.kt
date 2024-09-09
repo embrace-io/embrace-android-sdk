@@ -5,14 +5,14 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 /**
  * Function that returns an instance of [AnrModule]. Matches the signature of the constructor for [AnrModuleImpl]
  */
-public typealias AnrModuleSupplier = (
+typealias AnrModuleSupplier = (
     initModule: InitModule,
     configService: ConfigService,
     workerModule: WorkerThreadModule,
     otelModule: OpenTelemetryModule
 ) -> AnrModule
 
-public fun createAnrModule(
+fun createAnrModule(
     initModule: InitModule,
     configService: ConfigService,
     workerModule: WorkerThreadModule,

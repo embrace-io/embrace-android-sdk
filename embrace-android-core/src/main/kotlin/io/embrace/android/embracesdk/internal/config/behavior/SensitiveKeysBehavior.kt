@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-public fun interface SensitiveKeysBehavior {
+fun interface SensitiveKeysBehavior {
 
     /**
      * Checks if the given key is sensitive.
@@ -8,5 +8,5 @@ public fun interface SensitiveKeysBehavior {
      * @param key The key to check.
      * @return true if the key is sensitive, otherwise false.
      */
-    public fun isSensitiveKey(key: String): Boolean
+    fun isSensitiveKey(key: String): Boolean
 }

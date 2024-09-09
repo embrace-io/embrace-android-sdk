@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public data class Event(
+data class Event(
     @Json(name = "n")
     @JvmField
     val name: String? = null,

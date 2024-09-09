@@ -5,9 +5,9 @@ import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
-public class FakeLogPayloadSource : LogPayloadSource {
+class FakeLogPayloadSource : LogPayloadSource {
 
-    public var singleLogPayloadsSource: List<LogRequest<LogPayload>> =
+    var singleLogPayloadsSource: List<LogRequest<LogPayload>> =
         listOf(LogRequest(LogPayload(logs = listOf(sendImmediatelyLog))))
     private val batchedLogPayload: LogPayload = LogPayload()
 

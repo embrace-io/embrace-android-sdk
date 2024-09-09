@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManage
 import io.embrace.android.embracesdk.internal.injection.StorageModule
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
-public class FakeStorageModule(
+class FakeStorageModule(
     override val cacheService: CacheService = FakeCacheService(),
     override val deliveryCacheManager: DeliveryCacheManager = FakeDeliveryCacheManager(),
     override val storageService: StorageService = FakeStorageService()

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 
-public class EmbraceTracer(
+class EmbraceTracer(
     private val clock: Clock,
     private val spanService: SpanService,
 ) : TracingApi {
@@ -70,7 +70,7 @@ public class EmbraceTracer(
      * Return the current time in millis for the clock instance used by the Embrace SDK. This should be used to obtain the time
      * in used for [recordCompletedSpan] so the timestamps will be in sync with those used by the SDK when a time is implicitly recorded.
      */
-    public fun getSdkCurrentTimeMs(): Long = clock.now()
+    fun getSdkCurrentTimeMs(): Long = clock.now()
 
     @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
     override fun isTracingAvailable(): Boolean = spanService.initialized()

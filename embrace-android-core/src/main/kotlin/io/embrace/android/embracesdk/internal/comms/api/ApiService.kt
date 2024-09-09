@@ -8,32 +8,32 @@ import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import java.util.concurrent.Future
 
-public interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
+interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
 
     /**
      * Sends a list of OTel Logs to the API.
      *
      * @param logEnvelope containing the logs
      */
-    public fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>)
+    fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>)
 
     /**
      * Saves a list of OTel Logs to disk to be sent on restart.
      *
      * @param logEnvelope containing the logs
      */
-    public fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
+    fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
 
     /**
      * Sends an event to the API.
      *
      * @param eventMessage the event message containing the event
      */
-    public fun sendEvent(eventMessage: EventMessage)
+    fun sendEvent(eventMessage: EventMessage)
 
     /**
      * Sends a session to the API. This can be either a v1 or v2 session - the implementation
      * is responsible for routing the payload correctly.
      */
-    public fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>?
+    fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*>?
 }

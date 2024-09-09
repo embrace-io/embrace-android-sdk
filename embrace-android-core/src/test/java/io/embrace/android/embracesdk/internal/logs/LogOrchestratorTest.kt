@@ -51,6 +51,7 @@ internal class LogOrchestratorTest {
                 logPayloadSource = LogPayloadSourceImpl(logSink)
             ).logEnvelopeSource
         )
+        logSink.registerLogStoredCallback(logOrchestrator::onLogsAdded)
     }
 
     @Test

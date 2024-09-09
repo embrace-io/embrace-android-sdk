@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
@@ -45,10 +46,10 @@ internal class SessionOrchestrationModuleImpl(
 
     override val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
-            gatingService,
-            payloadSourceModule.sessionEnvelopeSource,
+            Systrace.traceSynchronous("gatingService") { gatingService },
+            Systrace.traceSynchronous("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
             androidServicesModule.preferencesService,
-            openTelemetryModule.currentSessionSpan
+            openTelemetryModule.currentSessionSpan,
         )
     }
 
@@ -69,8 +70,8 @@ internal class SessionOrchestrationModuleImpl(
 
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
-            payloadMessageCollator,
-            configModule.configService,
+            Systrace.traceSynchronous("payloadMessageCollator") { payloadMessageCollator },
+            Systrace.traceSynchronous("configService") { configModule.configService },
             initModule.logger
         )
     }
@@ -96,7 +97,7 @@ internal class SessionOrchestrationModuleImpl(
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
-            payloadFactory,
+            Systrace.traceSynchronous("payloadFactory") { payloadFactory },
             initModule.clock,
             configModule.configService,
             essentialServiceModule.sessionIdTracker,

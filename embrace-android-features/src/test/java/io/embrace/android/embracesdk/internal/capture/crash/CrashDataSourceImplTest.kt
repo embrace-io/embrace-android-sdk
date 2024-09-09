@@ -87,10 +87,10 @@ internal class CrashDataSourceImplTest {
             serializer,
             logger
         ).apply {
-            addCrashTeardownHandler(logOrchestrator)
-            addCrashTeardownHandler(sessionOrchestrator)
-            addCrashTeardownHandler(crashMarker)
-            addCrashTeardownHandler(anrService)
+            addCrashTeardownHandler(lazy { logOrchestrator })
+            addCrashTeardownHandler(lazy { sessionOrchestrator })
+            addCrashTeardownHandler(lazy { crashMarker })
+            addCrashTeardownHandler(lazy { anrService })
         }
     }
 

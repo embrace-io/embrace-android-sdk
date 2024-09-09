@@ -131,9 +131,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val apiClient: ApiClient by singleton {
-        ApiClientImpl(
-            initModule.logger
-        )
+        ApiClientImpl()
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {

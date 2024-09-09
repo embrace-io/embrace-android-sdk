@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import android.app.Activity
 import android.os.Bundle
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 
@@ -10,8 +9,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
  * In charge of handling all notifications related functionality.
  */
 class PushNotificationCaptureService(
-    private val pushNotificationDataSource: PushNotificationDataSource?,
-    private val logger: EmbLogger
+    private val pushNotificationDataSource: PushNotificationDataSource?
 ) : ActivityLifecycleListener {
 
     companion object Utils {
@@ -81,14 +79,8 @@ class PushNotificationCaptureService(
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         if (isComingFromPushNotification(activity)) {
-            logger.logInfo("Coming from a Firebase push notification")
             with(activity.intent.extras) {
                 if (this == null) {
-                    logger.logWarning(
-                        "It seems like we are coming from a Google Push " +
-                            "Notification, but intent extras is null. Will not be able to log it " +
-                            "to our dashboard."
-                    )
                     return
                 }
 

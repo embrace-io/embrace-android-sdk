@@ -47,7 +47,7 @@ internal class EmbraceDeliveryService(
             return
         }
 
-        try {
+        runCatching {
             val sessionId = envelope.getSessionId() ?: return
             val action: SerializationAction = cacheManager.loadSessionAsAction(sessionId)
                 ?: { stream: OutputStream ->
@@ -57,22 +57,12 @@ internal class EmbraceDeliveryService(
                         serializer.toJson(envelope, Envelope.sessionEnvelopeType)
                     }
                 }
-            val future = apiService.sendSession(action) { response ->
-                if (!response.shouldRetry) {
-                    val message =
-                        "Session deleted without request being sent: ID $sessionId"
-                    logger.logWarning(message, SessionPurgeException(message))
-                }
+            val future = apiService.sendSession(action) {
                 cacheManager.deleteSession(sessionId)
             }
             if (snapshotType == SessionSnapshotType.JVM_CRASH) {
                 future?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
             }
-        } catch (ex: Exception) {
-            logger.logInfo(
-                "Failed to send session end message. Embrace will store the " +
-                    "session message and attempt to deliver it at a future date."
-            )
         }
     }
 

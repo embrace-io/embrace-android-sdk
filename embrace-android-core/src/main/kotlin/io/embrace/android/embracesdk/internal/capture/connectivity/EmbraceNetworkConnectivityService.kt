@@ -30,11 +30,9 @@ internal class EmbraceNetworkConnectivityService(
             val networkStatus = getCurrentNetworkStatus()
             if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
-                logger.logInfo("Network status changed to: " + networkStatus.name)
                 notifyNetworkConnectivityListeners(networkStatus)
             }
         } catch (ex: Exception) {
-            logger.logWarning("Failed to record network connectivity", ex)
             logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, ex)
         }
     }
@@ -75,14 +73,8 @@ internal class EmbraceNetworkConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            try {
+            runCatching {
                 context.registerReceiver(this, intentFilter)
-            } catch (ex: Exception) {
-                logger.logInfo(
-                    "Failed to register EmbraceNetworkConnectivityService " +
-                        "broadcast receiver. Connectivity status will be unavailable.",
-                    ex
-                )
             }
         }
     }

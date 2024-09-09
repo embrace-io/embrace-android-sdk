@@ -78,8 +78,6 @@ internal class SdkStateApiDelegate(
                 val sessionId = localSessionIdTracker.getActiveSessionId()
                 if (sessionId != null) {
                     return sessionId
-                } else {
-                    logger.logInfo("Session ID is null", null)
                 }
             }
             return null

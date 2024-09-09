@@ -42,19 +42,13 @@ class EmbraceLogService(
 
     private val logCounters = mapOf(
         Severity.INFO to LogCounter(
-            Severity.INFO.name,
-            configService.logMessageBehavior::getInfoLogLimit,
-            logger
+            configService.logMessageBehavior::getInfoLogLimit
         ),
         Severity.WARNING to LogCounter(
-            Severity.WARNING.name,
-            configService.logMessageBehavior::getWarnLogLimit,
-            logger
+            configService.logMessageBehavior::getWarnLogLimit
         ),
         Severity.ERROR to LogCounter(
-            Severity.ERROR.name,
-            configService.logMessageBehavior::getErrorLogLimit,
-            logger
+            configService.logMessageBehavior::getErrorLogLimit
         )
     )
 

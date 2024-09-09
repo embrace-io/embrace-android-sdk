@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.anr.sigquit
 
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -8,7 +7,7 @@ internal class AnrThreadIdDelegateTest {
 
     @Test
     fun findGoogleAnrThread() {
-        val delegate = AnrThreadIdDelegate(EmbLoggerImpl())
+        val delegate = AnrThreadIdDelegate()
         val threadId = delegate.findGoogleAnrThread()
         assertEquals(0, threadId)
     }

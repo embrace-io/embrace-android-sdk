@@ -89,7 +89,6 @@ class NativeThreadSamplerInstaller(
     private fun monitorCurrentThread(sampler: NativeThreadSamplerService, anrService: AnrService) {
         synchronized(this) {
             if (!isMonitoring.get()) {
-                logger.logInfo("Installing native sampling on '${Thread.currentThread().name}'")
                 if (sampler.monitorCurrentThread()) {
                     anrService.addBlockedThreadListener(sampler)
                     isMonitoring.set(true)

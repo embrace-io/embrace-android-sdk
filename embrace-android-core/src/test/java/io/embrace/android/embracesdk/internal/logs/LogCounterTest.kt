@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -14,11 +13,7 @@ internal class LogCounterTest {
 
     @Before
     fun setUp() {
-        logCounter = LogCounter(
-            "Test",
-            { TEST_LOG_LIMIT },
-            FakeEmbLogger()
-        )
+        logCounter = LogCounter { TEST_LOG_LIMIT }
     }
 
     @Test

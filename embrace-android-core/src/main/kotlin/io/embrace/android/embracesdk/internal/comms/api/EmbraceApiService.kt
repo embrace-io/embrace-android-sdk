@@ -60,25 +60,21 @@ internal class EmbraceApiService(
 
         return when (val response = apiClient.executeGet(request)) {
             is ApiResponse.Success -> {
-                logger.logInfo("Fetched new config successfully.")
                 response.body?.let {
                     serializer.fromJson(it, RemoteConfig::class.java)
                 }
             }
 
             is ApiResponse.NotModified -> {
-                logger.logInfo("Confirmed config has not been modified.")
                 cachedResponse.remoteConfig
             }
 
             is ApiResponse.TooManyRequests -> {
                 // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
-                logger.logWarning("Too many requests. ")
                 null
             }
 
             is ApiResponse.Failure, ApiResponse.None -> {
-                logger.logInfo("Failed to fetch config (no response).")
                 null
             }
 

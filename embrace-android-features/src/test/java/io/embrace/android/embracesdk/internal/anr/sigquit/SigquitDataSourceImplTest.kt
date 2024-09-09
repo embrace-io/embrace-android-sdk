@@ -23,7 +23,7 @@ internal class SigquitDataSourceImplTest {
         config = AnrRemoteConfig()
         dataSource = SigquitDataSourceImpl(
             SharedObjectLoader(logger),
-            AnrThreadIdDelegate(logger),
+            AnrThreadIdDelegate(),
             fakeAnrBehavior(remoteCfg = { config }),
             logger,
             sessionSpan

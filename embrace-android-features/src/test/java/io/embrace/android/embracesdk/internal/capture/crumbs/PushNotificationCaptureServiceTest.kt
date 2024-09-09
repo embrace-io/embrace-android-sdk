@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import android.os.Bundle
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.mockk.clearAllMocks
 import io.mockk.clearMocks
 import io.mockk.every
@@ -17,7 +15,6 @@ internal class PushNotificationCaptureServiceTest {
     private lateinit var pushNotificationCaptureService: PushNotificationCaptureService
 
     companion object {
-        private val logger: EmbLogger = EmbLoggerImpl()
         private val mockBundle: Bundle = mockk(relaxed = true)
     }
 
@@ -28,8 +25,7 @@ internal class PushNotificationCaptureServiceTest {
         clearMocks(mockBundle)
 
         pushNotificationCaptureService = PushNotificationCaptureService(
-            mockk(relaxed = true),
-            logger
+            mockk(relaxed = true)
         )
     }
 

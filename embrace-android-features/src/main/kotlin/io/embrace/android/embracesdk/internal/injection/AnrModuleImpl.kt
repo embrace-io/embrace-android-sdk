@@ -50,7 +50,7 @@ internal class AnrModuleImpl(
     override val sigquitDataSource: SigquitDataSource by singleton {
         SigquitDataSourceImpl(
             sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
-            anrThreadIdDelegate = AnrThreadIdDelegate(initModule.logger),
+            anrThreadIdDelegate = AnrThreadIdDelegate(),
             anrBehavior = configService.anrBehavior,
             logger = initModule.logger,
             writer = otelModule.currentSessionSpan

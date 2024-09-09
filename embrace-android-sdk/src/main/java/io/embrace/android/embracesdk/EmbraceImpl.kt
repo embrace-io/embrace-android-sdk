@@ -186,11 +186,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val configModule = bootstrapper.configModule
         if (configModule.configService.isSdkDisabled()) {
-            logger.logInfo("Interrupting SDK start because it is disabled", null)
             stop()
             return
         }
-        logger.logInfo("Starting SDK for framework " + configModule.configService.appFramework.name)
 
         if (configModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
             registerComposeActivityListener(coreModule.application)
@@ -240,8 +238,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
             null -> {}
         }
         val appId = configModule.configService.appId
-        val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME
-        logger.logInfo(startMsg, null)
+        val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
+        logger.logInfo(startMsg)
 
         val endTimeMs = sdkClock.now()
         sdkCallChecker.started.set(true)
@@ -265,15 +263,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
      */
     fun stop() {
         if (sdkCallChecker.started.compareAndSet(true, false)) {
-            logger.logInfo("Shutting down Embrace SDK.", null)
-            try {
+            logger.logInfo("Shutting down Embrace SDK")
+            runCatching {
                 application?.let {
                     unregisterComposeActivityListener(it)
                 }
                 application = null
                 bootstrapper.stopServices()
-            } catch (ex: Exception) {
-                logger.logError("Error while shutting down Embrace SDK", ex)
             }
         }
     }

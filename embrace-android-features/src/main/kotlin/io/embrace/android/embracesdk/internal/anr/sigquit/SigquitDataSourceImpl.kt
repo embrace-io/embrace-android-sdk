@@ -46,13 +46,9 @@ internal class SigquitDataSourceImpl(
             val res = sigquitNdkDelegate.installGoogleAnrHandler(googleThreadId)
             if (res > 0) {
                 googleAnrTrackerInstalled.set(false)
-                logger.logError("Could not initialize Google ANR tracking {code=$res}")
-            } else {
-                logger.logInfo("Google Anr Tracker handler installed successfully")
             }
             res
         } catch (exception: UnsatisfiedLinkError) {
-            logger.logError("Could not install ANR Handler. Exception: $exception")
             1
         }
     }

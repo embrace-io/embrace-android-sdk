@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
@@ -114,21 +115,13 @@ internal object LocalConfigParser {
                 " embrace.disableMappingFileUpload=true to gradle.properties."
         }
 
-        val enabledStr = when {
-            ndkEnabled -> "enabled"
-            else -> "disabled"
-        }
-        logger.logInfo("Native crash capture is $enabledStr")
         var configs: SdkLocalConfig? = null
         if (!sdkConfigs.isNullOrEmpty()) {
             Systrace.traceSynchronous("deserialize-sdk-config") {
                 try {
                     configs = serializer.fromJson(sdkConfigs, SdkLocalConfig::class.java)
                 } catch (ex: Exception) {
-                    logger.logError(
-                        "Failed to parse Embrace config from config json file.",
-                        ex
-                    )
+                    logger.trackInternalError(InternalErrorType.CONFIG_DESERIALIZATION_FAIL, ex)
                 }
             }
         }

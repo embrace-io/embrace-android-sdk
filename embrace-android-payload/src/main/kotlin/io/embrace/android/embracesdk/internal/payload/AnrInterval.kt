@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
+import com.squareup.moshi.JsonClass
+
 /**
  * Intervals during which the UI thread was blocked for more than 1 second, which
  * determines that the application is not responding (ANR).
@@ -40,6 +42,7 @@ public data class AnrInterval @JvmOverloads constructor(
     /**
      * The type of thread not responding. Currently only the UI thread is monitored.
      */
+    @JsonClass(generateAdapter = false)
     public enum class Type {
         UI
     }

@@ -7,13 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.createLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
@@ -157,14 +156,10 @@ internal class EmbraceLogServiceTest {
         // given a config with log limits
         val testLogLimit = 5
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = createLogMessageBehavior(
-                remoteCfg = {
-                    LogRemoteConfig(
-                        logInfoLimit = testLogLimit,
-                        logWarnLimit = testLogLimit,
-                        logErrorLimit = testLogLimit
-                    )
-                }
+            logMessageBehavior = FakeLogMessageBehavior(
+                infoLogLimit = testLogLimit,
+                warnLogLimit = testLogLimit,
+                errorLogLimit = testLogLimit
             )
         )
         logService = createEmbraceLogService()
@@ -191,7 +186,9 @@ internal class EmbraceLogServiceTest {
     @Test
     fun `a max length smaller than 3 does not add ellipsis`() {
         // given a config with a log message limit smaller than 3
-        fakeConfigService = getConfigServiceWithLogLimit(2)
+        fakeConfigService = FakeConfigService(
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 2)
+        )
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
@@ -205,7 +202,9 @@ internal class EmbraceLogServiceTest {
     @Test
     fun `a log message bigger than the max length is trimmed`() {
         // given a config with message limit
-        fakeConfigService = getConfigServiceWithLogLimit(5)
+        fakeConfigService = FakeConfigService(
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5)
+        )
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
@@ -221,13 +220,7 @@ internal class EmbraceLogServiceTest {
         // given a config with message limit and app framework Unity
         fakeConfigService = FakeConfigService(
             appFramework = AppFramework.UNITY,
-            logMessageBehavior = createLogMessageBehavior(
-                remoteCfg = {
-                    LogRemoteConfig(
-                        logMessageMaximumAllowedLength = 5
-                    )
-                }
-            )
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5)
         )
         logService = createEmbraceLogService()
 
@@ -356,14 +349,4 @@ internal class EmbraceLogServiceTest {
         assertEquals(flutterLibrary, attributes[EmbType.System.FlutterException.embFlutterExceptionLibrary.name])
         log.assertIsType(EmbType.System.FlutterException)
     }
-
-    private fun getConfigServiceWithLogLimit(testLogMessageLimit: Int) = FakeConfigService(
-        logMessageBehavior = createLogMessageBehavior(
-            remoteCfg = {
-                LogRemoteConfig(
-                    logMessageMaximumAllowedLength = testLogMessageLimit
-                )
-            }
-        )
-    )
 }

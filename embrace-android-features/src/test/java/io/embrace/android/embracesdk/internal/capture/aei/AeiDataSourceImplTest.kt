@@ -7,10 +7,8 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.createAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
@@ -21,6 +19,7 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 
@@ -39,15 +38,9 @@ internal class AeiDataSourceImplTest {
 
     private lateinit var applicationExitInfoService: AeiDataSourceImpl
     private lateinit var logWriter: FakeLogWriter
+    private lateinit var configService: FakeConfigService
 
     private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
-
-    private var appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 100.0f)
-    private val configService = FakeConfigService(
-        appExitInfoBehavior = createAppExitInfoBehavior {
-            RemoteConfig(appExitInfoConfig = appExitInfoConfig)
-        }
-    )
 
     private val preferenceService = FakePreferenceService()
     private val logger = EmbLoggerImpl()
@@ -87,6 +80,13 @@ internal class AeiDataSourceImplTest {
             logWriter,
             logger
         ).apply(AeiDataSourceImpl::enableDataCapture)
+    }
+
+    @Before
+    fun setUp() {
+        configService = FakeConfigService(
+            appExitInfoBehavior = FakeAppExitInfoBehavior(enabled = true)
+        )
     }
 
     @Test
@@ -300,8 +300,7 @@ internal class AeiDataSourceImplTest {
         // given a trace that exceeds the limit
         every { mockAppExitInfo.traceInputStream } returns "a".repeat(500).byteInputStream()
 
-        appExitInfoConfig =
-            AppExitInfoConfig(pctAeiCaptureEnabled = 100.0f, appExitInfoTracesLimit = 100)
+        configService.appExitInfoBehavior = FakeAppExitInfoBehavior(enabled = true, traceMaxLimit = 100)
         every {
             mockActivityManager.getHistoricalProcessExitReasons(
                 any(),

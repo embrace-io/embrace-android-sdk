@@ -3,12 +3,11 @@ package io.embrace.android.embracesdk.internal.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.createAnrBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
@@ -34,7 +33,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     lateinit var livenessCheckScheduler: LivenessCheckScheduler
     lateinit var state: ThreadMonitoringState
     lateinit var blockedThreadDetector: BlockedThreadDetector
-    lateinit var cfg: AnrRemoteConfig
+    lateinit var anrBehavior: FakeAnrBehavior
     lateinit var anrExecutorService: T
     lateinit var targetThreadHandler: TargetThreadHandler
     lateinit var anrMonitorThread: AtomicReference<Thread>
@@ -42,9 +41,9 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     override fun before() {
         clock.setCurrentTime(0)
         val looper: Looper = mockk(relaxed = true)
-        cfg = AnrRemoteConfig()
+        anrBehavior = FakeAnrBehavior()
         anrMonitorThread = AtomicReference(Thread.currentThread())
-        fakeConfigService = FakeConfigService(anrBehavior = createAnrBehavior { cfg })
+        fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         val worker = ScheduledWorker(anrExecutorService)

@@ -3,13 +3,10 @@ package io.embrace.android.embracesdk.internal.injection
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.NoOpAnrService
-import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -42,25 +39,13 @@ internal class AnrModuleImplTest {
     fun testBehaviorDisabled() {
         val module = AnrModuleImpl(
             FakeInitModule(),
-            createConfigServiceWithAnrDisabled(),
+            FakeConfigService(
+                autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(anrServiceEnabled = false)
+            ),
             FakeWorkerThreadModule(),
             FakeOpenTelemetryModule()
         )
         assertTrue(module.anrService is NoOpAnrService)
         assertNotNull(module.anrOtelMapper)
     }
-
-    private fun createConfigServiceWithAnrDisabled() = FakeConfigService(
-        autoDataCaptureBehavior = createAutoDataCaptureBehavior(localCfg = {
-            LocalConfig(
-                "",
-                false,
-                SdkLocalConfig(
-                    automaticDataCaptureConfig = AutomaticDataCaptureLocalConfig(
-                        anrServiceEnabled = false
-                    )
-                )
-            )
-        })
-    )
 }

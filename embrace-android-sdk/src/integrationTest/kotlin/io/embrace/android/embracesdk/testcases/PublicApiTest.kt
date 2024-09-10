@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.createNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.recordSession
@@ -36,10 +37,7 @@ internal class PublicApiTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         IntegrationTestRule.Harness(startImmediately = false).apply {
-            overriddenConfigService.networkSpanForwardingBehavior =
-                createNetworkSpanForwardingBehavior {
-                    NetworkSpanForwardingRemoteConfig(100f)
-                }
+            overriddenConfigService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)
         }
     }
 

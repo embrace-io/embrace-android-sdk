@@ -17,13 +17,11 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
-import io.embrace.android.embracesdk.fakes.createSessionBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
@@ -205,13 +203,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test manual session end disabled for session gating`() {
         configService = FakeConfigService(
-            sessionBehavior = createSessionBehavior {
-                RemoteConfig(
-                    sessionConfig = SessionRemoteConfig(
-                        isEnabled = true
-                    ),
-                )
-            }
+            sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
         )
         createOrchestrator(false)
 

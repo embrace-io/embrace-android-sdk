@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.createAnrBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,6 +14,7 @@ import java.lang.Thread.MIN_PRIORITY
 import java.lang.Thread.NORM_PRIORITY
 import java.lang.Thread.State.RUNNABLE
 import java.lang.Thread.currentThread
+import java.util.regex.Pattern
 
 internal class ThreadInfoCollectorTest {
 
@@ -28,12 +28,10 @@ internal class ThreadInfoCollectorTest {
     @Before
     fun setUp() {
         configService = FakeConfigService(
-            anrBehavior = createAnrBehavior {
-                AnrRemoteConfig(
-                    allowList = listOf(currentThread().name),
-                    blockList = listOf("Finalizer")
-                )
-            }
+            anrBehavior = FakeAnrBehavior(
+                allowPatternList = listOf(currentThread().name).map(Pattern::compile),
+                blockPatternList = listOf("Finalizer").map(Pattern::compile)
+            )
         )
         threadInfoCollector = ThreadInfoCollector(currentThread())
     }

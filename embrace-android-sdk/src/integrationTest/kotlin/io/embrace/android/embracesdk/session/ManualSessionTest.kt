@@ -2,13 +2,11 @@ package io.embrace.android.embracesdk.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.fakes.createSessionBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -55,9 +53,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when session control enabled does not end sessions`() {
         with(testRule) {
-            harness.overriddenConfigService.sessionBehavior = createSessionBehavior {
-                RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
-            }
+            harness.overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
             harness.recordSession {
                 harness.overriddenClock.tick(10000)
                 embrace.endSession()
@@ -70,9 +66,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when state session is below 5s has no effect`() {
         with(testRule) {
-            harness.overriddenConfigService.sessionBehavior = createSessionBehavior {
-                RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
-            }
+            harness.overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
             harness.recordSession {
                 harness.overriddenClock.tick(1000) // not enough to trigger new session
                 embrace.endSession()

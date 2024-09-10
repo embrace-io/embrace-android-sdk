@@ -312,7 +312,6 @@ internal class EmbraceConfigServiceTest {
             fakeClock,
             logger,
             worker,
-            false,
             AppFramework.NATIVE,
             action
         ).apply {

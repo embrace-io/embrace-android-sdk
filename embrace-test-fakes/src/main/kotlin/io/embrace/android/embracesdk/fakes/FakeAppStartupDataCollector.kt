@@ -46,6 +46,7 @@ class FakeAppStartupDataCollector(
     ) {
         startupActivityName = activityName
         startupActivityResumedMs = timestampMs ?: clock.now()
+        collectionCompleteCallback?.invoke()
     }
 
     override fun firstFrameRendered(
@@ -55,6 +56,7 @@ class FakeAppStartupDataCollector(
     ) {
         startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: clock.now()
+        collectionCompleteCallback?.invoke()
     }
 
     override fun addTrackedInterval(name: String, startTimeMs: Long, endTimeMs: Long) {

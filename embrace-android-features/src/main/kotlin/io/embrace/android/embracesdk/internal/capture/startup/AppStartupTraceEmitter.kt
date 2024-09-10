@@ -98,6 +98,7 @@ internal class AppStartupTraceEmitter(
     private var sdkInitEndedInForeground: Boolean? = null
 
     private val startupRecorded = AtomicBoolean(false)
+    private val dataCollectionComplete = AtomicBoolean(false)
     private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
 
     override fun applicationInitStart(timestampMs: Long?) {
@@ -162,9 +163,9 @@ internal class AppStartupTraceEmitter(
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
     private fun dataCollectionComplete(callback: (() -> Unit)?) {
-        if (!startupRecorded.get()) {
-            synchronized(startupRecorded) {
-                if (!startupRecorded.get()) {
+        if (!dataCollectionComplete.get()) {
+            synchronized(dataCollectionComplete) {
+                if (!dataCollectionComplete.get()) {
                     backgroundWorker.submit {
                         recordStartup()
                         if (!startupRecorded.get()) {
@@ -175,6 +176,7 @@ internal class AppStartupTraceEmitter(
                         }
                     }
                     callback?.invoke()
+                    dataCollectionComplete.set(true)
                 }
             }
         }

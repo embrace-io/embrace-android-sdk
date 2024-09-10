@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -205,7 +205,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test manual session end disabled for session gating`() {
         configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
+            sessionBehavior = createSessionBehavior {
                 RemoteConfig(
                     sessionConfig = SessionRemoteConfig(
                         isEnabled = true

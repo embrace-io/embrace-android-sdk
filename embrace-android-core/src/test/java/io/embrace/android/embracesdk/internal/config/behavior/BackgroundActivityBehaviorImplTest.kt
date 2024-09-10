@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeBackgroundActivityBehavior
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.local.BackgroundActivityLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import org.junit.Assert.assertEquals
@@ -23,7 +23,7 @@ internal class BackgroundActivityBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeBackgroundActivityBehavior()) {
+        with(createBackgroundActivityBehavior()) {
             assertFalse(isEnabled())
             assertEquals(100, getManualBackgroundActivityLimit())
             assertEquals(5000L, getMinBackgroundActivityDuration())
@@ -33,7 +33,7 @@ internal class BackgroundActivityBehaviorImplTest {
 
     @Test
     fun testLocalOnly() {
-        with(fakeBackgroundActivityBehavior(localCfg = { local })) {
+        with(createBackgroundActivityBehavior(localCfg = { local })) {
             assertTrue(isEnabled())
             assertEquals(50, getManualBackgroundActivityLimit())
             assertEquals(3000L, getMinBackgroundActivityDuration())
@@ -43,7 +43,7 @@ internal class BackgroundActivityBehaviorImplTest {
 
     @Test
     fun testRemoteAndLocal() {
-        with(fakeBackgroundActivityBehavior(localCfg = { local }, remoteCfg = { remote })) {
+        with(createBackgroundActivityBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertFalse(isEnabled())
             assertEquals(50, getManualBackgroundActivityLimit())
             assertEquals(3000L, getMinBackgroundActivityDuration())

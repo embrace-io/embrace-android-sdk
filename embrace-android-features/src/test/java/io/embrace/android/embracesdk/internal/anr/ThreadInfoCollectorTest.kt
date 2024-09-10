@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
@@ -28,7 +28,7 @@ internal class ThreadInfoCollectorTest {
     @Before
     fun setUp() {
         configService = FakeConfigService(
-            anrBehavior = fakeAnrBehavior {
+            anrBehavior = createAnrBehavior {
                 AnrRemoteConfig(
                     allowList = listOf(currentThread().name),
                     blockList = listOf("Finalizer")

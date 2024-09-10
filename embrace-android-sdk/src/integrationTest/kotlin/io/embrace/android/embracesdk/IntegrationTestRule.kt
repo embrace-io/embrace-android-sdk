@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
@@ -159,18 +159,18 @@ internal class IntegrationTestRule(
         val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(overriddenInitModule),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
-            sdkModeBehavior = fakeSdkModeBehavior(
+            sdkModeBehavior = createSdkModeBehavior(
                 isDebug = overriddenCoreModule.isDebug,
                 localCfg = { DEFAULT_LOCAL_CONFIG }
             ),
-            networkBehavior = fakeNetworkBehavior(
+            networkBehavior = createNetworkBehavior(
                 localCfg = { DEFAULT_SDK_LOCAL_CONFIG },
                 remoteCfg = { DEFAULT_SDK_REMOTE_CONFIG }
             ),
-            networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
+            networkSpanForwardingBehavior = createNetworkSpanForwardingBehavior {
                 NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
             },
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+            autoDataCaptureBehavior = createAutoDataCaptureBehavior(
                 remoteCfg = {
                     DEFAULT_SDK_REMOTE_CONFIG.copy(
                         // disable thermal status capture as it interferes with unit tests

@@ -4,7 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -55,7 +55,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when session control enabled does not end sessions`() {
         with(testRule) {
-            harness.overriddenConfigService.sessionBehavior = fakeSessionBehavior {
+            harness.overriddenConfigService.sessionBehavior = createSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
             }
             harness.recordSession {
@@ -70,7 +70,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when state session is below 5s has no effect`() {
         with(testRule) {
-            harness.overriddenConfigService.sessionBehavior = fakeSessionBehavior {
+            harness.overriddenConfigService.sessionBehavior = createSessionBehavior {
                 RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true))
             }
             harness.recordSession {

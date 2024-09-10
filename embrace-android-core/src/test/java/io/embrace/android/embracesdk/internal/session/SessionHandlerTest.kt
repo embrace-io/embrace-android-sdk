@@ -17,9 +17,9 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -102,15 +102,15 @@ internal class SessionHandlerTest {
         sessionLocalConfig = SessionLocalConfig()
         remoteConfig = RemoteConfig()
         configService = FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+            autoDataCaptureBehavior = createAutoDataCaptureBehavior(
                 localCfg = { localConfig },
                 remoteCfg = { remoteConfig }
             ),
-            sessionBehavior = fakeSessionBehavior(
+            sessionBehavior = createSessionBehavior(
                 localCfg = { sessionLocalConfig },
                 remoteCfg = { remoteConfig }
             ),
-            dataCaptureEventBehavior = fakeDataCaptureEventBehavior(
+            dataCaptureEventBehavior = createDataCaptureEventBehavior(
                 remoteCfg = { remoteConfig }
             )
         )

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.WebViewVitals
-import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
+import io.embrace.android.embracesdk.fakes.createWebViewVitalsBehavior
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -36,7 +36,7 @@ internal class WebviewFeatureTest {
     @Before
     fun setup() {
         testRule.harness.overriddenConfigService.webViewVitalsBehavior =
-            fakeWebViewVitalsBehavior(remoteCfg = {
+            createWebViewVitalsBehavior(remoteCfg = {
                 RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
             })
     }

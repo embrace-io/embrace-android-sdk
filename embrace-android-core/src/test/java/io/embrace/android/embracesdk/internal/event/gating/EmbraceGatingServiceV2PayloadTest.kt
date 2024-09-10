@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.event.gating
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogService
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -33,8 +33,8 @@ internal class EmbraceGatingServiceV2PayloadTest {
 
     @Before
     fun setUp() {
-        sessionBehavior = fakeSessionBehavior { cfg }
-        configService = FakeConfigService(sessionBehavior = fakeSessionBehavior { cfg })
+        sessionBehavior = createSessionBehavior { cfg }
+        configService = FakeConfigService(sessionBehavior = createSessionBehavior { cfg })
         logService = FakeLogService()
         gatingService = EmbraceGatingService(configService, logService, EmbLoggerImpl())
     }

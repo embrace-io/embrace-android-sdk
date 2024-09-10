@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.anr
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
@@ -44,7 +44,7 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         val looper: Looper = mockk(relaxed = true)
         cfg = AnrRemoteConfig()
         anrMonitorThread = AtomicReference(Thread.currentThread())
-        fakeConfigService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
+        fakeConfigService = FakeConfigService(anrBehavior = createAnrBehavior { cfg })
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
         val worker = ScheduledWorker(anrExecutorService)

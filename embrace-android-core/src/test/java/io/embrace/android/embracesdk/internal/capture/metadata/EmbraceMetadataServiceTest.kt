@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
@@ -103,12 +103,12 @@ internal class EmbraceMetadataServiceTest {
 
     private val configService: FakeConfigService =
         FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+            autoDataCaptureBehavior = createAutoDataCaptureBehavior(
                 localCfg = {
                     LocalConfig("appId", true, SdkLocalConfig())
                 }
             ),
-            sdkModeBehavior = fakeSdkModeBehavior(
+            sdkModeBehavior = createSdkModeBehavior(
                 localCfg = {
                     LocalConfig("appId", false, SdkLocalConfig())
                 }

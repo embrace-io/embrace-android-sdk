@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.anr
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
@@ -34,7 +34,7 @@ internal class NativeThreadSamplerInstallerTest {
         sampler = mockk(relaxed = true)
 
         cfg = AnrRemoteConfig(pctNativeThreadAnrSamplingEnabled = 100f)
-        configService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
+        configService = FakeConfigService(anrBehavior = createAnrBehavior { cfg })
         installer = NativeThreadSamplerInstaller(sharedObjectLoader = sharedObjectLoader, mockk(relaxed = true))
         every { sharedObjectLoader.loadEmbraceNative() } returns true
     }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -30,7 +30,7 @@ internal class SdkModeBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 thresholdCheck = disabled
             )
         ) {
@@ -42,7 +42,7 @@ internal class SdkModeBehaviorImplTest {
     @Test
     fun testLocalOnly() {
         with(
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 thresholdCheck = enabled,
                 localCfg = { local }
             )
@@ -53,24 +53,24 @@ internal class SdkModeBehaviorImplTest {
 
     @Test
     fun testBetaFeaturesEnabled() {
-        var behavior = fakeSdkModeBehavior(
+        var behavior = createSdkModeBehavior(
             thresholdCheck = enabled
         )
         assertTrue(behavior.isBetaFeaturesEnabled())
 
-        behavior = fakeSdkModeBehavior(
+        behavior = createSdkModeBehavior(
             thresholdCheck = disabled
         )
         assertFalse(behavior.isBetaFeaturesEnabled())
 
-        behavior = fakeSdkModeBehavior(
+        behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
             localCfg = { LocalConfig("", false, SdkLocalConfig(betaFeaturesEnabled = false)) }
         )
         assertFalse(behavior.isBetaFeaturesEnabled())
 
         behavior =
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 thresholdCheck = enabled,
                 localCfg = { local },
                 remoteCfg = { RemoteConfig(pctBetaFeaturesEnabled = 100f) }
@@ -78,7 +78,7 @@ internal class SdkModeBehaviorImplTest {
         assertTrue(behavior.isBetaFeaturesEnabled())
 
         behavior =
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 thresholdCheck = disabled,
                 localCfg = { local },
                 remoteCfg = { RemoteConfig(pctBetaFeaturesEnabled = 0f) }
@@ -89,14 +89,14 @@ internal class SdkModeBehaviorImplTest {
     @Test
     fun testMetadataDebug() {
         val behaviorNotDebug =
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 isDebug = false,
                 thresholdCheck = disabled
             )
         assertFalse(behaviorNotDebug.isBetaFeaturesEnabled())
 
         val behaviorDebug =
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 isDebug = true,
                 thresholdCheck = disabled
             )
@@ -106,28 +106,28 @@ internal class SdkModeBehaviorImplTest {
     @Test
     fun testSdkEnabled() {
         // SDK disabled
-        var behavior = fakeSdkModeBehavior(
+        var behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
             remoteCfg = { RemoteConfig(threshold = 0) }
         )
         assertTrue(behavior.isSdkDisabled())
 
         // SDK enabled
-        behavior = fakeSdkModeBehavior(
+        behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
             remoteCfg = { RemoteConfig(threshold = 100) }
         )
         assertFalse(behavior.isSdkDisabled())
 
         // SDK 30% enabled with default offset
-        behavior = fakeSdkModeBehavior(
+        behavior = createSdkModeBehavior(
             thresholdCheck = halfEnabled,
             remoteCfg = { RemoteConfig(threshold = 30) }
         )
         assertTrue(behavior.isSdkDisabled())
 
         // SDK 30% enabled with non-default offset
-        behavior = fakeSdkModeBehavior(
+        behavior = createSdkModeBehavior(
             thresholdCheck = halfEnabled,
             remoteCfg = { RemoteConfig(threshold = 30, offset = 25) }
         )

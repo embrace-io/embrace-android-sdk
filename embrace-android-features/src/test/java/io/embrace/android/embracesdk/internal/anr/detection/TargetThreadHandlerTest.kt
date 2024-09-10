@@ -4,7 +4,7 @@ import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -118,7 +118,7 @@ internal class TargetThreadHandlerTest {
     fun testStartIdleHandlerEnabled() {
         val messageQueue = mockk<MessageQueue>(relaxed = true)
         configService = FakeConfigService(
-            anrBehavior = fakeAnrBehavior {
+            anrBehavior = createAnrBehavior {
                 AnrRemoteConfig(pctIdleHandlerEnabled = 100f)
             }
         )
@@ -131,7 +131,7 @@ internal class TargetThreadHandlerTest {
     fun testStartIdleHandlerDisabled() {
         val messageQueue = mockk<MessageQueue>(relaxed = true)
         configService = FakeConfigService(
-            anrBehavior = fakeAnrBehavior {
+            anrBehavior = createAnrBehavior {
                 AnrRemoteConfig(pctIdleHandlerEnabled = 0f)
             }
         )

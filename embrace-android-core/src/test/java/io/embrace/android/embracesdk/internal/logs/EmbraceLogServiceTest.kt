@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -130,7 +130,7 @@ internal class EmbraceLogServiceTest {
     fun `info and warning logs are gated correctly`() {
         // given a config that gates info and warning logs
         fakeConfigService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior(
+            sessionBehavior = createSessionBehavior(
                 remoteCfg = {
                     RemoteConfig(
                         sessionConfig = SessionRemoteConfig(
@@ -157,7 +157,7 @@ internal class EmbraceLogServiceTest {
         // given a config with log limits
         val testLogLimit = 5
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = fakeLogMessageBehavior(
+            logMessageBehavior = createLogMessageBehavior(
                 remoteCfg = {
                     LogRemoteConfig(
                         logInfoLimit = testLogLimit,
@@ -221,7 +221,7 @@ internal class EmbraceLogServiceTest {
         // given a config with message limit and app framework Unity
         fakeConfigService = FakeConfigService(
             appFramework = AppFramework.UNITY,
-            logMessageBehavior = fakeLogMessageBehavior(
+            logMessageBehavior = createLogMessageBehavior(
                 remoteCfg = {
                     LogRemoteConfig(
                         logMessageMaximumAllowedLength = 5
@@ -358,7 +358,7 @@ internal class EmbraceLogServiceTest {
     }
 
     private fun getConfigServiceWithLogLimit(testLogMessageLimit: Int) = FakeConfigService(
-        logMessageBehavior = fakeLogMessageBehavior(
+        logMessageBehavior = createLogMessageBehavior(
             remoteCfg = {
                 LogRemoteConfig(
                     logMessageMaximumAllowedLength = testLogMessageLimit

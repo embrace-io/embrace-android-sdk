@@ -17,8 +17,8 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -111,10 +111,10 @@ internal class EmbraceNdkServiceTest {
         remoteConfig = RemoteConfig()
         configService =
             FakeConfigService(
-                autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+                autoDataCaptureBehavior = createAutoDataCaptureBehavior(
                     localCfg = { localConfig }
                 ),
-                sdkModeBehavior = fakeSdkModeBehavior(
+                sdkModeBehavior = createSdkModeBehavior(
                     remoteCfg = { remoteConfig }
                 )
             )

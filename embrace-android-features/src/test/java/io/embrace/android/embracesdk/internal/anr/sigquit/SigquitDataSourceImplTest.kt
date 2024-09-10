@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.anr.sigquit
 
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -24,7 +24,7 @@ internal class SigquitDataSourceImplTest {
         dataSource = SigquitDataSourceImpl(
             SharedObjectLoader(logger),
             AnrThreadIdDelegate(),
-            fakeAnrBehavior(remoteCfg = { config }),
+            createAnrBehavior(remoteCfg = { config }),
             logger,
             sessionSpan
         )

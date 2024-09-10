@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.createAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -19,7 +19,7 @@ internal class AppExitInfoBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeAppExitInfoBehavior()) {
+        with(createAppExitInfoBehavior()) {
             assertEquals(2097152, getTraceMaxLimit())
             assertTrue(isEnabled())
         }
@@ -27,7 +27,7 @@ internal class AppExitInfoBehaviorImplTest {
 
     @Test
     fun testLocalOnly() {
-        with(fakeAppExitInfoBehavior(localCfg = { local })) {
+        with(createAppExitInfoBehavior(localCfg = { local })) {
             assertEquals(33792, getTraceMaxLimit())
             assertFalse(isEnabled())
         }
@@ -35,7 +35,7 @@ internal class AppExitInfoBehaviorImplTest {
 
     @Test
     fun testLocalAndRemote() {
-        with(fakeAppExitInfoBehavior(localCfg = { local }, remoteCfg = { remote })) {
+        with(createAppExitInfoBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertEquals(55209, getTraceMaxLimit())
             assertTrue(isEnabled())
         }

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
 import io.embrace.android.embracesdk.internal.config.local.DomainLocalConfig
@@ -71,7 +71,7 @@ internal class NetworkBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeNetworkBehavior(localCfg = { null }, remoteCfg = { null })) {
+        with(createNetworkBehavior(localCfg = { null }, remoteCfg = { null })) {
             assertEquals("x-emb-trace-id", getTraceIdHeader())
             assertFalse(isRequestContentLengthCaptureEnabled())
             assertTrue(isNativeNetworkingMonitoringEnabled())
@@ -86,7 +86,7 @@ internal class NetworkBehaviorImplTest {
 
     @Test
     fun testLocalOnly() {
-        with(fakeNetworkBehavior(localCfg = { local }, remoteCfg = { null })) {
+        with(createNetworkBehavior(localCfg = { local }, remoteCfg = { null })) {
             assertEquals("x-custom-trace", getTraceIdHeader())
             assertTrue(isRequestContentLengthCaptureEnabled())
             assertFalse(isNativeNetworkingMonitoringEnabled())
@@ -100,7 +100,7 @@ internal class NetworkBehaviorImplTest {
 
     @Test
     fun testRemoteOnly() {
-        with(fakeNetworkBehavior(localCfg = { null }, remoteCfg = { remote })) {
+        with(createNetworkBehavior(localCfg = { null }, remoteCfg = { remote })) {
             assertEquals(409, getNetworkCaptureLimit())
             assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
@@ -119,7 +119,7 @@ internal class NetworkBehaviorImplTest {
 
     @Test
     fun testRemoteAndLocal() {
-        with(fakeNetworkBehavior(localCfg = { local }, remoteCfg = { remote })) {
+        with(createNetworkBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertEquals(409, getNetworkCaptureLimit())
             assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
             assertTrue(isUrlEnabled("google.com"))
@@ -143,7 +143,7 @@ internal class NetworkBehaviorImplTest {
                 disabledUrlPatterns = listOf("a.b.c", "invalid[}regex")
             )
         )
-        with(fakeNetworkBehavior(localCfg = { cfg })) {
+        with(createNetworkBehavior(localCfg = { cfg })) {
             assertTrue(isUrlEnabled("invalid[}regex"))
         }
     }
@@ -157,7 +157,7 @@ internal class NetworkBehaviorImplTest {
         )
         val json = ResourceReader.readResourceAsText("public_key_config.json")
         val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer(), otelCfg, EmbLoggerImpl())
-        val behavior = fakeNetworkBehavior(localCfg = localConfig::sdkConfig)
+        val behavior = createNetworkBehavior(localCfg = localConfig::sdkConfig)
         assertEquals(testCleanPublicKey, behavior.getCapturePublicKey())
     }
 }

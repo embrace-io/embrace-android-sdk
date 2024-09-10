@@ -57,7 +57,7 @@ class NativeThreadSamplerInstaller(
         }
         prepareTargetHandler()
 
-        if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
+        if (configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             monitorCurrentThread(sampler, anrService)
         }
 
@@ -79,7 +79,7 @@ class NativeThreadSamplerInstaller(
     ) {
         targetHandler?.post(
             Runnable {
-                if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled() && !isMonitoring.get()) {
+                if (configService.anrBehavior.isUnityAnrCaptureEnabled() && !isMonitoring.get()) {
                     monitorCurrentThread(sampler, anrService)
                 }
             }

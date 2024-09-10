@@ -74,12 +74,12 @@ internal class NetworkBehaviorImplTest {
         with(createNetworkBehavior(localCfg = { null }, remoteCfg = { null })) {
             assertEquals("x-emb-trace-id", getTraceIdHeader())
             assertFalse(isRequestContentLengthCaptureEnabled())
-            assertTrue(isNativeNetworkingMonitoringEnabled())
-            assertEquals(1000, getNetworkCaptureLimit())
-            assertEquals(emptyMap<String, Int>(), getNetworkCallLimitsPerDomainSuffix())
+            assertTrue(isHttpUrlConnectionCaptureEnabled())
+            assertEquals(1000, getRequestLimitPerDomain())
+            assertEquals(emptyMap<String, Int>(), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isCaptureBodyEncryptionEnabled())
-            assertNull(getCapturePublicKey())
+            assertNull(getNetworkBodyCapturePublicKey())
             assertEquals(emptySet<NetworkCaptureRuleRemoteConfig>(), getNetworkCaptureRules())
         }
     }
@@ -89,20 +89,20 @@ internal class NetworkBehaviorImplTest {
         with(createNetworkBehavior(localCfg = { local }, remoteCfg = { null })) {
             assertEquals("x-custom-trace", getTraceIdHeader())
             assertTrue(isRequestContentLengthCaptureEnabled())
-            assertFalse(isNativeNetworkingMonitoringEnabled())
-            assertEquals(mapOf("google.com" to 100), getNetworkCallLimitsPerDomainSuffix())
-            assertEquals(720, getNetworkCaptureLimit())
+            assertFalse(isHttpUrlConnectionCaptureEnabled())
+            assertEquals(mapOf("google.com" to 100), getLimitsByDomain())
+            assertEquals(720, getRequestLimitPerDomain())
             assertFalse(isUrlEnabled("google.com"))
             assertTrue(isCaptureBodyEncryptionEnabled())
-            assertEquals("test", getCapturePublicKey())
+            assertEquals("test", getNetworkBodyCapturePublicKey())
         }
     }
 
     @Test
     fun testRemoteOnly() {
         with(createNetworkBehavior(localCfg = { null }, remoteCfg = { remote })) {
-            assertEquals(409, getNetworkCaptureLimit())
-            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
+            assertEquals(409, getRequestLimitPerDomain())
+            assertEquals(mapOf("google.com" to 50), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))
             assertEquals(
@@ -120,8 +120,8 @@ internal class NetworkBehaviorImplTest {
     @Test
     fun testRemoteAndLocal() {
         with(createNetworkBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertEquals(409, getNetworkCaptureLimit())
-            assertEquals(mapOf("google.com" to 50), getNetworkCallLimitsPerDomainSuffix())
+            assertEquals(409, getRequestLimitPerDomain())
+            assertEquals(mapOf("google.com" to 50), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))
             assertEquals(
@@ -149,7 +149,7 @@ internal class NetworkBehaviorImplTest {
     }
 
     @Test
-    fun testGetCapturePublicKey() {
+    fun testGetNetworkBodyCapturePublicKey() {
         val otelCfg = OpenTelemetryConfiguration(
             SpanSinkImpl(),
             LogSinkImpl(),
@@ -158,6 +158,6 @@ internal class NetworkBehaviorImplTest {
         val json = ResourceReader.readResourceAsText("public_key_config.json")
         val localConfig = LocalConfigParser.buildConfig("aaa", false, json, EmbraceSerializer(), otelCfg, EmbLoggerImpl())
         val behavior = createNetworkBehavior(localCfg = localConfig::sdkConfig)
-        assertEquals(testCleanPublicKey, behavior.getCapturePublicKey())
+        assertEquals(testCleanPublicKey, behavior.getNetworkBodyCapturePublicKey())
     }
 }

@@ -118,7 +118,7 @@ internal class EmbraceNdkService(
     }
 
     private fun checkSignalHandlersOverwritten() {
-        if (configService.autoDataCaptureBehavior.isSigHandlerDetectionEnabled()) {
+        if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
             val culprit = delegate._checkForOverwrittenHandlers()
             if (culprit != null) {
                 if (shouldIgnoreOverriddenHandler(culprit)) {

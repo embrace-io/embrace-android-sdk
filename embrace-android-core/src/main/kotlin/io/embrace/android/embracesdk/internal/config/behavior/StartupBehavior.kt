@@ -5,5 +5,5 @@ interface StartupBehavior {
     /**
      * Controls whether the startup moment is automatically ended.
      */
-    fun isAutomaticEndEnabled(): Boolean
+    fun isStartupMomentAutoEndEnabled(): Boolean
 }

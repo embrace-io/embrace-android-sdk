@@ -7,7 +7,7 @@ interface AppExitInfoBehavior {
     /**
      * Whether the feature is enabled or not.
      */
-    fun isEnabled(): Boolean
+    fun isAeiCaptureEnabled(): Boolean
 
     fun appExitInfoMaxNum(): Int
 

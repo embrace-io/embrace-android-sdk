@@ -34,7 +34,7 @@ internal class SigquitDataSourceImpl(
 
     // IMPORTANT: This class and method are referenced by anr.c. Move or rename both at the same time, or it will break.
     override fun saveSigquit(timestamp: Long) {
-        if (anrBehavior.isGoogleAnrCaptureEnabled()) {
+        if (anrBehavior.isSigquitCaptureEnabled()) {
             captureData(NoInputValidation) {
                 addEvent(SchemaType.Sigquit, timestamp)
             }

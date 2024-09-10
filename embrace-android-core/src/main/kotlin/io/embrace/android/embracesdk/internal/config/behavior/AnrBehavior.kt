@@ -7,9 +7,9 @@ import java.util.regex.Pattern
 interface AnrBehavior {
 
     /**
-     * Control whether Google ANR capture is enabled.
+     * Control whether SIGQUIT capture is enabled.
      */
-    fun isGoogleAnrCaptureEnabled(): Boolean
+    fun isSigquitCaptureEnabled(): Boolean
 
     /**
      * Allow listed threads by pattern
@@ -106,9 +106,9 @@ interface AnrBehavior {
     fun getNativeThreadAnrSamplingUnwinder(): Unwinder
 
     /**
-     * Whether native thread ANR sampling is enabled
+     * Whether Unity ANR capture is enabled
      */
-    fun isNativeThreadAnrSamplingEnabled(): Boolean
+    fun isUnityAnrCaptureEnabled(): Boolean
 
     /**
      * Whether offsets are enabled for native thread ANR stacktrace sampling.

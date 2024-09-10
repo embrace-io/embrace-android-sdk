@@ -11,12 +11,12 @@ interface BreadcrumbBehavior {
     /**
      * Controls whether tap coordinates are captured in breadcrumbs
      */
-    fun isTapCoordinateCaptureEnabled(): Boolean
+    fun isViewClickCoordinateCaptureEnabled(): Boolean
 
     /**
      * Controls whether activity lifecycle changes are captured in breadcrumbs
      */
-    fun isAutomaticActivityCaptureEnabled(): Boolean
+    fun isActivityBreadcrumbCaptureEnabled(): Boolean
 
     /**
      * Controls whether webviews are captured.
@@ -26,7 +26,7 @@ interface BreadcrumbBehavior {
     /**
      * Control whether query params for webviews are captured.
      */
-    fun isQueryParamCaptureEnabled(): Boolean
+    fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean
 
-    fun isCaptureFcmPiiDataEnabled(): Boolean
+    fun isFcmPiiDataCaptureEnabled(): Boolean
 }

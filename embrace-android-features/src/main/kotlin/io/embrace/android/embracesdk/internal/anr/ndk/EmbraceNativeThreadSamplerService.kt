@@ -105,7 +105,7 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
             return
         }
 
-        if (ignored || !configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
+        if (ignored || !configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             return
         }
         if (count % factor == 0) {
@@ -157,13 +157,13 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
 
     private fun shouldSkipNewSample(anrBehavior: AnrBehavior): Boolean {
         val sessionLimit = anrBehavior.getMaxAnrIntervalsPerSession()
-        return !configService.anrBehavior.isNativeThreadAnrSamplingEnabled() || intervals.size >= sessionLimit
+        return !configService.anrBehavior.isUnityAnrCaptureEnabled() || intervals.size >= sessionLimit
     }
 
     override fun getNativeSymbols(): Map<String, String>? = symbols.value
 
     override fun getCapturedIntervals(receivedTermination: Boolean?): List<NativeThreadAnrInterval>? {
-        if (!configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
+        if (!configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             return null
         }
 

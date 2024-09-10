@@ -259,7 +259,7 @@ internal class EmbraceConfigService(
     private fun persistConfig() {
         // TODO: future get rid of these prefs from PrefService entirely?
         preferencesService.sdkDisabled = sdkModeBehavior.isSdkDisabled()
-        preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isEnabled()
+        preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
     }
 
     // TODO: future extract these out to SdkBehavior interface
@@ -320,7 +320,7 @@ internal class EmbraceConfigService(
 
     override fun hasValidRemoteConfig(): Boolean = !configRequiresRefresh()
     override fun isAppExitInfoCaptureEnabled(): Boolean {
-        return appExitInfoBehavior.isEnabled()
+        return appExitInfoBehavior.isAeiCaptureEnabled()
     }
 
     private companion object {

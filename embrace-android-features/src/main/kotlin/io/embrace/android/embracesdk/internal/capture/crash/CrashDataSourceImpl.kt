@@ -48,7 +48,7 @@ internal class CrashDataSourceImpl(
     private var jsException: JsException? = null
 
     init {
-        if (configService.autoDataCaptureBehavior.isUncaughtExceptionHandlerEnabled()) {
+        if (configService.autoDataCaptureBehavior.isJvmCrashCaptureEnabled()) {
             registerExceptionHandler()
         }
     }

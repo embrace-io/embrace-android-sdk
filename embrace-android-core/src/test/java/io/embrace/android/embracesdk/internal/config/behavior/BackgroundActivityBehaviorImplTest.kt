@@ -24,7 +24,7 @@ internal class BackgroundActivityBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createBackgroundActivityBehavior()) {
-            assertFalse(isEnabled())
+            assertFalse(isBackgroundActivityCaptureEnabled())
             assertEquals(100, getManualBackgroundActivityLimit())
             assertEquals(5000L, getMinBackgroundActivityDuration())
             assertEquals(30, getMaxCachedActivities())
@@ -34,7 +34,7 @@ internal class BackgroundActivityBehaviorImplTest {
     @Test
     fun testLocalOnly() {
         with(createBackgroundActivityBehavior(localCfg = { local })) {
-            assertTrue(isEnabled())
+            assertTrue(isBackgroundActivityCaptureEnabled())
             assertEquals(50, getManualBackgroundActivityLimit())
             assertEquals(3000L, getMinBackgroundActivityDuration())
             assertEquals(50, getMaxCachedActivities())
@@ -44,7 +44,7 @@ internal class BackgroundActivityBehaviorImplTest {
     @Test
     fun testRemoteAndLocal() {
         with(createBackgroundActivityBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertFalse(isEnabled())
+            assertFalse(isBackgroundActivityCaptureEnabled())
             assertEquals(50, getManualBackgroundActivityLimit())
             assertEquals(3000L, getMinBackgroundActivityDuration())
             assertEquals(50, getMaxCachedActivities())

@@ -31,7 +31,7 @@ class AppExitInfoBehaviorImpl(
             ?: local?.appExitInfoTracesLimit
             ?: MAX_TRACE_SIZE_BYTES
 
-    override fun isEnabled(): Boolean {
+    override fun isAeiCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.appExitInfoConfig?.pctAeiCaptureEnabled)
             ?: local?.aeiCaptureEnabled
             ?: AEI_ENABLED_DEFAULT

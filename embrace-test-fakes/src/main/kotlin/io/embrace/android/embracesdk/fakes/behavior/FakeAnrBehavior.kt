@@ -21,7 +21,7 @@ class FakeAnrBehavior(
     var nativeThreadAnrSamplingAllowlistImpl: List<AllowedNdkSampleMethod> = emptyList(),
 ) : AnrBehavior {
 
-    override fun isGoogleAnrCaptureEnabled(): Boolean = googleAnrCaptureEnabled
+    override fun isSigquitCaptureEnabled(): Boolean = googleAnrCaptureEnabled
     override fun isAnrCaptureEnabled(): Boolean = anrCaptureEnabled
     override fun isAnrProcessErrorsCaptureEnabled(): Boolean = false
     override fun getMonitorThreadPriority(): Int = monitorThreadPriorityImpl
@@ -38,7 +38,7 @@ class FakeAnrBehavior(
     override fun shouldCaptureMainThreadOnly(): Boolean = true
     override fun getNativeThreadAnrSamplingFactor(): Int = 10
     override fun getNativeThreadAnrSamplingUnwinder(): Unwinder = Unwinder.LIBUNWIND
-    override fun isNativeThreadAnrSamplingEnabled(): Boolean = nativeThreadAnrSamplingEnabled
+    override fun isUnityAnrCaptureEnabled(): Boolean = nativeThreadAnrSamplingEnabled
     override fun isNativeThreadAnrSamplingOffsetEnabled(): Boolean = false
     override fun isIdleHandlerEnabled(): Boolean = idleHandlerEnabled
     override fun isStrictModeListenerEnabled(): Boolean = strictModeListenerEnabled

@@ -24,7 +24,7 @@ class BackgroundActivityBehaviorImpl(
         const val MAX_CACHED_ACTIVITIES_DEFAULT = 30
     }
 
-    override fun isEnabled(): Boolean {
+    override fun isBackgroundActivityCaptureEnabled(): Boolean {
         return remote?.threshold?.let(thresholdCheck::isBehaviorEnabled)
             ?: local?.backgroundActivityCaptureEnabled
             ?: BACKGROUND_ACTIVITY_CAPTURE_ENABLED_DEFAULT

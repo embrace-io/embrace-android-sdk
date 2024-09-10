@@ -32,7 +32,7 @@ class TapDataSource(
             inputValidation = NoInputValidation,
             captureAction = {
                 val finalPoint = when {
-                    breadcrumbBehavior.isTapCoordinateCaptureEnabled() -> point
+                    breadcrumbBehavior.isViewClickCoordinateCaptureEnabled() -> point
                     else -> Pair(0.0f, 0.0f)
                 }
                 val coords = run {

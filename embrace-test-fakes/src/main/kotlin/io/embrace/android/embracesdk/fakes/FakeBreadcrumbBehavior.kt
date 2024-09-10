@@ -19,9 +19,9 @@ class FakeBreadcrumbBehavior(
     override fun getTapBreadcrumbLimit(): Int = tapBreadcrumbLimitImpl
     override fun getViewBreadcrumbLimit(): Int = viewBreadcrumbLimitImpl
     override fun getWebViewBreadcrumbLimit(): Int = webviewBreadcrumbLimitImpl
-    override fun isTapCoordinateCaptureEnabled(): Boolean = tapCoordinateCaptureEnabled
-    override fun isAutomaticActivityCaptureEnabled(): Boolean = automaticActivityCaptureEnabled
+    override fun isViewClickCoordinateCaptureEnabled(): Boolean = tapCoordinateCaptureEnabled
+    override fun isActivityBreadcrumbCaptureEnabled(): Boolean = automaticActivityCaptureEnabled
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean = webViewBreadcrumbCaptureEnabled
-    override fun isQueryParamCaptureEnabled(): Boolean = queryParamCaptureEnabled
-    override fun isCaptureFcmPiiDataEnabled(): Boolean = captureFcmPiiDataEnabled
+    override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = queryParamCaptureEnabled
+    override fun isFcmPiiDataCaptureEnabled(): Boolean = captureFcmPiiDataEnabled
 }

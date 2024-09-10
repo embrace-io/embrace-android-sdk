@@ -19,5 +19,5 @@ class StartupBehaviorImpl(
         const val AUTOMATICALLY_END_DEFAULT = true
     }
 
-    override fun isAutomaticEndEnabled(): Boolean = local?.automaticallyEnd ?: AUTOMATICALLY_END_DEFAULT
+    override fun isStartupMomentAutoEndEnabled(): Boolean = local?.automaticallyEnd ?: AUTOMATICALLY_END_DEFAULT
 }

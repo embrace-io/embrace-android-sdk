@@ -55,7 +55,7 @@ internal class AnrBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createAnrBehavior()) {
-            assertFalse(isGoogleAnrCaptureEnabled())
+            assertFalse(isSigquitCaptureEnabled())
             assertEquals(100L, getSamplingIntervalMs())
             assertTrue(shouldCaptureMainThreadOnly())
             assertEquals(25, getStrictModeViolationLimit())
@@ -73,7 +73,7 @@ internal class AnrBehaviorImplTest {
             assertFalse(isIdleHandlerEnabled())
             assertFalse(isStrictModeListenerEnabled())
             assertFalse(isBgAnrCaptureEnabled())
-            assertFalse(isNativeThreadAnrSamplingEnabled())
+            assertFalse(isUnityAnrCaptureEnabled())
             assertFalse(isAnrProcessErrorsCaptureEnabled())
             assertTrue(isAnrCaptureEnabled())
             assertEquals(Unwinder.LIBUNWIND, getNativeThreadAnrSamplingUnwinder())
@@ -92,15 +92,15 @@ internal class AnrBehaviorImplTest {
     @Test
     fun testLocalOnly() {
         with(createAnrBehavior(localCfg = { local })) {
-            assertTrue(isGoogleAnrCaptureEnabled())
-            assertTrue(isNativeThreadAnrSamplingEnabled())
+            assertTrue(isSigquitCaptureEnabled())
+            assertTrue(isUnityAnrCaptureEnabled())
         }
     }
 
     @Test
     fun testRemoteAndLocal() {
         with(createAnrBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertFalse(isGoogleAnrCaptureEnabled())
+            assertFalse(isSigquitCaptureEnabled())
             assertEquals(200L, getSamplingIntervalMs())
             assertFalse(shouldCaptureMainThreadOnly())
             assertEquals(209, getStrictModeViolationLimit())
@@ -118,7 +118,7 @@ internal class AnrBehaviorImplTest {
             assertTrue(isIdleHandlerEnabled())
             assertTrue(isStrictModeListenerEnabled())
             assertTrue(isBgAnrCaptureEnabled())
-            assertTrue(isNativeThreadAnrSamplingEnabled())
+            assertTrue(isUnityAnrCaptureEnabled())
             assertTrue(isAnrProcessErrorsCaptureEnabled())
             assertFalse(isAnrCaptureEnabled())
             assertEquals(Unwinder.LIBUNWINDSTACK, getNativeThreadAnrSamplingUnwinder())

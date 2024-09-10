@@ -9,6 +9,6 @@ class FakeAppExitInfoBehavior(
 ) : AppExitInfoBehavior {
 
     override fun getTraceMaxLimit(): Int = traceMaxLimit
-    override fun isEnabled(): Boolean = enabled
+    override fun isAeiCaptureEnabled(): Boolean = enabled
     override fun appExitInfoMaxNum(): Int = appExitInfoMaxNum
 }

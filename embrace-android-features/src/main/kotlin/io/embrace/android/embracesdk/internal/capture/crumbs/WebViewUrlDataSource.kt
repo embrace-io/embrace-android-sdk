@@ -33,7 +33,7 @@ class WebViewUrlDataSource(
                 captureAction = {
                     // Check if web view query params should be captured.
                     var parsedUrl: String = url ?: ""
-                    if (!breadcrumbBehavior.isQueryParamCaptureEnabled()) {
+                    if (!breadcrumbBehavior.isWebViewBreadcrumbQueryParamCaptureEnabled()) {
                         val queryOffset = url?.indexOf(QUERY_PARAMETER_DELIMITER) ?: 0
                         if (queryOffset > 0) {
                             parsedUrl = url?.substring(0, queryOffset) ?: ""

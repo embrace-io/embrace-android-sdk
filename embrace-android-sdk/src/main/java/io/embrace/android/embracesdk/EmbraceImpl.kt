@@ -190,7 +190,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
             return
         }
 
-        if (configModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
+        if (configModule.configService.autoDataCaptureBehavior.isComposeClickCaptureEnabled()) {
             registerComposeActivityListener(coreModule.application)
         }
 

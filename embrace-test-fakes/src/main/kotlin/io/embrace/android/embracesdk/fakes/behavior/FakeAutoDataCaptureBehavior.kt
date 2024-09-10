@@ -15,14 +15,14 @@ class FakeAutoDataCaptureBehavior(
     private val diskUsageReportingEnabled: Boolean = true
 ) : AutoDataCaptureBehavior {
 
-    override fun isMemoryServiceEnabled(): Boolean = memoryServiceEnabled
+    override fun isMemoryWarningCaptureEnabled(): Boolean = memoryServiceEnabled
     override fun isThermalStatusCaptureEnabled(): Boolean = thermalStatusCaptureEnabled
-    override fun isPowerSaveModeServiceEnabled(): Boolean = powerSaveModeServiceEnabled
-    override fun isNetworkConnectivityServiceEnabled(): Boolean = networkConnectivityServiceEnabled
-    override fun isAnrServiceEnabled(): Boolean = anrServiceEnabled
-    override fun isUncaughtExceptionHandlerEnabled(): Boolean = uncaughtExceptionHandlerEnabled
-    override fun isComposeOnClickEnabled(): Boolean = composeOnClickEnabled
-    override fun isSigHandlerDetectionEnabled(): Boolean = sigHandlerDetectionEnabled
-    override fun isNdkEnabled(): Boolean = ndkEnabled
-    override fun isDiskUsageReportingEnabled(): Boolean = diskUsageReportingEnabled
+    override fun isPowerSaveModeCaptureEnabled(): Boolean = powerSaveModeServiceEnabled
+    override fun isNetworkConnectivityCaptureEnabled(): Boolean = networkConnectivityServiceEnabled
+    override fun isAnrCaptureEnabled(): Boolean = anrServiceEnabled
+    override fun isJvmCrashCaptureEnabled(): Boolean = uncaughtExceptionHandlerEnabled
+    override fun isComposeClickCaptureEnabled(): Boolean = composeOnClickEnabled
+    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean = sigHandlerDetectionEnabled
+    override fun isNativeCrashCaptureEnabled(): Boolean = ndkEnabled
+    override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageReportingEnabled
 }

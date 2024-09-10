@@ -5,7 +5,7 @@ interface BackgroundActivityBehavior {
     /**
      * Whether the feature is enabled or not.
      */
-    fun isEnabled(): Boolean
+    fun isBackgroundActivityCaptureEnabled(): Boolean
 
     /**
      * Specify a maximum number of client defined background activities.

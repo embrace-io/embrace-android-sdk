@@ -15,14 +15,14 @@ internal class StartupBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createStartupBehavior()) {
-            assertTrue(isAutomaticEndEnabled())
+            assertTrue(isStartupMomentAutoEndEnabled())
         }
     }
 
     @Test
     fun testLocalOnly() {
         with(createStartupBehavior(localCfg = { local })) {
-            assertFalse(isAutomaticEndEnabled())
+            assertFalse(isStartupMomentAutoEndEnabled())
         }
     }
 }

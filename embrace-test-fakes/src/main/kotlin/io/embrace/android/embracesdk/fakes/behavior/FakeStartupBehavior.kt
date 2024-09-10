@@ -6,5 +6,5 @@ class FakeStartupBehavior(
     private val automaticEndEnabled: Boolean = true
 ) : StartupBehavior {
 
-    override fun isAutomaticEndEnabled(): Boolean = automaticEndEnabled
+    override fun isStartupMomentAutoEndEnabled(): Boolean = automaticEndEnabled
 }

@@ -27,7 +27,7 @@ class ActivityBreadcrumbTracker(
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (configService.breadcrumbBehavior.isAutomaticActivityCaptureEnabled()) {
+        if (configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
             logView(activity.javaClass.name)
         }
     }
@@ -36,7 +36,7 @@ class ActivityBreadcrumbTracker(
      * Close all open fragments when the activity closes
      */
     override fun onActivityStopped(activity: Activity) {
-        if (configService.breadcrumbBehavior.isAutomaticActivityCaptureEnabled()) {
+        if (configService.breadcrumbBehavior.isActivityBreadcrumbCaptureEnabled()) {
             viewDataSourceProvider()?.onViewClose()
         }
     }

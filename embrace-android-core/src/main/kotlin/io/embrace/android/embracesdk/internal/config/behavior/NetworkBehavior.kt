@@ -17,7 +17,7 @@ interface NetworkBehavior {
     /**
      * Enable the native monitoring.
      */
-    fun isNativeNetworkingMonitoringEnabled(): Boolean
+    fun isHttpUrlConnectionCaptureEnabled(): Boolean
 
     /**
      * Map of limits being enforced for each domain suffix for the maximum number of requests that are logged given that suffix. The
@@ -28,12 +28,12 @@ interface NetworkBehavior {
      * - For suffixes with only a local entry, apply the local limit or the ceiling defined by the default limit on the remote,
      *   which ever is smaller.
      */
-    fun getNetworkCallLimitsPerDomainSuffix(): Map<String, Int>
+    fun getLimitsByDomain(): Map<String, Int>
 
     /**
      * Gets the default limit for network calls for all domains where the limit is not specified.
      */
-    fun getNetworkCaptureLimit(): Int
+    fun getRequestLimitPerDomain(): Int
 
     /**
      * Checks if the url is allowed to be reported based on the specified disabled pattern.
@@ -51,7 +51,7 @@ interface NetworkBehavior {
     /**
      * Supplies the public key used for network capture
      */
-    fun getCapturePublicKey(): String?
+    fun getNetworkBodyCapturePublicKey(): String?
 
     /**
      * Gets the rules for capturing network call bodies

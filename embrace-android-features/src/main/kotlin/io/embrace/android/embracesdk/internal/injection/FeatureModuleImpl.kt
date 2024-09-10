@@ -50,7 +50,7 @@ internal class FeatureModuleImpl(
                     logger = initModule.logger,
                 )
             },
-            configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() },
+            configGate = { configService.autoDataCaptureBehavior.isMemoryWarningCaptureEnabled() },
         )
     }
 
@@ -155,7 +155,7 @@ internal class FeatureModuleImpl(
                     logger = initModule.logger
                 )
             },
-            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() }
+            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() }
         )
     }
 
@@ -226,7 +226,7 @@ internal class FeatureModuleImpl(
                 )
             },
             configGate = {
-                configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+                configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
             }
         )
     }
@@ -234,7 +234,7 @@ internal class FeatureModuleImpl(
     override val sigquitDataSource: DataSourceState<SigquitDataSource> by dataSourceState {
         DataSourceState(
             factory = anrModule::sigquitDataSource,
-            configGate = { configService.anrBehavior.isGoogleAnrCaptureEnabled() }
+            configGate = { configService.anrBehavior.isSigquitCaptureEnabled() }
         )
     }
 

@@ -50,7 +50,7 @@ class AnrBehaviorImpl(
             android.os.Process.THREAD_PRIORITY_DEFAULT
     }
 
-    override fun isGoogleAnrCaptureEnabled(): Boolean {
+    override fun isSigquitCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.googlePctEnabled)
             ?: local?.captureGoogle
             ?: CAPTURE_GOOGLE_DEFAULT
@@ -125,7 +125,7 @@ class AnrBehaviorImpl(
         }.getOrDefault(Unwinder.LIBUNWIND)
     }
 
-    override fun isNativeThreadAnrSamplingEnabled(): Boolean {
+    override fun isUnityAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
             ?: local?.captureUnityThread
             ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ENABLED

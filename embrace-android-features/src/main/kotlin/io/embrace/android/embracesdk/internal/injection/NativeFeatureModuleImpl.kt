@@ -83,7 +83,7 @@ internal class NativeFeatureModuleImpl(
     }
 
     override val nativeCrashService: NativeCrashService by singleton {
-        if (!configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+        if (!configModule.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
             NoopNativeCrashService()
         } else {
             NativeCrashDataSourceImpl(
@@ -98,7 +98,8 @@ internal class NativeFeatureModuleImpl(
         }
     }
 
-    private fun nativeThreadSamplingEnabled(configService: ConfigService) = configService.autoDataCaptureBehavior.isNdkEnabled()
+    private fun nativeThreadSamplingEnabled(configService: ConfigService) =
+        configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(

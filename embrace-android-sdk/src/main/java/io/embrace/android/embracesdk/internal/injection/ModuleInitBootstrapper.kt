@@ -196,7 +196,7 @@ internal class ModuleInitBootstrapper(
                             )
 
                             val networkBehavior = configModule.configService.networkBehavior
-                            if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
+                            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                                 Systrace.traceSynchronous("network-monitoring-installation") {
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
@@ -339,7 +339,7 @@ internal class ModuleInitBootstrapper(
                             lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )
 
-                        if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
+                        if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT)
 
                             worker.submit(TaskPriority.HIGH) {

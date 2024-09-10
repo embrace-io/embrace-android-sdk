@@ -41,22 +41,22 @@ internal class BreadcrumbBehaviorImplTest {
             assertEquals(100, getViewBreadcrumbLimit())
             assertEquals(100, getWebViewBreadcrumbLimit())
             assertEquals(100, getFragmentBreadcrumbLimit())
-            assertTrue(isTapCoordinateCaptureEnabled())
-            assertTrue(isAutomaticActivityCaptureEnabled())
+            assertTrue(isViewClickCoordinateCaptureEnabled())
+            assertTrue(isActivityBreadcrumbCaptureEnabled())
             assertTrue(isWebViewBreadcrumbCaptureEnabled())
-            assertTrue(isQueryParamCaptureEnabled())
-            assertFalse(isCaptureFcmPiiDataEnabled())
+            assertTrue(isWebViewBreadcrumbQueryParamCaptureEnabled())
+            assertFalse(isFcmPiiDataCaptureEnabled())
         }
     }
 
     @Test
     fun testLocalOnly() {
         with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck, localSupplier = { local }) { null }) {
-            assertFalse(isTapCoordinateCaptureEnabled())
-            assertFalse(isAutomaticActivityCaptureEnabled())
+            assertFalse(isViewClickCoordinateCaptureEnabled())
+            assertFalse(isActivityBreadcrumbCaptureEnabled())
             assertFalse(isWebViewBreadcrumbCaptureEnabled())
-            assertFalse(isQueryParamCaptureEnabled())
-            assertTrue(isCaptureFcmPiiDataEnabled())
+            assertFalse(isWebViewBreadcrumbQueryParamCaptureEnabled())
+            assertTrue(isFcmPiiDataCaptureEnabled())
         }
     }
 

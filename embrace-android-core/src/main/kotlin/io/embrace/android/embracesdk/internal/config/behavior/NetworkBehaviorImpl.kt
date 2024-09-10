@@ -54,10 +54,10 @@ class NetworkBehaviorImpl(
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
         local?.networking?.captureRequestContentLength ?: CAPTURE_REQUEST_CONTENT_LENGTH
 
-    override fun isNativeNetworkingMonitoringEnabled(): Boolean =
+    override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
         local?.networking?.enableNativeMonitoring ?: ENABLE_NATIVE_MONITORING_DEFAULT
 
-    override fun getNetworkCallLimitsPerDomainSuffix(): Map<String, Int> {
+    override fun getLimitsByDomain(): Map<String, Int> {
         val limitCeiling = getLimitCeiling()
         val domainSuffixLimits: MutableMap<String, Int> = remote?.networkConfig?.domainLimits?.toMutableMap() ?: mutableMapOf()
 
@@ -74,7 +74,7 @@ class NetworkBehaviorImpl(
         return domainSuffixLimits
     }
 
-    override fun getNetworkCaptureLimit(): Int {
+    override fun getRequestLimitPerDomain(): Int {
         val remoteDefault = getLimitCeiling()
         return min(remoteDefault, local?.networking?.defaultCaptureLimit ?: remoteDefault)
     }
@@ -88,9 +88,9 @@ class NetworkBehaviorImpl(
         return regexes.none { it.matcher(url).find() }
     }
 
-    override fun isCaptureBodyEncryptionEnabled(): Boolean = getCapturePublicKey() != null
+    override fun isCaptureBodyEncryptionEnabled(): Boolean = getNetworkBodyCapturePublicKey() != null
 
-    override fun getCapturePublicKey(): String? {
+    override fun getNetworkBodyCapturePublicKey(): String? {
         var keyToClean = local?.capturePublicKey
         if (keyToClean != null) {
             for (dirty in dirtyKeyList) {

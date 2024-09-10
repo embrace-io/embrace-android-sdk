@@ -91,7 +91,7 @@ internal class EmbraceEventService(
     override fun applicationStartupComplete() {
         if (processStartedByNotification) {
             activeEvents.remove(STARTUP_EVENT_NAME)
-        } else if (configService.startupBehavior.isAutomaticEndEnabled()) {
+        } else if (configService.startupBehavior.isStartupMomentAutoEndEnabled()) {
             endEvent(STARTUP_EVENT_NAME)
         }
     }

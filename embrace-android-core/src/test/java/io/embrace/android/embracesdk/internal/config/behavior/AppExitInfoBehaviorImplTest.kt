@@ -21,7 +21,7 @@ internal class AppExitInfoBehaviorImplTest {
     fun testDefaults() {
         with(createAppExitInfoBehavior()) {
             assertEquals(2097152, getTraceMaxLimit())
-            assertTrue(isEnabled())
+            assertTrue(isAeiCaptureEnabled())
         }
     }
 
@@ -29,7 +29,7 @@ internal class AppExitInfoBehaviorImplTest {
     fun testLocalOnly() {
         with(createAppExitInfoBehavior(localCfg = { local })) {
             assertEquals(33792, getTraceMaxLimit())
-            assertFalse(isEnabled())
+            assertFalse(isAeiCaptureEnabled())
         }
     }
 
@@ -37,7 +37,7 @@ internal class AppExitInfoBehaviorImplTest {
     fun testLocalAndRemote() {
         with(createAppExitInfoBehavior(localCfg = { local }, remoteCfg = { remote })) {
             assertEquals(55209, getTraceMaxLimit())
-            assertTrue(isEnabled())
+            assertTrue(isAeiCaptureEnabled())
         }
     }
 }

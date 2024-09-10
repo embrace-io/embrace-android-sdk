@@ -59,7 +59,7 @@ class FakeConfigService(
     override fun isBackgroundActivityCaptureEnabled(): Boolean = backgroundActivityCaptureEnabled
 
     override fun hasValidRemoteConfig(): Boolean = hasValidRemoteConfig
-    override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isEnabled()
+    override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isAeiCaptureEnabled()
 
     fun updateListeners() {
         listeners.forEach {

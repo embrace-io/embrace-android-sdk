@@ -134,7 +134,7 @@ internal class EmbraceNetworkCaptureService(
     }
 
     private fun encryptNetworkCall(capturedNetworkCall: NetworkCapturedCall): String? {
-        val capturePublicKey = configService.networkBehavior.getCapturePublicKey() ?: return null
+        val capturePublicKey = configService.networkBehavior.getNetworkBodyCapturePublicKey() ?: return null
         return networkCaptureEncryptionManager.value.encrypt(
             serializer.toJson(capturedNetworkCall),
             capturePublicKey

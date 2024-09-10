@@ -4,6 +4,7 @@ import android.os.Build.VERSION_CODES
 import android.os.Process
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -97,6 +98,7 @@ internal class AppStartupTraceEmitter(
     private var sdkInitEndedInForeground: Boolean? = null
 
     private val startupRecorded = AtomicBoolean(false)
+    private val dataCollectionComplete = AtomicBoolean(false)
     private val endWithFrameDraw: Boolean = versionChecker.isAtLeast(VERSION_CODES.Q)
 
     override fun applicationInitStart(timestampMs: Long?) {
@@ -161,16 +163,20 @@ internal class AppStartupTraceEmitter(
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
     private fun dataCollectionComplete(callback: () -> Unit) {
-        if (!startupRecorded.get()) {
-            synchronized(startupRecorded) {
-                if (!startupRecorded.get()) {
+        if (!dataCollectionComplete.get()) {
+            synchronized(dataCollectionComplete) {
+                if (!dataCollectionComplete.get()) {
                     backgroundWorker.submit {
                         recordStartup()
                         if (!startupRecorded.get()) {
-                            logger.logWarning("App startup trace recording attempted but did not succeed")
+                            logger.trackInternalError(
+                                type = InternalErrorType.APP_STARTUP_TRACE_NOT_RECORDED,
+                                throwable = IllegalStateException("App startup trace not recorded after terminal app startup event")
+                            )
                         }
                     }
                     callback()
+                    dataCollectionComplete.set(true)
                 }
             }
         }

@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeObservedActivity
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
@@ -19,6 +20,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
+import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
 internal class OpenEventEmitterTest {
@@ -41,14 +43,12 @@ internal class OpenEventEmitterTest {
             clock = initModule.openTelemetryModule.openTelemetryClock,
             versionChecker = BuildVersionChecker,
         )
-        activityController = Robolectric.buildActivity(Activity::class.java)
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
             ClockTickingActivityLifecycleCallbacks(clock)
         )
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(eventEmitter)
         startTimeMs = clock.now()
-        instanceId = activityController.get().hashCode()
-        activityName = activityController.get().localClassName
+        setupActivityController(FakeObservedActivity::class)
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
@@ -197,6 +197,50 @@ internal class OpenEventEmitterTest {
                 ),
             )
         )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `unobserved activities will not emit open events in U`() {
+        setupActivityController(Activity::class)
+        stepThroughActivityLifecycle()
+        openEvents.events.assertEventData(
+            listOf(
+                createEvent(
+                    stage = "resetTrace",
+                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
+                ),
+                createEvent(
+                    stage = "hibernate",
+                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 4 + STATE_DURATION
+                ),
+            )
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `unobserved activities will not emit open events in L`() {
+        setupActivityController(Activity::class)
+        stepThroughActivityLifecycle()
+        openEvents.events.assertEventData(
+            listOf(
+                createEvent(
+                    stage = "resetTrace",
+                    timestampMs = startTimeMs + STATE_DURATION * 4
+                ),
+                createEvent(
+                    stage = "hibernate",
+                    timestampMs = startTimeMs + STATE_DURATION * 5
+                ),
+            )
+        )
+    }
+
+    private fun <T : Activity> setupActivityController(activityClass: KClass<T>) {
+        activityController = Robolectric.buildActivity(activityClass.java)
+        instanceId = activityController.get().hashCode()
+        activityName = activityController.get().localClassName
     }
 
     private fun stepThroughActivityLifecycle(

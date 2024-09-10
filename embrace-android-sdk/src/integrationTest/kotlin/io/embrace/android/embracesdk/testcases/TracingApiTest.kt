@@ -277,7 +277,7 @@ internal class TracingApiTest {
     @Test
     fun `span can be parented by a span created on a different thread`() {
         with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk()
             val session = harness.recordSession {
                 val latch = CountDownLatch(1)
                 val parentThreadId = Thread.currentThread().id

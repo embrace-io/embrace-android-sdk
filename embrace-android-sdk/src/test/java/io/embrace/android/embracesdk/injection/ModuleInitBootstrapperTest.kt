@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.injection
 
 import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
@@ -30,6 +32,7 @@ internal class ModuleInitBootstrapperTest {
         logger = EmbLoggerImpl()
         coreModule = FakeCoreModule(logger = logger)
         moduleInitBootstrapper = ModuleInitBootstrapper(
+            configModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = logger
@@ -39,11 +42,6 @@ internal class ModuleInitBootstrapperTest {
 
     @Test
     fun `test default implementation`() {
-        val moduleInitBootstrapper = ModuleInitBootstrapper(
-            coreModuleSupplier = { _, _ -> coreModule },
-            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
-            logger = EmbLoggerImpl()
-        )
         with(moduleInitBootstrapper) {
             assertTrue(
                 moduleInitBootstrapper.init(

@@ -32,10 +32,11 @@ import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
@@ -49,7 +50,8 @@ import kotlin.math.min
  * Loads configuration for the app from the Embrace API.
  */
 internal class EmbraceConfigService(
-    private val localConfig: LocalConfig,
+    customAppId: String?,
+    openTelemetryCfg: OpenTelemetryConfiguration,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: EmbLogger,
@@ -162,7 +164,27 @@ internal class EmbraceConfigService(
             remoteSupplier = remoteSupplier
         )
 
-    override val appId: String? by lazy(localConfig::appId)
+    override val appId: String? = resolveAppId(customAppId, openTelemetryCfg)
+
+    /**
+     * Loads the build information from resources provided by the config file packaged within the application by Gradle at
+     * build-time.
+     *
+     * @return the local configuration
+     */
+    fun resolveAppId(
+        customAppId: String?,
+        openTelemetryCfg: OpenTelemetryConfiguration
+    ): String? {
+        val appId = customAppId ?: InstrumentedConfig.project.getAppId()
+
+        require(!appId.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
+            "No appId supplied in embrace-config.json. This is required if you want to " +
+                "send data to Embrace, unless you configure an OTel exporter and add" +
+                " embrace.disableMappingFileUpload=true to gradle.properties."
+        }
+        return appId
+    }
 
     /**
      * Schedule an action that loads the config from the cache.
@@ -266,7 +288,7 @@ internal class EmbraceConfigService(
         foregroundAction()
     }
 
-    override val appFramework: AppFramework = localConfig.sdkConfig.appFramework?.let {
+    override val appFramework: AppFramework = InstrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
     } ?: suppliedFramework
 

@@ -16,17 +16,11 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.config.LocalConfigParser
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -34,7 +28,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -52,7 +45,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
-    private lateinit var localConfig: LocalConfig
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
     private lateinit var currentSessionSpan: CurrentSessionSpan
@@ -79,20 +71,6 @@ internal class PayloadFactoryBaTest {
             backgroundActivityCaptureEnabled = true
         )
         configService.updateListeners()
-        val otelCfg = OpenTelemetryConfiguration(
-            SpanSinkImpl(),
-            LogSinkImpl(),
-            SystemInfo()
-        )
-        localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
-            "{\"background_activity\": {\"max_background_activity_seconds\": 3600}}",
-            EmbraceSerializer(),
-            otelCfg,
-            EmbLoggerImpl()
-        )
-
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 

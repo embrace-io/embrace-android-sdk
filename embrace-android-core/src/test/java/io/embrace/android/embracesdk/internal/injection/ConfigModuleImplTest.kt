@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -12,7 +11,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
 internal class ConfigModuleImplTest {
@@ -21,7 +19,6 @@ internal class ConfigModuleImplTest {
     fun `test defaults`() {
         val module = ConfigModuleImpl(
             FakeInitModule(),
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
             FakeAndroidServicesModule(),
@@ -38,7 +35,6 @@ internal class ConfigModuleImplTest {
         val fakeConfigService = FakeConfigService()
         val module = ConfigModuleImpl(
             FakeInitModule(),
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
             FakeAndroidServicesModule(),

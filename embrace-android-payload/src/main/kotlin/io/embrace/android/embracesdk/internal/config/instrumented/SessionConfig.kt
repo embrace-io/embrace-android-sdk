@@ -17,7 +17,7 @@ object SessionConfig {
      * sdk_config.session.components
      */
     @Json(name = "components")
-    fun getSessionComponents(): Set<String>? = null
+    fun getSessionComponents(): List<String>? = null
 
     /**
      * A list of events (crashes, errors, etc) allowed to send a full session payload if the
@@ -26,5 +26,5 @@ object SessionConfig {
      * sdk_config.session.send_full_for
      */
     @Json(name = "send_full_for")
-    fun getFullSessionEvents(): Set<String> = emptySet()
+    fun getFullSessionEvents(): List<String> = emptyList()
 }

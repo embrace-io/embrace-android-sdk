@@ -181,53 +181,6 @@ internal class LocalConfigTest {
     }
 
     @Test
-    fun testSessionOnlyConfig() {
-        var localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
-            "{\"session\": {\"components\": [\"breadcrumbs_taps\"]}}",
-            serializer,
-            cfg,
-            logger
-        )
-        assertTrue(
-            checkNotNull(localConfig.sdkConfig.sessionConfig?.sessionComponents)
-                .contains("breadcrumbs_taps")
-        )
-
-        // full session for component list is empty
-        localConfig =
-            LocalConfigParser.buildConfig(
-                "GrCPU",
-                false,
-                "{\"session\": {\"send_full_for\": []}}",
-                serializer,
-                cfg,
-                logger
-            )
-        assertTrue(
-            checkNotNull(localConfig.sdkConfig.sessionConfig?.fullSessionEvents).isEmpty()
-        )
-
-        // receive a full session for component to restrict session messages
-        localConfig = LocalConfigParser.buildConfig(
-            "GrCPU",
-            false,
-            "{\"session\": {\"send_full_for\": [\"crashes\"]}}",
-            serializer,
-            cfg,
-            logger
-        )
-        val sessionConfig = localConfig.sdkConfig.sessionConfig
-        assertFalse(
-            checkNotNull(sessionConfig?.fullSessionEvents?.isEmpty())
-        )
-        assertTrue(
-            checkNotNull(sessionConfig?.fullSessionEvents?.contains("crashes"))
-        )
-    }
-
-    @Test
     fun testStartupMomentOnlyConfig() {
         val localConfig = LocalConfigParser.buildConfig(
             "GrCPU",

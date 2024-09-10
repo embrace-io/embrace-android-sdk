@@ -1,9 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.TapsLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.ViewLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.WebViewLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -26,16 +22,9 @@ internal class BreadcrumbBehaviorImplTest {
 
     private val behaviorThresholdCheck = BehaviorThresholdCheck { Uuid.getEmbUuid() }
 
-    private val local = SdkLocalConfig(
-        taps = TapsLocalConfig(false),
-        viewConfig = ViewLocalConfig(false),
-        webViewConfig = WebViewLocalConfig(captureWebViews = false, captureQueryParams = false),
-        captureFcmPiiData = true
-    )
-
     @Test
     fun testDefaults() {
-        with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck, localSupplier = { null }) { null }) {
+        with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck) { null }) {
             assertEquals(100, getCustomBreadcrumbLimit())
             assertEquals(100, getTapBreadcrumbLimit())
             assertEquals(100, getViewBreadcrumbLimit())
@@ -50,19 +39,10 @@ internal class BreadcrumbBehaviorImplTest {
     }
 
     @Test
-    fun testLocalOnly() {
-        with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck, localSupplier = { local }) { null }) {
-            assertFalse(isViewClickCoordinateCaptureEnabled())
-            assertFalse(isActivityBreadcrumbCaptureEnabled())
-            assertFalse(isWebViewBreadcrumbCaptureEnabled())
-            assertFalse(isWebViewBreadcrumbQueryParamCaptureEnabled())
-            assertTrue(isFcmPiiDataCaptureEnabled())
-        }
-    }
-
-    @Test
     fun testRemoteAndLocal() {
-        with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck, localSupplier = { local }) { remote }) {
+        with(
+            BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck) { remote }
+        ) {
             assertEquals(99, getCustomBreadcrumbLimit())
             assertEquals(98, getTapBreadcrumbLimit())
             assertEquals(97, getViewBreadcrumbLimit())

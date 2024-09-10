@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.BackgroundActivityLocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -9,36 +10,21 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class BackgroundActivityBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<BackgroundActivityLocalConfig?>,
     remoteSupplier: Provider<BackgroundActivityRemoteConfig?>
-) : BackgroundActivityBehavior, MergedConfigBehavior<BackgroundActivityLocalConfig, BackgroundActivityRemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
-) {
+) : BackgroundActivityBehavior,
+    MergedConfigBehavior<UnimplementedConfig, BackgroundActivityRemoteConfig>(
+        thresholdCheck = thresholdCheck,
+        remoteSupplier = remoteSupplier
+    ) {
 
-    private companion object {
-        const val BACKGROUND_ACTIVITY_CAPTURE_ENABLED_DEFAULT = false
-        const val MANUAL_BACKGROUND_ACTIVITY_LIMIT_DEFAULT = 100
-        const val MIN_BACKGROUND_ACTIVITY_DURATION_DEFAULT = 5000L
-        const val MAX_CACHED_ACTIVITIES_DEFAULT = 30
-    }
+    private val cfg = InstrumentedConfig.backgroundActivity
 
     override fun isBackgroundActivityCaptureEnabled(): Boolean {
         return remote?.threshold?.let(thresholdCheck::isBehaviorEnabled)
-            ?: local?.backgroundActivityCaptureEnabled
-            ?: BACKGROUND_ACTIVITY_CAPTURE_ENABLED_DEFAULT
+            ?: InstrumentedConfig.enabledFeatures.isBackgroundActivityCaptureEnabled()
     }
 
-    override fun getManualBackgroundActivityLimit(): Int {
-        return local?.manualBackgroundActivityLimit ?: MANUAL_BACKGROUND_ACTIVITY_LIMIT_DEFAULT
-    }
-
-    override fun getMinBackgroundActivityDuration(): Long {
-        return local?.minBackgroundActivityDuration ?: MIN_BACKGROUND_ACTIVITY_DURATION_DEFAULT
-    }
-
-    override fun getMaxCachedActivities(): Int {
-        return local?.maxCachedActivities ?: MAX_CACHED_ACTIVITIES_DEFAULT
-    }
+    override fun getManualBackgroundActivityLimit(): Int = cfg.getManualBackgroundActivityLimit()
+    override fun getMinBackgroundActivityDuration(): Long = cfg.getMinBackgroundActivityDuration()
+    override fun getMaxCachedActivities(): Int = cfg.getMaxCachedActivities()
 }

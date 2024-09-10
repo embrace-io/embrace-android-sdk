@@ -18,4 +18,5 @@ object InstrumentedConfig {
     val networkCapture: NetworkCaptureConfig = NetworkCaptureConfig
     val project: ProjectConfig = ProjectConfig
     val redaction: RedactionConfig = RedactionConfig
+    val session: SessionConfig = SessionConfig
 }

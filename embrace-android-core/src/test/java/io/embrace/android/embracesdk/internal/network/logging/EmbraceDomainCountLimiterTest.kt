@@ -1,13 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.createNetworkBehavior
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.local.DomainLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.remote.NetworkRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import junit.framework.TestCase.assertFalse
@@ -16,25 +10,15 @@ import org.junit.Before
 import org.junit.Test
 
 internal class EmbraceDomainCountLimiterTest {
-    private lateinit var logger: EmbLogger
-    private lateinit var configService: ConfigService
-    private lateinit var sdkLocalConfig: SdkLocalConfig
-    private lateinit var remoteConfig: RemoteConfig
 
+    private lateinit var logger: EmbLogger
+    private lateinit var configService: FakeConfigService
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
 
     @Before
     fun setUp() {
         logger = EmbLoggerImpl()
-        configService = FakeConfigService(
-            networkBehavior = createNetworkBehavior(
-                localCfg = { sdkLocalConfig },
-                remoteCfg = { remoteConfig }
-            )
-        )
-        sdkLocalConfig = SdkLocalConfig()
-        remoteConfig = RemoteConfig()
-
+        configService = FakeConfigService(networkBehavior = FakeNetworkBehavior())
         createDomainCountLimiter()
     }
 
@@ -57,11 +41,7 @@ internal class EmbraceDomainCountLimiterTest {
     @Test
     fun `test domain specific local limits`() {
         // given a domain with a limit of 2
-        sdkLocalConfig = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                domains = listOf(DomainLocalConfig("overLimit1.com", 2))
-            )
-        )
+        configService.networkBehavior = FakeNetworkBehavior(domains = mapOf("overLimit1.com" to 2))
         createDomainCountLimiter()
 
         // logging 2 requests is fine
@@ -76,11 +56,7 @@ internal class EmbraceDomainCountLimiterTest {
     @Test
     fun `test default local limits`() {
         // given a default local limit of 2
-        sdkLocalConfig = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                defaultCaptureLimit = 2
-            )
-        )
+        configService.networkBehavior = FakeNetworkBehavior(2)
 
         createDomainCountLimiter()
 
@@ -99,11 +75,9 @@ internal class EmbraceDomainCountLimiterTest {
     @Test
     fun `test local limits with default and domain specific limits`() {
         // given a default local limit of 2 and a domain specific limit of 3
-        sdkLocalConfig = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                defaultCaptureLimit = 2,
-                domains = listOf(DomainLocalConfig("overLimit1.com", 3))
-            )
+        configService.networkBehavior = FakeNetworkBehavior(
+            captureLimit = 2,
+            domains = mapOf("overLimit1.com" to 3)
         )
 
         createDomainCountLimiter()
@@ -128,18 +102,9 @@ internal class EmbraceDomainCountLimiterTest {
     @Test
     fun `test explicit remote limits as a ceiling for local limits`() {
         // given a local and a remote limit of different values, both for default and specific domains
-        sdkLocalConfig = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                domains = listOf(DomainLocalConfig("limited.org", 30)),
-                defaultCaptureLimit = 20
-            )
-        )
-
-        remoteConfig = RemoteConfig(
-            networkConfig = NetworkRemoteConfig(
-                domainLimits = mapOf("limited.org" to 10),
-                defaultCaptureLimit = 5
-            )
+        configService.networkBehavior = FakeNetworkBehavior(
+            captureLimit = 5,
+            domains = mapOf("limited.org" to 10)
         )
 
         createDomainCountLimiter()
@@ -163,15 +128,10 @@ internal class EmbraceDomainCountLimiterTest {
 
     @Test
     fun `test implicit remote limit as a ceiling for local limit`() {
-        sdkLocalConfig = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                domains = listOf(DomainLocalConfig("limited.org", 2000)),
-                defaultCaptureLimit = 1500
-            )
+        configService.networkBehavior = FakeNetworkBehavior(
+            captureLimit = 1000,
+            domains = mapOf("limited.org" to 1000)
         )
-
-        remoteConfig = RemoteConfig()
-
         createDomainCountLimiter()
 
         // logging 1000 requests of the domain with a specific limit is fine
@@ -186,11 +146,9 @@ internal class EmbraceDomainCountLimiterTest {
     @Test
     fun `limit applies to all domains with a given suffix`() {
         // given a specific domain with a limit of 4
-        remoteConfig = RemoteConfig(
-            networkConfig = NetworkRemoteConfig(
-                domainLimits = mapOf("limited.org" to 4),
-                defaultCaptureLimit = 3
-            )
+        configService.networkBehavior = FakeNetworkBehavior(
+            captureLimit = 3,
+            domains = mapOf("limited.org" to 4)
         )
 
         createDomainCountLimiter()
@@ -210,12 +168,7 @@ internal class EmbraceDomainCountLimiterTest {
     @Test
     fun `clearing service resets the limit`() {
         // given a default limit of 5
-        remoteConfig = RemoteConfig(
-            networkConfig = NetworkRemoteConfig(
-                defaultCaptureLimit = 5
-            )
-        )
-
+        configService.networkBehavior = FakeNetworkBehavior(5)
         createDomainCountLimiter()
 
         // logging 5 requests is fine

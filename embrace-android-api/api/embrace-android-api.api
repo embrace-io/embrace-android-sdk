@@ -27,6 +27,9 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/InternalApi : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class io/embrace/android/embracesdk/annotation/ObservedActivity : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
 }
 

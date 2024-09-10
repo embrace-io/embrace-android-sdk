@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.annotation.ObservedActivity
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -25,47 +26,59 @@ class UiLoadEventEmitter(
 ) : ActivityLifecycleListener {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        create(activity)
+        if (activity.observeOpening()) {
+            create(activity)
+        }
     }
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
-        if (!versionChecker.firePrePostEvents()) {
+        if (activity.observeOpening() && !versionChecker.firePrePostEvents()) {
             create(activity)
         }
     }
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
-        createEnd(activity)
+        if (activity.observeOpening()) {
+            createEnd(activity)
+        }
     }
 
     override fun onActivityPreStarted(activity: Activity) {
-        start(activity)
+        if (activity.observeOpening()) {
+            start(activity)
+        }
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (!versionChecker.firePrePostEvents()) {
+        if (activity.observeOpening() && !versionChecker.firePrePostEvents()) {
             createEnd(activity)
             start(activity)
         }
     }
 
     override fun onActivityPostStarted(activity: Activity) {
-        startEnd(activity)
+        if (activity.observeOpening()) {
+            startEnd(activity)
+        }
     }
 
     override fun onActivityPreResumed(activity: Activity) {
-        resume(activity)
+        if (activity.observeOpening()) {
+            resume(activity)
+        }
     }
 
     override fun onActivityResumed(activity: Activity) {
-        if (!versionChecker.firePrePostEvents()) {
+        if (activity.observeOpening() && !versionChecker.firePrePostEvents()) {
             startEnd(activity)
             resume(activity)
         }
     }
 
     override fun onActivityPostResumed(activity: Activity) {
-        resumeEnd(activity)
+        if (activity.observeOpening()) {
+            resumeEnd(activity)
+        }
     }
 
     override fun onActivityPrePaused(activity: Activity) {
@@ -146,4 +159,6 @@ class UiLoadEventEmitter(
     private fun traceInstanceId(activity: Activity): Int = activity.hashCode()
 
     private fun nowMs(): Long = clock.now().nanosToMillis()
+
+    private fun Activity.observeOpening() = javaClass.isAnnotationPresent(ObservedActivity::class.java)
 }

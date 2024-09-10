@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.local.CrashHandlerLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
@@ -68,7 +68,7 @@ internal class CrashDataSourceImplTest {
 
     private fun setupForHandleCrash(crashHandlerEnabled: Boolean = false) {
         configService = FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
+            autoDataCaptureBehavior = createAutoDataCaptureBehavior(
                 localCfg = {
                     LocalConfig(
                         "",

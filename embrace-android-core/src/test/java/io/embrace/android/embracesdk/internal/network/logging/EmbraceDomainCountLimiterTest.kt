@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.local.DomainLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
@@ -27,7 +27,7 @@ internal class EmbraceDomainCountLimiterTest {
     fun setUp() {
         logger = EmbLoggerImpl()
         configService = FakeConfigService(
-            networkBehavior = fakeNetworkBehavior(
+            networkBehavior = createNetworkBehavior(
                 localCfg = { sdkLocalConfig },
                 remoteCfg = { remoteConfig }
             )

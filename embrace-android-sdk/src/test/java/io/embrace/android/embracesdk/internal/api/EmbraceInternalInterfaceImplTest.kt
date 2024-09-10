@@ -13,9 +13,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
@@ -217,16 +217,16 @@ internal class EmbraceInternalInterfaceImplTest {
     fun `check isNetworkSpanForwardingEnabled`() {
         assertFalse(internalImpl.isNetworkSpanForwardingEnabled())
         fakeConfigService.networkSpanForwardingBehavior =
-            fakeNetworkSpanForwardingBehavior(remoteConfig = { NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f) })
+            createNetworkSpanForwardingBehavior(remoteConfig = { NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f) })
         assertTrue(internalImpl.isNetworkSpanForwardingEnabled())
     }
 
     @Test
     fun `check isAnrCaptureEnabled`() {
         assertTrue(internalImpl.isAnrCaptureEnabled())
-        fakeConfigService.anrBehavior = fakeAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 0) })
+        fakeConfigService.anrBehavior = createAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 0) })
         assertFalse(internalImpl.isAnrCaptureEnabled())
-        fakeConfigService.anrBehavior = fakeAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 100) })
+        fakeConfigService.anrBehavior = createAnrBehavior(remoteCfg = { AnrRemoteConfig(pctEnabled = 100) })
         assertTrue(internalImpl.isAnrCaptureEnabled())
     }
 
@@ -234,7 +234,7 @@ internal class EmbraceInternalInterfaceImplTest {
     fun `check isNdkEnabled`() {
         assertFalse(internalImpl.isNdkEnabled())
         fakeConfigService.autoDataCaptureBehavior =
-            fakeAutoDataCaptureBehavior(localCfg = { LocalConfig("abcde", true, SdkLocalConfig()) })
+            createAutoDataCaptureBehavior(localCfg = { LocalConfig("abcde", true, SdkLocalConfig()) })
         assertTrue(internalImpl.isNdkEnabled())
     }
 

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.createAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -44,7 +44,7 @@ internal class AeiDataSourceImplTest {
 
     private var appExitInfoConfig = AppExitInfoConfig(pctAeiCaptureEnabled = 100.0f)
     private val configService = FakeConfigService(
-        appExitInfoBehavior = fakeAppExitInfoBehavior {
+        appExitInfoBehavior = createAppExitInfoBehavior {
             RemoteConfig(appExitInfoConfig = appExitInfoConfig)
         }
     )

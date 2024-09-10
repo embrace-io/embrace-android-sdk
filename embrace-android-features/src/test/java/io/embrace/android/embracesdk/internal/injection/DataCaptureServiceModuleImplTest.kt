@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -36,8 +36,8 @@ internal class DataCaptureServiceModuleImplTest {
 
     private fun createEnabledBehavior(): FakeConfigService {
         return FakeConfigService(
-            anrBehavior = fakeAnrBehavior { AnrRemoteConfig(pctStrictModeListenerEnabled = 100f) },
-            sdkModeBehavior = fakeSdkModeBehavior(
+            anrBehavior = createAnrBehavior { AnrRemoteConfig(pctStrictModeListenerEnabled = 100f) },
+            sdkModeBehavior = createSdkModeBehavior(
                 isDebug = true
             )
         )

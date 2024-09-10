@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
+import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.createStartupBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
@@ -87,8 +87,8 @@ internal class EmbraceEventServiceTest {
         deliveryService = FakeDeliveryService()
         startupMomentLocalConfig = StartupMomentLocalConfig()
         configService = FakeConfigService(
-            startupBehavior = fakeStartupBehavior { startupMomentLocalConfig },
-            dataCaptureEventBehavior = fakeDataCaptureEventBehavior { remoteConfig },
+            startupBehavior = createStartupBehavior { startupMomentLocalConfig },
+            dataCaptureEventBehavior = createDataCaptureEventBehavior { remoteConfig },
             sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
                 SdkLocalConfig(
                     sensitiveKeysDenylist = listOf("password")

@@ -4,8 +4,8 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -105,7 +105,7 @@ internal class ThermalStateFeatureTest {
 
     private fun setUpThermalCapture() {
         testRule.harness.overriddenConfigService.autoDataCaptureBehavior =
-            fakeAutoDataCaptureBehavior(
+            createAutoDataCaptureBehavior(
                 remoteCfg = {
                     RemoteConfig(
                         dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 100.0f)
@@ -113,7 +113,7 @@ internal class ThermalStateFeatureTest {
                 }
             )
         testRule.harness.overriddenConfigService.sdkModeBehavior =
-            fakeSdkModeBehavior(
+            createSdkModeBehavior(
                 remoteCfg = {
                     RemoteConfig(
                         pctBetaFeaturesEnabled = 100.0f

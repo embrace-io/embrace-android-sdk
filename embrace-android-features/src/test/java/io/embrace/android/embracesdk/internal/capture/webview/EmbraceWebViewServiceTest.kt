@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
+import io.embrace.android.embracesdk.fakes.createWebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -50,7 +50,7 @@ internal class EmbraceWebViewServiceTest {
         writer = FakeCurrentSessionSpan()
         openTelemetryModule = FakeOpenTelemetryModule(writer)
         cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
-        configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })
+        configService = FakeConfigService(webViewVitalsBehavior = createWebViewVitalsBehavior { cfg })
         embraceWebViewService = EmbraceWebViewService(
             configService,
             serializer,

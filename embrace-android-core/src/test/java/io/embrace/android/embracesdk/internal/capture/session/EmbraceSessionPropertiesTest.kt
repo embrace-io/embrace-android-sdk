@@ -9,7 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -59,7 +59,7 @@ internal class EmbraceSessionPropertiesTest {
 
         config = RemoteConfig()
         configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
+            sessionBehavior = createSessionBehavior {
                 config
             }
         )

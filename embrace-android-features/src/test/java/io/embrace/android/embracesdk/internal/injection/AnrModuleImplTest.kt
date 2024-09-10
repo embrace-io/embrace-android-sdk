@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.NoOpAnrService
@@ -51,7 +51,7 @@ internal class AnrModuleImplTest {
     }
 
     private fun createConfigServiceWithAnrDisabled() = FakeConfigService(
-        autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(localCfg = {
+        autoDataCaptureBehavior = createAutoDataCaptureBehavior(localCfg = {
             LocalConfig(
                 "",
                 false,

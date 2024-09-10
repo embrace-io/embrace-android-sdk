@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.hasEventOfType
@@ -42,7 +42,7 @@ internal class OtelSessionGatingTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         Harness(
             overriddenConfigService = FakeConfigService(
-                sessionBehavior = fakeSessionBehavior(remoteCfg = { RemoteConfig(sessionConfig = gatingConfig) })
+                sessionBehavior = createSessionBehavior(remoteCfg = { RemoteConfig(sessionConfig = gatingConfig) })
             )
         )
     }

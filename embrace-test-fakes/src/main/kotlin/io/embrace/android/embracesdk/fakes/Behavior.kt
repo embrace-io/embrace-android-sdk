@@ -119,11 +119,10 @@ fun createDataCaptureEventBehavior(
  * A [SdkModeBehaviorImpl] that returns default values.
  */
 fun createSdkModeBehavior(
-    isDebug: Boolean = false,
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<LocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null }
-): SdkModeBehavior = SdkModeBehaviorImpl(isDebug, thresholdCheck, localCfg, remoteCfg)
+): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
  * A [SdkModeBehaviorImpl] that returns default values.

@@ -17,16 +17,10 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SessionLocalConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
@@ -66,9 +60,6 @@ internal class SessionHandlerTest {
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var metadataService: FakeMetadataService
-    private lateinit var localConfig: LocalConfig
-    private lateinit var remoteConfig: RemoteConfig
-    private lateinit var sessionLocalConfig: SessionLocalConfig
     private lateinit var deliveryService: FakeDeliveryService
     private lateinit var gatingService: FakeGatingService
     private lateinit var configService: FakeConfigService
@@ -93,26 +84,8 @@ internal class SessionHandlerTest {
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         memoryCleanerService = FakeMemoryCleanerService()
-
-        localConfig = LocalConfig(
-            appId = "abcde",
-            ndkEnabled = true,
-            sdkConfig = SdkLocalConfig()
-        )
-        sessionLocalConfig = SessionLocalConfig()
-        remoteConfig = RemoteConfig()
         configService = FakeConfigService(
-            autoDataCaptureBehavior = createAutoDataCaptureBehavior(
-                localCfg = { localConfig },
-                remoteCfg = { remoteConfig }
-            ),
-            sessionBehavior = createSessionBehavior(
-                localCfg = { sessionLocalConfig },
-                remoteCfg = { remoteConfig }
-            ),
-            dataCaptureEventBehavior = createDataCaptureEventBehavior(
-                remoteCfg = { remoteConfig }
-            )
+            sessionBehavior = createSessionBehavior()
         )
         gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService(), FakeEmbLogger()))
         preferencesService = FakePreferenceService()
@@ -147,7 +120,6 @@ internal class SessionHandlerTest {
     fun `onSession started successfully with no preference service session number`() {
         // return absent session number
         sessionNumber = 0
-        sessionLocalConfig = SessionLocalConfig()
         // this is needed so session handler creates automatic session stopper
 
         payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, NOW, true)

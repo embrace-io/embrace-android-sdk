@@ -54,7 +54,6 @@ internal class EmbraceConfigService(
     private val clock: Clock,
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
-    isDebug: Boolean,
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
     val thresholdCheck: BehaviorThresholdCheck =
@@ -150,7 +149,6 @@ internal class EmbraceConfigService(
 
     override val sdkModeBehavior: SdkModeBehavior =
         SdkModeBehaviorImpl(
-            isDebug = isDebug,
             thresholdCheck = thresholdCheck,
             localSupplier = { localConfig },
             remoteSupplier = remoteSupplier

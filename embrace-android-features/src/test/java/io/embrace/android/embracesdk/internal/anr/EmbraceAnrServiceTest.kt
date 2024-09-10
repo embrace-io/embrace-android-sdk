@@ -287,7 +287,7 @@ internal class EmbraceAnrServiceTest {
     fun testProcessAnrTickDisabled() {
         with(rule) {
             // create an ANR service with config that disables ANR capture
-            cfg = cfg.copy(pctEnabled = 0)
+            rule.anrBehavior.anrCaptureEnabled = false
             clock.setCurrentTime(15020000L)
             anrService.processAnrTick(clock.now())
             assertEquals(0, anrService.stacktraceSampler.size())
@@ -301,7 +301,7 @@ internal class EmbraceAnrServiceTest {
     @Test
     fun testReachedAnrCaptureLimit() {
         with(rule) {
-            cfg = cfg.copy(anrPerSession = 3)
+            rule.anrBehavior.anrPerSessionImpl = 3
             val state = anrService.stacktraceSampler
             assertFalse(state.reachedAnrStacktraceCaptureLimit())
 
@@ -398,7 +398,7 @@ internal class EmbraceAnrServiceTest {
     fun `test handleCrash stops ANR tracking but samples can still be retrieved`() {
         with(rule) {
             clock.setCurrentTime(14000000L)
-            cfg = cfg.copy(pctBgEnabled = 100)
+            rule.anrBehavior.bgAnrCaptureEnabled = true
             anrService.onForeground(true, clock.now())
             anrExecutorService.submit {
                 assertTrue(state.started.get())

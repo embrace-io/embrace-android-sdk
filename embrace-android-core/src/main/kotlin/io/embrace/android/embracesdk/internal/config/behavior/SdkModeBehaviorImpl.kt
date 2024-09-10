@@ -10,7 +10,6 @@ import kotlin.math.min
  * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
  */
 class SdkModeBehaviorImpl(
-    private val isDebug: Boolean,
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<LocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
@@ -23,13 +22,6 @@ class SdkModeBehaviorImpl(
     private companion object {
 
         /**
-         * The percentage of devices which should have beta features initialized.
-         *
-         * The range of allowed values is 0.0f to 100.0f, and the default is 1.0f (1% of devices).
-         */
-        private const val DEFAULT_BETA_FEATURES_PCT = 1.0f
-
-        /**
          * The default percentage of devices for which the SDK is enabled.
          */
         private const val DEFAULT_THRESHOLD = 100
@@ -38,19 +30,6 @@ class SdkModeBehaviorImpl(
          * The default percentage offset of devices for which the SDK is enabled.
          */
         private const val DEFAULT_OFFSET = 0
-    }
-
-    override fun isBetaFeaturesEnabled(): Boolean {
-        if (local?.sdkConfig?.betaFeaturesEnabled == false) {
-            return false
-        }
-
-        if (isDebug) {
-            return true
-        }
-
-        val pct = remote?.pctBetaFeaturesEnabled ?: DEFAULT_BETA_FEATURES_PCT
-        return thresholdCheck.isBehaviorEnabled(pct)
     }
 
     /**

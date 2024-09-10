@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.behavior.FakeStartupBehavior
 import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.createStartupBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
@@ -53,7 +52,6 @@ internal class EmbraceEventServiceTest {
     private lateinit var eventService: EmbraceEventService
     private lateinit var fakeClock: FakeClock
     private lateinit var eventHandler: EventHandler
-    private lateinit var startupMomentLocalConfig: StartupMomentLocalConfig
     private lateinit var remoteConfig: RemoteConfig
 
     companion object {
@@ -85,9 +83,8 @@ internal class EmbraceEventServiceTest {
         fakeClock.setCurrentTime(10L)
         remoteConfig = RemoteConfig()
         deliveryService = FakeDeliveryService()
-        startupMomentLocalConfig = StartupMomentLocalConfig()
         configService = FakeConfigService(
-            startupBehavior = createStartupBehavior { startupMomentLocalConfig },
+            startupBehavior = FakeStartupBehavior(true),
             dataCaptureEventBehavior = createDataCaptureEventBehavior { remoteConfig },
             sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
                 SdkLocalConfig(
@@ -123,7 +120,6 @@ internal class EmbraceEventServiceTest {
             fakeWorkerThreadModule,
             fakeClock
         )
-        startupMomentLocalConfig = StartupMomentLocalConfig()
         eventService.eventHandler = eventHandler
     }
 
@@ -306,7 +302,7 @@ internal class EmbraceEventServiceTest {
 
     @Test
     fun `applicationStartupComplete if automatically end is disabled does not do anything`() {
-        startupMomentLocalConfig = StartupMomentLocalConfig(automaticallyEnd = false)
+        configService.startupBehavior = FakeStartupBehavior(false)
         eventService.applicationStartupComplete()
         assertNull(deliveryService.lastEventSentAsync)
     }

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_INTERNAL_NAME_LENGTH
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_NAME_LENGTH
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -238,7 +239,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (newName.isValidName()) {
+        if (newName.isValidName(spanBuilder.internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -333,6 +334,7 @@ internal class EmbraceSpanImpl(
         internal fun attributeValid(key: String, value: String) =
             key.length <= MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
 
-        internal fun String.isValidName(): Boolean = isNotBlank() && (length <= MAX_NAME_LENGTH)
+        internal fun String.isValidName(internal: Boolean): Boolean =
+            isNotBlank() && ((internal && length <= MAX_INTERNAL_NAME_LENGTH) || length <= MAX_NAME_LENGTH)
     }
 }

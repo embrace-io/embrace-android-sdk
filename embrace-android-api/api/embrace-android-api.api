@@ -118,27 +118,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 	public abstract fun setUsername (Ljava/lang/String;)V
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/capture/activity/OpenEvents {
-	public abstract fun create (ILjava/lang/String;J)V
-	public abstract fun createEnd (IJ)V
-	public abstract fun hibernate (ILjava/lang/String;J)V
-	public abstract fun render (ILjava/lang/String;J)V
-	public abstract fun renderEnd (IJ)V
-	public abstract fun resetTrace (ILjava/lang/String;J)V
-	public abstract fun resume (ILjava/lang/String;J)V
-	public abstract fun resumeEnd (IJ)V
-	public abstract fun start (ILjava/lang/String;J)V
-	public abstract fun startEnd (IJ)V
-}
-
-public final class io/embrace/android/embracesdk/internal/capture/activity/OpenEvents$OpenType : java/lang/Enum {
-	public static final field COLD Lio/embrace/android/embracesdk/internal/capture/activity/OpenEvents$OpenType;
-	public static final field HOT Lio/embrace/android/embracesdk/internal/capture/activity/OpenEvents$OpenType;
-	public final fun getTypeName ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/capture/activity/OpenEvents$OpenType;
-	public static fun values ()[Lio/embrace/android/embracesdk/internal/capture/activity/OpenEvents$OpenType;
-}
-
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {
 	protected static final field PATH_OVERRIDE Ljava/lang/String;
 	public fun <init> ()V

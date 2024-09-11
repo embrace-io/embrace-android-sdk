@@ -11,36 +11,49 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Observes Activity lifecycle and rendering events to create traces that model the workflow for showing an Activity on screen.
- * Depending on the version of Android and the state of the app, the start, end, and intermediate stages of the workflow will use
- * timestamps from different events, which affects to preciseness of the measurement.
+ * Observes Activity lifecycle and rendering events to create traces that model the workflow for showing an Activity on screen after
+ * app startup has completed. This creates traces for both types of Activity opening specified in [OpenType].
  *
- * Trace Start:
+ * Depending on the version of Android and the state of the app, the start, end, and intermediate stages of the workflow will use
+ * timestamps from different events, which affects the precision of the measurement.
+ *
+ * The start for [OpenType.COLD]:
  *
  * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPostPaused] is fired, denoting that the previous activity has completed
  *   its [ActivityLifecycleCallbacks.onActivityPaused] callbacks and a new Activity is ready to be created.
+ *
  * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityPaused] is fired, denoting that the previous activity is in the
  *   process of exiting. This will possibly result in some cleanup work of exiting the previous activity being included in the duration
  *   of the next trace that is logged.
  *
- * Trace End:
+ *  The start for [OpenType.HOT]
+ *
+ * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPreStarted] is fired, denoting that an existing Activity instance is ready
+ *   to be started
+ *
+ * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityStarted] is fired, denoting that an existing activity is in the
+ *   process of starting. This will possibly result in some of the work to start the activity already having happened depending on the
+ *   other callbacks that have been registered.
+ *
+ * The end for both [OpenType.COLD] and [OpenType.HOT]:
  *
  * - Android 10+, when the Activity's first UI frame finishes rendering and is delivered to the screen
- * - Android 9 and lower.... TODO
+ *
+ * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
  */
-public class OpenTraceEmitter(
+class OpenTraceEmitter(
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
 ) : OpenEvents {
 
     private val activeTraces: MutableMap<Int, ActivityOpenTrace> = ConcurrentHashMap()
-    private val traceIds: MutableMap<String, Int> = ConcurrentHashMap()
     private val traceZygoteHolder: AtomicReference<OpenTraceZygote> = AtomicReference(INITIAL)
+    private var currentTracedInstanceId: Int? = null
 
     override fun resetTrace(instanceId: Int, activityName: String, timestampMs: Long) {
-        traceIds[activityName]?.let { existingTraceId ->
-            if (instanceId != existingTraceId) {
-                endTrace(instanceId = existingTraceId, timestampMs = timestampMs, errorCode = ErrorCode.USER_ABANDON)
+        currentTracedInstanceId?.let { currentlyTracedInstanceId ->
+            if (instanceId != currentlyTracedInstanceId) {
+                endTrace(instanceId = currentlyTracedInstanceId, timestampMs = timestampMs, errorCode = ErrorCode.USER_ABANDON)
             }
         }
         traceZygoteHolder.set(
@@ -60,7 +73,7 @@ public class OpenTraceEmitter(
 
     override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
         startTrace(
-            openType = OpenEvents.OpenType.COLD,
+            openType = OpenType.COLD,
             instanceId = instanceId,
             activityName = activityName,
             timestampMs = timestampMs
@@ -82,7 +95,7 @@ public class OpenTraceEmitter(
 
     override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
         startTrace(
-            openType = OpenEvents.OpenType.HOT,
+            openType = OpenType.HOT,
             instanceId = instanceId,
             activityName = activityName,
             timestampMs = timestampMs
@@ -147,7 +160,7 @@ public class OpenTraceEmitter(
     }
 
     private fun startTrace(
-        openType: OpenEvents.OpenType,
+        openType: OpenType,
         instanceId: Int,
         activityName: String,
         timestampMs: Long
@@ -215,16 +228,16 @@ public class OpenTraceEmitter(
 
     private fun traceName(
         activityName: String,
-        openType: OpenEvents.OpenType
+        openType: OpenType
     ): String = "$activityName-${openType.typeName}-open"
 
-    public enum class LifecycleEvent(private val typeName: String) {
+    enum class LifecycleEvent(private val typeName: String) {
         CREATE("create"),
         START("start"),
         RESUME("resume"),
         RENDER("render");
 
-        public fun spanName(activityName: String): String = "$activityName-$typeName"
+        fun spanName(activityName: String): String = "$activityName-$typeName"
     }
 
     private data class ActivityOpenTrace(

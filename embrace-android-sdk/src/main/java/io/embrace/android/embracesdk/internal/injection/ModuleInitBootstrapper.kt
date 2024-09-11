@@ -341,14 +341,8 @@ internal class ModuleInitBootstrapper(
 
                         if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT)
-
                             worker.submit(TaskPriority.HIGH) {
-                                ndkService.initializeService()
-                                with(essentialServiceModule) {
-                                    userService.addUserInfoListener(ndkService::onUserInfoUpdate)
-                                    sessionIdTracker.addListener { ndkService.updateSessionId(it ?: "") }
-                                    sessionPropertiesService.addChangeListener(ndkService::onSessionPropertiesUpdate)
-                                }
+                                ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }
                         }
                     }

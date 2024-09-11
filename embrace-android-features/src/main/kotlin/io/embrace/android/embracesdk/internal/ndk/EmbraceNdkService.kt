@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
@@ -66,14 +67,18 @@ internal class EmbraceNdkService(
         null
     }
 
-    override fun initializeService() {
+    override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {
-            processStateService.addListener(this)
-            if (configService.appFramework == AppFramework.UNITY) {
-                unityCrashId = Uuid.getEmbUuid()
+            if (startNativeCrashMonitoring()) {
+                processStateService.addListener(this)
+                userService.addUserInfoListener(::onUserInfoUpdate)
+                sessionIdTracker.addListener { updateSessionId(it ?: "") }
+                sessionPropertiesService.addChangeListener(::onSessionPropertiesUpdate)
+                if (configService.appFramework == AppFramework.UNITY) {
+                    unityCrashId = Uuid.getEmbUuid()
+                }
+                cleanOldCrashFiles()
             }
-            startNativeCrashMonitoring()
-            cleanOldCrashFiles()
         }
     }
 
@@ -103,8 +108,8 @@ internal class EmbraceNdkService(
         updateAppState(APPLICATION_STATE_FOREGROUND)
     }
 
-    private fun startNativeCrashMonitoring() {
-        try {
+    private fun startNativeCrashMonitoring(): Boolean {
+        return try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 createCrashReportDirectory()
                 handler.postAtFrontOfQueue { installSignals() }
@@ -112,10 +117,14 @@ internal class EmbraceNdkService(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()
                 )
+                true
+            } else {
+                false
             }
         } catch (ex: Exception) {
             logger.logError("Failed to start native crash monitoring", ex)
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
+            false
         }
     }
 

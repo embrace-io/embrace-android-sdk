@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertNull
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -43,8 +44,45 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify cold open trace from another activity in U`() {
         verifyOpen(
-            fromBackground = false,
-            openType = OpenEvents.OpenType.COLD,
+            previousState = PreviousState.FROM_ACTIVITY,
+            openType = OpenType.COLD,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+        )
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify cold open trace from the same activity in U`() {
+        verifyOpen(
+            lastActivityName = ACTIVITY_NAME,
+            previousState = PreviousState.FROM_ACTIVITY,
+            openType = OpenType.COLD,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+        )
+    }
+
+    @Ignore("Not working yet")
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify cold open trace from an interrupted opening of another activity in U`() {
+        verifyOpen(
+            previousState = PreviousState.FROM_INTERRUPTED_ACTIVITY_OPEN,
+            openType = OpenType.COLD,
+            firePreAndPost = true,
+            hasRenderEvent = true,
+        )
+    }
+
+    @Ignore("Not working yet")
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `verify cold open trace from an interrupted opening of the same activity in U`() {
+        verifyOpen(
+            lastActivityName = ACTIVITY_NAME,
+            previousState = PreviousState.FROM_INTERRUPTED_ACTIVITY_OPEN,
+            openType = OpenType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -54,8 +92,8 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify cold open trace from background in U`() {
         verifyOpen(
-            fromBackground = true,
-            openType = OpenEvents.OpenType.COLD,
+            previousState = PreviousState.FROM_BACKGROUND,
+            openType = OpenType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -65,8 +103,8 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify hot open trace in from background in U`() {
         verifyOpen(
-            fromBackground = true,
-            openType = OpenEvents.OpenType.HOT,
+            previousState = PreviousState.FROM_BACKGROUND,
+            openType = OpenType.HOT,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -76,8 +114,8 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify cold open trace in from another activity L`() {
         verifyOpen(
-            fromBackground = false,
-            openType = OpenEvents.OpenType.COLD,
+            previousState = PreviousState.FROM_ACTIVITY,
+            openType = OpenType.COLD,
             firePreAndPost = false,
             hasRenderEvent = false,
         )
@@ -87,8 +125,8 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify cold open trace from background in L`() {
         verifyOpen(
-            fromBackground = true,
-            openType = OpenEvents.OpenType.COLD,
+            previousState = PreviousState.FROM_BACKGROUND,
+            openType = OpenType.COLD,
             firePreAndPost = false,
             hasRenderEvent = false,
         )
@@ -98,27 +136,35 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify hot open trace in L from background`() {
         verifyOpen(
-            fromBackground = true,
-            openType = OpenEvents.OpenType.HOT,
+            previousState = PreviousState.FROM_BACKGROUND,
+            openType = OpenType.HOT,
             firePreAndPost = false,
             hasRenderEvent = false,
         )
     }
 
     private fun verifyOpen(
-        fromBackground: Boolean,
-        openType: OpenEvents.OpenType,
+        activityName: String = ACTIVITY_NAME,
+        instanceId: Int = NEW_INSTANCE_ID,
+        lastActivityName: String = LAST_ACTIVITY_NAME,
+        lastInstanceId: Int = LAST_ACTIVITY_INSTANCE_ID,
+        previousState: PreviousState,
+        openType: OpenType,
         firePreAndPost: Boolean,
         hasRenderEvent: Boolean,
     ) {
         openActivity(
-            fromBackground = fromBackground,
+            activityName = activityName,
+            instanceId = instanceId,
+            lastActivityName = lastActivityName,
+            lastInstanceId = lastInstanceId,
+            previousState = previousState,
             openType = openType,
             firePreAndPost = firePreAndPost,
             hasRenderEvent = hasRenderEvent
         ).let { timestamps ->
             val spanMap = spanSink.completedSpans().associateBy { it.name }
-            val trace = checkNotNull(spanMap["emb-${ACTIVITY_NAME}-${openType.typeName}-open"])
+            val trace = checkNotNull(spanMap["emb-$activityName-${openType.typeName}-open"])
 
             assertEmbraceSpanData(
                 span = trace.toNewPayload(),
@@ -129,22 +175,22 @@ internal class OpenTraceEmitterTest {
             )
 
             val events = timestamps.third
-            if (openType == OpenEvents.OpenType.COLD) {
+            if (openType == OpenType.COLD) {
                 checkNotNull(events[OpenTraceEmitter.LifecycleEvent.CREATE]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$ACTIVITY_NAME-create"]).toNewPayload(),
+                        span = checkNotNull(spanMap["emb-$activityName-create"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
                         expectedParentId = trace.spanId
                     )
                 }
             } else {
-                assertNull(spanMap["emb-$ACTIVITY_NAME-create"])
+                assertNull(spanMap["emb-$activityName-create"])
             }
 
             checkNotNull(events[OpenTraceEmitter.LifecycleEvent.START]).run {
                 assertEmbraceSpanData(
-                    span = checkNotNull(spanMap["emb-$ACTIVITY_NAME-start"]).toNewPayload(),
+                    span = checkNotNull(spanMap["emb-$activityName-start"]).toNewPayload(),
                     expectedStartTimeMs = startMs(),
                     expectedEndTimeMs = endMs(),
                     expectedParentId = trace.spanId
@@ -154,7 +200,7 @@ internal class OpenTraceEmitterTest {
             if (hasRenderEvent) {
                 checkNotNull(events[OpenTraceEmitter.LifecycleEvent.RESUME]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$ACTIVITY_NAME-resume"]).toNewPayload(),
+                        span = checkNotNull(spanMap["emb-$activityName-resume"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
                         expectedParentId = trace.spanId
@@ -162,60 +208,99 @@ internal class OpenTraceEmitterTest {
                 }
                 checkNotNull(events[OpenTraceEmitter.LifecycleEvent.RENDER]).run {
                     assertEmbraceSpanData(
-                        span = checkNotNull(spanMap["emb-$ACTIVITY_NAME-render"]).toNewPayload(),
+                        span = checkNotNull(spanMap["emb-$activityName-render"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
                         expectedEndTimeMs = endMs(),
                         expectedParentId = trace.spanId
                     )
                 }
             } else {
-                assertNull(spanMap["emb-$ACTIVITY_NAME-resume"])
-                assertNull(spanMap["emb-$ACTIVITY_NAME-render"])
+                assertNull(spanMap["emb-$activityName-resume"])
+                assertNull(spanMap["emb-$activityName-render"])
             }
         }
     }
 
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun openActivity(
-        fromBackground: Boolean,
-        openType: OpenEvents.OpenType,
+        activityName: String,
+        instanceId: Int,
+        lastActivityName: String,
+        lastInstanceId: Int,
+        previousState: PreviousState,
+        openType: OpenType,
         firePreAndPost: Boolean,
-        hasRenderEvent: Boolean
+        hasRenderEvent: Boolean,
     ): Triple<Long, Long, Map<OpenTraceEmitter.LifecycleEvent, LifecycleEvents>> {
         val events = mutableMapOf<OpenTraceEmitter.LifecycleEvent, LifecycleEvents>()
         val lastActivityExitMs = clock.now()
-        traceEmitter.resetTrace(LAST_ACTIVITY_INSTANCE, LAST_ACTIVITY, lastActivityExitMs)
         clock.tick(100L)
 
-        if (fromBackground) {
-            traceEmitter.hibernate(LAST_ACTIVITY_INSTANCE, LAST_ACTIVITY, clock.now())
+        when (previousState) {
+            PreviousState.FROM_ACTIVITY -> {
+                traceEmitter.resetTrace(lastInstanceId, lastActivityName, lastActivityExitMs)
+            }
+
+            PreviousState.FROM_BACKGROUND -> {
+                traceEmitter.resetTrace(lastInstanceId, lastActivityName, lastActivityExitMs)
+                traceEmitter.hibernate(lastInstanceId, lastActivityName, clock.now())
+            }
+
+            PreviousState.FROM_INTERRUPTED_ACTIVITY_OPEN -> {
+                activityCreate(
+                    activityName = lastActivityName,
+                    instanceId = lastInstanceId,
+                    firePreAndPost = firePreAndPost
+                )
+                activityStart(
+                    activityName = lastActivityName,
+                    instanceId = lastInstanceId,
+                    firePreAndPost = firePreAndPost
+                )
+            }
         }
 
-        val createEvents = if (openType == OpenEvents.OpenType.COLD) {
-            activityCreate(firePreAndPost)
+        val createEvents = if (openType == OpenType.COLD) {
+            activityCreate(
+                activityName = activityName,
+                instanceId = instanceId,
+                firePreAndPost = firePreAndPost
+            )
         } else {
             null
         }?.apply {
             events[OpenTraceEmitter.LifecycleEvent.CREATE] = this
         }
 
-        val startEvents = activityStart(firePreAndPost).apply {
+        val startEvents = activityStart(
+            activityName = activityName,
+            instanceId = instanceId,
+            firePreAndPost = firePreAndPost
+        ).apply {
             events[OpenTraceEmitter.LifecycleEvent.START] = this
         }
 
-        val resumeEvents = activityResume(firePreAndPost).apply {
+        val resumeEvents = activityResume(
+            activityName = activityName,
+            instanceId = instanceId,
+            firePreAndPost = firePreAndPost
+        ).apply {
             events[OpenTraceEmitter.LifecycleEvent.RESUME] = this
         }
 
         val renderEvents = if (hasRenderEvent) {
-            activityRender(firePreAndPost)
+            activityRender(
+                activityName = activityName,
+                instanceId = instanceId,
+                firePreAndPost = firePreAndPost
+            )
         } else {
             null
         }?.apply {
             events[OpenTraceEmitter.LifecycleEvent.RENDER] = this
         }
 
-        val traceStartMs = if (!fromBackground) {
+        val traceStartMs = if (previousState != PreviousState.FROM_BACKGROUND) {
             lastActivityExitMs
         } else {
             createEvents?.run {
@@ -238,32 +323,56 @@ internal class OpenTraceEmitterTest {
         return Triple(traceStartMs, traceEndMs, events)
     }
 
-    private fun activityCreate(firePreAndPost: Boolean = true): LifecycleEvents {
+    private fun activityCreate(
+        activityName: String,
+        instanceId: Int,
+        firePreAndPost: Boolean = true
+    ): LifecycleEvents {
         return runLifecycleEvent(
+            activityName = activityName,
+            instanceId = instanceId,
             startCallback = traceEmitter::create,
             endCallback = traceEmitter::createEnd,
             firePreAndPost = firePreAndPost,
         )
     }
 
-    private fun activityStart(firePreAndPost: Boolean = true): LifecycleEvents {
+    private fun activityStart(
+        activityName: String,
+        instanceId: Int,
+        firePreAndPost: Boolean = true
+    ): LifecycleEvents {
         return runLifecycleEvent(
+            activityName = activityName,
+            instanceId = instanceId,
             startCallback = traceEmitter::start,
             endCallback = traceEmitter::startEnd,
             firePreAndPost = firePreAndPost,
         )
     }
 
-    private fun activityResume(firePreAndPost: Boolean = true): LifecycleEvents {
+    private fun activityResume(
+        activityName: String,
+        instanceId: Int,
+        firePreAndPost: Boolean = true
+    ): LifecycleEvents {
         return runLifecycleEvent(
+            activityName = activityName,
+            instanceId = instanceId,
             startCallback = traceEmitter::resume,
             endCallback = traceEmitter::resumeEnd,
             firePreAndPost = firePreAndPost,
         )
     }
 
-    private fun activityRender(firePreAndPost: Boolean = true): LifecycleEvents {
+    private fun activityRender(
+        activityName: String,
+        instanceId: Int,
+        firePreAndPost: Boolean = true
+    ): LifecycleEvents {
         return runLifecycleEvent(
+            activityName = activityName,
+            instanceId = instanceId,
             startCallback = traceEmitter::render,
             endCallback = traceEmitter::renderEnd,
             firePreAndPost = firePreAndPost,
@@ -271,6 +380,8 @@ internal class OpenTraceEmitterTest {
     }
 
     private fun runLifecycleEvent(
+        activityName: String,
+        instanceId: Int,
         startCallback: (instanceId: Int, activityName: String, startMs: Long) -> Unit,
         endCallback: (instanceId: Int, startMs: Long) -> Unit,
         firePreAndPost: Boolean = true
@@ -281,12 +392,12 @@ internal class OpenTraceEmitterTest {
             clock.tick()
         }
         events.eventStart = clock.now()
-        startCallback(INSTANCE_1, ACTIVITY_NAME, events.startMs())
+        startCallback(instanceId, activityName, events.startMs())
         events.eventEnd = clock.tick(100L)
         if (firePreAndPost) {
             events.post = clock.tick()
         }
-        endCallback(INSTANCE_1, events.endMs())
+        endCallback(instanceId, events.endMs())
         return events
     }
 
@@ -301,10 +412,16 @@ internal class OpenTraceEmitterTest {
 
     private fun LifecycleEvents.endMs(): Long = max(post, eventEnd)
 
+    private enum class PreviousState {
+        FROM_ACTIVITY,
+        FROM_BACKGROUND,
+        FROM_INTERRUPTED_ACTIVITY_OPEN
+    }
+
     companion object {
-        const val INSTANCE_1 = 1
+        const val NEW_INSTANCE_ID = 1
         const val ACTIVITY_NAME = "com.my.CoolActivity"
-        const val LAST_ACTIVITY = "com.my.Activity"
-        const val LAST_ACTIVITY_INSTANCE = 99
+        const val LAST_ACTIVITY_NAME = "com.my.Activity"
+        const val LAST_ACTIVITY_INSTANCE_ID = 99
     }
 }

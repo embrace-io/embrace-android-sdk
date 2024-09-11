@@ -10,9 +10,11 @@ import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
 import io.embrace.android.embracesdk.fixtures.maxSizeEvents
@@ -481,6 +483,32 @@ internal class SpanServiceImplTest {
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME, internal = false))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME, internal = false) { 2 })
         assertTrue(spansService.recordCompletedSpan(name = MAX_LENGTH_SPAN_NAME, startTimeMs = 100L, endTimeMs = 200L, internal = false))
+        assertEquals(2, spanSink.completedSpans().size)
+    }
+
+    @Test
+    fun `check name length limit for spans by internally by the SDK`() {
+        assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = TOO_LONG_INTERNAL_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true
+            )
+        )
+        assertNotNull(spansService.recordSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true) { 1 })
+        assertEquals(0, spanSink.completedSpans().size)
+        assertNotNull(spansService.createSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true))
+        assertNotNull(spansService.recordSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true) { 2 })
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = MAX_LENGTH_INTERNAL_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = true
+            )
+        )
         assertEquals(2, spanSink.completedSpans().size)
     }
 

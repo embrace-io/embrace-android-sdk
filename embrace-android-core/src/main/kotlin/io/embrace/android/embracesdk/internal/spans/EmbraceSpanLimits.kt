@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 object EmbraceSpanLimits {
+    const val MAX_INTERNAL_NAME_LENGTH: Int = 2000
     const val MAX_NAME_LENGTH: Int = 50
     const val MAX_CUSTOM_EVENT_COUNT: Int = 10
     const val MAX_TOTAL_EVENT_COUNT: Int = 11000

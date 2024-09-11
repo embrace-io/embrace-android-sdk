@@ -66,6 +66,11 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
     fun isV2StorageEnabled(): Boolean
 
     /**
+     * Whether the SDK is configured to capture traces for the performance of the opening of Activities.
+     */
+    fun isUiLoadPerfCaptureEnabled(): Boolean
+
+    /**
      * Gates whether the SDK should use OkHttp or fallback to UrlConnection.
      */
     fun shouldUseOkHttp(): Boolean

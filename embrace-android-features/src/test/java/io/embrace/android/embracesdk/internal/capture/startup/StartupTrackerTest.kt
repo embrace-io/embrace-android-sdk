@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -38,6 +39,7 @@ internal class StartupTrackerTest {
         dataCollector = FakeAppStartupDataCollector(clock = clock)
         startupTracker = StartupTracker(
             appStartupDataCollector = dataCollector,
+            uiLoadEventEmitter = object : ActivityLifecycleListener { },
             logger = logger,
             versionChecker = BuildVersionChecker
         )

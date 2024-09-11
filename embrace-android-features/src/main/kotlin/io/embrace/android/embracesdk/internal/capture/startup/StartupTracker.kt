@@ -12,6 +12,7 @@ import android.view.Window
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
@@ -38,6 +39,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  */
 class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
+    private val uiLoadEventEmitter: ActivityLifecycleListener?,
     private val logger: EmbLogger,
     private val versionChecker: VersionChecker,
 ) : Application.ActivityLifecycleCallbacks {
@@ -123,6 +125,9 @@ class StartupTracker(
     private fun startupComplete(application: Application) {
         if (!startupDataCollectionComplete) {
             application.unregisterActivityLifecycleCallbacks(this)
+            uiLoadEventEmitter?.apply {
+                application.registerActivityLifecycleCallbacks(this)
+            }
             startupDataCollectionComplete = true
         }
     }

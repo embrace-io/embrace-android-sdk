@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventEmitter
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEvents
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
@@ -62,8 +65,28 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val startupTracker: StartupTracker by singleton {
         StartupTracker(
             appStartupDataCollector = appStartupDataCollector,
+            uiLoadEventEmitter = uiLoadEventEmitter,
             logger = initModule.logger,
             versionChecker = versionChecker,
         )
+    }
+
+    override val uiLoadEvents: UiLoadEvents by singleton {
+        UiLoadTraceEmitter(
+            spanService = openTelemetryModule.spanService,
+            versionChecker = versionChecker,
+        )
+    }
+
+    override val uiLoadEventEmitter: UiLoadEventEmitter? by singleton {
+        if (configService.autoDataCaptureBehavior.isUiLoadPerfCaptureEnabled()) {
+            UiLoadEventEmitter(
+                uiLoadEvents = uiLoadEvents,
+                clock = openTelemetryModule.openTelemetryClock,
+                versionChecker = versionChecker,
+            )
+        } else {
+            null
+        }
     }
 }

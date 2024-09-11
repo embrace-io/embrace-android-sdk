@@ -61,4 +61,9 @@ interface AutoDataCaptureBehavior {
      * Gates whether the SDK should use the v2 storage implementation or the legacy one.
      */
     fun isV2StorageEnabled(): Boolean
+
+    /**
+     * Whether the SDK is configured to capture traces for the performance of the opening of Activities.
+     */
+    fun isActivityOpenPerfCaptureEnabled(): Boolean
 }

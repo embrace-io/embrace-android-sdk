@@ -153,4 +153,11 @@ object EnabledFeatureConfig {
      * sdk_config.networking.enable_native_monitoring
      */
     fun isHttpUrlConnectionCaptureEnabled(): Boolean = true
+
+    /**
+     * Gates whether the SDK will capture traces for the performance of the opening of Activities.
+     *
+     * sdk_config.automatic_data_capture.activity_open_perf_info
+     */
+    fun isActivityOpenPerfCaptureEnabled(): Boolean = false
 }

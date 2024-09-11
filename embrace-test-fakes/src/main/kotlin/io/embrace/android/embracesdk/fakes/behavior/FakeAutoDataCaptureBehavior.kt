@@ -13,7 +13,8 @@ class FakeAutoDataCaptureBehavior(
     private val sigHandlerDetectionEnabled: Boolean = true,
     private val ndkEnabled: Boolean = false,
     private val diskUsageReportingEnabled: Boolean = true,
-    private val v2StorageEnabled: Boolean = false
+    private val v2StorageEnabled: Boolean = false,
+    private val activityOpenPerfEnabled: Boolean = false,
 ) : AutoDataCaptureBehavior {
 
     override fun isMemoryWarningCaptureEnabled(): Boolean = memoryServiceEnabled
@@ -26,5 +27,6 @@ class FakeAutoDataCaptureBehavior(
     override fun is3rdPartySigHandlerDetectionEnabled(): Boolean = sigHandlerDetectionEnabled
     override fun isNativeCrashCaptureEnabled(): Boolean = ndkEnabled
     override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageReportingEnabled
+    override fun isActivityOpenPerfCaptureEnabled(): Boolean = activityOpenPerfEnabled
     override fun isV2StorageEnabled(): Boolean = v2StorageEnabled
 }

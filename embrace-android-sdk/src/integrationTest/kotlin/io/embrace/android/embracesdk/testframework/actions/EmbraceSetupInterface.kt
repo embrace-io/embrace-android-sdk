@@ -39,7 +39,10 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     val overriddenConfigService: FakeConfigService = FakeConfigService(
         backgroundActivityCaptureEnabled = true,
         networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true),
-        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = false)
+        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+            thermalStatusCaptureEnabled = false,
+            activityOpenPerfEnabled = false,
+        )
     ),
     val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(
         overriddenInitModule

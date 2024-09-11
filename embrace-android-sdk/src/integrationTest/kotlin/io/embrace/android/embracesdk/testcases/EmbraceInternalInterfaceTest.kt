@@ -208,7 +208,7 @@ internal class EmbraceInternalInterfaceTest {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
             embrace.internalInterface.setProcessStartedByNotification()
-            harness.recordSession(simulateAppStartup = true) { }
+            harness.recordSession(simulateActivityCreation = true) { }
             assertEquals(EventType.START, harness.overriddenDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
         }
     }

@@ -114,6 +114,7 @@ internal class EmbraceNdkServiceTest {
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         every { sharedObjectLoader.loadEmbraceNative() } returns true
+        every { sharedObjectLoader.loaded.get() } returns true
     }
 
     @After

@@ -25,6 +25,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Install NDK
+        run: echo "y" | ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;27.0.12077973"
+
       # make sure version in gradle.properties matches the version of embrace-swazzler3 version
       - name: "Publish SDK locally"
         run: ./gradlew publishToMavenLocal --no-daemon

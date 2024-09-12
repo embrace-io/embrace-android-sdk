@@ -91,6 +91,8 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
+
+    androidTestImplementation(project(":embrace-test-fakes"))
 }
 
 project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }

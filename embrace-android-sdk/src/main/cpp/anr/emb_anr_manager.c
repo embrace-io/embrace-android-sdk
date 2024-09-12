@@ -12,9 +12,12 @@ extern "C" {
 
 JNIEXPORT jint JNICALL
 Java_io_embrace_android_embracesdk_internal_anr_sigquit_EmbraceSigquitNdkDelegate_installGoogleAnrHandler(
-        JNIEnv *env, jobject thiz,
-        jint google_thread_id) {
-    return emb_install_google_anr_handler(env, thiz, google_thread_id);
+        JNIEnv *env,
+        jobject thiz,
+        jint google_thread_id,
+        jobject sigquit_data_source
+        ) {
+    return emb_install_google_anr_handler(env, sigquit_data_source, google_thread_id);
 }
 
 #ifdef __cplusplus

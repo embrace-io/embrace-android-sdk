@@ -43,7 +43,7 @@ internal class SigquitDataSourceImpl(
 
     private fun install(googleThreadId: Int): Int {
         return try {
-            val res = sigquitNdkDelegate.installGoogleAnrHandler(googleThreadId)
+            val res = sigquitNdkDelegate.installGoogleAnrHandler(googleThreadId, this)
             if (res > 0) {
                 googleAnrTrackerInstalled.set(false)
             }

@@ -18,9 +18,9 @@ import java.util.regex.Pattern
 
 internal class ThreadInfoCollectorTest {
 
-    private val highPrioThread = ThreadInfo(1, RUNNABLE, "thread-1", MAX_PRIORITY, emptyList())
-    private val medPrioThread = ThreadInfo(2, RUNNABLE, "thread-2", NORM_PRIORITY, emptyList())
-    private val lowPrioThread = ThreadInfo(3, RUNNABLE, "thread-3", MIN_PRIORITY, emptyList())
+    private val highPrioThread = ThreadInfo(1, RUNNABLE, "thread-1", MAX_PRIORITY, emptyList(), 0)
+    private val medPrioThread = ThreadInfo(2, RUNNABLE, "thread-2", NORM_PRIORITY, emptyList(), 0)
+    private val lowPrioThread = ThreadInfo(3, RUNNABLE, "thread-3", MIN_PRIORITY, emptyList(), 0)
 
     private lateinit var configService: ConfigService
     private lateinit var threadInfoCollector: ThreadInfoCollector

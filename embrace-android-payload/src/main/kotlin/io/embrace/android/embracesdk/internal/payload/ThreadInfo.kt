@@ -35,7 +35,13 @@ data class ThreadInfo(
      * String representation of each line of the stack trace.
      */
     @Json(name = "tt")
-    val lines: List<String>?
+    val lines: List<String>?,
+
+    /**
+     * The total number of frames in the stack before truncation
+     */
+    @Json(name = "fc")
+    val frameCount: Int,
 ) {
 
     companion object {
@@ -64,8 +70,9 @@ data class ThreadInfo(
         ): ThreadInfo {
             val name = thread.name
             val priority = thread.priority
+            val frameCount = stackTraceElements.size
             val lines = stackTraceElements.take(maxStacktraceSize).map(StackTraceElement::toString)
-            return ThreadInfo(thread.id, thread.state, name, priority, lines)
+            return ThreadInfo(thread.id, thread.state, name, priority, lines, frameCount)
         }
     }
 }

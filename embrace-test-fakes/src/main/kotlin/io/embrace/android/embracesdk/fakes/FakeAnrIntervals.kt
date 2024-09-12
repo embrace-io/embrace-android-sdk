@@ -11,7 +11,8 @@ val fakeAnrIntervalThreads: List<ThreadInfo> = listOf(
         Thread.State.BLOCKED,
         "",
         9,
-        lines = listOf("line1", "line2")
+        lines = listOf("line1", "line2"),
+        2,
     )
 )
 

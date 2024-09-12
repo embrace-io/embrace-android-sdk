@@ -16,6 +16,7 @@ class FakeAnrBehavior(
     var monitorThreadPriorityImpl: Int = 5,
     var sampleIntervalMsImpl: Long = 5,
     var anrPerSessionImpl: Int = 5,
+    var frameLimit: Int = 200,
     override val allowPatternList: List<Pattern> = emptyList(),
     override val blockPatternList: List<Pattern> = emptyList(),
     var nativeThreadAnrSamplingAllowlistImpl: List<AllowedNdkSampleMethod> = emptyList(),
@@ -31,7 +32,7 @@ class FakeAnrBehavior(
     override fun getAnrProcessErrorsDelayMs(): Long = 0
     override fun getAnrProcessErrorsSchedulerExtraTimeAllowanceMs(): Long = 100
     override fun getMaxStacktracesPerInterval(): Int = 80
-    override fun getStacktraceFrameLimit(): Int = 256
+    override fun getStacktraceFrameLimit(): Int = frameLimit
     override fun getMaxAnrIntervalsPerSession(): Int = anrPerSessionImpl
     override fun getMinThreadPriority(): Int = 6
     override fun getMinDuration(): Int = 1000

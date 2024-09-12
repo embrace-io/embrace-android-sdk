@@ -41,10 +41,13 @@ internal class AnrOtelMapperTest {
         lines = listOf(
             "com.example.app.MainActivity.onCreate(MainActivity.kt:10)",
             "com.example.app.MainActivity.onCreate(MainActivity.kt:20)"
-        )
+        ),
+        frameCount = 2
     )
 
     private val threads = listOf(stacktrace)
+    private val truncatedStack = stacktrace.copy(frameCount = 10000)
+    private val truncatedThreads = listOf(truncatedStack)
 
     private val firstSample = AnrSample(
         timestamp = FIRST_SAMPLE_MS,
@@ -60,11 +63,25 @@ internal class AnrOtelMapperTest {
         threads = threads
     )
 
+    private val truncatedSecondSample = AnrSample(
+        timestamp = SECOND_SAMPLE_MS,
+        sampleOverheadMs = SECOND_SAMPLE_OVERHEAD_MS,
+        code = AnrSample.CODE_DEFAULT,
+        threads = truncatedThreads
+    )
+
     private val completedInterval = AnrInterval(
         startTime = START_TIME_MS,
         endTime = END_TIME_MS,
         code = AnrInterval.CODE_DEFAULT,
         anrSampleList = AnrSampleList(listOf(firstSample, secondSample))
+    )
+
+    private val completedIntervalWithTruncatedSample = AnrInterval(
+        startTime = START_TIME_MS,
+        endTime = END_TIME_MS,
+        code = AnrInterval.CODE_DEFAULT,
+        anrSampleList = AnrSampleList(listOf(firstSample, truncatedSecondSample))
     )
 
     private val inProgressInterval =
@@ -176,6 +193,15 @@ internal class AnrOtelMapperTest {
         }
     }
 
+    @Test
+    fun `truncated stack shows the pre-truncated frame count`() {
+        anrService.data = listOf(completedIntervalWithTruncatedSample)
+        val spans = mapper.snapshot(false)
+        val events = checkNotNull(spans.single().events)
+        assertEquals(2, events.size)
+        assertSampleMapped(events[1], truncatedSecondSample)
+    }
+
     private fun Span.assertCommonOtelCharacteristics() {
         assertNotNull(traceId)
         assertNotNull(spanId)
@@ -201,7 +227,7 @@ internal class AnrOtelMapperTest {
         val thread = checkNotNull(sample.threads?.single())
         assertEquals(thread.state.toString(), attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE.key).data)
         assertEquals(thread.priority, attrs.findAttribute("thread_priority").data?.toInt())
-        assertEquals(thread.lines?.size, attrs.findAttribute("frame_count").data?.toInt())
+        assertEquals(thread.frameCount, attrs.findAttribute("frame_count").data?.toInt())
         assertEquals(thread.lines?.joinToString("\n"), attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key).data)
     }
 

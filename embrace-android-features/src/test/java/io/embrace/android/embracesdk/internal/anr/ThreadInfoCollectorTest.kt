@@ -18,9 +18,9 @@ import java.util.regex.Pattern
 
 internal class ThreadInfoCollectorTest {
 
-    private val highPrioThread = ThreadInfo(1, RUNNABLE, "thread-1", MAX_PRIORITY, emptyList())
-    private val medPrioThread = ThreadInfo(2, RUNNABLE, "thread-2", NORM_PRIORITY, emptyList())
-    private val lowPrioThread = ThreadInfo(3, RUNNABLE, "thread-3", MIN_PRIORITY, emptyList())
+    private val highPrioThread = ThreadInfo(1, RUNNABLE, "thread-1", MAX_PRIORITY, emptyList(), 0)
+    private val medPrioThread = ThreadInfo(2, RUNNABLE, "thread-2", NORM_PRIORITY, emptyList(), 0)
+    private val lowPrioThread = ThreadInfo(3, RUNNABLE, "thread-3", MIN_PRIORITY, emptyList(), 0)
 
     private lateinit var configService: ConfigService
     private lateinit var threadInfoCollector: ThreadInfoCollector
@@ -30,7 +30,8 @@ internal class ThreadInfoCollectorTest {
         configService = FakeConfigService(
             anrBehavior = FakeAnrBehavior(
                 allowPatternList = listOf(currentThread().name).map(Pattern::compile),
-                blockPatternList = listOf("Finalizer").map(Pattern::compile)
+                blockPatternList = listOf("Finalizer").map(Pattern::compile),
+                frameLimit = 5
             )
         )
         threadInfoCollector = ThreadInfoCollector(currentThread())
@@ -125,5 +126,13 @@ internal class ThreadInfoCollectorTest {
                 highPrioThread.priority
             )
         )
+    }
+
+    @Test
+    fun `verify truncation of ANR stacktrace respects the config`() {
+        val thread = threadInfoCollector.getAllowedThreads(configService).single()
+        val frames = checkNotNull(thread.lines)
+        assertEquals(5, frames.size)
+        assertTrue(thread.frameCount > frames.size)
     }
 }

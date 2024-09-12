@@ -31,7 +31,7 @@ class AnrBehaviorImpl(
         private const val DEFAULT_ANR_PROCESS_ERRORS_SCHEDULER_EXTRA_TIME_ALLOWANCE: Long =
             30 * 1000
         private const val DEFAULT_ANR_MAX_PER_INTERVAL = 80
-        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 100
+        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 200
         private const val DEFAULT_ANR_MIN_THREAD_PRIORITY_TO_CAPTURE = 0
         private const val DEFAULT_ANR_MAX_ANR_INTERVALS_PER_SESSION = 5
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000

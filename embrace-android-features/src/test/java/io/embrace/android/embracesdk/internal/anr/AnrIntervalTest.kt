@@ -19,7 +19,8 @@ internal class AnrIntervalTest {
         listOf(
             "java.base/java.lang.Thread.getStackTrace(Thread.java:1602)",
             "io.embrace.android.embracesdk.ThreadInfoTest.testThreadInfoSerialization(ThreadInfoTest.kt:18)"
-        )
+        ),
+        2
     )
 
     private val anrSample = AnrSample(150980980980, listOf(threadInfo), 0)

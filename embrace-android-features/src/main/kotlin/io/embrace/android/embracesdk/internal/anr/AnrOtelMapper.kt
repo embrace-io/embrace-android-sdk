@@ -71,9 +71,9 @@ class AnrOtelMapper(
         sample.threads?.singleOrNull()?.let { thread ->
             attrs.add(Attribute(JvmAttributes.JVM_THREAD_STATE.key, thread.state.toString()))
             attrs.add(Attribute("thread_priority", thread.priority.toString()))
+            attrs.add(Attribute("frame_count", thread.frameCount.toString()))
 
             thread.lines?.let { lines ->
-                attrs.add(Attribute("frame_count", lines.size.toString()))
                 attrs.add(Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, lines.joinToString("\n")))
             }
         }

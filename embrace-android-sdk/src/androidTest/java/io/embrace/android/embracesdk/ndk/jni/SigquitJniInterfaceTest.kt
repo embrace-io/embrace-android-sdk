@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.ndk.jni
 
+import io.embrace.android.embracesdk.fakes.FakeSigquitDataSource
 import io.embrace.android.embracesdk.internal.anr.sigquit.EmbraceSigquitNdkDelegate
 import io.embrace.android.embracesdk.ndk.NativeTestSuite
 import org.junit.Assert.assertEquals
@@ -16,7 +17,8 @@ internal class SigquitJniInterfaceTest : NativeTestSuite() {
      */
     @Test
     fun installGoogleAnrHandlerTest() {
-        val result = sigquitNdkDelegate.installGoogleAnrHandler(1)
+        val fakeSigquitDataSource = FakeSigquitDataSource()
+        val result = sigquitNdkDelegate.installGoogleAnrHandler(1, fakeSigquitDataSource)
         assertEquals(0, result)
     }
 }

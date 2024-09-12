@@ -14,10 +14,10 @@
   "resource": {
     "app_version": "2.5.1",
     "app_framework": 1,
-    "build_id": "5.22.0",
+    "build_id": "fakeBuildId",
     "app_ecosystem_id": "com.fake.package",
-    "build_type": "release",
-    "build_flavor": "delicious",
+    "build_type": "fakeBuildType",
+    "build_flavor": "fakeBuildFlavor",
     "environment": "dev",
     "bundle_version": "99",
     "sdk_version": "__EMBRACE_TEST_IGNORE__",

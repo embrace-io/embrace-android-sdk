@@ -28,12 +28,10 @@ jobs:
 
       - name: Checkout SDK
         uses: actions/checkout@v4
-        with:
-          ref: master
 
       - name: Set next SDK version
         run: |
-          git checkout master
+          git checkout main
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"
@@ -43,12 +41,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Set Next Swazzler Version
         run: |
-          git checkout master
+          git checkout main
           sed -i -r "s#version = ([^\']+)#version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"

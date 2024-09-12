@@ -23,34 +23,18 @@ jobs:
     needs: [functional, baseline-profile]
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      matrix:
-        jdk-version: ["17"]
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.m2/repository
-            ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml', 'gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
-
-      - name: Install JDK ${{ matrix.jdk-version }}
+      - name: Install Java
         uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
-          java-version: ${{ matrix.jdk-version }}
+          java-version: 17
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       # Build the entire project, run the tests, and run all static analysis
       - name: Gradle Build
@@ -64,14 +48,12 @@ jobs:
           path: embrace-android-sdk/build/reports/tests/
 
       - name: Gradlew Release to internal Maven
-        run: |
-          ./gradlew clean publishReleasePublicationToSnapshotRepository --stacktrace
+        run: ./gradlew clean publishReleasePublicationToSnapshotRepository --stacktrace
 
       - name: Checkout Swazzler
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
           path: ./embrace-swazzler3
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
@@ -79,11 +61,3 @@ jobs:
         run: |
           cd ./embrace-swazzler3
           ./gradlew clean publishPluginMavenPublicationToSnapshotRepository --stacktrace
-
-      - name: Cleanup Gradle Cache
-        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
-        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
-        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
-        run: |
-          rm -f ~/.gradle/caches/modules-2/modules-2.lock
-          rm -f ~/.gradle/caches/modules-2/gc.properties

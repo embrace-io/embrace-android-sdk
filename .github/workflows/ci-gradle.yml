@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches:
   release:
     types: [ released ]
 
@@ -14,36 +13,22 @@ concurrency:
 
 jobs:
   gradle-test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        jdk-version: ["17"]
     steps:
       - name: Checkout Branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.m2/repository
-            ~/.sonar/cache
-          key: ${{ runner.os }}-gradle-jdk${{ matrix.jdk-version }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml', 'gradle.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle
-
-      - name: Install JDK ${{ matrix.jdk-version }}
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'adopt'
-          java-version: ${{ matrix.jdk-version }}
+          java-version: 17
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       # Build the entire project, run the tests, and run all static analysis
       - name: Gradle Build
@@ -64,11 +49,3 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
           file: embrace-android-sdk/build/reports/kover/reportRelease.xml
-
-      - name: Cleanup Gradle Cache
-        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
-        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
-        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
-        run: |
-          rm -f ~/.gradle/caches/modules-2/modules-2.lock
-          rm -f ~/.gradle/caches/modules-2/gc.properties

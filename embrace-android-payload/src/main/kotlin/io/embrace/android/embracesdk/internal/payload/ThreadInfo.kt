@@ -45,15 +45,6 @@ data class ThreadInfo(
 ) {
 
     companion object {
-
-        /**
-         * Creates a [ThreadInfo] from the [Thread], [StackTraceElement][] pair,
-         * using the thread name and priority, and each stacktrace element as each line with a limited length.
-         *
-         * @param thread            the exception
-         * @param maxStacktraceSize the maximum lines of a stacktrace
-         * @return the stacktrace instance
-         */
         /**
          * Creates a [ThreadInfo] from the [Thread], [StackTraceElement][] pair,
          * using the thread name and priority, and each stacktrace element as each line.

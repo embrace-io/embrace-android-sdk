@@ -30,7 +30,8 @@ internal class ThreadInfoCollectorTest {
         configService = FakeConfigService(
             anrBehavior = FakeAnrBehavior(
                 allowPatternList = listOf(currentThread().name).map(Pattern::compile),
-                blockPatternList = listOf("Finalizer").map(Pattern::compile)
+                blockPatternList = listOf("Finalizer").map(Pattern::compile),
+                frameLimit = 5
             )
         )
         threadInfoCollector = ThreadInfoCollector(currentThread())
@@ -125,5 +126,13 @@ internal class ThreadInfoCollectorTest {
                 highPrioThread.priority
             )
         )
+    }
+
+    @Test
+    fun `verify truncation of ANR stacktrace respects the config`() {
+        val thread = threadInfoCollector.getAllowedThreads(configService).single()
+        val frames = checkNotNull(thread.lines)
+        assertEquals(5, frames.size)
+        assertTrue(thread.frameCount > frames.size)
     }
 }

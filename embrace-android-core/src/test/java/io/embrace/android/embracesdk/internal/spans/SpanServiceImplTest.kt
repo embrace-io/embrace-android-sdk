@@ -550,7 +550,8 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = events
+                events = events,
+                internal = false
             )
         )
 
@@ -594,7 +595,8 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = attributesMap
+                attributes = attributesMap,
+                internal = false
             )
         )
 

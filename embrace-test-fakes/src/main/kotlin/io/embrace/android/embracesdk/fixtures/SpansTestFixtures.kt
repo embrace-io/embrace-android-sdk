@@ -85,6 +85,10 @@ val MAX_LENGTH_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_A
 val TOO_LONG_ATTRIBUTE_KEY: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH + 1)
 val MAX_LENGTH_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH)
 val TOO_LONG_ATTRIBUTE_VALUE: String = "s".repeat(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH + 1)
+val MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN: String = "s".repeat(EmbraceSpanLimits.MAX_INTERNAL_ATTRIBUTE_KEY_LENGTH)
+val TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN: String = "s".repeat(EmbraceSpanLimits.MAX_INTERNAL_ATTRIBUTE_KEY_LENGTH + 1)
+val MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String = "s".repeat(EmbraceSpanLimits.MAX_INTERNAL_ATTRIBUTE_VALUE_LENGTH)
+val TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN: String = "s".repeat(EmbraceSpanLimits.MAX_INTERNAL_ATTRIBUTE_VALUE_LENGTH + 1)
 
 val maxSizeAttributes: Map<String, String> = createMapOfSize(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT)
 val tooBigAttributes: Map<String, String> = createMapOfSize(EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT + 1)

@@ -14,12 +14,10 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.EXCEPTION_EVENT_NAME
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_INTERNAL_NAME_LENGTH
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_NAME_LENGTH
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isAttributeValid
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isNameValid
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -129,7 +127,7 @@ internal class EmbraceSpanImpl(
 
                 (systemEvents + redactedCustomEvents).forEach { event ->
                     val eventAttributes = if (event.attributes.isNotEmpty()) {
-                        Attributes.builder().fromMap(event.attributes).build()
+                        Attributes.builder().fromMap(event.attributes, spanBuilder.internal).build()
                     } else {
                         Attributes.empty()
                     }
@@ -226,7 +224,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < MAX_CUSTOM_ATTRIBUTE_COUNT && attributeValid(key, value)) {
+        if (customAttributes.size < MAX_CUSTOM_ATTRIBUTE_COUNT && isAttributeValid(key, value, spanBuilder.internal)) {
             synchronized(customAttributes) {
                 if (customAttributes.size < MAX_CUSTOM_ATTRIBUTE_COUNT && isRecording) {
                     customAttributes[key] = value
@@ -239,7 +237,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (newName.isValidName(spanBuilder.internal)) {
+        if (newName.isNameValid(spanBuilder.internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
@@ -328,13 +326,5 @@ internal class EmbraceSpanImpl(
                 it.value
             }
         }
-    }
-
-    companion object {
-        internal fun attributeValid(key: String, value: String) =
-            key.length <= MAX_CUSTOM_ATTRIBUTE_KEY_LENGTH && value.length <= MAX_CUSTOM_ATTRIBUTE_VALUE_LENGTH
-
-        internal fun String.isValidName(internal: Boolean): Boolean =
-            isNotBlank() && ((internal && length <= MAX_INTERNAL_NAME_LENGTH) || length <= MAX_NAME_LENGTH)
     }
 }

@@ -11,9 +11,9 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.recordSession
+import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
-import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -33,6 +33,21 @@ internal class NetworkRequestApiTest {
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromCompletedRequest(
                 URL,
+                HttpMethod.GET,
+                START_TIME,
+                END_TIME,
+                BYTES_SENT,
+                BYTES_RECEIVED,
+                200
+            )
+        )
+    }
+
+    @Test
+    fun `record completed GET request with long URL`() {
+        assertSingleNetworkRequestInSession(
+            EmbraceNetworkRequest.fromCompletedRequest(
+                LONG_URL,
                 HttpMethod.GET,
                 START_TIME,
                 END_TIME,
@@ -311,6 +326,7 @@ internal class NetworkRequestApiTest {
         private const val BYTES_RECEIVED = 500L
         private const val TRACE_ID = "rAnDoM-traceId"
         private const val TRACEPARENT = "00-c4ada96c31e1b6b9e351a1cffc99ae38-331f3a8acf49d295-01"
+        private val LONG_URL = "https://embrace.io/" + "s".repeat(1900)
 
         private val NETWORK_CAPTURE_DATA = NetworkCaptureData(
             requestHeaders = mapOf(Pair("x-emb-test", "holla")),

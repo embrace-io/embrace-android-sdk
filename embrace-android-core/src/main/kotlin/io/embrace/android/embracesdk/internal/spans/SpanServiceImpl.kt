@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.isValidName
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isNameValid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -134,7 +134,7 @@ internal class SpanServiceImpl(
         events: List<EmbraceSpanEvent>? = null,
         attributes: Map<String, String>? = null
     ): Boolean {
-        return (name.isValidName(internal)) &&
+        return (name.isNameValid(internal)) &&
             ((events == null) || (events.size <= EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT)) &&
             ((attributes == null) || (attributes.size <= EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT))
     }

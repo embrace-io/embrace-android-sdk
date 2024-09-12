@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 class FakeSessionPropertiesService : SessionPropertiesService {
 
     var props: MutableMap<String, String> = mutableMapOf()
+    var listeners: MutableList<(Map<String, String>) -> Unit> = mutableListOf()
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         props[originalKey] = originalValue
@@ -23,5 +24,6 @@ class FakeSessionPropertiesService : SessionPropertiesService {
     }
 
     override fun addChangeListener(listener: (Map<String, String>) -> Unit) {
+        listeners.add(listener)
     }
 }

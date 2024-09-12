@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 
 interface NdkService {
     fun updateSessionId(newSessionId: String)
@@ -21,5 +22,5 @@ interface NdkService {
      */
     val symbolsForCurrentArch: Map<String, String>?
 
-    fun initializeService()
+    fun initializeService(sessionIdTracker: SessionIdTracker)
 }

@@ -12,6 +12,7 @@ class FakeUserService : UserService {
     var payer: Boolean? = null
     var personas: MutableList<String> = mutableListOf()
     var clearedCount: Int = 0
+    var listeners: MutableList<() -> Unit> = mutableListOf()
 
     override fun getUserInfo(): UserInfo = obj
 
@@ -68,5 +69,6 @@ class FakeUserService : UserService {
     }
 
     override fun addUserInfoListener(listener: () -> Unit) {
+        listeners.add(listener)
     }
 }

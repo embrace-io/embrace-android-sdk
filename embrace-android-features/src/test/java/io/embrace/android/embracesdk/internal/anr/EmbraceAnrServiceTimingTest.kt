@@ -40,7 +40,7 @@ internal class EmbraceAnrServiceTimingTest {
     fun `check ANR recovery`() {
         with(rule) {
             clock.setCurrentTime(100000L)
-            anrService.finishInitialization(fakeConfigService)
+            anrService.startAnrCapture()
             anrExecutorService.runCurrentlyBlocked()
             targetThreadHandler.onIdleThread()
             anrExecutorService.runCurrentlyBlocked()
@@ -57,7 +57,7 @@ internal class EmbraceAnrServiceTimingTest {
     @Test
     fun `only one recurring heartbeat task is created after foregrounding`() {
         with(rule) {
-            anrService.finishInitialization(fakeConfigService)
+            anrService.startAnrCapture()
             anrExecutorService.runCurrentlyBlocked()
             anrExecutorService.runCurrentlyBlocked()
             assertEquals(1, anrExecutorService.scheduledTasksCount())

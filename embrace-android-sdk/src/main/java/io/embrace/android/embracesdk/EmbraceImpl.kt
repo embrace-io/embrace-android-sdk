@@ -194,8 +194,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             registerComposeActivityListener(coreModule.application)
         }
 
-        val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
-        val deliveryModule = bootstrapper.deliveryModule
         val momentsModule = bootstrapper.momentsModule
         val crashModule = bootstrapper.crashModule
 
@@ -204,7 +202,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val worker = bootstrapper.workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE)
         worker.submit(TaskPriority.HIGH) {
             val essentialServiceModule = bootstrapper.essentialServiceModule
-            deliveryModule.deliveryService.sendCachedSessions(
+            bootstrapper.deliveryModule.deliveryService.sendCachedSessions(
                 bootstrapper.nativeFeatureModule::nativeCrashService,
                 essentialServiceModule.sessionIdTracker
             )
@@ -254,6 +252,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
 
         startSynchronous("startup-tracking")
+        val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         dataCaptureServiceModule.startupService.setSdkStartupInfo(startTimeMs, endTimeMs, inForeground, Thread.currentThread().name)
         endSynchronous()
     }

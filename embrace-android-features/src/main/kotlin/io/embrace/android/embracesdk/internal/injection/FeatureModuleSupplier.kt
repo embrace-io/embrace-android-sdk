@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 /**
  * Function that returns an instance of [FeatureModule]. Matches the signature of the constructor for [FeatureModuleImpl]
  */
-public typealias FeatureModuleSupplier = (
+typealias FeatureModuleSupplier = (
     featureRegistry: EmbraceFeatureRegistry,
     coreModule: CoreModule,
     initModule: InitModule,
@@ -20,7 +20,7 @@ public typealias FeatureModuleSupplier = (
     configService: ConfigService
 ) -> FeatureModule
 
-public fun createFeatureModule(
+fun createFeatureModule(
     featureRegistry: EmbraceFeatureRegistry,
     coreModule: CoreModule,
     initModule: InitModule,

@@ -9,22 +9,22 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * A set of shared executors to be used throughout the SDK
  */
-public interface WorkerThreadModule : Closeable {
+interface WorkerThreadModule : Closeable {
 
     /**
      * Return a [BackgroundWorker] matching the [workerName]
      */
-    public fun backgroundWorker(workerName: WorkerName): BackgroundWorker
+    fun backgroundWorker(workerName: WorkerName): BackgroundWorker
 
     /**
      * Return the [ScheduledWorker] given the [workerName]
      */
-    public fun scheduledWorker(workerName: WorkerName): ScheduledWorker
+    fun scheduledWorker(workerName: WorkerName): ScheduledWorker
 
     /**
      * Returns the thread that monitors the main thread for ANRs
      */
-    public val anrMonitorThread: AtomicReference<Thread>
+    val anrMonitorThread: AtomicReference<Thread>
 
     /**
      * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the

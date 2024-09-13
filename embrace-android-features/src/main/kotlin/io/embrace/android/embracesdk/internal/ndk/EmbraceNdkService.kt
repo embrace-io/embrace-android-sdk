@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
@@ -66,19 +67,25 @@ internal class EmbraceNdkService(
         null
     }
 
-    override fun initializeService() {
+    override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {
-            processStateService.addListener(this)
-            if (configService.appFramework == AppFramework.UNITY) {
-                unityCrashId = Uuid.getEmbUuid()
+            if (startNativeCrashMonitoring()) {
+                processStateService.addListener(this)
+                userService.addUserInfoListener(::onUserInfoUpdate)
+                sessionIdTracker.addListener { updateSessionId(it ?: "") }
+                sessionPropertiesService.addChangeListener(::onSessionPropertiesUpdate)
+                if (configService.appFramework == AppFramework.UNITY) {
+                    unityCrashId = Uuid.getEmbUuid()
+                }
+                cleanOldCrashFiles()
             }
-            startNativeCrashMonitoring()
-            cleanOldCrashFiles()
         }
     }
 
     override fun updateSessionId(newSessionId: String) {
-        delegate._updateSessionId(newSessionId)
+        if (sharedObjectLoader.loaded.get()) {
+            delegate._updateSessionId(newSessionId)
+        }
     }
 
     override fun onSessionPropertiesUpdate(properties: Map<String, String>) {
@@ -101,8 +108,8 @@ internal class EmbraceNdkService(
         updateAppState(APPLICATION_STATE_FOREGROUND)
     }
 
-    private fun startNativeCrashMonitoring() {
-        try {
+    private fun startNativeCrashMonitoring(): Boolean {
+        return try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 createCrashReportDirectory()
                 handler.postAtFrontOfQueue { installSignals() }
@@ -110,15 +117,19 @@ internal class EmbraceNdkService(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()
                 )
+                true
+            } else {
+                false
             }
         } catch (ex: Exception) {
             logger.logError("Failed to start native crash monitoring", ex)
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
+            false
         }
     }
 
     private fun checkSignalHandlersOverwritten() {
-        if (configService.autoDataCaptureBehavior.isSigHandlerDetectionEnabled()) {
+        if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
             val culprit = delegate._checkForOverwrittenHandlers()
             if (culprit != null) {
                 if (shouldIgnoreOverriddenHandler(culprit)) {
@@ -218,45 +229,47 @@ internal class EmbraceNdkService(
 
     override fun getNativeCrash(): NativeCrashData? {
         var nativeCrash: NativeCrashData? = null
-        val matchingFiles = repository.sortNativeCrashes(false)
-        for (crashFile in matchingFiles) {
-            try {
-                val path = crashFile.path
-                val crashRaw = delegate._getCrashReport(path)
-                if (crashRaw != null) {
-                    nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
-                } else {
-                    logger.logError("Failed to load crash report at $path")
-                }
-                val errorFile = repository.errorFileForCrash(crashFile)
-                if (nativeCrash != null) {
-                    val errors = getNativeCrashErrors(nativeCrash, errorFile)
-                    if (errors != null) {
-                        nativeCrash.errors = errors
-                    }
-                }
-                val mapFile = repository.mapFileForCrash(crashFile)
-                if (mapFile != null && nativeCrash != null) {
-                    nativeCrash.map = getMapFileContent(mapFile)
-                }
-
-                // Retrieve deobfuscated symbols
-                if (nativeCrash != null) {
-                    val symbols = symbolsForCurrentArch
-                    if (symbols == null) {
-                        logger.logError("Failed to find symbols for native crash - stacktraces will not symbolicate correctly.")
+        if (sharedObjectLoader.loaded.get()) {
+            val matchingFiles = repository.sortNativeCrashes(false)
+            for (crashFile in matchingFiles) {
+                try {
+                    val path = crashFile.path
+                    val crashRaw = delegate._getCrashReport(path)
+                    if (crashRaw != null) {
+                        nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
                     } else {
-                        nativeCrash.symbols = symbols.toMap()
+                        logger.logError("Failed to load crash report at $path")
                     }
+                    val errorFile = repository.errorFileForCrash(crashFile)
+                    if (nativeCrash != null) {
+                        val errors = getNativeCrashErrors(nativeCrash, errorFile)
+                        if (errors != null) {
+                            nativeCrash.errors = errors
+                        }
+                    }
+                    val mapFile = repository.mapFileForCrash(crashFile)
+                    if (mapFile != null && nativeCrash != null) {
+                        nativeCrash.map = getMapFileContent(mapFile)
+                    }
+
+                    // Retrieve deobfuscated symbols
+                    if (nativeCrash != null) {
+                        val symbols = symbolsForCurrentArch
+                        if (symbols == null) {
+                            logger.logError("Failed to find symbols for native crash - stacktraces will not symbolicate correctly.")
+                        } else {
+                            nativeCrash.symbols = symbols.toMap()
+                        }
+                    }
+                    repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash)
+                } catch (ex: Exception) {
+                    crashFile.delete()
+                    logger.logError(
+                        "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
+                        ex
+                    )
+                    logger.trackInternalError(InternalErrorType.NATIVE_CRASH_LOAD_FAIL, ex)
                 }
-                repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash)
-            } catch (ex: Exception) {
-                crashFile.delete()
-                logger.logError(
-                    "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                    ex
-                )
-                logger.trackInternalError(InternalErrorType.NATIVE_CRASH_LOAD_FAIL, ex)
             }
         }
         return nativeCrash
@@ -393,20 +406,24 @@ internal class EmbraceNdkService(
     }
 
     private fun updateAppState(newAppState: String) {
-        delegate._updateAppState(newAppState)
+        if (sharedObjectLoader.loaded.get()) {
+            delegate._updateAppState(newAppState)
+        }
     }
 
     /**
      * Compute NDK metadata
      */
     private fun updateDeviceMetaData() {
-        val src = captureMetaData(true)
-        var json = serializeMetadata(src)
-        if (json.length >= EMB_DEVICE_META_DATA_SIZE) {
-            logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
-            json = serializeMetadata(src.copy(sessionProperties = null))
+        if (sharedObjectLoader.loaded.get()) {
+            val src = captureMetaData(true)
+            var json = serializeMetadata(src)
+            if (json.length >= EMB_DEVICE_META_DATA_SIZE) {
+                logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
+                json = serializeMetadata(src.copy(sessionProperties = null))
+            }
+            delegate._updateMetaData(json)
         }
-        delegate._updateMetaData(json)
     }
 
     private fun captureMetaData(includeSessionProperties: Boolean): NativeCrashMetadata {

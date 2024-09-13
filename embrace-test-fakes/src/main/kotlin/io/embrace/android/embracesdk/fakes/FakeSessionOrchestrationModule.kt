@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadMessageColl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 
-public class FakeSessionOrchestrationModule(
+class FakeSessionOrchestrationModule(
     override val payloadFactory: PayloadFactory = FakePayloadFactory(),
     override val sessionOrchestrator: SessionOrchestrator = FakeSessionOrchestrator(),
     override val sessionSpanAttrPopulator: SessionSpanAttrPopulator = FakeSessionSpanAttrPopulator(),

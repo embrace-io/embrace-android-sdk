@@ -12,13 +12,13 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSo
 /**
  * Modules containing classes that generate the payloads.
  */
-public interface PayloadSourceModule {
-    public val sessionEnvelopeSource: SessionEnvelopeSource
-    public val logEnvelopeSource: LogEnvelopeSource
-    public val metadataSource: EnvelopeMetadataSource
-    public val deviceArchitecture: DeviceArchitecture
-    public val resourceSource: EnvelopeResourceSource
-    public val metadataService: MetadataService
-    public val hostedSdkVersionInfo: HostedSdkVersionInfo
-    public val rnBundleIdTracker: RnBundleIdTracker
+interface PayloadSourceModule {
+    val sessionEnvelopeSource: SessionEnvelopeSource
+    val logEnvelopeSource: LogEnvelopeSource
+    val metadataSource: EnvelopeMetadataSource
+    val deviceArchitecture: DeviceArchitecture
+    val resourceSource: EnvelopeResourceSource
+    val metadataService: MetadataService
+    val hostedSdkVersionInfo: HostedSdkVersionInfo
+    val rnBundleIdTracker: RnBundleIdTracker
 }

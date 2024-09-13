@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit
  * Verifies if the last run crashed.
  * This is done by checking if the crash marker file exists.
  */
-public class LastRunCrashVerifier(
+class LastRunCrashVerifier(
     private val crashFileMarker: CrashFileMarker,
     private val logger: EmbLogger
 ) {
@@ -20,7 +20,7 @@ public class LastRunCrashVerifier(
     /**
      * Returns true if the app crashed in the last run, false otherwise.
      */
-    public fun didLastRunCrash(): Boolean {
+    fun didLastRunCrash(): Boolean {
         return didLastRunCrash ?: didLastRunCrashFuture?.let { future ->
             try {
                 future.get(2, TimeUnit.SECONDS)
@@ -35,7 +35,7 @@ public class LastRunCrashVerifier(
      * Reads and clean the last run crash marker in a background thread.
      * This method is called when the SDK is started.
      */
-    public fun readAndCleanMarkerAsync(backgroundWorker: BackgroundWorker) {
+    fun readAndCleanMarkerAsync(backgroundWorker: BackgroundWorker) {
         if (didLastRunCrash == null) {
             this.didLastRunCrashFuture = backgroundWorker.submit<Boolean> {
                 readAndCleanMarker()

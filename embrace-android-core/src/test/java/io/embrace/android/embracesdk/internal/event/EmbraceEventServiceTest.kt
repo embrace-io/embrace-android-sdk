@@ -11,15 +11,17 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeStartupBehavior
+import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
@@ -29,9 +31,6 @@ import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
-import io.mockk.clearAllMocks
-import io.mockk.unmockkAll
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -53,7 +52,6 @@ internal class EmbraceEventServiceTest {
     private lateinit var eventService: EmbraceEventService
     private lateinit var fakeClock: FakeClock
     private lateinit var eventHandler: EventHandler
-    private lateinit var startupMomentLocalConfig: StartupMomentLocalConfig
     private lateinit var remoteConfig: RemoteConfig
 
     companion object {
@@ -77,31 +75,22 @@ internal class EmbraceEventServiceTest {
                 logger = logger
             )
         }
-
-        @AfterClass
-        @JvmStatic
-        fun tearDown() {
-            unmockkAll()
-        }
     }
 
     @Before
     fun before() {
-        clearAllMocks(
-            answers = false,
-            objectMocks = false,
-            constructorMocks = false,
-            staticMocks = false
-        )
-
         fakeClock = FakeClock()
         fakeClock.setCurrentTime(10L)
         remoteConfig = RemoteConfig()
         deliveryService = FakeDeliveryService()
-        startupMomentLocalConfig = StartupMomentLocalConfig()
         configService = FakeConfigService(
-            startupBehavior = fakeStartupBehavior { startupMomentLocalConfig },
-            dataCaptureEventBehavior = fakeDataCaptureEventBehavior { remoteConfig }
+            startupBehavior = FakeStartupBehavior(true),
+            dataCaptureEventBehavior = createDataCaptureEventBehavior { remoteConfig },
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                SdkLocalConfig(
+                    sensitiveKeysDenylist = listOf("password")
+                )
+            )
         )
         sessionPropertiesService = FakeSessionPropertiesService()
         gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService(), FakeEmbLogger()))
@@ -131,7 +120,6 @@ internal class EmbraceEventServiceTest {
             fakeWorkerThreadModule,
             fakeClock
         )
-        startupMomentLocalConfig = StartupMomentLocalConfig()
         eventService.eventHandler = eventHandler
     }
 
@@ -314,7 +302,7 @@ internal class EmbraceEventServiceTest {
 
     @Test
     fun `applicationStartupComplete if automatically end is disabled does not do anything`() {
-        startupMomentLocalConfig = StartupMomentLocalConfig(automaticallyEnd = false)
+        configService.startupBehavior = FakeStartupBehavior(false)
         eventService.applicationStartupComplete()
         assertNull(deliveryService.lastEventSentAsync)
     }
@@ -371,5 +359,26 @@ internal class EmbraceEventServiceTest {
         assertEquals(1, deliveryService.eventSentAsyncInvokedCount)
         assertNotEquals(EventType.END, lastEvent?.event?.type)
         assertNotEquals(STARTUP_EVENT_NAME, lastEvent?.event?.name)
+    }
+
+    @Test
+    fun `sensitive keys are redacted on event start`() {
+        val eventName = "event-to-start"
+        val customProperties = mapOf("password" to "123456", "non-sensitive-key" to "hello")
+        eventService.startEvent(eventName, null, customProperties)
+        val eventDescription = eventService.getActiveEvent(eventName, null)
+        assertEquals(REDACTED_LABEL, eventDescription?.event?.customProperties?.get("password"))
+        assertEquals("hello", eventDescription?.event?.customProperties?.get("non-sensitive-key"))
+    }
+
+    @Test
+    fun `sensitive keys are redacted on event end`() {
+        val eventName = "event-to-end"
+        val customProperties = mapOf("password" to "123456", "non-sensitive-key" to "hello")
+        eventService.startEvent(eventName)
+        eventService.endEvent(eventName, customProperties)
+        val event = deliveryService.lastEventSentAsync?.event
+        assertEquals(REDACTED_LABEL, event?.customProperties?.get("password"))
+        assertEquals("hello", event?.customProperties?.get("non-sensitive-key"))
     }
 }

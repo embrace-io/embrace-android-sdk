@@ -18,7 +18,7 @@ import com.squareup.moshi.JsonClass
  * @param attributes
  */
 @JsonClass(generateAdapter = true)
-public data class Span(
+data class Span(
 
     /* The ID of the trace that this span is part of */
     @Json(name = "trace_id")
@@ -61,7 +61,7 @@ public data class Span(
      * Values: UNSET,ERROR,OK
      */
     @JsonClass(generateAdapter = false)
-    public enum class Status(public val value: String) {
+    enum class Status(val value: String) {
         @Json(name = "Unset")
         UNSET("Unset"),
 

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 /**
  * Base class for data sources.
  */
-public abstract class DataSourceImpl<T>(
+abstract class DataSourceImpl<T>(
     private val destination: T,
     private val logger: EmbLogger,
     private val limitStrategy: LimitStrategy,
@@ -37,22 +37,15 @@ public abstract class DataSourceImpl<T>(
     ): Boolean {
         try {
             if (enforceLimits && !limitStrategy.shouldCapture()) {
-                logger.logInfo(
-                    "Data capture limit reached for ${this.javaClass.name}." +
-                        " Ignoring to keep payload size reasonable - other data types will still be captured normally."
-                )
                 return false
             }
             if (!inputValidation()) {
-                logger.logWarning("Input validation failed.")
                 return false
             }
             destination.captureAction()
             return true
         } catch (exc: Throwable) {
-            logger.logError("Error capturing data", exc)
             logger.trackInternalError(InternalErrorType.DATA_SOURCE_DATA_CAPTURE_FAIL, exc)
-
             return false
         }
     }

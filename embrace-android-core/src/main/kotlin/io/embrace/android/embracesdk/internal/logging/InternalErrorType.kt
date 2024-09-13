@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.logging
 /**
  * Represents a type of internal error that can be recorded for the Embrace SDK's telemetry.
  */
-public enum class InternalErrorType {
+enum class InternalErrorType {
     UNCAUGHT_EXC_HANDLER,
     ANR_DATA_FETCH,
     UNBALANCED_CALL,
@@ -38,4 +38,5 @@ public enum class InternalErrorType {
     UNBALANCED_BG_CALL,
     ANR_HEARTBEAT_STOP_FAIL,
     SDK_START_FAIL,
+    CONFIG_DESERIALIZATION_FAIL,
 }

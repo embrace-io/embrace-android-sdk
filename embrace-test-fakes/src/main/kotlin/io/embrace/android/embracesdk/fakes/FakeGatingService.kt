@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
  * An implementation of [GatingService] that does a pass-through to a delegate & tracks the message
  * that goes through it
  */
-public class FakeGatingService(private val impl: GatingService? = null) : GatingService {
+class FakeGatingService(private val impl: GatingService? = null) : GatingService {
 
-    public val envelopesFiltered: MutableList<Envelope<SessionPayload>> = mutableListOf()
-    public val eventMessagesFiltered: MutableList<EventMessage> = mutableListOf()
+    val envelopesFiltered: MutableList<Envelope<SessionPayload>> = mutableListOf()
+    val eventMessagesFiltered: MutableList<EventMessage> = mutableListOf()
 
     override fun gateSessionEnvelope(
         hasCrash: Boolean,

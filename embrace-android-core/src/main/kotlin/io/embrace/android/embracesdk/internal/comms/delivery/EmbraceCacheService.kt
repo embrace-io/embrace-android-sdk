@@ -78,12 +78,8 @@ internal class EmbraceCacheService(
     override fun <T> loadObject(name: String, type: Type): T? {
         findLock(name).read {
             val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-            try {
+            runCatching {
                 return serializer.fromJson(file.inputStream(), type)
-            } catch (ex: FileNotFoundException) {
-                logger.logInfo("Cache file cannot be found " + file.path)
-            } catch (ex: Exception) {
-                logger.logDebug("Failed to read cache object " + file.path, ex)
             }
             return null
         }

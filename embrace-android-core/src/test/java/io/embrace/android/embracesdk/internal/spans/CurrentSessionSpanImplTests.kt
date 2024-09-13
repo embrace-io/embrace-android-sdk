@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_ATTRIBUTE_COUNT
@@ -438,5 +439,8 @@ internal class CurrentSessionSpanImplTests {
         ): PersistableEmbraceSpan = stoppedSpan
 
         override fun create(embraceSpanBuilder: EmbraceSpanBuilder) = stoppedSpan
+        override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
+            // no-op
+        }
     }
 }

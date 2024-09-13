@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
  * The NDK layer must be enabled in order to use this functionality as this class
  * calls native code.
  */
-public class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
+class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val configService: ConfigService,
     private val symbols: Lazy<Map<String, String>?>,
     private val random: Random = Random(),
@@ -33,24 +33,24 @@ public class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         const val MAX_NATIVE_SAMPLES = 10
     }
 
-    public interface NdkDelegate {
-        public fun setupNativeThreadSampler(is32Bit: Boolean): Boolean
-        public fun monitorCurrentThread(): Boolean
-        public fun startSampling(unwinderOrdinal: Int, intervalMs: Long)
-        public fun finishSampling(): List<NativeThreadAnrSample>?
+    interface NdkDelegate {
+        fun setupNativeThreadSampler(is32Bit: Boolean): Boolean
+        fun monitorCurrentThread(): Boolean
+        fun startSampling(unwinderOrdinal: Int, intervalMs: Long)
+        fun finishSampling(): List<NativeThreadAnrSample>?
     }
 
-    public var ignored: Boolean = true
+    var ignored: Boolean = true
 
-    public var sampling: Boolean = false
+    var sampling: Boolean = false
 
-    public var count: Int = -1
+    var count: Int = -1
 
-    public var factor: Int = -1
+    var factor: Int = -1
 
-    public var intervals: MutableList<NativeThreadAnrInterval> = mutableListOf()
+    var intervals: MutableList<NativeThreadAnrInterval> = mutableListOf()
 
-    public val currentInterval: NativeThreadAnrInterval?
+    val currentInterval: NativeThreadAnrInterval?
         get() = intervals.lastOrNull()
 
     private var targetThread: Thread = Thread.currentThread()
@@ -105,7 +105,7 @@ public class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
             return
         }
 
-        if (ignored || !configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
+        if (ignored || !configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             return
         }
         if (count % factor == 0) {
@@ -157,13 +157,13 @@ public class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
 
     private fun shouldSkipNewSample(anrBehavior: AnrBehavior): Boolean {
         val sessionLimit = anrBehavior.getMaxAnrIntervalsPerSession()
-        return !configService.anrBehavior.isNativeThreadAnrSamplingEnabled() || intervals.size >= sessionLimit
+        return !configService.anrBehavior.isUnityAnrCaptureEnabled() || intervals.size >= sessionLimit
     }
 
     override fun getNativeSymbols(): Map<String, String>? = symbols.value
 
     override fun getCapturedIntervals(receivedTermination: Boolean?): List<NativeThreadAnrInterval>? {
-        if (!configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
+        if (!configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             return null
         }
 
@@ -188,7 +188,7 @@ public class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
      * and the ANR config.
      */
 
-    public fun containsAllowedStackframes(
+    fun containsAllowedStackframes(
         anrBehavior: AnrBehavior,
         stacktrace: Array<StackTraceElement>
     ): Boolean {
@@ -204,4 +204,4 @@ public class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     }
 }
 
-public fun isUnityMainThread(): Boolean = "UnityMain" == Thread.currentThread().name
+fun isUnityMainThread(): Boolean = "UnityMain" == Thread.currentThread().name

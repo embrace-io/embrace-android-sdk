@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public data class EventMessage(
+data class EventMessage(
     @Json(name = "et")
     val event: Event,
 

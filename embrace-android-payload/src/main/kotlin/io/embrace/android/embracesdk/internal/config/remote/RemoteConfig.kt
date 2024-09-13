@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration of the SDK set by the Embrace API.
  */
 @JsonClass(generateAdapter = true)
-public data class RemoteConfig(
+data class RemoteConfig(
 
     /**
      * Used to determine whether or not the SDK should be activated for this device. The threshold

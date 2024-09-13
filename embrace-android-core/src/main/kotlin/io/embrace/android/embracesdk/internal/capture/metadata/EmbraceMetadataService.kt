@@ -73,7 +73,7 @@ internal class EmbraceMetadataService(
                 }
             }
             val free = statFs.freeBytes
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     storageStatsManager.value,
                     context.packageManager,

@@ -60,25 +60,21 @@ internal class EmbraceApiService(
 
         return when (val response = apiClient.executeGet(request)) {
             is ApiResponse.Success -> {
-                logger.logInfo("Fetched new config successfully.")
                 response.body?.let {
                     serializer.fromJson(it, RemoteConfig::class.java)
                 }
             }
 
             is ApiResponse.NotModified -> {
-                logger.logInfo("Confirmed config has not been modified.")
                 cachedResponse.remoteConfig
             }
 
             is ApiResponse.TooManyRequests -> {
                 // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
-                logger.logWarning("Too many requests. ")
                 null
             }
 
-            is ApiResponse.Failure -> {
-                logger.logInfo("Failed to fetch config (no response).")
+            is ApiResponse.Failure, ApiResponse.None -> {
                 null
             }
 
@@ -131,7 +127,7 @@ internal class EmbraceApiService(
         post(eventMessage, mapper::eventMessageRequest)
     }
 
-    override fun sendSession(action: SerializationAction, onFinish: ((successful: Boolean) -> Unit)?): Future<*> {
+    override fun sendSession(action: SerializationAction, onFinish: ((response: ApiResponse) -> Unit)): Future<*> {
         return postOnWorker(action, mapper.sessionRequest(), onFinish)
     }
 
@@ -139,7 +135,7 @@ internal class EmbraceApiService(
         payload: T,
         mapper: (T) -> ApiRequest,
         type: ParameterizedType? = null,
-        noinline onComplete: ((successful: Boolean) -> Unit)? = null,
+        noinline onComplete: ((response: ApiResponse) -> Unit) = {}
     ): Future<*> {
         val request: ApiRequest = mapper(payload)
         val action: SerializationAction = { stream ->
@@ -162,20 +158,20 @@ internal class EmbraceApiService(
     private fun postOnWorker(
         action: SerializationAction,
         request: ApiRequest,
-        onComplete: ((successful: Boolean) -> Any)?,
+        onComplete: ((response: ApiResponse) -> Unit),
     ): Future<*> {
         val priority = when (request.isSessionRequest()) {
             true -> TaskPriority.CRITICAL
             else -> TaskPriority.NORMAL
         }
         return backgroundWorker.submit(priority) {
-            var successfullySent = false
+            var response: ApiResponse = ApiResponse.None
             try {
-                successfullySent = handleApiRequest(request, action)
+                response = handleApiRequest(request, action)
             } catch (e: Exception) {
                 logger.logWarning("API call failed.", e)
             } finally {
-                onComplete?.invoke(successfullySent)
+                onComplete(response)
             }
         }
     }
@@ -184,7 +180,7 @@ internal class EmbraceApiService(
      * Handles an API request by executing it if the device is online and the endpoint is not rate limited.
      * Otherwise, the API call is saved to be sent later.
      */
-    private fun handleApiRequest(request: ApiRequest, action: SerializationAction): Boolean {
+    private fun handleApiRequest(request: ApiRequest, action: SerializationAction): ApiResponse {
         val url = EmbraceUrl.create(request.url.url)
         val endpoint = url.endpoint()
 
@@ -196,19 +192,12 @@ internal class EmbraceApiService(
                 pendingApiCallsSender.savePendingApiCall(request, action)
                 pendingApiCallsSender.scheduleRetry(response)
             }
-
-            if (response !is ApiResponse.Success) {
-                // If the API call failed, propagate the error to the caller.
-                error("Failed to post Embrace API call. $response")
-            } else {
-                return true
-            }
+            return response
         } else {
             // Otherwise, save the API call to send it once the rate limit is lifted or the device is online again.
             pendingApiCallsSender.savePendingApiCall(request, action)
         }
-
-        return false
+        return ApiResponse.None
     }
 
     /**

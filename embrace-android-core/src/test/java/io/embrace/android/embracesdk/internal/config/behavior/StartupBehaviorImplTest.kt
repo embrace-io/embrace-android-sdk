@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeStartupBehavior
+import io.embrace.android.embracesdk.fakes.createStartupBehavior
 import io.embrace.android.embracesdk.internal.config.local.StartupMomentLocalConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -14,15 +14,15 @@ internal class StartupBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeStartupBehavior()) {
-            assertTrue(isAutomaticEndEnabled())
+        with(createStartupBehavior()) {
+            assertTrue(isStartupMomentAutoEndEnabled())
         }
     }
 
     @Test
     fun testLocalOnly() {
-        with(fakeStartupBehavior(localCfg = { local })) {
-            assertFalse(isAutomaticEndEnabled())
+        with(createStartupBehavior(localCfg = { local })) {
+            assertFalse(isStartupMomentAutoEndEnabled())
         }
     }
 }

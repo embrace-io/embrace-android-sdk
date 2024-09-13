@@ -8,4 +8,4 @@ import java.io.IOException
  * intercept chain process for client errors.
  */
 @InternalApi
-public class EmbraceCustomPathException(public val customPath: String, cause: Throwable?) : IOException(cause)
+class EmbraceCustomPathException(val customPath: String, cause: Throwable?) : IOException(cause)

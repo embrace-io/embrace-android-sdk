@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.BuildInfo
  * New identifiers and associated strings can be added by directly accessing [resourceValues], but the identifiers returned from
  * [getIdentifier] are fixed to the few that the SDK expects
  */
-public class FakeAndroidResourcesService : AndroidResourcesService {
+class FakeAndroidResourcesService : AndroidResourcesService {
     private val resourceValues: MutableMap<Int, String> = sdkResources.associate { it.second to it.third }.toMutableMap()
     private val identifiers = sdkResources.associate { it.first to it.second }
 

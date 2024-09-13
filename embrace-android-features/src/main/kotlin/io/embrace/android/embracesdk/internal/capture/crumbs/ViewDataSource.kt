@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 /**
  * Captures fragment views.
  */
-public class ViewDataSource(
+class ViewDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     spanService: SpanService,
@@ -30,7 +30,7 @@ public class ViewDataSource(
     /**
      * Called when a view is started. If a view with the same name is already running, it will be ended.
      */
-    public fun startView(name: String?): Boolean = captureSpanData(
+    fun startView(name: String?): Boolean = captureSpanData(
         countsTowardsLimits = true,
         inputValidation = { !name.isNullOrEmpty() },
         captureAction = {
@@ -45,7 +45,7 @@ public class ViewDataSource(
     /**
      * Called when a view is started, ending the last view.
      */
-    public fun changeView(name: String?) {
+    fun changeView(name: String?) {
         val lastView = viewSpans.keys.lastOrNull()
         endView(lastView)
         startView(name)
@@ -54,7 +54,7 @@ public class ViewDataSource(
     /**
      * Called when a view is ended.
      */
-    public fun endView(name: String?): Boolean = captureSpanData(
+    fun endView(name: String?): Boolean = captureSpanData(
         countsTowardsLimits = false,
         inputValidation = { !name.isNullOrEmpty() },
         captureAction = {
@@ -65,7 +65,7 @@ public class ViewDataSource(
     /**
      * Called when the activity is closed (and therefore all views are assumed to close).
      */
-    public fun onViewClose() {
+    fun onViewClose() {
         viewSpans.forEach { (_, span) ->
             captureSpanData(
                 countsTowardsLimits = false,

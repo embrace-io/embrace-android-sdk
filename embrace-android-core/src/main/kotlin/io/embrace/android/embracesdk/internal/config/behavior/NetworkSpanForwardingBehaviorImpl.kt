@@ -4,18 +4,18 @@ import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-public class NetworkSpanForwardingBehaviorImpl(
+class NetworkSpanForwardingBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<NetworkSpanForwardingRemoteConfig?>
 ) : NetworkSpanForwardingBehavior, MergedConfigBehavior<UnimplementedConfig, NetworkSpanForwardingRemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
 ) {
-    public companion object {
+    companion object {
         /**
          * Header name for the W3C traceparent
          */
-        public const val TRACEPARENT_HEADER_NAME: String = "traceparent"
+        const val TRACEPARENT_HEADER_NAME: String = "traceparent"
 
         private const val DEFAULT_PCT_ENABLED = 0.0f
     }

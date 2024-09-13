@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.toUTF8String
 /**
  * Captures WebViews information, like view properties, console logs, or core web vitals.
  */
-public class WebViewDataSource(
+class WebViewDataSource(
     private val webViewVitalsBehavior: WebViewVitalsBehavior,
     private val writer: SessionSpanWriter,
     private val logger: EmbLogger,
@@ -26,7 +26,7 @@ public class WebViewDataSource(
     limitStrategy = UpToLimitStrategy(webViewVitalsBehavior::getMaxWebViewVitals),
 ) {
 
-    public fun loadDataIntoSession(webViewInfoList: List<WebViewInfo>) {
+    fun loadDataIntoSession(webViewInfoList: List<WebViewInfo>) {
         try {
             writer.removeEvents(EmbType.System.WebViewInfo)
             webViewInfoList.forEach { webViewInfo ->

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
-public class AutoDataCaptureBehaviorImpl(
+class AutoDataCaptureBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<LocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
@@ -29,7 +29,7 @@ public class AutoDataCaptureBehaviorImpl(
         const val REPORT_DISK_USAGE_DEFAULT = true
     }
 
-    override fun isMemoryServiceEnabled(): Boolean {
+    override fun isMemoryWarningCaptureEnabled(): Boolean {
         return local?.sdkConfig?.automaticDataCaptureConfig?.memoryServiceEnabled
             ?: MEMORY_SERVICE_ENABLED_DEFAULT
     }
@@ -39,25 +39,25 @@ public class AutoDataCaptureBehaviorImpl(
             ?: THERMAL_STATUS_ENABLED_DEFAULT
     }
 
-    override fun isPowerSaveModeServiceEnabled(): Boolean {
+    override fun isPowerSaveModeCaptureEnabled(): Boolean {
         return local?.sdkConfig?.automaticDataCaptureConfig?.powerSaveModeServiceEnabled
             ?: POWER_SAVE_MODE_SERVICE_ENABLED_DEFAULT
     }
 
-    override fun isNetworkConnectivityServiceEnabled(): Boolean {
+    override fun isNetworkConnectivityCaptureEnabled(): Boolean {
         return local?.sdkConfig?.automaticDataCaptureConfig?.networkConnectivityServiceEnabled
             ?: NETWORK_CONNECTIVITY_SERVICE_ENABLED_DEFAULT
     }
 
-    override fun isAnrServiceEnabled(): Boolean {
+    override fun isAnrCaptureEnabled(): Boolean {
         return local?.sdkConfig?.automaticDataCaptureConfig?.anrServiceEnabled
             ?: ANR_SERVICE_ENABLED_DEFAULT
     }
 
-    override fun isUncaughtExceptionHandlerEnabled(): Boolean =
+    override fun isJvmCrashCaptureEnabled(): Boolean =
         local?.sdkConfig?.crashHandler?.enabled ?: CRASH_HANDLER_ENABLED_DEFAULT
 
-    override fun isComposeOnClickEnabled(): Boolean {
+    override fun isComposeClickCaptureEnabled(): Boolean {
         return when (remote?.killSwitchConfig?.jetpackCompose) {
             null, true -> {
                 // no remote: use local
@@ -71,13 +71,13 @@ public class AutoDataCaptureBehaviorImpl(
         }
     }
 
-    override fun isSigHandlerDetectionEnabled(): Boolean {
+    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean {
         return remote?.killSwitchConfig?.sigHandlerDetection
             ?: local?.sdkConfig?.sigHandlerDetection ?: true
     }
 
-    override fun isNdkEnabled(): Boolean = local?.ndkEnabled ?: false
+    override fun isNativeCrashCaptureEnabled(): Boolean = local?.ndkEnabled ?: false
 
-    override fun isDiskUsageReportingEnabled(): Boolean =
+    override fun isDiskUsageCaptureEnabled(): Boolean =
         local?.sdkConfig?.app?.reportDiskUsage ?: REPORT_DISK_USAGE_DEFAULT
 }

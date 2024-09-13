@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
@@ -23,31 +24,32 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  * current config values of this object will be propagated, and you can trigger this fake update even if you have not changed the underlying
  * data. Beware of this difference in implementation compared to the real EmbraceConfigService
  */
-public class FakeConfigService(
+class FakeConfigService(
     override var appFramework: AppFramework = AppFramework.NATIVE,
     override var appId: String = "abcde",
-    public var sdkDisabled: Boolean = false,
-    public var backgroundActivityCaptureEnabled: Boolean = false,
+    var sdkDisabled: Boolean = false,
+    var backgroundActivityCaptureEnabled: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,
-    override var backgroundActivityBehavior: BackgroundActivityBehavior = fakeBackgroundActivityBehavior(),
-    override var autoDataCaptureBehavior: AutoDataCaptureBehavior = fakeAutoDataCaptureBehavior(),
+    override var backgroundActivityBehavior: BackgroundActivityBehavior = createBackgroundActivityBehavior(),
+    override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
     override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
-    override var logMessageBehavior: LogMessageBehavior = fakeLogMessageBehavior(),
-    override var anrBehavior: AnrBehavior = fakeAnrBehavior(),
-    override var sessionBehavior: SessionBehavior = fakeSessionBehavior(),
-    override var networkBehavior: NetworkBehavior = fakeNetworkBehavior(),
-    override var startupBehavior: StartupBehavior = fakeStartupBehavior(),
-    override var dataCaptureEventBehavior: DataCaptureEventBehavior = fakeDataCaptureEventBehavior(),
-    override var sdkModeBehavior: SdkModeBehavior = fakeSdkModeBehavior(),
-    override var sdkEndpointBehavior: SdkEndpointBehavior = fakeSdkEndpointBehavior(),
-    override var webViewVitalsBehavior: WebViewVitalsBehavior = fakeWebViewVitalsBehavior(),
-    override var appExitInfoBehavior: AppExitInfoBehavior = fakeAppExitInfoBehavior(),
-    override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior()
+    override var logMessageBehavior: LogMessageBehavior = createLogMessageBehavior(),
+    override var anrBehavior: AnrBehavior = createAnrBehavior(),
+    override var sessionBehavior: SessionBehavior = createSessionBehavior(),
+    override var networkBehavior: NetworkBehavior = createNetworkBehavior(),
+    override var startupBehavior: StartupBehavior = createStartupBehavior(),
+    override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
+    override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),
+    override var sdkEndpointBehavior: SdkEndpointBehavior = createSdkEndpointBehavior(),
+    override var webViewVitalsBehavior: WebViewVitalsBehavior = createWebViewVitalsBehavior(),
+    override var appExitInfoBehavior: AppExitInfoBehavior = createAppExitInfoBehavior(),
+    override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = createNetworkSpanForwardingBehavior(),
+    override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior()
 ) : ConfigService {
 
     override var remoteConfigSource: RemoteConfigSource? = null
 
-    public val listeners: MutableSet<() -> Unit> = mutableSetOf()
+    val listeners: MutableSet<() -> Unit> = mutableSetOf()
     override fun addListener(configListener: () -> Unit) {
         listeners.add(configListener)
     }
@@ -57,9 +59,9 @@ public class FakeConfigService(
     override fun isBackgroundActivityCaptureEnabled(): Boolean = backgroundActivityCaptureEnabled
 
     override fun hasValidRemoteConfig(): Boolean = hasValidRemoteConfig
-    override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isEnabled()
+    override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isAeiCaptureEnabled()
 
-    public fun updateListeners() {
+    fun updateListeners() {
         listeners.forEach {
             it()
         }

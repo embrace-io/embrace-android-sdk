@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,7 +17,7 @@ internal class DataCaptureEventBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeDataCaptureEventBehavior()) {
+        with(createDataCaptureEventBehavior()) {
             assertTrue(isInternalExceptionCaptureEnabled())
             assertTrue(isEventEnabled("my_event"))
             assertTrue(isEventEnabled("other_event"))
@@ -29,7 +29,7 @@ internal class DataCaptureEventBehaviorImplTest {
 
     @Test
     fun testRemoteOnly() {
-        with(fakeDataCaptureEventBehavior(remoteCfg = { remote })) {
+        with(createDataCaptureEventBehavior(remoteCfg = { remote })) {
             assertFalse(isInternalExceptionCaptureEnabled())
             assertFalse(isEventEnabled("my_event"))
             assertTrue(isEventEnabled("other_event"))

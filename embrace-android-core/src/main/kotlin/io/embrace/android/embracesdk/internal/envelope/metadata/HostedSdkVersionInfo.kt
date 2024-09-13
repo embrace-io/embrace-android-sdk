@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.envelope.metadata
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
-public class HostedSdkVersionInfo(
+class HostedSdkVersionInfo(
     private val preferencesService: PreferencesService,
     appFramework: AppFramework = AppFramework.NATIVE
 ) {
@@ -17,7 +17,7 @@ public class HostedSdkVersionInfo(
             else -> this.hostedPlatformStrategy = NativePlatformStrategy()
         }
     }
-    public var hostedSdkVersion: String? = null
+    var hostedSdkVersion: String? = null
         get() = field ?: hostedPlatformStrategy.getHostedSdkVersionFromPreferences(preferencesService)
         set(value) {
             val sdkVersion = hostedPlatformStrategy.getHostedSdkVersionFromPreferences(preferencesService)
@@ -32,7 +32,7 @@ public class HostedSdkVersionInfo(
             }
         }
 
-    public var hostedPlatformVersion: String? = null
+    var hostedPlatformVersion: String? = null
         get() = field ?: hostedPlatformStrategy.getHostedPlatformVersionFromPreferences(preferencesService)
         set(value) {
             val platformVersion = hostedPlatformStrategy.getHostedPlatformVersionFromPreferences(preferencesService)
@@ -47,7 +47,7 @@ public class HostedSdkVersionInfo(
             }
         }
 
-    public var unityBuildIdNumber: String? = null
+    var unityBuildIdNumber: String? = null
         get() = field ?: hostedPlatformStrategy.getUnityBuildIdNumber(preferencesService)
         set(value) {
             val unityBuildIdNumber = hostedPlatformStrategy.getUnityBuildIdNumber(preferencesService)
@@ -62,7 +62,7 @@ public class HostedSdkVersionInfo(
             }
         }
 
-    public var javaScriptPatchNumber: String? = null
+    var javaScriptPatchNumber: String? = null
         get() = field ?: hostedPlatformStrategy.getJavaScriptPatchNumber(preferencesService)
         set(value) {
             val javaScriptPatchNumber = hostedPlatformStrategy.getJavaScriptPatchNumber(preferencesService)

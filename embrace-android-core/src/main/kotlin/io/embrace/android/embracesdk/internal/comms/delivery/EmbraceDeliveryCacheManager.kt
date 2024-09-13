@@ -75,11 +75,9 @@ internal class EmbraceDeliveryCacheManager(
     override fun deleteSession(sessionId: String) {
         cachedSessions[sessionId]?.let { cachedSession ->
             backgroundWorker.submit {
-                try {
+                runCatching {
                     cacheService.deleteFile(cachedSession.filename)
                     cachedSessions.remove(sessionId)
-                } catch (ex: Exception) {
-                    logger.logError("Could not remove session from cache: $sessionId")
                 }
             }
         }

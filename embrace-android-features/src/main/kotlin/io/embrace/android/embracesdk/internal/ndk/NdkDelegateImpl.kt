@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 @Suppress("UnusedPrivateClass")
-public class NdkDelegateImpl : NdkServiceDelegate.NdkDelegate {
+class NdkDelegateImpl : NdkServiceDelegate.NdkDelegate {
     external override fun _installSignalHandlers(
         report_path: String?,
         markerFilePath: String?,

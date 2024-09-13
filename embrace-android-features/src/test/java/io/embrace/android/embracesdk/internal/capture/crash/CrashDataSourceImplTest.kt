@@ -10,11 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.local.CrashHandlerLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.JsException
@@ -68,15 +65,7 @@ internal class CrashDataSourceImplTest {
 
     private fun setupForHandleCrash(crashHandlerEnabled: Boolean = false) {
         configService = FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                localCfg = {
-                    LocalConfig(
-                        "",
-                        false,
-                        SdkLocalConfig(crashHandler = CrashHandlerLocalConfig(crashHandlerEnabled))
-                    )
-                }
-            )
+            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(uncaughtExceptionHandlerEnabled = crashHandlerEnabled)
         )
         crashDataSource = CrashDataSourceImpl(
             sessionPropertiesService,
@@ -87,10 +76,10 @@ internal class CrashDataSourceImplTest {
             serializer,
             logger
         ).apply {
-            addCrashTeardownHandler(logOrchestrator)
-            addCrashTeardownHandler(sessionOrchestrator)
-            addCrashTeardownHandler(crashMarker)
-            addCrashTeardownHandler(anrService)
+            addCrashTeardownHandler(lazy { logOrchestrator })
+            addCrashTeardownHandler(lazy { sessionOrchestrator })
+            addCrashTeardownHandler(lazy { crashMarker })
+            addCrashTeardownHandler(lazy { anrService })
         }
     }
 

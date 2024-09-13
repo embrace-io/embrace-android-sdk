@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -90,7 +91,7 @@ internal class EmbraceEventService(
     override fun applicationStartupComplete() {
         if (processStartedByNotification) {
             activeEvents.remove(STARTUP_EVENT_NAME)
-        } else if (configService.startupBehavior.isAutomaticEndEnabled()) {
+        } else if (configService.startupBehavior.isStartupMomentAutoEndEnabled()) {
             endEvent(STARTUP_EVENT_NAME)
         }
     }
@@ -154,7 +155,7 @@ internal class EmbraceEventService(
                 name,
                 sanitizedStartTime,
                 sessionPropertiesService,
-                properties,
+                redactSensitiveProperties(properties),
                 Runnable { endEvent(name, identifier, true, null) }
             )
 
@@ -210,7 +211,7 @@ internal class EmbraceEventService(
             val (event) = eventHandler.onEventEnded(
                 originEventDescription,
                 late,
-                properties,
+                redactSensitiveProperties(properties),
                 sessionPropertiesService
             )
             if (isStartupEvent(name)) {
@@ -225,6 +226,12 @@ internal class EmbraceEventService(
                 ex
             )
             logger.trackInternalError(InternalErrorType.END_EVENT_FAIL, ex)
+        }
+    }
+
+    private fun redactSensitiveProperties(properties: Map<String, Any>?): Map<String, Any>? {
+        return properties?.mapValues { (key, value) ->
+            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) REDACTED_LABEL else value
         }
     }
 

@@ -9,9 +9,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
@@ -44,8 +42,7 @@ internal class EmbraceSessionPropertiesTest {
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var context: Context
     private lateinit var logger: EmbLogger
-    private lateinit var configService: ConfigService
-    private lateinit var config: RemoteConfig
+    private lateinit var configService: FakeConfigService
     private lateinit var writer: FakeCurrentSessionSpan
 
     @Before
@@ -57,11 +54,8 @@ internal class EmbraceSessionPropertiesTest {
         preferencesService =
             EmbracePreferencesService(worker, prefs, fakeClock, EmbraceSerializer())
 
-        config = RemoteConfig()
         configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
-                config
-            }
+            sessionBehavior = FakeSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)
         )
         writer = FakeCurrentSessionSpan()
         sessionProperties = EmbraceSessionProperties(
@@ -185,7 +179,7 @@ internal class EmbraceSessionPropertiesTest {
 
     @Test
     fun addPropertyTooManyWithRemoteConfigMax() {
-        config = RemoteConfig(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
+        configService.sessionBehavior = FakeSessionBehavior(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
         var isPermanent = true
         for (i in 0 until MAX_SESSION_PROPERTIES_FROM_CONFIG) {
             assertTrue(sessionProperties.add("prop$i", VALUE_VALID, isPermanent))

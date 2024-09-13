@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.utils.toNonNullMap
@@ -16,31 +17,31 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
  * telemetry data object if the same, fixed name is used for every instance.
  */
 
-public sealed class SchemaType(
-    public val telemetryType: TelemetryType,
-    public val fixedObjectName: String = "",
+sealed class SchemaType(
+    val telemetryType: TelemetryType,
+    val fixedObjectName: String = "",
 ) {
     protected abstract val schemaAttributes: Map<String, String>
 
     private val commonAttributes: Map<String, String> = mutableMapOf<String, String>().apply {
-        if (telemetryType.sendImmediately) {
-            plusAssign(SendImmediately.toEmbraceKeyValuePair())
+        if (telemetryType.sendMode != SendMode.DEFAULT) {
+            plusAssign(embSendMode.name to telemetryType.sendMode.name)
         }
     }
 
     /**
      * The attributes defined for this schema that should be used to populate telemetry objects
      */
-    public fun attributes(): Map<String, String> = schemaAttributes.plus(commonAttributes)
+    fun attributes(): Map<String, String> = schemaAttributes.plus(commonAttributes)
 
-    public class Breadcrumb(message: String) : SchemaType(
+    class Breadcrumb(message: String) : SchemaType(
         telemetryType = EmbType.System.Breadcrumb,
         fixedObjectName = "breadcrumb"
     ) {
         override val schemaAttributes: Map<String, String> = mapOf("message" to message)
     }
 
-    public class View(viewName: String) : SchemaType(
+    class View(viewName: String) : SchemaType(
         telemetryType = EmbType.Ux.View,
         fixedObjectName = "screen-view"
     ) {
@@ -53,7 +54,7 @@ public sealed class SchemaType(
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
      * @param coords The coordinates of the tap event.
      */
-    public class PushNotification(
+    class PushNotification(
         title: String?,
         type: String?,
         body: String?,
@@ -80,7 +81,7 @@ public sealed class SchemaType(
      * @param type The type of tap event. "tap"/"long_press". "tap" is the default.
      * @param coords The coordinates of the tap event.
      */
-    public class Tap(
+    class Tap(
         viewName: String?,
         type: String = "tap",
         coords: String
@@ -95,7 +96,7 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class WebViewUrl(
+    class WebViewUrl(
         url: String
     ) : SchemaType(
         telemetryType = EmbType.Ux.WebView,
@@ -106,14 +107,14 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class MemoryWarning : SchemaType(
+    class MemoryWarning : SchemaType(
         telemetryType = EmbType.Performance.MemoryWarning,
         fixedObjectName = "memory-warning"
     ) {
         override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
-    public class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
+    class AeiLog(message: AppExitInfoData) : SchemaType(EmbType.System.Exit) {
         override val schemaAttributes: Map<String, String> = mapOf(
             "aei_session_id" to message.sessionId,
             "session_id_error" to message.sessionIdError,
@@ -128,53 +129,53 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class NetworkRequest(networkRequestAttrs: Map<String, String>) : SchemaType(EmbType.Performance.Network) {
+    class NetworkRequest(networkRequestAttrs: Map<String, String>) : SchemaType(EmbType.Performance.Network) {
         // EmbraceNetworkRequest needs to stay in embrace-android-sdk module as it's a public API,
         // so pass a map of attributes directly.
         override val schemaAttributes: Map<String, String> = networkRequestAttrs
     }
 
-    public class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
+    class Log(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Log) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    public class Exception(attributes: TelemetryAttributes) :
+    class Exception(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.Exception) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    public class FlutterException(attributes: TelemetryAttributes) :
+    class FlutterException(attributes: TelemetryAttributes) :
         SchemaType(EmbType.System.FlutterException) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    public class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
+    class Crash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.Crash) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    public class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
+    class ReactNativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.ReactNativeCrash) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    public class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
+    class NativeCrash(attributes: TelemetryAttributes) : SchemaType(EmbType.System.NativeCrash) {
         override val schemaAttributes: Map<String, String> = attributes.snapshot()
     }
 
-    public object LowPower : SchemaType(
+    object LowPower : SchemaType(
         telemetryType = EmbType.System.LowPower,
         fixedObjectName = "device-low-power"
     ) {
         override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
-    public object Sigquit : SchemaType(
+    object Sigquit : SchemaType(
         telemetryType = EmbType.System.Sigquit,
         fixedObjectName = "sigquit"
     ) {
         override val schemaAttributes: Map<String, String> = emptyMap<String, String>()
     }
 
-    public class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
+    class NetworkCapturedRequest(networkCapturedCall: NetworkCapturedCall) : SchemaType(
         telemetryType = EmbType.System.NetworkCapturedRequest
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
@@ -201,7 +202,7 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class NetworkStatus(
+    class NetworkStatus(
         networkStatus: io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
@@ -212,7 +213,7 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class WebViewInfo(
+    class WebViewInfo(
         url: String,
         webVitals: String,
         tag: String?
@@ -227,7 +228,7 @@ public sealed class SchemaType(
         ).toNonNullMap()
     }
 
-    public class ReactNativeAction(
+    class ReactNativeAction(
         name: String,
         outcome: String,
         payloadSize: Int,
@@ -249,7 +250,7 @@ public sealed class SchemaType(
             .toNonNullMap()
     }
 
-    public class ThermalState(
+    class ThermalState(
         status: Int
     ) : SchemaType(
         telemetryType = EmbType.Performance.ThermalState,
@@ -260,7 +261,7 @@ public sealed class SchemaType(
         )
     }
 
-    public class InternalError(throwable: Throwable) : SchemaType(
+    class InternalError(throwable: Throwable) : SchemaType(
         telemetryType = EmbType.System.InternalError,
         fixedObjectName = "internal-error"
     ) {

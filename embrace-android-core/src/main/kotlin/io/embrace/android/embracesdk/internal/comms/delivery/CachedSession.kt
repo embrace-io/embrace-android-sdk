@@ -5,20 +5,20 @@ package io.embrace.android.embracesdk.internal.comms.delivery
  * filename such as sessionId, timestamp, and payload version. This allows the SDK to process
  * cached sessions without deserializing the JSON.
  */
-public class CachedSession private constructor(
-    public val sessionId: String,
-    public val timestampMs: Long,
-    public val filename: String,
-    public val v2Payload: Boolean
+class CachedSession private constructor(
+    val sessionId: String,
+    val timestampMs: Long,
+    val filename: String,
+    val v2Payload: Boolean
 ) {
 
-    public companion object {
+    companion object {
         private const val V2_PREFIX = "v2"
 
         /**
          * Creates a [CachedSession] from a session id and timestamp.
          */
-        public fun create(sessionId: String, timestampMs: Long, v2Payload: Boolean = true): CachedSession {
+        fun create(sessionId: String, timestampMs: Long, v2Payload: Boolean = true): CachedSession {
             val filename = when {
                 v2Payload -> getV2FileNameForSession(
                     sessionId,
@@ -37,7 +37,7 @@ public class CachedSession private constructor(
         /**
          * Creates a [CachedSession] from a filename.
          */
-        public fun fromFilename(filename: String): CachedSession? {
+        fun fromFilename(filename: String): CachedSession? {
             val values = filename.split('.')
             if (values.size == 4 || values.size == 5) {
                 val v2Payload = isV2Payload(filename)

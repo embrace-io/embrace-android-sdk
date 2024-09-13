@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.payload
 
-public enum class ThreadState(public val code: Int) {
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = false)
+enum class ThreadState(val code: Int) {
     NEW(0),
     RUNNABLE(1),
     BLOCKED(2),

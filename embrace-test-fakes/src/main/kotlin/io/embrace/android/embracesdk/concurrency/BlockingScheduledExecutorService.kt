@@ -28,14 +28,14 @@ import java.util.concurrent.TimeUnit
  * - The value of [ScheduledFuture.get] for [schedule] when you pass in a [Callable] will not return the execution result.
  *
  */
-public class BlockingScheduledExecutorService(
+class BlockingScheduledExecutorService(
     private val fakeClock: FakeClock = FakeClock(),
     blockingMode: Boolean = true
 ) : AbstractExecutorService(), ScheduledExecutorService {
     private val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
     private val delegateExecutorService = BlockableExecutorService(blockingMode = blockingMode)
 
-    public var blockingMode: Boolean
+    var blockingMode: Boolean
         get() = delegateExecutorService.blockingMode
         set(value) {
             delegateExecutorService.blockingMode = value
@@ -45,7 +45,7 @@ public class BlockingScheduledExecutorService(
      * Run all tasks due to run at the current time and return when all the tasks have finished running. This does not include tasks
      * submitted during the running of these tasks.
      */
-    public fun runCurrentlyBlocked() {
+    fun runCurrentlyBlocked() {
         rejectIfShutdown()
         val tasksToRun = LinkedList<Runnable>()
         var nextTask = scheduledTasks.peek()
@@ -68,7 +68,7 @@ public class BlockingScheduledExecutorService(
     /**
      * Runs all tasks that have been submitted to the ExecutorService, regardless of scheduled time.
      */
-    public fun runAllSubmittedTasks() {
+    fun runAllSubmittedTasks() {
         rejectIfShutdown()
         val tasksToRun = LinkedList<Runnable>()
         var nextTask = scheduledTasks.peek()
@@ -86,15 +86,15 @@ public class BlockingScheduledExecutorService(
     /**
      * Move time forward and run the tasks that are expected to be run by that time.
      */
-    public fun moveForwardAndRunBlocked(timeIncrementMs: Long) {
+    fun moveForwardAndRunBlocked(timeIncrementMs: Long) {
         rejectIfShutdown()
         fakeClock.tick(timeIncrementMs)
         runCurrentlyBlocked()
     }
 
-    public fun scheduledTasksCount(): Int = scheduledTasks.size
+    fun scheduledTasksCount(): Int = scheduledTasks.size
 
-    public var submitCount: Int = 0
+    var submitCount: Int = 0
 
     override fun execute(command: Runnable?) {
         requireNotNull(command)

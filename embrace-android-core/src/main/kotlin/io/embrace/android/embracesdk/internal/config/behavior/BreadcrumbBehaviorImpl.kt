@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
-public class BreadcrumbBehaviorImpl(
+class BreadcrumbBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<SdkLocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
@@ -36,20 +36,20 @@ public class BreadcrumbBehaviorImpl(
     override fun getViewBreadcrumbLimit(): Int = remote?.uiConfig?.views ?: DEFAULT_BREADCRUMB_LIMIT
     override fun getWebViewBreadcrumbLimit(): Int = remote?.uiConfig?.webViews ?: DEFAULT_BREADCRUMB_LIMIT
 
-    override fun isTapCoordinateCaptureEnabled(): Boolean =
+    override fun isViewClickCoordinateCaptureEnabled(): Boolean =
         local?.taps?.captureCoordinates ?: CAPTURE_TAP_COORDINATES_DEFAULT
 
-    override fun isAutomaticActivityCaptureEnabled(): Boolean =
+    override fun isActivityBreadcrumbCaptureEnabled(): Boolean =
         local?.viewConfig?.enableAutomaticActivityCapture
             ?: ENABLE_AUTOMATIC_ACTIVITY_CAPTURE_DEFAULT
 
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean =
         local?.webViewConfig?.captureWebViews ?: WEB_VIEW_CAPTURE_DEFAULT
 
-    override fun isQueryParamCaptureEnabled(): Boolean =
+    override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean =
         local?.webViewConfig?.captureQueryParams ?: WEB_VIEW_QUERY_PARAMS_CAPTURE_DEFAULT
 
-    override fun isCaptureFcmPiiDataEnabled(): Boolean {
+    override fun isFcmPiiDataCaptureEnabled(): Boolean {
         return try {
             local?.captureFcmPiiData ?: false
         } catch (ex: Exception) {

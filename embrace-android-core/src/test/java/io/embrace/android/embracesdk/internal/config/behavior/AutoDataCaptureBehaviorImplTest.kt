@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.createAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.config.local.AppLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.AutomaticDataCaptureLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.ComposeLocalConfig
@@ -42,40 +42,40 @@ internal class AutoDataCaptureBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeAutoDataCaptureBehavior()) {
-            assertTrue(isMemoryServiceEnabled())
-            assertTrue(isPowerSaveModeServiceEnabled())
-            assertTrue(isNetworkConnectivityServiceEnabled())
-            assertTrue(isAnrServiceEnabled())
-            assertTrue(isUncaughtExceptionHandlerEnabled())
-            assertFalse(isComposeOnClickEnabled())
-            assertTrue(isSigHandlerDetectionEnabled())
-            assertFalse(isNdkEnabled())
-            assertTrue(isDiskUsageReportingEnabled())
+        with(createAutoDataCaptureBehavior()) {
+            assertTrue(isMemoryWarningCaptureEnabled())
+            assertTrue(isPowerSaveModeCaptureEnabled())
+            assertTrue(isNetworkConnectivityCaptureEnabled())
+            assertTrue(isAnrCaptureEnabled())
+            assertTrue(isJvmCrashCaptureEnabled())
+            assertFalse(isComposeClickCaptureEnabled())
+            assertTrue(is3rdPartySigHandlerDetectionEnabled())
+            assertFalse(isNativeCrashCaptureEnabled())
+            assertTrue(isDiskUsageCaptureEnabled())
             assertTrue(isThermalStatusCaptureEnabled())
         }
     }
 
     @Test
     fun testLocalOnly() {
-        with(fakeAutoDataCaptureBehavior(localCfg = { local })) {
-            assertFalse(isMemoryServiceEnabled())
-            assertFalse(isPowerSaveModeServiceEnabled())
-            assertFalse(isNetworkConnectivityServiceEnabled())
-            assertFalse(isAnrServiceEnabled())
-            assertFalse(isUncaughtExceptionHandlerEnabled())
-            assertTrue(isComposeOnClickEnabled())
-            assertTrue(isSigHandlerDetectionEnabled())
-            assertTrue(isNdkEnabled())
-            assertFalse(isDiskUsageReportingEnabled())
+        with(createAutoDataCaptureBehavior(localCfg = { local })) {
+            assertFalse(isMemoryWarningCaptureEnabled())
+            assertFalse(isPowerSaveModeCaptureEnabled())
+            assertFalse(isNetworkConnectivityCaptureEnabled())
+            assertFalse(isAnrCaptureEnabled())
+            assertFalse(isJvmCrashCaptureEnabled())
+            assertTrue(isComposeClickCaptureEnabled())
+            assertTrue(is3rdPartySigHandlerDetectionEnabled())
+            assertTrue(isNativeCrashCaptureEnabled())
+            assertFalse(isDiskUsageCaptureEnabled())
         }
     }
 
     @Test
     fun testLocalAndRemote() {
-        with(fakeAutoDataCaptureBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertFalse(isSigHandlerDetectionEnabled())
-            assertFalse(isComposeOnClickEnabled())
+        with(createAutoDataCaptureBehavior(localCfg = { local }, remoteCfg = { remote })) {
+            assertFalse(is3rdPartySigHandlerDetectionEnabled())
+            assertFalse(isComposeClickCaptureEnabled())
             assertFalse(isThermalStatusCaptureEnabled())
         }
     }
@@ -83,18 +83,18 @@ internal class AutoDataCaptureBehaviorImplTest {
     @Test
     fun testJetpackCompose() {
         // Jetpack Compose is disabled by default
-        with(fakeAutoDataCaptureBehavior()) {
-            assertFalse(isComposeOnClickEnabled())
+        with(createAutoDataCaptureBehavior()) {
+            assertFalse(isComposeClickCaptureEnabled())
         }
 
         // Jetpack Compose is enabled locally, no remote config
-        with(fakeAutoDataCaptureBehavior(localCfg = { local })) {
-            assertTrue(isComposeOnClickEnabled())
+        with(createAutoDataCaptureBehavior(localCfg = { local })) {
+            assertTrue(isComposeClickCaptureEnabled())
         }
 
         // Jetpack Compose disabled remotely, overrides local: killswitch
-        with(fakeAutoDataCaptureBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertFalse(isComposeOnClickEnabled())
+        with(createAutoDataCaptureBehavior(localCfg = { local }, remoteCfg = { remote })) {
+            assertFalse(isComposeClickCaptureEnabled())
         }
 
         val localComposeOff = LocalConfig(
@@ -116,22 +116,22 @@ internal class AutoDataCaptureBehaviorImplTest {
 
         // Jetpack Compose enabled remotely, but explicit disabled locally, remote ignored
         with(
-            fakeAutoDataCaptureBehavior(
+            createAutoDataCaptureBehavior(
                 localCfg = { localComposeOff },
                 remoteCfg = { remoteComposeKillSwitchOff }
             )
         ) {
-            assertFalse(isComposeOnClickEnabled())
+            assertFalse(isComposeClickCaptureEnabled())
         }
 
         // Jetpack Compose enabled remotely, and explicit enabled locally
         with(
-            fakeAutoDataCaptureBehavior(
+            createAutoDataCaptureBehavior(
                 localCfg = { local },
                 remoteCfg = { remoteComposeKillSwitchOff }
             )
         ) {
-            assertTrue(isComposeOnClickEnabled())
+            assertTrue(isComposeClickCaptureEnabled())
         }
     }
 }

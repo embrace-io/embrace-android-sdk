@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public data class NetworkSpanForwardingRemoteConfig(
+data class NetworkSpanForwardingRemoteConfig(
     @Json(name = "pct_enabled")
     val pctEnabled: Float? = null
 )

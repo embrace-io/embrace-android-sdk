@@ -12,7 +12,7 @@ import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 import org.junit.Assert.assertEquals
 
-public fun Resource.assertExpectedAttributes(
+fun Resource.assertExpectedAttributes(
     expectedServiceName: String,
     expectedServiceVersion: String,
     systemInfo: SystemInfo
@@ -31,6 +31,6 @@ public fun Resource.assertExpectedAttributes(
     assertEquals(systemInfo.deviceModel, getAttribute(DeviceIncubatingAttributes.DEVICE_MODEL_NAME))
 }
 
-public fun SpanData.assertHasEmbraceAttribute(key: EmbraceAttributeKey, value: String) {
+fun SpanData.assertHasEmbraceAttribute(key: EmbraceAttributeKey, value: String) {
     assertEquals(value, attributes.get(AttributeKey.stringKey(key.name)))
 }

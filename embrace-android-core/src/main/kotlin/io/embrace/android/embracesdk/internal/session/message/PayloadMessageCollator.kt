@@ -4,16 +4,16 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
 
-public interface PayloadMessageCollator {
+interface PayloadMessageCollator {
 
     /**
      * Builds a new precursor session object. This is not sent to the backend but is used
      * to hold essential session information (such as ID), etc
      */
-    public fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote
+    fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote
 
     /**
      * Builds a fully populated payload.
      */
-    public fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPayload>
+    fun buildFinalEnvelope(params: FinalEnvelopeParams): Envelope<SessionPayload>
 }

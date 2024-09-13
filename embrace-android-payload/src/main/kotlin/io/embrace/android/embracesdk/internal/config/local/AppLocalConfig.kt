@@ -4,8 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class AppLocalConfig(
+class AppLocalConfig(
 
-    @Json(name = "report_disk_usage")
-    public val reportDiskUsage: Boolean? = null
+    @Json(name = "report_disk_usage") val reportDiskUsage: Boolean? = null
 )

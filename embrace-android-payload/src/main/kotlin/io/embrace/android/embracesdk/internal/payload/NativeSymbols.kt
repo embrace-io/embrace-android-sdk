@@ -4,12 +4,12 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class NativeSymbols(
+class NativeSymbols(
     @Json(name = "symbols")
     internal val symbols: Map<String, Map<String, String>>
 ) {
 
-    public fun getSymbolByArchitecture(arch: String?): Map<String, String> {
+    fun getSymbolByArchitecture(arch: String?): Map<String, String> {
         if (arch == null) {
             return HashMap()
         }
@@ -26,7 +26,7 @@ public class NativeSymbols(
         } ?: HashMap()
     }
 
-    public companion object {
+    companion object {
         private const val ARM_ABI_V7_NAME = "armeabi-v7a"
         private const val ARM_64_NAME = "arm64-v8a"
         private const val ARCH_X86_NAME = "x86"

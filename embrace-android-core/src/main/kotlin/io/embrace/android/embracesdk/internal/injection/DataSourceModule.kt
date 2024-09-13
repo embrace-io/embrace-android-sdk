@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
  *
  * Data will then automatically be captured by the SDK.
  */
-public interface DataSourceModule {
-    public val embraceFeatureRegistry: EmbraceFeatureRegistry
-    public val dataCaptureOrchestrator: DataCaptureOrchestrator
+interface DataSourceModule {
+    val embraceFeatureRegistry: EmbraceFeatureRegistry
+    val dataCaptureOrchestrator: DataCaptureOrchestrator
 }

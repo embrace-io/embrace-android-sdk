@@ -8,7 +8,7 @@ internal const val EMBRACE_TAG = "[Embrace]"
  * Implementation of [EmbLogger] that logs to Android logcat & also allows tracking of internal
  * errors for our telemetry.
  */
-public class EmbLoggerImpl : EmbLogger {
+class EmbLoggerImpl : EmbLogger {
 
     override var internalErrorService: InternalErrorHandler? = null
 

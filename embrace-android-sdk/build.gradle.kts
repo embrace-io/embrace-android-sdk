@@ -2,6 +2,7 @@ import io.embrace.gradle.Versions
 
 plugins {
     id("embrace-prod-defaults")
+    id("enable-explicit-api-mode")
     id("com.google.devtools.ksp")
 }
 
@@ -90,6 +91,8 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
+
+    androidTestImplementation(project(":embrace-test-fakes"))
 }
 
 project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }

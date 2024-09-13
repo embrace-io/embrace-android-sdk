@@ -5,6 +5,6 @@ package io.embrace.android.embracesdk.internal.utils
  * performs the necessary casts to ensure Kotlin's type system is happy.
  */
 @Suppress("UNCHECKED_CAST")
-public fun <K, V> Map<K, V?>.toNonNullMap(): Map<K, V> {
+fun <K, V> Map<K, V?>.toNonNullMap(): Map<K, V> {
     return filter { it.value != null } as Map<K, V>
 }

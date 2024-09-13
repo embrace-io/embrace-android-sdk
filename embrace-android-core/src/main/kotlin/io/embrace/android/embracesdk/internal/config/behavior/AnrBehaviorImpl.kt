@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 /**
  * Provides the behavior that the ANR feature should follow.
  */
-public class AnrBehaviorImpl(
+class AnrBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<AnrLocalConfig?>,
     remoteSupplier: Provider<AnrRemoteConfig?>
@@ -31,7 +31,7 @@ public class AnrBehaviorImpl(
         private const val DEFAULT_ANR_PROCESS_ERRORS_SCHEDULER_EXTRA_TIME_ALLOWANCE: Long =
             30 * 1000
         private const val DEFAULT_ANR_MAX_PER_INTERVAL = 80
-        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 100
+        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 200
         private const val DEFAULT_ANR_MIN_THREAD_PRIORITY_TO_CAPTURE = 0
         private const val DEFAULT_ANR_MAX_ANR_INTERVALS_PER_SESSION = 5
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000
@@ -50,7 +50,7 @@ public class AnrBehaviorImpl(
             android.os.Process.THREAD_PRIORITY_DEFAULT
     }
 
-    override fun isGoogleAnrCaptureEnabled(): Boolean {
+    override fun isSigquitCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.googlePctEnabled)
             ?: local?.captureGoogle
             ?: CAPTURE_GOOGLE_DEFAULT
@@ -125,7 +125,7 @@ public class AnrBehaviorImpl(
         }.getOrDefault(Unwinder.LIBUNWIND)
     }
 
-    override fun isNativeThreadAnrSamplingEnabled(): Boolean {
+    override fun isUnityAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
             ?: local?.captureUnityThread
             ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ENABLED

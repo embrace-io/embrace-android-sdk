@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.payload
 /**
  * Disk space used by the app and available memory on the device.
  */
-public data class DiskUsage(
+data class DiskUsage(
 
     /**
      * Amount of disk space consumed by the app in bytes.

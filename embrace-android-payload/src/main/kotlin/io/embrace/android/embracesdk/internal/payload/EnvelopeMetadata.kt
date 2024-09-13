@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * that are not tied to a session.
  */
 @JsonClass(generateAdapter = true)
-public data class EnvelopeMetadata(
+data class EnvelopeMetadata(
     @Json(name = "user_id")
     val userId: String? = null,
 

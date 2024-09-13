@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 
-public class FakeStartupService : StartupService {
+class FakeStartupService : StartupService {
 
-    public var sdkStartupDuration: Long? = null
-    public var endedInForeground: Boolean? = null
-    public var threadName: String? = null
+    var sdkStartupDuration: Long? = null
+    var endedInForeground: Boolean? = null
+    var threadName: String? = null
 
     override fun setSdkStartupInfo(
         startTimeMs: Long,

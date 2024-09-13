@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.payload
 
+import com.squareup.moshi.JsonClass
+
 /**
  * Web Core Vital type.
  *
@@ -9,6 +11,7 @@ package io.embrace.android.embracesdk.internal.payload
  * FCP = First Contentful Paint: Indicates the time it takes for the first content element to appear on the screen.
  *
  */
+@JsonClass(generateAdapter = false)
 public enum class WebVitalType {
     FID, LCP, CLS, FCP
 }

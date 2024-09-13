@@ -9,7 +9,7 @@ import com.squareup.moshi.JsonClass
  * Values: NATIVE,REACT_NATIVE,UNITY,FLUTTER
  */
 @JsonClass(generateAdapter = false)
-public enum class AppFramework(public val value: Int) {
+enum class AppFramework(val value: Int) {
     @Json(name = "1")
     NATIVE(1),
 
@@ -22,11 +22,11 @@ public enum class AppFramework(public val value: Int) {
     @Json(name = "4")
     FLUTTER(4);
 
-    public companion object {
+    companion object {
 
-        public fun fromInt(type: Int): AppFramework? = values().associateBy(AppFramework::value)[type]
+        fun fromInt(type: Int): AppFramework? = values().associateBy(AppFramework::value)[type]
 
-        public fun fromString(type: String?): AppFramework? = when (type) {
+        fun fromString(type: String?): AppFramework? = when (type) {
             "react_native" -> REACT_NATIVE
             "unity" -> UNITY
             "flutter" -> FLUTTER

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -17,9 +16,7 @@ import java.net.HttpURLConnection
  * The development endpoint is only used if the build is a debug build, and if integration
  * testing is enabled when calling [Embrace.start()].
  */
-internal class ApiClientImpl(
-    private val logger: EmbLogger
-) : ApiClient {
+internal class ApiClientImpl : ApiClient {
 
     override fun executeGet(request: ApiRequest): ApiResponse {
         var connection: EmbraceConnection? = null
@@ -114,13 +111,12 @@ internal class ApiClientImpl(
     }
 
     private fun readHttpResponseCode(connection: EmbraceConnection): Int {
-        var responseCode: Int? = null
-        try {
-            responseCode = connection.responseCode
+        val responseCode: Int = try {
+            connection.responseCode
         } catch (ex: IOException) {
-            logger.logInfo("Connection failed or unexpected response code")
+            ApiClient.NO_HTTP_RESPONSE
         }
-        return responseCode ?: ApiClient.NO_HTTP_RESPONSE
+        return responseCode
     }
 
     private fun readHttpResponseHeaders(connection: EmbraceConnection): Map<String, String> {

@@ -2,34 +2,34 @@ package io.embrace.android.embracesdk.internal.clock
 
 import java.util.concurrent.TimeUnit
 
-public fun interface Clock {
+fun interface Clock {
 
     /**
      * Returns the current milliseconds from epoch.
      */
-    public fun now(): Long
+    fun now(): Long
 
     /**
      * Returns the current nanoseconds from epoch
      */
-    public fun nowInNanos(): Long = now().millisToNanos()
+    fun nowInNanos(): Long = now().millisToNanos()
 }
 
 /**
  * Turns a number that specifies a millisecond value to nanoseconds
  */
-public fun Long.millisToNanos(): Long = TimeUnit.MILLISECONDS.toNanos(this)
+fun Long.millisToNanos(): Long = TimeUnit.MILLISECONDS.toNanos(this)
 
 /**
  * Turns a number that specifies a nanosecond value to milliseconds
  */
-public fun Long.nanosToMillis(): Long = TimeUnit.NANOSECONDS.toMillis(this)
+fun Long.nanosToMillis(): Long = TimeUnit.NANOSECONDS.toMillis(this)
 
 /**
  * Any epoch timestamp that we detect to be unreasonable to be interpreted as milliseconds, we assume it's an unintended use of nanoseconds
  * based on an old API version or assumption from OpenTelemetry conventions
  */
-public fun Long.normalizeTimestampAsMillis(): Long =
+fun Long.normalizeTimestampAsMillis(): Long =
     if (this < MAX_MS_CUTOFF) {
         this
     } else {

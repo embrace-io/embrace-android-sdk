@@ -21,14 +21,14 @@ import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 
-public class OpenTelemetryConfiguration(
+class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
     systemInfo: SystemInfo
 ) {
-    public val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
-    public val embraceSdkVersion: String = BuildConfig.VERSION_NAME
-    public val resource: Resource = Resource.getDefault().toBuilder()
+    val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
+    val embraceSdkVersion: String = BuildConfig.VERSION_NAME
+    val resource: Resource = Resource.getDefault().toBuilder()
         .put(ServiceAttributes.SERVICE_NAME, embraceSdkName)
         .put(ServiceAttributes.SERVICE_VERSION, embraceSdkVersion)
         .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
@@ -55,7 +55,7 @@ public class OpenTelemetryConfiguration(
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()
 
-    public val spanProcessor: SpanProcessor by lazy {
+    val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
             EmbraceSpanExporter(
                 spanSink = spanSink,
@@ -65,7 +65,7 @@ public class OpenTelemetryConfiguration(
         )
     }
 
-    public val logProcessor: LogRecordProcessor by lazy {
+    val logProcessor: LogRecordProcessor by lazy {
         EmbraceLogRecordProcessor(
             EmbraceLogRecordExporter(
                 logSink = logSink,
@@ -74,13 +74,13 @@ public class OpenTelemetryConfiguration(
         )
     }
 
-    public fun addSpanExporter(spanExporter: SpanExporter) {
+    fun addSpanExporter(spanExporter: SpanExporter) {
         externalSpanExporters.add(spanExporter)
     }
 
-    public fun addLogExporter(logExporter: LogRecordExporter) {
+    fun addLogExporter(logExporter: LogRecordExporter) {
         externalLogExporters.add(logExporter)
     }
 
-    public fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
+    fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
 }

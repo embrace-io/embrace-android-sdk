@@ -22,7 +22,7 @@ import kotlin.reflect.KClass
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    public val logger: EmbLogger = Systrace.traceSynchronous("logger-init", ::EmbLoggerImpl),
+    val logger: EmbLogger = Systrace.traceSynchronous("logger-init", ::EmbLoggerImpl),
     val initModule: InitModule = Systrace.traceSynchronous("init-module", { createInitModule(logger = logger) }),
     val openTelemetryModule: OpenTelemetryModule = Systrace.traceSynchronous("otel-module", {
         createOpenTelemetryModule(initModule)
@@ -165,6 +165,7 @@ internal class ModuleInitBootstrapper(
                     }
                     postInit(ConfigModule::class) {
                         serviceRegistry.registerService(lazy { configModule.configService })
+                        openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
                     }
 
                     storageModule = init(StorageModule::class) {
@@ -195,7 +196,7 @@ internal class ModuleInitBootstrapper(
                             )
 
                             val networkBehavior = configModule.configService.networkBehavior
-                            if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
+                            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                                 Systrace.traceSynchronous("network-monitoring-installation") {
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
@@ -338,16 +339,10 @@ internal class ModuleInitBootstrapper(
                             lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )
 
-                        if (configService.autoDataCaptureBehavior.isNdkEnabled()) {
+                        if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT)
-
                             worker.submit(TaskPriority.HIGH) {
-                                ndkService.initializeService()
-                                with(essentialServiceModule) {
-                                    userService.addUserInfoListener(ndkService::onUserInfoUpdate)
-                                    sessionIdTracker.addListener { ndkService.updateSessionId(it ?: "") }
-                                    sessionPropertiesService.addChangeListener(ndkService::onSessionPropertiesUpdate)
-                                }
+                                ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }
                         }
                     }
@@ -368,7 +363,9 @@ internal class ModuleInitBootstrapper(
                     postInit(LogModule::class) {
                         serviceRegistry.registerService(lazy { logModule.logService })
                         // Start the log orchestrator
-                        logModule.logOrchestrator
+                        openTelemetryModule.logSink.registerLogStoredCallback {
+                            logModule.logOrchestrator.onLogsAdded()
+                        }
                     }
 
                     momentsModule = init(MomentsModule::class) {
@@ -426,9 +423,9 @@ internal class ModuleInitBootstrapper(
                     postInit(CrashModule::class) {
                         serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-                            addCrashTeardownHandler(anrModule.anrService)
-                            addCrashTeardownHandler(logModule.logOrchestrator)
-                            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
+                            addCrashTeardownHandler(lazy { anrModule.anrService })
+                            addCrashTeardownHandler(lazy { logModule.logOrchestrator })
+                            addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
                         }
                     }
 

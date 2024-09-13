@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  * @param exceptions A list of exceptions. Previous name: s.e.rep.ex
  */
 @JsonClass(generateAdapter = true)
-public data class ExceptionErrorInfo(
+data class ExceptionErrorInfo(
 
     /* The timestamp in milliseconds of when an error happened. Previous name: s.e.rep.ts */
     @Json(name = "timestamp")

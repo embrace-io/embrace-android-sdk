@@ -116,9 +116,6 @@ internal class EmbracePendingApiCallsSender(
                     delayInSeconds,
                     TimeUnit.SECONDS
                 )
-                logger.logInfo(
-                    "Scheduled failed API calls to retry ${if (delayInSeconds == 0L) "now" else "in $delayInSeconds seconds"}"
-                )
             }
         }
     }
@@ -129,12 +126,11 @@ internal class EmbracePendingApiCallsSender(
     @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     private fun executeDelivery(delayInSeconds: Long) {
         if (!lastNetworkStatus.isReachable) {
-            logger.logInfo("Did not retry api calls as scheduled because network is not reachable")
             return
         }
 
         sendMethodRef.get()?.let { sendMethod ->
-            try {
+            runCatching {
                 val failedApiCallsToRetry = mutableListOf<PendingApiCall>()
                 var applyExponentialBackoff = false
 
@@ -189,8 +185,6 @@ internal class EmbracePendingApiCallsSender(
                         )
                     }
                 }
-            } catch (ex: Exception) {
-                logger.logDebug("Error when sending API call", ex)
             }
         }
     }
@@ -230,4 +224,4 @@ internal class EmbracePendingApiCallsSender(
     }
 }
 
-public typealias SendMethod = (request: ApiRequest, action: SerializationAction) -> ApiResponse
+typealias SendMethod = (request: ApiRequest, action: SerializationAction) -> ApiResponse

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 /**
  * Captures custom breadcrumbs.
  */
-public class PushNotificationDataSource(
+class PushNotificationDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     writer: SessionSpanWriter,
@@ -24,7 +24,7 @@ public class PushNotificationDataSource(
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getCustomBreadcrumbLimit)
 ) {
 
-    public fun logPushNotification(
+    fun logPushNotification(
         title: String?,
         body: String?,
         from: String?,
@@ -35,7 +35,7 @@ public class PushNotificationDataSource(
         captureData(
             inputValidation = NoInputValidation,
             captureAction = {
-                val captureFcmPiiData = breadcrumbBehavior.isCaptureFcmPiiDataEnabled()
+                val captureFcmPiiData = breadcrumbBehavior.isFcmPiiDataCaptureEnabled()
                 addEvent(
                     SchemaType.PushNotification(
                         title = if (captureFcmPiiData) title else null,

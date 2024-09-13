@@ -7,8 +7,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
 
-public class FakeSpanExporter : SpanExporter {
-    public val exportedSpans: MutableList<SpanData> = mutableListOf()
+class FakeSpanExporter : SpanExporter {
+    val exportedSpans: MutableList<SpanData> = mutableListOf()
 
     private val latches = mutableListOf<CountDownLatch>()
     private var totalExported = 0
@@ -41,7 +41,7 @@ public class FakeSpanExporter : SpanExporter {
     /**
      * Block the thread until the number of spans expected have been exported by this exporter since the last flush
      */
-    public fun awaitSpanExport(count: Int = 1, timeout: Long = 1, unit: TimeUnit = TimeUnit.SECONDS): Boolean {
+    fun awaitSpanExport(count: Int = 1, timeout: Long = 1, unit: TimeUnit = TimeUnit.SECONDS): Boolean {
         val latch = synchronized(exportedSpans) {
             return@synchronized if (count > totalExported) {
                 val newLatch = CountDownLatch(count - totalExported)

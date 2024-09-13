@@ -4,14 +4,11 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -32,7 +29,8 @@ internal class ThermalStateFeatureTest {
 
     @Before
     fun setUp() {
-        setUpThermalCapture()
+        testRule.harness.overriddenConfigService.autoDataCaptureBehavior =
+            FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = true)
     }
 
     @Test
@@ -54,7 +52,10 @@ internal class ThermalStateFeatureTest {
             val attrs = checkNotNull(snapshot.attributes)
             assertEquals("emb-thermal-state", snapshot.name)
             assertEquals("perf.thermal_state", attrs.findAttributeValue("emb.type"))
-            assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), attrs.findAttributeValue("status"))
+            assertEquals(
+                PowerManager.THERMAL_STATUS_NONE.toString(),
+                attrs.findAttributeValue("status")
+            )
             assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
@@ -84,11 +85,17 @@ internal class ThermalStateFeatureTest {
                 assertEquals("perf.thermal_state", it.attributes?.findAttributeValue("emb.type"))
             }
             val firstSpan = spans.first()
-            assertEquals(PowerManager.THERMAL_STATUS_CRITICAL.toString(), firstSpan.attributes?.findAttributeValue("status"))
+            assertEquals(
+                PowerManager.THERMAL_STATUS_CRITICAL.toString(),
+                firstSpan.attributes?.findAttributeValue("status")
+            )
             assertEquals(startTimeMs, firstSpan.startTimeNanos?.nanosToMillis())
             assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos?.nanosToMillis())
             val secondSpan = spans.last()
-            assertEquals(PowerManager.THERMAL_STATUS_MODERATE.toString(), secondSpan.attributes?.findAttributeValue("status"))
+            assertEquals(
+                PowerManager.THERMAL_STATUS_MODERATE.toString(),
+                secondSpan.attributes?.findAttributeValue("status")
+            )
             assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos?.nanosToMillis())
             assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos?.nanosToMillis())
 
@@ -98,27 +105,12 @@ internal class ThermalStateFeatureTest {
             val snapshot = snapshots.single()
             assertEquals("emb-thermal-state", snapshot.name)
             assertEquals("perf.thermal_state", snapshot.attributes?.findAttributeValue("emb.type"))
-            assertEquals(PowerManager.THERMAL_STATUS_NONE.toString(), snapshot.attributes?.findAttributeValue("status"))
+            assertEquals(
+                PowerManager.THERMAL_STATUS_NONE.toString(),
+                snapshot.attributes?.findAttributeValue("status")
+            )
             assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos?.nanosToMillis())
         }
     }
 
-    private fun setUpThermalCapture() {
-        testRule.harness.overriddenConfigService.autoDataCaptureBehavior =
-            fakeAutoDataCaptureBehavior(
-                remoteCfg = {
-                    RemoteConfig(
-                        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 100.0f)
-                    )
-                }
-            )
-        testRule.harness.overriddenConfigService.sdkModeBehavior =
-            fakeSdkModeBehavior(
-                remoteCfg = {
-                    RemoteConfig(
-                        pctBetaFeaturesEnabled = 100.0f
-                    )
-                }
-            )
-    }
 }

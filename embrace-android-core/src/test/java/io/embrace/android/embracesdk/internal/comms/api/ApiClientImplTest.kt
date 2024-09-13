@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -32,7 +31,7 @@ internal class ApiClientImplTest {
 
     @Before
     fun setUp() {
-        apiClient = ApiClientImpl(EmbLoggerImpl())
+        apiClient = ApiClientImpl()
         server = MockWebServer()
         server.start()
         baseUrl = server.url("test").toString()

@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.internal.anr.sigquit
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.File
 
-internal class AnrThreadIdDelegate(
-    private val logger: EmbLogger
-) {
+internal class AnrThreadIdDelegate {
 
     /**
      * Search the app's threads to find the Google ANR watcher thread.
@@ -13,8 +10,6 @@ internal class AnrThreadIdDelegate(
      * @return the thread ID for the Google ANR watcher thread, or 0 if one cannot be found
      */
     fun findGoogleAnrThread(): Int {
-        logger.logInfo("Searching for Google thread ID for ANR detection")
-
         val anrThreadId = getThreadIdsInCurrentProcess().firstOrNull {
             readThreadCommand(it).startsWith("Signal Catcher")
         }

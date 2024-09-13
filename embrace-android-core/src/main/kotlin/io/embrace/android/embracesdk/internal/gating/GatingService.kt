@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.gating
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 interface GatingService {
@@ -18,13 +17,4 @@ interface GatingService {
         hasCrash: Boolean,
         envelope: Envelope<SessionPayload>
     ): Envelope<SessionPayload>
-
-    /**
-     * Sanitizes an event message before send it to backend based on the Gating configuration.
-     * Log properties, stacktraces, etc can be removed from the event payload.
-     * This method should be called before send the event message to the ApiClient class.
-     *
-     * @param eventMessage to be sanitized
-     */
-    fun gateEventMessage(eventMessage: EventMessage): EventMessage
 }

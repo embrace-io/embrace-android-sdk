@@ -33,10 +33,8 @@ internal class SessionSanitizerFacadeTest {
         SessionGatingKeys.SESSION_PROPERTIES,
         SessionGatingKeys.SESSION_ORIENTATIONS,
         SessionGatingKeys.SESSION_USER_TERMINATION,
-        SessionGatingKeys.SESSION_MOMENTS,
         SessionGatingKeys.LOGS_INFO,
         SessionGatingKeys.LOGS_WARN,
-        SessionGatingKeys.STARTUP_MOMENT,
         SessionGatingKeys.PERFORMANCE_NETWORK,
         SessionGatingKeys.PERFORMANCE_ANR,
         SessionGatingKeys.PERFORMANCE_CURRENT_DISK_USAGE,
@@ -45,7 +43,7 @@ internal class SessionSanitizerFacadeTest {
     )
 
     @Test
-    fun `test if it keeps all event message components`() {
+    fun `test if it keeps all components`() {
         val sanitizedMessage =
             SessionSanitizerFacade(envelope, enabledComponents).getSanitizedMessage()
         assertNotNull(sanitizedMessage.metadata?.personas)
@@ -53,7 +51,7 @@ internal class SessionSanitizerFacadeTest {
     }
 
     @Test
-    fun `test if it sanitizes event message components`() {
+    fun `test if it sanitizes enabled components`() {
         // uses an empty set for enabled components
         val sanitizedMessage =
             SessionSanitizerFacade(envelope, setOf()).getSanitizedMessage()

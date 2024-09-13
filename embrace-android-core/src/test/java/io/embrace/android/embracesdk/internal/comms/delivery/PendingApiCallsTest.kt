@@ -35,7 +35,6 @@ internal class PendingApiCallsTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -47,7 +46,6 @@ internal class PendingApiCallsTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_2",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -66,7 +64,6 @@ internal class PendingApiCallsTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -82,7 +79,6 @@ internal class PendingApiCallsTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -94,7 +90,6 @@ internal class PendingApiCallsTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_2",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -121,9 +116,8 @@ internal class PendingApiCallsTest {
                 val request = ApiRequest(
                     url = ApiRequestUrl("http://test.url/$path"),
                     httpMethod = HttpMethod.POST,
-                    appId = "test_app_id_1",
+                    appId = "request_$it",
                     deviceId = "test_device_id",
-                    eventId = "request_$it",
                     contentEncoding = "gzip",
                     userAgent = ""
                 )
@@ -135,9 +129,8 @@ internal class PendingApiCallsTest {
             val exceedingRequest = ApiRequest(
                 url = ApiRequestUrl("http://test.url/$path"),
                 httpMethod = HttpMethod.POST,
-                appId = "test_app_id_1",
+                appId = "request_exceeding",
                 deviceId = "test_device_id",
-                eventId = "request_exceeding",
                 contentEncoding = "gzip",
                 userAgent = ""
             )
@@ -148,7 +141,7 @@ internal class PendingApiCallsTest {
             val headApiCall = queue.pollNextPendingApiCall()
 
             // Verify that after adding an api call when queue is full, the head of the queue is the second one added
-            assertTrue(headApiCall?.apiRequest?.eventId == "request_1")
+            assertTrue(headApiCall?.apiRequest?.appId == "request_1")
 
             // Verify that the exceeding api call was added to the queue
             repeat(queueLimit - 2) {
@@ -161,18 +154,17 @@ internal class PendingApiCallsTest {
     @Test
     fun `test pollNextPendingApiCall doesn't return api calls from rate limited endpoint`() {
         val request1 = ApiRequest(
-            url = ApiRequestUrl("http://test.url/events"),
+            url = ApiRequestUrl("http://test.url/logs"),
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
         val pendingApiCall1 = PendingApiCall(request1, "payload_filename")
         queue.add(pendingApiCall1)
 
-        val endpoint = Endpoint.EVENTS
+        val endpoint = Endpoint.LOGS
         with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
@@ -188,11 +180,9 @@ internal class PendingApiCallsTest {
 
     private fun Endpoint.getMaxPendingApiCalls(): Int {
         return when (this) {
-            Endpoint.EVENTS -> 100
             Endpoint.LOGS -> 10
-            Endpoint.SESSIONS -> 100
             Endpoint.UNKNOWN -> 50
-            Endpoint.SESSIONS_V2 -> 100
+            Endpoint.SESSIONS -> 100
         }
     }
 }

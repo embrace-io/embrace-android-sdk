@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
@@ -38,7 +37,6 @@ class FakeConfigService(
     override var anrBehavior: AnrBehavior = createAnrBehavior(),
     override var sessionBehavior: SessionBehavior = createSessionBehavior(),
     override var networkBehavior: NetworkBehavior = createNetworkBehavior(),
-    override var startupBehavior: StartupBehavior = createStartupBehavior(),
     override var dataCaptureEventBehavior: DataCaptureEventBehavior = createDataCaptureEventBehavior(),
     override var sdkModeBehavior: SdkModeBehavior = createSdkModeBehavior(),
     override var sdkEndpointBehavior: SdkEndpointBehavior = createSdkEndpointBehavior(),

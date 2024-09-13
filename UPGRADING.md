@@ -4,6 +4,7 @@
 
 Version 7 of the Embrace Android SDK contains the following breaking changes:
 
+- The `startMoment/endMoment` API has been removed. Use `startSpan/recordSpan` instead.
 - `Embrace.AppFramework` is now its own top level class, `AppFramework`
 - `Embrace.LastRunEndState` is now its own top level class, `LastRunEndState`
 

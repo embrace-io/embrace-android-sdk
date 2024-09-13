@@ -172,8 +172,6 @@ internal class ApiClientImplTest {
             "gzip",
             "abcde",
             "test_did",
-            "test_eid",
-            "test_lid",
             ApiRequestUrl(baseUrl)
         )
         server.enqueue(response200)
@@ -195,8 +193,6 @@ internal class ApiClientImplTest {
                 "Accept-Encoding" to "gzip",
                 "X-EM-AID" to "abcde",
                 "X-EM-DID" to "test_did",
-                "X-EM-SID" to "test_eid",
-                "X-EM-LID" to "test_lid",
                 "Content-Length" to "${delivered.bodySize}",
             ),
             headers

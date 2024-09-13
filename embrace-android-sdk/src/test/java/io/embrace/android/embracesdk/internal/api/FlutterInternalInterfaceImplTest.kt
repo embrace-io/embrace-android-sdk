@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -61,7 +61,7 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logUnhandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                EventType.ERROR_LOG,
+                Severity.ERROR,
                 "Dart error",
                 null,
                 null,
@@ -81,7 +81,7 @@ internal class FlutterInternalInterfaceImplTest {
         impl.logHandledDartException("stack", "exception name", "message", "ctx", "lib")
         verify(exactly = 1) {
             embrace.logMessage(
-                EventType.ERROR_LOG,
+                Severity.ERROR,
                 "Dart error",
                 null,
                 null,

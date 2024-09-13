@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 /**
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 class FakeGatingService(private val impl: GatingService? = null) : GatingService {
 
     val envelopesFiltered: MutableList<Envelope<SessionPayload>> = mutableListOf()
-    val eventMessagesFiltered: MutableList<EventMessage> = mutableListOf()
 
     override fun gateSessionEnvelope(
         hasCrash: Boolean,
@@ -21,11 +19,5 @@ class FakeGatingService(private val impl: GatingService? = null) : GatingService
         val filteredMessage = impl?.gateSessionEnvelope(hasCrash, envelope) ?: envelope
         envelopesFiltered.add(filteredMessage)
         return envelope
-    }
-
-    override fun gateEventMessage(eventMessage: EventMessage): EventMessage {
-        val filteredMessage = impl?.gateEventMessage(eventMessage) ?: eventMessage
-        eventMessagesFiltered.add(eventMessage)
-        return filteredMessage
     }
 }

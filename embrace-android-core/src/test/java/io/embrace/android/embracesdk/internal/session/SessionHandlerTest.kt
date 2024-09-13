@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
@@ -86,13 +85,7 @@ internal class SessionHandlerTest {
         configService = FakeConfigService(
             sessionBehavior = createSessionBehavior()
         )
-        gatingService = FakeGatingService(
-            EmbraceGatingService(
-                configService,
-                FakeLogService(),
-                FakeEmbLogger()
-            )
-        )
+        gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService()))
         preferencesService = FakePreferenceService()
         deliveryService = FakeDeliveryService()
         val initModule = FakeInitModule(clock = clock)

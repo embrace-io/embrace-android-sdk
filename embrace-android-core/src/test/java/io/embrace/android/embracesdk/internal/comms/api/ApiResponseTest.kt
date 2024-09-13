@@ -13,7 +13,7 @@ internal class ApiResponseTest {
         assertFalse(ApiResponse.PayloadTooLarge.shouldRetry)
         assertFalse(ApiResponse.Failure(400, null).shouldRetry)
 
-        assertTrue(ApiResponse.TooManyRequests(Endpoint.EVENTS, null).shouldRetry)
+        assertTrue(ApiResponse.TooManyRequests(Endpoint.LOGS, null).shouldRetry)
         assertTrue(ApiResponse.Incomplete(RuntimeException()).shouldRetry)
         assertTrue(ApiResponse.None.shouldRetry)
         assertTrue(ApiResponse.Failure(500, null).shouldRetry)

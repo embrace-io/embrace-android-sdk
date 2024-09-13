@@ -5,10 +5,6 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
-import io.embrace.android.embracesdk.internal.payload.EventType
-import io.embrace.android.embracesdk.internal.payload.EventType.ERROR_LOG
-import io.embrace.android.embracesdk.internal.payload.EventType.INFO_LOG
-import io.embrace.android.embracesdk.internal.payload.EventType.WARNING_LOG
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils.normalizeProperties
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
@@ -81,7 +77,7 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>?
     ) {
         logMessage(
-            fromSeverity(severity),
+            severity,
             message,
             properties,
             null,
@@ -100,7 +96,7 @@ internal class LogsApiDelegate(
     ) {
         val exceptionMessage = if (throwable.message != null) throwable.message else ""
         logMessage(
-            fromSeverity(severity),
+            severity,
             (
                 message
                     ?: exceptionMessage
@@ -123,7 +119,7 @@ internal class LogsApiDelegate(
         message: String?
     ) {
         logMessage(
-            fromSeverity(severity),
+            severity,
             message
                 ?: "",
             properties,
@@ -139,7 +135,7 @@ internal class LogsApiDelegate(
 
     @JvmOverloads
     fun logMessage(
-        type: EventType,
+        severity: Severity,
         message: String,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
@@ -154,7 +150,7 @@ internal class LogsApiDelegate(
             try {
                 logService?.log(
                     message,
-                    type,
+                    severity,
                     logExceptionType,
                     normalizeProperties(properties, logger),
                     stackTraceElements,
@@ -189,11 +185,5 @@ internal class LogsApiDelegate(
             pushNotificationDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
             sessionOrchestrator?.reportBackgroundActivityStateChange()
         }
-    }
-
-    private fun fromSeverity(severity: Severity): EventType = when (severity) {
-        Severity.INFO -> INFO_LOG
-        Severity.WARNING -> WARNING_LOG
-        Severity.ERROR -> ERROR_LOG
     }
 }

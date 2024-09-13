@@ -1,12 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.startup
 
 import io.embrace.android.embracesdk.internal.spans.SpanService
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
-internal class StartupServiceImpl(
-    private val spanService: SpanService,
-    @Suppress("UnusedPrivateMember")
-    private val backgroundWorker: BackgroundWorker
+class StartupServiceImpl(
+    private val spanService: SpanService
 ) : StartupService {
 
     @Volatile
@@ -52,16 +49,9 @@ internal class StartupServiceImpl(
         sdkStartupDurationMs = endTimeMs - startTimeMs
     }
 
-    override fun getSdkStartupDuration(coldStart: Boolean): Long? = when (coldStart) {
-        true -> sdkStartupDurationMs
-        false -> null
-    }
-
+    override fun getSdkStartupDuration(): Long? = sdkStartupDurationMs
     override fun getSdkInitStartMs(): Long? = sdkInitStartMs
-
     override fun getSdkInitEndMs(): Long? = sdkInitEndMs
-
     override fun endedInForeground(): Boolean? = endedInForeground
-
     override fun getInitThreadName(): String = threadName
 }

@@ -12,12 +12,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun clearUsername ()V
 	public fun createSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public fun endAppStartup ()V
-	public fun endAppStartup (Ljava/util/Map;)V
-	public fun endMoment (Ljava/lang/String;)V
-	public fun endMoment (Ljava/lang/String;Ljava/lang/String;)V
-	public fun endMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-	public fun endMoment (Ljava/lang/String;Ljava/util/Map;)V
 	public fun endSession ()V
 	public fun endSession (Z)V
 	public fun endView (Ljava/lang/String;)Z
@@ -71,9 +65,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public fun start (Landroid/content/Context;Z)V
 	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/AppFramework;)V
-	public fun startMoment (Ljava/lang/String;)V
-	public fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
-	public fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
 	public fun startSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;

@@ -182,53 +182,6 @@ public final class Embrace implements SdkApi {
     }
 
     @Override
-    public void startMoment(@NonNull String name) {
-        startMoment(name, null);
-    }
-
-    @Override
-    public void startMoment(@NonNull String name, @Nullable String identifier) {
-        startMoment(name, identifier, null);
-    }
-
-    @Override
-    public void startMoment(@NonNull String name,
-                            @Nullable String identifier,
-                            @Nullable Map<String, ?> properties) {
-        impl.startMoment(name, identifier, properties);
-    }
-
-    @Override
-    public void endMoment(@NonNull String name) {
-        endMoment(name, null, null);
-    }
-
-    @Override
-    public void endMoment(@NonNull String name, @Nullable String identifier) {
-        endMoment(name, identifier, null);
-    }
-
-    @Override
-    public void endMoment(@NonNull String name, @Nullable Map<String, ?> properties) {
-        endMoment(name, null, properties);
-    }
-
-    @Override
-    public void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, ?> properties) {
-        impl.endMoment(name, identifier, properties);
-    }
-
-    @Override
-    public void endAppStartup() {
-        impl.endAppStartup();
-    }
-
-    @Override
-    public void endAppStartup(@NonNull Map<String, ?> properties) {
-        impl.endAppStartup(properties);
-    }
-
-    @Override
     @NonNull
     public String getTraceIdHeader() {
         return impl.getTraceIdHeader();

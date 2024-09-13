@@ -7,9 +7,8 @@ import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -136,11 +135,7 @@ internal class AeiNdkCrashProtobufSendTest {
         val logWriter = FakeLogWriter()
         AeiDataSourceImpl(
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            fakeAppExitInfoBehavior(localCfg = {
-                AppExitInfoLocalConfig(
-                    aeiCaptureEnabled = true
-                )
-            }),
+            FakeAppExitInfoBehavior(enabled = true),
             activityManager,
             FakePreferenceService(),
             logWriter,

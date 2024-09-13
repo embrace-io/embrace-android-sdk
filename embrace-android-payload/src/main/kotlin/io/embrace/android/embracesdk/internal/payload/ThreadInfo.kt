@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Represents thread information at a given point in time.
  */
 @JsonClass(generateAdapter = true)
-public data class ThreadInfo public constructor(
+data class ThreadInfo(
 
     /**
      * The thread ID
@@ -35,19 +35,16 @@ public data class ThreadInfo public constructor(
      * String representation of each line of the stack trace.
      */
     @Json(name = "tt")
-    val lines: List<String>?
+    val lines: List<String>?,
+
+    /**
+     * The total number of frames in the stack before truncation
+     */
+    @Json(name = "fc")
+    val frameCount: Int,
 ) {
 
-    public companion object {
-
-        /**
-         * Creates a [ThreadInfo] from the [Thread], [StackTraceElement][] pair,
-         * using the thread name and priority, and each stacktrace element as each line with a limited length.
-         *
-         * @param thread            the exception
-         * @param maxStacktraceSize the maximum lines of a stacktrace
-         * @return the stacktrace instance
-         */
+    companion object {
         /**
          * Creates a [ThreadInfo] from the [Thread], [StackTraceElement][] pair,
          * using the thread name and priority, and each stacktrace element as each line.
@@ -57,15 +54,16 @@ public data class ThreadInfo public constructor(
          */
         @JvmStatic
         @JvmOverloads
-        public fun ofThread(
+        fun ofThread(
             thread: Thread,
             stackTraceElements: Array<StackTraceElement>,
             maxStacktraceSize: Int = Integer.MAX_VALUE
         ): ThreadInfo {
             val name = thread.name
             val priority = thread.priority
+            val frameCount = stackTraceElements.size
             val lines = stackTraceElements.take(maxStacktraceSize).map(StackTraceElement::toString)
-            return ThreadInfo(thread.id, thread.state, name, priority, lines)
+            return ThreadInfo(thread.id, thread.state, name, priority, lines, frameCount)
         }
     }
 }

@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
@@ -39,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 import io.embrace.android.embracesdk.spans.TracingApi
 
@@ -51,7 +54,7 @@ import io.embrace.android.embracesdk.spans.TracingApi
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl @JvmOverloads constructor(
-    private val bootstrapper: ModuleInitBootstrapper = ModuleInitBootstrapper(),
+    private val bootstrapper: ModuleInitBootstrapper = Systrace.traceSynchronous("bootstrapper-init", ::ModuleInitBootstrapper),
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
@@ -85,8 +88,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
         UninitializedSdkInternalInterfaceImpl(bootstrapper.openTelemetryModule.internalTracer)
     }
 
-    private val sdkClock = bootstrapper.initModule.clock
-    private val logger = bootstrapper.initModule.logger
+    private val sdkClock by lazy { bootstrapper.initModule.clock }
+    private val logger by lazy { bootstrapper.initModule.logger }
     private val customAppId: String?
         get() = sdkStateApiDelegate.customAppId
 
@@ -183,13 +186,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         val configModule = bootstrapper.configModule
         if (configModule.configService.isSdkDisabled()) {
-            logger.logInfo("Interrupting SDK start because it is disabled", null)
             stop()
             return
         }
-        logger.logInfo("Starting SDK for framework " + configModule.configService.appFramework.name)
 
-        if (configModule.configService.autoDataCaptureBehavior.isComposeOnClickEnabled()) {
+        if (configModule.configService.autoDataCaptureBehavior.isComposeClickCaptureEnabled()) {
             registerComposeActivityListener(coreModule.application)
         }
 
@@ -198,13 +199,16 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val momentsModule = bootstrapper.momentsModule
         val crashModule = bootstrapper.crashModule
 
-        startSynchronous("send-cached-sessions")
         // Send any sessions that were cached and not yet sent.
-        val essentialServiceModule = bootstrapper.essentialServiceModule
-        deliveryModule.deliveryService.sendCachedSessions(
-            bootstrapper.nativeFeatureModule::nativeCrashService,
-            essentialServiceModule.sessionIdTracker
-        )
+        startSynchronous("send-cached-sessions")
+        val worker = bootstrapper.workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE)
+        worker.submit(TaskPriority.HIGH) {
+            val essentialServiceModule = bootstrapper.essentialServiceModule
+            deliveryModule.deliveryService.sendCachedSessions(
+                bootstrapper.nativeFeatureModule::nativeCrashService,
+                essentialServiceModule.sessionIdTracker
+            )
+        }
         endSynchronous()
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -234,13 +238,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
             null -> {}
         }
         val appId = configModule.configService.appId
-        val startMsg = "Embrace SDK started. App ID: " + appId + " Version: " + BuildConfig.VERSION_NAME
-        logger.logInfo(startMsg, null)
+        val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" + appId?.run { " for appId =  $this" }
+        logger.logInfo(startMsg)
 
         val endTimeMs = sdkClock.now()
         sdkCallChecker.started.set(true)
         endSynchronous()
-        val inForeground = !essentialServiceModule.processStateService.isInBackground
+        val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
 
         // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
         // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
@@ -252,10 +256,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         startSynchronous("startup-tracking")
         dataCaptureServiceModule.startupService.setSdkStartupInfo(startTimeMs, endTimeMs, inForeground, Thread.currentThread().name)
         endSynchronous()
-
-        // This should return immediately given that EmbraceSpansService initialization should be finished at this point
-        // Put in emergency timeout just in case something unexpected happens so as to fail the SDK startup.
-        bootstrapper.waitForAsyncInit()
     }
 
     /**
@@ -263,15 +263,13 @@ internal class EmbraceImpl @JvmOverloads constructor(
      */
     fun stop() {
         if (sdkCallChecker.started.compareAndSet(true, false)) {
-            logger.logInfo("Shutting down Embrace SDK.", null)
-            try {
+            logger.logInfo("Shutting down Embrace SDK")
+            runCatching {
                 application?.let {
                     unregisterComposeActivityListener(it)
                 }
                 application = null
                 bootstrapper.stopServices()
-            } catch (ex: Exception) {
-                logger.logError("Error while shutting down Embrace SDK", ex)
             }
         }
     }
@@ -328,15 +326,22 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     private fun sampleCurrentThreadDuringAnrs() {
         try {
-            val service = anrService
-            if (service != null && nativeThreadSamplerInstaller != null) {
-                nativeThreadSampler?.let { sampler ->
-                    configService?.let { cfg ->
-                        nativeThreadSamplerInstaller?.monitorCurrentThread(sampler, cfg, service)
-                    }
+            val service = anrService ?: return
+            val installer = nativeThreadSamplerInstaller ?: return
+            val sampler = nativeThreadSampler ?: return
+            val cfgService = configService ?: return
+
+            // install the native thread sampler
+            sampler.setupNativeSampler()
+
+            // In Unity this should always run on the Unity thread.
+            if (isUnityMainThread()) {
+                try {
+                    installer.monitorCurrentThread(sampler, cfgService, service)
+                } catch (t: Throwable) {
+                    logger.logError("Failed to sample current thread during ANRs", t)
+                    logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
                 }
-            } else {
-                logger.logWarning("nativeThreadSamplerInstaller not started, cannot sample current thread", null)
             }
         } catch (exc: Exception) {
             logger.logError("Failed to sample current thread during ANRs", exc)

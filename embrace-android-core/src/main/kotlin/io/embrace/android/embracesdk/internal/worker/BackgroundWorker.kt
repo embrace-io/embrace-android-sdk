@@ -10,14 +10,14 @@ import java.util.concurrent.Future
  * This class is necessary because it hides aspects of the ExecutorService API that we don't want
  * to expose as part of the internal API.
  */
-public class BackgroundWorker(
+class BackgroundWorker(
     private val impl: ExecutorService
 ) {
 
     /**
      * Submits a task for execution and returns a [Future].
      */
-    public fun submit(
+    fun submit(
         priority: TaskPriority = TaskPriority.NORMAL,
         runnable: Runnable
     ): Future<*> {
@@ -27,7 +27,7 @@ public class BackgroundWorker(
     /**
      * Submits a task for execution and returns a [Future].
      */
-    public fun <T> submit(
+    fun <T> submit(
         priority: TaskPriority = TaskPriority.NORMAL,
         callable: Callable<T>
     ): Future<T> {

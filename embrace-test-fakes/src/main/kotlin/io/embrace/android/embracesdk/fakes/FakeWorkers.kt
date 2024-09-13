@@ -5,5 +5,5 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 
-public fun fakeBackgroundWorker(): BackgroundWorker = BackgroundWorker(BlockableExecutorService())
-public fun fakeScheduledWorker(): ScheduledWorker = ScheduledWorker(BlockingScheduledExecutorService(blockingMode = false))
+fun fakeBackgroundWorker(): BackgroundWorker = BackgroundWorker(BlockableExecutorService())
+fun fakeScheduledWorker(): ScheduledWorker = ScheduledWorker(BlockingScheduledExecutorService(blockingMode = false))

@@ -13,12 +13,8 @@ import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
 import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
@@ -101,19 +97,7 @@ internal class EmbraceMetadataServiceTest {
         }
     }
 
-    private val configService: FakeConfigService =
-        FakeConfigService(
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                localCfg = {
-                    LocalConfig("appId", true, SdkLocalConfig())
-                }
-            ),
-            sdkModeBehavior = fakeSdkModeBehavior(
-                localCfg = {
-                    LocalConfig("appId", false, SdkLocalConfig())
-                }
-            )
-        )
+    private val configService: FakeConfigService = FakeConfigService()
 
     @Before
     fun setUp() {
@@ -132,26 +116,28 @@ internal class EmbraceMetadataServiceTest {
     ): EmbraceMetadataService {
         configService.appFramework = framework
         ref = EmbraceMetadataService(
-            EnvelopeResourceSourceImpl(
-                hostedSdkVersionInfo,
-                AppEnvironment.Environment.PROD,
-                buildInfo,
-                PackageVersionInfo(packageInfo),
-                framework,
-                fakeArchitecture,
-                DeviceImpl(
-                    mockk(relaxed = true),
-                    preferencesService,
-                    BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-                    SystemInfo(),
-                    Companion::cpuInfoDelegate,
-                    FakeEmbLogger()
-                ),
-                FakeRnBundleIdTracker()
-            ),
+            lazy {
+                EnvelopeResourceSourceImpl(
+                    hostedSdkVersionInfo,
+                    AppEnvironment.Environment.PROD,
+                    buildInfo,
+                    PackageVersionInfo(packageInfo),
+                    framework,
+                    fakeArchitecture,
+                    DeviceImpl(
+                        mockk(relaxed = true),
+                        preferencesService,
+                        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+                        SystemInfo(),
+                        Companion::cpuInfoDelegate,
+                        FakeEmbLogger()
+                    ),
+                    FakeRnBundleIdTracker()
+                )
+            },
             EnvelopeMetadataSourceImpl(::UserInfo),
             context,
-            storageStatsManager,
+            lazy { storageStatsManager },
             configService,
             preferencesService,
             BackgroundWorker(MoreExecutors.newDirectExecutorService()),
@@ -187,7 +173,7 @@ internal class EmbraceMetadataServiceTest {
     @Test
     fun `test startup complete`() {
         every { preferencesService.installDate }.returns(null)
-        getMetadataService().applicationStartupComplete()
+        getMetadataService()
 
         verify(exactly = 1) { preferencesService.appVersion = any() }
         verify(exactly = 1) { preferencesService.osVersion = any() }
@@ -197,7 +183,7 @@ internal class EmbraceMetadataServiceTest {
     @Test
     fun `test startup complete if it is not the first time`() {
         every { preferencesService.installDate }.returns(1234L)
-        getMetadataService().applicationStartupComplete()
+        getMetadataService()
         verify(exactly = 0) { preferencesService.installDate = any() }
     }
 

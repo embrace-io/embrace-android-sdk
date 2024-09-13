@@ -9,8 +9,7 @@ import kotlin.math.min
 /**
  * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
  */
-public class SdkModeBehaviorImpl(
-    private val isDebug: Boolean,
+class SdkModeBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<LocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
@@ -23,19 +22,6 @@ public class SdkModeBehaviorImpl(
     private companion object {
 
         /**
-         * The percentage of devices which should have beta features initialized.
-         *
-         * The range of allowed values is 0.0f to 100.0f, and the default is 1.0f (1% of devices).
-         */
-        private const val DEFAULT_BETA_FEATURES_PCT = 1.0f
-
-        /**
-         * The percentage of devices that defer some expensive service initialization to a background
-         * thread to improve startup performance in exchange for delayed enablement of some features of the SDK
-         */
-        private const val DEFAULT_DEFER_SERVICE_INIT_PCT = 0.0f
-
-        /**
          * The default percentage of devices for which the SDK is enabled.
          */
         private const val DEFAULT_THRESHOLD = 100
@@ -44,24 +30,6 @@ public class SdkModeBehaviorImpl(
          * The default percentage offset of devices for which the SDK is enabled.
          */
         private const val DEFAULT_OFFSET = 0
-    }
-
-    override fun isBetaFeaturesEnabled(): Boolean {
-        if (local?.sdkConfig?.betaFeaturesEnabled == false) {
-            return false
-        }
-
-        if (isDebug) {
-            return true
-        }
-
-        val pct = remote?.pctBetaFeaturesEnabled ?: DEFAULT_BETA_FEATURES_PCT
-        return thresholdCheck.isBehaviorEnabled(pct)
-    }
-
-    override fun isServiceInitDeferred(): Boolean {
-        val pct = remote?.pctDeferServiceInitEnabled ?: DEFAULT_DEFER_SERVICE_INIT_PCT
-        return thresholdCheck.isBehaviorEnabled(pct)
     }
 
     /**

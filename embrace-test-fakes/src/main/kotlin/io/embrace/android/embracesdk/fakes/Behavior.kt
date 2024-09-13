@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
@@ -43,116 +44,122 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
-private val behaviorThresholdCheck = BehaviorThresholdCheck { Uuid.getEmbUuid() }
+private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
 
 /**
- * A fake [AnrBehavior] that returns default values.
+ * A [AnrBehavior] that returns default values.
  */
-public fun fakeAnrBehavior(
+fun createAnrBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<AnrLocalConfig?> = { null },
     remoteCfg: Provider<AnrRemoteConfig?> = { null }
 ): AnrBehavior = AnrBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [SessionBehaviorImpl] that returns default values.
+ * A [SessionBehaviorImpl] that returns default values.
  */
-public fun fakeSessionBehavior(
+fun createSessionBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<SessionLocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null }
 ): SessionBehavior = SessionBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [NetworkBehaviorImpl] that returns default values.
+ * A [NetworkBehaviorImpl] that returns default values.
  */
-public fun fakeNetworkBehavior(
+fun createNetworkBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<SdkLocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null }
 ): NetworkBehavior = NetworkBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [BackgroundActivityBehaviorImpl] that returns default values.
+ * A [BackgroundActivityBehaviorImpl] that returns default values.
  */
-public fun fakeBackgroundActivityBehavior(
+fun createBackgroundActivityBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<BackgroundActivityLocalConfig?> = { null },
     remoteCfg: Provider<BackgroundActivityRemoteConfig?> = { null }
 ): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [AutoDataCaptureBehaviorImpl] that returns default values.
+ * A [AutoDataCaptureBehaviorImpl] that returns default values.
  */
-public fun fakeAutoDataCaptureBehavior(
+fun createAutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<LocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null }
 ): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [LogMessageBehaviorImpl] that returns default values.
+ * A [LogMessageBehaviorImpl] that returns default values.
  */
-public fun fakeLogMessageBehavior(
+fun createLogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<LogRemoteConfig?> = { null }
 ): LogMessageBehavior = LogMessageBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
- * A fake [StartupBehaviorImpl] that returns default values.
+ * A [StartupBehaviorImpl] that returns default values.
  */
-public fun fakeStartupBehavior(
+fun createStartupBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<StartupMomentLocalConfig?> = { null }
 ): StartupBehavior = StartupBehaviorImpl(thresholdCheck, localCfg)
 
 /**
- * A fake [DataCaptureEventBehaviorImpl] that returns default values.
+ * A [DataCaptureEventBehaviorImpl] that returns default values.
  */
-public fun fakeDataCaptureEventBehavior(
+fun createDataCaptureEventBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<RemoteConfig?> = { null }
 ): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
- * A fake [SdkModeBehaviorImpl] that returns default values.
+ * A [SdkModeBehaviorImpl] that returns default values.
  */
-public fun fakeSdkModeBehavior(
-    isDebug: Boolean = false,
+fun createSdkModeBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<LocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null }
-): SdkModeBehavior = SdkModeBehaviorImpl(isDebug, thresholdCheck, localCfg, remoteCfg)
+): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [SdkModeBehaviorImpl] that returns default values.
+ * A [SdkModeBehaviorImpl] that returns default values.
  */
-public fun fakeSdkEndpointBehavior(
+fun createSdkEndpointBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<BaseUrlLocalConfig?> = { null },
 ): SdkEndpointBehavior = SdkEndpointBehaviorImpl(thresholdCheck, localCfg)
 
 /**
- * A fake [AppExitInfoBehavior] that returns default values.
+ * A [AppExitInfoBehavior] that returns default values.
  */
-public fun fakeAppExitInfoBehavior(
+fun createAppExitInfoBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     localCfg: Provider<AppExitInfoLocalConfig?> = { null },
     remoteCfg: Provider<RemoteConfig?> = { null },
 ): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, localCfg, remoteCfg)
 
 /**
- * A fake [NetworkSpanForwardingBehaviorImpl] that returns default values.
+ * A [NetworkSpanForwardingBehaviorImpl] that returns default values.
  */
-public fun fakeNetworkSpanForwardingBehavior(
+fun createNetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null }
 ): NetworkSpanForwardingBehavior = NetworkSpanForwardingBehaviorImpl(thresholdCheck, remoteConfig)
 
 /**
- * A fake [WebViewVitalsBehaviorImpl] that returns default values.
+ * A [WebViewVitalsBehaviorImpl] that returns default values.
  */
-public fun fakeWebViewVitalsBehavior(
+fun createWebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<RemoteConfig?> = { null },
 ): WebViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteCfg)
+
+/**
+ * A [SensitiveKeysBehaviorImpl] that returns default values.
+ */
+internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(
+    SdkLocalConfig()
+)

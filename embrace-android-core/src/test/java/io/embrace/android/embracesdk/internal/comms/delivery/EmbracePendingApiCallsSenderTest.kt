@@ -287,6 +287,30 @@ internal class EmbracePendingApiCallsSenderTest {
         assertEquals(sessionRequest, queue.pollNextPendingApiCall()?.apiRequest)
     }
 
+    @Test
+    fun `no pending api calls remains if SendMethod is set`() {
+        initPendingApiCallsSender(runRetryJobAfterScheduling = false)
+        pendingApiCallsSender.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
+        retryTaskActive(NetworkStatus.WIFI)
+        assertTrue(queue.hasPendingApiCallsToSend())
+        blockingScheduledExecutorService.runCurrentlyBlocked()
+        checkRequestSendAttempt()
+        assertFalse(queue.hasPendingApiCallsToSend())
+    }
+
+    @Test
+    fun `pending api calls remains if SendMethod is not set`() {
+        initPendingApiCallsSender(
+            runRetryJobAfterScheduling = false,
+            sendMethod = null
+        )
+        pendingApiCallsSender.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
+        retryTaskActive(NetworkStatus.WIFI)
+        assertTrue(queue.hasPendingApiCallsToSend())
+        blockingScheduledExecutorService.runCurrentlyBlocked()
+        assertTrue(queue.hasPendingApiCallsToSend())
+    }
+
     private fun clearApiPipeline() {
         clearMocks(mockRetryMethod, answers = false)
         pendingApiCalls = PendingApiCalls()
@@ -297,6 +321,7 @@ internal class EmbracePendingApiCallsSenderTest {
     private fun initPendingApiCallsSender(
         loadFailedRequest: Boolean = true,
         runRetryJobAfterScheduling: Boolean = false,
+        sendMethod: SendMethod? = mockRetryMethod
     ) {
         pendingApiCalls = PendingApiCalls()
         every { mockCacheManager.loadPendingApiCallQueue() } returns queue
@@ -308,7 +333,9 @@ internal class EmbracePendingApiCallsSenderTest {
             logger = EmbLoggerImpl()
         )
 
-        pendingApiCallsSender.setSendMethod(mockRetryMethod)
+        if (sendMethod != null) {
+            pendingApiCallsSender.initializeRetrySchedule(mockRetryMethod)
+        }
 
         if (loadFailedRequest) {
             val request = ApiRequest(

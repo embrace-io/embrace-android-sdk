@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.injection.DataSourceModule
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
-public class FakeDataSourceModule : DataSourceModule {
+class FakeDataSourceModule : DataSourceModule {
     override val dataCaptureOrchestrator: DataCaptureOrchestrator =
         DataCaptureOrchestrator(
             FakeConfigService(),

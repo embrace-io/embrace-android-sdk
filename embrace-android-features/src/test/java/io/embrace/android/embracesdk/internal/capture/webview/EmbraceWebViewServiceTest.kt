@@ -5,12 +5,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.WebViewVitals
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
@@ -40,17 +37,15 @@ internal class EmbraceWebViewServiceTest {
     private lateinit var serializer: EmbraceSerializer
     private lateinit var writer: FakeCurrentSessionSpan
     private lateinit var openTelemetryModule: FakeOpenTelemetryModule
-    private lateinit var configService: ConfigService
+    private lateinit var configService: FakeConfigService
     private lateinit var embraceWebViewService: EmbraceWebViewService
-    private var cfg: RemoteConfig? = RemoteConfig()
 
     @Before
     fun setup() {
         serializer = EmbraceSerializer()
         writer = FakeCurrentSessionSpan()
         openTelemetryModule = FakeOpenTelemetryModule(writer)
-        cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 50))
-        configService = FakeConfigService(webViewVitalsBehavior = fakeWebViewVitalsBehavior { cfg })
+        configService = FakeConfigService(webViewVitalsBehavior = FakeWebViewVitalsBehavior(50, true))
         embraceWebViewService = EmbraceWebViewService(
             configService,
             serializer,
@@ -180,14 +175,14 @@ internal class EmbraceWebViewServiceTest {
 
     @Test
     fun `test limit collect web vital by maxVitals remote config`() {
-        cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 1))
+        configService.webViewVitalsBehavior = FakeWebViewVitalsBehavior(1, true)
 
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData)
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData2)
         Assert.assertEquals(1, writer.addedEvents.size)
 
         // same but bigger max vitals limit
-        cfg = RemoteConfig(webViewVitals = WebViewVitals(100f, 10))
+        configService.webViewVitalsBehavior = FakeWebViewVitalsBehavior(10, true)
 
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData)
         embraceWebViewService.collectWebData("webViewMock", expectedCompleteData2)

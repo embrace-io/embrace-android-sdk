@@ -5,7 +5,7 @@ import java.net.URL
 import java.nio.charset.Charset
 import java.util.regex.Pattern
 
-public object NetworkUtils {
+object NetworkUtils {
 
     private const val TRACE_ID_MAXIMUM_ALLOWED_LENGTH = 64
     private const val DNS_PATTERN =
@@ -18,7 +18,7 @@ public object NetworkUtils {
     private val DomainPattern = Pattern.compile("$DNS_PATTERN|$IPV4_PATTERN|$IPV6_PATTERN")
 
     @JvmStatic
-    public fun getValidTraceId(traceId: String?): String? {
+    fun getValidTraceId(traceId: String?): String? {
         if (traceId == null) {
             return null
         }
@@ -41,7 +41,7 @@ public object NetworkUtils {
      * @return the hostname or IP address
      */
     @JvmStatic
-    public fun getDomain(originalUrl: String): String? {
+    fun getDomain(originalUrl: String): String? {
         // This is necessary for the "new URL(url)" logic.
         val url = if (!originalUrl.startsWith("http")) "http://$originalUrl" else originalUrl
 
@@ -64,7 +64,7 @@ public object NetworkUtils {
      * @return true if the domain is an IP address, false otherwise
      */
     @JvmStatic
-    public fun isIpAddress(domain: String?): Boolean =
+    fun isIpAddress(domain: String?): Boolean =
         if (domain == null) false else IpAddrPattern.matcher(domain).find()
 
     /**
@@ -74,7 +74,7 @@ public object NetworkUtils {
      * @return the URL with the hash fragment and query string parameters removed
      */
     @JvmStatic
-    public fun stripUrl(url: String): String {
+    fun stripUrl(url: String): String {
         val pathPos: Int = url.lastIndexOf('/')
         val suffix: String = if (pathPos < 0) url else url.substring(pathPos)
 
@@ -93,7 +93,7 @@ public object NetworkUtils {
     }
 
     @JvmStatic
-    public fun getUrlPath(url: String?): String? = try {
+    fun getUrlPath(url: String?): String? = try {
         URL(url).path
     } catch (exception: Exception) {
         ""

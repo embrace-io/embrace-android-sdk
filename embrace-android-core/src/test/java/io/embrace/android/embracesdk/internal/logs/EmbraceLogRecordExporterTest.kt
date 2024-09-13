@@ -22,8 +22,8 @@ internal class EmbraceLogRecordExporterTest {
 
         embraceLogRecordExporter.export(listOf(logRecordData))
 
-        assertFalse(logSink.completedLogs().isEmpty())
-        assertEquals(logRecordData.toNewPayload(), logSink.completedLogs()[0])
+        assertFalse(logSink.logsForNextBatch().isEmpty())
+        assertEquals(logRecordData.toNewPayload(), logSink.logsForNextBatch()[0])
     }
 
     @Test
@@ -46,9 +46,9 @@ internal class EmbraceLogRecordExporterTest {
 
         embraceLogRecordExporter.export(listOf(logRecordData, privateLogRecordData))
 
-        assertEquals(2, logSink.completedLogs().size)
-        assertEquals(logRecordData.toNewPayload(), logSink.completedLogs()[0])
-        assertEquals(privateLogRecordData.toNewPayload(), logSink.completedLogs()[1])
+        assertEquals(2, logSink.logsForNextBatch().size)
+        assertEquals(logRecordData.toNewPayload(), logSink.logsForNextBatch()[0])
+        assertEquals(privateLogRecordData.toNewPayload(), logSink.logsForNextBatch()[1])
 
         assertEquals(1, externalExporter.exportedLogs?.size)
         assertEquals(logRecordData, externalExporter.exportedLogs?.first())

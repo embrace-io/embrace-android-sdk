@@ -41,7 +41,6 @@ internal class ConfigModuleImpl(
                     initModule.clock,
                     initModule.logger,
                     workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                    coreModule.isDebug,
                     framework,
                     foregroundAction
                 )

@@ -22,11 +22,11 @@ import java.io.IOException
  * chain process for client errors on requests to a generic URL like a GraphQL endpoint.
  */
 @InternalApi
-public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
+class EmbraceOkHttp3ApplicationInterceptor internal constructor(
     private val embrace: Embrace
 ) : Interceptor {
 
-    public constructor() : this(Embrace.getInstance())
+    constructor() : this(Embrace.getInstance())
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {

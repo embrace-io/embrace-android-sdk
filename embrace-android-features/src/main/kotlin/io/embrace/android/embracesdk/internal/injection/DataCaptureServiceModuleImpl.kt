@@ -39,7 +39,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
-        PushNotificationCaptureService(featureModule.pushNotificationDataSource.dataSource, initModule.logger)
+        PushNotificationCaptureService(featureModule.pushNotificationDataSource.dataSource)
     }
 
     override val startupService: StartupService by singleton {

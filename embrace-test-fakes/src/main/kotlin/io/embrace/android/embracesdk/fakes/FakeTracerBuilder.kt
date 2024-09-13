@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.internal.opentelemetry.TracerKey
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerBuilder
 
-public class FakeTracerBuilder(
-    public val instrumentationScopeName: String
+class FakeTracerBuilder(
+    val instrumentationScopeName: String
 ) : TracerBuilder {
 
-    public var scopeVersion: String? = null
-    public var schema: String? = null
+    var scopeVersion: String? = null
+    var schema: String? = null
 
     override fun setInstrumentationVersion(instrumentationScopeVersion: String): TracerBuilder {
         scopeVersion = instrumentationScopeVersion

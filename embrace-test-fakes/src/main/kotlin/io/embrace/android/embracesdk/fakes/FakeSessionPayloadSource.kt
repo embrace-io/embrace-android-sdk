@@ -4,10 +4,10 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSou
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-public class FakeSessionPayloadSource : SessionPayloadSource {
+class FakeSessionPayloadSource : SessionPayloadSource {
 
-    public var sessionPayload: SessionPayload = SessionPayload()
-    public var lastStartNewSession: Boolean? = null
+    var sessionPayload: SessionPayload = SessionPayload()
+    var lastStartNewSession: Boolean? = null
 
     override fun getSessionPayload(
         endType: SessionSnapshotType,

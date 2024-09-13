@@ -4,30 +4,23 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnec
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 
-public class FakeNetworkConnectivityService(
+class FakeNetworkConnectivityService(
     initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
     override var ipAddress: String = defaultIpAddress
 ) : FakeDataCaptureService<FakeNetworkConnectivityService.Interval>(), NetworkConnectivityService {
 
-    public data class Interval(
+    data class Interval(
         val startTime: Long,
         val endTime: Long,
         val value: String? = null
     )
 
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
-    public var networkStatus: NetworkStatus = initialNetworkStatus
+    var networkStatus: NetworkStatus = initialNetworkStatus
         set(value) {
             field = value
             notifyListeners()
         }
-
-    public var networkStatusOnSessionStartedCount: Int = 0
-
-    override fun networkStatusOnSessionStarted(startTime: Long) {
-        notifyListeners()
-        networkStatusOnSessionStartedCount += 1
-    }
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
         networkConnectivityListeners.add(listener)
@@ -56,10 +49,8 @@ public class FakeNetworkConnectivityService(
     }
 }
 
-public class NoOpNetworkConnectivityService : NetworkConnectivityService {
+class NoOpNetworkConnectivityService : NetworkConnectivityService {
     override fun close() {}
-
-    override fun networkStatusOnSessionStarted(startTime: Long) {}
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {}
 

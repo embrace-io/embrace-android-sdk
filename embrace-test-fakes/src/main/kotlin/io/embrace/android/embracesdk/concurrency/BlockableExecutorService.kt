@@ -15,12 +15,12 @@ import java.util.concurrent.TimeUnit
  * (and subsequently toggled using the [blockingMode] attribute). So by default, this executor behaves like
  * [com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService] unless switched to blocking mode.
  */
-public class BlockableExecutorService(blockingMode: Boolean = false) : AbstractExecutorService() {
+class BlockableExecutorService(blockingMode: Boolean = false) : AbstractExecutorService() {
     private val tasks = ConcurrentLinkedQueue<Runnable>()
     private var shutdown = false
 
     @Volatile
-    public var blockingMode: Boolean = blockingMode
+    var blockingMode: Boolean = blockingMode
         set(value) {
             field = value
             if (!field) {
@@ -32,7 +32,7 @@ public class BlockableExecutorService(blockingMode: Boolean = false) : AbstractE
      * Unblock and run all submitted tasks. New submissions will NOT be run until explicitly told to after the current batch of tasks
      * are completed.
      */
-    public fun runCurrentlyBlocked() {
+    fun runCurrentlyBlocked() {
         rejectIfShutdown()
         var taskCount = tasks.size
         if (taskCount > 0) {
@@ -51,7 +51,7 @@ public class BlockableExecutorService(blockingMode: Boolean = false) : AbstractE
     /**
      * Unblock and run one (1) submitted task at the head of the queue if it exists
      */
-    public fun runNext() {
+    fun runNext() {
         rejectIfShutdown()
         tasks.poll()?.run()
     }
@@ -59,7 +59,7 @@ public class BlockableExecutorService(blockingMode: Boolean = false) : AbstractE
     /**
      * Return the number of blocked tasks
      */
-    public fun tasksBlockedCount(): Int = tasks.size
+    fun tasksBlockedCount(): Int = tasks.size
 
     @TestOnly
     override fun execute(command: Runnable?) {

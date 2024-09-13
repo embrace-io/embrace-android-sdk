@@ -23,7 +23,7 @@ private const val EMBRACE_USAGE_ATTRIBUTE_NAME_PREFIX = "emb.usage."
  */
 internal fun String.toEmbraceObjectName(): String = EMBRACE_OBJECT_NAME_PREFIX + this
 
-public fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity = when (this) {
+fun io.embrace.android.embracesdk.Severity.toOtelSeverity(): Severity = when (this) {
     io.embrace.android.embracesdk.Severity.INFO -> Severity.INFO
     io.embrace.android.embracesdk.Severity.WARNING -> Severity.WARN
     io.embrace.android.embracesdk.Severity.ERROR -> Severity.ERROR
@@ -41,7 +41,7 @@ internal fun Attributes.toStringMap(): Map<String, String> = asMap().entries.ass
     it.key.key.toString() to it.value.toString()
 }
 
-public fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+fun EmbraceSpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     fixedAttribute.value == attributes[fixedAttribute.key.name]
 
 internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): Span {
@@ -54,5 +54,5 @@ internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setE
 internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value
 
-public fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
+fun LogRecordData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     attributes[fixedAttribute.key.attributeKey] == fixedAttribute.value

@@ -16,64 +16,64 @@ import java.util.concurrent.atomic.AtomicBoolean
  * An object that holds all of the services that are registered with the SDK. This makes it simpler
  * to remember to set callbacks & close resources when creating a new service.
  */
-public class ServiceRegistry(
+class ServiceRegistry(
     private val logger: EmbLogger
 ) : Closeable {
 
-    private val registry = mutableListOf<Any>()
+    private val registry = mutableListOf<Lazy<Any?>>()
+    private val finalRegistry: List<Any?> by lazy { registry.map(Lazy<Any?>::value) }
     private var initialized = AtomicBoolean(false)
 
     // lazy init avoids type checks at startup until absolutely necessary.
     // once these variables are initialized, no further services should be registered.
-    public val closeables: List<Closeable> by lazy { registry.filterIsInstance<Closeable>() }
-    public val memoryCleanerListeners: List<MemoryCleanerListener> by lazy {
-        registry.filterIsInstance<MemoryCleanerListener>()
+    val closeables: List<Closeable> by lazy { finalRegistry.filterIsInstance<Closeable>() }
+    val memoryCleanerListeners: List<MemoryCleanerListener> by lazy {
+        finalRegistry.filterIsInstance<MemoryCleanerListener>()
     }
-    public val processStateListeners: List<ProcessStateListener> by lazy {
-        registry.filterIsInstance<ProcessStateListener>()
+    val processStateListeners: List<ProcessStateListener> by lazy {
+        finalRegistry.filterIsInstance<ProcessStateListener>()
     }
-    public val activityLifecycleListeners: List<ActivityLifecycleListener> by lazy {
-        registry.filterIsInstance<ActivityLifecycleListener>()
+    val activityLifecycleListeners: List<ActivityLifecycleListener> by lazy {
+        finalRegistry.filterIsInstance<ActivityLifecycleListener>()
     }
-    public val startupListener: List<StartupListener> by lazy { registry.filterIsInstance<StartupListener>() }
+    val startupListener: List<StartupListener> by lazy { finalRegistry.filterIsInstance<StartupListener>() }
 
-    public fun registerServices(vararg services: Any?) {
+    fun registerServices(vararg services: Lazy<Any?>) {
         Systrace.trace("register-services") {
             services.forEach(::registerService)
         }
     }
 
-    public fun registerService(service: Any?) {
+    fun registerService(service: Lazy<Any?>) {
         if (initialized.get()) {
             error("Cannot register a service - already initialized.")
-        }
-        if (service == null) {
-            return
         }
         registry.add(service)
     }
 
-    public fun closeRegistration() {
+    fun closeRegistration() {
         initialized.set(true)
     }
 
-    public fun registerActivityListeners(processStateService: ProcessStateService): Unit = processStateListeners.forEachSafe(
-        "Failed to register activity listener",
-        processStateService::addListener
-    )
+    fun registerActivityListeners(processStateService: ProcessStateService): Unit =
+        processStateListeners.forEachSafe(
+            "Failed to register activity listener",
+            processStateService::addListener
+        )
 
-    public fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit = activityLifecycleListeners.forEachSafe(
-        "Failed to register activity lifecycle listener",
-        activityLifecycleTracker::addListener
-    )
+    fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit =
+        activityLifecycleListeners.forEachSafe(
+            "Failed to register activity lifecycle listener",
+            activityLifecycleTracker::addListener
+        )
 
-    public fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService): Unit =
+    fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService): Unit =
         memoryCleanerListeners.forEachSafe(
             "Failed to register memory cleaner listener",
             memoryCleanerService::addListener
         )
 
-    public fun registerStartupListener(activityLifecycleTracker: ActivityTracker): Unit =
+    fun registerStartupListener(activityLifecycleTracker: ActivityTracker): Unit =
         startupListener.forEachSafe(
             "Failed to register application lifecycle listener",
             activityLifecycleTracker::addStartupListener

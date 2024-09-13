@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.utils.exceptions
 
 import java.lang.reflect.InvocationTargetException
 
-public object Unchecked {
+object Unchecked {
     /**
      * Propagates `throwable` as-is if possible, or by wrapping in a `RuntimeException` if not.
      *
@@ -27,7 +27,7 @@ public object Unchecked {
      * @return nothing; this method always throws an exception
      */
     @JvmStatic
-    public fun propagate(throwable: Throwable?): RuntimeException {
+    fun propagate(throwable: Throwable?): RuntimeException {
         if (throwable is InvocationTargetException) {
             throw propagate(throwable.cause)
         } else {

@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessSt
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.worker.WorkerName
 
-public class EssentialServiceModuleImpl(
+class EssentialServiceModuleImpl(
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -73,7 +73,7 @@ public class EssentialServiceModuleImpl(
                 configBaseUrl = configBaseUrl,
                 appId = appId,
                 lazyDeviceId = lazyDeviceId,
-                lazyAppVersionName = lazy(coreModule.packageVersionInfo::versionName)
+                lazyAppVersionName = lazy { coreModule.packageVersionInfo.versionName }
             )
         }
     }
@@ -122,7 +122,6 @@ public class EssentialServiceModuleImpl(
                 },
                 logger = initModule.logger,
                 backgroundWorker = networkRequestWorker,
-                cacheManager = Systrace.traceSynchronous("cache-manager") { storageModule.deliveryCacheManager },
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,
@@ -132,9 +131,7 @@ public class EssentialServiceModuleImpl(
     }
 
     override val apiClient: ApiClient by singleton {
-        ApiClientImpl(
-            initModule.logger
-        )
+        ApiClientImpl()
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.local.AnrLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -54,8 +54,8 @@ internal class AnrBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeAnrBehavior()) {
-            assertFalse(isGoogleAnrCaptureEnabled())
+        with(createAnrBehavior()) {
+            assertFalse(isSigquitCaptureEnabled())
             assertEquals(100L, getSamplingIntervalMs())
             assertTrue(shouldCaptureMainThreadOnly())
             assertEquals(25, getStrictModeViolationLimit())
@@ -65,7 +65,7 @@ internal class AnrBehaviorImplTest {
             assertEquals(5000, getAnrProcessErrorsDelayMs())
             assertEquals(30000, getAnrProcessErrorsSchedulerExtraTimeAllowanceMs())
             assertEquals(80, getMaxStacktracesPerInterval())
-            assertEquals(100, getStacktraceFrameLimit())
+            assertEquals(200, getStacktraceFrameLimit())
             assertEquals(5, getMaxAnrIntervalsPerSession())
             assertEquals(0, getMinThreadPriority())
             assertEquals(1000, getMinDuration())
@@ -73,7 +73,7 @@ internal class AnrBehaviorImplTest {
             assertFalse(isIdleHandlerEnabled())
             assertFalse(isStrictModeListenerEnabled())
             assertFalse(isBgAnrCaptureEnabled())
-            assertFalse(isNativeThreadAnrSamplingEnabled())
+            assertFalse(isUnityAnrCaptureEnabled())
             assertFalse(isAnrProcessErrorsCaptureEnabled())
             assertTrue(isAnrCaptureEnabled())
             assertEquals(Unwinder.LIBUNWIND, getNativeThreadAnrSamplingUnwinder())
@@ -91,16 +91,16 @@ internal class AnrBehaviorImplTest {
 
     @Test
     fun testLocalOnly() {
-        with(fakeAnrBehavior(localCfg = { local })) {
-            assertTrue(isGoogleAnrCaptureEnabled())
-            assertTrue(isNativeThreadAnrSamplingEnabled())
+        with(createAnrBehavior(localCfg = { local })) {
+            assertTrue(isSigquitCaptureEnabled())
+            assertTrue(isUnityAnrCaptureEnabled())
         }
     }
 
     @Test
     fun testRemoteAndLocal() {
-        with(fakeAnrBehavior(localCfg = { local }, remoteCfg = { remote })) {
-            assertFalse(isGoogleAnrCaptureEnabled())
+        with(createAnrBehavior(localCfg = { local }, remoteCfg = { remote })) {
+            assertFalse(isSigquitCaptureEnabled())
             assertEquals(200L, getSamplingIntervalMs())
             assertFalse(shouldCaptureMainThreadOnly())
             assertEquals(209, getStrictModeViolationLimit())
@@ -118,7 +118,7 @@ internal class AnrBehaviorImplTest {
             assertTrue(isIdleHandlerEnabled())
             assertTrue(isStrictModeListenerEnabled())
             assertTrue(isBgAnrCaptureEnabled())
-            assertTrue(isNativeThreadAnrSamplingEnabled())
+            assertTrue(isUnityAnrCaptureEnabled())
             assertTrue(isAnrProcessErrorsCaptureEnabled())
             assertFalse(isAnrCaptureEnabled())
             assertEquals(Unwinder.LIBUNWINDSTACK, getNativeThreadAnrSamplingUnwinder())

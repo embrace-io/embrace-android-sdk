@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * A class that coordinates the parallel execution of two threads to ensure a deterministic execution order
  * This enables the writing of non-flaky, non-sleep()-based tests to check for race conditions
  */
-public class ExecutionCoordinator(
+class ExecutionCoordinator(
     private val executionModifiers: ExecutionModifiers,
     private val errorLogsProvider: Provider<List<Throwable>>?
 ) {
@@ -25,7 +25,7 @@ public class ExecutionCoordinator(
     /**
      * Execute both operations in separate threads in a coordinated manner
      */
-    public fun executeOperations(
+    fun executeOperations(
         first: () -> Unit,
         second: () -> Unit,
         firstBlocksSecond: Boolean,
@@ -90,12 +90,12 @@ public class ExecutionCoordinator(
     /**
      * Kill the first thread. Most useful when the thread is blocked so unexpected mid-execution errors can be simulated.
      */
-    public fun shutdownFirstThread(): List<Runnable> = thread1.shutdownNow()
+    fun shutdownFirstThread(): List<Runnable> = thread1.shutdownNow()
 
     /**
      * Return an error message used for debugging and assertions based on error logs recorded during the execution.
      */
-    public fun getErrorMessage(): String {
+    fun getErrorMessage(): String {
         return if (errorLogsProvider != null) {
             "The following errors were logged: ${errorLogsProvider.invoke()}"
         } else {
@@ -112,7 +112,7 @@ public class ExecutionCoordinator(
      * Provides a standard implementation for [ExecutionModifiers] that [ExecutionCoordinator] expects and validates against.
      * Use [wrapOperation] to wrap code blocks or functions whose execution will by modified by [ExecutionModifiers].
      */
-    public class OperationWrapper : ExecutionModifiers {
+    class OperationWrapper : ExecutionModifiers {
         private val operationLatches = ConcurrentHashMap<Int, CountDownLatch>()
         private val operationBlockCounter = AtomicInteger(0)
         private val operationBlocks = LinkedBlockingDeque<Int>()
@@ -136,7 +136,7 @@ public class ExecutionCoordinator(
         /**
          * Wrap the enclosed operation so execution will by modified by the [ExecutionModifiers] implementation of this class
          */
-        public fun <T> wrapOperation(operation: () -> T): T {
+        fun <T> wrapOperation(operation: () -> T): T {
             val id = operationBlocks.poll()
             val latch = id?.let { operationLatches[it] }
 
@@ -164,7 +164,7 @@ public class ExecutionCoordinator(
      * This does not typically need to be implemented as [OperationWrapper] should be sufficient for most use cases. If new
      * implementations are needed, they must abide by the expectations of [ExecutionCoordinator].
      */
-    public interface ExecutionModifiers {
+    interface ExecutionModifiers {
 
         /**
          * Block on the operation of the next components. [blockBefore] determines if the blocking is done before or after the operation
@@ -172,16 +172,16 @@ public class ExecutionCoordinator(
          * operation. A positive number for the ID indicates that the blocking will happen before, while a negative number means
          * blocking will happen after.
          */
-        public fun blockNextOperation(blockBefore: Boolean = true): Int
+        fun blockNextOperation(blockBefore: Boolean = true): Int
 
         /**
          * Unblock the operation associated with [id]
          */
-        public fun unblockOperation(id: Int): Boolean
+        fun unblockOperation(id: Int): Boolean
 
         /**
          * Use to sure that next operation will throw an [IllegalAccessException]
          */
-        public fun errorOnNextOperation()
+        fun errorOnNextOperation()
     }
 }

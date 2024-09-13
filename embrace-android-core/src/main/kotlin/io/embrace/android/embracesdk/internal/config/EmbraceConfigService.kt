@@ -24,6 +24,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
@@ -52,11 +54,10 @@ internal class EmbraceConfigService(
     private val clock: Clock,
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
-    isDebug: Boolean,
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
-    public val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck(preferencesService::deviceIdentifier)
+    val thresholdCheck: BehaviorThresholdCheck =
+        BehaviorThresholdCheck { preferencesService.deviceIdentifier }
 ) : ConfigService, ProcessStateListener {
 
     /**
@@ -75,7 +76,7 @@ internal class EmbraceConfigService(
     private var configProp = RemoteConfig()
 
     @Volatile
-    public var lastUpdated: Long = 0
+    var lastUpdated: Long = 0
 
     @Volatile
     private var lastRefreshConfigAttempt: Long = 0
@@ -105,6 +106,8 @@ internal class EmbraceConfigService(
             localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
+
+    override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl(localConfig.sdkConfig)
 
     override val logMessageBehavior: LogMessageBehavior =
         LogMessageBehaviorImpl(
@@ -146,7 +149,6 @@ internal class EmbraceConfigService(
 
     override val sdkModeBehavior: SdkModeBehavior =
         SdkModeBehaviorImpl(
-            isDebug = isDebug,
             thresholdCheck = thresholdCheck,
             localSupplier = { localConfig },
             remoteSupplier = remoteSupplier
@@ -189,7 +191,7 @@ internal class EmbraceConfigService(
     /**
      * Load Config from cache if present.
      */
-    public fun loadConfigFromCache() {
+    fun loadConfigFromCache() {
         val cachedConfig = remoteConfigSource?.getCachedConfig()
         val obj = cachedConfig?.remoteConfig
 
@@ -257,7 +259,7 @@ internal class EmbraceConfigService(
     private fun persistConfig() {
         // TODO: future get rid of these prefs from PrefService entirely?
         preferencesService.sdkDisabled = sdkModeBehavior.isSdkDisabled()
-        preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isEnabled()
+        preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
     }
 
     // TODO: future extract these out to SdkBehavior interface
@@ -316,13 +318,9 @@ internal class EmbraceConfigService(
         return clock.now() > lastRefreshConfigAttempt + configRetrySafeWindow * 1000
     }
 
-    override fun close() {
-        logger.logDebug("Shutting down EmbraceConfigService")
-    }
-
     override fun hasValidRemoteConfig(): Boolean = !configRequiresRefresh()
     override fun isAppExitInfoCaptureEnabled(): Boolean {
-        return appExitInfoBehavior.isEnabled()
+        return appExitInfoBehavior.isAeiCaptureEnabled()
     }
 
     private companion object {

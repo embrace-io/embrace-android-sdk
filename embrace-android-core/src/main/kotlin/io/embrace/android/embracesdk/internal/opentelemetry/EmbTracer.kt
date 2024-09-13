@@ -8,7 +8,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.Clock
 
-public class EmbTracer(
+class EmbTracer(
     private val sdkTracer: Tracer,
     private val spanService: SpanService,
     private val clock: Clock

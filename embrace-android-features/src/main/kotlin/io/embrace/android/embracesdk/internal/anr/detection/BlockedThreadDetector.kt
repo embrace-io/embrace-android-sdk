@@ -28,10 +28,10 @@ private const val SAMPLE_BACKOFF_FACTOR = 0.5
  * Responsible for deciding whether a thread is blocked or not. The actual scheduling happens in
  * [LivenessCheckScheduler] whereas this class contains the business logic.
  */
-public class BlockedThreadDetector(
-    public var configService: ConfigService,
+class BlockedThreadDetector(
+    var configService: ConfigService,
     private val clock: Clock,
-    public var listener: BlockedThreadListener? = null,
+    var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
     private val logger: EmbLogger
@@ -44,7 +44,7 @@ public class BlockedThreadDetector(
      * All functions in this class MUST be called from the same thread - this is part of the
      * synchronization strategy that ensures ANR data is not corrupted.
      */
-    public fun onTargetThreadResponse(timestamp: Long) {
+    fun onTargetThreadResponse(timestamp: Long) {
         state.lastTargetThreadResponseMs = timestamp
 
         if (isDebuggerEnabled()) {
@@ -68,7 +68,7 @@ public class BlockedThreadDetector(
      * All functions in this class MUST be called from the same thread - this is part of the
      * synchronization strategy that ensures ANR data is not corrupted.
      */
-    public fun updateAnrTracking(timestamp: Long) {
+    fun updateAnrTracking(timestamp: Long) {
         if (isDebuggerEnabled()) {
             return
         }
@@ -96,7 +96,7 @@ public class BlockedThreadDetector(
      * To avoid useless samples grouped within a few ms of each other, this function will return
      * false & thus avoid sampling if less than half of the interval MS has passed.
      */
-    public fun shouldAttemptAnrSample(timestamp: Long): Boolean {
+    fun shouldAttemptAnrSample(timestamp: Long): Boolean {
         val lastMonitorThreadResponseMs = state.lastMonitorThreadResponseMs
         val delta = timestamp - lastMonitorThreadResponseMs // time since last check
         val intervalMs = configService.anrBehavior.getSamplingIntervalMs()
@@ -109,7 +109,7 @@ public class BlockedThreadDetector(
      * This defaults to the main thread not having processed a message within 1s.
      */
 
-    public fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
+    fun isAnrDurationThresholdExceeded(timestamp: Long): Boolean {
         val monitorThreadLag = timestamp - state.lastMonitorThreadResponseMs
         val targetThreadLag = timestamp - state.lastTargetThreadResponseMs
 

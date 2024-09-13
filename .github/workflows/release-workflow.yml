@@ -27,9 +27,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    strategy:
-      matrix:
-        jdk-version: [ "17" ]
     steps:
       - name: Checkout SDK
         uses: actions/checkout@v4
@@ -37,14 +34,14 @@ jobs:
           ref: release/${{ github.event.inputs.version_to_release }}
           fetch-depth: 0
 
-      - name: Set up JDK ${{ matrix.jdk-version }}
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.jdk-version }}
           distribution: 'adopt'
+          java-version: 17
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Gradlew Release SDK to Maven Central
         run: |
@@ -57,20 +54,9 @@ jobs:
           ref: release/${{ github.event.inputs.version_to_release }}
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
-      - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v4
-
       - name: Gradlew Release Swazzler to Maven Central
         run: |
           ./gradlew findSonatypeStagingRepository releaseSonatypeStagingRepository -Dorg.gradle.parallel=false --no-build-cache --no-configuration-cache --stacktrace
-
-      - name: Cleanup Gradle Cache
-        # Based on https://docs.github.com/en/actions/guides/building-and-testing-java-with-gradle#caching-dependencies
-        # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
-        # Restoring these files from a GitHub Actions cache might cause problems for future builds.
-        run: |
-          rm -f ~/.gradle/caches/modules-2/modules-2.lock
-          rm -f ~/.gradle/caches/modules-2/gc.properties
 
   publish-api-docs:
     name: Publish API Docs

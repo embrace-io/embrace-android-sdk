@@ -56,8 +56,8 @@ internal class PriorityThreadPoolExecutor(
         return PriorityRunnableFuture(runnableFuture, runnable.priority, clock.now())
     }
 
-    public companion object {
-        public fun createPriorityQueue(): PriorityBlockingQueue<Runnable> =
+    companion object {
+        fun createPriorityQueue(): PriorityBlockingQueue<Runnable> =
             PriorityBlockingQueue(
                 100,
                 compareBy<Runnable> { runnable ->

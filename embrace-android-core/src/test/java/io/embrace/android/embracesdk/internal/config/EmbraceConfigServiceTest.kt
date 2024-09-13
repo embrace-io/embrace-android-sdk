@@ -108,7 +108,6 @@ internal class EmbraceConfigServiceTest {
     @After
     fun tearDown() {
         clearAllMocks()
-        service.close()
     }
 
     @Suppress("DEPRECATION")
@@ -313,7 +312,6 @@ internal class EmbraceConfigServiceTest {
             fakeClock,
             logger,
             worker,
-            false,
             AppFramework.NATIVE,
             action
         ).apply {

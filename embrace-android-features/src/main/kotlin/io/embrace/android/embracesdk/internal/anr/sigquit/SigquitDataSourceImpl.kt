@@ -34,7 +34,7 @@ internal class SigquitDataSourceImpl(
 
     // IMPORTANT: This class and method are referenced by anr.c. Move or rename both at the same time, or it will break.
     override fun saveSigquit(timestamp: Long) {
-        if (anrBehavior.isGoogleAnrCaptureEnabled()) {
+        if (anrBehavior.isSigquitCaptureEnabled()) {
             captureData(NoInputValidation) {
                 addEvent(SchemaType.Sigquit, timestamp)
             }
@@ -43,16 +43,12 @@ internal class SigquitDataSourceImpl(
 
     private fun install(googleThreadId: Int): Int {
         return try {
-            val res = sigquitNdkDelegate.installGoogleAnrHandler(googleThreadId)
+            val res = sigquitNdkDelegate.installGoogleAnrHandler(googleThreadId, this)
             if (res > 0) {
                 googleAnrTrackerInstalled.set(false)
-                logger.logError("Could not initialize Google ANR tracking {code=$res}")
-            } else {
-                logger.logInfo("Google Anr Tracker handler installed successfully")
             }
             res
         } catch (exception: UnsatisfiedLinkError) {
-            logger.logError("Could not install ANR Handler. Exception: $exception")
             1
         }
     }

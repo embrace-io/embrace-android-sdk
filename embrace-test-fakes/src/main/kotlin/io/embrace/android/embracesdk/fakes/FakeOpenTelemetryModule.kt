@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -19,14 +20,19 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import io.opentelemetry.sdk.common.Clock
 
-public class FakeOpenTelemetryModule(
+class FakeOpenTelemetryModule(
     override val currentSessionSpan: CurrentSessionSpan = FakeCurrentSessionSpan(),
     override val spanSink: SpanSink = SpanSinkImpl(),
     override val logSink: LogSink = LogSinkImpl(),
     override val spanRepository: SpanRepository = SpanRepository(),
 ) : OpenTelemetryModule {
     override val openTelemetryConfiguration: OpenTelemetryConfiguration =
-        OpenTelemetryConfiguration(spanSink, logSink, SystemInfo(), "my.example")
+        OpenTelemetryConfiguration(spanSink, logSink, SystemInfo())
+
+    override fun setupSensitiveKeysBehavior(sensitiveKeysBehavior: SensitiveKeysBehavior) {
+        // no-op
+    }
+
     override val sdkTracer: Tracer
         get() = FakeTracer()
     override val spanService: SpanService

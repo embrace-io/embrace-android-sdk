@@ -9,14 +9,13 @@ import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb.TapBreadcrum
  * Breadcrumbs that represent tap events.
  */
 @JsonClass(generateAdapter = true)
-public class TapBreadcrumb(
+class TapBreadcrumb(
     point: Pair<Float?, Float?>? = null,
 
     /**
      * Name of the tapped element.
      */
-    @Json(name = "tt")
-    public val tappedElementName: String?,
+    @Json(name = "tt") val tappedElementName: String?,
 
     /**
      * The timestamp at which the event occurred.
@@ -28,15 +27,14 @@ public class TapBreadcrumb(
      * Type of TapBreadcrumb that categorizes the kind interaction, based on
      * [TapBreadcrumbType] types.
      */
-    @Json(name = "t")
-    public val type: TapBreadcrumbType?
+    @Json(name = "t") val type: TapBreadcrumbType?
 ) : Breadcrumb {
 
     /**
      * Screen position (coordinates) of the tapped element.
      */
     @Json(name = "tl")
-    public var location: String? = null
+    var location: String? = null
 
     init {
         location = if (point != null) {
@@ -51,7 +49,7 @@ public class TapBreadcrumb(
     override fun getStartTime(): Long = timestamp
 
     @JsonClass(generateAdapter = false)
-    public enum class TapBreadcrumbType(public val value: String) {
+    enum class TapBreadcrumbType(val value: String) {
         @Json(name = "s")
         TAP("tap"),
 

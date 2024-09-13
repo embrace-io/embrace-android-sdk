@@ -29,12 +29,13 @@ internal class SystemServiceModuleImpl @JvmOverloads constructor(
         getSystemServiceSafe(Context.CONNECTIVITY_SERVICE)
     }
 
-    override val storageManager: StorageStatsManager? =
+    override val storageManager: StorageStatsManager? by singleton {
         if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
-            getSystemServiceSafe(Context.STORAGE_STATS_SERVICE)
+            getSystemServiceSafe(Context.STORAGE_STATS_SERVICE) as StorageStatsManager?
         } else {
             null
         }
+    }
 
     override val windowManager: WindowManager? by singleton {
         getSystemServiceSafe(Context.WINDOW_SERVICE)

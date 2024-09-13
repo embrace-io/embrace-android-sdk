@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
 
-public class FakeBlockedThreadListener : BlockedThreadListener {
-    public var blockedCount: Int = 0
-    public var unblockedCount: Int = 0
-    public var intervalCount: Int = 0
+class FakeBlockedThreadListener : BlockedThreadListener {
+    var blockedCount: Int = 0
+    var unblockedCount: Int = 0
+    var intervalCount: Int = 0
 
     override fun onThreadBlocked(thread: Thread, timestamp: Long) {
         blockedCount++

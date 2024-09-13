@@ -5,6 +5,6 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 /**
  * Creates a [EnvelopeMetadata] object for Embrace API requests.
  */
-public fun interface EnvelopeMetadataSource {
-    public fun getEnvelopeMetadata(): EnvelopeMetadata
+fun interface EnvelopeMetadataSource {
+    fun getEnvelopeMetadata(): EnvelopeMetadata
 }

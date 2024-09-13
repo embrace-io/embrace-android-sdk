@@ -4,8 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public class ViewLocalConfig(
+class ViewLocalConfig(
 
-    @Json(name = "enable_automatic_activity_capture")
-    public val enableAutomaticActivityCapture: Boolean? = null
+    @Json(name = "enable_automatic_activity_capture") val enableAutomaticActivityCapture: Boolean? = null
 )

@@ -11,100 +11,105 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import java.io.Closeable
 
 /**
  * Provides access to the configuration for the customer's app.
  *
  * Configuration is configured for the user's app, and exposed via the API.
  */
-public interface ConfigService : Closeable {
+interface ConfigService {
 
-    public var remoteConfigSource: RemoteConfigSource?
+    var remoteConfigSource: RemoteConfigSource?
 
     /**
      * How background activity functionality should behave.
      */
-    public val backgroundActivityBehavior: BackgroundActivityBehavior
+    val backgroundActivityBehavior: BackgroundActivityBehavior
 
     /**
      * How automatic data capture functionality should behave.
      */
-    public val autoDataCaptureBehavior: AutoDataCaptureBehavior
+    val autoDataCaptureBehavior: AutoDataCaptureBehavior
 
     /**
      * How automatic breadcrumb functionality should behave.
      */
-    public val breadcrumbBehavior: BreadcrumbBehavior
+    val breadcrumbBehavior: BreadcrumbBehavior
 
     /**
      * How log message functionality should behave.
      */
-    public val logMessageBehavior: LogMessageBehavior
+    val logMessageBehavior: LogMessageBehavior
 
     /**
      * How ANR functionality should behave.
      */
-    public val anrBehavior: AnrBehavior
+    val anrBehavior: AnrBehavior
 
     /**
      * How sessions should behave.
      */
-    public val sessionBehavior: SessionBehavior
+    val sessionBehavior: SessionBehavior
 
     /**
      * How network call capture should behave.
      */
-    public val networkBehavior: NetworkBehavior
+    val networkBehavior: NetworkBehavior
 
     /**
      * How the startup moment should behave
      */
-    public val startupBehavior: StartupBehavior
+    val startupBehavior: StartupBehavior
 
     /**
      * How the SDK should handle events where data can be captured. This could be a moment, etc...
      */
-    public val dataCaptureEventBehavior: DataCaptureEventBehavior
+    val dataCaptureEventBehavior: DataCaptureEventBehavior
 
     /**
      * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
      */
-    public val sdkModeBehavior: SdkModeBehavior
+    val sdkModeBehavior: SdkModeBehavior
 
     /**
      * Provides base endpoints the SDK should send data to
      */
-    public val sdkEndpointBehavior: SdkEndpointBehavior
+    val sdkEndpointBehavior: SdkEndpointBehavior
 
     /**
      * Provides whether the SDK should enable certain 'behavior' of web vitals
      */
-    public val webViewVitalsBehavior: WebViewVitalsBehavior
+    val webViewVitalsBehavior: WebViewVitalsBehavior
 
     /**
      * Provides behavior for the app exit info feature
      */
-    public val appExitInfoBehavior: AppExitInfoBehavior
+    val appExitInfoBehavior: AppExitInfoBehavior
 
     /**
      * How the network span forwarding feature should behave
      */
-    public val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
+    val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior
+
+    /**
+     * Provides behavior for keys that might be sensitive and should be redacted when they are sent to the server
+     */
+    val sensitiveKeysBehavior: SensitiveKeysBehavior
 
     /**
      * The app framework that is currently in use.
      */
-    public val appFramework: AppFramework
+    val appFramework: AppFramework
 
     /**
      * The Embrace app ID. This is used to identify the app within the database.
      */
-    public val appId: String?
+    val appId: String?
 
     /**
      * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the
@@ -112,7 +117,7 @@ public interface ConfigService : Closeable {
      *
      * @param configListener the listener to add
      */
-    public fun addListener(configListener: () -> Unit)
+    fun addListener(configListener: () -> Unit)
 
     /**
      * Checks if the SDK is enabled.
@@ -122,7 +127,7 @@ public interface ConfigService : Closeable {
      *
      * @return true if the sdk is enabled, false otherwise
      */
-    public fun isSdkDisabled(): Boolean
+    fun isSdkDisabled(): Boolean
 
     /**
      * Checks if the capture of background activity is enabled.
@@ -133,7 +138,7 @@ public interface ConfigService : Closeable {
      *
      * @return true if background activity capture is enabled.
      */
-    public fun isBackgroundActivityCaptureEnabled(): Boolean
+    fun isBackgroundActivityCaptureEnabled(): Boolean
 
     /**
      * Returns true if the remote config has been fetched and is not expired. Generally speaking
@@ -142,12 +147,12 @@ public interface ConfigService : Closeable {
      *
      * Most callers will not need this function - try not to abuse it.
      */
-    public fun hasValidRemoteConfig(): Boolean
+    fun hasValidRemoteConfig(): Boolean
 
     /**
      * Checks if the capture of Application Exit Info is enabled.
      *
      * @return true if AEI capture is enabled.
      */
-    public fun isAppExitInfoCaptureEnabled(): Boolean
+    fun isAppExitInfoCaptureEnabled(): Boolean
 }

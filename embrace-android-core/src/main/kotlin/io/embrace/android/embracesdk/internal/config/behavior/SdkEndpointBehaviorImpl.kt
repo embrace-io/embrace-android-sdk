@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Provides the behavior that the Background Activity feature should follow.
  */
-public class SdkEndpointBehaviorImpl(
+class SdkEndpointBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<BaseUrlLocalConfig?>,
 ) : SdkEndpointBehavior, MergedConfigBehavior<BaseUrlLocalConfig, UnimplementedConfig>(
@@ -15,9 +15,9 @@ public class SdkEndpointBehaviorImpl(
     localSupplier
 ) {
 
-    public companion object {
-        public const val CONFIG_DEFAULT: String = "config.emb-api.com"
-        public const val DATA_DEFAULT: String = "data.emb-api.com"
+    companion object {
+        const val CONFIG_DEFAULT: String = "config.emb-api.com"
+        const val DATA_DEFAULT: String = "data.emb-api.com"
     }
 
     override fun getData(appId: String?): String {

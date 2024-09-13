@@ -10,7 +10,7 @@ import com.squareup.moshi.JsonClass
  * @param errors A list of causes of the internal error. Previous name: s.e.rep
  */
 @JsonClass(generateAdapter = true)
-public data class InternalError(
+data class InternalError(
 
     /* The number of internal error that occurred within Embrace. Previous name: s.e.c */
     @Json(name = "count")

@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ThreadFactory
 
-public class ComposeActivityListener : ActivityLifeCycleCallbacks {
+class ComposeActivityListener : ActivityLifeCycleCallbacks {
 
     private val threadFactory: ThreadFactory = ThreadFactory { runnable: Runnable ->
         Executors.defaultThreadFactory().newThread(runnable).apply {

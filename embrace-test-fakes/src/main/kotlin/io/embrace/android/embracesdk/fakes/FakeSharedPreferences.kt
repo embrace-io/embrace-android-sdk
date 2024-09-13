@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import android.content.SharedPreferences
 
-public class FakeSharedPreferences(private val throwExceptionOnGet: Boolean = false) : SharedPreferences {
+class FakeSharedPreferences(private val throwExceptionOnGet: Boolean = false) : SharedPreferences {
     override fun getAll(): MutableMap<String, String> = if (throwExceptionOnGet) {
         throw Exception("test exception")
     } else {

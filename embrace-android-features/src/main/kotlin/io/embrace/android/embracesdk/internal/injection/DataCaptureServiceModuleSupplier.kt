@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  * Function that returns an instance of [DataCaptureServiceModule]. Matches the signature of the constructor for
  * [DataCaptureServiceModuleImpl]
  */
-public typealias DataCaptureServiceModuleSupplier = (
+typealias DataCaptureServiceModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,
@@ -16,7 +16,7 @@ public typealias DataCaptureServiceModuleSupplier = (
     featureModule: FeatureModule
 ) -> DataCaptureServiceModule
 
-public fun createDataCaptureServiceModule(
+fun createDataCaptureServiceModule(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
     configService: ConfigService,

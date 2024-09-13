@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
 import io.embrace.android.embracesdk.internal.payload.DiskUsage
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 /**
@@ -28,18 +27,18 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
 internal class EmbraceMetadataService(
-    resourceSource: EnvelopeResourceSource,
+    resourceSource: Lazy<EnvelopeResourceSource>,
     metadataSource: EnvelopeMetadataSource,
     private val context: Context,
-    private val storageStatsManager: StorageStatsManager?,
+    private val storageStatsManager: Lazy<StorageStatsManager?>,
     private val configService: ConfigService,
     private val preferencesService: PreferencesService,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
     private val logger: EmbLogger
-) : MetadataService, StartupListener {
+) : MetadataService {
 
-    private val res by lazy(resourceSource::getEnvelopeResource)
+    private val res by lazy { resourceSource.value.getEnvelopeResource() }
     private val meta by lazy(metadataSource::getEnvelopeMetadata)
 
     private val appUpdated by lazy {
@@ -66,10 +65,17 @@ internal class EmbraceMetadataService(
      */
     override fun precomputeValues() {
         metadataBackgroundWorker.submit {
+            with(preferencesService) {
+                appVersion = res.appVersion
+                osVersion = res.osVersion
+                if (installDate == null) {
+                    installDate = clock.now()
+                }
+            }
             val free = statFs.freeBytes
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageReportingEnabled()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.autoDataCaptureBehavior.isDiskUsageCaptureEnabled()) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
-                    storageStatsManager,
+                    storageStatsManager.value,
                     context.packageManager,
                     context.packageName
                 )
@@ -152,14 +158,4 @@ internal class EmbraceMetadataService(
     }
 
     override fun getDiskUsage(): DiskUsage? = diskUsage
-
-    override fun applicationStartupComplete() {
-        with(preferencesService) {
-            appVersion = res.appVersion
-            osVersion = res.osVersion
-            if (installDate == null) {
-                installDate = clock.now()
-            }
-        }
-    }
 }

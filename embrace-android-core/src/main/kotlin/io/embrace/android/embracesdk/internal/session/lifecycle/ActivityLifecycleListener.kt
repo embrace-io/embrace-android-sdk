@@ -7,19 +7,19 @@ import android.os.Bundle
 /**
  * Implementation of [ActivityLifecycleCallbacks] with no-op defaults
  */
-public interface ActivityLifecycleListener : ActivityLifecycleCallbacks {
+interface ActivityLifecycleListener : ActivityLifecycleCallbacks {
 
-    public override fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
+    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {}
 
-    public override fun onActivityStarted(activity: Activity) {}
+    override fun onActivityStarted(activity: Activity) {}
 
-    public override fun onActivityResumed(activity: Activity) {}
+    override fun onActivityResumed(activity: Activity) {}
 
-    public override fun onActivityPaused(activity: Activity) {}
+    override fun onActivityPaused(activity: Activity) {}
 
-    public override fun onActivityStopped(activity: Activity) {}
+    override fun onActivityStopped(activity: Activity) {}
 
-    public override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
-    public override fun onActivityDestroyed(activity: Activity) {}
+    override fun onActivityDestroyed(activity: Activity) {}
 }

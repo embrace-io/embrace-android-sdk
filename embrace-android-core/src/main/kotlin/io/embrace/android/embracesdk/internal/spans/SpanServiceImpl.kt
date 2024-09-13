@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanImpl.Companion.isValidName
+import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isNameValid
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -34,7 +34,7 @@ internal class SpanServiceImpl(
         internal: Boolean,
         private: Boolean
     ): PersistableEmbraceSpan? {
-        return if (inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+        return if (inputsValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             embraceSpanFactory.create(
                 name = name,
                 type = type,
@@ -49,7 +49,7 @@ internal class SpanServiceImpl(
 
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
         return if (
-            inputsValid(embraceSpanBuilder.spanName) &&
+            inputsValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
             currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
         ) {
             embraceSpanFactory.create(embraceSpanBuilder)
@@ -110,7 +110,7 @@ internal class SpanServiceImpl(
             return false
         }
 
-        if (inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+        if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             val newSpan = embraceSpanFactory.create(name = name, type = type, internal = internal, private = private, parent = parent)
             if (newSpan.start(startTimeMs)) {
                 attributes.forEach {
@@ -130,16 +130,17 @@ internal class SpanServiceImpl(
 
     private fun inputsValid(
         name: String,
+        internal: Boolean,
         events: List<EmbraceSpanEvent>? = null,
         attributes: Map<String, String>? = null
     ): Boolean {
-        return name.isValidName() &&
+        return (name.isNameValid(internal)) &&
             ((events == null) || (events.size <= EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT)) &&
             ((attributes == null) || (attributes.size <= EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT))
     }
 
-    public companion object {
-        public const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
-        public const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
+    companion object {
+        const val MAX_INTERNAL_SPANS_PER_SESSION: Int = 5000
+        const val MAX_NON_INTERNAL_SPANS_PER_SESSION: Int = 500
     }
 }

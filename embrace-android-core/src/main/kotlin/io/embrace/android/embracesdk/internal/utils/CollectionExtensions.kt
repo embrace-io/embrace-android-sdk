@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * Returns the element at the specified index.
  * Returns null if the index is out of bounds, instead of the out-of-bounds exception.
  */
-public fun <T> List<T>.at(index: Int): T? {
+fun <T> List<T>.at(index: Int): T? {
     return if (index >= 0 && index < count()) {
         this[index]
     } else {
@@ -18,7 +18,7 @@ public fun <T> List<T>.at(index: Int): T? {
 /**
  * Dynamically allocate a set of locks in this map to support mutual exclusion for executing blocks of code when using the same key
  */
-public fun <T> MutableMap<String, AtomicInteger>.lockAndRun(key: String, code: () -> T): T {
+fun <T> MutableMap<String, AtomicInteger>.lockAndRun(key: String, code: () -> T): T {
     var lock: AtomicInteger
 
     // Find the lock for the given key if it exists - create a new one if it doesn't
@@ -52,7 +52,7 @@ public fun <T> MutableMap<String, AtomicInteger>.lockAndRun(key: String, code: (
  * or equal to the size of the number of elements requested, but since the underlying data can change after the size check, you can
  * get more elements than requested if they were added during the [toList] call.
  */
-public fun <T> Collection<T>.threadSafeTake(n: Int): List<T> {
+fun <T> Collection<T>.threadSafeTake(n: Int): List<T> {
     return if (n == 0) {
         emptyList()
     } else {

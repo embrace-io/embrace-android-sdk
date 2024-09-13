@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.createLogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -16,7 +16,7 @@ internal class LogMessageBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(fakeLogMessageBehavior()) {
+        with(createLogMessageBehavior()) {
             assertEquals(128, getLogMessageMaximumAllowedLength())
             assertEquals(100, getInfoLogLimit())
             assertEquals(100, getWarnLogLimit())
@@ -26,7 +26,7 @@ internal class LogMessageBehaviorImplTest {
 
     @Test
     fun testRemoteAndLocal() {
-        with(fakeLogMessageBehavior(remoteCfg = { remote })) {
+        with(createLogMessageBehavior(remoteCfg = { remote })) {
             assertEquals(256, getLogMessageMaximumAllowedLength())
             assertEquals(200, getInfoLogLimit())
             assertEquals(300, getWarnLogLimit())

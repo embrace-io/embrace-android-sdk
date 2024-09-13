@@ -33,8 +33,7 @@ internal class OpenTelemetrySdkTest {
         configuration = OpenTelemetryConfiguration(
             spanSink = spanSink,
             logSink = logSink,
-            systemInfo = systemInfo,
-            processIdentifier = "fakeProcessIdentifier"
+            systemInfo = systemInfo
         )
         spanExporter = FakeSpanExporter()
         logExporter = FakeLogRecordExporter()
@@ -95,5 +94,10 @@ internal class OpenTelemetrySdkTest {
             assertEquals("v1", version)
             assertEquals("url", schemaUrl)
         }
+    }
+
+    @Test
+    fun `verify that the default StorageContext is used after OpenTelemetrySdk is initialized`() {
+        assertEquals("default", System.getProperty("io.opentelemetry.context.contextStorageProvider"))
     }
 }

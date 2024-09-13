@@ -8,12 +8,12 @@ import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
 
-public class FakeEmbraceInternalInterface(
-    public var networkSpanForwardingEnabled: Boolean = false,
-    public var captureNetworkBody: Boolean = false
+class FakeEmbraceInternalInterface(
+    var networkSpanForwardingEnabled: Boolean = false,
+    var captureNetworkBody: Boolean = false
 ) : EmbraceInternalInterface {
 
-    public var networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
+    var networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
 
     override fun startSpan(name: String, parentSpanId: String?, startTimeMs: Long?): String? {
         return null

@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringStat
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 
-public class FakeAnrModule(
+class FakeAnrModule(
     override val anrService: AnrService = FakeAnrService(),
     override val anrOtelMapper: AnrOtelMapper = AnrOtelMapper(anrService, FakeClock()),
     override val sigquitDataSource: SigquitDataSource = FakeSigquitDataSource(),

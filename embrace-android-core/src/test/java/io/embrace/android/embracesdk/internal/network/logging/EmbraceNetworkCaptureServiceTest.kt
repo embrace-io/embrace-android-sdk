@@ -4,11 +4,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.config.LocalConfigParser
-import io.embrace.android.embracesdk.internal.config.local.BaseUrlLocalConfig
 import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -36,8 +34,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         private var cfg: RemoteConfig = RemoteConfig()
         private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
         private val configService: FakeConfigService = FakeConfigService(
-            networkBehavior = fakeNetworkBehavior { cfg },
-            sdkEndpointBehavior = fakeSdkEndpointBehavior { BaseUrlLocalConfig() }
+            networkBehavior = createNetworkBehavior { cfg }
         )
         private lateinit var mockLocalConfig: LocalConfig
         private val networkCaptureData: NetworkCaptureData = NetworkCaptureData(
@@ -55,8 +52,7 @@ internal class EmbraceNetworkCaptureServiceTest {
             val otelCfg = OpenTelemetryConfiguration(
                 SpanSinkImpl(),
                 LogSinkImpl(),
-                SystemInfo(),
-                "my-id"
+                SystemInfo()
             )
             mockLocalConfig =
                 LocalConfigParser.buildConfig(

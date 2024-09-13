@@ -28,8 +28,6 @@ jobs:
 
       - name: Checkout SDK
         uses: actions/checkout@v4
-        with:
-          ref: master
 
       - name: Create SDK Release Branch "release/${{ github.event.inputs.version_to_release }}"
         run: |
@@ -46,7 +44,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
           token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
 
       - name: Create Swazzler Release Branch "release/${{ github.event.inputs.version_to_release }}"

@@ -20,8 +20,8 @@ internal class ServiceRegistryTest {
     fun testServiceRegistration() {
         val registry = ServiceRegistry(EmbLoggerImpl())
         val service = FakeService()
-        val obj = "test_obj"
-        registry.registerServices(service, obj)
+        val obj = lazy { "test_obj" }
+        registry.registerServices(lazy { service }, obj, lazy { null })
 
         val expected = listOf(service)
         assertEquals(expected, registry.closeables)
@@ -35,7 +35,7 @@ internal class ServiceRegistryTest {
     fun testListeners() {
         val registry = ServiceRegistry(EmbLoggerImpl())
         val service = FakeService()
-        registry.registerService(service)
+        registry.registerService(lazy { service })
         val expected = listOf(service)
 
         val activityService = FakeProcessStateService()
@@ -61,7 +61,7 @@ internal class ServiceRegistryTest {
     fun testClosedRegistration() {
         val registry = ServiceRegistry(EmbLoggerImpl())
         registry.closeRegistration()
-        registry.registerService(FakeService())
+        registry.registerService(lazy { FakeService() })
     }
 
     private class FakeService :

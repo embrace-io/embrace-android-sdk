@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
-public class LowPowerDataSource(
+class LowPowerDataSource(
     private val context: Context,
     spanService: SpanService,
     logger: EmbLogger,
@@ -37,7 +37,7 @@ public class LowPowerDataSource(
     override fun enableDataCapture(): Unit = receiver.register(context, backgroundWorker)
     override fun disableDataCapture(): Unit = receiver.unregister(context)
 
-    public fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
+    fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val activeSpan = span
 
         if (powerSaveMode && activeSpan == null) {

@@ -71,7 +71,7 @@ import com.squareup.moshi.JsonClass
  */
 
 @JsonClass(generateAdapter = true)
-public data class EnvelopeResource(
+data class EnvelopeResource(
 
     /* The app's publicly displayed version name. Previous name: a.v */
     @Json(name = "app_version")

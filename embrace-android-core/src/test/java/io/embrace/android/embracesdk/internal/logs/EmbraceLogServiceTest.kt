@@ -7,10 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeLogMessageBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
@@ -41,7 +43,13 @@ internal class EmbraceLogServiceTest {
 
     @Before
     fun setUp() {
-        fakeConfigService = FakeConfigService()
+        fakeConfigService = FakeConfigService(
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                SdkLocalConfig(
+                    sensitiveKeysDenylist = listOf("password")
+                )
+            )
+        )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         fakeLogWriter = FakeLogWriter()
 
@@ -70,6 +78,21 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
+    fun `sensitive properties are redacted`() {
+        // given custom properties with a sensitive key
+        val properties = mapOf("password" to "123456", "status" to "success")
+
+        // when logging a message with those properties
+        logService.log("message", EventType.INFO_LOG, LogExceptionType.NONE, properties)
+
+        // then the sensitive key is redacted
+        val log = fakeLogWriter.logEvents.single()
+        val attributes = log.schemaType.attributes()
+        assertEquals(REDACTED_LABEL, attributes["password"])
+        assertEquals("success", attributes["status"])
+    }
+
+    @Test
     fun `telemetry attributes are set correctly, including session properties and LOG_RECORD_UID`() {
         // given a session with properties
         fakeSessionPropertiesService.props["someProperty"] = "someValue"
@@ -80,10 +103,9 @@ internal class EmbraceLogServiceTest {
 
         // then the telemetry attributes are set correctly
         val log = fakeLogWriter.logEvents.single()
-        assertEquals("someValue", log.schemaType.attributes()["emb.properties.someProperty"])
-        assertTrue(
-            log.schemaType.attributes().containsKey(LogIncubatingAttributes.LOG_RECORD_UID.key)
-        )
+        val attributes = log.schemaType.attributes()
+        assertEquals("someValue", attributes["emb.properties.someProperty"])
+        assertTrue(attributes.containsKey(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
     @Test
@@ -107,7 +129,7 @@ internal class EmbraceLogServiceTest {
     fun `info and warning logs are gated correctly`() {
         // given a config that gates info and warning logs
         fakeConfigService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior(
+            sessionBehavior = createSessionBehavior(
                 remoteCfg = {
                     RemoteConfig(
                         sessionConfig = SessionRemoteConfig(
@@ -134,14 +156,10 @@ internal class EmbraceLogServiceTest {
         // given a config with log limits
         val testLogLimit = 5
         fakeConfigService = FakeConfigService(
-            logMessageBehavior = fakeLogMessageBehavior(
-                remoteCfg = {
-                    LogRemoteConfig(
-                        logInfoLimit = testLogLimit,
-                        logWarnLimit = testLogLimit,
-                        logErrorLimit = testLogLimit
-                    )
-                }
+            logMessageBehavior = FakeLogMessageBehavior(
+                infoLogLimit = testLogLimit,
+                warnLogLimit = testLogLimit,
+                errorLogLimit = testLogLimit
             )
         )
         logService = createEmbraceLogService()
@@ -168,7 +186,9 @@ internal class EmbraceLogServiceTest {
     @Test
     fun `a max length smaller than 3 does not add ellipsis`() {
         // given a config with a log message limit smaller than 3
-        fakeConfigService = getConfigServiceWithLogLimit(2)
+        fakeConfigService = FakeConfigService(
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 2)
+        )
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
@@ -182,7 +202,9 @@ internal class EmbraceLogServiceTest {
     @Test
     fun `a log message bigger than the max length is trimmed`() {
         // given a config with message limit
-        fakeConfigService = getConfigServiceWithLogLimit(5)
+        fakeConfigService = FakeConfigService(
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5)
+        )
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
@@ -198,13 +220,7 @@ internal class EmbraceLogServiceTest {
         // given a config with message limit and app framework Unity
         fakeConfigService = FakeConfigService(
             appFramework = AppFramework.UNITY,
-            logMessageBehavior = fakeLogMessageBehavior(
-                remoteCfg = {
-                    LogRemoteConfig(
-                        logMessageMaximumAllowedLength = 5
-                    )
-                }
-            )
+            logMessageBehavior = FakeLogMessageBehavior(logMessageMaximumAllowedLength = 5)
         )
         logService = createEmbraceLogService()
 
@@ -290,19 +306,11 @@ internal class EmbraceLogServiceTest {
         val log = fakeLogWriter.logEvents.single()
         assertEquals(message, log.message)
         assertEquals(Severity.WARN, log.severity)
-        Assert.assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertEquals(
-            LogExceptionType.HANDLED.value,
-            log.schemaType.attributes()[embExceptionHandling.name]
-        )
-        assertEquals(
-            exception.javaClass.simpleName,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key]
-        )
-        assertEquals(
-            exception.message,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key]
-        )
+        val attributes = log.schemaType.attributes()
+        Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
+        assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
+        assertEquals(exception.javaClass.simpleName, attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals(exception.message, attributes[ExceptionAttributes.EXCEPTION_MESSAGE.key])
         log.assertIsType(EmbType.System.Exception)
     }
 
@@ -332,37 +340,13 @@ internal class EmbraceLogServiceTest {
         val log = fakeLogWriter.logEvents.single()
         assertEquals(flutterMessage, log.message)
         assertEquals(Severity.ERROR, log.severity)
-        Assert.assertNotNull(log.schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key])
-        assertEquals(
-            LogExceptionType.HANDLED.value,
-            log.schemaType.attributes()[embExceptionHandling.name]
-        )
-        assertEquals(
-            flutterException.javaClass.simpleName,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_TYPE.key]
-        )
-        assertEquals(
-            flutterException.message,
-            log.schemaType.attributes()[ExceptionAttributes.EXCEPTION_MESSAGE.key]
-        )
-        assertEquals(
-            flutterContext,
-            log.schemaType.attributes()[EmbType.System.FlutterException.embFlutterExceptionContext.name]
-        )
-        assertEquals(
-            flutterLibrary,
-            log.schemaType.attributes()[EmbType.System.FlutterException.embFlutterExceptionLibrary.name]
-        )
+        val attributes = log.schemaType.attributes()
+        Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
+        assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
+        assertEquals(flutterException.javaClass.simpleName, attributes[ExceptionAttributes.EXCEPTION_TYPE.key])
+        assertEquals(flutterException.message, attributes[ExceptionAttributes.EXCEPTION_MESSAGE.key])
+        assertEquals(flutterContext, attributes[EmbType.System.FlutterException.embFlutterExceptionContext.name])
+        assertEquals(flutterLibrary, attributes[EmbType.System.FlutterException.embFlutterExceptionLibrary.name])
         log.assertIsType(EmbType.System.FlutterException)
     }
-
-    private fun getConfigServiceWithLogLimit(testLogMessageLimit: Int) = FakeConfigService(
-        logMessageBehavior = fakeLogMessageBehavior(
-            remoteCfg = {
-                LogRemoteConfig(
-                    logMessageMaximumAllowedLength = testLogMessageLimit
-                )
-            }
-        )
-    )
 }

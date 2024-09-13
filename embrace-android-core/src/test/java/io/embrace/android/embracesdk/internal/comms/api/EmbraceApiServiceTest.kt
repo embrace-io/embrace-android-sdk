@@ -23,8 +23,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.mockk.mockk
-import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -37,7 +35,6 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.util.concurrent.ScheduledExecutorService
 
 internal class EmbraceApiServiceTest {
 
@@ -48,7 +45,7 @@ internal class EmbraceApiServiceTest {
     private lateinit var apiUrlBuilder: ApiUrlBuilder
     private lateinit var fakeApiClient: FakeApiClient
     private lateinit var fakeCacheManager: DeliveryCacheManager
-    private lateinit var testScheduledExecutor: ScheduledExecutorService
+    private lateinit var testScheduledExecutor: BlockingScheduledExecutorService
     private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
     private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
@@ -79,7 +76,6 @@ internal class EmbraceApiServiceTest {
         }
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `test getConfig returns correct values in Response`() {
         fakeApiClient.queueResponse(
@@ -166,23 +162,6 @@ internal class EmbraceApiServiceTest {
             expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
             expectedEventId = "e:event-id",
             expectedPayload = getExpectedPayloadSerialized(event, EventMessage::class.java)
-        )
-    }
-
-    @Test
-    fun `send crash request is as expected`() {
-        val crash = EventMessage(
-            event = Event(
-                eventId = "crash-id",
-                activeEventIds = listOf("event-1", "event-2"),
-                type = EventType.CRASH
-            )
-        )
-        apiService.sendCrash(crash)
-        verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
-            expectedEventId = "c:event-1,event-2",
-            expectedPayload = getExpectedPayloadSerialized(crash, EventMessage::class.java)
         )
     }
 
@@ -277,11 +256,10 @@ internal class EmbraceApiServiceTest {
 
     @Test
     fun `network request runnable is used`() {
-        testScheduledExecutor = mockk(relaxed = true)
         initApiService()
         val payload = "{}".toByteArray(Charsets.UTF_8)
         apiService.sendSession({ it.write(payload) }) {}
-        verify(exactly = 1) { testScheduledExecutor.submit(any<Runnable>()) }
+        assertEquals(1, testScheduledExecutor.submitCount)
     }
 
     @Test
@@ -393,14 +371,13 @@ internal class EmbraceApiServiceTest {
 
     @Test
     fun `test that requests to rate limited endpoint, do not execute the request and save a pending api call`() {
-        val callback = mockk<() -> Unit>(relaxed = true)
         val endpoint = Endpoint.LOGS
         with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
                 scheduledWorker = ScheduledWorker(testScheduledExecutor),
                 retryAfter = 3,
-                retryMethod = callback
+                retryMethod = { }
             )
         }
 
@@ -479,7 +456,6 @@ internal class EmbraceApiServiceTest {
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = EmbLoggerImpl(),
             backgroundWorker = BackgroundWorker(testScheduledExecutor),
-            cacheManager = fakeCacheManager,
             pendingApiCallsSender = fakePendingApiCallsSender,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,

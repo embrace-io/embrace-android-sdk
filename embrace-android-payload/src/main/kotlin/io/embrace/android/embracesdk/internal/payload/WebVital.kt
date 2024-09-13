@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Web Vitals are a set of performance metrics that measure and report on the speed and quality of web pages.
  */
 @JsonClass(generateAdapter = true)
-public data class WebVital(
+data class WebVital(
 
     @Json(name = "t")
     val type: WebVitalType,

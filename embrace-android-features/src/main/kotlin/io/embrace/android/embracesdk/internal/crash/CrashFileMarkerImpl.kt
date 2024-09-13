@@ -7,7 +7,7 @@ import java.io.File
  * CrashFileMarker uses a file to indicate that a crash has occurred. This file is accessed in the
  * next launch of the app to determine if a crash occurred in the previous launch.
  */
-public class CrashFileMarkerImpl(
+class CrashFileMarkerImpl(
     private val markerFile: Lazy<File>,
     private val logger: EmbLogger
 ) : CrashFileMarker {
@@ -87,8 +87,8 @@ public class CrashFileMarkerImpl(
         }
     }
 
-    public companion object {
-        public const val CRASH_MARKER_FILE_NAME: String = "embrace_crash_marker"
+    companion object {
+        const val CRASH_MARKER_FILE_NAME: String = "embrace_crash_marker"
         private const val CRASH_MARKER_SOURCE_JVM: String = "1"
     }
 }

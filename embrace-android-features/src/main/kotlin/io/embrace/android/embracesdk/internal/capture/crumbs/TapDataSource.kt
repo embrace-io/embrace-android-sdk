@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 /**
  * Captures custom breadcrumbs.
  */
-public class TapDataSource(
+class TapDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     logger: EmbLogger
@@ -22,7 +22,7 @@ public class TapDataSource(
     limitStrategy = UpToLimitStrategy(breadcrumbBehavior::getTapBreadcrumbLimit)
 ) {
 
-    public fun logTap(
+    fun logTap(
         point: Pair<Float?, Float?>,
         element: String,
         timestamp: Long,
@@ -32,7 +32,7 @@ public class TapDataSource(
             inputValidation = NoInputValidation,
             captureAction = {
                 val finalPoint = when {
-                    breadcrumbBehavior.isTapCoordinateCaptureEnabled() -> point
+                    breadcrumbBehavior.isViewClickCoordinateCaptureEnabled() -> point
                     else -> Pair(0.0f, 0.0f)
                 }
                 val coords = run {

@@ -4,8 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public data class ApiRequestUrl(
+data class ApiRequestUrl(
 
-    @Json(name = "url")
-    public val url: String
+    @Json(name = "url") val url: String
 )

@@ -16,20 +16,20 @@ import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDat
 import io.embrace.android.embracesdk.internal.capture.thermalstate.ThermalStateDataSource
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 
-public interface FeatureModule {
-    public val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
-    public val viewDataSource: DataSourceState<ViewDataSource>
-    public val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
-    public val tapDataSource: DataSourceState<TapDataSource>
-    public val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
-    public val rnActionDataSource: DataSourceState<RnActionDataSource>
-    public val webViewDataSource: DataSourceState<WebViewDataSource>
-    public val lowPowerDataSource: DataSourceState<LowPowerDataSource>
-    public val thermalStateDataSource: DataSourceState<ThermalStateDataSource>
-    public val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
-    public val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
-    public val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
-    public val sigquitDataSource: DataSourceState<SigquitDataSource>
+interface FeatureModule {
+    val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource>
+    val viewDataSource: DataSourceState<ViewDataSource>
+    val pushNotificationDataSource: DataSourceState<PushNotificationDataSource>
+    val tapDataSource: DataSourceState<TapDataSource>
+    val webViewUrlDataSource: DataSourceState<WebViewUrlDataSource>
+    val rnActionDataSource: DataSourceState<RnActionDataSource>
+    val webViewDataSource: DataSourceState<WebViewDataSource>
+    val lowPowerDataSource: DataSourceState<LowPowerDataSource>
+    val thermalStateDataSource: DataSourceState<ThermalStateDataSource>
+    val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
+    val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
+    val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
+    val sigquitDataSource: DataSourceState<SigquitDataSource>
 
     /**
      * Called by the embrace-android-core module. The implementation of this should add any features
@@ -37,5 +37,5 @@ public interface FeatureModule {
      * embrace-android-core module. As an example, [MemoryWarningDataSource] is not directly
      * referenced anywhere, but [BreadcrumbDataSource] is.
      */
-    public fun registerFeatures()
+    fun registerFeatures()
 }

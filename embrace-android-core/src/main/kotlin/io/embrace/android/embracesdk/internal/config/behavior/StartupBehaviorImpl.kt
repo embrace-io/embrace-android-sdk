@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Provides the behavior that the Startup moment feature should follow.
  */
-public class StartupBehaviorImpl(
+class StartupBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     localSupplier: Provider<StartupMomentLocalConfig?>
 ) : StartupBehavior, MergedConfigBehavior<StartupMomentLocalConfig, UnimplementedConfig>(
@@ -19,5 +19,5 @@ public class StartupBehaviorImpl(
         const val AUTOMATICALLY_END_DEFAULT = true
     }
 
-    override fun isAutomaticEndEnabled(): Boolean = local?.automaticallyEnd ?: AUTOMATICALLY_END_DEFAULT
+    override fun isStartupMomentAutoEndEnabled(): Boolean = local?.automaticallyEnd ?: AUTOMATICALLY_END_DEFAULT
 }

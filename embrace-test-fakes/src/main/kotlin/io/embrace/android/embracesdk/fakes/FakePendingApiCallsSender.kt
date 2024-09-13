@@ -9,10 +9,10 @@ import java.io.ByteArrayOutputStream
 import java.util.LinkedList
 import java.util.Queue
 
-public class FakePendingApiCallsSender : PendingApiCallsSender {
+class FakePendingApiCallsSender : PendingApiCallsSender {
 
-    public var didScheduleApiCall: Boolean = false
-    public val retryQueue: Queue<Pair<ApiRequest, ByteArray?>> = LinkedList()
+    var didScheduleApiCall: Boolean = false
+    val retryQueue: Queue<Pair<ApiRequest, ByteArray?>> = LinkedList()
     private var sendMethod: ((ApiRequest, SerializationAction) -> ApiResponse)? = null
 
     override fun scheduleRetry(response: ApiResponse) {
@@ -20,7 +20,7 @@ public class FakePendingApiCallsSender : PendingApiCallsSender {
         didScheduleApiCall = true
     }
 
-    override fun setSendMethod(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
+    override fun initializeRetrySchedule(sendMethod: (request: ApiRequest, action: SerializationAction) -> ApiResponse) {
         this.sendMethod = sendMethod
     }
 

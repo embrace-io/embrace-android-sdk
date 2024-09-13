@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
@@ -23,16 +24,14 @@ internal class SessionOrchestrationModuleImpl(
     deliveryModule: DeliveryModule,
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
-    startupDurationProvider: (coldStart: Boolean) -> Long?,
-    momentsModule: MomentsModule,
+    startupService: StartupService,
     logModule: LogModule
 ) : SessionOrchestrationModule {
 
     override val gatingService: GatingService by singleton {
         EmbraceGatingService(
             configModule.configService,
-            logModule.logService,
-            initModule.logger
+            logModule.logService
         )
     }
 
@@ -68,8 +67,7 @@ internal class SessionOrchestrationModuleImpl(
     override val sessionSpanAttrPopulator: SessionSpanAttrPopulator by singleton {
         SessionSpanAttrPopulatorImpl(
             openTelemetryModule.currentSessionSpan,
-            momentsModule.eventService,
-            startupDurationProvider,
+            startupService,
             logModule.logService,
             payloadSourceModule.metadataService
         )

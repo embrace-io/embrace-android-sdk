@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.spans.TracingApi
 @InternalApi
 public interface SdkApi :
     LogsApi,
-    MomentsApi,
     NetworkRequestApi,
     SessionApi,
     UserApi,

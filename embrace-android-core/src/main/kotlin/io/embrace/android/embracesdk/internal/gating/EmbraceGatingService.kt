@@ -1,12 +1,9 @@
 package io.embrace.android.embracesdk.internal.gating
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.gating.v2.EnvelopeSanitizerFacade
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 /**
@@ -19,8 +16,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
  */
 internal class EmbraceGatingService(
     private val configService: ConfigService,
-    private val logService: LogService,
-    private val logger: EmbLogger
+    private val logService: LogService
 ) : GatingService {
 
     override fun gateSessionEnvelope(
@@ -46,21 +42,5 @@ internal class EmbraceGatingService(
     private fun hasErrorLogs(): Boolean {
         return logService.getErrorLogsCount() > 0 &&
             configService.sessionBehavior.shouldSendFullForErrorLog()
-    }
-
-    override fun gateEventMessage(eventMessage: EventMessage): EventMessage {
-        val behavior = configService.sessionBehavior
-        val components = behavior.getSessionComponents()
-        if (components != null && behavior.isGatingFeatureEnabled()) {
-            logger.logDebug("Session gating feature enabled. Attempting to sanitize the event message")
-
-            if (behavior is SessionBehaviorImpl && behavior.shouldSendFullMessage(eventMessage)) {
-                return eventMessage
-            }
-
-            return EventSanitizerFacade(eventMessage, components).getSanitizedMessage()
-        }
-
-        return eventMessage
     }
 }

@@ -16,7 +16,7 @@ internal class EndpointTest {
 
     private lateinit var scheduledExecutorService: BlockingScheduledExecutorService
     private lateinit var mockExecuteApiCalls: () -> Unit
-    private val endpoint = Endpoint.EVENTS
+    private val endpoint = Endpoint.LOGS
 
     @Before
     fun setUp() {
@@ -54,7 +54,7 @@ internal class EndpointTest {
 
     @Test
     fun `test subsequent rate limit calls without retryAfter are delayed exponentially`() {
-        val endpoint = Endpoint.EVENTS
+        val endpoint = Endpoint.LOGS
         // emulate 2 rate limit responses and 1 success response
         every { mockExecuteApiCalls.invoke() } answers {
             with(endpoint.limiter) {

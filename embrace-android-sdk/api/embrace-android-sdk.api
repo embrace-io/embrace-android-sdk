@@ -21,12 +21,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun clearUsername ()V
 	public fun createSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public fun endAppStartup ()V
-	public fun endAppStartup (Ljava/util/Map;)V
-	public fun endMoment (Ljava/lang/String;)V
-	public fun endMoment (Ljava/lang/String;Ljava/lang/String;)V
-	public fun endMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
-	public fun endMoment (Ljava/lang/String;Ljava/util/Map;)V
 	public fun endSession ()V
 	public fun endSession (Z)V
 	public fun endView (Ljava/lang/String;)Z
@@ -81,9 +75,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/Embrace$AppFramework;)V
 	public fun start (Landroid/content/Context;Z)V
 	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
-	public fun startMoment (Ljava/lang/String;)V
-	public fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
-	public fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
 	public fun startSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
@@ -147,7 +138,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun startView (Ljava/lang/String;)Z
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
 }
 
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {

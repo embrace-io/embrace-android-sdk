@@ -86,9 +86,6 @@ class FakeEmbraceInternalInterface(
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = captureNetworkBody
 
-    override fun setProcessStartedByNotification() {
-    }
-
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwardingEnabled
 
     override fun getSdkCurrentTime(): Long {

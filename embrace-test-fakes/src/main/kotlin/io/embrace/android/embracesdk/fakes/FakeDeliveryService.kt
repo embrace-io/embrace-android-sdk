@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -24,9 +23,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 open class FakeDeliveryService : DeliveryService {
     val lastSentLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
     val lastSavedLogPayloads: MutableList<Envelope<LogPayload>> = mutableListOf()
-    val sentMoments: MutableList<EventMessage> = mutableListOf()
-    var lastEventSentAsync: EventMessage? = null
-    var eventSentAsyncInvokedCount: Int = 0
     var lastSentCachedSession: String? = null
     val sentSessionEnvelopes: Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>> =
         ConcurrentLinkedQueue()
@@ -45,12 +41,6 @@ open class FakeDeliveryService : DeliveryService {
         sessionIdTracker: SessionIdTracker
     ) {
         lastSentCachedSession = sessionIdTracker.getActiveSessionId()
-    }
-
-    override fun sendMoment(eventMessage: EventMessage) {
-        eventSentAsyncInvokedCount++
-        lastEventSentAsync = eventMessage
-        sentMoments.add(eventMessage)
     }
 
     override fun sendLogs(logEnvelope: Envelope<LogPayload>) {

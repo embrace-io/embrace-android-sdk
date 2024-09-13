@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
@@ -15,9 +16,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert
@@ -57,24 +56,12 @@ internal class EmbraceLogServiceTest {
     )
 
     @Test
-    fun `invalid event types are not logged`() {
-        // given an invalid event type (not INFO, WARNING or ERROR)
-        val invalidEventType = EventType.START
-
-        // when logging a message with said type
-        logService.log("message", invalidEventType, LogExceptionType.NONE)
-
-        // then the message is not be logged
-        assertEquals(0, fakeLogWriter.logEvents.size)
-    }
-
-    @Test
     fun `sensitive properties are redacted`() {
         // given custom properties with a sensitive key
         val properties = mapOf("password" to "123456", "status" to "success")
 
         // when logging a message with those properties
-        logService.log("message", EventType.INFO_LOG, LogExceptionType.NONE, properties)
+        logService.log("message", Severity.INFO, LogExceptionType.NONE, properties)
 
         // then the sensitive key is redacted
         val log = fakeLogWriter.logEvents.single()
@@ -90,7 +77,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging the message
-        logService.log("message", EventType.INFO_LOG, LogExceptionType.NONE)
+        logService.log("message", Severity.INFO, LogExceptionType.NONE)
 
         // then the telemetry attributes are set correctly
         val log = fakeLogWriter.logEvents.single()
@@ -104,7 +91,7 @@ internal class EmbraceLogServiceTest {
         val props = mapOf(LogIncubatingAttributes.LOG_RECORD_UID.key to "fakeUid")
         logService.log(
             message = "Hello world",
-            type = EventType.INFO_LOG,
+            severity = Severity.INFO,
             logExceptionType = LogExceptionType.NONE,
             properties = props
         )
@@ -134,9 +121,9 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging some messages
-        logService.log("info", EventType.INFO_LOG, LogExceptionType.NONE)
-        logService.log("warning!", EventType.WARNING_LOG, LogExceptionType.NONE)
-        logService.log("error!", EventType.ERROR_LOG, LogExceptionType.NONE)
+        logService.log("info", Severity.INFO, LogExceptionType.NONE)
+        logService.log("warning!", Severity.WARNING, LogExceptionType.NONE)
+        logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
 
         // then only errors are logged
         assertEquals(1, fakeLogWriter.logEvents.size)
@@ -157,18 +144,18 @@ internal class EmbraceLogServiceTest {
 
         // when logging exactly the allowed count of each type
         repeat(testLogLimit) {
-            logService.log("info", EventType.INFO_LOG, LogExceptionType.NONE)
-            logService.log("warning!", EventType.WARNING_LOG, LogExceptionType.NONE)
-            logService.log("error!", EventType.ERROR_LOG, LogExceptionType.NONE)
+            logService.log("info", Severity.INFO, LogExceptionType.NONE)
+            logService.log("warning!", Severity.WARNING, LogExceptionType.NONE)
+            logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
         }
 
         // then the logs are all logged
         assertEquals(testLogLimit * 3, fakeLogWriter.logEvents.size)
 
         // when logging one more of each type
-        logService.log("info", EventType.INFO_LOG, LogExceptionType.NONE)
-        logService.log("warning!", EventType.WARNING_LOG, LogExceptionType.NONE)
-        logService.log("error!", EventType.ERROR_LOG, LogExceptionType.NONE)
+        logService.log("info", Severity.INFO, LogExceptionType.NONE)
+        logService.log("warning!", Severity.WARNING, LogExceptionType.NONE)
+        logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
 
         // then the logs are not logged
         assertEquals(testLogLimit * 3, fakeLogWriter.logEvents.size)
@@ -183,7 +170,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
-        logService.log("message", EventType.INFO_LOG, LogExceptionType.NONE)
+        logService.log("message", Severity.INFO, LogExceptionType.NONE)
 
         // then the message is not ellipsized
         val log = fakeLogWriter.logEvents.single()
@@ -199,7 +186,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the limit
-        logService.log("abcdef", EventType.INFO_LOG, LogExceptionType.NONE)
+        logService.log("abcdef", Severity.INFO, LogExceptionType.NONE)
 
         // then the message is trimmed
         val log = fakeLogWriter.logEvents.single()
@@ -216,7 +203,7 @@ internal class EmbraceLogServiceTest {
         logService = createEmbraceLogService()
 
         // when logging a message that exceeds the logMessageMaximumAllowedLength
-        logService.log("abcdef", EventType.INFO_LOG, LogExceptionType.NONE)
+        logService.log("abcdef", Severity.INFO, LogExceptionType.NONE)
 
         // then the message is not trimmed
         val log = fakeLogWriter.logEvents.single()
@@ -226,7 +213,7 @@ internal class EmbraceLogServiceTest {
         val unityMaxAllowedLength = 16384
         logService.log(
             "a".repeat(unityMaxAllowedLength + 1),
-            EventType.INFO_LOG,
+            Severity.INFO,
             LogExceptionType.NONE
         )
 
@@ -242,7 +229,7 @@ internal class EmbraceLogServiceTest {
         val exceptionType = LogExceptionType.NONE
 
         // when logging the message
-        logService.log(message, EventType.INFO_LOG, exceptionType)
+        logService.log(message, Severity.INFO, exceptionType)
 
         // then the message is logged
         val log = fakeLogWriter.logEvents.single()
@@ -253,7 +240,7 @@ internal class EmbraceLogServiceTest {
     fun `get error logs count returns the correct number`() {
         // when logging some error messages
         repeat(5) {
-            logService.log("error!", EventType.ERROR_LOG, LogExceptionType.NONE)
+            logService.log("error!", Severity.ERROR, LogExceptionType.NONE)
         }
 
         // then the correct number of error logs is returned
@@ -266,7 +253,7 @@ internal class EmbraceLogServiceTest {
         val stackTrace = Array(201) { StackTraceElement("TestClass", "testMethod", "testFile", it) }
 
         // when logging a message with the stacktrace
-        logService.log("message", EventType.INFO_LOG, LogExceptionType.HANDLED, stackTraceElements = stackTrace)
+        logService.log("message", Severity.INFO, LogExceptionType.HANDLED, stackTraceElements = stackTrace)
 
         // then the stacktrace is truncated
         val log = fakeLogWriter.logEvents.single()
@@ -286,7 +273,7 @@ internal class EmbraceLogServiceTest {
         // when logging it
         logService.log(
             message = message,
-            type = EventType.WARNING_LOG,
+            severity = Severity.WARNING,
             logExceptionType = LogExceptionType.HANDLED,
             stackTraceElements = exception.stackTrace,
             exceptionName = exception.javaClass.simpleName,
@@ -296,7 +283,7 @@ internal class EmbraceLogServiceTest {
         // then the exception is correctly logged
         val log = fakeLogWriter.logEvents.single()
         assertEquals(message, log.message)
-        assertEquals(Severity.WARN, log.severity)
+        assertEquals(io.opentelemetry.api.logs.Severity.WARN, log.severity)
         val attributes = log.schemaType.attributes()
         Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])
@@ -318,7 +305,7 @@ internal class EmbraceLogServiceTest {
         // when logging it
         logService.log(
             message = flutterMessage,
-            type = EventType.ERROR_LOG,
+            severity = Severity.ERROR,
             logExceptionType = LogExceptionType.HANDLED,
             stackTraceElements = flutterException.stackTrace,
             exceptionName = flutterException.javaClass.simpleName,
@@ -330,7 +317,7 @@ internal class EmbraceLogServiceTest {
         // then the exception is correctly logged
         val log = fakeLogWriter.logEvents.single()
         assertEquals(flutterMessage, log.message)
-        assertEquals(Severity.ERROR, log.severity)
+        assertEquals(io.opentelemetry.api.logs.Severity.ERROR, log.severity)
         val attributes = log.schemaType.attributes()
         Assert.assertNotNull(attributes[LogIncubatingAttributes.LOG_RECORD_UID.key])
         assertEquals(LogExceptionType.HANDLED.value, attributes[embExceptionHandling.name])

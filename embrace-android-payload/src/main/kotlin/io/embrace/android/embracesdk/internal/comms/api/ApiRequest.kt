@@ -19,10 +19,6 @@ data class ApiRequest(
 
     val deviceId: String? = null,
 
-    val eventId: String? = null,
-
-    val logId: String? = null,
-
     val url: ApiRequestUrl,
 
     val httpMethod: HttpMethod = HttpMethod.POST,

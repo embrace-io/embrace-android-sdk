@@ -287,11 +287,7 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerServices(
                             lazy { anrModule.anrService }
                         )
-
-                        // set callbacks and pass in non-placeholder config.
-                        anrModule.anrService.finishInitialization(
-                            configModule.configService
-                        )
+                        anrModule.anrService.startAnrCapture()
                     }
 
                     payloadSourceModule = init(PayloadSourceModule::class) {

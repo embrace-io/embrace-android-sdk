@@ -72,7 +72,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 deliveryServiceProvider = { FakeDeliveryService() }
             )
         },
-        anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
+        anrModuleSupplier = { _, _, _ -> fakeAnrModule },
         nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() }
     )
 }

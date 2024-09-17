@@ -20,8 +20,6 @@ add_library(# Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         emb_ndk_crash_samples.cpp
-        anr/emb_anr_manager.c
-        anr/anr.c
         utils/emb_log.c
         jnibridge/emb_ndk_manager.c
         safejni/jni_util.c

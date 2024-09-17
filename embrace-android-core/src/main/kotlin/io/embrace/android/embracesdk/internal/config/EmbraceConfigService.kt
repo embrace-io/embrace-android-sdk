@@ -89,25 +89,22 @@ internal class EmbraceConfigService(
     override val backgroundActivityBehavior: BackgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::backgroundActivityConfig,
             remoteSupplier = { getConfig().backgroundActivityConfig }
         )
 
     override val autoDataCaptureBehavior: AutoDataCaptureBehavior =
         AutoDataCaptureBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            localSupplier = { localConfig },
             remoteSupplier = remoteSupplier
         )
 
     override val breadcrumbBehavior: BreadcrumbBehavior =
         BreadcrumbBehaviorImpl(
             thresholdCheck,
-            localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
 
-    override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl(localConfig.sdkConfig)
+    override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl()
 
     override val logMessageBehavior: LogMessageBehavior =
         LogMessageBehaviorImpl(
@@ -118,51 +115,38 @@ internal class EmbraceConfigService(
     override val anrBehavior: AnrBehavior =
         AnrBehaviorImpl(
             thresholdCheck,
-            localSupplier = localConfig.sdkConfig::anr,
             remoteSupplier = { getConfig().anrConfig }
         )
 
-    override val sessionBehavior: SessionBehavior =
-        SessionBehaviorImpl(
-            thresholdCheck,
-            localSupplier = localConfig.sdkConfig::sessionConfig,
-            remoteSupplier = { getConfig() }
-        )
+    override val sessionBehavior: SessionBehavior = SessionBehaviorImpl(
+        thresholdCheck,
+        remoteSupplier = { getConfig() }
+    )
 
     override val networkBehavior: NetworkBehavior =
         NetworkBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
 
-    override val startupBehavior: StartupBehavior =
-        StartupBehaviorImpl(
-            thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::startupMoment
-        )
+    override val startupBehavior: StartupBehavior = StartupBehaviorImpl()
 
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(
         thresholdCheck = thresholdCheck,
         remoteSupplier = remoteSupplier
     )
 
-    override val sdkModeBehavior: SdkModeBehavior =
-        SdkModeBehaviorImpl(
-            thresholdCheck = thresholdCheck,
-            localSupplier = { localConfig },
-            remoteSupplier = remoteSupplier
-        )
+    override val sdkModeBehavior: SdkModeBehavior = SdkModeBehaviorImpl(
+        thresholdCheck = thresholdCheck,
+        remoteSupplier = remoteSupplier
+    )
 
-    override val sdkEndpointBehavior: SdkEndpointBehavior =
-        SdkEndpointBehaviorImpl(
-            thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::baseUrls,
-        )
+    override val sdkEndpointBehavior: SdkEndpointBehavior = SdkEndpointBehaviorImpl(
+        thresholdCheck = thresholdCheck
+    )
 
     override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehaviorImpl(
         thresholdCheck = thresholdCheck,
-        localSupplier = localConfig.sdkConfig::appExitInfoConfig,
         remoteSupplier = remoteSupplier
     )
 
@@ -259,7 +243,8 @@ internal class EmbraceConfigService(
     private fun persistConfig() {
         // TODO: future get rid of these prefs from PrefService entirely?
         preferencesService.sdkDisabled = sdkModeBehavior.isSdkDisabled()
-        preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
+        preferencesService.backgroundActivityEnabled =
+            backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
     }
 
     // TODO: future extract these out to SdkBehavior interface

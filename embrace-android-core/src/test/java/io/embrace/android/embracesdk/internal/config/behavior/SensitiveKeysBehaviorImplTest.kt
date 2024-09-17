@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -10,7 +9,7 @@ internal class SensitiveKeysBehaviorImplTest {
     @Test
     fun `keys are not sensitive if they are not in the sensitive keys list`() {
         // given an empty sensitive list
-        val behavior = getBehaviorWithSensitiveList(emptyList())
+        val behavior = SensitiveKeysBehaviorImpl(emptyList())
 
         // when checking if a key is sensitive
         val isSensitive = behavior.isSensitiveKey("password")
@@ -22,7 +21,7 @@ internal class SensitiveKeysBehaviorImplTest {
     @Test
     fun `keys are not sensitive with a null sensitive keys list`() {
         // given a null sensitive list
-        val behavior = getBehaviorWithSensitiveList(null)
+        val behavior = SensitiveKeysBehaviorImpl(null)
 
         // when checking if a key is sensitive
         val isSensitive = behavior.isSensitiveKey("password")
@@ -34,7 +33,7 @@ internal class SensitiveKeysBehaviorImplTest {
     @Test
     fun `keys are sensitive when found in the sensitive keys list`() {
         // given a sensitive list with a key
-        val behavior = getBehaviorWithSensitiveList(listOf("password"))
+        val behavior = SensitiveKeysBehaviorImpl(listOf("password"))
 
         // when checking if a key present in the list is sensitive
         val isSensitive = behavior.isSensitiveKey("password")
@@ -46,7 +45,7 @@ internal class SensitiveKeysBehaviorImplTest {
     @Test
     fun `keys in the sensitive list are truncated to 128 characters`() {
         // given a sensitive list with a long key
-        val behavior = getBehaviorWithSensitiveList(listOf("a".repeat(200)))
+        val behavior = SensitiveKeysBehaviorImpl(listOf("a".repeat(200)))
 
         // when checking if a key present in the list is sensitive
         val sensitiveKey = behavior.isSensitiveKey("a".repeat(128))
@@ -60,7 +59,7 @@ internal class SensitiveKeysBehaviorImplTest {
     @Test
     fun `sensitive list is truncated to 10000 keys`() {
         // given a sensitive list with more than 10000 keys
-        val behavior = getBehaviorWithSensitiveList(
+        val behavior = SensitiveKeysBehaviorImpl(
             List(10000) { it.toString() } + "password"
         )
 
@@ -74,7 +73,7 @@ internal class SensitiveKeysBehaviorImplTest {
     @Test
     fun `sensitive list with multiple keys`() {
         // given a sensitive list with multiple keys
-        val behavior = getBehaviorWithSensitiveList(
+        val behavior = SensitiveKeysBehaviorImpl(
             listOf(
                 "password",
                 "passkey"
@@ -90,13 +89,5 @@ internal class SensitiveKeysBehaviorImplTest {
         assertTrue(sensitiveKey)
         assertTrue(anotherSensitiveKey)
         assertFalse(notSensitiveKey)
-    }
-
-    private fun getBehaviorWithSensitiveList(list: List<String>?): SensitiveKeysBehaviorImpl {
-        return SensitiveKeysBehaviorImpl(
-            SdkLocalConfig(
-                sensitiveKeysDenylist = list
-            )
-        )
     }
 }

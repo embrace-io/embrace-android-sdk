@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.fakes.createAnrBehavior
-import io.embrace.android.embracesdk.internal.config.local.AnrLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
@@ -12,11 +11,6 @@ import org.junit.Test
 import java.util.regex.Pattern
 
 internal class AnrBehaviorImplTest {
-
-    private val local = AnrLocalConfig(
-        captureGoogle = true,
-        captureUnityThread = true
-    )
 
     private val remote = AnrRemoteConfig(
         pctEnabled = 0,
@@ -90,16 +84,8 @@ internal class AnrBehaviorImplTest {
     }
 
     @Test
-    fun testLocalOnly() {
-        with(createAnrBehavior(localCfg = { local })) {
-            assertTrue(isSigquitCaptureEnabled())
-            assertTrue(isUnityAnrCaptureEnabled())
-        }
-    }
-
-    @Test
     fun testRemoteAndLocal() {
-        with(createAnrBehavior(localCfg = { local }, remoteCfg = { remote })) {
+        with(createAnrBehavior(remoteCfg = { remote })) {
             assertFalse(isSigquitCaptureEnabled())
             assertEquals(200L, getSamplingIntervalMs())
             assertFalse(shouldCaptureMainThreadOnly())

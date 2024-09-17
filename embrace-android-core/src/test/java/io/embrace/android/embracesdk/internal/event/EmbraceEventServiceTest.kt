@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
@@ -86,11 +85,7 @@ internal class EmbraceEventServiceTest {
         configService = FakeConfigService(
             startupBehavior = FakeStartupBehavior(true),
             dataCaptureEventBehavior = createDataCaptureEventBehavior { remoteConfig },
-            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-                SdkLocalConfig(
-                    sensitiveKeysDenylist = listOf("password")
-                )
-            )
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password"))
         )
         sessionPropertiesService = FakeSessionPropertiesService()
         gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService(), FakeEmbLogger()))

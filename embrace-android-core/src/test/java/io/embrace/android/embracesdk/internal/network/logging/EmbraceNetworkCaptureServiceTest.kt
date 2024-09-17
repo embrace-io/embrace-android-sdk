@@ -5,76 +5,38 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
-import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.config.LocalConfigParser
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
-import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
-import io.mockk.clearAllMocks
-import io.mockk.unmockkAll
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 
 internal class EmbraceNetworkCaptureServiceTest {
 
     private lateinit var preferenceService: FakePreferenceService
     private lateinit var networkCaptureDataSource: FakeNetworkCaptureDataSource
-
-    companion object {
-        private var cfg: RemoteConfig = RemoteConfig()
-        private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
-        private val configService: FakeConfigService = FakeConfigService(
-            networkBehavior = createNetworkBehavior { cfg }
-        )
-        private lateinit var mockLocalConfig: LocalConfig
-        private val networkCaptureData: NetworkCaptureData = NetworkCaptureData(
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        )
-
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            val otelCfg = OpenTelemetryConfiguration(
-                SpanSinkImpl(),
-                LogSinkImpl(),
-                SystemInfo()
-            )
-            mockLocalConfig =
-                LocalConfigParser.buildConfig(
-                    "GrCPU",
-                    false,
-                    "{\"base_urls\": {\"data\": \"https://data.emb-api.com\"}}",
-                    EmbraceSerializer(),
-                    otelCfg,
-                    EmbLoggerImpl()
-                )
-        }
-
-        @AfterClass
-        @JvmStatic
-        fun afterClass() {
-            unmockkAll()
-        }
-    }
+    private lateinit var cfg: RemoteConfig
+    private val sessionIdTracker: FakeSessionIdTracker = FakeSessionIdTracker()
+    private lateinit var configService: FakeConfigService
+    private val networkCaptureData: NetworkCaptureData = NetworkCaptureData(
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    )
 
     @Before
     fun setUp() {
-        clearAllMocks()
+        cfg = RemoteConfig()
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = { cfg })
+        )
         preferenceService = FakePreferenceService()
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
         sessionIdTracker.setActiveSession("session-123", true)

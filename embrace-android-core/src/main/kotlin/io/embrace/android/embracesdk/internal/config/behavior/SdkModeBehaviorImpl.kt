@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.math.max
@@ -11,12 +11,10 @@ import kotlin.math.min
  */
 class SdkModeBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<LocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
-) : SdkModeBehavior, MergedConfigBehavior<LocalConfig, RemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
+) : SdkModeBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     private companion object {

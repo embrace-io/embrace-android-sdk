@@ -15,7 +15,6 @@ typealias FeatureModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    anrModule: AnrModule,
     logWriter: LogWriter,
     configService: ConfigService
 ) -> FeatureModule
@@ -28,7 +27,6 @@ fun createFeatureModule(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    anrModule: AnrModule,
     logWriter: LogWriter,
     configService: ConfigService,
 ): FeatureModule = FeatureModuleImpl(
@@ -39,7 +37,6 @@ fun createFeatureModule(
     workerThreadModule = workerThreadModule,
     systemServiceModule = systemServiceModule,
     androidServicesModule = androidServicesModule,
-    anrModule = anrModule,
     logWriter = logWriter,
     configService = configService,
 )

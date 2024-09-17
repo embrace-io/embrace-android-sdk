@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
@@ -29,6 +28,5 @@ class FakeFeatureModule : FeatureModule {
     override val thermalStateDataSource: DataSourceState<ThermalStateDataSource> = DataSourceState({ null })
     override val webViewDataSource: DataSourceState<WebViewDataSource> = DataSourceState({ null })
     override val internalErrorDataSource: DataSourceState<InternalErrorDataSource> = DataSourceState({ null })
-    override val sigquitDataSource: DataSourceState<SigquitDataSource> = DataSourceState({ null })
     override fun registerFeatures() {}
 }

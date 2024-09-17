@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   test:
@@ -62,7 +63,7 @@ jobs:
 
       - name: Create baseline profile PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
@@ -70,11 +71,15 @@ jobs:
           branch=baseline-profile-${{ github.ref }}
           git checkout -b $branch
           
-          git add embrace-android-sdk/src/main/baseline-prof.txt
-          git commit -m "Generate baseline profiles"
-          
-          gh pr create \
-              --base main \
-              --head $branch \
-              --title "Generate baseline profile ${{ github.ref }}" \
-              --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch"
+          if [[ `git status --porcelain` ]]; then
+            git add embrace-android-sdk/src/main/baseline-prof.txt
+            git commit -m "Generate baseline profiles"
+            
+            gh pr create \
+                --base main \
+                --head $branch \
+                --title "Generate baseline profile ${{ github.ref }}" \
+                --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch"
+          else
+            echo "No changes to commit"
+          fi

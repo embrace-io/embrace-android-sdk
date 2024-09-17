@@ -20,9 +20,4 @@ object ProjectConfig {
      * sdk_config.app_framework
      */
     fun getAppFramework(): String? = null
-
-    /**
-     * The ID of the particular build, generated at compile-time
-     */
-    fun getBuildId(): String = ""
 }

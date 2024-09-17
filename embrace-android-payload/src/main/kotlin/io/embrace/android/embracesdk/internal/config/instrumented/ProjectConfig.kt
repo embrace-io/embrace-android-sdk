@@ -20,4 +20,25 @@ object ProjectConfig {
      * sdk_config.app_framework
      */
     fun getAppFramework(): String? = null
+
+    /**
+     * The project's buildId
+     *
+     * This is not possible to specify in the embrace-config.json.
+     */
+    fun getBuildId(): String? = null
+
+    /**
+     * The project's buildType
+     *
+     * This is not possible to specify in the embrace-config.json.
+     */
+    fun getBuildType(): String? = null
+
+    /**
+     * The project's buildFlavor
+     *
+     * This is not possible to specify in the embrace-config.json.
+     */
+    fun getBuildFlavor(): String? = null
 }

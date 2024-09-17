@@ -4,8 +4,9 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.fakes.FakeAndroidResourcesService
+import io.embrace.android.embracesdk.fakes.FakeBuildInfoService
 import io.embrace.android.embracesdk.fakes.system.mockApplication
-import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -29,7 +30,7 @@ public class FakeCoreModule(
     override val serviceRegistry: ServiceRegistry = ServiceRegistry(logger),
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
-    override val buildInfo: BuildInfo = BuildInfo.fromResources(resources, context.packageName),
+    override val buildInfoService: BuildInfoService = FakeBuildInfoService(),
     override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo
 ) : CoreModule {
 

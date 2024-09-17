@@ -30,7 +30,7 @@ class SessionBehaviorImpl(
     }
 
     override fun getSessionComponents(): Set<String>? =
-        remote?.sessionConfig?.sessionComponents ?: InstrumentedConfig.session.getSessionComponents()
+        (remote?.sessionConfig?.sessionComponents ?: InstrumentedConfig.session.getSessionComponents())?.toSet()
 
     override fun isGatingFeatureEnabled(): Boolean = getSessionComponents() != null
 

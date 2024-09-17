@@ -31,7 +31,7 @@ internal class LogRecordExporterTest {
 
             val fakeLogRecordExporter = FakeLogRecordExporter()
             embrace.addLogRecordExporter(fakeLogRecordExporter)
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk()
 
             harness.recordSession {
                 embrace.logMessage("test message", Severity.INFO)
@@ -53,7 +53,7 @@ internal class LogRecordExporterTest {
             }
 
             val fakeLogRecordExporter = FakeLogRecordExporter()
-            embrace.start(harness.overriddenCoreModule.context)
+            startSdk()
             embrace.addLogRecordExporter(fakeLogRecordExporter)
 
             harness.recordSession {

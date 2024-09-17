@@ -72,6 +72,7 @@ jobs:
           git checkout -b $branch
           
           if [[ `git status --porcelain` ]]; then
+            git pull origin main --rebase
             git add embrace-android-sdk/src/main/baseline-prof.txt
             git commit -m "Generate baseline profiles"
             git push origin $branch

@@ -6,8 +6,6 @@ on:
     secrets:
       token:
         required: true
-  schedule:
-    - cron: '0 3 * * *'
 
 permissions:
   contents: write
@@ -76,14 +74,11 @@ jobs:
             git commit -m "Generate baseline profiles"
             git push -f origin $branch
           
-            echo "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch" >> message.txt
-            echo "" >> message.txt
-          
             gh pr create \
                 --base main \
                 --head $branch \
                 --title "Generate baseline profile ${{ github.ref }}" \
-                --body-file message.txt \
+                --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch" \
                 --assignee ${{ github.actor }}
           else
             echo "No changes to commit"

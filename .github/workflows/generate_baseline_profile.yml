@@ -61,8 +61,8 @@ jobs:
           | grep '^[^[]*io/embrace/android/embracesdk' > embrace-android-sdk/src/main/baseline-prof.txt
 
       - name: Create baseline profile PR
-        with:
-          token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'

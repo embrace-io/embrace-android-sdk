@@ -77,3 +77,4 @@ jobs:
               --base main \
               --head $branch \
               --title "Generate baseline profile ${{ github.ref }}"
+              --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch"

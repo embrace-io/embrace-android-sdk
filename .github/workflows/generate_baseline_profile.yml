@@ -68,7 +68,7 @@ jobs:
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
           
-          branch=baseline-profile-${{ github.ref }}
+          branch=baseline-profile-${{ github.run_id }}
           git checkout -b $branch
           
           if [[ `git status --porcelain` ]]; then

@@ -14,14 +14,13 @@ import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
-import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -75,17 +74,18 @@ internal class EmbraceNdkServiceTest {
     private lateinit var storageManager: FakeStorageService
     private lateinit var metadataService: MetadataService
     private lateinit var configService: FakeConfigService
-    private lateinit var activityService: FakeProcessStateService
+    private lateinit var processStateService: FakeProcessStateService
     private lateinit var deliveryService: FakeDeliveryService
-    private lateinit var userService: UserService
+    private lateinit var userService: FakeUserService
     private lateinit var preferencesService: FakePreferenceService
-    private lateinit var sessionPropertiesService: SessionPropertiesService
+    private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var sharedObjectLoader: SharedObjectLoader
     private lateinit var logger: EmbLogger
     private lateinit var delegate: NdkServiceDelegate.NdkDelegate
     private lateinit var repository: EmbraceNdkServiceRepository
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
+    private lateinit var sessionIdTracker: FakeSessionIdTracker
     private val deviceArchitecture = FakeDeviceArchitecture()
     private val serializer = EmbraceSerializer()
 
@@ -102,7 +102,7 @@ internal class EmbraceNdkServiceTest {
         storageManager = FakeStorageService()
         metadataService = FakeMetadataService()
         configService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true))
-        activityService = FakeProcessStateService()
+        processStateService = FakeProcessStateService()
         deliveryService = FakeDeliveryService()
         userService = FakeUserService()
         preferencesService = FakePreferenceService()
@@ -113,7 +113,9 @@ internal class EmbraceNdkServiceTest {
         repository = mockk(relaxUnitFun = true)
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
+        sessionIdTracker = FakeSessionIdTracker()
         every { sharedObjectLoader.loadEmbraceNative() } returns true
+        every { sharedObjectLoader.loaded.get() } returns true
     }
 
     @After
@@ -136,7 +138,7 @@ internal class EmbraceNdkServiceTest {
                 context,
                 storageManager,
                 metadataService,
-                activityService,
+                processStateService,
                 configService,
                 userService,
                 sessionPropertiesService,
@@ -151,8 +153,28 @@ internal class EmbraceNdkServiceTest {
             ),
             recordPrivateCalls = true
         ).apply {
-            initializeService()
+            initializeService(sessionIdTracker = sessionIdTracker)
         }
+    }
+
+    @Test
+    fun `successful initialization attaches appropriate listeners`() {
+        every { sharedObjectLoader.loadEmbraceNative() } returns true
+        initializeService()
+        assertEquals(1, userService.listeners.size)
+        assertEquals(1, sessionIdTracker.listeners.size)
+        assertEquals(1, sessionPropertiesService.listeners.size)
+        assertEquals(1, processStateService.listeners.size)
+    }
+
+    @Test
+    fun `failed native library loading attaches no listeners`() {
+        every { sharedObjectLoader.loadEmbraceNative() } returns false
+        initializeService()
+        assertEquals(0, userService.listeners.size)
+        assertEquals(0, sessionIdTracker.listeners.size)
+        assertEquals(0, sessionPropertiesService.listeners.size)
+        assertEquals(0, processStateService.listeners.size)
     }
 
     @Test
@@ -192,7 +214,7 @@ internal class EmbraceNdkServiceTest {
 
         configService.appFramework = AppFramework.UNITY
         initializeService()
-        assertEquals(1, activityService.listeners.size)
+        assertEquals(1, processStateService.listeners.size)
 
         val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
         val markerFilePath =
@@ -228,7 +250,7 @@ internal class EmbraceNdkServiceTest {
         every { Uuid.getEmbUuid() } returns "uuid"
 
         initializeService()
-        assertEquals(1, activityService.listeners.size)
+        assertEquals(1, processStateService.listeners.size)
 
         val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
         val markerFilePath =

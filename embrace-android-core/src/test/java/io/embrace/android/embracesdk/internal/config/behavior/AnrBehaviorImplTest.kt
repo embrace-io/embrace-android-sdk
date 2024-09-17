@@ -59,7 +59,7 @@ internal class AnrBehaviorImplTest {
             assertEquals(5000, getAnrProcessErrorsDelayMs())
             assertEquals(30000, getAnrProcessErrorsSchedulerExtraTimeAllowanceMs())
             assertEquals(80, getMaxStacktracesPerInterval())
-            assertEquals(100, getStacktraceFrameLimit())
+            assertEquals(200, getStacktraceFrameLimit())
             assertEquals(5, getMaxAnrIntervalsPerSession())
             assertEquals(0, getMinThreadPriority())
             assertEquals(1000, getMinDuration())

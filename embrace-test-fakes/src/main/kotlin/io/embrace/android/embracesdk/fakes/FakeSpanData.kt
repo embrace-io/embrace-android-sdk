@@ -29,11 +29,12 @@ class FakeSpanData(
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
     private var attributes: Attributes =
         Attributes.builder().fromMap(
-            mapOf(
+            attributes = mapOf(
                 EmbType.Performance.Default.toEmbraceKeyValuePair(),
                 KeySpan.toEmbraceKeyValuePair(),
                 Pair("my-key", "my-value")
-            )
+            ),
+            internal = true,
         ).build(),
     private var events: MutableList<EventData> = mutableListOf(
         EventData.create(

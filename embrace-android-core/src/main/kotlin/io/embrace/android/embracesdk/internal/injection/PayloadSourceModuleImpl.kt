@@ -89,7 +89,7 @@ internal class PayloadSourceModuleImpl(
                 hostedSdkVersionInfo,
                 AppEnvironment(coreModule.context.applicationInfo).environment,
                 Systrace.traceSynchronous("buildInfo") { coreModule.buildInfoService.getBuildInfo() },
-                coreModule.packageVersionInfo,
+                Systrace.traceSynchronous("packageInfo") { coreModule.packageVersionInfo },
                 configModule.configService.appFramework,
                 deviceArchitecture,
                 Systrace.traceSynchronous("deviceImpl") {

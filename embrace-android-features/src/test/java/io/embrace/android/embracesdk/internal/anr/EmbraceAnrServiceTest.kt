@@ -50,9 +50,7 @@ internal class EmbraceAnrServiceTest {
         with(rule) {
             val configService = FakeConfigService()
             anrExecutorService.submit {
-                anrService.finishInitialization(
-                    configService
-                )
+                anrService.startAnrCapture()
             }.get(1L, TimeUnit.SECONDS)
             // verify the config service was changed from the bootstrapped early version
             assertNotSame(this.fakeConfigService, configService)

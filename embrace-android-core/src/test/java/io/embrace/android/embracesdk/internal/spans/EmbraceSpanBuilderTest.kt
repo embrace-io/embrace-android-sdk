@@ -156,6 +156,31 @@ internal class EmbraceSpanBuilderTest {
     }
 
     @Test
+    fun `perf and activity_open spans are key spans if parent is null`() {
+        val perfSpanBuilder = EmbraceSpanBuilder(
+            tracer = tracer,
+            name = "test",
+            telemetryType = EmbType.Performance.Default,
+            internal = false,
+            private = false,
+            parentSpan = null,
+        )
+
+        assertTrue(perfSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
+
+        val activityOpenSpanBuilder = EmbraceSpanBuilder(
+            tracer = tracer,
+            name = "test",
+            telemetryType = EmbType.Performance.ActivityOpen,
+            internal = false,
+            private = false,
+            parentSpan = null,
+        )
+
+        assertTrue(activityOpenSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
+    }
+
+    @Test
     fun `context value propagated even if it does not context a span`() {
         val fakeRootContext = Context.root().with(fakeContextKey, "fake-value")
         val spanBuilder = EmbraceSpanBuilder(

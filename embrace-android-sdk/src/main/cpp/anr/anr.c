@@ -17,7 +17,7 @@ static bool enabled = false;
 static bool installed = false;
 
 static jmethodID anr_mid = NULL;
-static jobject anr_service_obj = NULL;
+static jobject data_source_ref = NULL;
 static JavaVM *emb_jvm = NULL;
 
 static volatile bool watchdog_thread_triggered = false;
@@ -112,9 +112,9 @@ static void process_anr() {
             return;
     }
 
-    if (anr_service_obj != NULL && anr_mid != NULL) {
+    if (data_source_ref != NULL && anr_mid != NULL) {
         // last_ts_ms was set in the signal handler to ensure the most accurate time possible
-        if (emb_jni_call_void_method(env, anr_service_obj, anr_mid, last_ts_ms)) {
+        if (emb_jni_call_void_method(env, data_source_ref, anr_mid, last_ts_ms)) {
             EMB_LOGERROR("Failed to report ANR through JNI.");
         } else {
             EMB_LOGINFO("Reported ANR through JNI.");
@@ -226,23 +226,23 @@ static bool configure_reporting(JNIEnv *env) {
         EMB_LOGERROR("Reporting config failed, could not find SigquitDataSource class");
         return false;
     }
-    EMB_LOGDEV("got ANR class id %p", anr_class);
+    EMB_LOGERROR("got ANR class id %p", anr_class);
     anr_mid = emb_jni_get_method_id(env, anr_class, "saveSigquit", "(J)V");
     return true;
 }
 
-int emb_install_google_anr_handler(JNIEnv *env, jobject anr_service, jint _google_thread_id) {
+int emb_install_google_anr_handler(JNIEnv *env, jobject sigquit_data_source, jint _google_thread_id) {
     pthread_mutex_lock(&emb_anr_install_lock);
     int res = 0;
-    EMB_LOGDEV("anr_service %p", anr_service);
+    EMB_LOGDEV("sigquit_data_source %p", sigquit_data_source);
 
     if (!installed) {
         pid = getpid();
         google_thread_id = _google_thread_id;
 
         enabled = true;
-        if (configure_reporting(env) && anr_service != NULL) {
-            anr_service_obj = (*env)->NewGlobalRef(env, anr_service);
+        if (configure_reporting(env) && sigquit_data_source != NULL) {
+            data_source_ref = (*env)->NewGlobalRef(env, sigquit_data_source);
             res = install_signal_handler();
             installed = true;
         } else {

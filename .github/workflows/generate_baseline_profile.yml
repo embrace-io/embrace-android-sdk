@@ -60,11 +60,21 @@ jobs:
         run: cat android-sdk-benchmark/macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineprofile/pixel6Api34/BaselineProfileGenerator_startup-baseline-prof.txt 
           | grep '^[^[]*io/embrace/android/embracesdk' > embrace-android-sdk/src/main/baseline-prof.txt
 
-      # Commits the generated Baseline Profile to your origin/remote
-      - name: Commit Baseline Profiles
+      - name: Create baseline profile PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
         run: |
           git config --global user.name 'embrace-ci[bot]'
           git config --global user.email 'embrace-ci@users.noreply.github.com'
+          
+          branch=baseline-profile-${{ github.ref }}
+          git checkout -b $branch
+          
           git add embrace-android-sdk/src/main/baseline-prof.txt
           git commit -m "Generate baseline profiles"
-          git push
+          
+          gh pr create \
+              --base main \
+              --head $branch \
+              --title "Generate baseline profile ${{ github.ref }}"
+              --body "Baseline Profiles help guide optimization beyond app startup by providing common user interactions that improve app runtime from the first launch"

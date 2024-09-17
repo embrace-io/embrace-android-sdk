@@ -40,15 +40,6 @@ class EssentialServiceModuleImpl(
 
     private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
 
-    private val backgroundWorker =
-        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-
-    private val networkRequestWorker =
-        workerThreadModule.backgroundWorker(WorkerName.NETWORK_REQUEST)
-
-    private val pendingApiCallsWorker =
-        workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
-
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
             EmbraceProcessStateService(initModule.clock, initModule.logger)
@@ -91,7 +82,7 @@ class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("network-connectivity-service-init") {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
-                backgroundWorker,
+                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
                 initModule.logger,
                 systemServiceModule.connectivityManager
             )
@@ -101,7 +92,7 @@ class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         Systrace.traceSynchronous("pending-call-sender-init") {
             EmbracePendingApiCallsSender(
-                pendingApiCallsWorker,
+                workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
                 storageModule.deliveryCacheManager,
                 initModule.clock,
                 initModule.logger
@@ -121,7 +112,7 @@ class EssentialServiceModuleImpl(
                     }
                 },
                 logger = initModule.logger,
-                backgroundWorker = networkRequestWorker,
+                backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.NETWORK_REQUEST),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,

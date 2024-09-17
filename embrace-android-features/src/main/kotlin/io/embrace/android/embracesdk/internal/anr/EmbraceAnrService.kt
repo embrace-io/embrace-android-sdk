@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  *  1. Determining whether the target thread responds in time, and if not logging an ANR
  */
 internal class EmbraceAnrService(
-    var configService: ConfigService,
+    private val configService: ConfigService,
     looper: Looper,
     logger: EmbLogger,
     livenessCheckScheduler: LivenessCheckScheduler,
@@ -57,19 +57,10 @@ internal class EmbraceAnrService(
         livenessCheckScheduler.listener = this
     }
 
-    private fun startAnrCapture() {
+    override fun startAnrCapture() {
         this.anrMonitorWorker.submit {
             targetThreadHeartbeatScheduler.startMonitoringThread()
         }
-    }
-
-    override fun finishInitialization(
-        configService: ConfigService
-    ) {
-        this.configService = configService
-        stacktraceSampler.setConfigService(configService)
-        targetThreadHeartbeatScheduler.configService = configService
-        startAnrCapture()
     }
 
     override fun addBlockedThreadListener(listener: BlockedThreadListener) {

@@ -4,10 +4,14 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
+import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
@@ -315,6 +319,21 @@ internal class EmbraceSpanImplTest {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))
+        }
+    }
+
+    @Test
+    fun `check internal span attribute key and value limits`() {
+        embraceSpan = createEmbraceSpanImpl(
+            spanBuilder = createEmbraceSpanBuilder()
+        )
+        with(embraceSpan) {
+            assertTrue(start())
+            assertFalse(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "value"))
+            assertFalse(addAttribute(key = "key", value = TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
+            assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "value"))
+            assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
+            assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
         }
     }
 

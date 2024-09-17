@@ -4,12 +4,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+      ANDROID_BUILD_TOOLS_HOME: "/usr/local/lib/android/sdk/build-tools/35.0.0"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-
-env:
-  ANDROID_BUILD_TOOLS_HOME: "/usr/local/lib/android/sdk/build-tools/32.0.0"
 
 jobs:
   runSwazzlerTests:
@@ -25,6 +25,20 @@ jobs:
           distribution: 'adopt'
           java-version: 17
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Cache NDK
+        id: ndk-cache
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/lib/android/sdk/ndk/27.0.12077973
+          key: ndk-cache
+
+      - name: Install NDK
+        if: steps.ndk-cache.outputs.cache-hit != 'true'
+        run: echo "y" | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.0.12077973"
+
       # make sure version in gradle.properties matches the version of embrace-swazzler3 version
       - name: "Publish SDK locally"
         run: ./gradlew publishToMavenLocal --no-daemon
@@ -33,7 +47,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: embrace-io/swazzler-test
-          ref: master
           path: ./swazzler-test
           submodules: recursive
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN || secrets.token }}
@@ -42,20 +55,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: embrace-io/embrace-swazzler3
-          ref: master
           path: ./swazzler-test/embrace-swazzler3
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN }}
 
       - name: "Publish Swazzler locally"
-        run: |
-          cd ./swazzler-test/embrace-swazzler3
-          ./gradlew publishToMavenLocal --no-daemon
+        working-directory: ./swazzler-test/embrace-swazzler3
+        run: ./gradlew publishToMavenLocal --no-daemon
 
       - name: "Run Gradle Tests"
-        run: |
-          echo "Running Gradle tests"
-          cd ./swazzler-test
-          ./gradlew :functional-tests:swazzlerTests --tests "io.embrace.android.gradle.swazzler.tests.MinimumSurvivalTests" --stacktrace
+        working-directory: ./swazzler-test
+        run: ./gradlew :functional-tests:swazzlerTests --tests "io.embrace.android.gradle.swazzler.tests.MinimumSurvivalTests" --stacktrace
 
       - name: "Test Results"
         if: ${{ always() }}

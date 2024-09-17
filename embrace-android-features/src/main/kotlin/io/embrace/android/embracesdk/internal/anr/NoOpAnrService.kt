@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.anr
 
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 
 internal class NoOpAnrService : AnrService {
@@ -12,9 +11,7 @@ internal class NoOpAnrService : AnrService {
     override fun handleCrash(crashId: String) {
     }
 
-    override fun finishInitialization(
-        configService: ConfigService
-    ) {
+    override fun startAnrCapture() {
     }
 
     override fun addBlockedThreadListener(listener: BlockedThreadListener) {

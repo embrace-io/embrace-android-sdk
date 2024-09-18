@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -10,12 +11,10 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class BreadcrumbBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<SdkLocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
-) : BreadcrumbBehavior, MergedConfigBehavior<SdkLocalConfig, RemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
+) : BreadcrumbBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     private companion object {
@@ -24,36 +23,32 @@ class BreadcrumbBehaviorImpl(
          * The default breadcrumbs capture limit.
          */
         const val DEFAULT_BREADCRUMB_LIMIT = 100
-        const val CAPTURE_TAP_COORDINATES_DEFAULT = true
-        const val ENABLE_AUTOMATIC_ACTIVITY_CAPTURE_DEFAULT = true
-        const val WEB_VIEW_CAPTURE_DEFAULT = true
-        const val WEB_VIEW_QUERY_PARAMS_CAPTURE_DEFAULT = true
     }
 
-    override fun getCustomBreadcrumbLimit(): Int = remote?.uiConfig?.breadcrumbs ?: DEFAULT_BREADCRUMB_LIMIT
-    override fun getFragmentBreadcrumbLimit(): Int = remote?.uiConfig?.fragments ?: DEFAULT_BREADCRUMB_LIMIT
+    private val cfg = InstrumentedConfig.enabledFeatures
+
+    override fun getCustomBreadcrumbLimit(): Int =
+        remote?.uiConfig?.breadcrumbs ?: DEFAULT_BREADCRUMB_LIMIT
+
+    override fun getFragmentBreadcrumbLimit(): Int =
+        remote?.uiConfig?.fragments ?: DEFAULT_BREADCRUMB_LIMIT
+
     override fun getTapBreadcrumbLimit(): Int = remote?.uiConfig?.taps ?: DEFAULT_BREADCRUMB_LIMIT
     override fun getViewBreadcrumbLimit(): Int = remote?.uiConfig?.views ?: DEFAULT_BREADCRUMB_LIMIT
-    override fun getWebViewBreadcrumbLimit(): Int = remote?.uiConfig?.webViews ?: DEFAULT_BREADCRUMB_LIMIT
+    override fun getWebViewBreadcrumbLimit(): Int =
+        remote?.uiConfig?.webViews ?: DEFAULT_BREADCRUMB_LIMIT
 
     override fun isViewClickCoordinateCaptureEnabled(): Boolean =
-        local?.taps?.captureCoordinates ?: CAPTURE_TAP_COORDINATES_DEFAULT
+        cfg.isViewClickCoordinateCaptureEnabled()
 
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean =
-        local?.viewConfig?.enableAutomaticActivityCapture
-            ?: ENABLE_AUTOMATIC_ACTIVITY_CAPTURE_DEFAULT
+        cfg.isActivityBreadcrumbCaptureEnabled()
 
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean =
-        local?.webViewConfig?.captureWebViews ?: WEB_VIEW_CAPTURE_DEFAULT
+        cfg.isWebViewBreadcrumbCaptureEnabled()
 
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean =
-        local?.webViewConfig?.captureQueryParams ?: WEB_VIEW_QUERY_PARAMS_CAPTURE_DEFAULT
+        cfg.isWebViewBreadcrumbQueryParamCaptureEnabled()
 
-    override fun isFcmPiiDataCaptureEnabled(): Boolean {
-        return try {
-            local?.captureFcmPiiData ?: false
-        } catch (ex: Exception) {
-            false
-        }
-    }
+    override fun isFcmPiiDataCaptureEnabled(): Boolean = cfg.isFcmPiiDataCaptureEnabled()
 }

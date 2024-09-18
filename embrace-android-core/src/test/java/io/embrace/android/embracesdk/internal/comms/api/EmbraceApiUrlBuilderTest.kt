@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.fakes.createSdkEndpointBehavior
-import io.embrace.android.embracesdk.internal.config.local.BaseUrlLocalConfig
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -17,7 +16,7 @@ internal class EmbraceApiUrlBuilderTest {
 
     @Before
     fun setup() {
-        val baseUrlLocalConfig = createSdkEndpointBehavior { BaseUrlLocalConfig() }
+        val baseUrlLocalConfig = createSdkEndpointBehavior()
 
         apiUrlBuilder = EmbraceApiUrlBuilder(
             coreBaseUrl = baseUrlLocalConfig.getData(APP_ID),

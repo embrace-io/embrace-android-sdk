@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -53,11 +52,7 @@ internal class EmbraceSpanImplTest {
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
-    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-        SdkLocalConfig(
-            sensitiveKeysDenylist = listOf("password")
-        )
-    )
+    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password"))
 
     @Before
     fun setup() {

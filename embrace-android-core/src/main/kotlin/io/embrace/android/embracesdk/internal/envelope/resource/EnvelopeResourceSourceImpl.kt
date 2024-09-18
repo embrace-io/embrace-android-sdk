@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
 import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.BuildInfo
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
+import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo

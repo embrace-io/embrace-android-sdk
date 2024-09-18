@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.SessionLocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
 import io.embrace.android.embracesdk.internal.payload.EventMessage
@@ -13,12 +14,10 @@ import java.util.Locale
  */
 class SessionBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<SessionLocalConfig?>,
     remoteSupplier: Provider<RemoteConfig?>
-) : SessionBehavior, MergedConfigBehavior<SessionLocalConfig, RemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
+) : SessionBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     companion object {
@@ -26,12 +25,12 @@ class SessionBehaviorImpl(
     }
 
     override fun getFullSessionEvents(): Set<String> {
-        val strings = remote?.sessionConfig?.fullSessionEvents ?: local?.fullSessionEvents ?: emptySet()
+        val strings = remote?.sessionConfig?.fullSessionEvents ?: InstrumentedConfig.session.getFullSessionEvents()
         return strings.map { it.lowercase(Locale.US) }.toSet()
     }
 
     override fun getSessionComponents(): Set<String>? =
-        remote?.sessionConfig?.sessionComponents ?: local?.sessionComponents
+        (remote?.sessionConfig?.sessionComponents ?: InstrumentedConfig.session.getSessionComponents())?.toSet()
 
     override fun isGatingFeatureEnabled(): Boolean = getSessionComponents() != null
 

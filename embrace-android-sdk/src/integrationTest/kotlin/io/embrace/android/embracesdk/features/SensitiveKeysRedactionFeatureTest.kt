@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -24,9 +23,7 @@ internal class SensitiveKeysRedactionFeatureTest {
     @Before
     fun setUp() {
         testRule.harness.overriddenConfigService.sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-            localConfig = SdkLocalConfig(
-                sensitiveKeysDenylist = listOf("password")
-            )
+            listOf("password")
         )
     }
 

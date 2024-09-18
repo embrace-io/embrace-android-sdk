@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -12,30 +13,15 @@ import kotlin.math.min
  */
 class NetworkBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<SdkLocalConfig?>,
-    remoteSupplier: Provider<RemoteConfig?>
-) : NetworkBehavior, MergedConfigBehavior<SdkLocalConfig, RemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
+    remoteSupplier: Provider<RemoteConfig?>,
+    private val disabledUrlPatterns: List<String>? = null
+) : NetworkBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     companion object {
 
-        /**
-         * Sets the default name of the HTTP request header to extract trace ID from.
-         */
-        const val CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE: String = "x-emb-trace-id"
-
-        /**
-         * Capture request content length by default.
-         */
-        const val CAPTURE_REQUEST_CONTENT_LENGTH: Boolean = false
-
-        /**
-         * Enable native monitoring by default.
-         */
-        const val ENABLE_NATIVE_MONITORING_DEFAULT: Boolean = true
         const val DEFAULT_NETWORK_CALL_LIMIT: Int = 1000
 
         private val dirtyKeyList = listOf(
@@ -48,50 +34,43 @@ class NetworkBehaviorImpl(
         )
     }
 
-    override fun getTraceIdHeader(): String =
-        local?.networking?.traceIdHeader ?: CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+    private val cfg = InstrumentedConfig.networkCapture
 
+    override fun getTraceIdHeader(): String = cfg.getTraceIdHeader()
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
-        local?.networking?.captureRequestContentLength ?: CAPTURE_REQUEST_CONTENT_LENGTH
+        InstrumentedConfig.enabledFeatures.isRequestContentLengthCaptureEnabled()
 
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
-        local?.networking?.enableNativeMonitoring ?: ENABLE_NATIVE_MONITORING_DEFAULT
+        InstrumentedConfig.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
 
     override fun getLimitsByDomain(): Map<String, Int> {
-        val limitCeiling = getLimitCeiling()
-        val domainSuffixLimits: MutableMap<String, Int> = remote?.networkConfig?.domainLimits?.toMutableMap() ?: mutableMapOf()
+        val limits = remote?.networkConfig?.domainLimits ?: cfg.getLimitsByDomain()
+            .mapValues { it.value.toInt() }
+        val limitCeiling = getRequestLimitPerDomain()
 
-        local?.networking?.domains?.forEach { localLimit ->
-            val dom = localLimit.domain
-            val lim = localLimit.limit
-            if (dom != null && lim != null) {
-                domainSuffixLimits[dom] = domainSuffixLimits[dom]?.let { remoteLimit ->
-                    min(remoteLimit, lim)
-                } ?: min(limitCeiling, lim)
-            }
+        return limits.mapValues {
+            min(it.value, limitCeiling)
         }
-
-        return domainSuffixLimits
     }
 
-    override fun getRequestLimitPerDomain(): Int {
-        val remoteDefault = getLimitCeiling()
-        return min(remoteDefault, local?.networking?.defaultCaptureLimit ?: remoteDefault)
-    }
+    override fun getRequestLimitPerDomain(): Int = min(
+        remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT,
+        cfg.getRequestLimitPerDomain()
+    )
 
     override fun isUrlEnabled(url: String): Boolean {
-        val patterns =
-            remote?.disabledUrlPatterns ?: local?.networking?.disabledUrlPatterns ?: emptySet()
+        val patterns = disabledUrlPatterns ?: remote?.disabledUrlPatterns ?: cfg.getIgnoredRequestPatternList()
         val regexes = patterns.mapNotNull {
             runCatching { Pattern.compile(it) }.getOrNull()
         }.toSet()
         return regexes.none { it.matcher(url).find() }
     }
 
-    override fun isCaptureBodyEncryptionEnabled(): Boolean = getNetworkBodyCapturePublicKey() != null
+    override fun isCaptureBodyEncryptionEnabled(): Boolean =
+        getNetworkBodyCapturePublicKey() != null
 
     override fun getNetworkBodyCapturePublicKey(): String? {
-        var keyToClean = local?.capturePublicKey
+        var keyToClean = cfg.getNetworkBodyCapturePublicKey()
         if (keyToClean != null) {
             for (dirty in dirtyKeyList) {
                 keyToClean = keyToClean?.replace(dirty.toRegex(), "")
@@ -100,10 +79,6 @@ class NetworkBehaviorImpl(
         return keyToClean
     }
 
-    override fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> = remote?.networkCaptureRules ?: emptySet()
-
-    /**
-     * Cap the default limit at whatever the default limit is that is set or implied by the remote config
-     */
-    private fun getLimitCeiling(): Int = remote?.networkConfig?.defaultCaptureLimit ?: DEFAULT_NETWORK_CALL_LIMIT
+    override fun getNetworkCaptureRules(): Set<NetworkCaptureRuleRemoteConfig> =
+        remote?.networkCaptureRules ?: emptySet()
 }

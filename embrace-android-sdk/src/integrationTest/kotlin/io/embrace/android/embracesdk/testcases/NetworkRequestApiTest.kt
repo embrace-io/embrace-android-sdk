@@ -3,8 +3,11 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -177,6 +180,22 @@ internal class NetworkRequestApiTest {
 
     @Test
     fun `disabled URLs not recorded`() {
+        testRule.harness.overriddenConfigService.networkBehavior =
+            createNetworkBehavior(remoteCfg = {
+                RemoteConfig(
+                    disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+                    networkCaptureRules = setOf(
+                        NetworkCaptureRuleRemoteConfig(
+                            id = "test",
+                            duration = 10000,
+                            method = "GET",
+                            urlRegex = "capture.me",
+                            expiresIn = 10000
+                        )
+                    )
+                )
+            })
+
         with(testRule) {
             harness.recordSession {
                 harness.overriddenConfigService.updateListeners()
@@ -248,7 +267,8 @@ internal class NetworkRequestApiTest {
 
             val session = checkNotNull(testRule.harness.getLastSentSession())
 
-            val spans = checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
+            val spans =
+                checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
             assertEquals(
                 "Unexpected number of requests in sent session: ${spans.size}",
                 2,
@@ -273,30 +293,61 @@ internal class NetworkRequestApiTest {
             with(networkSpan) {
                 val attrs = checkNotNull(attributes)
                 assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
-                assertEquals(expectedRequest.httpMethod, attrs.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key))
+                assertEquals(
+                    expectedRequest.httpMethod,
+                    attrs.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key)
+                )
                 assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
                 assertEquals(expectedRequest.endTime.millisToNanos(), endTimeNanos)
                 assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
-                assertEquals(expectedRequest.w3cTraceparent, attrs.findAttributeValue("emb.w3c_traceparent"))
+                assertEquals(
+                    expectedRequest.w3cTraceparent,
+                    attrs.findAttributeValue("emb.w3c_traceparent")
+                )
                 if (completed) {
-                    assertEquals(expectedRequest.responseCode.toString(), attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key))
-                    assertEquals(expectedRequest.bytesSent.toString(), attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key))
-                    assertEquals(expectedRequest.bytesReceived.toString(), attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key))
+                    assertEquals(
+                        expectedRequest.responseCode.toString(),
+                        attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
+                    )
+                    assertEquals(
+                        expectedRequest.bytesSent.toString(),
+                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
+                    )
+                    assertEquals(
+                        expectedRequest.bytesReceived.toString(),
+                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
+                    )
                     assertEquals(null, attrs.findAttributeValue("error.type"))
-                    assertEquals(null, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key))
+                    assertEquals(
+                        null,
+                        attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
+                    )
                     val statusCode = expectedRequest.responseCode
-                    val expectedStatus = if (statusCode != null && statusCode >= 200 && statusCode < 400) {
-                        Span.Status.UNSET
-                    } else {
-                        Span.Status.ERROR
-                    }
+                    val expectedStatus =
+                        if (statusCode != null && statusCode >= 200 && statusCode < 400) {
+                            Span.Status.UNSET
+                        } else {
+                            Span.Status.ERROR
+                        }
                     assertEquals(expectedStatus, status)
                 } else {
-                    assertEquals(null, attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key))
-                    assertEquals(null, attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key))
-                    assertEquals(null, attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key))
+                    assertEquals(
+                        null,
+                        attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
+                    )
+                    assertEquals(
+                        null,
+                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
+                    )
+                    assertEquals(
+                        null,
+                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
+                    )
                     assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
-                    assertEquals(expectedRequest.errorMessage, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key))
+                    assertEquals(
+                        expectedRequest.errorMessage,
+                        attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
+                    )
                     assertEquals(Span.Status.ERROR, status)
                 }
             }
@@ -307,7 +358,8 @@ internal class NetworkRequestApiTest {
         val session = checkNotNull(testRule.harness.getLastSentSession())
 
         val unfilteredSpans = checkNotNull(session.data.spans)
-        val spans = checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
+        val spans =
+            checkNotNull(unfilteredSpans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
         assertEquals(
             "Unexpected number of requests in sent session: ${spans.size}",
             1,

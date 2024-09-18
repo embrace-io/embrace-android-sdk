@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.AnrLocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
@@ -12,16 +13,13 @@ import java.util.regex.Pattern
  */
 class AnrBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<AnrLocalConfig?>,
     remoteSupplier: Provider<AnrRemoteConfig?>
-) : AnrBehavior, MergedConfigBehavior<AnrLocalConfig, AnrRemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
+) : AnrBehavior, MergedConfigBehavior<UnimplementedConfig, AnrRemoteConfig>(
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     private companion object {
-        private const val CAPTURE_GOOGLE_DEFAULT = false
         private const val DEFAULT_ANR_PCT_ENABLED = true
         private const val DEFAULT_ANR_PROCESS_ERRORS_PCT_ENABLED = false
         private const val DEFAULT_ANR_BG_PCT_ENABLED = false
@@ -37,7 +35,6 @@ class AnrBehaviorImpl(
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000
         private const val DEFAULT_ANR_MAIN_THREAD_ONLY = true
         private const val DEFAULT_NATIVE_THREAD_ANR_SAMPLING_FACTOR = 5
-        private const val DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ENABLED = false
         private const val DEFAULT_NATIVE_THREAD_ANR_OFFSET_ENABLED = true
         private const val DEFAULT_IDLE_HANDLER_ENABLED = false
         private const val DEFAULT_STRICT_MODE_LISTENER_ENABLED = false
@@ -52,8 +49,7 @@ class AnrBehaviorImpl(
 
     override fun isSigquitCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.googlePctEnabled)
-            ?: local?.captureGoogle
-            ?: CAPTURE_GOOGLE_DEFAULT
+            ?: InstrumentedConfig.enabledFeatures.isSigquitCaptureEnabled()
     }
 
     override val allowPatternList: List<Pattern> by lazy {
@@ -127,8 +123,7 @@ class AnrBehaviorImpl(
 
     override fun isUnityAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
-            ?: local?.captureUnityThread
-            ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ENABLED
+            ?: InstrumentedConfig.enabledFeatures.isUnityAnrCaptureEnabled()
     }
 
     override fun isNativeThreadAnrSamplingOffsetEnabled(): Boolean =

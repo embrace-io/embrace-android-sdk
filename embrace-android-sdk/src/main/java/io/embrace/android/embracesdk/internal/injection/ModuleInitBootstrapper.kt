@@ -150,7 +150,6 @@ internal class ModuleInitBootstrapper(
                     configModule = init(ConfigModule::class) {
                         configModuleSupplier(
                             initModule,
-                            coreModule,
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,

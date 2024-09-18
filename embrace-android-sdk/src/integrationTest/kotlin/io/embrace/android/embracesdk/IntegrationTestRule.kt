@@ -11,17 +11,11 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -156,10 +150,6 @@ internal class IntegrationTestRule(
         val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(overriddenInitModule),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
-            networkBehavior = createNetworkBehavior(
-                localCfg = { DEFAULT_SDK_LOCAL_CONFIG },
-                remoteCfg = { DEFAULT_SDK_REMOTE_CONFIG }
-            ),
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true),
             autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = false)
         ),
@@ -182,31 +172,5 @@ internal class IntegrationTestRule(
 
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
-
-        private val DEFAULT_SDK_LOCAL_CONFIG = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                enableNativeMonitoring = false
-            ),
-            betaFeaturesEnabled = false
-        )
-
-        private val DEFAULT_SDK_REMOTE_CONFIG = RemoteConfig(
-            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
-            networkCaptureRules = setOf(
-                NetworkCaptureRuleRemoteConfig(
-                    id = "test",
-                    duration = 10000,
-                    method = "GET",
-                    urlRegex = "capture.me",
-                    expiresIn = 10000
-                )
-            )
-        )
-
-        val DEFAULT_LOCAL_CONFIG = LocalConfig(
-            appId = "CoYh3",
-            ndkEnabled = false,
-            sdkConfig = DEFAULT_SDK_LOCAL_CONFIG
-        )
     }
 }

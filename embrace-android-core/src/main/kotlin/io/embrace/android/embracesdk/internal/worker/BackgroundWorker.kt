@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.worker
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * Submits tasks to a background thread pool.
@@ -32,5 +33,18 @@ class BackgroundWorker(
         callable: Callable<T>
     ): Future<T> {
         return impl.submit(PriorityCallable(priority, callable))
+    }
+
+    /**
+     * Shutdown the worker. If [timeoutMs] is greater than 0, the worker will
+     * block for the specified milliseconds if tasks are still enqueued or running.
+     */
+    fun shutdownAndWait(timeoutMs: Long = 0) {
+        runCatching {
+            with(impl) {
+                shutdown()
+                awaitTermination(timeoutMs, TimeUnit.MILLISECONDS)
+            }
+        }
     }
 }

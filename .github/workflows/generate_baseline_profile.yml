@@ -23,6 +23,9 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -38,6 +41,20 @@ jobs:
           version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           # Set the version as an environment variable
           echo "ANDROID_SDK_VERSION=${version}" >> "$GITHUB_ENV"
+
+      - name: Publish SDK to Maven local
+        run: ./gradlew pTML
+
+      - name: Checkout Swazzler
+        uses: actions/checkout@v4
+        with:
+          repository: embrace-io/embrace-swazzler3
+          token: ${{ secrets.GH_EMBRACE_SWAZZLER3_TOKEN }}
+          path: './embrace-swazzler3'
+
+      - name: Publish Swazzler to Maven local
+        working-directory: ./embrace-swazzler3
+        run: ./gradlew pTML
 
       - name: Checkout Android SDK Benchmark
         uses: actions/checkout@v4

@@ -6,7 +6,7 @@ This document provides some basic guidelines for contributing to this repository
 
 ## Requirements
 
-Before code can be accepted all contributors must read the [**code of conduct**](https://github.com/embrace-io/embrace-android-sdk/blob/master/CODE_OF_CONDUCT.md) and complete our [**Individual Contributor License Agreement (CLA).**](https://forms.gle/SjXadmUcVwh6NrU68)
+Before code can be accepted all contributors must read the [**code of conduct**](https://github.com/embrace-io/embrace-android-sdk/blob/main/CODE_OF_CONDUCT.md) and complete our [**Individual Contributor License Agreement (CLA).**](https://forms.gle/SjXadmUcVwh6NrU68)
 
 Our code of conduct applies to all platforms and venues related to this project; please follow it in all your interactions with the project and its participants.
 

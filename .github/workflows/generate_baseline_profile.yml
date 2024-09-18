@@ -23,9 +23,6 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Checkout Branch
-        uses: actions/checkout@v4
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -34,6 +31,13 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      - name: Read SDK version
+        run: |
+          # Read the version from gradle.properties
+          version=$(grep '^version' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+          # Set the version as an environment variable
+          echo "ANDROID_SDK_VERSION=${version}" >> "$GITHUB_ENV"
 
       - name: Checkout Android SDK Benchmark
         uses: actions/checkout@v4
@@ -49,7 +53,7 @@ jobs:
 
       - name: Generate Baseline Profile
         working-directory: android-sdk-benchmark
-        run: ./gradlew :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
+        run: ./gradlew -Pswazzler_version=${{ env.ANDROID_SDK_VERSION }} :macrobenchmark:pixel6Api34BaselineProfileAndroidTest 
           -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile
           -Pandroid.testoptions.manageddevices.emulator.gpu="swiftshader_indirect"
           -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1

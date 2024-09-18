@@ -68,6 +68,7 @@ dependencies {
     implementation(project(":embrace-android-core"))
     implementation(project(":embrace-android-features"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-delivery"))
 
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)

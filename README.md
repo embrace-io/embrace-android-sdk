@@ -80,7 +80,7 @@ For details about the features the Embrace Android SDK supports, refer to our [f
 - After you've obtained an `appId` and `API token`, checkout our [integration guide](https://embrace.io/docs/android/integration/) for further instructions.
 
 ## Existing Embrace Customers Upgrading from 5.x
-- For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/master/UPGRADING.md).
+- For existing customers on older versions of the Embrace SDK, follow the instructions in our [upgrade guide](https://github.com/embrace-io/embrace-android-sdk/blob/main/UPGRADING.md).
 
 # Contributing
 - See [CONTRIBUTING.md](CONTRIBUTING.md).

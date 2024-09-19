@@ -10,8 +10,8 @@ import kotlin.Result.Companion.failure
 class StoredTelemetryMetadata(
     val timestamp: Long,
     val uuid: String,
-    val type: SupportedEnvelopeType,
-    val filename: String = "v1_${timestamp}_${type.description}_$uuid.json"
+    val envelopeType: SupportedEnvelopeType,
+    val filename: String = "v1_${timestamp}_${envelopeType.description}_$uuid.json"
 ) {
 
     companion object {

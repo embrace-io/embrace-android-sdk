@@ -52,7 +52,7 @@ class StoredTelemetryMetadataTest {
                 assertEquals(input, filename)
                 assertEquals(TIMESTAMP, timestamp)
                 assertEquals(UUID, uuid)
-                assertEquals(type, this.type)
+                assertEquals(type, this.envelopeType)
             }
         }
     }

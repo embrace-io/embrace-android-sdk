@@ -28,7 +28,7 @@ internal class EmbraceGatingService(
         envelope: Envelope<SessionPayload>
     ): Envelope<SessionPayload> {
         val components = configService.sessionBehavior.getSessionComponents()
-        if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {
+        if (components != null) {
             // check if the session has error logs IDs. If so, send the full session payload.
             if (hasErrorLogs()) {
                 return envelope
@@ -51,7 +51,7 @@ internal class EmbraceGatingService(
     override fun gateEventMessage(eventMessage: EventMessage): EventMessage {
         val behavior = configService.sessionBehavior
         val components = behavior.getSessionComponents()
-        if (components != null && behavior.isGatingFeatureEnabled()) {
+        if (components != null) {
             logger.logDebug("Session gating feature enabled. Attempting to sanitize the event message")
 
             if (behavior is SessionBehaviorImpl && behavior.shouldSendFullMessage(eventMessage)) {

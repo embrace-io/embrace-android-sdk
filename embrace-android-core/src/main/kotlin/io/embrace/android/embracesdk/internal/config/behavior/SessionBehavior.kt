@@ -16,14 +16,6 @@ interface SessionBehavior {
     fun getSessionComponents(): Set<String>?
 
     /**
-     * Determines if the gating feature is enabled based on the presence of the session
-     * components list property.
-     *
-     * @return true if the gating feature is enabled
-     */
-    fun isGatingFeatureEnabled(): Boolean
-
-    /**
      * Whether session control is enabled, meaning that features should be gated.
      */
     fun isSessionControlEnabled(): Boolean

@@ -13,7 +13,7 @@ internal class SessionBehaviorImplImplTest {
 
     private val remote = RemoteConfig(
         sessionConfig = SessionRemoteConfig(
-            isEnabled = true,
+            isEnabled = false,
             sessionComponents = setOf("test"),
             fullSessionEvents = setOf("test2")
         ),
@@ -26,7 +26,7 @@ internal class SessionBehaviorImplImplTest {
             assertEquals(emptySet<String>(), getFullSessionEvents())
             assertNull(getSessionComponents())
             assertFalse(isGatingFeatureEnabled())
-            assertFalse(isSessionControlEnabled())
+            assertTrue(isSessionControlEnabled())
             assertEquals(10, getMaxSessionProperties())
         }
     }
@@ -35,7 +35,7 @@ internal class SessionBehaviorImplImplTest {
     fun testRemoteAndLocal() {
         with(createSessionBehavior(remoteCfg = { remote })) {
             assertTrue(isGatingFeatureEnabled())
-            assertTrue(isSessionControlEnabled())
+            assertFalse(isSessionControlEnabled())
             assertEquals(setOf("test"), getSessionComponents())
             assertEquals(setOf("test2"), getFullSessionEvents())
             assertEquals(57, getMaxSessionProperties())

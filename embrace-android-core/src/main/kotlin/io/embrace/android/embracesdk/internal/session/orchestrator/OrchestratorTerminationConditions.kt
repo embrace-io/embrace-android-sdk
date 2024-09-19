@@ -22,13 +22,13 @@ internal fun shouldEndManualSession(
 ): Boolean {
     if (state == ProcessState.BACKGROUND) {
         logger.logWarning("Cannot manually end session while in background.")
-        return true
+        return false
     }
-    if (configService.sessionBehavior.isSessionControlEnabled()) {
-        logger.logWarning("Cannot manually end session while session control is enabled.")
-        return true
+    if (!configService.sessionBehavior.isSessionControlEnabled()) {
+        logger.logWarning("Cannot manually end session while session control is disabled.")
+        return false
     }
-    val initial = activeSession ?: return true
+    val initial = activeSession ?: return false
     val startTime = initial.startTime
     val delta = clock.now() - startTime
     if (delta < MIN_SESSION_MS) {
@@ -37,9 +37,9 @@ internal fun shouldEndManualSession(
                 "This protects against instrumentation unintentionally creating too" +
                 "many sessions"
         )
-        return true
+        return false
     }
-    return false
+    return true
 }
 
 internal fun shouldRunOnBackground(

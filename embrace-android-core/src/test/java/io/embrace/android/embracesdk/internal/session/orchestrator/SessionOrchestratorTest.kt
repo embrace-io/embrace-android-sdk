@@ -201,9 +201,9 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `test manual session end disabled for session gating`() {
+    fun `test manual session end disabled`() {
         configService = FakeConfigService(
-            sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
+            sessionBehavior = FakeSessionBehavior(sessionControlEnabled = false)
         )
         createOrchestrator(false)
 

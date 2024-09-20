@@ -37,7 +37,7 @@ internal class WorkerThreadModuleImpl(
 
     override fun backgroundWorker(worker: Worker): BackgroundWorker {
         return backgroundWorker.getOrPut(worker) {
-            BackgroundWorker(fetchExecutor(worker))
+            BackgroundWorker(fetchExecutor(worker) as ScheduledExecutorService)
         }
     }
 

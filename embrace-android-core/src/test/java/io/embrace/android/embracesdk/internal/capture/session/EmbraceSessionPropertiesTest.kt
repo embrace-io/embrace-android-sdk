@@ -10,12 +10,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,7 +24,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
 
 private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
 private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
@@ -47,7 +46,7 @@ internal class EmbraceSessionPropertiesTest {
 
     @Before
     fun setUp() {
-        val worker = BackgroundWorker(Executors.newSingleThreadExecutor())
+        val worker = fakeBackgroundWorker()
         context = ApplicationProvider.getApplicationContext()
         logger = EmbLoggerImpl()
         val prefs = lazy { PreferenceManager.getDefaultSharedPreferences(context) }

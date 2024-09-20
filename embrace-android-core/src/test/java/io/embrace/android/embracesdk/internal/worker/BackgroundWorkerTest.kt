@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.worker
 
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -8,33 +8,33 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 internal class BackgroundWorkerTest {
 
     @Test
     fun testSubmitRunnable() {
-        val impl = BlockableExecutorService()
+        val impl = BlockingScheduledExecutorService(blockingMode = false)
         var ran = false
         val runnable = Runnable {
             ran = true
         }
         BackgroundWorker(impl).submit(runnable)
-        impl.runNext()
+        impl.runCurrentlyBlocked()
         assertTrue(ran)
     }
 
     @Test
     fun testSubmitCallable() {
-        val impl = BlockableExecutorService()
+        val impl = BlockingScheduledExecutorService(blockingMode = false)
         var ran = false
         val callable = Callable {
             ran = true
         }
         BackgroundWorker(impl).submit(callable)
-        impl.runNext()
+        impl.runCurrentlyBlocked()
         assertTrue(ran)
     }
 
@@ -97,8 +97,8 @@ internal class BackgroundWorkerTest {
     private class ShutdownAndWaitExecutorService(
         private val postShutdownAction: () -> Unit = {},
         private val postAwaitTerminationAction: () -> Unit = {},
-        private val impl: ExecutorService = Executors.newSingleThreadExecutor()
-    ) : ExecutorService by impl {
+        private val impl: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    ) : ScheduledExecutorService by impl {
 
         override fun shutdown() {
             impl.shutdown()

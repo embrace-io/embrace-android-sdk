@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
@@ -19,7 +19,7 @@ internal class DataCaptureOrchestratorTest {
     private lateinit var orchestrator: DataCaptureOrchestrator
     private lateinit var dataSource: FakeDataSource
     private lateinit var configService: FakeConfigService
-    private lateinit var executorService: BlockableExecutorService
+    private lateinit var executorService: BlockingScheduledExecutorService
     private var enabled: Boolean = true
 
     private val syncDataSource = DataSourceState(
@@ -37,7 +37,7 @@ internal class DataCaptureOrchestratorTest {
     fun setUp() {
         dataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         configService = FakeConfigService()
-        executorService = BlockableExecutorService()
+        executorService = BlockingScheduledExecutorService(blockingMode = false)
         orchestrator = DataCaptureOrchestrator(
             configService,
             BackgroundWorker(executorService),
@@ -72,13 +72,13 @@ internal class DataCaptureOrchestratorTest {
 
         orchestrator.currentSessionType = SessionType.FOREGROUND
         assertEquals(0, dataSource.enableDataCaptureCount)
-        executorService.runNext()
+        executorService.runCurrentlyBlocked()
         assertEquals(1, dataSource.enableDataCaptureCount)
 
         enabled = false
         configService.updateListeners()
         assertEquals(0, dataSource.disableDataCaptureCount)
-        executorService.runNext()
+        executorService.runCurrentlyBlocked()
         assertEquals(1, dataSource.disableDataCaptureCount)
     }
 
@@ -90,7 +90,7 @@ internal class DataCaptureOrchestratorTest {
         assertEquals(0, dataSource.enableDataCaptureCount)
         orchestrator.currentSessionType = SessionType.FOREGROUND
         assertEquals(0, dataSource.enableDataCaptureCount)
-        executorService.runNext()
+        executorService.runCurrentlyBlocked()
         assertEquals(1, dataSource.enableDataCaptureCount)
     }
 }

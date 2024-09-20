@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.worker
 
 import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
+import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
  * to expose as part of the internal API.
  */
 class BackgroundWorker(
-    private val impl: ExecutorService
+    private val impl: ScheduledExecutorService
 ) {
 
     /**

@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -90,7 +90,7 @@ internal class EmbraceEventServiceTest {
         sessionPropertiesService = FakeSessionPropertiesService()
         gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService(), FakeEmbLogger()))
         val initModule = FakeInitModule(clock = fakeClock)
-        fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule, name = WorkerName.BACKGROUND_REGISTRATION)
+        fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule, name = Worker.NonIoRegWorker)
         eventHandler = EventHandler(
             metadataService = metadataService,
             sessionIdTracker = sessionIdTracker,
@@ -100,7 +100,7 @@ internal class EmbraceEventServiceTest {
             logger = logger,
             clock = fakeClock,
             processStateService = processStateService,
-            scheduledWorker = fakeWorkerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
+            scheduledWorker = fakeWorkerThreadModule.scheduledWorker(Worker.NonIoRegWorker)
         )
         eventService = EmbraceEventService(
             1,

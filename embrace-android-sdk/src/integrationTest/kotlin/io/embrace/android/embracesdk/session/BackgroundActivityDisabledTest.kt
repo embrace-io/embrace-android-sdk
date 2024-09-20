@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -49,7 +49,7 @@ internal class BackgroundActivityDisabledTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock()
         val initModule = FakeInitModule(clock)
-        val workerThreadModule = FakeWorkerThreadModule(initModule, WorkerName.REMOTE_LOGGING)
+        val workerThreadModule = FakeWorkerThreadModule(initModule, Worker.LogMessageWorker)
 
         IntegrationTestRule.Harness(
             overriddenClock = clock,

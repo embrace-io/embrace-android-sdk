@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
@@ -200,7 +200,7 @@ internal class ModuleInitBootstrapper(
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
                             }
-                            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION).submit {
+                            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker).submit {
                                 Systrace.traceSynchronous("network-connectivity-registration") {
                                     essentialServiceModule.networkConnectivityService.register()
                                 }
@@ -335,7 +335,7 @@ internal class ModuleInitBootstrapper(
                         )
 
                         if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
-                            val worker = workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT)
+                            val worker = workerThreadModule.backgroundWorker(Worker.IoRegWorker)
                             worker.submit(TaskPriority.HIGH) {
                                 ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryCach
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.TimeUnit
 
 internal class StorageModuleImpl(
@@ -44,14 +44,14 @@ internal class StorageModuleImpl(
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
         EmbraceDeliveryCacheManager(
             cacheService,
-            workerThreadModule.backgroundWorker(WorkerName.DELIVERY_CACHE),
+            workerThreadModule.backgroundWorker(Worker.FileCacheWorker),
             initModule.logger
         )
     }
 
     init {
         workerThreadModule
-            .scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
+            .scheduledWorker(Worker.IoRegWorker)
             .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
     }
 }

@@ -18,11 +18,10 @@ class PeriodicBackgroundActivityCacher(
 ) {
 
     private companion object {
-
         /**
          * Minimum time between writes of the background activity to disk
          */
-        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 5000
+        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 2000L
     }
 
     private var lastSaved: Long = 0
@@ -44,11 +43,14 @@ class PeriodicBackgroundActivityCacher(
                 logger.trackInternalError(InternalErrorType.BG_SESSION_CACHE_FAIL, ex)
             }
         }
-        scheduledFuture = worker.schedule<Unit>(
-            action,
-            delay,
-            TimeUnit.MILLISECONDS
-        )
+
+        if (scheduledFuture?.isDone != false) {
+            scheduledFuture = worker.schedule<Unit>(
+                action,
+                delay,
+                TimeUnit.MILLISECONDS
+            )
+        }
     }
 
     private fun calculateDelay(): Long {

@@ -36,7 +36,7 @@ class EmbraceOkHttp3ApplicationInterceptor internal constructor(
             // we are not interested in response, just proceed
             chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
-            if (embrace.isStarted && !embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
+            if (embrace.isStarted) {
                 val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromIncompleteRequest(
@@ -55,7 +55,7 @@ class EmbraceOkHttp3ApplicationInterceptor internal constructor(
             throw e
         } catch (e: Exception) {
             // we are interested in errors.
-            if (embrace.isStarted && !embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
+            if (embrace.isStarted) {
                 val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request))
                 val errorType = e.javaClass.canonicalName
                 val errorMessage = e.message

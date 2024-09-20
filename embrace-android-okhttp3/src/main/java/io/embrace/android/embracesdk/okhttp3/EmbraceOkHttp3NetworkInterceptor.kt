@@ -45,7 +45,7 @@ class EmbraceOkHttp3NetworkInterceptor internal constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         // If the SDK has not started, don't do anything
         val originalRequest: Request = chain.request()
-        if (!embrace.isStarted || embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
+        if (!embrace.isStarted) {
             return chain.proceed(originalRequest)
         }
 

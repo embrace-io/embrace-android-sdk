@@ -95,10 +95,6 @@ class FakeEmbraceInternalInterface(
         return 0
     }
 
-    override fun isInternalNetworkCaptureDisabled(): Boolean {
-        return false
-    }
-
     override fun isAnrCaptureEnabled(): Boolean {
         return true
     }

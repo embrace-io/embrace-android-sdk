@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.api.limiter
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,13 +15,15 @@ import org.junit.Test
 
 internal class PendingApiCallsTest {
 
-    private lateinit var worker: ScheduledWorker
+    private lateinit var worker: BackgroundWorker
     private lateinit var pendingApiCalls: PendingApiCalls
     private lateinit var queue: PendingApiCallQueue
 
     @Before
     fun setUp() {
-        worker = ScheduledWorker(BlockingScheduledExecutorService(blockingMode = false))
+        worker = BackgroundWorker(
+            BlockingScheduledExecutorService(blockingMode = false)
+        )
         pendingApiCalls = PendingApiCalls()
         queue = PendingApiCallQueue(pendingApiCalls)
     }
@@ -174,7 +176,7 @@ internal class PendingApiCallsTest {
         with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
-                scheduledWorker = worker,
+                worker = worker,
                 1000
             ) {}
         }

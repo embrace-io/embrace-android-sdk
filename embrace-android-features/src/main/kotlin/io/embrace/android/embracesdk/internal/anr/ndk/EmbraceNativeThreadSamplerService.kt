@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.Random
 import java.util.concurrent.TimeUnit
 
@@ -24,7 +24,7 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val random: Random = Random(),
     private val logger: EmbLogger,
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
-    private val scheduledWorker: ScheduledWorker,
+    private val worker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
     private val sharedObjectLoader: SharedObjectLoader
 ) : NativeThreadSamplerService {
@@ -123,7 +123,7 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
                     intervalMs
                 )
 
-                scheduledWorker.schedule<Unit>(::fetchIntervals, intervalMs * MAX_NATIVE_SAMPLES, TimeUnit.MILLISECONDS)
+                worker.schedule<Unit>(::fetchIntervals, intervalMs * MAX_NATIVE_SAMPLES, TimeUnit.MILLISECONDS)
             }
         }
         count++
@@ -131,7 +131,7 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
 
     override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
         if (sampling) {
-            scheduledWorker.submit {
+            worker.submit {
                 fetchIntervals()
             }
         }

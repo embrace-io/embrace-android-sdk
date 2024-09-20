@@ -28,12 +28,9 @@ internal class WorkerThreadModuleImplTest {
 
         val backgroundExecutor = module.backgroundWorker(Worker.PeriodicCacheWorker)
         assertNotNull(backgroundExecutor)
-        val scheduledExecutor = module.scheduledWorker(Worker.PeriodicCacheWorker)
-        assertNotNull(scheduledExecutor)
 
         // test caching
         assertSame(backgroundExecutor, module.backgroundWorker(Worker.PeriodicCacheWorker))
-        assertSame(scheduledExecutor, module.scheduledWorker(Worker.PeriodicCacheWorker))
 
         // test shutting down module
         module.close()
@@ -43,12 +40,6 @@ internal class WorkerThreadModuleImplTest {
     fun `network request executor uses custom queue`() {
         val module = WorkerThreadModuleImpl(initModule)
         assertNotNull(module.prioritizedWorker(Worker.NetworkRequestWorker))
-    }
-
-    @Test(expected = IllegalStateException::class)
-    fun `network request scheduled executor fails`() {
-        val module = WorkerThreadModuleImpl(initModule)
-        module.scheduledWorker(Worker.NetworkRequestWorker)
     }
 
     @Test

@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
@@ -46,7 +46,8 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         fakeConfigService = FakeConfigService(anrBehavior = anrBehavior)
         anrExecutorService = scheduledExecutorSupplier.invoke()
         state = ThreadMonitoringState(clock)
-        val worker = ScheduledWorker(anrExecutorService)
+        val worker =
+            BackgroundWorker(anrExecutorService)
         targetThreadHandler = TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = worker,

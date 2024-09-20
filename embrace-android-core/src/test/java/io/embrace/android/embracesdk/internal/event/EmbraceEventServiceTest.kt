@@ -100,7 +100,7 @@ internal class EmbraceEventServiceTest {
             logger = logger,
             clock = fakeClock,
             processStateService = processStateService,
-            scheduledWorker = fakeWorkerThreadModule.scheduledWorker(Worker.NonIoRegWorker)
+            worker = fakeWorkerThreadModule.backgroundWorker(Worker.NonIoRegWorker)
         )
         eventService = EmbraceEventService(
             1,

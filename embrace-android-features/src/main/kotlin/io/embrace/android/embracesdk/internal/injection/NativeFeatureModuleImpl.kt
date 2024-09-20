@@ -55,7 +55,7 @@ internal class NativeFeatureModuleImpl(
                     configService = configModule.configService,
                     symbols = lazy { ndkService.symbolsForCurrentArch },
                     logger = initModule.logger,
-                    scheduledWorker = workerThreadModule.scheduledWorker(Worker.NonIoRegWorker),
+                    worker = workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 )

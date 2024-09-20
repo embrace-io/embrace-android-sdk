@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 
 /**
@@ -32,7 +32,7 @@ internal class EventHandler(
     private val deliveryService: DeliveryService,
     private val logger: EmbLogger,
     private val clock: Clock,
-    private val scheduledWorker: ScheduledWorker
+    private val worker: BackgroundWorker
 ) {
     /**
      * Responsible for handling the start of an event.
@@ -55,7 +55,7 @@ internal class EventHandler(
             eventProperties
         )
 
-        val timer = scheduledWorker.schedule<Unit>(
+        val timer = worker.schedule<Unit>(
             timeoutCallback,
             threshold - calculateOffset(startTime, threshold),
             TimeUnit.MILLISECONDS

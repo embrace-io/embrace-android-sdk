@@ -51,7 +51,7 @@ internal class StorageModuleImpl(
 
     init {
         workerThreadModule
-            .scheduledWorker(Worker.IoRegWorker)
+            .backgroundWorker(Worker.IoRegWorker)
             .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
     }
 }

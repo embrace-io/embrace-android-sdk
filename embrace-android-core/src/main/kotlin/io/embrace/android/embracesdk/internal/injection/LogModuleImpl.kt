@@ -70,7 +70,7 @@ internal class LogModuleImpl(
 
     override val logOrchestrator: LogOrchestrator by singleton {
         LogOrchestratorImpl(
-            workerThreadModule.scheduledWorker(Worker.LogMessageWorker),
+            workerThreadModule.backgroundWorker(Worker.LogMessageWorker),
             initModule.clock,
             openTelemetryModule.logSink,
             deliveryModule.deliveryService,

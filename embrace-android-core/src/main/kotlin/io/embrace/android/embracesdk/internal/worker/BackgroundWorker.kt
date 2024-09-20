@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.worker
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
@@ -28,6 +29,40 @@ class BackgroundWorker(
     fun <T> submit(callable: Callable<T>): Future<T> {
         return impl.submit(callable)
     }
+
+    /**
+     * Schedules a task for future execution and returns a [ScheduledFuture].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> schedule(
+        command: Runnable?,
+        delay: Long,
+        unit: TimeUnit?
+    ): ScheduledFuture<T> {
+        return impl.schedule(command, delay, unit) as ScheduledFuture<T>
+    }
+
+    /**
+     * Schedules a task for recurring execution and returns a [ScheduledFuture].
+     */
+    fun scheduleWithFixedDelay(
+        command: Runnable?,
+        initialDelay: Long,
+        delay: Long,
+        unit: TimeUnit?
+    ): ScheduledFuture<*>? {
+        return impl.scheduleWithFixedDelay(command, initialDelay, delay, unit)
+    }
+
+    @Deprecated(
+        "Use scheduleWithFixedDelay instead.",
+    )
+    fun scheduleAtFixedRate(
+        runnable: Runnable,
+        initialDelay: Long,
+        intervalMs: Long,
+        unit: TimeUnit
+    ): ScheduledFuture<*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)
 
     /**
      * Shutdown the worker. If [timeoutMs] is greater than 0, the worker will

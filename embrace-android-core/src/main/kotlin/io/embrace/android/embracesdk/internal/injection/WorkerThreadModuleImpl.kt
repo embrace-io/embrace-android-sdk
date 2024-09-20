@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
@@ -26,7 +25,6 @@ internal class WorkerThreadModuleImpl(
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
     private val prioritizedWorker: MutableMap<Worker, PrioritizedWorker> = ConcurrentHashMap()
     private val backgroundWorker: MutableMap<Worker, BackgroundWorker> = ConcurrentHashMap()
-    private val scheduledWorker: MutableMap<Worker, ScheduledWorker> = ConcurrentHashMap()
     override val anrMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
 
     override fun prioritizedWorker(worker: Worker): PrioritizedWorker {
@@ -38,15 +36,6 @@ internal class WorkerThreadModuleImpl(
     override fun backgroundWorker(worker: Worker): BackgroundWorker {
         return backgroundWorker.getOrPut(worker) {
             BackgroundWorker(fetchExecutor(worker) as ScheduledExecutorService)
-        }
-    }
-
-    override fun scheduledWorker(worker: Worker): ScheduledWorker {
-        if (worker == Worker.NetworkRequestWorker || worker == Worker.FileCacheWorker) {
-            error("Selected executor is not a scheduled executor")
-        }
-        return scheduledWorker.getOrPut(worker) {
-            ScheduledWorker(fetchExecutor(worker) as ScheduledExecutorService)
         }
     }
 
@@ -66,6 +55,7 @@ internal class WorkerThreadModuleImpl(
                     1,
                     1
                 )
+
                 else -> ScheduledThreadPoolExecutor(1, threadFactory, this)
             }
         }

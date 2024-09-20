@@ -72,7 +72,7 @@ internal class EmbraceEventService(
             deliveryService,
             logger,
             clock,
-            workerThreadModule.scheduledWorker(Worker.NonIoRegWorker)
+            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker)
         )
         backgroundWorker =
             workerThreadModule.backgroundWorker(Worker.NonIoRegWorker)

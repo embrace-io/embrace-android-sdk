@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
@@ -27,7 +27,7 @@ internal class EmbraceAnrService(
     looper: Looper,
     logger: EmbLogger,
     livenessCheckScheduler: LivenessCheckScheduler,
-    private val anrMonitorWorker: ScheduledWorker,
+    private val anrMonitorWorker: BackgroundWorker,
     state: ThreadMonitoringState,
     val clock: Clock
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {

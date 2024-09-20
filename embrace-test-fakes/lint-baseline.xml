@@ -96,7 +96,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeApiService.kt"
-            line="33"
+            line="34"
             column="9"/>
     </issue>
 
@@ -107,7 +107,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeApiService.kt"
-            line="37"
+            line="38"
             column="9"/>
     </issue>
 
@@ -283,6 +283,28 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
+            line="46"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
+            line="50"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StopShip"
+        message="`TODO` call found; points to code which must be fixed prior to release"
+        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
             line="54"
             column="9"/>
     </issue>
@@ -316,40 +338,7 @@
         errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
-            line="66"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
-            line="70"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
-            line="74"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeDeliveryCacheManager.kt"
-            line="81"
+            line="69"
             column="9"/>
     </issue>
 
@@ -470,7 +459,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeNdkService.kt"
-            line="48"
+            line="43"
             column="13"/>
     </issue>
 
@@ -525,7 +514,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="35"
+            line="41"
             column="17"/>
     </issue>
 
@@ -536,7 +525,7 @@
         errorLine2="                ~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="37"
+            line="43"
             column="17"/>
     </issue>
 

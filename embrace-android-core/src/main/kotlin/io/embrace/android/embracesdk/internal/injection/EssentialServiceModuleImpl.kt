@@ -92,7 +92,7 @@ class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         Systrace.traceSynchronous("pending-call-sender-init") {
             EmbracePendingApiCallsSender(
-                workerThreadModule.scheduledWorker(Worker.IoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.IoRegWorker),
                 storageModule.deliveryCacheManager,
                 initModule.clock,
                 initModule.logger

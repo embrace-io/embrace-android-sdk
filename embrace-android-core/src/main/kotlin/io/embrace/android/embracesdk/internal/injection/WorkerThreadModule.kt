@@ -19,7 +19,7 @@ interface WorkerThreadModule : Closeable {
     /**
      * Return a [PriorityWorker] matching the [worker]
      */
-    fun priorityWorker(worker: Worker.Priority): PriorityWorker
+    fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T>
 
     /**
      * Returns the thread that monitors the main thread for ANRs

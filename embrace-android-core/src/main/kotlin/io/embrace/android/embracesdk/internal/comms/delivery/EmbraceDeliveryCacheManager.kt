@@ -16,7 +16,7 @@ import java.io.Closeable
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
-    private val priorityWorker: PriorityWorker,
+    private val priorityWorker: PriorityWorker<TaskPriority>,
     private val logger: EmbLogger
 ) : Closeable, DeliveryCacheManager {
 
@@ -74,7 +74,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun deleteSession(sessionId: String) {
         cachedSessions[sessionId]?.let { cachedSession ->
-            priorityWorker.submit {
+            priorityWorker.submit(TaskPriority.NORMAL) {
                 runCatching {
                     cacheService.deleteFile(cachedSession.filename)
                     cachedSessions.remove(sessionId)
@@ -105,7 +105,7 @@ internal class EmbraceDeliveryCacheManager(
         if (sync) {
             runnable()
         } else {
-            priorityWorker.submit(runnable = runnable)
+            priorityWorker.submit(TaskPriority.NORMAL, runnable)
         }
         return name
     }
@@ -115,7 +115,7 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     override fun deletePayload(name: String) {
-        priorityWorker.submit {
+        priorityWorker.submit(TaskPriority.NORMAL) {
             cacheService.deleteFile(name)
         }
     }
@@ -128,7 +128,7 @@ internal class EmbraceDeliveryCacheManager(
         if (sync) {
             cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, model, PendingApiCalls::class.java)
         } else {
-            priorityWorker.submit {
+            priorityWorker.submit(TaskPriority.NORMAL) {
                 cacheService.cacheObject(
                     PENDING_API_CALLS_FILE_NAME,
                     model,

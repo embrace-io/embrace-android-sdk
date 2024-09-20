@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -46,7 +47,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     private val prefix = "last_session"
     private val serializer = EmbraceSerializer()
-    private val worker = fakePriorityWorker()
+    private val worker = fakePriorityWorker<TaskPriority>()
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService

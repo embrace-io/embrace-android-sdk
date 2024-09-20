@@ -40,6 +40,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
@@ -52,7 +53,7 @@ import org.junit.Test
 internal class EmbraceDeliveryServiceTest {
 
     private lateinit var fakeClock: FakeClock
-    private lateinit var worker: PriorityWorker
+    private lateinit var worker: PriorityWorker<TaskPriority>
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var apiService: FakeApiService
     private lateinit var fakeNativeCrashService: FakeNativeCrashService

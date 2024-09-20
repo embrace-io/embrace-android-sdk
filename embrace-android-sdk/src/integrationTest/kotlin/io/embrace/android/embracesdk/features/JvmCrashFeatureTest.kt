@@ -50,7 +50,7 @@ internal class JvmCrashFeatureTest {
         with(testRule) {
             harness.recordSession {
                 handleException()
-                checkNotNull(harness.getLastSavedLogPayload()?.data?.logs).single().assertCrash(
+                checkNotNull(harness.getLastSavedLogPayload().data.logs).single().assertCrash(
                     state = "foreground",
                     crashId = checkNotNull(harness.getLastSentSession()?.getCrashedId())
                 )
@@ -62,7 +62,7 @@ internal class JvmCrashFeatureTest {
     fun `app crash in the background generates a crash log`() {
         with(testRule) {
             handleException()
-            checkNotNull(harness.getLastSavedLogPayload()?.data?.logs).single().assertCrash(
+            checkNotNull(harness.getLastSavedLogPayload().data.logs).single().assertCrash(
                 crashId = checkNotNull(harness.getLastSentBackgroundActivity()?.getCrashedId())
             )
         }
@@ -86,7 +86,7 @@ internal class JvmCrashFeatureTest {
             }
         }
 
-        val log = checkNotNull(testRule.harness.getLastSavedLogPayload()?.data?.logs).single()
+        val log = checkNotNull(testRule.harness.getLastSavedLogPayload().data.logs).single()
         assertOtelLogReceived(
             logReceived = log,
             expectedMessage = "",

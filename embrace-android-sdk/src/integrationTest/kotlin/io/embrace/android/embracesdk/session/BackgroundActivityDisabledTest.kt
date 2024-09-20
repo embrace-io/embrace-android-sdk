@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSentLogPayloads
-import io.embrace.android.embracesdk.getSentLogs
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -84,7 +84,7 @@ internal class BackgroundActivityDisabledTest {
 
             embrace.addBreadcrumb("not-logged")
             harness.overriddenClock.tick(10_000L)
-            with(checkNotNull(harness.getSentLogPayloads(1).single().data.logs?.single())) {
+            with(checkNotNull(harness.getSentLogPayloads(1).single().data.logs).single()) {
                 assertEquals("error", body)
                 assertEquals("background", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -124,8 +124,7 @@ internal class BackgroundActivityDisabledTest {
             checkNotNull(session)
 
             flushLogBatch()
-
-            with(checkNotNull(harness.getSentLogs(1)?.single())) {
+            checkNotNull(harness.getLastSentLog()).run {
                 assertEquals("sent-after-session", body)
                 assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertEquals(session.getSessionId(), attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))

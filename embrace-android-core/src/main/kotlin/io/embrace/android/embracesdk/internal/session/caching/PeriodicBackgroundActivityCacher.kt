@@ -43,14 +43,11 @@ class PeriodicBackgroundActivityCacher(
                 logger.trackInternalError(InternalErrorType.BG_SESSION_CACHE_FAIL, ex)
             }
         }
-
-        if (scheduledFuture?.isDone != false) {
-            scheduledFuture = worker.schedule<Unit>(
-                action,
-                delay,
-                TimeUnit.MILLISECONDS
-            )
-        }
+        scheduledFuture = worker.schedule<Unit>(
+            action,
+            delay,
+            TimeUnit.MILLISECONDS
+        )
     }
 
     private fun calculateDelay(): Long {

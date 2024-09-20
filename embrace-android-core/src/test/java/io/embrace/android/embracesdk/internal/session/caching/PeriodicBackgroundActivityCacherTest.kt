@@ -38,7 +38,7 @@ internal class PeriodicBackgroundActivityCacherTest {
     }
 
     @Test
-    fun `do not schedule save if there is a pending one`() {
+    fun `do not save more than once if delay time has not elapsed`() {
         queueScheduleSave()
         queueScheduleSave()
         val latch = queueCompletionTask()
@@ -48,19 +48,7 @@ internal class PeriodicBackgroundActivityCacherTest {
     }
 
     @Test
-    fun `schedule save if previous one has already run`() {
-        val latch1 = queueScheduleSave()
-        executor.runCurrentlyBlocked()
-        latch1.assertCountedDown()
-        assertEquals(0, executor.scheduledTasksCount())
-        val latch2 = queueScheduleSave()
-        executor.moveForwardAndRunBlocked(10_000L)
-        latch2.assertCountedDown()
-        assertEquals(2, executionCount.get())
-    }
-
-    @Test
-    fun `scheduled save will only run after minimum delay has elapsed`() {
+    fun `scheduled save will run once minimum delay time has elapsed`() {
         val latch1 = queueScheduleSave()
         executor.runCurrentlyBlocked()
         latch1.assertCountedDown()
@@ -78,24 +66,13 @@ internal class PeriodicBackgroundActivityCacherTest {
     }
 
     @Test
-    fun `stopping cacher prevents execution`() {
+    fun `stopping cacher prevents execution of the pending scheduled save`() {
         queueScheduleSave()
         cacher.stop()
         val latch = queueCompletionTask()
         executor.blockingMode = false
         latch.assertCountedDown()
         assertEquals(0, executionCount.get())
-    }
-
-    @Test
-    fun `stopping allows another save to be scheduled`() {
-        queueScheduleSave()
-        cacher.stop()
-        queueScheduleSave()
-        val latch = queueCompletionTask()
-        executor.blockingMode = false
-        latch.assertCountedDown()
-        assertEquals(1, executionCount.get())
     }
 
     private fun queueScheduleSave(): CountDownLatch {

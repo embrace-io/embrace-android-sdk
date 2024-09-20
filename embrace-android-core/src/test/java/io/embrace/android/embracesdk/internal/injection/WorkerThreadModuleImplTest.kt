@@ -42,7 +42,7 @@ internal class WorkerThreadModuleImplTest {
     @Test
     fun `network request executor uses custom queue`() {
         val module = WorkerThreadModuleImpl(initModule)
-        assertNotNull(module.backgroundWorker(Worker.NetworkRequestWorker))
+        assertNotNull(module.prioritizedWorker(Worker.NetworkRequestWorker))
     }
 
     @Test(expected = IllegalStateException::class)

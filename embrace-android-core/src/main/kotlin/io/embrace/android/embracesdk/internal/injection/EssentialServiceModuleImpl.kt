@@ -112,7 +112,7 @@ class EssentialServiceModuleImpl(
                     }
                 },
                 logger = initModule.logger,
-                backgroundWorker = workerThreadModule.backgroundWorker(Worker.NetworkRequestWorker),
+                prioritizedWorker = workerThreadModule.prioritizedWorker(Worker.NetworkRequestWorker),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,

@@ -53,7 +53,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when session control disabled does not end sessions`() {
         with(testRule) {
-            harness.overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlEnabled = false)
+            harness.overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlDisabled = true)
             harness.recordSession {
                 harness.overriddenClock.tick(10000)
                 embrace.endSession()
@@ -66,7 +66,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when state session is below 5s has no effect`() {
         with(testRule) {
-            harness.overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
+            harness.overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlDisabled = true)
             harness.recordSession {
                 harness.overriddenClock.tick(1000) // not enough to trigger new session
                 embrace.endSession()

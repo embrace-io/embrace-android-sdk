@@ -24,9 +24,9 @@ interface SessionBehavior {
     fun isGatingFeatureEnabled(): Boolean
 
     /**
-     * Whether session control is enabled, meaning that features should be gated.
+     * Whether session control is disabled, meaning that can't end sessions manually.
      */
-    fun isSessionControlEnabled(): Boolean
+    fun isSessionControlDisabled(): Boolean
 
     /**
      * Returns the maximum number of properties that can be attached to a session

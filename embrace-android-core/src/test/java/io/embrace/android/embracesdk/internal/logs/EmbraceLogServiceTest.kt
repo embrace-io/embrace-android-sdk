@@ -128,7 +128,6 @@ internal class EmbraceLogServiceTest {
                 remoteCfg = {
                     RemoteConfig(
                         sessionConfig = SessionRemoteConfig(
-                            isEnabled = true,
                             sessionComponents = emptySet() // empty set will gate everything
                         )
                     )

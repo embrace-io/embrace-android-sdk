@@ -89,7 +89,7 @@ internal class EmbraceApiServiceTest {
 
         // verify a few fields were serialized correctly.
         checkNotNull(remoteConfig)
-        assertTrue(checkNotNull(remoteConfig.sessionConfig?.isEnabled))
+        assertFalse(checkNotNull(remoteConfig.disableSessionControl))
         assertEquals(100, remoteConfig.threshold)
     }
 

@@ -34,7 +34,7 @@ class SessionBehaviorImpl(
 
     override fun isGatingFeatureEnabled(): Boolean = getSessionComponents() != null
 
-    override fun isSessionControlEnabled(): Boolean = remote?.sessionConfig?.isEnabled ?: true
+    override fun isSessionControlDisabled(): Boolean = remote?.disableSessionControl ?: false
 
     override fun getMaxSessionProperties(): Int = remote?.maxSessionProperties ?: SESSION_PROPERTY_LIMIT
 

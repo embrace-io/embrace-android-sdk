@@ -24,7 +24,7 @@ internal fun shouldEndManualSession(
         logger.logWarning("Cannot manually end session while in background.")
         return false
     }
-    if (!configService.sessionBehavior.isSessionControlEnabled()) {
+    if (configService.sessionBehavior.isSessionControlDisabled()) {
         logger.logWarning("Cannot manually end session while session control is disabled.")
         return false
     }

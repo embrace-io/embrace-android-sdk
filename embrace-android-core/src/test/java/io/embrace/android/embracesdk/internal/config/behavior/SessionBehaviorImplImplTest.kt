@@ -12,8 +12,8 @@ import org.junit.Test
 internal class SessionBehaviorImplImplTest {
 
     private val remote = RemoteConfig(
+        disableSessionControl = true,
         sessionConfig = SessionRemoteConfig(
-            isEnabled = false,
             sessionComponents = setOf("test"),
             fullSessionEvents = setOf("test2")
         ),
@@ -26,7 +26,7 @@ internal class SessionBehaviorImplImplTest {
             assertEquals(emptySet<String>(), getFullSessionEvents())
             assertNull(getSessionComponents())
             assertFalse(isGatingFeatureEnabled())
-            assertTrue(isSessionControlEnabled())
+            assertFalse(isSessionControlDisabled())
             assertEquals(10, getMaxSessionProperties())
         }
     }
@@ -35,7 +35,7 @@ internal class SessionBehaviorImplImplTest {
     fun testRemoteAndLocal() {
         with(createSessionBehavior(remoteCfg = { remote })) {
             assertTrue(isGatingFeatureEnabled())
-            assertFalse(isSessionControlEnabled())
+            assertTrue(isSessionControlDisabled())
             assertEquals(setOf("test"), getSessionComponents())
             assertEquals(setOf("test2"), getFullSessionEvents())
             assertEquals(57, getMaxSessionProperties())

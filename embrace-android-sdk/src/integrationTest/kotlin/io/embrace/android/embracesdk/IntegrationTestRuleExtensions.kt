@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
 /**
- * Returns the list of log payload envelops that have been sent. If [minSize] is specified, it will wait a maximum of 1 second for
+ * Returns the list of log payload envelopes that have been sent. If [minSize] is specified, it will wait a maximum of 1 second for
  * the number of payloads that exist to equal to or exceed that before returning, timing out if it doesn't.
  */
 internal fun IntegrationTestRule.Harness.getSentLogPayloads(minSize: Int? = null): List<Envelope<LogPayload>> {

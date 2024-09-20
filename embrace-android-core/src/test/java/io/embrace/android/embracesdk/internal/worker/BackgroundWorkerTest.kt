@@ -78,7 +78,7 @@ internal class BackgroundWorkerTest {
 
     @Test
     fun `shutdown and wait exceeds timeout`() {
-        val latch = CountDownLatch(1)
+        val latch = CountDownLatch(2)
         val worker = BackgroundWorker(
             ShutdownAndWaitExecutorService(postAwaitTerminationAction = {
                 latch.countDown()
@@ -91,6 +91,7 @@ internal class BackgroundWorkerTest {
             ran = true
         }
         worker.shutdownAndWait(0)
+        assertEquals(1, latch.count)
         assertFalse(ran)
     }
 

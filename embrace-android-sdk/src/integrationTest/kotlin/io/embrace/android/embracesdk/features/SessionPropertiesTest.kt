@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.checkNextSavedBackgroundActivity
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastSavedBackgroundActivity
 import io.embrace.android.embracesdk.getLastSavedSession
 import io.embrace.android.embracesdk.getLastSentBackgroundActivity
 import io.embrace.android.embracesdk.getSentBackgroundActivities
@@ -130,9 +130,14 @@ internal class SessionPropertiesTest {
         with(testRule) {
             startSdk()
             harness.recordSession()
-            embrace.addSessionProperty("temp", "value", false)
-            val bgSnapshot = checkNotNull(harness.getLastSavedBackgroundActivity())
-            checkNotNull(bgSnapshot.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
+            harness.checkNextSavedBackgroundActivity(
+                action = {
+                    embrace.addSessionProperty("temp", "value", false)
+                },
+                validationFn = { envelope ->
+                    checkNotNull(envelope.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
+                }
+            )
 
             val session = checkNotNull(harness.recordSession())
             checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
@@ -147,14 +152,21 @@ internal class SessionPropertiesTest {
         with(testRule) {
             startSdk()
             var lastSessionId = checkNotNull(harness.recordSession()).getSessionId()
-            embrace.addSessionProperty("perm", "value", true)
-            with(checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan())) {
-                assertNotEquals(lastSessionId, embrace.currentSessionId)
-                assertPropertyExistence(
-                    exist = listOf("perm")
-                )
-                lastSessionId = checkNotNull(embrace.currentSessionId)
-            }
+
+            harness.checkNextSavedBackgroundActivity(
+                action = {
+                    embrace.addSessionProperty("perm", "value", true)
+                },
+                validationFn = { envelope ->
+                    assertNotEquals(lastSessionId, envelope.getSessionId())
+                    with(checkNotNull(envelope.getSessionSpan())) {
+                        assertPropertyExistence(
+                            exist = listOf("perm")
+                        )
+                        lastSessionId = checkNotNull(embrace.currentSessionId)
+                    }
+                }
+            )
 
             harness.recordSession {
                 with(checkNotNull(harness.getLastSavedSession()?.getSessionSpan())) {
@@ -170,17 +182,19 @@ internal class SessionPropertiesTest {
                 )
             }
 
-            with(checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan())) {
-                assertNotEquals(lastSessionId, embrace.currentSessionId)
-                assertPropertyExistence(
-                    exist = listOf("perm", "perm2")
-                )
-                lastSessionId = checkNotNull(embrace.currentSessionId)
-            }
-
-            embrace.addSessionProperty("perm3", "value", true)
-            checkNotNull(harness.getLastSavedBackgroundActivity()?.getSessionSpan()).assertPropertyExistence(
-                exist = listOf("perm", "perm2", "perm3")
+            harness.checkNextSavedBackgroundActivity(
+                action = {
+                    embrace.addSessionProperty("perm3", "value", true)
+                },
+                validationFn = { envelope ->
+                    assertNotEquals(lastSessionId, envelope.getSessionId())
+                    with(checkNotNull(envelope.getSessionSpan())) {
+                        assertPropertyExistence(
+                            exist = listOf("perm", "perm2", "perm3")
+                        )
+                        lastSessionId = checkNotNull(embrace.currentSessionId)
+                    }
+                }
             )
 
             harness.recordSession {

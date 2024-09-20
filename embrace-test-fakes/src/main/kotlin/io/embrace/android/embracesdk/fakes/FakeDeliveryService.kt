@@ -34,10 +34,10 @@ open class FakeDeliveryService : DeliveryService {
         ConcurrentLinkedQueue()
 
     override fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType) {
+        savedSessionEnvelopes.add(envelope to snapshotType)
         if (snapshotType != SessionSnapshotType.PERIODIC_CACHE) {
             sentSessionEnvelopes.add(envelope to snapshotType)
         }
-        savedSessionEnvelopes.add(envelope to snapshotType)
     }
 
     override fun sendCachedSessions(
@@ -69,6 +69,10 @@ open class FakeDeliveryService : DeliveryService {
         return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
     }
 
+    fun getSavedBackgroundActivities(): List<Envelope<SessionPayload>> {
+        return savedSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
+    }
+
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
         val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.uppercase(Locale.ENGLISH)
         return ApplicationState.valueOf(checkNotNull(value))
@@ -78,19 +82,9 @@ open class FakeDeliveryService : DeliveryService {
         return getSentSessions().lastOrNull()
     }
 
-    fun getLastSentBackgroundActivity(): Envelope<SessionPayload>? {
-        return getSentBackgroundActivities().lastOrNull()
-    }
-
     fun getLastSavedSession(): Envelope<SessionPayload>? {
         return savedSessionEnvelopes.map { it.first }.lastOrNull {
             it.findAppState() == ApplicationState.FOREGROUND
-        }
-    }
-
-    fun getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
-        return savedSessionEnvelopes.map { it.first }.lastOrNull {
-            it.findAppState() == ApplicationState.BACKGROUND
         }
     }
 }

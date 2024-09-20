@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.config
 
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
@@ -95,7 +95,7 @@ internal class EmbraceConfigServiceTest {
         every {
             mockCacheService.loadObject<RemoteConfig>("config.json", RemoteConfig::class.java)
         } returns fakeCachedConfig
-        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+        worker = fakeBackgroundWorker()
         service = createService(worker = worker, action = {})
     }
 

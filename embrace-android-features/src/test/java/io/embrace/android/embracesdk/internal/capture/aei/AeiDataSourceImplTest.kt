@@ -2,15 +2,14 @@ package io.embrace.android.embracesdk.internal.capture.aei
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.unmockkAll
@@ -40,7 +39,7 @@ internal class AeiDataSourceImplTest {
     private lateinit var logWriter: FakeLogWriter
     private lateinit var configService: FakeConfigService
 
-    private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+    private val worker = fakeBackgroundWorker()
 
     private val preferenceService = FakePreferenceService()
     private val logger = EmbLoggerImpl()

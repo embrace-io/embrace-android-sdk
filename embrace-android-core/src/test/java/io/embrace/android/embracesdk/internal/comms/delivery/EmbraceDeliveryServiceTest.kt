@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -12,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.findSessionSpan
@@ -67,7 +67,7 @@ internal class EmbraceDeliveryServiceTest {
     @Before
     fun setUp() {
         fakeClock = FakeClock()
-        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+        worker = fakeBackgroundWorker()
         apiService = FakeApiService()
         fakeNativeCrashService = FakeNativeCrashService()
         gatingService = FakeGatingService()

@@ -2,12 +2,11 @@ package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.os.Environment
 import android.view.WindowManager
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -62,7 +61,7 @@ internal class DeviceImplTest {
         val device = DeviceImpl(
             windowManager,
             preferencesService,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            fakeBackgroundWorker(),
             SystemInfo(),
             Companion::cpuInfoDelegate,
             EmbLoggerImpl(),
@@ -76,7 +75,7 @@ internal class DeviceImplTest {
         val device = DeviceImpl(
             windowManager,
             preferencesService,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            fakeBackgroundWorker(),
             SystemInfo(),
             Companion::cpuInfoDelegate,
             EmbLoggerImpl(),
@@ -90,7 +89,7 @@ internal class DeviceImplTest {
         val device = DeviceImpl(
             windowManager,
             preferencesService,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            fakeBackgroundWorker(),
             SystemInfo(),
             Companion::cpuInfoDelegate,
             EmbLoggerImpl(),

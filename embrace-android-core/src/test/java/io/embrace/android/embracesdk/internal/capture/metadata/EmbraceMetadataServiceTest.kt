@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.os.Environment
 import android.view.WindowManager
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -127,7 +126,7 @@ internal class EmbraceMetadataServiceTest {
                     DeviceImpl(
                         mockk(relaxed = true),
                         preferencesService,
-                        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+                        fakeBackgroundWorker(),
                         SystemInfo(),
                         Companion::cpuInfoDelegate,
                         FakeEmbLogger()
@@ -140,7 +139,7 @@ internal class EmbraceMetadataServiceTest {
             lazy { storageStatsManager },
             configService,
             preferencesService,
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            fakeBackgroundWorker(),
             fakeClock,
             FakeEmbLogger()
         )

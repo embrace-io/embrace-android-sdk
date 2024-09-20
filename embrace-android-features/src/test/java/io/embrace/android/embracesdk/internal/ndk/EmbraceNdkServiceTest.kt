@@ -5,7 +5,6 @@ import android.content.res.Resources
 import android.os.Build
 import android.os.Handler
 import android.util.Base64
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -19,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
@@ -29,7 +29,6 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -146,7 +145,7 @@ internal class EmbraceNdkServiceTest {
                 logger,
                 repository,
                 delegate,
-                BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+                fakeBackgroundWorker(),
                 deviceArchitecture,
                 EmbraceSerializer(),
                 handler

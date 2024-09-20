@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.storage
 
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
@@ -46,7 +46,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     private val prefix = "last_session"
     private val serializer = EmbraceSerializer()
-    private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+    private val worker = fakeBackgroundWorker()
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService

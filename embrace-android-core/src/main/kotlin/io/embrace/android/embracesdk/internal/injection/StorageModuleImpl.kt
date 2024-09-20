@@ -44,14 +44,14 @@ internal class StorageModuleImpl(
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
         EmbraceDeliveryCacheManager(
             cacheService,
-            workerThreadModule.prioritizedWorker(Worker.FileCacheWorker),
+            workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker),
             initModule.logger
         )
     }
 
     init {
         workerThreadModule
-            .backgroundWorker(Worker.IoRegWorker)
+            .backgroundWorker(Worker.Background.IoRegWorker)
             .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
     }
 }

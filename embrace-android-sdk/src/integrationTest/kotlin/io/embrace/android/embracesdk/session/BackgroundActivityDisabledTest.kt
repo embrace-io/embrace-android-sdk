@@ -49,7 +49,7 @@ internal class BackgroundActivityDisabledTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock()
         val initModule = FakeInitModule(clock)
-        val workerThreadModule = FakeWorkerThreadModule(initModule, Worker.LogMessageWorker)
+        val workerThreadModule = FakeWorkerThreadModule(initModule, Worker.Background.LogMessageWorker)
 
         IntegrationTestRule.Harness(
             overriddenClock = clock,

@@ -199,7 +199,7 @@ internal class ModuleInitBootstrapper(
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
                             }
-                            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker).submit {
+                            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                                 Systrace.traceSynchronous("network-connectivity-registration") {
                                     essentialServiceModule.networkConnectivityService.register()
                                 }
@@ -334,7 +334,7 @@ internal class ModuleInitBootstrapper(
                         )
 
                         if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
-                            val worker = workerThreadModule.backgroundWorker(Worker.IoRegWorker)
+                            val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
                             worker.submit {
                                 ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }

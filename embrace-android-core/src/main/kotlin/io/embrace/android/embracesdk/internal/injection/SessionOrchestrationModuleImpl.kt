@@ -55,7 +55,7 @@ internal class SessionOrchestrationModuleImpl(
 
     private val periodicSessionCacher: PeriodicSessionCacher by singleton {
         PeriodicSessionCacher(
-            workerThreadModule.backgroundWorker(Worker.PeriodicCacheWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
             initModule.logger
         )
     }
@@ -63,7 +63,7 @@ internal class SessionOrchestrationModuleImpl(
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
         PeriodicBackgroundActivityCacher(
             initModule.clock,
-            workerThreadModule.backgroundWorker(Worker.PeriodicCacheWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
             initModule.logger
         )
     }

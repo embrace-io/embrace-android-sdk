@@ -39,13 +39,13 @@ internal class PriorityThreadPoolExecutorTest {
 
     @Test
     fun `submit valid runnable`() {
-        val future = PrioritizedWorker(executor).submit {}
+        val future = PriorityWorker(executor).submit {}
         assertEquals(TaskPriority.NORMAL, (future as PriorityRunnableFuture<*>).priority)
     }
 
     @Test
     fun `submit valid callable`() {
-        val future = PrioritizedWorker(executor).submit(TaskPriority.HIGH, Callable {})
+        val future = PriorityWorker(executor).submit(TaskPriority.HIGH, Callable {})
         assertEquals(TaskPriority.HIGH, (future as PriorityRunnableFuture<*>).priority)
     }
 

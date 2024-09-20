@@ -45,7 +45,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     override val startupService: StartupService by singleton {
         StartupServiceImpl(
             spanService = openTelemetryModule.spanService,
-            backgroundWorker = workerThreadModule.backgroundWorker(Worker.NonIoRegWorker)
+            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
     }
 
@@ -54,7 +54,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             clock = openTelemetryModule.openTelemetryClock,
             startupServiceProvider = { startupService },
             spanService = openTelemetryModule.spanService,
-            backgroundWorker = workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             versionChecker = versionChecker,
             logger = initModule.logger
         )

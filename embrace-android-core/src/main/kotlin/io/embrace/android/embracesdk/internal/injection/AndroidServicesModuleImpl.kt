@@ -20,7 +20,7 @@ internal class AndroidServicesModuleImpl(
             )
         }
         EmbracePreferencesService(
-            workerThreadModule.backgroundWorker(Worker.IoRegWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
             lazyPrefs,
             initModule.clock,
             initModule.jsonSerializer

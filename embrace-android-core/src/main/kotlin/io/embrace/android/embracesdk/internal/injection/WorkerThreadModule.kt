@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
@@ -14,12 +14,12 @@ interface WorkerThreadModule : Closeable {
     /**
      * Return a [BackgroundWorker] matching the [worker]
      */
-    fun backgroundWorker(worker: Worker): BackgroundWorker
+    fun backgroundWorker(worker: Worker.Background): BackgroundWorker
 
     /**
-     * Return a [PrioritizedWorker] matching the [worker]
+     * Return a [PriorityWorker] matching the [worker]
      */
-    fun prioritizedWorker(worker: Worker): PrioritizedWorker
+    fun priorityWorker(worker: Worker.Priority): PriorityWorker
 
     /**
      * Returns the thread that monitors the main thread for ANRs

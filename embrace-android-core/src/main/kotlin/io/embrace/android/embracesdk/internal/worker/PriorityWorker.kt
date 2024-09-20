@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  * This class is necessary because it hides aspects of the ExecutorService API that we don't want
  * to expose as part of the internal API.
  */
-class PrioritizedWorker(
+class PriorityWorker(
     private val impl: ExecutorService
 ) {
 

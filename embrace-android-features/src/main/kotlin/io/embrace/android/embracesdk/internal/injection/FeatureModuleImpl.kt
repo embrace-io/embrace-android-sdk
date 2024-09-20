@@ -148,7 +148,7 @@ internal class FeatureModuleImpl(
             factory = {
                 LowPowerDataSource(
                     context = coreModule.context,
-                    backgroundWorker = workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+                    backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     clock = initModule.clock,
                     provider = { systemServiceModule.powerManager },
                     spanService = otelModule.spanService,
@@ -164,7 +164,7 @@ internal class FeatureModuleImpl(
             ThermalStateDataSource(
                 spanService = otelModule.spanService,
                 logger = initModule.logger,
-                backgroundWorker = workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+                backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 clock = initModule.clock,
                 powerManagerProvider = { systemServiceModule.powerManager }
             )
@@ -185,7 +185,7 @@ internal class FeatureModuleImpl(
     private val aeiService: AeiDataSourceImpl? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             AeiDataSourceImpl(
-                workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 configService.appExitInfoBehavior,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,

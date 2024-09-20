@@ -20,7 +20,7 @@ class FakeWorkerThreadModule(
 
     private val backgroundWorker = BackgroundWorker(executor)
 
-    override fun backgroundWorker(worker: Worker): BackgroundWorker {
+    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
         return when (worker) {
             name -> backgroundWorker
             else -> base.backgroundWorker(worker)

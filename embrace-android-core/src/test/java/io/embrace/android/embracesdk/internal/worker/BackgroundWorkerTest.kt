@@ -89,7 +89,7 @@ internal class BackgroundWorkerTest {
     fun `test runnable transformed`() {
         val impl = DecoratedExecutorService()
         val runnable = Runnable {}
-        val future = PrioritizedWorker(impl).submit(TaskPriority.LOW, runnable)
+        val future = PriorityWorker(impl).submit(TaskPriority.LOW, runnable)
         val submitted = impl.runnables.single() as PriorityRunnable
         assertEquals(TaskPriority.LOW, submitted.priority)
         assertNull(future.get())
@@ -99,7 +99,7 @@ internal class BackgroundWorkerTest {
     fun `test callable transformed`() {
         val impl = DecoratedExecutorService()
         val callable = Callable { "test" }
-        val future = PrioritizedWorker(impl).submit(TaskPriority.HIGH, callable)
+        val future = PriorityWorker(impl).submit(TaskPriority.HIGH, callable)
         val submitted = impl.callables.single() as PriorityCallable<*>
         assertEquals(TaskPriority.HIGH, submitted.priority)
         assertEquals("test", future.get())

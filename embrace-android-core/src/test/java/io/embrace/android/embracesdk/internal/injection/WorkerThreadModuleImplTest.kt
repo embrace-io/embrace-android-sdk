@@ -26,11 +26,11 @@ internal class WorkerThreadModuleImplTest {
         val module = WorkerThreadModuleImpl(initModule)
         assertNotNull(module)
 
-        val backgroundExecutor = module.backgroundWorker(Worker.PeriodicCacheWorker)
+        val backgroundExecutor = module.backgroundWorker(Worker.Background.PeriodicCacheWorker)
         assertNotNull(backgroundExecutor)
 
         // test caching
-        assertSame(backgroundExecutor, module.backgroundWorker(Worker.PeriodicCacheWorker))
+        assertSame(backgroundExecutor, module.backgroundWorker(Worker.Background.PeriodicCacheWorker))
 
         // test shutting down module
         module.close()
@@ -39,13 +39,13 @@ internal class WorkerThreadModuleImplTest {
     @Test
     fun `network request executor uses custom queue`() {
         val module = WorkerThreadModuleImpl(initModule)
-        assertNotNull(module.prioritizedWorker(Worker.NetworkRequestWorker))
+        assertNotNull(module.priorityWorker(Worker.Priority.NetworkRequestWorker))
     }
 
     @Test
     fun `rejected execution policy`() {
         val module = WorkerThreadModuleImpl(initModule)
-        val worker = module.backgroundWorker(Worker.PeriodicCacheWorker)
+        val worker = module.backgroundWorker(Worker.Background.PeriodicCacheWorker)
         module.close()
 
         val future = worker.submit {}

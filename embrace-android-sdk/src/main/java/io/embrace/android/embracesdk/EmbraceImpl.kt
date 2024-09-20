@@ -198,7 +198,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         // Send any sessions that were cached and not yet sent.
         startSynchronous("send-cached-sessions")
-        val worker = bootstrapper.workerThreadModule.prioritizedWorker(Worker.FileCacheWorker)
+        val worker = bootstrapper.workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
         worker.submit {
             val essentialServiceModule = bootstrapper.essentialServiceModule
             bootstrapper.deliveryModule.deliveryService.sendCachedSessions(
@@ -209,7 +209,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         endSynchronous()
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-            bootstrapper.workerThreadModule.backgroundWorker(Worker.IoRegWorker)
+            bootstrapper.workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
         )
 
         val internalInterfaceModuleImpl =

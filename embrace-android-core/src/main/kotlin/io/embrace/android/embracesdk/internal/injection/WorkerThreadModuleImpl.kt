@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -23,9 +24,16 @@ internal class WorkerThreadModuleImpl(
     private val clock = initModule.clock
     private val logger = initModule.logger
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
+    private val prioritizedWorker: MutableMap<Worker, PrioritizedWorker> = ConcurrentHashMap()
     private val backgroundWorker: MutableMap<Worker, BackgroundWorker> = ConcurrentHashMap()
     private val scheduledWorker: MutableMap<Worker, ScheduledWorker> = ConcurrentHashMap()
     override val anrMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
+
+    override fun prioritizedWorker(worker: Worker): PrioritizedWorker {
+        return prioritizedWorker.getOrPut(worker) {
+            PrioritizedWorker(fetchExecutor(worker))
+        }
+    }
 
     override fun backgroundWorker(worker: Worker): BackgroundWorker {
         return backgroundWorker.getOrPut(worker) {
@@ -34,8 +42,8 @@ internal class WorkerThreadModuleImpl(
     }
 
     override fun scheduledWorker(worker: Worker): ScheduledWorker {
-        if (worker == Worker.NetworkRequestWorker) {
-            error("Network request executor is not a scheduled executor")
+        if (worker == Worker.NetworkRequestWorker || worker == Worker.FileCacheWorker) {
+            error("Selected executor is not a scheduled executor")
         }
         return scheduledWorker.getOrPut(worker) {
             ScheduledWorker(fetchExecutor(worker) as ScheduledExecutorService)
@@ -51,7 +59,13 @@ internal class WorkerThreadModuleImpl(
             val threadFactory = createThreadFactory(worker)
 
             when (worker) {
-                Worker.NetworkRequestWorker -> PriorityThreadPoolExecutor(clock, threadFactory, this, 1, 1)
+                Worker.NetworkRequestWorker, Worker.FileCacheWorker -> PriorityThreadPoolExecutor(
+                    clock,
+                    threadFactory,
+                    this,
+                    1,
+                    1
+                )
                 else -> ScheduledThreadPoolExecutor(1, threadFactory, this)
             }
         }

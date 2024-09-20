@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -71,7 +70,7 @@ class DataCaptureOrchestrator(
 
     private fun DataSourceState<*>.dispatchStateChange(action: () -> Unit) {
         if (asyncInit) {
-            worker.submit(TaskPriority.HIGH, action)
+            worker.submit(action)
         } else {
             action()
         }

@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.io.Closeable
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
-    private val backgroundWorker: BackgroundWorker,
+    private val prioritizedWorker: PrioritizedWorker,
     private val logger: EmbLogger
 ) : Closeable, DeliveryCacheManager {
 
@@ -74,7 +74,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun deleteSession(sessionId: String) {
         cachedSessions[sessionId]?.let { cachedSession ->
-            backgroundWorker.submit {
+            prioritizedWorker.submit {
                 runCatching {
                     cacheService.deleteFile(cachedSession.filename)
                     cachedSessions.remove(sessionId)
@@ -105,7 +105,7 @@ internal class EmbraceDeliveryCacheManager(
         if (sync) {
             runnable()
         } else {
-            backgroundWorker.submit(runnable = runnable)
+            prioritizedWorker.submit(runnable = runnable)
         }
         return name
     }
@@ -115,7 +115,7 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     override fun deletePayload(name: String) {
-        backgroundWorker.submit {
+        prioritizedWorker.submit {
             cacheService.deleteFile(name)
         }
     }
@@ -128,7 +128,7 @@ internal class EmbraceDeliveryCacheManager(
         if (sync) {
             cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, model, PendingApiCalls::class.java)
         } else {
-            backgroundWorker.submit {
+            prioritizedWorker.submit {
                 cacheService.cacheObject(
                     PENDING_API_CALLS_FILE_NAME,
                     model,
@@ -214,7 +214,7 @@ internal class EmbraceDeliveryCacheManager(
                 snapshot -> TaskPriority.LOW
                 else -> TaskPriority.CRITICAL
             }
-            backgroundWorker.submit(priority) {
+            prioritizedWorker.submit(priority) {
                 saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
             }
         }

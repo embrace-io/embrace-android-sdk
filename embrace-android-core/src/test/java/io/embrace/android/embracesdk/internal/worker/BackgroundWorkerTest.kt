@@ -21,7 +21,7 @@ internal class BackgroundWorkerTest {
         val runnable = Runnable {
             ran = true
         }
-        BackgroundWorker(impl).submit(TaskPriority.NORMAL, runnable)
+        BackgroundWorker(impl).submit(runnable)
         impl.runNext()
         assertTrue(ran)
     }
@@ -33,7 +33,7 @@ internal class BackgroundWorkerTest {
         val callable = Callable {
             ran = true
         }
-        BackgroundWorker(impl).submit(TaskPriority.NORMAL, callable)
+        BackgroundWorker(impl).submit(callable)
         impl.runNext()
         assertTrue(ran)
     }
@@ -42,7 +42,7 @@ internal class BackgroundWorkerTest {
     fun `test runnable transformed`() {
         val impl = DecoratedExecutorService()
         val runnable = Runnable {}
-        val future = BackgroundWorker(impl).submit(TaskPriority.LOW, runnable)
+        val future = PrioritizedWorker(impl).submit(TaskPriority.LOW, runnable)
         val submitted = impl.runnables.single() as PriorityRunnable
         assertEquals(TaskPriority.LOW, submitted.priority)
         assertNull(future.get())
@@ -52,7 +52,7 @@ internal class BackgroundWorkerTest {
     fun `test callable transformed`() {
         val impl = DecoratedExecutorService()
         val callable = Callable { "test" }
-        val future = BackgroundWorker(impl).submit(TaskPriority.HIGH, callable)
+        val future = PrioritizedWorker(impl).submit(TaskPriority.HIGH, callable)
         val submitted = impl.callables.single() as PriorityCallable<*>
         assertEquals(TaskPriority.HIGH, submitted.priority)
         assertEquals("test", future.get())
@@ -68,7 +68,7 @@ internal class BackgroundWorkerTest {
         )
 
         var ran = false
-        worker.submit(TaskPriority.NORMAL) {
+        worker.submit {
             latch.await(1000, TimeUnit.MILLISECONDS)
             ran = true
         }
@@ -86,7 +86,7 @@ internal class BackgroundWorkerTest {
         )
 
         var ran = false
-        worker.submit(TaskPriority.NORMAL,) {
+        worker.submit {
             latch.await(1000, TimeUnit.MILLISECONDS)
             ran = true
         }

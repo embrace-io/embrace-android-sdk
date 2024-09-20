@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
 import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.Closeable
@@ -15,6 +16,11 @@ interface WorkerThreadModule : Closeable {
      * Return a [BackgroundWorker] matching the [worker]
      */
     fun backgroundWorker(worker: Worker): BackgroundWorker
+
+    /**
+     * Return a [PrioritizedWorker] matching the [worker]
+     */
+    fun prioritizedWorker(worker: Worker): PrioritizedWorker
 
     /**
      * Return the [ScheduledWorker] given the [worker]

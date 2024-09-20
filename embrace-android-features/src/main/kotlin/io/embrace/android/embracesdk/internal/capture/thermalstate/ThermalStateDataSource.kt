@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import java.util.concurrent.Executor
 
@@ -41,7 +40,7 @@ class ThermalStateDataSource(
     private var span: EmbraceSpan? = null
 
     override fun enableDataCapture() {
-        backgroundWorker.submit(TaskPriority.LOW) {
+        backgroundWorker.submit {
             Systrace.traceSynchronous("thermal-service-registration") {
                 thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
                     handleThermalStateChange(it)
@@ -63,7 +62,7 @@ class ThermalStateDataSource(
     }
 
     override fun disableDataCapture() {
-        backgroundWorker.submit(TaskPriority.LOW) {
+        backgroundWorker.submit {
             thermalStatusListener?.let {
                 powerManager?.removeThermalStatusListener(it)
                 thermalStatusListener = null

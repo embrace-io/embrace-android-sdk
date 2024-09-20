@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.logs
 
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -9,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
@@ -36,7 +35,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
 
-    private val backgroundWorker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+    private val backgroundWorker = fakeBackgroundWorker()
     private val fakeEmbLogger = FakeEmbLogger()
     private val embraceSerializer = EmbraceSerializer()
 

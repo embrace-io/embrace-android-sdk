@@ -59,4 +59,17 @@ class ScheduledWorker(
         intervalMs: Long,
         unit: TimeUnit
     ): ScheduledFuture<*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)
+
+    /**
+     * Shutdown the worker. If [timeoutMs] is greater than 0, the worker will
+     * block for the specified milliseconds if tasks are still enqueued or running.
+     */
+    fun shutdownAndWait(timeoutMs: Long = 0) {
+        runCatching {
+            with(impl) {
+                shutdown()
+                awaitTermination(timeoutMs, TimeUnit.MILLISECONDS)
+            }
+        }
+    }
 }

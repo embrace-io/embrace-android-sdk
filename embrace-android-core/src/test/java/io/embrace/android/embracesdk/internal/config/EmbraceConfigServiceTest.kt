@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.config
 
-import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
@@ -34,7 +35,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import org.robolectric.android.util.concurrent.PausedExecutorService
 
 internal class EmbraceConfigServiceTest {
 
@@ -95,7 +95,7 @@ internal class EmbraceConfigServiceTest {
         every {
             mockCacheService.loadObject<RemoteConfig>("config.json", RemoteConfig::class.java)
         } returns fakeCachedConfig
-        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+        worker = fakeBackgroundWorker()
         service = createService(worker = worker, action = {})
     }
 
@@ -271,13 +271,13 @@ internal class EmbraceConfigServiceTest {
         // Use ExecutorService that requires tasks to be explicitly run. This allows us to simulate the case
         // when the loading from the cache doesn't run before the config is read.
 
-        val pausableExecutorService = PausedExecutorService()
+        val executorService = BlockingScheduledExecutorService(blockingMode = true)
 
         every { mockApiService.getCachedConfig() } returns CachedConfig(null, null)
 
         // Create a new instance of the ConfigService where the value of the config is what it is when the config
         // variable is initialized, before the cached version is loaded.
-        val configService = createService(BackgroundWorker(pausableExecutorService))
+        val configService = createService(BackgroundWorker(executorService))
         assertFalse(configService.hasValidRemoteConfig())
 
         // call arbitrary function to trigger config refresh
@@ -285,11 +285,7 @@ internal class EmbraceConfigServiceTest {
 
         // Only run the task from the executor that loads the cached config to the ConfigService so the call to fetch
         // a new config from the server isn't run
-        pausableExecutorService.runNext()
-        assertFalse(configService.hasValidRemoteConfig())
-
-        // fetch config from the server
-        pausableExecutorService.runNext()
+        executorService.runCurrentlyBlocked()
         assertTrue(configService.hasValidRemoteConfig())
     }
 

@@ -3,42 +3,43 @@ package io.embrace.android.embracesdk.internal.worker
 /**
  * The key used to reference a specific shared [BackgroundWorker] or the [ScheduledWorker] that uses it
  */
-enum class WorkerName(internal val threadName: String) {
+enum class Worker(internal val threadName: String) {
 
     /**
-     * Used primarily to perform short-lived tasks that need to execute only once, or
-     * recurring tasks that don't use I/O or block for long periods of time.
+     * Used to perform miscellaneous tasks that don't involve I/O & don't require guarantees about
+     * running on a specific thread or in a specific order.
      */
-    BACKGROUND_REGISTRATION("background-reg"),
+    NonIoRegWorker("non-io-reg"),
+
+    /**
+     * Used to perform miscellaneous tasks that _do_ involve I/O & don't require guarantees about
+     * running on a specific thread or in a specific order.
+     */
+    IoRegWorker("non-io-reg"),
 
     /**
      * Saves/loads request information from files cached on disk.
      */
-    DELIVERY_CACHE("delivery-cache"),
+    FileCacheWorker("file-cache"),
 
     /**
      * All HTTP requests are performed on this executor.
      */
-    NETWORK_REQUEST("network-request"),
+    NetworkRequestWorker("network-request"),
 
     /**
      * Used for periodic writing of session/background activity payloads to disk.
      */
-    PERIODIC_CACHE("periodic-cache"),
+    PeriodicCacheWorker("periodic-cache"),
 
     /**
      * Used to construct log messages. Log messages are sent to the server on a separate thread -
      * the intention behind this is to offload unnecessary CPU work from the main thread.
      */
-    REMOTE_LOGGING("remote-logging"),
+    LogMessageWorker("log-message"),
 
     /**
      * Monitor thread that checks the main thread for ANRs.
      */
-    ANR_MONITOR("anr-monitor"),
-
-    /**
-     * Initialize services asynchronously
-     */
-    SERVICE_INIT("service-init"),
+    AnrWatchdogWorker("anr-watchdog")
 }

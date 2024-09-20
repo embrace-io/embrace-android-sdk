@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 class EssentialServiceModuleImpl(
     initModule: InitModule,
@@ -82,7 +82,7 @@ class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("network-connectivity-service-init") {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
                 initModule.logger,
                 systemServiceModule.connectivityManager
             )
@@ -92,7 +92,7 @@ class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         Systrace.traceSynchronous("pending-call-sender-init") {
             EmbracePendingApiCallsSender(
-                workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.scheduledWorker(Worker.IoRegWorker),
                 storageModule.deliveryCacheManager,
                 initModule.clock,
                 initModule.logger
@@ -112,7 +112,7 @@ class EssentialServiceModuleImpl(
                     }
                 },
                 logger = initModule.logger,
-                backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.NETWORK_REQUEST),
+                prioritizedWorker = workerThreadModule.prioritizedWorker(Worker.NetworkRequestWorker),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,

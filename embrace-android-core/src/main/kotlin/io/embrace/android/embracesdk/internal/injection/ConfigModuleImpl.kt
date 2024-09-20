@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class ConfigModuleImpl(
     initModule: InitModule,
@@ -26,7 +26,7 @@ internal class ConfigModuleImpl(
                     androidServicesModule.preferencesService,
                     initModule.clock,
                     initModule.logger,
-                    workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    workerThreadModule.backgroundWorker(Worker.IoRegWorker),
                     framework,
                     foregroundAction
                 )

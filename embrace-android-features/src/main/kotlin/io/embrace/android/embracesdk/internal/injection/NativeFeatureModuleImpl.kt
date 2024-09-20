@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class NativeFeatureModuleImpl(
     initModule: InitModule,
@@ -41,7 +41,7 @@ internal class NativeFeatureModuleImpl(
                 initModule.logger,
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(Worker.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer
             )
@@ -55,7 +55,7 @@ internal class NativeFeatureModuleImpl(
                     configService = configModule.configService,
                     symbols = lazy { ndkService.symbolsForCurrentArch },
                     logger = initModule.logger,
-                    scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    scheduledWorker = workerThreadModule.scheduledWorker(Worker.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 )

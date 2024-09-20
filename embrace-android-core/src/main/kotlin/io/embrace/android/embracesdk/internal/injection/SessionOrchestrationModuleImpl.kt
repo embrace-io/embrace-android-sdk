@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class SessionOrchestrationModuleImpl(
     initModule: InitModule,
@@ -55,7 +55,7 @@ internal class SessionOrchestrationModuleImpl(
 
     private val periodicSessionCacher: PeriodicSessionCacher by singleton {
         PeriodicSessionCacher(
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            workerThreadModule.scheduledWorker(Worker.PeriodicCacheWorker),
             initModule.logger
         )
     }
@@ -63,7 +63,7 @@ internal class SessionOrchestrationModuleImpl(
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
         PeriodicBackgroundActivityCacher(
             initModule.clock,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            workerThreadModule.scheduledWorker(Worker.PeriodicCacheWorker),
             initModule.logger
         )
     }

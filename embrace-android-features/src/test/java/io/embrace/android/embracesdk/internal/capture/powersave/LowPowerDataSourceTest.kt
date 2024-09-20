@@ -5,12 +5,11 @@ import android.content.Intent
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -31,7 +30,7 @@ internal class LowPowerDataSourceTest {
             ApplicationProvider.getApplicationContext(),
             spanService,
             EmbLoggerImpl(),
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+            fakeBackgroundWorker(),
             FakeClock()
         ) { mockk(relaxed = true) }.apply {
             enableDataCapture()

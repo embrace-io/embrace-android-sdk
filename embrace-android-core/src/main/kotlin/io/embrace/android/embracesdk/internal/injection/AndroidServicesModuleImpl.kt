@@ -5,7 +5,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class AndroidServicesModuleImpl(
     initModule: InitModule,
@@ -20,7 +20,7 @@ internal class AndroidServicesModuleImpl(
             )
         }
         EmbracePreferencesService(
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundWorker(Worker.IoRegWorker),
             lazyPrefs,
             initModule.clock,
             initModule.jsonSerializer

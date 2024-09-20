@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -45,7 +45,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
             logger = EmbLoggerImpl()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()
-            worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+            worker = fakeBackgroundWorker()
         }
 
         /**

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.anr.sigquit.AnrThreadIdDelegate
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class AnrModuleImpl(
     initModule: InitModule,
@@ -23,7 +23,7 @@ internal class AnrModuleImpl(
     otelModule: OpenTelemetryModule
 ) : AnrModule {
 
-    private val anrMonitorWorker = workerModule.scheduledWorker(WorkerName.ANR_MONITOR)
+    private val anrMonitorWorker = workerModule.scheduledWorker(Worker.AnrWatchdogWorker)
 
     override val anrService: AnrService by singleton {
         if (configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {

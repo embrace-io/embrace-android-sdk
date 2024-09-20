@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.utils.stream
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ConcurrentMap
@@ -72,10 +72,10 @@ internal class EmbraceEventService(
             deliveryService,
             logger,
             clock,
-            workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
+            workerThreadModule.scheduledWorker(Worker.NonIoRegWorker)
         )
         backgroundWorker =
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker)
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {

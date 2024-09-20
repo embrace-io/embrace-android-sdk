@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSo
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class PayloadSourceModuleImpl(
     initModule: InitModule,
@@ -42,7 +42,7 @@ internal class PayloadSourceModuleImpl(
             coreModule.context,
             configModule.configService,
             androidServicesModule.preferencesService,
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
             initModule.logger
         )
     }
@@ -96,7 +96,7 @@ internal class PayloadSourceModuleImpl(
                     DeviceImpl(
                         systemServiceModule.windowManager,
                         androidServicesModule.preferencesService,
-                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                        workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
                         initModule.systemInfo,
                         { nativeCoreModuleProvider()?.cpuInfoDelegate },
                         initModule.logger
@@ -122,7 +122,7 @@ internal class PayloadSourceModuleImpl(
                 lazy { systemServiceModule.storageManager },
                 configModule.configService,
                 androidServicesModule.preferencesService,
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
                 initModule.clock,
                 initModule.logger
             )

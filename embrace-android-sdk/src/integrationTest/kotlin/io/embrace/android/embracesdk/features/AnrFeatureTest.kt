@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.recordSession
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
@@ -42,7 +42,7 @@ internal class AnrFeatureTest {
         val clock = FakeClock(currentTime = START_TIME_MS)
         val initModule = FakeInitModule(clock)
         val workerThreadModule =
-            FakeWorkerThreadModule(initModule, WorkerName.ANR_MONITOR).apply {
+            FakeWorkerThreadModule(initModule, Worker.AnrWatchdogWorker).apply {
                 anrMonitorThread = AtomicReference(Thread.currentThread())
             }
         anrMonitorExecutor = workerThreadModule.executor

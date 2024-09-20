@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -26,14 +26,14 @@ internal class WorkerThreadModuleImplTest {
         val module = WorkerThreadModuleImpl(initModule)
         assertNotNull(module)
 
-        val backgroundExecutor = module.backgroundWorker(WorkerName.PERIODIC_CACHE)
+        val backgroundExecutor = module.backgroundWorker(Worker.PeriodicCacheWorker)
         assertNotNull(backgroundExecutor)
-        val scheduledExecutor = module.scheduledWorker(WorkerName.PERIODIC_CACHE)
+        val scheduledExecutor = module.scheduledWorker(Worker.PeriodicCacheWorker)
         assertNotNull(scheduledExecutor)
 
         // test caching
-        assertSame(backgroundExecutor, module.backgroundWorker(WorkerName.PERIODIC_CACHE))
-        assertSame(scheduledExecutor, module.scheduledWorker(WorkerName.PERIODIC_CACHE))
+        assertSame(backgroundExecutor, module.backgroundWorker(Worker.PeriodicCacheWorker))
+        assertSame(scheduledExecutor, module.scheduledWorker(Worker.PeriodicCacheWorker))
 
         // test shutting down module
         module.close()
@@ -42,19 +42,19 @@ internal class WorkerThreadModuleImplTest {
     @Test
     fun `network request executor uses custom queue`() {
         val module = WorkerThreadModuleImpl(initModule)
-        assertNotNull(module.backgroundWorker(WorkerName.NETWORK_REQUEST))
+        assertNotNull(module.prioritizedWorker(Worker.NetworkRequestWorker))
     }
 
     @Test(expected = IllegalStateException::class)
     fun `network request scheduled executor fails`() {
         val module = WorkerThreadModuleImpl(initModule)
-        module.scheduledWorker(WorkerName.NETWORK_REQUEST)
+        module.scheduledWorker(Worker.NetworkRequestWorker)
     }
 
     @Test
     fun `rejected execution policy`() {
         val module = WorkerThreadModuleImpl(initModule)
-        val worker = module.backgroundWorker(WorkerName.PERIODIC_CACHE)
+        val worker = module.backgroundWorker(Worker.PeriodicCacheWorker)
         module.close()
 
         val future = worker.submit {}

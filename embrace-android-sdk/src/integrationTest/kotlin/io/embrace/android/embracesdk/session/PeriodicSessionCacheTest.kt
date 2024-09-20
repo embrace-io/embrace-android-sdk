@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.recordSession
-import io.embrace.android.embracesdk.internal.worker.WorkerName.PERIODIC_CACHE
+import io.embrace.android.embracesdk.internal.worker.Worker.PeriodicCacheWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -32,7 +32,7 @@ internal class PeriodicSessionCacheTest {
         IntegrationTestRule.Harness(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = PERIODIC_CACHE)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = PeriodicCacheWorker)
         )
     }
 

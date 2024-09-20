@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -42,7 +42,7 @@ internal class FlutterInternalInterfaceTest {
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
-                name = WorkerName.REMOTE_LOGGING
+                name = Worker.LogMessageWorker
             )
         )
     }

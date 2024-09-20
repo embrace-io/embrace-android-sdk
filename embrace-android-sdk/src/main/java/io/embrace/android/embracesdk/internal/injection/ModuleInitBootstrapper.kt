@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
@@ -336,7 +335,7 @@ internal class ModuleInitBootstrapper(
 
                         if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(Worker.IoRegWorker)
-                            worker.submit(TaskPriority.HIGH) {
+                            worker.submit {
                                 ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }
                         }

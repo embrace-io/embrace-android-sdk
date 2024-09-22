@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -91,11 +90,20 @@ internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<Env
 }
 
 /**
- * Returns the last session that was saved by the SDK.
+ * Run some [action] and the validate the next saved session using [validationFn]. If no session is saved with
+ * 1 second, this fails.
  */
-internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<SessionPayload>? {
-    return overriddenDeliveryModule.deliveryService.getLastSavedSession()
-}
+internal fun IntegrationTestRule.Harness.checkNextSavedSession(
+    action: () -> Unit,
+    validationFn: (Envelope<SessionPayload>) -> Unit
+): Envelope<SessionPayload> =
+    with(overriddenDeliveryModule.deliveryService) {
+        checkNextSavedSessionEnvelope(
+            dataProvider = ::getSavedSessions,
+            action = action,
+            validationFn = validationFn,
+        )
+    }
 
 /**
  * Run some [action] and the validate the next saved background activity using [validationFn]. If no background activity is saved with
@@ -104,36 +112,14 @@ internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<Session
 internal fun IntegrationTestRule.Harness.checkNextSavedBackgroundActivity(
     action: () -> Unit,
     validationFn: (Envelope<SessionPayload>) -> Unit
-): Envelope<SessionPayload> {
+): Envelope<SessionPayload> =
     with(overriddenDeliveryModule.deliveryService) {
-        val startingSize = getSavedBackgroundActivities().size
-        overriddenClock.tick(10_000L)
-        action()
-        return when (getSavedBackgroundActivities().size) {
-            startingSize -> {
-                returnIfConditionMet(
-                    desiredValueSupplier = {
-                        getNthBackgroundActivity(startingSize)
-                    },
-                    condition = { data ->
-                        data.size > startingSize
-                    },
-                    dataProvider = ::getSavedBackgroundActivities
-                )
-            }
-            else -> {
-                getNthBackgroundActivity(startingSize)
-            }
-        }.apply {
-            validationFn(this)
-        }
+        checkNextSavedSessionEnvelope(
+            dataProvider = ::getSavedBackgroundActivities,
+            action = action,
+            validationFn = validationFn,
+        )
     }
-}
-
-private fun FakeDeliveryService.getNthBackgroundActivity(n: Int) =
-    getSavedBackgroundActivities().filterIndexed { index, _ ->
-        index == n
-    }.single()
 
 /**
  * Returns the last session that was sent by the SDK.
@@ -234,5 +220,36 @@ internal fun <T, R> returnIfConditionMet(
 
     throw TimeoutException("Timeout period elapsed before condition met")
 }
+
+private fun IntegrationTestRule.Harness.checkNextSavedSessionEnvelope(
+    dataProvider: () -> List<Envelope<SessionPayload>>,
+    action: () -> Unit,
+    validationFn: (Envelope<SessionPayload>) -> Unit
+): Envelope<SessionPayload> {
+    val startingSize = dataProvider().size
+    overriddenClock.tick(10_000L)
+    action()
+    return when (dataProvider().size) {
+        startingSize -> {
+            returnIfConditionMet(
+                desiredValueSupplier = {
+                    dataProvider().getNth(startingSize)
+                },
+                condition = { data ->
+                    data.size > startingSize
+                },
+                dataProvider = dataProvider
+            )
+        }
+
+        else -> {
+            dataProvider().getNth(startingSize)
+        }
+    }.apply {
+        validationFn(this)
+    }
+}
+
+private fun <T> List<T>.getNth(n: Int) = filterIndexed { index, _ -> index == n }.single()
 
 private const val CHECK_INTERVAL_MS: Int = 10

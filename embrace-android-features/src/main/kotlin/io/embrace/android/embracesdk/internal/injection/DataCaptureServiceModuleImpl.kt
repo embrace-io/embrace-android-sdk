@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     initModule: InitModule,
@@ -39,13 +39,13 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     }
 
     override val pushNotificationService: PushNotificationCaptureService by singleton {
-        PushNotificationCaptureService(featureModule.pushNotificationDataSource.dataSource, initModule.logger)
+        PushNotificationCaptureService(featureModule.pushNotificationDataSource.dataSource)
     }
 
     override val startupService: StartupService by singleton {
         StartupServiceImpl(
             spanService = openTelemetryModule.spanService,
-            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
+            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
     }
 
@@ -54,7 +54,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
             clock = openTelemetryModule.openTelemetryClock,
             startupServiceProvider = { startupService },
             spanService = openTelemetryModule.spanService,
-            backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             versionChecker = versionChecker,
             logger = initModule.logger
         )

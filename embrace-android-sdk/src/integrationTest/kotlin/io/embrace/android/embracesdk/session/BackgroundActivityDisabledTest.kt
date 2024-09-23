@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSentLogPayloads
-import io.embrace.android.embracesdk.getSentLogs
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -49,7 +49,7 @@ internal class BackgroundActivityDisabledTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock()
         val initModule = FakeInitModule(clock)
-        val workerThreadModule = FakeWorkerThreadModule(initModule, WorkerName.REMOTE_LOGGING)
+        val workerThreadModule = FakeWorkerThreadModule(initModule, Worker.Background.LogMessageWorker)
 
         IntegrationTestRule.Harness(
             overriddenClock = clock,
@@ -84,7 +84,7 @@ internal class BackgroundActivityDisabledTest {
 
             embrace.addBreadcrumb("not-logged")
             harness.overriddenClock.tick(10_000L)
-            with(checkNotNull(harness.getSentLogPayloads(1).single().data.logs?.single())) {
+            with(checkNotNull(harness.getSentLogPayloads(1).single().data.logs).single()) {
                 assertEquals("error", body)
                 assertEquals("background", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -124,8 +124,7 @@ internal class BackgroundActivityDisabledTest {
             checkNotNull(session)
 
             flushLogBatch()
-
-            with(checkNotNull(harness.getSentLogs(1)?.single())) {
+            checkNotNull(harness.getLastSentLog()).run {
                 assertEquals("sent-after-session", body)
                 assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertEquals(session.getSessionId(), attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -181,7 +180,7 @@ internal class BackgroundActivityDisabledTest {
                 startMs = session2StartMs,
                 endMs = session2EndMs,
                 sessionNumber = 2,
-                sequenceId = 6,
+                sequenceId = 4,
                 coldStart = false,
             )
 

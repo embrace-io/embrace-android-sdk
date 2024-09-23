@@ -13,7 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * Tracks activity lifecycle events.
  */
-public class ActivityLifecycleTracker(
+class ActivityLifecycleTracker(
     private val application: Application,
     private val logger: EmbLogger
 ) : ActivityTracker {
@@ -25,13 +25,13 @@ public class ActivityLifecycleTracker(
     /**
      * List of listeners that subscribe to activity events.
      */
-    public val listeners: CopyOnWriteArrayList<ActivityLifecycleListener> =
+    val activityListeners: CopyOnWriteArrayList<ActivityLifecycleListener> =
         CopyOnWriteArrayList<ActivityLifecycleListener>()
 
     /**
      * List of listeners notified when application startup is complete
      */
-    public val startupListeners: CopyOnWriteArrayList<StartupListener> = CopyOnWriteArrayList<StartupListener>()
+    val startupListeners: CopyOnWriteArrayList<StartupListener> = CopyOnWriteArrayList<StartupListener>()
 
     /**
      * The currently active activity.
@@ -46,7 +46,7 @@ public class ActivityLifecycleTracker(
      */
 
     @Synchronized
-    public fun updateStateWithActivity(activity: Activity?) {
+    fun updateStateWithActivity(activity: Activity?) {
         currentActivity = WeakReference(activity)
     }
 
@@ -64,7 +64,7 @@ public class ActivityLifecycleTracker(
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         updateStateWithActivity(activity)
-        stream(listeners) { listener: ActivityLifecycleListener ->
+        stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
@@ -76,7 +76,7 @@ public class ActivityLifecycleTracker(
 
     override fun onActivityStarted(activity: Activity) {
         updateStateWithActivity(activity)
-        stream(listeners) { listener: ActivityLifecycleListener ->
+        stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityStarted(activity)
             } catch (ex: Exception) {
@@ -103,7 +103,7 @@ public class ActivityLifecycleTracker(
 
     override fun onActivityPaused(activity: Activity) {}
     override fun onActivityStopped(activity: Activity) {
-        stream(listeners) { listener: ActivityLifecycleListener ->
+        stream(activityListeners) { listener: ActivityLifecycleListener ->
             try {
                 listener.onActivityStopped(activity)
             } catch (ex: Exception) {
@@ -118,8 +118,8 @@ public class ActivityLifecycleTracker(
     override fun onActivityDestroyed(activity: Activity) {}
 
     override fun addListener(listener: ActivityLifecycleListener) {
-        if (!listeners.contains(listener)) {
-            listeners.addIfAbsent(listener)
+        if (!activityListeners.contains(listener)) {
+            activityListeners.addIfAbsent(listener)
         }
     }
 
@@ -133,7 +133,7 @@ public class ActivityLifecycleTracker(
         try {
             logger.logDebug("Shutting down ActivityLifecycleTracker")
             application.unregisterActivityLifecycleCallbacks(this)
-            listeners.clear()
+            activityListeners.clear()
             startupListeners.clear()
         } catch (ex: Exception) {
             logger.logWarning("Error when closing ActivityLifecycleTracker", ex)

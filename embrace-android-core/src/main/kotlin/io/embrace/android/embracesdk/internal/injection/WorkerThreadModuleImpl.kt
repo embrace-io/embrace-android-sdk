@@ -2,8 +2,12 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.internal.worker.Worker.Priority.FileCacheWorker
+import io.embrace.android.embracesdk.internal.worker.Worker.Priority.NetworkRequestWorker
+import io.embrace.android.embracesdk.internal.worker.comparator.apiRequestComparator
+import io.embrace.android.embracesdk.internal.worker.comparator.taskPriorityComparator
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -20,25 +24,22 @@ internal class WorkerThreadModuleImpl(
     initModule: InitModule,
 ) : WorkerThreadModule, RejectedExecutionHandler {
 
-    private val clock = initModule.clock
     private val logger = initModule.logger
-    private val executors: MutableMap<WorkerName, ExecutorService> = ConcurrentHashMap()
-    private val backgroundWorkers: MutableMap<WorkerName, BackgroundWorker> = ConcurrentHashMap()
-    private val scheduledWorkers: MutableMap<WorkerName, ScheduledWorker> = ConcurrentHashMap()
+    private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
+    private val priorityWorkers: MutableMap<Worker, PriorityWorker<*>> = ConcurrentHashMap()
+    private val backgroundWorkers: MutableMap<Worker, BackgroundWorker> = ConcurrentHashMap()
     override val anrMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
 
-    override fun backgroundWorker(workerName: WorkerName): BackgroundWorker {
-        return backgroundWorkers.getOrPut(workerName) {
-            BackgroundWorker(fetchExecutor(workerName))
-        }
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> {
+        return priorityWorkers.getOrPut(worker) {
+            PriorityWorker<T>(fetchExecutor(worker))
+        } as PriorityWorker<T>
     }
 
-    override fun scheduledWorker(workerName: WorkerName): ScheduledWorker {
-        if (workerName == WorkerName.NETWORK_REQUEST) {
-            error("Network request executor is not a scheduled executor")
-        }
-        return scheduledWorkers.getOrPut(workerName) {
-            ScheduledWorker(fetchExecutor(workerName) as ScheduledExecutorService)
+    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
+        return backgroundWorkers.getOrPut(worker) {
+            BackgroundWorker(fetchExecutor(worker) as ScheduledExecutorService)
         }
     }
 
@@ -46,13 +47,24 @@ internal class WorkerThreadModuleImpl(
         executors.values.forEach(ExecutorService::shutdown)
     }
 
-    private fun fetchExecutor(workerName: WorkerName): ExecutorService {
-        return executors.getOrPut(workerName) {
-            val threadFactory = createThreadFactory(workerName)
+    private fun fetchExecutor(worker: Worker): ExecutorService {
+        return executors.getOrPut(worker) {
+            val threadFactory = createThreadFactory(worker)
 
-            when (workerName) {
-                WorkerName.NETWORK_REQUEST -> PriorityThreadPoolExecutor(clock, threadFactory, this, 1, 1)
-                else -> ScheduledThreadPoolExecutor(1, threadFactory, this)
+            if (worker is Worker.Priority) {
+                val comparator = when (worker) {
+                    FileCacheWorker -> taskPriorityComparator
+                    NetworkRequestWorker -> apiRequestComparator
+                }
+                PriorityThreadPoolExecutor(
+                    threadFactory,
+                    this,
+                    1,
+                    1,
+                    comparator
+                )
+            } else {
+                ScheduledThreadPoolExecutor(1, threadFactory, this)
             }
         }
     }
@@ -72,10 +84,10 @@ internal class WorkerThreadModuleImpl(
         )
     }
 
-    private fun createThreadFactory(name: WorkerName): ThreadFactory {
+    private fun createThreadFactory(name: Worker): ThreadFactory {
         return ThreadFactory { runnable: Runnable ->
             Executors.defaultThreadFactory().newThread(runnable).apply {
-                if (name == WorkerName.ANR_MONITOR) {
+                if (name == Worker.Background.AnrWatchdogWorker) {
                     anrMonitorThread.set(this)
                 }
                 this.name = "emb-${name.threadName}"

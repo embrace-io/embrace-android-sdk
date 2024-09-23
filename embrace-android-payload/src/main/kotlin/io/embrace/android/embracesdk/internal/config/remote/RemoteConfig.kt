@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Configuration of the SDK set by the Embrace API.
  */
 @JsonClass(generateAdapter = true)
-public data class RemoteConfig(
+data class RemoteConfig(
 
     /**
      * Used to determine whether or not the SDK should be activated for this device. The threshold
@@ -108,12 +108,5 @@ public data class RemoteConfig(
      * Web view vitals settings
      */
     @Json(name = "webview_vitals_beta")
-    val webViewVitals: WebViewVitals? = null,
-
-    /**
-     * Enable deferral of initialization of some services to a background thread during startup.
-     * Currently, the only feature that uses this is native crash capture
-     */
-    @Json(name = "pct_defer_service_init")
-    val pctDeferServiceInitEnabled: Float? = null,
+    val webViewVitals: WebViewVitals? = null
 )

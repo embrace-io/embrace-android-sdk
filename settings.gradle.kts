@@ -4,6 +4,7 @@ include(
     ":embrace-android-core",
     ":embrace-android-features",
     ":embrace-android-payload",
+    ":embrace-android-delivery",
     ":embrace-android-okhttp3",
     ":embrace-android-fcm",
     ":embrace-android-compose",

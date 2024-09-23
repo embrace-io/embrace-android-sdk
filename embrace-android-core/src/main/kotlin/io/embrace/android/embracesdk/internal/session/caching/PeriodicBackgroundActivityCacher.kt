@@ -6,23 +6,22 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-public class PeriodicBackgroundActivityCacher(
+class PeriodicBackgroundActivityCacher(
     private val clock: Clock,
-    private val scheduledWorker: ScheduledWorker,
+    private val worker: BackgroundWorker,
     private val logger: EmbLogger
 ) {
 
     private companion object {
-
         /**
          * Minimum time between writes of the background activity to disk
          */
-        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 5000
+        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 2000L
     }
 
     private var lastSaved: Long = 0
@@ -31,7 +30,7 @@ public class PeriodicBackgroundActivityCacher(
     /**
      * Save the background activity to disk
      */
-    public fun scheduleSave(provider: Provider<Envelope<SessionPayload>?>) {
+    fun scheduleSave(provider: Provider<Envelope<SessionPayload>?>) {
         val delay = calculateDelay()
         val action: () -> Unit = {
             try {
@@ -44,7 +43,7 @@ public class PeriodicBackgroundActivityCacher(
                 logger.trackInternalError(InternalErrorType.BG_SESSION_CACHE_FAIL, ex)
             }
         }
-        scheduledFuture = scheduledWorker.schedule<Unit>(
+        scheduledFuture = worker.schedule<Unit>(
             action,
             delay,
             TimeUnit.MILLISECONDS
@@ -56,7 +55,7 @@ public class PeriodicBackgroundActivityCacher(
         return max(0, MIN_INTERVAL_BETWEEN_SAVES - delta)
     }
 
-    public fun stop() {
+    fun stop() {
         scheduledFuture?.cancel(false)
     }
 }

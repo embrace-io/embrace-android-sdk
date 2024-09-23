@@ -1,30 +1,30 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A set of shared executors to be used throughout the SDK
  */
-public interface WorkerThreadModule : Closeable {
+interface WorkerThreadModule : Closeable {
 
     /**
-     * Return a [BackgroundWorker] matching the [workerName]
+     * Return a [BackgroundWorker] matching the [worker]
      */
-    public fun backgroundWorker(workerName: WorkerName): BackgroundWorker
+    fun backgroundWorker(worker: Worker.Background): BackgroundWorker
 
     /**
-     * Return the [ScheduledWorker] given the [workerName]
+     * Return a [PriorityWorker] matching the [worker]
      */
-    public fun scheduledWorker(workerName: WorkerName): ScheduledWorker
+    fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T>
 
     /**
      * Returns the thread that monitors the main thread for ANRs
      */
-    public val anrMonitorThread: AtomicReference<Thread>
+    val anrMonitorThread: AtomicReference<Thread>
 
     /**
      * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the

@@ -63,7 +63,6 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface : io/embrace/android/embracesdk/internal/InternalTracingApi {
 	public abstract fun getSdkCurrentTime ()J
 	public abstract fun isAnrCaptureEnabled ()Z
-	public abstract fun isInternalNetworkCaptureDisabled ()Z
 	public abstract fun isNdkEnabled ()Z
 	public abstract fun isNetworkSpanForwardingEnabled ()Z
 	public abstract fun logComposeTap (Lkotlin/Pair;Ljava/lang/String;)V

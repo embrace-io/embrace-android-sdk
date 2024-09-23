@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -13,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapsh
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
+import io.embrace.android.embracesdk.fakes.fakePriorityWorker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getLastHeartbeatTimeMs
@@ -39,7 +39,8 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
@@ -52,7 +53,7 @@ import org.junit.Test
 internal class EmbraceDeliveryServiceTest {
 
     private lateinit var fakeClock: FakeClock
-    private lateinit var worker: BackgroundWorker
+    private lateinit var worker: PriorityWorker<TaskPriority>
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var apiService: FakeApiService
     private lateinit var fakeNativeCrashService: FakeNativeCrashService
@@ -67,7 +68,7 @@ internal class EmbraceDeliveryServiceTest {
     @Before
     fun setUp() {
         fakeClock = FakeClock()
-        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+        worker = fakePriorityWorker()
         apiService = FakeApiService()
         fakeNativeCrashService = FakeNativeCrashService()
         gatingService = FakeGatingService()
@@ -82,13 +83,12 @@ internal class EmbraceDeliveryServiceTest {
         )
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService = cacheService,
-            backgroundWorker = worker,
+            priorityWorker = worker,
             logger = logger,
         )
         deliveryService = EmbraceDeliveryService(
             deliveryCacheManager,
             apiService,
-            worker,
             testPlatformSerializer,
             logger
         )
@@ -315,13 +315,6 @@ internal class EmbraceDeliveryServiceTest {
         val obj = EventMessage(Event(eventId = "abc", type = EventType.END))
         deliveryService.sendMoment(obj)
         assertEquals(obj, apiService.eventRequests.single())
-    }
-
-    @Test
-    fun testSaveCrash() {
-        val obj = EventMessage(Event(eventId = "abc", type = EventType.CRASH))
-        deliveryService.sendCrash(obj, true)
-        assertEquals(obj, apiService.crashRequests.single())
     }
 
     @Test

@@ -3,17 +3,15 @@ package io.embrace.android.embracesdk.internal.capture.aei
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.fakes.fakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAppExitInfoBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.config.local.AppExitInfoLocalConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -135,12 +133,8 @@ internal class AeiNdkCrashProtobufSendTest {
         )
         val logWriter = FakeLogWriter()
         AeiDataSourceImpl(
-            BackgroundWorker(MoreExecutors.newDirectExecutorService()),
-            fakeAppExitInfoBehavior(localCfg = {
-                AppExitInfoLocalConfig(
-                    aeiCaptureEnabled = true
-                )
-            }),
+            fakeBackgroundWorker(),
+            FakeAppExitInfoBehavior(enabled = true),
             activityManager,
             FakePreferenceService(),
             logWriter,

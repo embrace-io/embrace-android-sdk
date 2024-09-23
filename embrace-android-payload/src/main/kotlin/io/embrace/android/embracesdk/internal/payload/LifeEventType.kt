@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
  * Enum to discriminate the different ways a session can start / end
  */
 @JsonClass(generateAdapter = false)
-public enum class LifeEventType {
+enum class LifeEventType {
 
     /* Session values */
 

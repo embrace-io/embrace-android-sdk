@@ -10,7 +10,7 @@ private const val NETWORK_BODY_RULE_DEFAULT_MAX_SIZE_BYTES = 102400L
  * Criteria to determine if a network body call should be captured or not.
  */
 @JsonClass(generateAdapter = true)
-public data class NetworkCaptureRuleRemoteConfig(
+data class NetworkCaptureRuleRemoteConfig(
 
     /**
      * Rule id

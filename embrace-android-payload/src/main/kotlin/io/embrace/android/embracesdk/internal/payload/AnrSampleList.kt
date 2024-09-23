@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.payload
 /**
  * Holds a list of [AnrSample] objects.
  */
-public data class AnrSampleList(
+data class AnrSampleList(
 
     /**
      * List of samples.

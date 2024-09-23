@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
@@ -14,7 +15,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class SessionOrchestrationModuleImpl(
     initModule: InitModule,
@@ -45,16 +46,16 @@ internal class SessionOrchestrationModuleImpl(
 
     override val payloadMessageCollator: PayloadMessageCollatorImpl by singleton {
         PayloadMessageCollatorImpl(
-            gatingService,
-            payloadSourceModule.sessionEnvelopeSource,
+            Systrace.traceSynchronous("gatingService") { gatingService },
+            Systrace.traceSynchronous("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
             androidServicesModule.preferencesService,
-            openTelemetryModule.currentSessionSpan
+            openTelemetryModule.currentSessionSpan,
         )
     }
 
     private val periodicSessionCacher: PeriodicSessionCacher by singleton {
         PeriodicSessionCacher(
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
             initModule.logger
         )
     }
@@ -62,15 +63,15 @@ internal class SessionOrchestrationModuleImpl(
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
         PeriodicBackgroundActivityCacher(
             initModule.clock,
-            workerThreadModule.scheduledWorker(WorkerName.PERIODIC_CACHE),
+            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
             initModule.logger
         )
     }
 
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
-            payloadMessageCollator,
-            configModule.configService,
+            Systrace.traceSynchronous("payloadMessageCollator") { payloadMessageCollator },
+            Systrace.traceSynchronous("configService") { configModule.configService },
             initModule.logger
         )
     }
@@ -79,8 +80,7 @@ internal class SessionOrchestrationModuleImpl(
         OrchestratorBoundaryDelegate(
             memoryCleanerService,
             essentialServiceModule.userService,
-            essentialServiceModule.sessionPropertiesService,
-            essentialServiceModule.networkConnectivityService
+            essentialServiceModule.sessionPropertiesService
         )
     }
 
@@ -97,7 +97,7 @@ internal class SessionOrchestrationModuleImpl(
     override val sessionOrchestrator: SessionOrchestrator by singleton(LoadType.EAGER) {
         SessionOrchestratorImpl(
             essentialServiceModule.processStateService,
-            payloadFactory,
+            Systrace.traceSynchronous("payloadFactory") { payloadFactory },
             initModule.clock,
             configModule.configService,
             essentialServiceModule.sessionIdTracker,

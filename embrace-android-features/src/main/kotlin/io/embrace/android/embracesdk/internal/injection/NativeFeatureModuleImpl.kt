@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class NativeFeatureModuleImpl(
     initModule: InitModule,
@@ -22,7 +22,6 @@ internal class NativeFeatureModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
-    deliveryModule: DeliveryModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
     nativeCoreModule: NativeCoreModule
@@ -36,16 +35,13 @@ internal class NativeFeatureModuleImpl(
                 payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
                 configModule.configService,
-                deliveryModule.deliveryService,
                 essentialServiceModule.userService,
-                androidServicesModule.preferencesService,
                 essentialServiceModule.sessionPropertiesService,
                 nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT),
+                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer
             )
@@ -57,9 +53,9 @@ internal class NativeFeatureModuleImpl(
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 EmbraceNativeThreadSamplerService(
                     configService = configModule.configService,
-                    symbols = lazy { ndkService.getSymbolsForCurrentArch() },
+                    symbols = lazy { ndkService.symbolsForCurrentArch },
                     logger = initModule.logger,
-                    scheduledWorker = workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 )
@@ -87,7 +83,7 @@ internal class NativeFeatureModuleImpl(
     }
 
     override val nativeCrashService: NativeCrashService by singleton {
-        if (!configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
+        if (!configModule.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
             NoopNativeCrashService()
         } else {
             NativeCrashDataSourceImpl(
@@ -102,7 +98,8 @@ internal class NativeFeatureModuleImpl(
         }
     }
 
-    private fun nativeThreadSamplingEnabled(configService: ConfigService) = configService.autoDataCaptureBehavior.isNdkEnabled()
+    private fun nativeThreadSamplingEnabled(configService: ConfigService) =
+        configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(

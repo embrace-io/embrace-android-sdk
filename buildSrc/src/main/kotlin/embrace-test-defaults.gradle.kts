@@ -67,7 +67,6 @@ project.tasks.withType(KotlinCompile::class.java).configureEach {
         apiVersion = "1.8"
         languageVersion = "1.8"
         jvmTarget = JavaVersion.VERSION_1_8.toString()
-        freeCompilerArgs = freeCompilerArgs + "-Xexplicit-api=strict"
         allWarningsAsErrors = true
     }
 }

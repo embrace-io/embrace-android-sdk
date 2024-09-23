@@ -20,6 +20,11 @@ internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     configuration: OpenTelemetryConfiguration
 ) {
+    init {
+        // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode
+        System.setProperty("io.opentelemetry.context.contextStorageProvider", "default")
+    }
+
     val sdkTracerProvider: SdkTracerProvider by lazy {
         Systrace.traceSynchronous("otel-tracer-provider-init") {
             SdkTracerProvider

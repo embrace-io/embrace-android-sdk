@@ -15,8 +15,8 @@ import io.opentelemetry.sdk.logs.data.Body
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import io.opentelemetry.sdk.resources.Resource
 
-public class FakeLogRecordData(
-    public val log: Log = testLog
+class FakeLogRecordData(
+    val log: Log = testLog
 ) : LogRecordData {
 
     override fun getResource(): Resource {

@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 /**
  * Creates a [SessionPayload] object.
  */
-public interface SessionPayloadSource {
-    public fun getSessionPayload(
+interface SessionPayloadSource {
+    fun getSessionPayload(
         endType: SessionSnapshotType,
         startNewSession: Boolean,
         crashId: String? = null

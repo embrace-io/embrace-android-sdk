@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 
-public class FakeAeiDataSource : AeiDataSource {
+class FakeAeiDataSource : AeiDataSource {
 
-    public var data: List<AppExitInfoData> =
+    var data: List<AppExitInfoData> =
         listOf(AppExitInfoData(null, null, null, null, null, null, null, null, null, null, null))
 
     override fun captureData(

@@ -5,15 +5,15 @@ package io.embrace.android.embracesdk.internal
  * to defer expensive initialization logic to a later time when it's desirable to create the instance earlier but we don't want to take
  * the upfront performance hit of the init.
  */
-public interface Initializable {
+interface Initializable {
 
     /**
      * Explicitly initialize the service post instance creation
      */
-    public fun initializeService(sdkInitStartTimeMs: Long)
+    fun initializeService(sdkInitStartTimeMs: Long)
 
     /**
      * Returns true if this service is initialized
      */
-    public fun initialized(): Boolean
+    fun initialized(): Boolean
 }

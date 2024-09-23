@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
-public class WebViewVitalsBehaviorImpl(
+class WebViewVitalsBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?>
 ) : WebViewVitalsBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(

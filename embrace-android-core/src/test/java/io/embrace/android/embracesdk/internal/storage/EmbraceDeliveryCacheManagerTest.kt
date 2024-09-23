@@ -1,9 +1,10 @@
 package io.embrace.android.embracesdk.internal.storage
 
-import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
+import io.embrace.android.embracesdk.fakes.fakePriorityWorker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
@@ -21,7 +22,8 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -45,7 +47,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     private val prefix = "last_session"
     private val serializer = EmbraceSerializer()
-    private val worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+    private val worker = fakePriorityWorker<TaskPriority>()
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
@@ -131,7 +133,12 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     @Test
     fun `return serialized current session even if cache fails`() {
-        every { cacheService.writeSession(any(), eq(testSessionEnvelopeOneMinuteLater)) } throws Exception()
+        every {
+            cacheService.writeSession(
+                any(),
+                eq(testSessionEnvelopeOneMinuteLater)
+            )
+        } throws Exception()
         deliveryCacheManager.saveSession(testSessionEnvelope, PERIODIC_CACHE)
         val original = ByteArrayOutputStream()
         original.use(checkNotNull(deliveryCacheManager.loadSessionAsAction(testSessionEnvelope.getSessionId())))
@@ -217,7 +224,8 @@ internal class EmbraceDeliveryCacheManagerTest {
             fakeClock.tick()
         }
 
-        val cachedSessions = deliveryCacheManager.getAllCachedSessionIds().map(CachedSession::sessionId)
+        val cachedSessions =
+            deliveryCacheManager.getAllCachedSessionIds().map(CachedSession::sessionId)
         assertEquals(EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED, cachedSessions.size)
         for (i in (100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)..99) {
             assertTrue(cachedSessions.contains("test$i"))
@@ -326,6 +334,59 @@ internal class EmbraceDeliveryCacheManagerTest {
         assertEquals(pendingApiCall2, cachedCalls.pollNextPendingApiCall())
         assertEquals(pendingApiCall3, cachedCalls.pollNextPendingApiCall())
         assertNull(cachedCalls.pollNextPendingApiCall())
+    }
+
+    @Test
+    fun `save payload sync`() {
+        deliveryCacheManager = EmbraceDeliveryCacheManager(
+            cacheService,
+            PriorityWorker(BlockableExecutorService(blockingMode = true)),
+            logger
+        )
+        val expected = "test".toByteArray()
+        val id = deliveryCacheManager.savePayload({ it.write(expected) }, true)
+        val output = ByteArrayOutputStream().use {
+            deliveryCacheManager.loadPayloadAsAction(id).invoke(it)
+            it.toByteArray()
+        }
+        val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(id))
+        val stream = ByteArrayOutputStream()
+        returnedAction(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = GZIPInputStream(compressed.inputStream()).readBytes()
+        assertArrayEquals(expected, uncompressed)
+        assertNotNull(output)
+    }
+
+    @Test
+    fun `save payload async`() {
+        val executorService = BlockableExecutorService(blockingMode = true)
+        deliveryCacheManager = EmbraceDeliveryCacheManager(
+            cacheService,
+            PriorityWorker(executorService),
+            logger
+        )
+        val expected = "test".toByteArray()
+        val id = deliveryCacheManager.savePayload({ it.write(expected) }, false)
+        val output = ByteArrayOutputStream().use {
+            deliveryCacheManager.loadPayloadAsAction(id).invoke(it)
+            it.toByteArray()
+        }
+
+        val emptyAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(id))
+        val emptyStream = ByteArrayOutputStream()
+        emptyAction(emptyStream)
+        assertEquals(0, emptyStream.toByteArray().size)
+
+        // unblock pending executor task
+        executorService.runCurrentlyBlocked()
+        val returnedAction = checkNotNull(deliveryCacheManager.loadPayloadAsAction(id))
+        val stream = ByteArrayOutputStream()
+        returnedAction(stream)
+        val compressed = stream.toByteArray()
+        val uncompressed = GZIPInputStream(compressed.inputStream()).readBytes()
+        assertArrayEquals(expected, uncompressed)
+        assertNotNull(output)
     }
 
     @Test

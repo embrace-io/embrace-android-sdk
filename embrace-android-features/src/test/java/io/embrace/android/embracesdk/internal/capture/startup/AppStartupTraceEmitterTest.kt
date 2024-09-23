@@ -4,10 +4,10 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertDoesNotHaveEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsKeySpan
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -49,7 +49,7 @@ internal class AppStartupTraceEmitterTest {
     fun setUp() {
         clock = FakeClock()
         val initModule = FakeInitModule(clock = clock)
-        backgroundWorker = BackgroundWorker(BlockableExecutorService())
+        backgroundWorker = fakeBackgroundWorker()
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeWebViewVitalsBehavior
+import io.embrace.android.embracesdk.fakes.createWebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.WebViewVitals
 import org.junit.Assert.assertEquals
@@ -14,7 +14,7 @@ internal class WebVitalsBehaviorTest {
 
     @Test
     fun testDefaults() {
-        with(fakeWebViewVitalsBehavior()) {
+        with(createWebViewVitalsBehavior()) {
             assertTrue(isWebViewVitalsEnabled())
             assertEquals(300, getMaxWebViewVitals())
         }
@@ -22,7 +22,7 @@ internal class WebVitalsBehaviorTest {
 
     @Test
     fun testRemote() {
-        with(fakeWebViewVitalsBehavior(remoteCfg = { remote })) {
+        with(createWebViewVitalsBehavior(remoteCfg = { remote })) {
             assertEquals(100, getMaxWebViewVitals())
             assertFalse(isWebViewVitalsEnabled())
         }

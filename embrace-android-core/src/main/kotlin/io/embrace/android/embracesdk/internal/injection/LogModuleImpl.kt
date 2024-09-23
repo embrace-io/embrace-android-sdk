@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class LogModuleImpl(
     initModule: InitModule,
@@ -62,7 +62,7 @@ internal class LogModuleImpl(
             essentialServiceModule.logWriter,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
-            workerThreadModule.backgroundWorker(WorkerName.REMOTE_LOGGING),
+            workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.logger,
             initModule.jsonSerializer
         )
@@ -70,7 +70,7 @@ internal class LogModuleImpl(
 
     override val logOrchestrator: LogOrchestrator by singleton {
         LogOrchestratorImpl(
-            workerThreadModule.scheduledWorker(WorkerName.REMOTE_LOGGING),
+            workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.clock,
             openTelemetryModule.logSink,
             deliveryModule.deliveryService,

@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.Callable
@@ -16,7 +15,7 @@ internal class EmbracePreferencesService(
     private val lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
     private val serializer: PlatformSerializer
-) : PreferencesService, StartupListener {
+) : PreferencesService {
 
     // We get SharedPreferences on a background thread because it loads data from disk
     // and can block. When client code needs to set/get a preference, getSharedPrefs() will
@@ -31,20 +30,6 @@ internal class EmbracePreferencesService(
                 }
             }
         )
-    }
-
-    init {
-        alterStartupStatus(SDK_STARTUP_IN_PROGRESS)
-    }
-
-    override fun applicationStartupComplete(): Unit = alterStartupStatus(SDK_STARTUP_COMPLETED)
-
-    private fun alterStartupStatus(status: String) {
-        backgroundWorker.submit {
-            Systrace.traceSynchronous("set-startup-status") {
-                prefs.setStringPreference(SDK_STARTUP_STATUS_KEY, status)
-            }
-        }
     }
 
     // fallback from this very unlikely case by just loading on the main thread
@@ -173,9 +158,6 @@ internal class EmbracePreferencesService(
             return newId
         }
         set(value) = prefs.setStringPreference(DEVICE_IDENTIFIER_KEY, value)
-
-    override val sdkStartupStatus: String?
-        get() = prefs.getStringPreference(SDK_STARTUP_STATUS_KEY)
 
     override var sdkDisabled: Boolean
         get() = prefs.getBooleanPreference(SDK_DISABLED_KEY, false)
@@ -338,10 +320,9 @@ internal class EmbracePreferencesService(
         return value ?: maxCount
     }
 
-    public companion object {
+    companion object {
         internal const val SDK_STARTUP_IN_PROGRESS = "startup_entered"
         internal const val SDK_STARTUP_COMPLETED = "startup_completed"
-        private const val SDK_STARTUP_STATUS_KEY = "io.embrace.sdkstartup"
         private const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"
         private const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"
         private const val PREVIOUS_OS_VERSION_KEY = "io.embrace.lastosversion"

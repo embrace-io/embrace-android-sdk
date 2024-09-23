@@ -7,7 +7,7 @@ import android.os.MessageQueue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ExecutorService
 
 /**
@@ -24,7 +24,7 @@ import java.util.concurrent.ExecutorService
  */
 internal class TargetThreadHandler(
     looper: Looper,
-    private val anrMonitorWorker: ScheduledWorker,
+    private val anrMonitorWorker: BackgroundWorker,
     private val configService: ConfigService,
     private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
     private val logger: EmbLogger,

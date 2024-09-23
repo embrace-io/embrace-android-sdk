@@ -22,8 +22,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
@@ -31,14 +29,12 @@ import kotlin.math.max
 internal class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
-    private val backgroundWorker: BackgroundWorker,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger
 ) : DeliveryService {
 
     private companion object {
         private const val SEND_SESSION_TIMEOUT = 1L
-        private const val CRASH_TIMEOUT = 1L // Seconds to wait before timing out when sending a crash
     }
 
     /**
@@ -51,7 +47,7 @@ internal class EmbraceDeliveryService(
             return
         }
 
-        try {
+        runCatching {
             val sessionId = envelope.getSessionId() ?: return
             val action: SerializationAction = cacheManager.loadSessionAsAction(sessionId)
                 ?: { stream: OutputStream ->
@@ -61,22 +57,12 @@ internal class EmbraceDeliveryService(
                         serializer.toJson(envelope, Envelope.sessionEnvelopeType)
                     }
                 }
-            val future = apiService.sendSession(action) { successful ->
-                if (!successful) {
-                    val message =
-                        "Session deleted without request being sent: ID $sessionId"
-                    logger.logWarning(message, SessionPurgeException(message))
-                }
+            val future = apiService.sendSession(action) {
                 cacheManager.deleteSession(sessionId)
             }
             if (snapshotType == SessionSnapshotType.JVM_CRASH) {
                 future?.get(SEND_SESSION_TIMEOUT, TimeUnit.SECONDS)
             }
-        } catch (ex: Exception) {
-            logger.logInfo(
-                "Failed to send session end message. Embrace will store the " +
-                    "session message and attempt to deliver it at a future date."
-            )
         }
     }
 
@@ -88,59 +74,33 @@ internal class EmbraceDeliveryService(
         apiService.saveLogEnvelope(logEnvelope)
     }
 
-    override fun sendCrash(crash: EventMessage, processTerminating: Boolean) {
-        runCatching {
-            cacheManager.saveCrash(crash)
-            val future = apiService.sendCrash(crash)
-
-            if (processTerminating) {
-                future.get(CRASH_TIMEOUT, TimeUnit.SECONDS)
-            }
-        }
-    }
-
     override fun sendCachedSessions(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         sessionIdTracker: SessionIdTracker
     ) {
-        sendCachedCrash()
-        backgroundWorker.submit(TaskPriority.HIGH) {
-            val allSessions = cacheManager.getAllCachedSessionIds().filter {
-                it.sessionId != sessionIdTracker.getActiveSessionId()
-            }
+        val nativeCrashData = nativeCrashServiceProvider()?.getAndSendNativeCrash()
+        val allSessions = cacheManager.getAllCachedSessionIds().filter {
+            it.sessionId != sessionIdTracker.getActiveSessionId()
+        }
 
-            allSessions.map { it.sessionId }.forEach { sessionId ->
-                cacheManager.transformSession(sessionId = sessionId) {
-                    val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
-                    val spansToFail = data.spanSnapshots
-                        ?.filterNot { completedSpanIds.contains(it.spanId) }
-                        ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
-                        ?: emptyList()
-                    val completedSpans = (data.spans ?: emptyList()) + spansToFail
-                    copy(
-                        data = data.copy(
-                            spans = completedSpans,
-                            spanSnapshots = emptyList(),
-                        )
+        allSessions.map { it.sessionId }.forEach { sessionId ->
+            cacheManager.transformSession(sessionId = sessionId) {
+                val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
+                val spansToFail = data.spanSnapshots
+                    ?.filterNot { completedSpanIds.contains(it.spanId) }
+                    ?.map { it.toFailedSpan(endTimeMs = getFailedSpanEndTimeMs(this)) }
+                    ?: emptyList()
+                val completedSpans = (data.spans ?: emptyList()) + spansToFail
+                copy(
+                    data = data.copy(
+                        spans = completedSpans,
+                        spanSnapshots = emptyList(),
                     )
-                }
+                )
             }
-
-            nativeCrashServiceProvider()?.let { service ->
-                val nativeCrashData = service.getAndSendNativeCrash()
-                if (nativeCrashData != null) {
-                    addCrashDataToCachedSession(nativeCrashData)
-                }
-            }
-            sendCachedSessions(allSessions)
         }
-    }
-
-    private fun sendCachedCrash() {
-        val crash = cacheManager.loadCrash()
-        crash?.let {
-            apiService.sendCrash(it)
-        }
+        nativeCrashData?.let(::addCrashDataToCachedSession)
+        sendCachedSessions(allSessions)
     }
 
     private fun addCrashDataToCachedSession(nativeCrashData: NativeCrashData) {
@@ -174,8 +134,8 @@ internal class EmbraceDeliveryService(
                 val sessionId = cachedSession.sessionId
                 val action = cacheManager.loadSessionAsAction(sessionId)
                 if (action != null) {
-                    apiService.sendSession(action) { successful ->
-                        if (!successful) {
+                    apiService.sendSession(action) { response ->
+                        if (!response.shouldRetry) {
                             val message = "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
                             logger.logWarning(message, SessionPurgeException(message))
                         }

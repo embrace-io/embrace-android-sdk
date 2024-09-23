@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringStat
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -21,7 +21,9 @@ internal class AnrStacktraceSamplerTest {
     private val clock = FakeClock()
     private val configService = FakeConfigService()
     private val state = ThreadMonitoringState(clock)
-    private val worker = ScheduledWorker(BlockingScheduledExecutorService())
+    private val worker = BackgroundWorker(
+        BlockingScheduledExecutorService()
+    )
 
     @Test
     fun testLeastValuableInterval() {

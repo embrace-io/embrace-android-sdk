@@ -1,31 +1,22 @@
 package io.embrace.android.embracesdk.internal.worker
 
-import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.internal.worker.comparator.taskPriorityComparator
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
 import java.util.concurrent.PriorityBlockingQueue
-import java.util.concurrent.RejectedExecutionHandler
 
 internal class PriorityThreadPoolExecutorTest {
 
-    private val clock = FakeClock()
-
     private val executor = PriorityThreadPoolExecutor(
-        clock,
         Executors.defaultThreadFactory(),
-        RejectedExecutionHandler { _, _ -> },
+        { _, _ -> },
         1,
-        1
+        1,
+        taskPriorityComparator
     )
-
-    @Before
-    fun setUp() {
-        clock.setCurrentTime(0)
-    }
 
     @Test(expected = IllegalArgumentException::class)
     fun `reject invalid runnable`() {
@@ -39,25 +30,28 @@ internal class PriorityThreadPoolExecutorTest {
 
     @Test
     fun `submit valid runnable`() {
-        val future = BackgroundWorker(executor).submit {}
-        assertEquals(TaskPriority.NORMAL, (future as PriorityRunnableFuture<*>).priority)
+        val future = PriorityWorker<TaskPriority>(executor).submit(TaskPriority.NORMAL) {}
+        assertEquals(TaskPriority.NORMAL, (future as PriorityRunnableFuture<*>).priorityInfo)
     }
 
     @Test
     fun `submit valid callable`() {
-        val future = BackgroundWorker(executor).submit(TaskPriority.HIGH, Callable {})
-        assertEquals(TaskPriority.HIGH, (future as PriorityRunnableFuture<*>).priority)
+        val future = PriorityWorker<TaskPriority>(executor).submit(TaskPriority.HIGH, Callable {})
+        assertEquals(TaskPriority.HIGH, (future as PriorityRunnableFuture<*>).priorityInfo)
     }
 
     @Test
     fun `tasks are processed in priority order when priority is different`() {
         val inputs = listOf(
-            createFuture(1, TaskPriority.LOW, 0),
-            createFuture(2, TaskPriority.NORMAL, 0),
-            createFuture(3, TaskPriority.CRITICAL, 0),
-            createFuture(4, TaskPriority.HIGH, 0)
+            createFuture(1, TaskPriority.LOW),
+            createFuture(2, TaskPriority.NORMAL),
+            createFuture(3, TaskPriority.CRITICAL),
+            createFuture(4, TaskPriority.HIGH)
         )
-        val queue = PriorityThreadPoolExecutor.createPriorityQueue()
+        val queue = PriorityBlockingQueue<Runnable>(
+            100,
+            taskPriorityComparator
+        )
         inputs.forEach(queue::add)
         queue.forEach(Runnable::run)
 
@@ -68,15 +62,18 @@ internal class PriorityThreadPoolExecutorTest {
     @Test
     fun `tasks are in random order when priority + submission time is same`() {
         val inputs = listOf(
-            createFuture("elephant", TaskPriority.NORMAL, 0),
-            createFuture("apple", TaskPriority.NORMAL, 0),
-            createFuture("cat", TaskPriority.NORMAL, 0),
-            createFuture("banana", TaskPriority.NORMAL, 0),
-            createFuture("zebra", TaskPriority.NORMAL, 0),
-            createFuture("dog", TaskPriority.NORMAL, 0),
-            createFuture("snake", TaskPriority.NORMAL, 0)
+            createFuture("elephant", TaskPriority.NORMAL),
+            createFuture("apple", TaskPriority.NORMAL),
+            createFuture("cat", TaskPriority.NORMAL),
+            createFuture("banana", TaskPriority.NORMAL),
+            createFuture("zebra", TaskPriority.NORMAL),
+            createFuture("dog", TaskPriority.NORMAL),
+            createFuture("snake", TaskPriority.NORMAL)
         )
-        val queue = PriorityThreadPoolExecutor.createPriorityQueue()
+        val queue = PriorityBlockingQueue<Runnable>(
+            100,
+            taskPriorityComparator
+        )
         inputs.forEach(queue::add)
         queue.forEach(Runnable::run)
 
@@ -95,102 +92,13 @@ internal class PriorityThreadPoolExecutorTest {
         )
     }
 
-    @Test
-    fun `tasks are processed in submission order when priority is same`() {
-        val inputs = listOf(
-            createFuture("elephant", TaskPriority.NORMAL, 0),
-            createFuture("apple", TaskPriority.NORMAL, 1),
-            createFuture("cat", TaskPriority.NORMAL, 2),
-            createFuture("banana", TaskPriority.NORMAL, 3),
-            createFuture("zebra", TaskPriority.NORMAL, 4),
-            createFuture("dog", TaskPriority.NORMAL, 5),
-            createFuture("snake", TaskPriority.NORMAL, 6)
-        )
-        val queue = PriorityThreadPoolExecutor.createPriorityQueue()
-        inputs.forEach(queue::add)
-        queue.forEach(Runnable::run)
-
-        val observed = queue.getResults()
-        assertEquals(
-            listOf(
-                "elephant",
-                "apple",
-                "cat",
-                "banana",
-                "zebra",
-                "dog",
-                "snake"
-            ),
-            observed
-        )
-    }
-
-    @Test
-    fun `tasks are processed with both submission + priority order`() {
-        val inputs = listOf(
-            createFuture("elephant", TaskPriority.NORMAL, 0),
-            createFuture("apple", TaskPriority.HIGH, 1),
-            createFuture("cat", TaskPriority.NORMAL, 2),
-            createFuture("banana", TaskPriority.LOW, 3),
-            createFuture("zebra", TaskPriority.CRITICAL, 4),
-            createFuture("dog", TaskPriority.NORMAL, 5),
-            createFuture("snake", TaskPriority.NORMAL, 6)
-        )
-        val queue = PriorityThreadPoolExecutor.createPriorityQueue()
-        inputs.forEach(queue::add)
-        queue.forEach(Runnable::run)
-
-        val observed = queue.getResults()
-        assertEquals(
-            listOf(
-                "zebra",
-                "apple",
-                "elephant",
-                "cat",
-                "dog",
-                "snake",
-                "banana",
-            ),
-            observed
-        )
-    }
-
-    @Test
-    fun `resource starvation is mitigated`() {
-        val inputs = listOf(
-            createFuture("a", TaskPriority.CRITICAL, 0),
-            createFuture("c", TaskPriority.HIGH, 1),
-            createFuture("b", TaskPriority.CRITICAL, 2),
-            createFuture("d", TaskPriority.HIGH, 3).also {
-                clock.tick(TaskPriority.HIGH.delayThresholdMs + 1000)
-            },
-            createFuture("e", TaskPriority.CRITICAL, clock.now()),
-        )
-        val queue = PriorityThreadPoolExecutor.createPriorityQueue()
-        inputs.forEach(queue::add)
-        queue.forEach(Runnable::run)
-
-        val observed = queue.getResults()
-        assertEquals(
-            listOf(
-                "a",
-                "b",
-                "c",
-                "d",
-                "e",
-            ),
-            observed
-        )
-    }
-
     /**
      * Syntactic sugar for creating a [PriorityRunnableFuture].
      */
     private fun <T> createFuture(
         value: T,
-        taskPriority: TaskPriority,
-        submitTime: Long
-    ) = PriorityRunnableFuture(FutureTask { value }, taskPriority, submitTime)
+        taskPriority: TaskPriority
+    ) = PriorityRunnableFuture(FutureTask { value }, taskPriority)
 
     /**
      * Drains the results from the queue & returns their Callable value.

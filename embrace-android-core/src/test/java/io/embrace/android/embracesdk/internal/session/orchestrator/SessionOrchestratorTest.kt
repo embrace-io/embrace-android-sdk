@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -12,19 +11,17 @@ import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
@@ -33,7 +30,6 @@ import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackground
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -206,13 +202,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `test manual session end disabled for session gating`() {
         configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
-                RemoteConfig(
-                    sessionConfig = SessionRemoteConfig(
-                        isEnabled = true
-                    ),
-                )
-            }
+            sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
         )
         createOrchestrator(false)
 
@@ -372,13 +362,20 @@ internal class SessionOrchestratorTest {
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
+        periodicSessionCacher = PeriodicSessionCacher(
+            BackgroundWorker(sessionCacheExecutor),
+            logger
+        )
         periodicBackgroundActivityCacher =
-            PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
+            PeriodicBackgroundActivityCacher(
+                clock,
+                BackgroundWorker(baCacheExecutor),
+                logger
+            )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             configService,
-            BackgroundWorker(BlockableExecutorService()),
+            fakeBackgroundWorker(),
             logger
         ).apply {
             add(
@@ -398,8 +395,7 @@ internal class SessionOrchestratorTest {
             OrchestratorBoundaryDelegate(
                 memoryCleanerService,
                 userService,
-                sessionPropertiesService,
-                FakeNetworkConnectivityService()
+                sessionPropertiesService
             ),
             deliveryService,
             periodicSessionCacher,

@@ -5,7 +5,7 @@ import io.opentelemetry.api.common.AttributeKey
 /**
  * Defines a unique object to represent a [EmbraceAttribute]
  */
-public class EmbraceAttributeKey(
+class EmbraceAttributeKey(
     override val id: String,
     otelAttributeKey: AttributeKey<String>? = null,
     useIdAsAttributeName: Boolean = false,
@@ -20,5 +20,5 @@ public class EmbraceAttributeKey(
     /**
      * The [AttributeKey] equivalent for this object to be used in conjunction with OTel objects
      */
-    public val attributeKey: AttributeKey<String> = otelAttributeKey ?: AttributeKey.stringKey(name)
+    val attributeKey: AttributeKey<String> = otelAttributeKey ?: AttributeKey.stringKey(name)
 }

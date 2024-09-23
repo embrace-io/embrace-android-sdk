@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class LivenessCheckScheduler(
     configService: ConfigService,
-    private val anrMonitorWorker: ScheduledWorker,
+    private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,
@@ -56,7 +56,6 @@ internal class LivenessCheckScheduler(
      */
     fun startMonitoringThread() {
         if (!state.started.getAndSet(true)) {
-            logger.logInfo("Start ANR detection...")
             scheduleRegularHeartbeats()
         }
     }
@@ -76,20 +75,14 @@ internal class LivenessCheckScheduler(
     private fun scheduleRegularHeartbeats() {
         intervalMs = configService.anrBehavior.getSamplingIntervalMs()
         val runnable = Runnable(::checkHeartbeat)
-        try {
-            logger.logInfo("Starting ANR heartbeats with interval: ${intervalMs}ms")
+        runCatching {
             monitorFuture = anrMonitorWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
-        } catch (exc: Exception) {
-            // ignore any RejectedExecution - ScheduledExecutorService only throws when shutting down.
-            val message = "ANR capture initialization failed"
-            logger.logWarning(message, exc)
         }
     }
 
     private fun stopHeartbeatTask(): Boolean {
         monitorFuture?.let { monitorTask ->
             if (monitorTask.cancel(false)) {
-                logger.logInfo("Stopped ANR detection...")
                 monitorFuture = null
                 return true
             }
@@ -114,7 +107,7 @@ internal class LivenessCheckScheduler(
             }
 
             if (intervalMs != configService.anrBehavior.getSamplingIntervalMs()) {
-                logger.logInfo("Different interval detected, scheduling a heartbeat restart")
+                // Different interval detected, scheduling a heartbeat restart
                 anrMonitorWorker.submit {
                     if (stopHeartbeatTask()) {
                         scheduleRegularHeartbeats()
@@ -128,18 +121,12 @@ internal class LivenessCheckScheduler(
                 blockedThreadDetector.updateAnrTracking(now)
             }
         } catch (exc: Exception) {
-            logger.logError("Failed to process ANR monitor thread heartbeat", exc)
             logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_CHECK_FAIL, exc)
         }
     }
 
     private fun sendHeartbeatMessage() {
         val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
-        if (!targetThreadHandler.sendMessage(heartbeatMessage)) {
-            logger.logWarning(
-                "Failed to send message to targetHandler, main thread likely shutting down.",
-                IllegalStateException("Failed to send message to targetHandler")
-            )
-        }
+        targetThreadHandler.sendMessage(heartbeatMessage)
     }
 }

@@ -7,7 +7,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Type
 
-public class TestPlatformSerializer(
+class TestPlatformSerializer(
     private val realSerializer: PlatformSerializer = EmbraceSerializer(),
     private val operationWrapper: ExecutionCoordinator.OperationWrapper = ExecutionCoordinator.OperationWrapper()
 ) : PlatformSerializer, ExecutionCoordinator.ExecutionModifiers by operationWrapper {

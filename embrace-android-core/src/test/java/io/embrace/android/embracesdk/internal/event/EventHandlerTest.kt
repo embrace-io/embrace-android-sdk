@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.fakeDataCaptureEventBehavior
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createDataCaptureEventBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.verify
@@ -80,8 +80,8 @@ internal class EventHandlerTest {
 
         cfg = RemoteConfig()
         configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior { cfg },
-            dataCaptureEventBehavior = fakeDataCaptureEventBehavior { cfg }
+            sessionBehavior = createSessionBehavior { cfg },
+            dataCaptureEventBehavior = createDataCaptureEventBehavior { cfg }
         )
         sessionPropertiesService = FakeSessionPropertiesService()
 
@@ -100,7 +100,7 @@ internal class EventHandlerTest {
             deliveryService,
             logger,
             clock,
-            ScheduledWorker(scheduledExecutorService)
+            BackgroundWorker(scheduledExecutorService)
         )
     }
 

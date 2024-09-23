@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.capture.webview.WebViewDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class FeatureModuleImpl(
     private val featureRegistry: EmbraceFeatureRegistry,
@@ -50,7 +50,7 @@ internal class FeatureModuleImpl(
                     logger = initModule.logger,
                 )
             },
-            configGate = { configService.autoDataCaptureBehavior.isMemoryServiceEnabled() },
+            configGate = { configService.autoDataCaptureBehavior.isMemoryWarningCaptureEnabled() },
         )
     }
 
@@ -148,14 +148,14 @@ internal class FeatureModuleImpl(
             factory = {
                 LowPowerDataSource(
                     context = coreModule.context,
-                    backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                    backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     clock = initModule.clock,
                     provider = { systemServiceModule.powerManager },
                     spanService = otelModule.spanService,
                     logger = initModule.logger
                 )
             },
-            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeServiceEnabled() }
+            configGate = { configService.autoDataCaptureBehavior.isPowerSaveModeCaptureEnabled() }
         )
     }
 
@@ -164,7 +164,7 @@ internal class FeatureModuleImpl(
             ThermalStateDataSource(
                 spanService = otelModule.spanService,
                 logger = initModule.logger,
-                backgroundWorker = workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 clock = initModule.clock,
                 powerManagerProvider = { systemServiceModule.powerManager }
             )
@@ -177,8 +177,7 @@ internal class FeatureModuleImpl(
         DataSourceState(
             factory = { thermalService },
             configGate = {
-                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled() &&
-                    configService.sdkModeBehavior.isBetaFeaturesEnabled()
+                configService.autoDataCaptureBehavior.isThermalStatusCaptureEnabled()
             }
         )
     }
@@ -186,7 +185,7 @@ internal class FeatureModuleImpl(
     private val aeiService: AeiDataSourceImpl? by singleton {
         if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             AeiDataSourceImpl(
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 configService.appExitInfoBehavior,
                 systemServiceModule.activityManager,
                 androidServicesModule.preferencesService,
@@ -227,7 +226,7 @@ internal class FeatureModuleImpl(
                 )
             },
             configGate = {
-                configService.autoDataCaptureBehavior.isNetworkConnectivityServiceEnabled()
+                configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
             }
         )
     }
@@ -235,7 +234,7 @@ internal class FeatureModuleImpl(
     override val sigquitDataSource: DataSourceState<SigquitDataSource> by dataSourceState {
         DataSourceState(
             factory = anrModule::sigquitDataSource,
-            configGate = { configService.anrBehavior.isGoogleAnrCaptureEnabled() }
+            configGate = { configService.anrBehavior.isSigquitCaptureEnabled() }
         )
     }
 

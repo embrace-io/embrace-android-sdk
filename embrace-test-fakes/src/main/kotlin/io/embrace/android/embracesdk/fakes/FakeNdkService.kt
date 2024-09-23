@@ -2,15 +2,18 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 
-public class FakeNdkService : NdkService {
-    public var checkForNativeCrashCount: Int = 0
-    public val propUpdates: MutableList<Map<String, String>> = mutableListOf()
+class FakeNdkService : NdkService {
+    val propUpdates: MutableList<Map<String, String>> = mutableListOf()
 
-    public var sessionId: String? = null
-    public var userUpdateCount: Int = 0
-    public var lastUnityCrashId: String? = null
+    var sessionId: String? = null
+    var userUpdateCount: Int = 0
+    var lastUnityCrashId: String? = null
     private var nativeCrashData: NativeCrashData? = null
+
+    override fun initializeService(sessionIdTracker: SessionIdTracker) {
+    }
 
     override fun updateSessionId(newSessionId: String) {
         sessionId = newSessionId
@@ -24,9 +27,10 @@ public class FakeNdkService : NdkService {
         userUpdateCount++
     }
 
-    override fun getUnityCrashId(): String? {
-        return lastUnityCrashId
-    }
+    override val unityCrashId: String?
+        get() {
+            return lastUnityCrashId
+        }
 
     override fun getNativeCrash(): NativeCrashData? {
         val data = nativeCrashData
@@ -34,18 +38,14 @@ public class FakeNdkService : NdkService {
         return data
     }
 
-    override fun getAndSendNativeCrash(): NativeCrashData? {
-        checkForNativeCrashCount++
-        return getNativeCrash()
-    }
+    override val symbolsForCurrentArch: Map<String, String>?
+        get() {
+            TODO("Not yet implemented")
+        }
 
-    override fun getSymbolsForCurrentArch(): Map<String, String>? {
-        TODO("Not yet implemented")
-    }
+    fun hasNativeCrash(): Boolean = nativeCrashData != null
 
-    public fun hasNativeCrash(): Boolean = nativeCrashData != null
-
-    public fun setNativeCrashData(data: NativeCrashData) {
+    fun setNativeCrashData(data: NativeCrashData) {
         nativeCrashData = data
     }
 }

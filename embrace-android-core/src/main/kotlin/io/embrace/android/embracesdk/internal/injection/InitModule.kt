@@ -9,41 +9,34 @@ import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorServ
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
  */
-public interface InitModule {
+interface InitModule {
     /**
      * Clock instance locked to the time of creation used by the SDK throughout its lifetime
      */
-    public val clock: io.embrace.android.embracesdk.internal.clock.Clock
+    val clock: io.embrace.android.embracesdk.internal.clock.Clock
 
     /**
      * Service to track usage of public APIs and other internal metrics
      */
-    public val telemetryService: TelemetryService
+    val telemetryService: TelemetryService
 
     /**
      * Logger used by the SDK
      */
-    public val logger: EmbLogger
+    val logger: EmbLogger
 
     /**
      * Info about the system available at startup time without expensive disk or API calls
      */
-    public val systemInfo: SystemInfo
-
-    /**
-     * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.
-     * This allows us to explicitly relate all the sessions associated with a particular app launch rather than having the backend figure
-     * this out by proximity for stitched sessions.
-     */
-    public val processIdentifier: String
+    val systemInfo: SystemInfo
 
     /**
      * Tracks internal errors
      */
-    public val internalErrorService: InternalErrorService
+    val internalErrorService: InternalErrorService
 
     /**
      * Returns the serializer used to serialize data to JSON
      */
-    public val jsonSerializer: PlatformSerializer
+    val jsonSerializer: PlatformSerializer
 }

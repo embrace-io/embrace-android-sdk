@@ -8,22 +8,14 @@ import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.fakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeNetworkBehavior
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.fakeSdkModeBehavior
+import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.NetworkLocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
-import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -107,8 +99,9 @@ internal class IntegrationTestRule(
                 coreModuleSupplier = { _, _ -> overriddenCoreModule },
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-                deliveryModuleSupplier = { _, _, _, _ -> overriddenDeliveryModule },
-                anrModuleSupplier = { _, _, _, _ -> fakeAnrModule }
+                deliveryModuleSupplier = { _, _, _ -> overriddenDeliveryModule },
+                anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
+                nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
             )
             val embraceImpl = EmbraceImpl(bootstrapper)
             Embrace.setImpl(embraceImpl)
@@ -157,25 +150,8 @@ internal class IntegrationTestRule(
         val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(overriddenInitModule),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
-            sdkModeBehavior = fakeSdkModeBehavior(
-                isDebug = overriddenCoreModule.isDebug,
-                localCfg = { DEFAULT_LOCAL_CONFIG }
-            ),
-            networkBehavior = fakeNetworkBehavior(
-                localCfg = { DEFAULT_SDK_LOCAL_CONFIG },
-                remoteCfg = { DEFAULT_SDK_REMOTE_CONFIG }
-            ),
-            networkSpanForwardingBehavior = fakeNetworkSpanForwardingBehavior {
-                NetworkSpanForwardingRemoteConfig(pctEnabled = 100.0f)
-            },
-            autoDataCaptureBehavior = fakeAutoDataCaptureBehavior(
-                remoteCfg = {
-                    DEFAULT_SDK_REMOTE_CONFIG.copy(
-                        // disable thermal status capture as it interferes with unit tests
-                        dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
-                    )
-                }
-            )
+            networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true),
+            autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = false)
         ),
         val overriddenAndroidServicesModule: AndroidServicesModule = createAndroidServicesModule(
             initModule = overriddenInitModule,
@@ -186,7 +162,8 @@ internal class IntegrationTestRule(
             FakeDeliveryModule(
                 deliveryService = FakeDeliveryService(),
             ),
-        val fakeAnrModule: AnrModule = FakeAnrModule()
+        val fakeAnrModule: AnrModule = FakeAnrModule(),
+        val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()
     ) {
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)
@@ -195,31 +172,5 @@ internal class IntegrationTestRule(
 
     companion object {
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
-
-        private val DEFAULT_SDK_LOCAL_CONFIG = SdkLocalConfig(
-            networking = NetworkLocalConfig(
-                enableNativeMonitoring = false
-            ),
-            betaFeaturesEnabled = false
-        )
-
-        private val DEFAULT_SDK_REMOTE_CONFIG = RemoteConfig(
-            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
-            networkCaptureRules = setOf(
-                NetworkCaptureRuleRemoteConfig(
-                    id = "test",
-                    duration = 10000,
-                    method = "GET",
-                    urlRegex = "capture.me",
-                    expiresIn = 10000
-                )
-            )
-        )
-
-        val DEFAULT_LOCAL_CONFIG = LocalConfig(
-            appId = "CoYh3",
-            ndkEnabled = false,
-            sdkConfig = DEFAULT_SDK_LOCAL_CONFIG
-        )
     }
 }

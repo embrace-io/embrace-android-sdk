@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSo
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class PayloadSourceModuleImpl(
     initModule: InitModule,
@@ -38,24 +38,26 @@ internal class PayloadSourceModuleImpl(
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
         RnBundleIdTrackerImpl(
-            coreModule.buildInfo,
+            coreModule.buildInfoService.getBuildInfo(),
             coreModule.context,
             configModule.configService,
             androidServicesModule.preferencesService,
-            workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.logger
         )
     }
 
     private val sessionPayloadSource by singleton {
-        SessionPayloadSourceImpl(
-            nativeSymbolsProvider,
-            otelModule.spanSink,
-            otelModule.currentSessionSpan,
-            otelModule.spanRepository,
-            otelPayloadMapperProvider(),
-            initModule.logger
-        )
+        Systrace.traceSynchronous("session-payload-source") {
+            SessionPayloadSourceImpl(
+                nativeSymbolsProvider,
+                otelModule.spanSink,
+                otelModule.currentSessionSpan,
+                otelModule.spanRepository,
+                otelPayloadMapperProvider(),
+                initModule.logger
+            )
+        }
     }
 
     private val logPayloadSource by singleton {
@@ -82,39 +84,45 @@ internal class PayloadSourceModuleImpl(
     }
 
     override val resourceSource by singleton {
-        EnvelopeResourceSourceImpl(
-            hostedSdkVersionInfo,
-            AppEnvironment(coreModule.context.applicationInfo).environment,
-            coreModule.buildInfo,
-            coreModule.packageVersionInfo,
-            configModule.configService.appFramework,
-            deviceArchitecture,
-            DeviceImpl(
-                systemServiceModule.windowManager,
-                androidServicesModule.preferencesService,
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
-                initModule.systemInfo,
-                { nativeCoreModuleProvider()?.cpuInfoDelegate },
-                initModule.logger
-            ),
-            rnBundleIdTracker
-        )
+        Systrace.traceSynchronous("resource-source") {
+            EnvelopeResourceSourceImpl(
+                hostedSdkVersionInfo,
+                AppEnvironment(coreModule.context.applicationInfo).environment,
+                Systrace.traceSynchronous("buildInfo") { coreModule.buildInfoService.getBuildInfo() },
+                Systrace.traceSynchronous("packageInfo") { coreModule.packageVersionInfo },
+                configModule.configService.appFramework,
+                deviceArchitecture,
+                Systrace.traceSynchronous("deviceImpl") {
+                    DeviceImpl(
+                        systemServiceModule.windowManager,
+                        androidServicesModule.preferencesService,
+                        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+                        initModule.systemInfo,
+                        { nativeCoreModuleProvider()?.cpuInfoDelegate },
+                        initModule.logger
+                    )
+                },
+                rnBundleIdTracker
+            )
+        }
     }
 
     override val metadataSource by singleton {
-        EnvelopeMetadataSourceImpl(essentialServiceModule.userService::getUserInfo)
+        Systrace.traceSynchronous("metadata-source") {
+            EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
+        }
     }
 
     override val metadataService: MetadataService by singleton {
         Systrace.traceSynchronous("metadata-service-init") {
             EmbraceMetadataService(
-                resourceSource,
+                lazy { resourceSource },
                 metadataSource,
                 coreModule.context,
-                systemServiceModule.storageManager,
+                lazy { systemServiceModule.storageManager },
                 configModule.configService,
                 androidServicesModule.preferencesService,
-                workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION),
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.clock,
                 initModule.logger
             )

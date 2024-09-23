@@ -9,15 +9,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -26,7 +24,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
 
 private const val MAX_SESSION_PROPERTIES_FROM_CONFIG = 5
 private const val MAX_SESSION_PROPERTIES_DEFAULT = 10
@@ -44,24 +41,20 @@ internal class EmbraceSessionPropertiesTest {
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var context: Context
     private lateinit var logger: EmbLogger
-    private lateinit var configService: ConfigService
-    private lateinit var config: RemoteConfig
+    private lateinit var configService: FakeConfigService
     private lateinit var writer: FakeCurrentSessionSpan
 
     @Before
     fun setUp() {
-        val worker = BackgroundWorker(Executors.newSingleThreadExecutor())
+        val worker = fakeBackgroundWorker()
         context = ApplicationProvider.getApplicationContext()
         logger = EmbLoggerImpl()
         val prefs = lazy { PreferenceManager.getDefaultSharedPreferences(context) }
         preferencesService =
             EmbracePreferencesService(worker, prefs, fakeClock, EmbraceSerializer())
 
-        config = RemoteConfig()
         configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior {
-                config
-            }
+            sessionBehavior = FakeSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT)
         )
         writer = FakeCurrentSessionSpan()
         sessionProperties = EmbraceSessionProperties(
@@ -185,7 +178,7 @@ internal class EmbraceSessionPropertiesTest {
 
     @Test
     fun addPropertyTooManyWithRemoteConfigMax() {
-        config = RemoteConfig(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
+        configService.sessionBehavior = FakeSessionBehavior(maxSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
         var isPermanent = true
         for (i in 0 until MAX_SESSION_PROPERTIES_FROM_CONFIG) {
             assertTrue(sessionProperties.add("prop$i", VALUE_VALID, isPermanent))

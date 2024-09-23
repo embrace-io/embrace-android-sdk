@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 /**
  * Captures custom breadcrumbs.
  */
-public class WebViewUrlDataSource(
+class WebViewUrlDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
     private val logger: EmbLogger
@@ -24,7 +24,7 @@ public class WebViewUrlDataSource(
         private const val QUERY_PARAMETER_DELIMITER = "?"
     }
 
-    public fun logWebView(url: String?, startTime: Long) {
+    fun logWebView(url: String?, startTime: Long) {
         try {
             captureData(
                 inputValidation = {
@@ -33,7 +33,7 @@ public class WebViewUrlDataSource(
                 captureAction = {
                     // Check if web view query params should be captured.
                     var parsedUrl: String = url ?: ""
-                    if (!breadcrumbBehavior.isQueryParamCaptureEnabled()) {
+                    if (!breadcrumbBehavior.isWebViewBreadcrumbQueryParamCaptureEnabled()) {
                         val queryOffset = url?.indexOf(QUERY_PARAMETER_DELIMITER) ?: 0
                         if (queryOffset > 0) {
                             parsedUrl = url?.substring(0, queryOffset) ?: ""

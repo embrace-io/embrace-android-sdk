@@ -4,8 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.getLastSavedLogPayload
 import io.embrace.android.embracesdk.getLastSentBackgroundActivity
-import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.getLastSentSession
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
@@ -50,7 +50,7 @@ internal class JvmCrashFeatureTest {
         with(testRule) {
             harness.recordSession {
                 handleException()
-                checkNotNull(harness.getLastSentLog()).assertCrash(
+                checkNotNull(harness.getLastSavedLogPayload().data.logs).single().assertCrash(
                     state = "foreground",
                     crashId = checkNotNull(harness.getLastSentSession()?.getCrashedId())
                 )
@@ -62,7 +62,7 @@ internal class JvmCrashFeatureTest {
     fun `app crash in the background generates a crash log`() {
         with(testRule) {
             handleException()
-            checkNotNull(harness.getLastSentLog()).assertCrash(
+            checkNotNull(harness.getLastSavedLogPayload().data.logs).single().assertCrash(
                 crashId = checkNotNull(harness.getLastSentBackgroundActivity()?.getCrashedId())
             )
         }
@@ -86,7 +86,7 @@ internal class JvmCrashFeatureTest {
             }
         }
 
-        val log = checkNotNull(testRule.harness.getLastSentLog())
+        val log = checkNotNull(testRule.harness.getLastSavedLogPayload().data.logs).single()
         assertOtelLogReceived(
             logReceived = log,
             expectedMessage = "",

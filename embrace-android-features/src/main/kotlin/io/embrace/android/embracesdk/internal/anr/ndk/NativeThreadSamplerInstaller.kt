@@ -8,14 +8,14 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
-public class NativeThreadSamplerInstaller(
+class NativeThreadSamplerInstaller(
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
 ) {
     private val isMonitoring = AtomicBoolean(false)
     private var targetHandler: Handler? = null
 
-    public var currentThread: Thread? = null
+    var currentThread: Thread? = null
 
     private fun prepareTargetHandler() {
         // We create a Handler here so that when the functionality is disabled locally
@@ -38,7 +38,7 @@ public class NativeThreadSamplerInstaller(
         }
     }
 
-    public fun monitorCurrentThread(
+    fun monitorCurrentThread(
         sampler: NativeThreadSamplerService,
         configService: ConfigService,
         anrService: AnrService
@@ -57,7 +57,7 @@ public class NativeThreadSamplerInstaller(
         }
         prepareTargetHandler()
 
-        if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled()) {
+        if (configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             monitorCurrentThread(sampler, anrService)
         }
 
@@ -79,7 +79,7 @@ public class NativeThreadSamplerInstaller(
     ) {
         targetHandler?.post(
             Runnable {
-                if (configService.anrBehavior.isNativeThreadAnrSamplingEnabled() && !isMonitoring.get()) {
+                if (configService.anrBehavior.isUnityAnrCaptureEnabled() && !isMonitoring.get()) {
                     monitorCurrentThread(sampler, anrService)
                 }
             }
@@ -89,7 +89,6 @@ public class NativeThreadSamplerInstaller(
     private fun monitorCurrentThread(sampler: NativeThreadSamplerService, anrService: AnrService) {
         synchronized(this) {
             if (!isMonitoring.get()) {
-                logger.logInfo("Installing native sampling on '${Thread.currentThread().name}'")
                 if (sampler.monitorCurrentThread()) {
                     anrService.addBlockedThreadListener(sampler)
                     isMonitoring.set(true)

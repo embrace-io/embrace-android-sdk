@@ -6,7 +6,7 @@ This document provides some basic guidelines for contributing to this repository
 
 ## Requirements
 
-Before code can be accepted all contributors must read the [**code of conduct**](https://github.com/embrace-io/embrace-android-sdk/blob/master/CODE_OF_CONDUCT.md) and complete our [**Individual Contributor License Agreement (CLA).**](https://forms.gle/SjXadmUcVwh6NrU68)
+Before code can be accepted all contributors must read the [**code of conduct**](https://github.com/embrace-io/embrace-android-sdk/blob/main/CODE_OF_CONDUCT.md) and complete our [**Individual Contributor License Agreement (CLA).**](https://forms.gle/SjXadmUcVwh6NrU68)
 
 Our code of conduct applies to all platforms and venues related to this project; please follow it in all your interactions with the project and its participants.
 
@@ -20,7 +20,7 @@ To share your idea or request, [open a GitHub Issue](https://github.com/embrace
 
 For urgent matters (such as outages) or issues concerning the Embrace service or UI, please email [support@embrace.io](mailto:support@embrace.io) or reach out in our [Community Slack](https://join.slack.com/t/embraceio-community/shared_invite/zt-ywr4jhzp-DLROX0ndN9a0soHMf6Ksow) for direct, faster assistance.
 
-You may submit a bug report concerning the Embrace iOS SDK by [opening a GitHub Issue](https://github.com/embrace-io/embrace-android-sdk/issues/new/choose). Use the appropriate template and provide all the listed details to help us resolve the issue.
+You may submit a bug report concerning the Embrace Android SDK by [opening a GitHub Issue](https://github.com/embrace-io/embrace-android-sdk/issues/new/choose). Use the appropriate template and provide all the listed details to help us resolve the issue.
 
 ## **Have a patch?**
 

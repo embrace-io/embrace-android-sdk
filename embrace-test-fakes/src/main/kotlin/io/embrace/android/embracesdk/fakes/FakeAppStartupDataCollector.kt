@@ -2,18 +2,18 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
 
-public class FakeAppStartupDataCollector(
+class FakeAppStartupDataCollector(
     private val clock: FakeClock,
 ) : AppStartupDataCollector {
-    public var applicationInitStartMs: Long? = null
-    public var applicationInitEndMs: Long? = null
-    public var startupActivityName: String? = null
-    public var startupActivityPreCreatedMs: Long? = null
-    public var startupActivityInitStartMs: Long? = null
-    public var startupActivityPostCreatedMs: Long? = null
-    public var startupActivityInitEndMs: Long? = null
-    public var startupActivityResumedMs: Long? = null
-    public var firstFrameRenderedMs: Long? = null
+    var applicationInitStartMs: Long? = null
+    var applicationInitEndMs: Long? = null
+    var startupActivityName: String? = null
+    var startupActivityPreCreatedMs: Long? = null
+    var startupActivityInitStartMs: Long? = null
+    var startupActivityPostCreatedMs: Long? = null
+    var startupActivityInitEndMs: Long? = null
+    var startupActivityResumedMs: Long? = null
+    var firstFrameRenderedMs: Long? = null
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: clock.now()

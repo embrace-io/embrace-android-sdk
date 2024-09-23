@@ -172,11 +172,9 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun getSdkCurrentTime(): Long = initModule.clock.now()
 
-    override fun isInternalNetworkCaptureDisabled(): Boolean = false
-
     override fun isAnrCaptureEnabled(): Boolean = configService.anrBehavior.isAnrCaptureEnabled()
 
-    override fun isNdkEnabled(): Boolean = configService.autoDataCaptureBehavior.isNdkEnabled()
+    override fun isNdkEnabled(): Boolean = configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()
 
     override fun logInternalError(message: String?, details: String?) {
         if (message == null) {

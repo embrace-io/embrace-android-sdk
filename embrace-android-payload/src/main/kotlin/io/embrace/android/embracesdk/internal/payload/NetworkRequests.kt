@@ -4,6 +4,6 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-public data class NetworkRequests(
+data class NetworkRequests(
     @Json(name = "v2") val networkSessionV2: NetworkSessionV2?
 )

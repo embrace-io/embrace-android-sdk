@@ -32,7 +32,7 @@ internal class CrashModuleImpl(
             initModule.jsonSerializer,
             initModule.logger,
         ).apply {
-            addCrashTeardownHandler(crashMarker)
+            addCrashTeardownHandler(lazy { crashMarker })
         }
     }
 

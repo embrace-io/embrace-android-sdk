@@ -1,22 +1,25 @@
 package io.embrace.android.embracesdk.internal.config
 
-import com.google.common.util.concurrent.MoreExecutors
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
-import io.embrace.android.embracesdk.internal.config.local.SdkLocalConfig
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -27,11 +30,11 @@ import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
-import org.robolectric.android.util.concurrent.PausedExecutorService
 
 internal class EmbraceConfigServiceTest {
 
@@ -40,7 +43,6 @@ internal class EmbraceConfigServiceTest {
     private lateinit var worker: BackgroundWorker
 
     companion object {
-        private lateinit var localConfig: LocalConfig
         private lateinit var remoteConfig: RemoteConfig
         private lateinit var mockApiService: ApiService
         private lateinit var processStateService: ProcessStateService
@@ -58,7 +60,6 @@ internal class EmbraceConfigServiceTest {
         @JvmStatic
         fun setupBeforeAll() {
             mockkStatic(RemoteConfig::class)
-            localConfig = createLocalConfig()
             remoteConfig = RemoteConfig()
             mockApiService = mockk()
             processStateService = FakeProcessStateService()
@@ -70,10 +71,6 @@ internal class EmbraceConfigServiceTest {
             fakeCachedConfig = RemoteConfig( // alter config to trigger listener
                 anrConfig = AnrRemoteConfig(pctIdleHandlerEnabled = 59f)
             )
-        }
-
-        fun createLocalConfig(action: Provider<SdkLocalConfig> = { SdkLocalConfig() }): LocalConfig {
-            return LocalConfig("abcde", false, action())
         }
 
         /**
@@ -98,8 +95,9 @@ internal class EmbraceConfigServiceTest {
         every {
             mockCacheService.loadObject<RemoteConfig>("config.json", RemoteConfig::class.java)
         } returns fakeCachedConfig
-        worker = BackgroundWorker(MoreExecutors.newDirectExecutorService())
+        worker = fakeBackgroundWorker()
         service = createService(worker = worker, action = {})
+        assertFalse(service.isOnlyUsingOtelExporters())
     }
 
     /**
@@ -108,7 +106,6 @@ internal class EmbraceConfigServiceTest {
     @After
     fun tearDown() {
         clearAllMocks()
-        service.close()
     }
 
     @Suppress("DEPRECATION")
@@ -199,7 +196,7 @@ internal class EmbraceConfigServiceTest {
         val obj = RemoteConfig(anrConfig = AnrRemoteConfig(mainThreadOnly = false))
         every { mockApiService.getConfig() } returns null
         every { mockApiService.getCachedConfig() } returns CachedConfig(obj, null)
-        service = createService(worker) {}
+        service = createService(worker)
 
         // config was updated
         assertFalse(service.anrBehavior.shouldCaptureMainThreadOnly())
@@ -250,9 +247,9 @@ internal class EmbraceConfigServiceTest {
     @Test
     fun `test onForeground() with sdk started and config sdkDisabled=true stops the SDK`() {
         var stopped = false
-        service = createService(worker) {
+        service = createService(worker, action = {
             stopped = true
-        }
+        })
         fakePreferenceService.sdkDisabled = true
         service.onForeground(true, 1100L)
         assertTrue(stopped)
@@ -275,13 +272,13 @@ internal class EmbraceConfigServiceTest {
         // Use ExecutorService that requires tasks to be explicitly run. This allows us to simulate the case
         // when the loading from the cache doesn't run before the config is read.
 
-        val pausableExecutorService = PausedExecutorService()
+        val executorService = BlockingScheduledExecutorService(blockingMode = true)
 
         every { mockApiService.getCachedConfig() } returns CachedConfig(null, null)
 
         // Create a new instance of the ConfigService where the value of the config is what it is when the config
         // variable is initialized, before the cached version is loaded.
-        val configService = createService(BackgroundWorker(pausableExecutorService)) {}
+        val configService = createService(BackgroundWorker(executorService))
         assertFalse(configService.hasValidRemoteConfig())
 
         // call arbitrary function to trigger config refresh
@@ -289,11 +286,7 @@ internal class EmbraceConfigServiceTest {
 
         // Only run the task from the executor that loads the cached config to the ConfigService so the call to fetch
         // a new config from the server isn't run
-        pausableExecutorService.runNext()
-        assertFalse(configService.hasValidRemoteConfig())
-
-        // fetch config from the server
-        pausableExecutorService.runNext()
+        executorService.runCurrentlyBlocked()
         assertTrue(configService.hasValidRemoteConfig())
     }
 
@@ -302,21 +295,52 @@ internal class EmbraceConfigServiceTest {
         assertEquals(AppFramework.NATIVE, service.appFramework)
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun testEmptyAppId() {
+        createService(worker = worker, appId = "")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testNullAppId() {
+        createService(worker = worker, appId = null)
+    }
+
+    @Test
+    fun testNoAppIdRequiredWithExporters() {
+        val cfg = OpenTelemetryConfiguration(
+            SpanSinkImpl(),
+            LogSinkImpl(),
+            SystemInfo()
+        )
+        cfg.addLogExporter(FakeLogRecordExporter())
+        val service = createService(worker = worker, appId = "", config = cfg)
+        assertNotNull(service)
+        assertTrue(service.isOnlyUsingOtelExporters())
+    }
+
     /**
      * Create a new instance of the [EmbraceConfigService] using the passed in [worker] to run
      * tasks for its internal [BackgroundWorker]
      */
-    private fun createService(worker: BackgroundWorker, action: ConfigService.() -> Unit): EmbraceConfigService =
-        EmbraceConfigService(
-            localConfig,
-            fakePreferenceService,
-            fakeClock,
-            logger,
-            worker,
-            false,
-            AppFramework.NATIVE,
-            action
-        ).apply {
-            remoteConfigSource = mockApiService
-        }
+    private fun createService(
+        worker: BackgroundWorker,
+        action: ConfigService.() -> Unit = {},
+        appId: String? = "abcde",
+        config: OpenTelemetryConfiguration = OpenTelemetryConfiguration(
+            SpanSinkImpl(),
+            LogSinkImpl(),
+            SystemInfo()
+        )
+    ): EmbraceConfigService = EmbraceConfigService(
+        appId,
+        config,
+        fakePreferenceService,
+        fakeClock,
+        logger,
+        worker,
+        AppFramework.NATIVE,
+        action
+    ).apply {
+        remoteConfigSource = mockApiService
+    }
 }

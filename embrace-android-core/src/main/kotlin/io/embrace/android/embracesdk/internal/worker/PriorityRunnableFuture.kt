@@ -6,8 +6,7 @@ import java.util.concurrent.RunnableFuture
  * An implementation of [RunnableFuture] that also contains priority information on how important
  * the task is.
  */
-internal class PriorityRunnableFuture<T> (
+internal class PriorityRunnableFuture<T>(
     val impl: RunnableFuture<T>,
-    val priority: TaskPriority,
-    val submitTime: Long
+    val priorityInfo: Any
 ) : RunnableFuture<T> by impl

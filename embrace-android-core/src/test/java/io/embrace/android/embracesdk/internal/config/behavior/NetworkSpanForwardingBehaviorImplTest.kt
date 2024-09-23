@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.fakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -10,18 +10,18 @@ internal class NetworkSpanForwardingBehaviorImplTest {
 
     @Test
     fun testDefault() {
-        with(fakeNetworkSpanForwardingBehavior()) {
+        with(createNetworkSpanForwardingBehavior()) {
             assertFalse(isNetworkSpanForwardingEnabled())
         }
     }
 
     @Test
     fun testRemote() {
-        with(fakeNetworkSpanForwardingBehavior(remoteConfig = { remoteEnabled })) {
+        with(createNetworkSpanForwardingBehavior(remoteConfig = { remoteEnabled })) {
             assertTrue(isNetworkSpanForwardingEnabled())
         }
 
-        with(fakeNetworkSpanForwardingBehavior(remoteConfig = { remoteDisabled })) {
+        with(createNetworkSpanForwardingBehavior(remoteConfig = { remoteDisabled })) {
             assertFalse(isNetworkSpanForwardingEnabled())
         }
     }

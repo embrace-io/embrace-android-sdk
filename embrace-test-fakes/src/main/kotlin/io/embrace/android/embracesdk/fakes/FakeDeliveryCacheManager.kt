@@ -12,11 +12,11 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 
-public class FakeDeliveryCacheManager : DeliveryCacheManager {
+class FakeDeliveryCacheManager : DeliveryCacheManager {
 
-    public val saveSessionRequests: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
-    public val saveBgActivityRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
-    public val saveCrashRequests: MutableList<EventMessage> = mutableListOf()
+    val saveSessionRequests: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
+    val saveBgActivityRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
+    val saveCrashRequests: MutableList<EventMessage> = mutableListOf()
 
     private val cachedSessions = mutableListOf<Envelope<SessionPayload>>()
     private val serializer = EmbraceSerializer()
@@ -42,18 +42,6 @@ public class FakeDeliveryCacheManager : DeliveryCacheManager {
         return cachedSessions.map { CachedSession.create(it.getSessionId(), 0, false) }
     }
 
-    override fun saveCrash(crash: EventMessage) {
-        saveCrashRequests.add(crash)
-    }
-
-    override fun loadCrash(): EventMessage? {
-        return null
-    }
-
-    override fun deleteCrash() {
-        TODO("Not yet implemented")
-    }
-
     override fun deletePayload(name: String) {
         TODO("Not yet implemented")
     }
@@ -66,7 +54,7 @@ public class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    override fun savePayload(action: SerializationAction): String {
+    override fun savePayload(action: SerializationAction, sync: Boolean): String {
         TODO("Not yet implemented")
     }
 
@@ -81,7 +69,7 @@ public class FakeDeliveryCacheManager : DeliveryCacheManager {
         TODO("Not yet implemented")
     }
 
-    public fun addCachedSessions(vararg envelopes: Envelope<SessionPayload>) {
+    fun addCachedSessions(vararg envelopes: Envelope<SessionPayload>) {
         cachedSessions.addAll(envelopes)
     }
 }

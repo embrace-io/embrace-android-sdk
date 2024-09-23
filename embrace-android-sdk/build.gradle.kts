@@ -2,6 +2,7 @@ import io.embrace.gradle.Versions
 
 plugins {
     id("embrace-prod-defaults")
+    id("enable-explicit-api-mode")
     id("com.google.devtools.ksp")
 }
 
@@ -67,6 +68,7 @@ dependencies {
     implementation(project(":embrace-android-core"))
     implementation(project(":embrace-android-features"))
     implementation(project(":embrace-android-payload"))
+    implementation(project(":embrace-android-delivery"))
 
     implementation(platform(libs.opentelemetry.bom))
     implementation(libs.lifecycle.common.java8)
@@ -90,6 +92,8 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
+
+    androidTestImplementation(project(":embrace-test-fakes"))
 }
 
 project.tasks.register("publishLocal") { dependsOn("publishMavenPublicationToMavenLocal") }

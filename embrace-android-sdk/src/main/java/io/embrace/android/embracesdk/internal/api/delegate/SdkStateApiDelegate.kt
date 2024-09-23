@@ -78,8 +78,6 @@ internal class SdkStateApiDelegate(
                 val sessionId = localSessionIdTracker.getActiveSessionId()
                 if (sessionId != null) {
                     return sessionId
-                } else {
-                    logger.logInfo("Session ID is null", null)
                 }
             }
             return null
@@ -98,7 +96,7 @@ internal class SdkStateApiDelegate(
             }
         }
 
-    companion object {
-        private val appIdPattern: Pattern = Pattern.compile("^[A-Za-z0-9]{5}$")
+    private companion object {
+        val appIdPattern: Pattern by lazy { Pattern.compile("^[A-Za-z0-9]{5}$") }
     }
 }

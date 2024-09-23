@@ -6,10 +6,13 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -101,7 +104,6 @@ internal class EmbraceInternalInterfaceTest {
             setProcessStartedByNotification()
             assertFalse(isNetworkSpanForwardingEnabled())
             getSdkCurrentTime()
-            assertFalse(isInternalNetworkCaptureDisabled())
         }
     }
 
@@ -193,6 +195,22 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `access check methods work as expected`() {
         with(testRule) {
+            harness.overriddenConfigService.networkBehavior =
+                createNetworkBehavior(remoteCfg = {
+                    RemoteConfig(
+                        disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+                        networkCaptureRules = setOf(
+                            NetworkCaptureRuleRemoteConfig(
+                                id = "test",
+                                duration = 10000,
+                                method = "GET",
+                                urlRegex = "capture.me",
+                                expiresIn = 10000
+                            )
+                        )
+                    )
+                })
+
             startSdk(context = harness.overriddenCoreModule.context)
             harness.recordSession {
                 assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
@@ -208,7 +226,7 @@ internal class EmbraceInternalInterfaceTest {
         with(testRule) {
             startSdk(context = harness.overriddenCoreModule.context)
             embrace.internalInterface.setProcessStartedByNotification()
-            harness.recordSession(simulateAppStartup = true) { }
+            harness.recordSession(simulateActivityCreation = true) { }
             assertEquals(EventType.START, harness.overriddenDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
         }
     }
@@ -220,15 +238,6 @@ internal class EmbraceInternalInterfaceTest {
             assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
             harness.overriddenClock.tick()
             assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
-        }
-    }
-
-    @Test
-    fun `test isInternalNetworkCaptureDisabled`() {
-        with(testRule) {
-            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
         }
     }
 

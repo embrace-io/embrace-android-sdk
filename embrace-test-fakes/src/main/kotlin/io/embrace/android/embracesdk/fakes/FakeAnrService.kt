@@ -2,13 +2,12 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AnrInterval
 
-public class FakeAnrService : AnrService {
+class FakeAnrService : AnrService {
 
-    public var data: List<AnrInterval> = mutableListOf()
-    public var crashCount: Int = 0
+    var data: List<AnrInterval> = mutableListOf()
+    var crashCount: Int = 0
 
     override fun cleanCollections() {
     }
@@ -19,9 +18,7 @@ public class FakeAnrService : AnrService {
         crashCount++
     }
 
-    override fun finishInitialization(
-        configService: ConfigService
-    ) {
+    override fun startAnrCapture() {
     }
 
     override fun addBlockedThreadListener(listener: BlockedThreadListener) {

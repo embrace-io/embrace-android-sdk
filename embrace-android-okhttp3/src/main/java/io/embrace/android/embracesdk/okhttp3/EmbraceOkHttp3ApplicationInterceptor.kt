@@ -22,11 +22,11 @@ import java.io.IOException
  * chain process for client errors on requests to a generic URL like a GraphQL endpoint.
  */
 @InternalApi
-public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
+class EmbraceOkHttp3ApplicationInterceptor internal constructor(
     private val embrace: Embrace
 ) : Interceptor {
 
-    public constructor() : this(Embrace.getInstance())
+    constructor() : this(Embrace.getInstance())
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -36,7 +36,7 @@ public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
             // we are not interested in response, just proceed
             chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
-            if (embrace.isStarted && !embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
+            if (embrace.isStarted) {
                 val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromIncompleteRequest(
@@ -55,7 +55,7 @@ public class EmbraceOkHttp3ApplicationInterceptor internal constructor(
             throw e
         } catch (e: Exception) {
             // we are interested in errors.
-            if (embrace.isStarted && !embrace.internalInterface.isInternalNetworkCaptureDisabled()) {
+            if (embrace.isStarted) {
                 val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request))
                 val errorType = e.javaClass.canonicalName
                 val errorMessage = e.message

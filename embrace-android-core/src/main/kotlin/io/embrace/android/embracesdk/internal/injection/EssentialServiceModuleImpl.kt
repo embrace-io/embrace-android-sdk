@@ -23,9 +23,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 
-public class EssentialServiceModuleImpl(
+class EssentialServiceModuleImpl(
     initModule: InitModule,
     configModule: ConfigModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -39,15 +39,6 @@ public class EssentialServiceModuleImpl(
     private val configService by lazy { configModule.configService }
 
     private val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
-
-    private val backgroundWorker =
-        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-
-    private val networkRequestWorker =
-        workerThreadModule.backgroundWorker(WorkerName.NETWORK_REQUEST)
-
-    private val pendingApiCallsWorker =
-        workerThreadModule.scheduledWorker(WorkerName.BACKGROUND_REGISTRATION)
 
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
@@ -73,7 +64,7 @@ public class EssentialServiceModuleImpl(
                 configBaseUrl = configBaseUrl,
                 appId = appId,
                 lazyDeviceId = lazyDeviceId,
-                lazyAppVersionName = lazy(coreModule.packageVersionInfo::versionName)
+                lazyAppVersionName = lazy { coreModule.packageVersionInfo.versionName }
             )
         }
     }
@@ -91,7 +82,7 @@ public class EssentialServiceModuleImpl(
         Systrace.traceSynchronous("network-connectivity-service-init") {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
-                backgroundWorker,
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.logger,
                 systemServiceModule.connectivityManager
             )
@@ -101,7 +92,7 @@ public class EssentialServiceModuleImpl(
     override val pendingApiCallsSender: PendingApiCallsSender by singleton {
         Systrace.traceSynchronous("pending-call-sender-init") {
             EmbracePendingApiCallsSender(
-                pendingApiCallsWorker,
+                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 storageModule.deliveryCacheManager,
                 initModule.clock,
                 initModule.logger
@@ -121,8 +112,7 @@ public class EssentialServiceModuleImpl(
                     }
                 },
                 logger = initModule.logger,
-                backgroundWorker = networkRequestWorker,
-                cacheManager = Systrace.traceSynchronous("cache-manager") { storageModule.deliveryCacheManager },
+                priorityWorker = workerThreadModule.priorityWorker(Worker.Priority.NetworkRequestWorker),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,
@@ -132,9 +122,7 @@ public class EssentialServiceModuleImpl(
     }
 
     override val apiClient: ApiClient by singleton {
-        ApiClientImpl(
-            initModule.logger
-        )
+        ApiClientImpl()
     }
 
     override val sessionIdTracker: SessionIdTracker by singleton {

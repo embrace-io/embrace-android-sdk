@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.worker
 
-import io.embrace.android.embracesdk.internal.clock.Clock
 import java.util.concurrent.Callable
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.RejectedExecutionHandler
@@ -10,29 +9,27 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 /**
- * A [ThreadPoolExecutor] that supports prioritisation of submitted tasks. Prioritisation
- * uses the following logic:
+ * A [ThreadPoolExecutor] that supports prioritisation of submitted tasks. Each task
+ * must have a priorityInfo object that is associated with the task. Prioritisation is then
+ * delegated to the supplied [Comparator].
  *
- * 1. Each [TaskPriority] defines a delay threshold in milliseconds.
- * 2. Higher task priorities have smaller delay thresholds.
- * 3. A score is calculated for each task by adding the submit time + delay threshold
- * 4. Tasks are executed in order of lowest score to highest score
- *
- * This helps mitigate against resource starvation scenarios where a large number of high priority
- * tasks prevent lower priority tasks from ever completing execution.
+ * This executor assumes that all tasks submitted are operations that have some sort of logical
+ * grouping that can be prioritised. Submitting all HTTP requests to the same executor will result
+ * in good prioritisation. Submitting a bunch of miscellaneous tasks that have no relation to each
+ * other will probably not.
  */
 internal class PriorityThreadPoolExecutor(
-    private val clock: Clock,
     threadFactory: ThreadFactory,
     handler: RejectedExecutionHandler,
     corePoolSize: Int,
-    maximumPoolSize: Int
+    maximumPoolSize: Int,
+    comparator: Comparator<Runnable>
 ) : ThreadPoolExecutor(
     corePoolSize,
     maximumPoolSize,
     60L,
     TimeUnit.SECONDS,
-    createPriorityQueue(),
+    PriorityBlockingQueue(100, comparator),
     threadFactory,
     handler
 ) {
@@ -42,7 +39,7 @@ internal class PriorityThreadPoolExecutor(
             "Callable must be PriorityCallable"
         }
         val runnableFuture = super.newTaskFor(callable)
-        return PriorityRunnableFuture(runnableFuture, callable.priority, clock.now())
+        return PriorityRunnableFuture<T>(runnableFuture, callable.priorityInfo)
     }
 
     override fun <T : Any?> newTaskFor(
@@ -53,19 +50,6 @@ internal class PriorityThreadPoolExecutor(
             "Runnable must be PriorityCallable"
         }
         val runnableFuture = super.newTaskFor(runnable, value)
-        return PriorityRunnableFuture(runnableFuture, runnable.priority, clock.now())
-    }
-
-    public companion object {
-        public fun createPriorityQueue(): PriorityBlockingQueue<Runnable> =
-            PriorityBlockingQueue(
-                100,
-                compareBy<Runnable> { runnable ->
-                    require(runnable is PriorityRunnableFuture<*>) {
-                        "Runnable must be PriorityRunnableFuture"
-                    }
-                    runnable.submitTime + runnable.priority.delayThresholdMs
-                }
-            )
+        return PriorityRunnableFuture<T>(runnableFuture, runnable.priorityInfo)
     }
 }

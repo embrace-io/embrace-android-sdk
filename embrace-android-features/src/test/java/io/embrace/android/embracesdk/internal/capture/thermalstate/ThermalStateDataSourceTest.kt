@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.internal.capture.thermalstate
 
 import android.os.PowerManager
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
@@ -25,7 +24,7 @@ internal class ThermalStateDataSourceTest {
         dataSource = ThermalStateDataSource(
             spanWriter,
             EmbLoggerImpl(),
-            BackgroundWorker(BlockableExecutorService()),
+            fakeBackgroundWorker(),
             FakeClock(100),
         ) { mockPowerManager }
     }

@@ -6,7 +6,7 @@ import kotlin.math.pow
 /**
  * Checks whether a percent-based config value is over a threshold where it should be enabled.
  */
-public class BehaviorThresholdCheck(
+class BehaviorThresholdCheck(
     private val deviceIdProvider: Provider<String>
 ) {
 
@@ -14,13 +14,13 @@ public class BehaviorThresholdCheck(
      * An implementation of [isBehaviorEnabled] that returns null if the pctEnabled parameter
      * is null.
      */
-    public fun isBehaviorEnabled(pctEnabled: Float?): Boolean? = pctEnabled?.let(::isBehaviorEnabled)
+    fun isBehaviorEnabled(pctEnabled: Float?): Boolean? = pctEnabled?.let(::isBehaviorEnabled)
 
     /**
      * An implementation of [isBehaviorEnabled] that returns null if the pctEnabled parameter
      * is null.
      */
-    public fun isBehaviorEnabled(pctEnabled: Int?): Boolean? = pctEnabled?.toFloat().let(::isBehaviorEnabled)
+    fun isBehaviorEnabled(pctEnabled: Int?): Boolean? = pctEnabled?.toFloat().let(::isBehaviorEnabled)
 
     /**
      * Determines whether behaviour is enabled for a percentage roll-out. This is achieved
@@ -36,7 +36,7 @@ public class BehaviorThresholdCheck(
      * an integer for maximum granularity.
      * @return whether the behaviour is enabled or not.
      */
-    public fun isBehaviorEnabled(pctEnabled: Float): Boolean {
+    fun isBehaviorEnabled(pctEnabled: Float): Boolean {
         if (pctEnabled <= 0 || pctEnabled > 100) {
             return false
         }
@@ -44,14 +44,14 @@ public class BehaviorThresholdCheck(
         return pctEnabled >= deviceId
     }
 
-    public fun getNormalizedLargeDeviceId(): Float = getNormalizedDeviceId(6)
+    fun getNormalizedLargeDeviceId(): Float = getNormalizedDeviceId(6)
 
     /**
      * Use [.isBehaviorEnabled] instead as it allows rollouts to be controlled
      * at greater granularity.
      */
     @Deprecated("")
-    public fun getNormalizedDeviceId(): Float = getNormalizedDeviceId(2)
+    fun getNormalizedDeviceId(): Float = getNormalizedDeviceId(2)
 
     private fun getNormalizedDeviceId(digits: Int): Float {
         val deviceId = deviceIdProvider()

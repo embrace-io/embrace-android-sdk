@@ -4,7 +4,7 @@ import com.squareup.moshi.JsonClass
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
 @JsonClass(generateAdapter = true)
-public data class ApiRequest(
+data class ApiRequest(
     val contentType: String = "application/json",
 
     val userAgent: String,

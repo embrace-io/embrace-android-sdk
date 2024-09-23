@@ -6,9 +6,8 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 /**
  * Function that returns an instance of [ConfigModule]. Matches the signature of the constructor for [ConfigModuleImpl]
  */
-public typealias ConfigModuleSupplier = (
+typealias ConfigModuleSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
@@ -18,9 +17,8 @@ public typealias ConfigModuleSupplier = (
     foregroundAction: ConfigService.() -> Unit
 ) -> ConfigModule
 
-public fun createConfigModule(
+fun createConfigModule(
     initModule: InitModule,
-    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
@@ -30,7 +28,6 @@ public fun createConfigModule(
     foregroundAction: ConfigService.() -> Unit
 ): ConfigModule = ConfigModuleImpl(
     initModule,
-    coreModule,
     openTelemetryModule,
     workerThreadModule,
     androidServicesModule,

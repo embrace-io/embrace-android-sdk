@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
  * by the backend.
  * @param spanStartTimeMs the start time of the span event in milliseconds.
  */
-public class SpanEventData(
-    public val schemaType: SchemaType,
-    public val spanStartTimeMs: Long
+class SpanEventData(
+    val schemaType: SchemaType,
+    val spanStartTimeMs: Long
 )

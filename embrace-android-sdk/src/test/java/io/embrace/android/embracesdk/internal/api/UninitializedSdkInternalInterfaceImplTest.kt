@@ -83,11 +83,6 @@ internal class UninitializedSdkInternalInterfaceImplTest {
     }
 
     @Test
-    fun `check isInternalNetworkCaptureDisabled before SDK starts`() {
-        assertFalse(impl.isInternalNetworkCaptureDisabled())
-    }
-
-    @Test
     fun `check isNetworkSpanForwardingEnabled before SDK starts`() {
         assertFalse(impl.isNetworkSpanForwardingEnabled())
     }

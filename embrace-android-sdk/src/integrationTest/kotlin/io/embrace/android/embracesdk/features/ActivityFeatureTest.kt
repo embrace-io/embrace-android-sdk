@@ -31,7 +31,7 @@ internal class ActivityFeatureTest {
             )
             startSdk()
             var startTimeMs: Long = 0
-            val message = checkNotNull(harness.recordSession(simulateAppStartup = true) {
+            val message = checkNotNull(harness.recordSession(simulateActivityCreation = true) {
                 startTimeMs = harness.overriddenClock.now()
             })
 

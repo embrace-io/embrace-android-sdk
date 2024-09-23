@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -85,7 +85,7 @@ internal class RnBundleIdTrackerImpl(
         }
     }
 
-    public companion object {
+    companion object {
 
         private fun getBundleAssetName(bundleUrl: String): String {
             return bundleUrl.substring(bundleUrl.indexOf("://") + 3)

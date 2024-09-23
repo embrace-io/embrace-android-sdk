@@ -24,16 +24,19 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.StartupBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.local.LocalConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
@@ -47,16 +50,16 @@ import kotlin.math.min
  * Loads configuration for the app from the Embrace API.
  */
 internal class EmbraceConfigService(
-    private val localConfig: LocalConfig,
+    customAppId: String?,
+    openTelemetryCfg: OpenTelemetryConfiguration,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
     private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
-    isDebug: Boolean,
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
-    public val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck(preferencesService::deviceIdentifier)
+    val thresholdCheck: BehaviorThresholdCheck =
+        BehaviorThresholdCheck { preferencesService.deviceIdentifier }
 ) : ConfigService, ProcessStateListener {
 
     /**
@@ -75,7 +78,7 @@ internal class EmbraceConfigService(
     private var configProp = RemoteConfig()
 
     @Volatile
-    public var lastUpdated: Long = 0
+    var lastUpdated: Long = 0
 
     @Volatile
     private var lastRefreshConfigAttempt: Long = 0
@@ -88,23 +91,22 @@ internal class EmbraceConfigService(
     override val backgroundActivityBehavior: BackgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::backgroundActivityConfig,
             remoteSupplier = { getConfig().backgroundActivityConfig }
         )
 
     override val autoDataCaptureBehavior: AutoDataCaptureBehavior =
         AutoDataCaptureBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            localSupplier = { localConfig },
             remoteSupplier = remoteSupplier
         )
 
     override val breadcrumbBehavior: BreadcrumbBehavior =
         BreadcrumbBehaviorImpl(
             thresholdCheck,
-            localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
+
+    override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl()
 
     override val logMessageBehavior: LogMessageBehavior =
         LogMessageBehaviorImpl(
@@ -115,52 +117,38 @@ internal class EmbraceConfigService(
     override val anrBehavior: AnrBehavior =
         AnrBehaviorImpl(
             thresholdCheck,
-            localSupplier = localConfig.sdkConfig::anr,
             remoteSupplier = { getConfig().anrConfig }
         )
 
-    override val sessionBehavior: SessionBehavior =
-        SessionBehaviorImpl(
-            thresholdCheck,
-            localSupplier = localConfig.sdkConfig::sessionConfig,
-            remoteSupplier = { getConfig() }
-        )
+    override val sessionBehavior: SessionBehavior = SessionBehaviorImpl(
+        thresholdCheck,
+        remoteSupplier = { getConfig() }
+    )
 
     override val networkBehavior: NetworkBehavior =
         NetworkBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            localSupplier = localConfig::sdkConfig,
             remoteSupplier = remoteSupplier
         )
 
-    override val startupBehavior: StartupBehavior =
-        StartupBehaviorImpl(
-            thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::startupMoment
-        )
+    override val startupBehavior: StartupBehavior = StartupBehaviorImpl()
 
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(
         thresholdCheck = thresholdCheck,
         remoteSupplier = remoteSupplier
     )
 
-    override val sdkModeBehavior: SdkModeBehavior =
-        SdkModeBehaviorImpl(
-            isDebug = isDebug,
-            thresholdCheck = thresholdCheck,
-            localSupplier = { localConfig },
-            remoteSupplier = remoteSupplier
-        )
+    override val sdkModeBehavior: SdkModeBehavior = SdkModeBehaviorImpl(
+        thresholdCheck = thresholdCheck,
+        remoteSupplier = remoteSupplier
+    )
 
-    override val sdkEndpointBehavior: SdkEndpointBehavior =
-        SdkEndpointBehaviorImpl(
-            thresholdCheck = thresholdCheck,
-            localSupplier = localConfig.sdkConfig::baseUrls,
-        )
+    override val sdkEndpointBehavior: SdkEndpointBehavior = SdkEndpointBehaviorImpl(
+        thresholdCheck = thresholdCheck
+    )
 
     override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehaviorImpl(
         thresholdCheck = thresholdCheck,
-        localSupplier = localConfig.sdkConfig::appExitInfoConfig,
         remoteSupplier = remoteSupplier
     )
 
@@ -176,7 +164,29 @@ internal class EmbraceConfigService(
             remoteSupplier = remoteSupplier
         )
 
-    override val appId: String? by lazy(localConfig::appId)
+    override val appId: String? = resolveAppId(customAppId, openTelemetryCfg)
+
+    override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
+
+    /**
+     * Loads the build information from resources provided by the config file packaged within the application by Gradle at
+     * build-time.
+     *
+     * @return the local configuration
+     */
+    fun resolveAppId(
+        customAppId: String?,
+        openTelemetryCfg: OpenTelemetryConfiguration
+    ): String? {
+        val appId = customAppId ?: InstrumentedConfig.project.getAppId()
+
+        require(!appId.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
+            "No appId supplied in embrace-config.json. This is required if you want to " +
+                "send data to Embrace, unless you configure an OTel exporter and add" +
+                " embrace.disableMappingFileUpload=true to gradle.properties."
+        }
+        return appId
+    }
 
     /**
      * Schedule an action that loads the config from the cache.
@@ -189,7 +199,7 @@ internal class EmbraceConfigService(
     /**
      * Load Config from cache if present.
      */
-    public fun loadConfigFromCache() {
+    fun loadConfigFromCache() {
         val cachedConfig = remoteConfigSource?.getCachedConfig()
         val obj = cachedConfig?.remoteConfig
 
@@ -257,7 +267,8 @@ internal class EmbraceConfigService(
     private fun persistConfig() {
         // TODO: future get rid of these prefs from PrefService entirely?
         preferencesService.sdkDisabled = sdkModeBehavior.isSdkDisabled()
-        preferencesService.backgroundActivityEnabled = backgroundActivityBehavior.isEnabled()
+        preferencesService.backgroundActivityEnabled =
+            backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
     }
 
     // TODO: future extract these out to SdkBehavior interface
@@ -279,7 +290,7 @@ internal class EmbraceConfigService(
         foregroundAction()
     }
 
-    override val appFramework: AppFramework = localConfig.sdkConfig.appFramework?.let {
+    override val appFramework: AppFramework = InstrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
     } ?: suppliedFramework
 
@@ -316,13 +327,9 @@ internal class EmbraceConfigService(
         return clock.now() > lastRefreshConfigAttempt + configRetrySafeWindow * 1000
     }
 
-    override fun close() {
-        logger.logDebug("Shutting down EmbraceConfigService")
-    }
-
     override fun hasValidRemoteConfig(): Boolean = !configRequiresRefresh()
     override fun isAppExitInfoCaptureEnabled(): Boolean {
-        return appExitInfoBehavior.isEnabled()
+        return appExitInfoBehavior.isAeiCaptureEnabled()
     }
 
     private companion object {

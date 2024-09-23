@@ -31,12 +31,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ matrix.repo }}
-          ref: master
           token: ${{ secrets.GH_ANDROID_SDK_TOKEN }} # NOTE: write embrace-io/android-sdk-benchmark, embrace-io/android-test-suite, embrace-io/ndk-test-app-ndkbuild, embrace-io/ndk-test-app-custombuild, embrace-io/ndk-test-app, embrace-io/android-size-measure
 
       - name: Set next SDK version
         run: |
-          git checkout master
+          git checkout main
           sed -i -r "s#swazzler_version = ([^\']+)#swazzler_version = ${{ github.event.inputs.next_version }}.0-SNAPSHOT#" gradle.properties
           git add gradle.properties
           git commit -m "CI/CD: set next version: ${{ github.event.inputs.next_version }}.0-SNAPSHOT"

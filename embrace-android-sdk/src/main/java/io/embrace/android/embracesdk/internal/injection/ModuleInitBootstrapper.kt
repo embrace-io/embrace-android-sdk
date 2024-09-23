@@ -3,33 +3,29 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.Locale
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.max
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /**
  * A class that wires together and initializes modules in a manner that makes them work as a cohesive whole.
  */
 internal class ModuleInitBootstrapper(
-    public val logger: EmbLogger = EmbLoggerImpl(),
-    val initModule: InitModule = createInitModule(logger = logger),
-    val openTelemetryModule: OpenTelemetryModule = createOpenTelemetryModule(initModule),
+    val logger: EmbLogger = Systrace.traceSynchronous("logger-init", ::EmbLoggerImpl),
+    val initModule: InitModule = Systrace.traceSynchronous("init-module", { createInitModule(logger = logger) }),
+    val openTelemetryModule: OpenTelemetryModule = Systrace.traceSynchronous("otel-module", {
+        createOpenTelemetryModule(initModule)
+    }),
     private val coreModuleSupplier: CoreModuleSupplier = ::createCoreModule,
     private val configModuleSupplier: ConfigModuleSupplier = ::createConfigModule,
     private val systemServiceModuleSupplier: SystemServiceModuleSupplier = ::createSystemServiceModule,
@@ -49,6 +45,7 @@ internal class ModuleInitBootstrapper(
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
+    private val deliveryModule2Supplier: DeliveryModule2Supplier = ::createDeliveryModule2,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -107,13 +104,11 @@ internal class ModuleInitBootstrapper(
     lateinit var payloadSourceModule: PayloadSourceModule
         private set
 
-    private val asyncInitTask = AtomicReference<Future<*>?>(null)
+    lateinit var deliveryModule2: DeliveryModule2
+        private set
 
     @Volatile
-    private var synchronousInitCompletionMs: Long = -1L
-
-    @Volatile
-    private var asyncInitCompletionMs: Long = -1L
+    var initialized: AtomicBoolean = AtomicBoolean(false)
 
     /**
      * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
@@ -133,31 +128,18 @@ internal class ModuleInitBootstrapper(
                 return false
             }
 
-            synchronized(asyncInitTask) {
-                return if (!isInitialized()) {
+            synchronized(initialized) {
+                val result = if (!isInitialized()) {
                     coreModule = init(CoreModule::class) { coreModuleSupplier(context, logger) }
 
                     val serviceRegistry = coreModule.serviceRegistry
-                    postInit(InitModule::class) {
-                        serviceRegistry.registerService(initModule.internalErrorService)
-                    }
                     workerThreadModule =
                         init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
 
-                    val initTask = postInit(OpenTelemetryModule::class) {
-                        workerThreadModule.backgroundWorker(WorkerName.BACKGROUND_REGISTRATION)
-                            .submit(
-                                TaskPriority.CRITICAL
-                            ) {
-                                Systrace.traceSynchronous("span-service-init") {
-                                    openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
-                                }
-                                asyncInitCompletionMs = initModule.clock.now()
-                            }
-                    }
                     postInit(OpenTelemetryModule::class) {
-                        serviceRegistry.registerService(initModule.telemetryService)
-                        serviceRegistry.registerService(openTelemetryModule.spanService)
+                        Systrace.traceSynchronous("span-service-init") {
+                            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
+                        }
                     }
 
                     systemServiceModule = init(SystemServiceModule::class) {
@@ -167,14 +149,10 @@ internal class ModuleInitBootstrapper(
                     androidServicesModule = init(AndroidServicesModule::class) {
                         androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
                     }
-                    postInit(AndroidServicesModule::class) {
-                        serviceRegistry.registerService(androidServicesModule.preferencesService)
-                    }
 
                     configModule = init(ConfigModule::class) {
                         configModuleSupplier(
                             initModule,
-                            coreModule,
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,
@@ -188,7 +166,8 @@ internal class ModuleInitBootstrapper(
                         }
                     }
                     postInit(ConfigModule::class) {
-                        serviceRegistry.registerService(configModule.configService)
+                        serviceRegistry.registerService(lazy { configModule.configService })
+                        openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
                     }
 
                     storageModule = init(StorageModule::class) {
@@ -213,23 +192,31 @@ internal class ModuleInitBootstrapper(
                             configModule.configService.remoteConfigSource = apiService
 
                             serviceRegistry.registerServices(
-                                processStateService,
-                                activityLifecycleTracker,
-                                networkConnectivityService,
-                                userService
+                                lazy { essentialServiceModule.processStateService },
+                                lazy { activityLifecycleTracker },
+                                lazy { networkConnectivityService }
                             )
 
                             val networkBehavior = configModule.configService.networkBehavior
-                            if (networkBehavior.isNativeNetworkingMonitoringEnabled()) {
+                            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                                 Systrace.traceSynchronous("network-monitoring-installation") {
                                     registerFactory(networkBehavior.isRequestContentLengthCaptureEnabled())
                                 }
                             }
-                            Systrace.traceSynchronous("network-connectivity-registration") {
-                                networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
-                                apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+                                Systrace.traceSynchronous("network-connectivity-registration") {
+                                    essentialServiceModule.networkConnectivityService.register()
+                                }
+                                Systrace.traceSynchronous("network-connectivity-listeners") {
+                                    networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
+                                    apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                                }
                             }
                         }
+                    }
+
+                    deliveryModule2 = init(DeliveryModule2::class) {
+                        deliveryModule2Supplier(configModule)
                     }
 
                     anrModule = init(AnrModule::class) {
@@ -266,9 +253,6 @@ internal class ModuleInitBootstrapper(
                     postInit(FeatureModule::class) {
                         featureModule.registerFeatures()
                     }
-                    Systrace.traceSynchronous("network-connectivity-registration") {
-                        essentialServiceModule.networkConnectivityService.register()
-                    }
                     initModule.internalErrorService.handler =
                         { featureModule.internalErrorDataSource.dataSource }
 
@@ -291,34 +275,25 @@ internal class ModuleInitBootstrapper(
 
                     postInit(DataCaptureServiceModule::class) {
                         serviceRegistry.registerServices(
-                            dataCaptureServiceModule.webviewService,
-                            dataCaptureServiceModule.activityBreadcrumbTracker,
-                            dataCaptureServiceModule.pushNotificationService
+                            lazy { dataCaptureServiceModule.webviewService },
+                            lazy { dataCaptureServiceModule.activityBreadcrumbTracker },
+                            lazy { dataCaptureServiceModule.pushNotificationService }
                         )
                     }
 
                     deliveryModule = init(DeliveryModule::class) {
                         deliveryModuleSupplier(
                             initModule,
-                            workerThreadModule,
                             storageModule,
                             essentialServiceModule.apiService
                         )
                     }
 
-                    postInit(DeliveryModule::class) {
-                        serviceRegistry.registerService(deliveryModule.deliveryService)
-                    }
-
                     postInit(AnrModule::class) {
                         serviceRegistry.registerServices(
-                            anrModule.anrService
+                            lazy { anrModule.anrService }
                         )
-
-                        // set callbacks and pass in non-placeholder config.
-                        anrModule.anrService.finishInitialization(
-                            configModule.configService
-                        )
+                        anrModule.anrService.startAnrCapture()
                     }
 
                     payloadSourceModule = init(PayloadSourceModule::class) {
@@ -337,7 +312,6 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(PayloadSourceModule::class) {
-                        serviceRegistry.registerServices(payloadSourceModule.metadataService)
                         payloadSourceModule.metadataService.precomputeValues()
                     }
 
@@ -353,7 +327,6 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             payloadSourceModule,
-                            deliveryModule,
                             androidServicesModule,
                             workerThreadModule,
                             nativeCoreModule
@@ -361,67 +334,18 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeFeatureModule::class) {
+                        val configService = configModule.configService
                         val ndkService = nativeFeatureModule.ndkService
-                        essentialServiceModule.userService.addUserInfoListener(ndkService::onUserInfoUpdate)
-
-                        val initWorkerTaskQueueTime = initModule.clock.now()
-                        workerThreadModule.backgroundWorker(WorkerName.SERVICE_INIT).submit {
-                            openTelemetryModule.spanService.recordCompletedSpan(
-                                name = "init-worker-schedule-delay",
-                                startTimeMs = initWorkerTaskQueueTime,
-                                endTimeMs = initModule.clock.now(),
-                                private = true,
-                            )
-                        }
                         serviceRegistry.registerServices(
-                            ndkService,
-                            nativeFeatureModule.nativeThreadSamplerService
+                            lazy { ndkService },
+                            lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )
 
-                        if (configModule.configService.autoDataCaptureBehavior.isNdkEnabled()) {
-                            Systrace.startSynchronous("ndk-service-updates")
-                            essentialServiceModule.sessionIdTracker.addListener {
-                                nativeFeatureModule.ndkService.updateSessionId(it ?: "")
+                        if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
+                            val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+                            worker.submit {
+                                ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }
-                            essentialServiceModule.sessionPropertiesService.addChangeListener(
-                                nativeFeatureModule.ndkService::onSessionPropertiesUpdate
-                            )
-                            Systrace.endSynchronous()
-                        }
-
-                        if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
-                            Systrace.startSynchronous("native-thread-sampler-init")
-                            // install the native thread sampler
-                            nativeFeatureModule.nativeThreadSamplerService?.let { nativeThreadSamplerService ->
-                                nativeThreadSamplerService.setupNativeSampler()
-
-                                // In Unity this should always run on the Unity thread.
-                                if (configModule.configService.appFramework == AppFramework.UNITY && isUnityMainThread()) {
-                                    try {
-                                        if (nativeFeatureModule.nativeThreadSamplerInstaller != null) {
-                                            nativeFeatureModule.nativeThreadSamplerInstaller?.monitorCurrentThread(
-                                                nativeThreadSamplerService,
-                                                configModule.configService,
-                                                anrModule.anrService
-                                            )
-                                        } else {
-                                            initModule.logger.logWarning(
-                                                "nativeThreadSamplerInstaller not started, cannot sample current thread"
-                                            )
-                                        }
-                                    } catch (t: Throwable) {
-                                        initModule.logger.logError(
-                                            "Failed to sample current thread during ANRs",
-                                            t
-                                        )
-                                        logger.trackInternalError(
-                                            InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL,
-                                            t
-                                        )
-                                    }
-                                }
-                            }
-                            Systrace.endSynchronous()
                         }
                     }
 
@@ -439,13 +363,11 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(LogModule::class) {
-                        serviceRegistry.registerServices(
-                            logModule.logService,
-                            logModule.networkCaptureService,
-                            logModule.networkLoggingService
-                        )
+                        serviceRegistry.registerService(lazy { logModule.logService })
                         // Start the log orchestrator
-                        logModule.logOrchestrator
+                        openTelemetryModule.logSink.registerLogStoredCallback {
+                            logModule.logOrchestrator.onLogsAdded()
+                        }
                     }
 
                     momentsModule = init(MomentsModule::class) {
@@ -461,8 +383,8 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeCoreModule::class) {
-                        serviceRegistry.registerServices(
-                            momentsModule.eventService,
+                        serviceRegistry.registerService(
+                            lazy { momentsModule.eventService },
                         )
                     }
 
@@ -496,62 +418,37 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             androidServicesModule,
-                            nativeFeatureModule.ndkService::getUnityCrashId
+                            nativeFeatureModule.ndkService::unityCrashId
                         )
                     }
 
                     postInit(CrashModule::class) {
-                        serviceRegistry.registerService(crashModule.crashDataSource)
+                        serviceRegistry.registerService(lazy { crashModule.crashDataSource })
                         with(crashModule.crashDataSource) {
-                            addCrashTeardownHandler(anrModule.anrService)
-                            addCrashTeardownHandler(logModule.logOrchestrator)
-                            addCrashTeardownHandler(sessionOrchestrationModule.sessionOrchestrator)
+                            addCrashTeardownHandler(lazy { anrModule.anrService })
+                            addCrashTeardownHandler(lazy { logModule.logOrchestrator })
+                            addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
                         }
                     }
 
                     // Sets up the registered services. This method is called after the SDK has been started and no more services can
                     // be added to the registry. It sets listeners for any services that were registered.
-                    serviceRegistry.closeRegistration()
-                    serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
-                    serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
-                    serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
-                    serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
-
-                    asyncInitTask.set(initTask)
-                    synchronousInitCompletionMs = initModule.clock.now()
+                    Systrace.traceSynchronous("service-registration") {
+                        serviceRegistry.closeRegistration()
+                        serviceRegistry.registerActivityListeners(essentialServiceModule.processStateService)
+                        serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
+                        serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
+                        serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
+                    }
                     true
                 } else {
                     false
                 }
+                initialized.set(result)
+                return result
             }
         } finally {
             Systrace.endSynchronous()
-        }
-    }
-
-    /**
-     * A blocking get that returns when the async portion of initialization is complete. An exception will be thrown by the underlying
-     * [Future] if there is a timeout or if this failed for other reasons.
-     */
-    @JvmOverloads
-    fun waitForAsyncInit(timeout: Long = 5L, unit: TimeUnit = TimeUnit.SECONDS) {
-        Systrace.traceSynchronous("async-init-wait") {
-            asyncInitTask.get()?.get(timeout, unit)
-        }
-
-        Systrace.traceSynchronous("record-delay") {
-            // If async init finished after synchronous init, there's a delay so record that delay
-            // Otherwise, record a 0-duration span to signify there was no significant wait
-            val delayStartMs = synchronousInitCompletionMs
-            val delayEndMs = max(synchronousInitCompletionMs, asyncInitCompletionMs)
-            if (delayStartMs > 0) {
-                openTelemetryModule.spanService.recordCompletedSpan(
-                    name = "async-init-delay",
-                    startTimeMs = delayStartMs,
-                    endTimeMs = delayEndMs,
-                    private = true
-                )
-            }
         }
     }
 
@@ -559,18 +456,15 @@ internal class ModuleInitBootstrapper(
         if (!isInitialized()) {
             return
         }
-
-        synchronized(asyncInitTask) {
-            if (isInitialized()) {
-                coreModule.serviceRegistry.close()
-                workerThreadModule.close()
-                essentialServiceModule.processStateService.close()
-                asyncInitTask.set(null)
-            }
+        if (isInitialized()) {
+            coreModule.serviceRegistry.close()
+            workerThreadModule.close()
+            essentialServiceModule.processStateService.close()
+            initialized.set(false)
         }
     }
 
-    fun isInitialized(): Boolean = asyncInitTask.get() != null
+    fun isInitialized(): Boolean = initialized.get()
 
     private fun <T> init(module: KClass<*>, provider: Provider<T>): T =
         Systrace.traceSynchronous("${toSectionName(module)}-init") { provider() }

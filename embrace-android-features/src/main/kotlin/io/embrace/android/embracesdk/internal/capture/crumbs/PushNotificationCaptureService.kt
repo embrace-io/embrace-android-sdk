@@ -2,21 +2,19 @@ package io.embrace.android.embracesdk.internal.capture.crumbs
 
 import android.app.Activity
 import android.os.Bundle
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 
 /**
  * In charge of handling all notifications related functionality.
  */
-public class PushNotificationCaptureService(
-    private val pushNotificationDataSource: PushNotificationDataSource?,
-    private val logger: EmbLogger
+class PushNotificationCaptureService(
+    private val pushNotificationDataSource: PushNotificationDataSource?
 ) : ActivityLifecycleListener {
 
-    public companion object Utils {
+    companion object Utils {
 
-        public enum class PRIORITY(public val priority: Int) {
+        enum class PRIORITY(val priority: Int) {
             PRIORITY_UNKNOWN(0),
             PRIORITY_HIGH(1),
             PRIORITY_NORMAL(2)
@@ -37,14 +35,14 @@ public class PushNotificationCaptureService(
          * add some more complex code.
          */
 
-        public fun getMessagePriority(priority: String?): Int =
+        fun getMessagePriority(priority: String?): Int =
             when (priority) {
                 "high" -> PRIORITY.PRIORITY_HIGH.priority
                 "normal" -> PRIORITY.PRIORITY_NORMAL.priority
                 else -> PRIORITY.PRIORITY_UNKNOWN.priority
             }
 
-        public fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
+        fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
             val keySet = bundle.keySet() ?: return emptyMap()
             return keySet.filter {
                 // let's filter all google reserved words, leaving us with user defined keys
@@ -68,7 +66,7 @@ public class PushNotificationCaptureService(
      * @param notificationPriority the priority of the message (as resolved on the device)
      * @param type the notification type
      */
-    public fun logPushNotification(
+    fun logPushNotification(
         title: String?,
         body: String?,
         topic: String?,
@@ -81,14 +79,8 @@ public class PushNotificationCaptureService(
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         if (isComingFromPushNotification(activity)) {
-            logger.logInfo("Coming from a Firebase push notification")
             with(activity.intent.extras) {
                 if (this == null) {
-                    logger.logWarning(
-                        "It seems like we are coming from a Google Push " +
-                            "Notification, but intent extras is null. Will not be able to log it " +
-                            "to our dashboard."
-                    )
                     return
                 }
 

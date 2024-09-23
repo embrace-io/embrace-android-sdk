@@ -4,11 +4,10 @@ import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert
@@ -43,7 +42,7 @@ internal class TargetThreadHandlerTest {
     private fun createHandler(messageQueue: MessageQueue?): TargetThreadHandler {
         return TargetThreadHandler(
             mockk(relaxed = true),
-            ScheduledWorker(executorService),
+            BackgroundWorker(executorService),
             configService,
             messageQueue,
             logger = EmbLoggerImpl()
@@ -118,9 +117,7 @@ internal class TargetThreadHandlerTest {
     fun testStartIdleHandlerEnabled() {
         val messageQueue = mockk<MessageQueue>(relaxed = true)
         configService = FakeConfigService(
-            anrBehavior = fakeAnrBehavior {
-                AnrRemoteConfig(pctIdleHandlerEnabled = 100f)
-            }
+            anrBehavior = FakeAnrBehavior(idleHandlerEnabled = true)
         )
         handler = createHandler(messageQueue)
         handler.start()
@@ -131,9 +128,7 @@ internal class TargetThreadHandlerTest {
     fun testStartIdleHandlerDisabled() {
         val messageQueue = mockk<MessageQueue>(relaxed = true)
         configService = FakeConfigService(
-            anrBehavior = fakeAnrBehavior {
-                AnrRemoteConfig(pctIdleHandlerEnabled = 0f)
-            }
+            anrBehavior = FakeAnrBehavior(idleHandlerEnabled = false)
         )
         handler = createHandler(messageQueue)
         handler.start()

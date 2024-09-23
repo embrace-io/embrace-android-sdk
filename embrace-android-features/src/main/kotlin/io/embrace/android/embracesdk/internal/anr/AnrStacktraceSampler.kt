@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.AnrInterval
 import io.embrace.android.embracesdk.internal.payload.AnrSample
 import io.embrace.android.embracesdk.internal.payload.AnrSampleList
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -17,7 +17,7 @@ internal class AnrStacktraceSampler(
     private var configService: ConfigService,
     private val clock: Clock,
     targetThread: Thread,
-    private val anrMonitorWorker: ScheduledWorker
+    private val anrMonitorWorker: BackgroundWorker
 ) : BlockedThreadListener, MemoryCleanerListener {
 
     val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()

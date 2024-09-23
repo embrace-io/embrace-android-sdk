@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.local.AnrLocalConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
@@ -10,18 +11,15 @@ import java.util.regex.Pattern
 /**
  * Provides the behavior that the ANR feature should follow.
  */
-public class AnrBehaviorImpl(
+class AnrBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    localSupplier: Provider<AnrLocalConfig?>,
     remoteSupplier: Provider<AnrRemoteConfig?>
-) : AnrBehavior, MergedConfigBehavior<AnrLocalConfig, AnrRemoteConfig>(
-    thresholdCheck,
-    localSupplier,
-    remoteSupplier
+) : AnrBehavior, MergedConfigBehavior<UnimplementedConfig, AnrRemoteConfig>(
+    thresholdCheck = thresholdCheck,
+    remoteSupplier = remoteSupplier
 ) {
 
     private companion object {
-        private const val CAPTURE_GOOGLE_DEFAULT = false
         private const val DEFAULT_ANR_PCT_ENABLED = true
         private const val DEFAULT_ANR_PROCESS_ERRORS_PCT_ENABLED = false
         private const val DEFAULT_ANR_BG_PCT_ENABLED = false
@@ -31,13 +29,12 @@ public class AnrBehaviorImpl(
         private const val DEFAULT_ANR_PROCESS_ERRORS_SCHEDULER_EXTRA_TIME_ALLOWANCE: Long =
             30 * 1000
         private const val DEFAULT_ANR_MAX_PER_INTERVAL = 80
-        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 100
+        private const val DEFAULT_STACKTRACE_FRAME_LIMIT = 200
         private const val DEFAULT_ANR_MIN_THREAD_PRIORITY_TO_CAPTURE = 0
         private const val DEFAULT_ANR_MAX_ANR_INTERVALS_PER_SESSION = 5
         private const val DEFAULT_ANR_MIN_CAPTURE_DURATION = 1000
         private const val DEFAULT_ANR_MAIN_THREAD_ONLY = true
         private const val DEFAULT_NATIVE_THREAD_ANR_SAMPLING_FACTOR = 5
-        private const val DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ENABLED = false
         private const val DEFAULT_NATIVE_THREAD_ANR_OFFSET_ENABLED = true
         private const val DEFAULT_IDLE_HANDLER_ENABLED = false
         private const val DEFAULT_STRICT_MODE_LISTENER_ENABLED = false
@@ -50,10 +47,9 @@ public class AnrBehaviorImpl(
             android.os.Process.THREAD_PRIORITY_DEFAULT
     }
 
-    override fun isGoogleAnrCaptureEnabled(): Boolean {
+    override fun isSigquitCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.googlePctEnabled)
-            ?: local?.captureGoogle
-            ?: CAPTURE_GOOGLE_DEFAULT
+            ?: InstrumentedConfig.enabledFeatures.isSigquitCaptureEnabled()
     }
 
     override val allowPatternList: List<Pattern> by lazy {
@@ -125,10 +121,9 @@ public class AnrBehaviorImpl(
         }.getOrDefault(Unwinder.LIBUNWIND)
     }
 
-    override fun isNativeThreadAnrSamplingEnabled(): Boolean {
+    override fun isUnityAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
-            ?: local?.captureUnityThread
-            ?: DEFAULT_NATIVE_THREAD_ANR_SAMPLING_ENABLED
+            ?: InstrumentedConfig.enabledFeatures.isUnityAnrCaptureEnabled()
     }
 
     override fun isNativeThreadAnrSamplingOffsetEnabled(): Boolean =

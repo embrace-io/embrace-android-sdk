@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.remote
 
-public enum class Unwinder(public val code: Int) {
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = false)
+enum class Unwinder(val code: Int) {
     LIBUNWIND(0),
     LIBUNWINDSTACK(1)
 }

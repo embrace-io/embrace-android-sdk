@@ -6,12 +6,12 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-public class PeriodicSessionCacher(
-    private val sessionPeriodicCacheScheduledWorker: ScheduledWorker,
+class PeriodicSessionCacher(
+    private val worker: BackgroundWorker,
     private val logger: EmbLogger
 ) {
 
@@ -28,8 +28,8 @@ public class PeriodicSessionCacher(
     /**
      * It starts a background job that will schedule a callback to do periodic caching.
      */
-    public fun start(provider: Provider<Envelope<SessionPayload>?>) {
-        scheduledFuture = this.sessionPeriodicCacheScheduledWorker.scheduleWithFixedDelay(
+    fun start(provider: Provider<Envelope<SessionPayload>?>) {
+        scheduledFuture = this.worker.scheduleWithFixedDelay(
             onPeriodicCache(provider),
             0,
             SESSION_CACHING_INTERVAL.toLong(),
@@ -48,7 +48,7 @@ public class PeriodicSessionCacher(
         }
     }
 
-    public fun stop() {
+    fun stop() {
         scheduledFuture?.cancel(false)
     }
 }

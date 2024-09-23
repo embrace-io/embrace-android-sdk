@@ -14,7 +14,7 @@ import java.lang.reflect.ParameterizedType
  * - NetworkCapturePayload
  */
 @JsonClass(generateAdapter = true)
-public data class Envelope<T>(
+data class Envelope<T>(
     @Json(name = "resource")
     val resource: EnvelopeResource? = null,
 
@@ -31,7 +31,8 @@ public data class Envelope<T>(
     val data: T
 ) {
 
-    public companion object {
-        public val sessionEnvelopeType: ParameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+    companion object {
+        val sessionEnvelopeType: ParameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+        val logEnvelopeType: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
     }
 }

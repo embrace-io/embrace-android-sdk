@@ -15,6 +15,6 @@
 #define EMB_ANR_INSTALL_HANDLER_FAIL 1 << 2
 #define EMB_ANR_INSTALL_REPORTING_CONFIGURATION_FAIL 1 << 3
 
-int emb_install_google_anr_handler(JNIEnv *env, jobject anr_service, jint _google_thread_id);
+int emb_install_google_anr_handler(JNIEnv *env, jobject sigquit_data_source, jint _google_thread_id);
 
 #endif //EMBRACE_ANDROID_SDK3_ANR_H

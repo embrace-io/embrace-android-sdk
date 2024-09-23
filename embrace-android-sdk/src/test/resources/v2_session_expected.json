@@ -14,10 +14,10 @@
   "resource": {
     "app_version": "2.5.1",
     "app_framework": 1,
-    "build_id": "5.22.0",
+    "build_id": "fakeBuildId",
     "app_ecosystem_id": "com.fake.package",
-    "build_type": "release",
-    "build_flavor": "delicious",
+    "build_type": "fakeBuildType",
+    "build_flavor": "fakeBuildFlavor",
     "environment": "dev",
     "bundle_version": "99",
     "sdk_version": "__EMBRACE_TEST_IGNORE__",
@@ -32,10 +32,8 @@
     "os_version": "__EMBRACE_TEST_IGNORE__",
     "os_code": "__EMBRACE_TEST_IGNORE__",
     "screen_resolution": "__EMBRACE_TEST_IGNORE__",
-    "num_cores": "__EMBRACE_TEST_IGNORE__",
-    "disk_space": "__EMBRACE_TEST_IGNORE__"
+    "num_cores": "__EMBRACE_TEST_IGNORE__"
   },
-  "s": "__EMBRACE_TEST_IGNORE__",
   "type": "spans",
   "version": "0.1.0"
 }

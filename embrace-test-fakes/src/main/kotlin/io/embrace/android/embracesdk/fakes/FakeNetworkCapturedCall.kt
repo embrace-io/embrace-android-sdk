@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 
-public fun fakeNetworkCapturedCall(): NetworkCapturedCall {
+fun fakeNetworkCapturedCall(): NetworkCapturedCall {
     return NetworkCapturedCall(
         duration = 100,
         endTime = 1713453000,

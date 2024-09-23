@@ -17,8 +17,8 @@ internal class EmbraceDomainCountLimiter(
     private val callsPerDomainSuffix = ConcurrentHashMap<String, DomainCount>()
     private val ipAddressNetworkCallCount = AtomicInteger(0)
     private val untrackedNetworkCallCount = AtomicInteger(0)
-    private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-    private var domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
+    private var defaultPerDomainSuffixCallLimit = configService.networkBehavior.getRequestLimitPerDomain()
+    private var domainSuffixCallLimits = configService.networkBehavior.getLimitsByDomain()
 
     private val lock = Any()
 
@@ -80,8 +80,8 @@ internal class EmbraceDomainCountLimiter(
         synchronized(lock) {
             clearNetworkCalls()
             // re-fetch limits in case they changed since they last time they were fetched
-            defaultPerDomainSuffixCallLimit = configService.networkBehavior.getNetworkCaptureLimit()
-            domainSuffixCallLimits = configService.networkBehavior.getNetworkCallLimitsPerDomainSuffix()
+            defaultPerDomainSuffixCallLimit = configService.networkBehavior.getRequestLimitPerDomain()
+            domainSuffixCallLimits = configService.networkBehavior.getLimitsByDomain()
         }
     }
 

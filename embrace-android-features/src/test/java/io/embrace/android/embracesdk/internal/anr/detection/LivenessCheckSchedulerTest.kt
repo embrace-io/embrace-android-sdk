@@ -4,12 +4,12 @@ import android.os.Looper
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.fakeAnrBehavior
+import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -46,7 +46,7 @@ internal class LivenessCheckSchedulerTest {
             monitorThreadPriority = CUSTOM_THREAD_PRIORITY,
         )
         fakeClock = FakeClock(160982340900)
-        configService = FakeConfigService(anrBehavior = fakeAnrBehavior { cfg })
+        configService = FakeConfigService(anrBehavior = createAnrBehavior { cfg })
         anrExecutorService = BlockingScheduledExecutorService(fakeClock)
         logger = EmbLoggerImpl()
         looper = mockk {
@@ -68,7 +68,7 @@ internal class LivenessCheckSchedulerTest {
 
         scheduler = LivenessCheckScheduler(
             configService,
-            ScheduledWorker(anrExecutorService),
+            BackgroundWorker(anrExecutorService),
             fakeClock,
             state,
             fakeTargetThreadHandler,

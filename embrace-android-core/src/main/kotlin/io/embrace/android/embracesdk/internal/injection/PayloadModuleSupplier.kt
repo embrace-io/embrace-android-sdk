@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Function that returns an instance of [PayloadSourceModule]. Matches the signature of the constructor for [PayloadSourceModuleImpl]
  */
-public typealias PayloadSourceModuleSupplier = (
+typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,
@@ -20,7 +20,7 @@ public typealias PayloadSourceModuleSupplier = (
     otelPayloadMapperProvider: Provider<OtelPayloadMapper>
 ) -> PayloadSourceModule
 
-public fun createPayloadSourceModule(
+fun createPayloadSourceModule(
     initModule: InitModule,
     coreModule: CoreModule,
     workerThreadModule: WorkerThreadModule,

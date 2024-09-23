@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 /**
  * Handles logic for features that are not fully integrated into the OTel pipeline.
  */
-public class OtelPayloadMapperImpl(
+class OtelPayloadMapperImpl(
     private val anrOtelMapper: AnrOtelMapper,
     private val nativeAnrOtelMapper: NativeAnrOtelMapper?,
 ) : OtelPayloadMapper {

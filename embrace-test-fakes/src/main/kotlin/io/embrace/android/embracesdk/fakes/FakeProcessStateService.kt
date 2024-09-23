@@ -6,15 +6,15 @@ import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 
-public class FakeProcessStateService(
+class FakeProcessStateService(
     override var isInBackground: Boolean = false,
 ) : ProcessStateService {
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
     }
 
-    public val listeners: MutableList<ProcessStateListener> = mutableListOf()
-    public var config: Configuration? = null
+    val listeners: MutableList<ProcessStateListener> = mutableListOf()
+    var config: Configuration? = null
 
     override fun addListener(listener: ProcessStateListener) {
         listeners.add(listener)

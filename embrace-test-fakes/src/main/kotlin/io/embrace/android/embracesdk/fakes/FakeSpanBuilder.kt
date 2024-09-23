@@ -9,15 +9,15 @@ import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import java.util.concurrent.TimeUnit
 
-public class FakeSpanBuilder(
-    public val spanName: String,
-    public val tracerKey: TracerKey = TracerKey("fake-scope")
+class FakeSpanBuilder(
+    val spanName: String,
+    val tracerKey: TracerKey = TracerKey("fake-scope")
 ) : SpanBuilder {
 
-    public var spanKind: SpanKind? = null
-    public var parentContext: Context = Context.root()
-    public var startTimestampMs: Long? = null
-    public var attributes: MutableMap<Any, Any> = mutableMapOf()
+    var spanKind: SpanKind? = null
+    var parentContext: Context = Context.root()
+    var startTimestampMs: Long? = null
+    var attributes: MutableMap<Any, Any> = mutableMapOf()
 
     override fun setParent(context: Context): SpanBuilder {
         parentContext = context

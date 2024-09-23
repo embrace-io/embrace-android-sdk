@@ -5,27 +5,22 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionId
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.io.Closeable
 
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
-    private val backgroundWorker: BackgroundWorker,
+    private val priorityWorker: PriorityWorker<TaskPriority>,
     private val logger: EmbLogger
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
-        /**
-         * File name to cache JVM crash information
-         */
-        private const val CRASH_FILE_NAME = "crash.json"
 
         /**
          * File name for pending api calls
@@ -79,12 +74,10 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun deleteSession(sessionId: String) {
         cachedSessions[sessionId]?.let { cachedSession ->
-            backgroundWorker.submit {
-                try {
+            priorityWorker.submit(TaskPriority.NORMAL) {
+                runCatching {
                     cacheService.deleteFile(cachedSession.filename)
                     cachedSessions.remove(sessionId)
-                } catch (ex: Exception) {
-                    logger.logError("Could not remove session from cache: $sessionId")
                 }
             }
         }
@@ -104,22 +97,15 @@ internal class EmbraceDeliveryCacheManager(
         return cachedSessions.values.toList()
     }
 
-    override fun saveCrash(crash: EventMessage) {
-        cacheService.cacheObject(CRASH_FILE_NAME, crash, EventMessage::class.java)
-    }
-
-    override fun loadCrash(): EventMessage? {
-        return cacheService.loadObject(CRASH_FILE_NAME, EventMessage::class.java)
-    }
-
-    override fun deleteCrash() {
-        cacheService.deleteFile(CRASH_FILE_NAME)
-    }
-
-    override fun savePayload(action: SerializationAction): String {
+    override fun savePayload(action: SerializationAction, sync: Boolean): String {
         val name = "payload_" + Uuid.getEmbUuid()
-        backgroundWorker.submit {
+        val runnable = {
             cacheService.cachePayload(name, action)
+        }
+        if (sync) {
+            runnable()
+        } else {
+            priorityWorker.submit(TaskPriority.NORMAL, runnable)
         }
         return name
     }
@@ -129,7 +115,7 @@ internal class EmbraceDeliveryCacheManager(
     }
 
     override fun deletePayload(name: String) {
-        backgroundWorker.submit {
+        priorityWorker.submit(TaskPriority.NORMAL) {
             cacheService.deleteFile(name)
         }
     }
@@ -142,7 +128,7 @@ internal class EmbraceDeliveryCacheManager(
         if (sync) {
             cacheService.cacheObject(PENDING_API_CALLS_FILE_NAME, model, PendingApiCalls::class.java)
         } else {
-            backgroundWorker.submit {
+            priorityWorker.submit(TaskPriority.NORMAL) {
                 cacheService.cacheObject(
                     PENDING_API_CALLS_FILE_NAME,
                     model,
@@ -228,7 +214,7 @@ internal class EmbraceDeliveryCacheManager(
                 snapshot -> TaskPriority.LOW
                 else -> TaskPriority.CRITICAL
             }
-            backgroundWorker.submit(priority) {
+            priorityWorker.submit(priority) {
                 saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
             }
         }

@@ -131,11 +131,6 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     public fun getSdkCurrentTime(): Long
 
     /**
-     * Whether network capture has been disabled through an internal, not-publicly supported means
-     */
-    public fun isInternalNetworkCaptureDisabled(): Boolean
-
-    /**
      * Whether the ANR capture service is enabled
      */
     public fun isAnrCaptureEnabled(): Boolean

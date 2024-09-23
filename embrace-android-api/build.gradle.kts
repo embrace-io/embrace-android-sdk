@@ -1,5 +1,6 @@
 plugins {
     id("embrace-prod-defaults")
+    id("enable-explicit-api-mode")
 }
 
 description = "Embrace Android SDK: API"

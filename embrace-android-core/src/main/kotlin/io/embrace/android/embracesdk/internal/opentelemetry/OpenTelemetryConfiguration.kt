@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.IdGenerator
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordExporter
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogRecordProcessor
 import io.embrace.android.embracesdk.internal.logs.LogSink
@@ -19,15 +21,14 @@ import io.opentelemetry.semconv.incubating.DeviceIncubatingAttributes
 import io.opentelemetry.semconv.incubating.OsIncubatingAttributes
 import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 
-public class OpenTelemetryConfiguration(
+class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
-    systemInfo: SystemInfo,
-    processIdentifier: String
+    systemInfo: SystemInfo
 ) {
-    public val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
-    public val embraceSdkVersion: String = BuildConfig.VERSION_NAME
-    public val resource: Resource = Resource.getDefault().toBuilder()
+    val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
+    val embraceSdkVersion: String = BuildConfig.VERSION_NAME
+    val resource: Resource = Resource.getDefault().toBuilder()
         .put(ServiceAttributes.SERVICE_NAME, embraceSdkName)
         .put(ServiceAttributes.SERVICE_VERSION, embraceSdkVersion)
         .put(OsIncubatingAttributes.OS_NAME, systemInfo.osName)
@@ -42,10 +43,19 @@ public class OpenTelemetryConfiguration(
         .put(TelemetryIncubatingAttributes.TELEMETRY_DISTRO_VERSION, embraceSdkVersion)
         .build()
 
+    /**
+     * Unique ID generated for an instance of the app process and not related to the actual process ID assigned by the OS.
+     * This allows us to explicitly relate all the sessions associated with a particular app launch rather than having the backend figure
+     * this out by proximity for stitched sessions.
+     */
+    private val processIdentifier: String by lazy {
+        Systrace.traceSynchronous("process-identifier-init", IdGenerator.Companion::generateLaunchInstanceId)
+    }
+
     private val externalSpanExporters = mutableListOf<SpanExporter>()
     private val externalLogExporters = mutableListOf<LogRecordExporter>()
 
-    public val spanProcessor: SpanProcessor by lazy {
+    val spanProcessor: SpanProcessor by lazy {
         EmbraceSpanProcessor(
             EmbraceSpanExporter(
                 spanSink = spanSink,
@@ -55,7 +65,7 @@ public class OpenTelemetryConfiguration(
         )
     }
 
-    public val logProcessor: LogRecordProcessor by lazy {
+    val logProcessor: LogRecordProcessor by lazy {
         EmbraceLogRecordProcessor(
             EmbraceLogRecordExporter(
                 logSink = logSink,
@@ -64,13 +74,13 @@ public class OpenTelemetryConfiguration(
         )
     }
 
-    public fun addSpanExporter(spanExporter: SpanExporter) {
+    fun addSpanExporter(spanExporter: SpanExporter) {
         externalSpanExporters.add(spanExporter)
     }
 
-    public fun addLogExporter(logExporter: LogRecordExporter) {
+    fun addLogExporter(logExporter: LogRecordExporter) {
         externalLogExporters.add(logExporter)
     }
 
-    public fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
+    fun hasConfiguredOtelExporters(): Boolean = externalLogExporters.isNotEmpty() || externalSpanExporters.isNotEmpty()
 }

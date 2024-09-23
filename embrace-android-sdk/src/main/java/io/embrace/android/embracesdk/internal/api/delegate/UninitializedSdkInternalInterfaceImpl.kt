@@ -77,8 +77,6 @@ internal class UninitializedSdkInternalInterfaceImpl(
 
     override fun getSdkCurrentTime(): Long = System.currentTimeMillis()
 
-    override fun isInternalNetworkCaptureDisabled(): Boolean = false
-
     override fun isAnrCaptureEnabled(): Boolean = false
 
     override fun isNdkEnabled(): Boolean = false

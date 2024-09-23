@@ -14,12 +14,11 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
-public class ThermalStateDataSource(
+class ThermalStateDataSource(
     spanService: SpanService,
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
@@ -41,7 +40,7 @@ public class ThermalStateDataSource(
     private var span: EmbraceSpan? = null
 
     override fun enableDataCapture() {
-        backgroundWorker.submit(TaskPriority.LOW) {
+        backgroundWorker.submit {
             Systrace.traceSynchronous("thermal-service-registration") {
                 thermalStatusListener = PowerManager.OnThermalStatusChangedListener {
                     handleThermalStateChange(it)
@@ -63,7 +62,7 @@ public class ThermalStateDataSource(
     }
 
     override fun disableDataCapture() {
-        backgroundWorker.submit(TaskPriority.LOW) {
+        backgroundWorker.submit {
             thermalStatusListener?.let {
                 powerManager?.removeThermalStatusListener(it)
                 thermalStatusListener = null
@@ -71,7 +70,7 @@ public class ThermalStateDataSource(
         }
     }
 
-    public fun handleThermalStateChange(status: Int?) {
+    fun handleThermalStateChange(status: Int?) {
         if (status == null) {
             return
         }

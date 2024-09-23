@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.fakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -103,7 +103,7 @@ internal class TelemetryAttributesTest {
     @Test
     fun `log properties and session properties are not included in the attributes`() {
         val configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior(
+            sessionBehavior = createSessionBehavior(
                 remoteCfg = {
                     RemoteConfig(
                         sessionConfig = SessionRemoteConfig(
@@ -131,7 +131,7 @@ internal class TelemetryAttributesTest {
     @Test
     fun `log properties and session properties are included in the attributes`() {
         val configService = FakeConfigService(
-            sessionBehavior = fakeSessionBehavior(
+            sessionBehavior = createSessionBehavior(
                 remoteCfg = {
                     RemoteConfig(
                         sessionConfig = SessionRemoteConfig(

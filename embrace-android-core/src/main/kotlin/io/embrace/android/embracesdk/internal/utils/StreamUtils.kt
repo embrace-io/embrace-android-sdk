@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.utils
 /**
  * Backwards compatibility streaming for Java, implemented via Kotlin.
  */
-public inline fun <T> stream(
+inline fun <T> stream(
     collection: Collection<T>,
     function: (T) -> Unit
 ): Unit = collection.toList().forEach(function)
@@ -11,7 +11,7 @@ public inline fun <T> stream(
 /**
  * Backwards compatibility filtering for Java, implemented via Kotlin.
  */
-public inline fun <T> filter(
+inline fun <T> filter(
     collection: Collection<T>,
     function: (T) -> Boolean
 ): List<T> = collection.toList().filter(function)
@@ -19,7 +19,7 @@ public inline fun <T> filter(
 /**
  * Backwards compatibility mapping for Java, implemented via Kotlin.
  */
-public inline fun <T, R> map(
+inline fun <T, R> map(
     collection: Collection<T>,
     function: (T) -> R
 ): List<R> = collection.toList().map(function)

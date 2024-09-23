@@ -16,24 +16,24 @@ import java.util.concurrent.TimeUnit
 /**
  * Wrapper for the [SpanBuilder] that stores the input data so that they can be accessed
  */
-public class EmbraceSpanBuilder(
+class EmbraceSpanBuilder(
     tracer: Tracer,
     name: String,
     telemetryType: TelemetryType,
-    public val internal: Boolean,
+    val internal: Boolean,
     private: Boolean,
     parentSpan: EmbraceSpan?,
 ) {
-    public lateinit var parentContext: Context
+    lateinit var parentContext: Context
         private set
 
-    public val spanName: String = if (internal) {
+    val spanName: String = if (internal) {
         name.toEmbraceObjectName()
     } else {
         name
     }
 
-    public var startTimeMs: Long? = null
+    var startTimeMs: Long? = null
 
     private val sdkSpanBuilder = tracer.spanBuilder(spanName)
     private val fixedAttributes = mutableListOf<FixedAttribute>(telemetryType)
@@ -53,39 +53,39 @@ public class EmbraceSpanBuilder(
         }
     }
 
-    public fun startSpan(startTimeMs: Long): Span {
+    fun startSpan(startTimeMs: Long): Span {
         sdkSpanBuilder.setStartTimestamp(startTimeMs, TimeUnit.MILLISECONDS)
         return sdkSpanBuilder.startSpan()
     }
 
-    public fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
+    fun getFixedAttributes(): List<FixedAttribute> = fixedAttributes
 
-    public fun getCustomAttributes(): Map<String, String> = customAttributes
+    fun getCustomAttributes(): Map<String, String> = customAttributes
 
-    public fun setCustomAttribute(key: String, value: String) {
+    fun setCustomAttribute(key: String, value: String) {
         customAttributes[key] = value
     }
 
-    public fun getParentSpan(): EmbraceSpan? = parentContext.getEmbraceSpan()
+    fun getParentSpan(): EmbraceSpan? = parentContext.getEmbraceSpan()
 
-    public fun setParentContext(context: Context) {
+    fun setParentContext(context: Context) {
         parentContext = context
         sdkSpanBuilder.setParent(parentContext)
         updateKeySpan()
     }
 
-    public fun setNoParent() {
+    fun setNoParent() {
         parentContext = Context.root()
         sdkSpanBuilder.setNoParent()
         updateKeySpan()
     }
 
-    public fun setSpanKind(spanKind: SpanKind) {
+    fun setSpanKind(spanKind: SpanKind) {
         sdkSpanBuilder.setSpanKind(spanKind)
     }
 
     private fun updateKeySpan() {
-        if (fixedAttributes.contains(EmbType.Performance.Default)) {
+        if (fixedAttributes.contains(EmbType.Performance.Default) || fixedAttributes.contains(EmbType.Performance.ActivityOpen)) {
             if (getParentSpan() == null) {
                 fixedAttributes.add(KeySpan)
             } else {

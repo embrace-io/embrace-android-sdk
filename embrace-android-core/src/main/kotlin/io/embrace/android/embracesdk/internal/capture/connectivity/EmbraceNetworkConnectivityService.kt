@@ -25,23 +25,14 @@ internal class EmbraceNetworkConnectivityService(
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
     override val ipAddress: String? by lazy { calculateIpAddress() }
 
-    override fun onReceive(context: Context, intent: Intent): Unit = handleNetworkStatus(true)
-
-    override fun networkStatusOnSessionStarted(startTime: Long): Unit = handleNetworkStatus(false)
-
-    private fun handleNetworkStatus(notifyListeners: Boolean) {
+    override fun onReceive(context: Context, intent: Intent) {
         try {
             val networkStatus = getCurrentNetworkStatus()
             if (didNetworkStatusChange(networkStatus)) {
                 lastNetworkStatus = networkStatus
-
-                if (notifyListeners) {
-                    logger.logInfo("Network status changed to: " + networkStatus.name)
-                    notifyNetworkConnectivityListeners(networkStatus)
-                }
+                notifyNetworkConnectivityListeners(networkStatus)
             }
         } catch (ex: Exception) {
-            logger.logWarning("Failed to record network connectivity", ex)
             logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, ex)
         }
     }
@@ -77,18 +68,13 @@ internal class EmbraceNetworkConnectivityService(
         return networkStatus
     }
 
-    private fun didNetworkStatusChange(newNetworkStatus: NetworkStatus) = lastNetworkStatus != newNetworkStatus
+    private fun didNetworkStatusChange(newNetworkStatus: NetworkStatus) =
+        lastNetworkStatus != newNetworkStatus
 
     override fun register() {
         backgroundWorker.submit {
-            try {
+            runCatching {
                 context.registerReceiver(this, intentFilter)
-            } catch (ex: Exception) {
-                logger.logInfo(
-                    "Failed to register EmbraceNetworkConnectivityService " +
-                        "broadcast receiver. Connectivity status will be unavailable.",
-                    ex
-                )
             }
         }
     }

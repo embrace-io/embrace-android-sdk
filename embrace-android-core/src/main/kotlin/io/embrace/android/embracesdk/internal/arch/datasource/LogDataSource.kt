@@ -5,5 +5,5 @@ import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 /**
  * A [DataSource] that adds a new log to the log service.
  */
-public typealias LogDataSource = DataSource<LogWriter>
-public typealias LogDataSourceImpl = DataSourceImpl<LogWriter>
+typealias LogDataSource = DataSource<LogWriter>
+typealias LogDataSourceImpl = DataSourceImpl<LogWriter>

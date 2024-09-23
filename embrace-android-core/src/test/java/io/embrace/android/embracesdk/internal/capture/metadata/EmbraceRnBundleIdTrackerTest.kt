@@ -3,16 +3,15 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
-import com.google.common.util.concurrent.MoreExecutors
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
-import io.embrace.android.embracesdk.internal.BuildInfo
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -59,7 +58,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         context,
         configService,
         preferencesService,
-        BackgroundWorker(MoreExecutors.newDirectExecutorService()),
+        fakeBackgroundWorker(),
         FakeEmbLogger()
     )
 

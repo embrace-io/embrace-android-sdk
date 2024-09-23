@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 internal class LogOrchestratorImpl(
-    private val logOrchestratorScheduledWorker: ScheduledWorker,
+    private val worker: BackgroundWorker,
     private val clock: Clock,
     private val sink: LogSink,
     private val deliveryService: DeliveryService,
@@ -24,10 +24,6 @@ internal class LogOrchestratorImpl(
 
     @Volatile
     private var scheduledCheckFuture: ScheduledFuture<*>? = null
-
-    init {
-        sink.registerLogStoredCallback(::onLogsAdded)
-    }
 
     override fun flush(saveOnly: Boolean) {
         scheduledCheckFuture?.cancel(false)
@@ -48,9 +44,15 @@ internal class LogOrchestratorImpl(
         flush(true)
     }
 
-    private fun onLogsAdded() {
-        logEnvelopeSource.getNonbatchedEnvelope().forEach { logEnvelope ->
-            deliveryService.sendLogs(logEnvelope)
+    override fun onLogsAdded() {
+        logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
+            if (logRequest.defer) {
+                deliveryService.saveLogs(logRequest.payload)
+            } else {
+                worker.submit {
+                    deliveryService.sendLogs(logRequest.payload)
+                }
+            }
         }
 
         lastLogTime.set(clock.now())
@@ -85,7 +87,7 @@ internal class LogOrchestratorImpl(
         val nextBatchCheck = MAX_BATCH_TIME - (now - firstLogInBatchTime.get())
         val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime.get())
         scheduledCheckFuture?.cancel(false)
-        scheduledCheckFuture = logOrchestratorScheduledWorker.schedule<Unit>(
+        scheduledCheckFuture = worker.schedule<Unit>(
             ::sendLogsIfNeeded,
             min(nextBatchCheck, nextInactivityCheck),
             TimeUnit.MILLISECONDS
@@ -93,7 +95,7 @@ internal class LogOrchestratorImpl(
     }
 
     private fun isMaxLogsPerBatchReached(): Boolean =
-        sink.completedLogs().size >= MAX_LOGS_PER_BATCH
+        sink.logsForNextBatch().size >= MAX_LOGS_PER_BATCH
 
     private fun isMaxInactivityTimeReached(now: Long): Boolean =
         now - lastLogTime.get() >= MAX_INACTIVITY_TIME
@@ -103,8 +105,8 @@ internal class LogOrchestratorImpl(
         return firstLogInBatchTime != 0L && now - firstLogInBatchTime >= MAX_BATCH_TIME
     }
 
-    public companion object {
-        public const val MAX_LOGS_PER_BATCH: Int = 50
+    companion object {
+        const val MAX_LOGS_PER_BATCH: Int = 50
         private const val MAX_BATCH_TIME = 5000L // In milliseconds
         private const val MAX_INACTIVITY_TIME = 2000L // In milliseconds
     }

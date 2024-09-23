@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSo
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 
-public class FakePayloadSourceModule(
+class FakePayloadSourceModule(
     override val metadataService: MetadataService = FakeMetadataService(),
     override val deviceArchitecture: DeviceArchitecture = FakeDeviceArchitecture(),
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = HostedSdkVersionInfo(FakePreferenceService()),

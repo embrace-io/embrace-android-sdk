@@ -5,14 +5,13 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Orchestrates all data sources that could potentially be used in the SDK. This is a convenient
  * place to coordinate everything in one place.
  */
-public class DataCaptureOrchestrator(
+class DataCaptureOrchestrator(
     configService: ConfigService,
     private val worker: BackgroundWorker,
     private val logger: EmbLogger
@@ -26,7 +25,7 @@ public class DataCaptureOrchestrator(
 
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
 
-    public var currentSessionType: SessionType? = null
+    var currentSessionType: SessionType? = null
         set(value) {
             field = value
             onSessionTypeChange()
@@ -71,7 +70,7 @@ public class DataCaptureOrchestrator(
 
     private fun DataSourceState<*>.dispatchStateChange(action: () -> Unit) {
         if (asyncInit) {
-            worker.submit(TaskPriority.HIGH, action)
+            worker.submit(action)
         } else {
             action()
         }

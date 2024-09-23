@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 
-public class FakeEssentialServiceModule(
+class FakeEssentialServiceModule(
     override val processStateService: ProcessStateService = FakeProcessStateService(),
     override val activityLifecycleTracker: ActivityTracker = FakeActivityTracker(),
     override val sessionIdTracker: SessionIdTracker = FakeSessionIdTracker(),

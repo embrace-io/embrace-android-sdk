@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.getLastSentLog
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.android.embracesdk.internal.worker.WorkerName
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import org.junit.Rule
@@ -26,7 +26,7 @@ internal class EmbraceLoggingFeatureTest {
         IntegrationTestRule.Harness(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = WorkerName.REMOTE_LOGGING)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = Worker.Background.LogMessageWorker)
         )
     }
 

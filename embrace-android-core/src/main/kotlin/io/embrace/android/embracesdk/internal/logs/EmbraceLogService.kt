@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -30,7 +31,7 @@ import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
-public class EmbraceLogService(
+class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
@@ -41,19 +42,13 @@ public class EmbraceLogService(
 
     private val logCounters = mapOf(
         Severity.INFO to LogCounter(
-            Severity.INFO.name,
-            configService.logMessageBehavior::getInfoLogLimit,
-            logger
+            configService.logMessageBehavior::getInfoLogLimit
         ),
         Severity.WARNING to LogCounter(
-            Severity.WARNING.name,
-            configService.logMessageBehavior::getWarnLogLimit,
-            logger
+            configService.logMessageBehavior::getWarnLogLimit
         ),
         Severity.ERROR to LogCounter(
-            Severity.ERROR.name,
-            configService.logMessageBehavior::getErrorLogLimit,
-            logger
+            configService.logMessageBehavior::getErrorLogLimit
         )
     )
 
@@ -72,16 +67,17 @@ public class EmbraceLogService(
         // Currently, any call to this log method can only have an event type of INFO_LOG,
         // WARNING_LOG, or ERROR_LOG, since it is taken from the fromSeverity() method
         // in EventType.
-        if (type.getSeverity() == null) {
+        val severity = type.getSeverity()
+        if (severity == null) {
             logger.logError("Invalid event type for log: $type")
             return
         }
-        val severity = type.getSeverity() ?: Severity.INFO
+        val redactedProperties = redactSensitiveProperties(properties)
         if (logExceptionType == LogExceptionType.NONE) {
             log(
                 message,
                 severity,
-                properties
+                redactedProperties
             )
         } else {
             val stacktrace = if (stackTraceElements != null) {
@@ -94,7 +90,7 @@ public class EmbraceLogService(
                     message = message,
                     severity = severity,
                     logExceptionType = logExceptionType,
-                    properties = properties,
+                    properties = redactedProperties,
                     stackTrace = stacktrace,
                     exceptionName = exceptionName,
                     exceptionMessage = exceptionMessage,
@@ -106,7 +102,7 @@ public class EmbraceLogService(
                     message = message,
                     severity = severity,
                     logExceptionType = logExceptionType,
-                    properties = properties,
+                    properties = redactedProperties,
                     stackTrace = stacktrace,
                     exceptionName = exceptionName,
                     exceptionMessage = exceptionMessage
@@ -287,6 +283,12 @@ public class EmbraceLogService(
             return message.take(maxLength - endChars.length) + endChars
         } else {
             return message
+        }
+    }
+
+    private fun redactSensitiveProperties(properties: Map<String, Any>?): Map<String, Any>? {
+        return properties?.mapValues { (key, value) ->
+            if (configService.sensitiveKeysBehavior.isSensitiveKey(key)) REDACTED_LABEL else value
         }
     }
 

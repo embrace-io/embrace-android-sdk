@@ -19,44 +19,43 @@ import java.util.concurrent.TimeoutException
 /*** Extension functions that are syntactic sugar for retrieving information from the SDK. ***/
 
 /**
- * Wait for there to at least be [minSize] number of log envelopes to be sent and return all the ones sent. Times out at 1 second.
+ * Returns the list of log payload envelopes that have been sent. If [minSize] is specified, it will wait a maximum of 1 second for
+ * the number of payloads that exist to equal to or exceed that before returning, timing out if it doesn't.
  */
 internal fun IntegrationTestRule.Harness.getSentLogPayloads(minSize: Int? = null): List<Envelope<LogPayload>> {
-    val logs = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
-    return when (minSize) {
-        null -> logs
-        else -> returnIfConditionMet({ logs }) {
-            logs.size >= minSize
+    with(overriddenDeliveryModule.deliveryService) {
+        return when (minSize) {
+            null -> lastSentLogPayloads
+            else ->
+                returnIfConditionMet(
+                    desiredValueSupplier = { lastSentLogPayloads },
+                    dataProvider = { lastSentLogPayloads },
+                    condition = { data ->
+                        data.size >= minSize
+                    }
+                )
         }
     }
 }
 
 /**
- *  Returns a list of [Log]s that were sent by the SDK since the last logs flush.
- */
-internal fun IntegrationTestRule.Harness.getSentLogs(expectedSize: Int? = null): List<Log>? {
-    val logPayloads = overriddenDeliveryModule.deliveryService.lastSentLogPayloads
-    val logs = logPayloads.last().data.logs
-    return when (expectedSize) {
-        null -> logs
-        else -> returnIfConditionMet({ logs }) {
-            logs?.size == expectedSize
-        }
-    }
-}
-
-/**
- * Returns a list of [EventMessage] moments that were sent by the SDK since startup. If [expectedSize] is specified, it will wait up to
- * 1 second to validate the number of sent moments equal that size. If a second passes that the size requirement is not met, a
- * [TimeoutException] will be thrown. If [expectedSize] is null or not specified, the correct sent moments will be returned right
- * away.
+ * Returns the list of Moments that have been sent. If [expectedSize] is specified, it will wait a maximum of 1 second for
+ * the number of payloads that exist to equal that before returning, timing out if it doesn't.
  */
 internal fun IntegrationTestRule.Harness.getSentMoments(expectedSize: Int? = null): List<EventMessage> {
-    val logs = overriddenDeliveryModule.deliveryService.sentMoments
-    return when (expectedSize) {
-        null -> logs
-        else -> returnIfConditionMet({ logs }) {
-            logs.size == expectedSize
+    with(overriddenDeliveryModule.deliveryService) {
+        return when (expectedSize) {
+            null -> sentMoments
+            else ->
+                with(overriddenDeliveryModule.deliveryService) {
+                    returnIfConditionMet(
+                        desiredValueSupplier = { sentMoments },
+                        dataProvider = { sentMoments },
+                        condition = { data ->
+                            data.size == expectedSize
+                        }
+                    )
+                }
         }
     }
 }
@@ -64,9 +63,17 @@ internal fun IntegrationTestRule.Harness.getSentMoments(expectedSize: Int? = nul
 /**
  * Returns the last [Log] that was sent to the delivery service.
  */
-internal fun IntegrationTestRule.Harness.getLastSentLog(expectedSize: Int? = null): Log? {
-    return getSentLogs(expectedSize)?.last()
+internal fun IntegrationTestRule.Harness.getLastSentLog(): Log {
+    return checkNotNull(getSentLogPayloads(1).last().data.logs).last()
 }
+
+/**
+ * Returns the last [Log] that was saved by the delivery service.
+ */
+internal fun IntegrationTestRule.Harness.getLastSavedLogPayload(): Envelope<LogPayload> {
+    return overriddenDeliveryModule.deliveryService.lastSavedLogPayloads.last()
+}
+
 
 /**
  * Returns a list of session that were sent by the SDK since startup.
@@ -83,18 +90,36 @@ internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(): List<Env
 }
 
 /**
- * Returns the last session that was saved by the SDK.
+ * Run some [action] and the validate the next saved session using [validationFn]. If no session is saved with
+ * 1 second, this fails.
  */
-internal fun IntegrationTestRule.Harness.getLastSavedSession(): Envelope<SessionPayload>? {
-    return overriddenDeliveryModule.deliveryService.getLastSavedSession()
-}
+internal fun IntegrationTestRule.Harness.checkNextSavedSession(
+    action: () -> Unit,
+    validationFn: (Envelope<SessionPayload>) -> Unit
+): Envelope<SessionPayload> =
+    with(overriddenDeliveryModule.deliveryService) {
+        checkNextSavedSessionEnvelope(
+            dataProvider = ::getSavedSessions,
+            action = action,
+            validationFn = validationFn,
+        )
+    }
 
 /**
- * Returns the last background activity that was saved by the SDK.
+ * Run some [action] and the validate the next saved background activity using [validationFn]. If no background activity is saved with
+ * 1 second, this fails.
  */
-internal fun IntegrationTestRule.Harness.getLastSavedBackgroundActivity(): Envelope<SessionPayload>? {
-    return overriddenDeliveryModule.deliveryService.getLastSavedBackgroundActivity()
-}
+internal fun IntegrationTestRule.Harness.checkNextSavedBackgroundActivity(
+    action: () -> Unit,
+    validationFn: (Envelope<SessionPayload>) -> Unit
+): Envelope<SessionPayload> =
+    with(overriddenDeliveryModule.deliveryService) {
+        checkNextSavedSessionEnvelope(
+            dataProvider = ::getSavedBackgroundActivities,
+            action = action,
+            validationFn = validationFn,
+        )
+    }
 
 /**
  * Returns the last session that was sent by the SDK.
@@ -121,13 +146,13 @@ internal fun IntegrationTestRule.Harness.getLastSentBackgroundActivity(): Envelo
  * are guaranteed not to change in the start/end message.
  */
 internal fun IntegrationTestRule.Harness.recordSession(
-    simulateAppStartup: Boolean = false,
+    simulateActivityCreation: Boolean = false,
     action: () -> Unit = {}
 ): Envelope<SessionPayload>? {
     // get the activity service & simulate the lifecycle event that triggers a new session.
     val activityService = checkNotNull(Embrace.getImpl().activityService)
     val activityController =
-        if (simulateAppStartup) Robolectric.buildActivity(Activity::class.java) else null
+        if (simulateActivityCreation) Robolectric.buildActivity(Activity::class.java) else null
 
     activityController?.create()
     activityController?.start()
@@ -176,12 +201,17 @@ internal fun internalErrorService(): InternalErrorService? = Embrace.getImpl().i
 /**
  * Return the result of [desiredValueSupplier] if [condition] is true before [waitTimeMs] elapses. Otherwise, throws [TimeoutException]
  */
-internal fun <T> returnIfConditionMet(desiredValueSupplier: Provider<T>, waitTimeMs: Int = 1000, condition: () -> Boolean): T {
+internal fun <T, R> returnIfConditionMet(
+    desiredValueSupplier: Provider<T>,
+    waitTimeMs: Int = 1000,
+    dataProvider: () -> R,
+    condition: (R) -> Boolean
+): T {
     val tries: Int = waitTimeMs / CHECK_INTERVAL_MS
     val countDownLatch = CountDownLatch(1)
 
     repeat(tries) {
-        if (!condition()) {
+        if (!condition(dataProvider())) {
             countDownLatch.await(CHECK_INTERVAL_MS.toLong(), TimeUnit.MILLISECONDS)
         } else {
             return desiredValueSupplier.invoke()
@@ -190,5 +220,36 @@ internal fun <T> returnIfConditionMet(desiredValueSupplier: Provider<T>, waitTim
 
     throw TimeoutException("Timeout period elapsed before condition met")
 }
+
+private fun IntegrationTestRule.Harness.checkNextSavedSessionEnvelope(
+    dataProvider: () -> List<Envelope<SessionPayload>>,
+    action: () -> Unit,
+    validationFn: (Envelope<SessionPayload>) -> Unit
+): Envelope<SessionPayload> {
+    val startingSize = dataProvider().size
+    overriddenClock.tick(10_000L)
+    action()
+    return when (dataProvider().size) {
+        startingSize -> {
+            returnIfConditionMet(
+                desiredValueSupplier = {
+                    dataProvider().getNth(startingSize)
+                },
+                condition = { data ->
+                    data.size > startingSize
+                },
+                dataProvider = dataProvider
+            )
+        }
+
+        else -> {
+            dataProvider().getNth(startingSize)
+        }
+    }.apply {
+        validationFn(this)
+    }
+}
+
+private fun <T> List<T>.getNth(n: Int) = filterIndexed { index, _ -> index == n }.single()
 
 private const val CHECK_INTERVAL_MS: Int = 10

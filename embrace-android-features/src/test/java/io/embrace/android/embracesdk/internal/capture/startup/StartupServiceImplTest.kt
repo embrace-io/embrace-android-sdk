@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.capture.startup
 import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertSuccessful
-import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -29,7 +29,7 @@ internal class StartupServiceImplTest {
     fun setUp() {
         clock = FakeClock(10000000)
         val initModule = FakeInitModule(clock = clock)
-        backgroundWorker = BackgroundWorker(BlockableExecutorService())
+        backgroundWorker = fakeBackgroundWorker()
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())

@@ -7,6 +7,11 @@ class DeliveryModule2ImplTest {
 
     @Test
     fun testModule() {
-        assertNotNull(DeliveryModule2Impl())
+        val module = DeliveryModule2Impl()
+        assertNotNull(module)
+        assertNotNull(module.intakeService)
+        assertNotNull(module.payloadCachingService)
+        assertNotNull(module.payloadResurrectionService)
+        assertNotNull(module.requestExecutionService)
     }
 }

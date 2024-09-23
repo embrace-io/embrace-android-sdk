@@ -45,6 +45,7 @@ internal class ModuleInitBootstrapper(
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
+    private val deliveryModule2Supplier: DeliveryModule2Supplier = ::createDeliveryModule2,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -101,6 +102,9 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var payloadSourceModule: PayloadSourceModule
+        private set
+
+    lateinit var deliveryModule2: DeliveryModule2
         private set
 
     @Volatile
@@ -209,6 +213,10 @@ internal class ModuleInitBootstrapper(
                                 }
                             }
                         }
+                    }
+
+                    deliveryModule2 = init(DeliveryModule2::class) {
+                        deliveryModule2Supplier(configModule)
                     }
 
                     anrModule = init(AnrModule::class) {

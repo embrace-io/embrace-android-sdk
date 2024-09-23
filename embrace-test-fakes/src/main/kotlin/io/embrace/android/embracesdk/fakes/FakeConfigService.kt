@@ -29,6 +29,7 @@ class FakeConfigService(
     override var appId: String = "abcde",
     var sdkDisabled: Boolean = false,
     var backgroundActivityCaptureEnabled: Boolean = false,
+    var onlyUsingOtelExporters: Boolean = false,
     private var hasValidRemoteConfig: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = createBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
@@ -60,6 +61,7 @@ class FakeConfigService(
 
     override fun hasValidRemoteConfig(): Boolean = hasValidRemoteConfig
     override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isAeiCaptureEnabled()
+    override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
 
     fun updateListeners() {
         listeners.forEach {

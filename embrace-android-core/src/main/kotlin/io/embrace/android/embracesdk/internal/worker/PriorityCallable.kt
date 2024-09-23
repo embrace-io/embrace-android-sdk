@@ -7,6 +7,6 @@ import java.util.concurrent.Callable
  * task is.
  */
 internal class PriorityCallable<T>(
-    val priority: TaskPriority,
+    val priorityInfo: Any,
     impl: Callable<T>
 ) : Callable<T> by impl

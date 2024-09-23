@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
@@ -39,7 +41,8 @@ internal class WorkerThreadModuleImplTest {
     @Test
     fun `network request executor uses custom queue`() {
         val module = WorkerThreadModuleImpl(initModule)
-        assertNotNull(module.priorityWorker(Worker.Priority.NetworkRequestWorker))
+        assertNotNull(module.priorityWorker<ApiRequest>(Worker.Priority.NetworkRequestWorker))
+        assertNotNull(module.priorityWorker<TaskPriority>(Worker.Priority.FileCacheWorker))
     }
 
     @Test

@@ -18,11 +18,10 @@ class PeriodicBackgroundActivityCacher(
 ) {
 
     private companion object {
-
         /**
          * Minimum time between writes of the background activity to disk
          */
-        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 5000
+        private const val MIN_INTERVAL_BETWEEN_SAVES: Long = 2000L
     }
 
     private var lastSaved: Long = 0

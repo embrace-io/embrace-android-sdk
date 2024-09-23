@@ -33,5 +33,6 @@ data class Envelope<T>(
 
     companion object {
         val sessionEnvelopeType: ParameterizedType = Types.newParameterizedType(Envelope::class.java, SessionPayload::class.java)
+        val logEnvelopeType: ParameterizedType = Types.newParameterizedType(Envelope::class.java, LogPayload::class.java)
     }
 }

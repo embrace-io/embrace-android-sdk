@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert
@@ -42,7 +42,7 @@ internal class TargetThreadHandlerTest {
     private fun createHandler(messageQueue: MessageQueue?): TargetThreadHandler {
         return TargetThreadHandler(
             mockk(relaxed = true),
-            ScheduledWorker(executorService),
+            BackgroundWorker(executorService),
             configService,
             messageQueue,
             logger = EmbLoggerImpl()

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Event
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -36,7 +36,7 @@ internal class EmbracePendingApiCallsSenderTest {
 
         private lateinit var blockingScheduledExecutorService: BlockingScheduledExecutorService
         private lateinit var mockCacheManager: DeliveryCacheManager
-        private lateinit var worker: ScheduledWorker
+        private lateinit var worker: BackgroundWorker
         private lateinit var pendingApiCalls: PendingApiCalls
         private lateinit var queue: PendingApiCallQueue
         private lateinit var pendingApiCallsSender: EmbracePendingApiCallsSender
@@ -55,7 +55,9 @@ internal class EmbracePendingApiCallsSenderTest {
     @Before
     fun setUp() {
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
-        worker = ScheduledWorker(blockingScheduledExecutorService)
+        worker = BackgroundWorker(
+            blockingScheduledExecutorService
+        )
         pendingApiCalls = PendingApiCalls()
         queue = PendingApiCallQueue(pendingApiCalls)
         mockRetryMethod = mockk(relaxUnitFun = true)
@@ -315,7 +317,9 @@ internal class EmbracePendingApiCallsSenderTest {
         clearMocks(mockRetryMethod, answers = false)
         pendingApiCalls = PendingApiCalls()
         blockingScheduledExecutorService = BlockingScheduledExecutorService()
-        worker = ScheduledWorker(blockingScheduledExecutorService)
+        worker = BackgroundWorker(
+            blockingScheduledExecutorService
+        )
     }
 
     private fun initPendingApiCallsSender(
@@ -327,7 +331,7 @@ internal class EmbracePendingApiCallsSenderTest {
         every { mockCacheManager.loadPendingApiCallQueue() } returns queue
 
         pendingApiCallsSender = EmbracePendingApiCallsSender(
-            scheduledWorker = worker,
+            worker = worker,
             cacheManager = mockCacheManager,
             clock = FakeClock(),
             logger = EmbLoggerImpl()

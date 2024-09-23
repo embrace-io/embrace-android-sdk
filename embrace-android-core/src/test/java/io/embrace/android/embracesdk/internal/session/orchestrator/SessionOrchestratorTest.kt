@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -362,9 +362,16 @@ internal class SessionOrchestratorTest {
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        periodicSessionCacher = PeriodicSessionCacher(ScheduledWorker(sessionCacheExecutor), logger)
+        periodicSessionCacher = PeriodicSessionCacher(
+            BackgroundWorker(sessionCacheExecutor),
+            logger
+        )
         periodicBackgroundActivityCacher =
-            PeriodicBackgroundActivityCacher(clock, ScheduledWorker(baCacheExecutor), logger)
+            PeriodicBackgroundActivityCacher(
+                clock,
+                BackgroundWorker(baCacheExecutor),
+                logger
+            )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             configService,

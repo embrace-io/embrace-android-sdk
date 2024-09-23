@@ -62,7 +62,7 @@ internal class LogModuleImpl(
             essentialServiceModule.logWriter,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
-            workerThreadModule.backgroundWorker(Worker.LogMessageWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.logger,
             initModule.jsonSerializer
         )
@@ -70,7 +70,7 @@ internal class LogModuleImpl(
 
     override val logOrchestrator: LogOrchestrator by singleton {
         LogOrchestratorImpl(
-            workerThreadModule.scheduledWorker(Worker.LogMessageWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.clock,
             openTelemetryModule.logSink,
             deliveryModule.deliveryService,

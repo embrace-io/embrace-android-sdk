@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -18,7 +18,7 @@ private const val RETRY_PERIOD = 120L // In seconds
 private const val MAX_EXPONENTIAL_RETRY_PERIOD = 3600 // In seconds
 
 internal class EmbracePendingApiCallsSender(
-    private val scheduledWorker: ScheduledWorker,
+    private val worker: BackgroundWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,
     private val logger: EmbLogger
@@ -33,7 +33,7 @@ internal class EmbracePendingApiCallsSender(
 
     override fun initializeRetrySchedule(sendMethod: SendMethod) {
         sendMethodRef.set(sendMethod)
-        scheduledWorker.submit(this::scheduleApiCallsDelivery)
+        worker.submit(this::scheduleApiCallsDelivery)
     }
 
     override fun savePendingApiCall(request: ApiRequest, action: SerializationAction, sync: Boolean) {
@@ -55,7 +55,7 @@ internal class EmbracePendingApiCallsSender(
                 with(response.endpoint.limiter) {
                     updateRateLimitStatus()
                     scheduleRetry(
-                        scheduledWorker,
+                        worker,
                         response.retryAfter,
                         this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
                     )
@@ -111,7 +111,7 @@ internal class EmbracePendingApiCallsSender(
     private fun scheduleApiCallsDelivery(delayInSeconds: Long = 0L) {
         synchronized(this) {
             if (shouldScheduleDelivery()) {
-                lastDeliveryTask = scheduledWorker.schedule<Unit>(
+                lastDeliveryTask = worker.schedule<Unit>(
                     { executeDelivery(delayInSeconds) },
                     delayInSeconds,
                     TimeUnit.SECONDS
@@ -147,7 +147,7 @@ internal class EmbracePendingApiCallsSender(
                                     with(response.endpoint.limiter) {
                                         updateRateLimitStatus()
                                         scheduleRetry(
-                                            scheduledWorker,
+                                            worker,
                                             response.retryAfter,
                                             this@EmbracePendingApiCallsSender::scheduleApiCallsDelivery
                                         )
@@ -178,7 +178,7 @@ internal class EmbracePendingApiCallsSender(
                 }
 
                 if (pendingApiCallQueue.hasPendingApiCallsToSend()) {
-                    scheduledWorker.submit {
+                    worker.submit {
                         scheduleNextApiCallsDelivery(
                             applyExponentialBackoff,
                             delayInSeconds

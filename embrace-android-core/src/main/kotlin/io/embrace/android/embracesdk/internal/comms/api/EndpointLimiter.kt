@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.pow
@@ -32,7 +32,7 @@ internal class EndpointLimiter {
      * or the exponential backoff delay calculated from the number of retries.
      */
     fun scheduleRetry(
-        scheduledWorker: ScheduledWorker,
+        worker: BackgroundWorker,
         retryAfter: Long?,
         retryMethod: () -> Unit
     ) {
@@ -40,7 +40,7 @@ internal class EndpointLimiter {
             retryMethod()
         }
         val delay = calculateDelay(retryAfter)
-        scheduledWorker.schedule<Unit>(retryTask, delay, TimeUnit.SECONDS)
+        worker.schedule<Unit>(retryTask, delay, TimeUnit.SECONDS)
     }
 
     /**

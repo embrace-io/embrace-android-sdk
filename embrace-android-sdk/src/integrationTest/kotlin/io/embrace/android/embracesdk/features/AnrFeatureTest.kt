@@ -42,7 +42,7 @@ internal class AnrFeatureTest {
         val clock = FakeClock(currentTime = START_TIME_MS)
         val initModule = FakeInitModule(clock)
         val workerThreadModule =
-            FakeWorkerThreadModule(initModule, Worker.AnrWatchdogWorker).apply {
+            FakeWorkerThreadModule(initModule, Worker.Background.AnrWatchdogWorker).apply {
                 anrMonitorThread = AtomicReference(Thread.currentThread())
             }
         anrMonitorExecutor = workerThreadModule.executor

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -38,7 +38,9 @@ internal class EndpointTest {
         with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
-                ScheduledWorker(scheduledExecutorService),
+                BackgroundWorker(
+                    scheduledExecutorService
+                ),
                 retryAfter,
                 mockExecuteApiCalls
             )
@@ -58,7 +60,9 @@ internal class EndpointTest {
             with(endpoint.limiter) {
                 updateRateLimitStatus()
                 scheduleRetry(
-                    ScheduledWorker(scheduledExecutorService),
+                    BackgroundWorker(
+                        scheduledExecutorService
+                    ),
                     null,
                     mockExecuteApiCalls
                 )
@@ -67,7 +71,9 @@ internal class EndpointTest {
             with(endpoint.limiter) {
                 updateRateLimitStatus()
                 scheduleRetry(
-                    ScheduledWorker(scheduledExecutorService),
+                    BackgroundWorker(
+                        scheduledExecutorService
+                    ),
                     null,
                     mockExecuteApiCalls
                 )
@@ -80,7 +86,9 @@ internal class EndpointTest {
         with(endpoint.limiter) {
             updateRateLimitStatus()
             scheduleRetry(
-                ScheduledWorker(scheduledExecutorService),
+                BackgroundWorker(
+                    scheduledExecutorService
+                ),
                 null,
                 mockExecuteApiCalls
             )

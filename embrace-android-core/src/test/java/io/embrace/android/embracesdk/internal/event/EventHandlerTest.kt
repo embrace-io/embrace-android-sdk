@@ -25,7 +25,7 @@ import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.mockk
 import io.mockk.verify
@@ -100,7 +100,7 @@ internal class EventHandlerTest {
             deliveryService,
             logger,
             clock,
-            ScheduledWorker(scheduledExecutorService)
+            BackgroundWorker(scheduledExecutorService)
         )
     }
 

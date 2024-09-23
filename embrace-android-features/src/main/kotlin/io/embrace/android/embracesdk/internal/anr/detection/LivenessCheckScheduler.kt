@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class LivenessCheckScheduler(
     configService: ConfigService,
-    private val anrMonitorWorker: ScheduledWorker,
+    private val anrMonitorWorker: BackgroundWorker,
     private val clock: Clock,
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,

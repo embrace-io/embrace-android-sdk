@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
-import io.embrace.android.embracesdk.fakes.fakePrioritizedWorker
+import io.embrace.android.embracesdk.fakes.fakePriorityWorker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
@@ -22,7 +22,8 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.PERIODIC_CACHE
-import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -46,7 +47,7 @@ internal class EmbraceDeliveryCacheManagerTest {
 
     private val prefix = "last_session"
     private val serializer = EmbraceSerializer()
-    private val worker = fakePrioritizedWorker()
+    private val worker = fakePriorityWorker<TaskPriority>()
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
@@ -339,7 +340,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `save payload sync`() {
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            PrioritizedWorker(BlockableExecutorService(blockingMode = true)),
+            PriorityWorker(BlockableExecutorService(blockingMode = true)),
             logger
         )
         val expected = "test".toByteArray()
@@ -362,7 +363,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val executorService = BlockableExecutorService(blockingMode = true)
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            PrioritizedWorker(executorService),
+            PriorityWorker(executorService),
             logger
         )
         val expected = "test".toByteArray()

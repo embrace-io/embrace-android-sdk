@@ -3,14 +3,14 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 internal class LogOrchestratorImpl(
-    private val worker: ScheduledWorker,
+    private val worker: BackgroundWorker,
     private val clock: Clock,
     private val sink: LogSink,
     private val deliveryService: DeliveryService,

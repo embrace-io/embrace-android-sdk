@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,7 +30,7 @@ internal class LogOrchestratorTest {
 
     private lateinit var logOrchestrator: LogOrchestrator
     private lateinit var executorService: BlockingScheduledExecutorService
-    private lateinit var scheduledWorker: ScheduledWorker
+    private lateinit var worker: BackgroundWorker
     private lateinit var logSink: LogSink
     private lateinit var deliveryService: FakeDeliveryService
     private val clock = FakeClock()
@@ -38,12 +38,13 @@ internal class LogOrchestratorTest {
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService()
-        scheduledWorker = ScheduledWorker(executorService)
+        worker =
+            BackgroundWorker(executorService)
         logSink = LogSinkImpl()
         deliveryService = FakeDeliveryService()
         clock.setCurrentTime(now)
         logOrchestrator = LogOrchestratorImpl(
-            scheduledWorker,
+            worker,
             clock,
             logSink,
             deliveryService,
@@ -176,7 +177,11 @@ internal class LogOrchestratorTest {
         latch.await(1000L, TimeUnit.MILLISECONDS)
 
         assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
-        assertEquals("Too many logs in payload", 50, deliveryService.lastSentLogPayloads[0].data.logs?.size)
+        assertEquals(
+            "Too many logs in payload",
+            50,
+            deliveryService.lastSentLogPayloads[0].data.logs?.size
+        )
     }
 
     @Test

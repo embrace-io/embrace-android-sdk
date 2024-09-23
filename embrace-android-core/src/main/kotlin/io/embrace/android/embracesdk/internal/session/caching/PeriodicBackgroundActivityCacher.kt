@@ -6,14 +6,14 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 class PeriodicBackgroundActivityCacher(
     private val clock: Clock,
-    private val scheduledWorker: ScheduledWorker,
+    private val worker: BackgroundWorker,
     private val logger: EmbLogger
 ) {
 
@@ -44,7 +44,7 @@ class PeriodicBackgroundActivityCacher(
                 logger.trackInternalError(InternalErrorType.BG_SESSION_CACHE_FAIL, ex)
             }
         }
-        scheduledFuture = scheduledWorker.schedule<Unit>(
+        scheduledFuture = worker.schedule<Unit>(
             action,
             delay,
             TimeUnit.MILLISECONDS

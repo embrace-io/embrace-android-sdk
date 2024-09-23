@@ -26,7 +26,7 @@ internal class ConfigModuleImpl(
                     androidServicesModule.preferencesService,
                     initModule.clock,
                     initModule.logger,
-                    workerThreadModule.backgroundWorker(Worker.IoRegWorker),
+                    workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                     framework,
                     foregroundAction
                 )

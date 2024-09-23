@@ -23,7 +23,7 @@ internal class SessionOrchestrationModuleImplTest {
     private val configService = FakeConfigService()
     private val workerThreadModule = FakeWorkerThreadModule(
         fakeInitModule = initModule,
-        name = Worker.NonIoRegWorker
+        name = Worker.Background.NonIoRegWorker
     )
 
     @Test

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.worker.ScheduledWorker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -68,7 +68,7 @@ internal class LivenessCheckSchedulerTest {
 
         scheduler = LivenessCheckScheduler(
             configService,
-            ScheduledWorker(anrExecutorService),
+            BackgroundWorker(anrExecutorService),
             fakeClock,
             state,
             fakeTargetThreadHandler,

@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 
@@ -198,8 +199,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         // Send any sessions that were cached and not yet sent.
         startSynchronous("send-cached-sessions")
-        val worker = bootstrapper.workerThreadModule.prioritizedWorker(Worker.FileCacheWorker)
-        worker.submit {
+        val worker = bootstrapper.workerThreadModule.priorityWorker<TaskPriority>(Worker.Priority.FileCacheWorker)
+        worker.submit(TaskPriority.NORMAL) {
             val essentialServiceModule = bootstrapper.essentialServiceModule
             bootstrapper.deliveryModule.deliveryService.sendCachedSessions(
                 bootstrapper.nativeFeatureModule::nativeCrashService,
@@ -209,7 +210,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         endSynchronous()
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-            bootstrapper.workerThreadModule.backgroundWorker(Worker.IoRegWorker)
+            bootstrapper.workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
         )
 
         val internalInterfaceModuleImpl =

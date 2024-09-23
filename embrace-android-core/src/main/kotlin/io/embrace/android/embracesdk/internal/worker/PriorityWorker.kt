@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  * This class is necessary because it hides aspects of the ExecutorService API that we don't want
  * to expose as part of the internal API.
  */
-class PrioritizedWorker(
+class PriorityWorker<T>(
     private val impl: ExecutorService
 ) {
 
@@ -19,20 +19,20 @@ class PrioritizedWorker(
      * Submits a task for execution and returns a [Future].
      */
     fun submit(
-        priority: TaskPriority = TaskPriority.NORMAL,
+        priorityInfo: T,
         runnable: Runnable
     ): Future<*> {
-        return impl.submit(PriorityRunnable(priority, runnable))
+        return impl.submit(PriorityRunnable(priorityInfo as Any, runnable))
     }
 
     /**
      * Submits a task for execution and returns a [Future].
      */
-    fun <T> submit(
-        priority: TaskPriority = TaskPriority.NORMAL,
-        callable: Callable<T>
-    ): Future<T> {
-        return impl.submit(PriorityCallable(priority, callable))
+    fun <R> submit(
+        priorityInfo: T,
+        callable: Callable<R>
+    ): Future<R> {
+        return impl.submit(PriorityCallable(priorityInfo as Any, callable))
     }
 
     /**

@@ -26,7 +26,7 @@ internal class EmbraceLoggingFeatureTest {
         IntegrationTestRule.Harness(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = Worker.LogMessageWorker)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = Worker.Background.LogMessageWorker)
         )
     }
 

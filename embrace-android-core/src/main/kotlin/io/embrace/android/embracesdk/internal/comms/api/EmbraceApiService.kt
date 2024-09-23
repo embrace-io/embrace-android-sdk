@@ -13,8 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
-import io.embrace.android.embracesdk.internal.worker.TaskPriority
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.lang.reflect.ParameterizedType
 import java.util.concurrent.Future
@@ -24,7 +23,7 @@ internal class EmbraceApiService(
     private val serializer: PlatformSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val logger: EmbLogger,
-    private val prioritizedWorker: PrioritizedWorker,
+    private val priorityWorker: PriorityWorker<ApiRequest>,
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
     appId: String,
@@ -160,11 +159,7 @@ internal class EmbraceApiService(
         request: ApiRequest,
         onComplete: ((response: ApiResponse) -> Unit),
     ): Future<*> {
-        val priority = when (request.isSessionRequest()) {
-            true -> TaskPriority.CRITICAL
-            else -> TaskPriority.NORMAL
-        }
-        return prioritizedWorker.submit(priority) {
+        return priorityWorker.submit(request) {
             var response: ApiResponse = ApiResponse.None
             try {
                 response = handleApiRequest(request, action)

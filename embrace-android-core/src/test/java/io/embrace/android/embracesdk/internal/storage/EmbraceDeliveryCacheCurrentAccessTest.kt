@@ -10,7 +10,8 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
-import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.mockk.clearAllMocks
 import io.mockk.spyk
 import io.mockk.verify
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit
 internal class EmbraceDeliveryCacheCurrentAccessTest {
 
     private val serializer = EmbraceSerializer()
-    private lateinit var worker: PrioritizedWorker
+    private lateinit var worker: PriorityWorker<TaskPriority>
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
@@ -34,7 +35,7 @@ internal class EmbraceDeliveryCacheCurrentAccessTest {
         fakeClock = FakeClock(clockInit)
         logger = EmbLoggerImpl()
         storageService = FakeStorageService()
-        worker = PrioritizedWorker(SingleThreadTestScheduledExecutor())
+        worker = PriorityWorker(SingleThreadTestScheduledExecutor())
         cacheService = spyk(
             EmbraceCacheService(
                 storageService = storageService,

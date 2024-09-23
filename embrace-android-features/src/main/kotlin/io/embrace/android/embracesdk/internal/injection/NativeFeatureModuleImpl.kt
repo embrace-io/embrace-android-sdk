@@ -41,7 +41,7 @@ internal class NativeFeatureModuleImpl(
                 initModule.logger,
                 embraceNdkServiceRepository,
                 NdkDelegateImpl(),
-                workerThreadModule.backgroundWorker(Worker.IoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer
             )
@@ -55,7 +55,7 @@ internal class NativeFeatureModuleImpl(
                     configService = configModule.configService,
                     symbols = lazy { ndkService.symbolsForCurrentArch },
                     logger = initModule.logger,
-                    scheduledWorker = workerThreadModule.scheduledWorker(Worker.NonIoRegWorker),
+                    worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 )

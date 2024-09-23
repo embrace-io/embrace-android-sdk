@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.5.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.5.1)" variant="all" version="8.5.1">
+<issues format="6" by="lint 8.5.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.5.2)" variant="all" version="8.5.2">
 
     <issue
         id="DiscouragedApi"
@@ -7,8 +7,8 @@
         errorLine1="    ): ScheduledFuture&lt;*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)"
         errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/worker/ScheduledWorker.kt"
-            line="61"
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/worker/BackgroundWorker.kt"
+            line="65"
             column="29"/>
     </issue>
 

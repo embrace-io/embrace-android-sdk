@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.delivery
+package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResur
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
-import io.embrace.android.embracesdk.internal.injection.singleton
 
 internal class DeliveryModule2Impl : DeliveryModule2 {
 

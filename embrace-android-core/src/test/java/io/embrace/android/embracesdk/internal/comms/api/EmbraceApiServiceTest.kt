@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.embrace.android.embracesdk.internal.worker.PrioritizedWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -457,7 +457,7 @@ internal class EmbraceApiServiceTest {
             serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
             logger = EmbLoggerImpl(),
-            prioritizedWorker = PrioritizedWorker(testScheduledExecutor),
+            priorityWorker = PriorityWorker(testScheduledExecutor),
             pendingApiCallsSender = fakePendingApiCallsSender,
             lazyDeviceId = lazy { fakeDeviceId },
             appId = fakeAppId,

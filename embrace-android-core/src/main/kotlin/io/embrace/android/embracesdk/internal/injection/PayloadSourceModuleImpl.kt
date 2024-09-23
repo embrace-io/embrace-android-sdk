@@ -42,7 +42,7 @@ internal class PayloadSourceModuleImpl(
             coreModule.context,
             configModule.configService,
             androidServicesModule.preferencesService,
-            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.logger
         )
     }
@@ -96,7 +96,7 @@ internal class PayloadSourceModuleImpl(
                     DeviceImpl(
                         systemServiceModule.windowManager,
                         androidServicesModule.preferencesService,
-                        workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+                        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
                         { nativeCoreModuleProvider()?.cpuInfoDelegate },
                         initModule.logger
@@ -122,7 +122,7 @@ internal class PayloadSourceModuleImpl(
                 lazy { systemServiceModule.storageManager },
                 configModule.configService,
                 androidServicesModule.preferencesService,
-                workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 initModule.clock,
                 initModule.logger
             )

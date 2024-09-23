@@ -14,7 +14,7 @@ internal class DataSourceModuleImpl(
     override val dataCaptureOrchestrator: DataCaptureOrchestrator by singleton {
         DataCaptureOrchestrator(
             configService,
-            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker),
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.logger
         )
     }

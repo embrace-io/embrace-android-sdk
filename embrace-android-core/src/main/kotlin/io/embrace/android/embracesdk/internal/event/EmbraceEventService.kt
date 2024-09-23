@@ -72,10 +72,10 @@ internal class EmbraceEventService(
             deliveryService,
             logger,
             clock,
-            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker)
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
         backgroundWorker =
-            workerThreadModule.backgroundWorker(Worker.NonIoRegWorker)
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {

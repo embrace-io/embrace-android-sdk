@@ -23,7 +23,7 @@ internal class AnrModuleImpl(
     otelModule: OpenTelemetryModule
 ) : AnrModule {
 
-    private val anrMonitorWorker = workerModule.backgroundWorker(Worker.AnrWatchdogWorker)
+    private val anrMonitorWorker = workerModule.backgroundWorker(Worker.Background.AnrWatchdogWorker)
 
     override val anrService: AnrService by singleton {
         if (configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {

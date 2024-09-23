@@ -4,6 +4,9 @@ import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResur
 
 class FakePayloadResurrectionService : PayloadResurrectionService {
 
+    var resurrectCount: Int = 0
+
     override fun resurrectOldPayloads() {
+        resurrectCount++
     }
 }

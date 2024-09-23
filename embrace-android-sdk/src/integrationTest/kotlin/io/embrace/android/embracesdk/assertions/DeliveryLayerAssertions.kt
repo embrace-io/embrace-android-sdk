@@ -48,6 +48,6 @@ internal inline fun <reified T> FakePayloadIntake<T>.assertPayloadIntake(
     envelopeAssertion(envelope)
 }
 
-private inline fun <reified T> IntegrationTestRule.getService(noinline fieldProvider: DeliveryModule2.() -> Any): T =
+private inline fun <reified T> IntegrationTestRule.getService(noinline fieldProvider: DeliveryModule2.() -> Any?): T =
     fieldProvider(bootstrapper.deliveryModule2) as? T
         ?: error("Intake service is not of type ${T::class.simpleName}")

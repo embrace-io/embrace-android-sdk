@@ -97,6 +97,7 @@ internal class EmbraceConfigServiceTest {
         } returns fakeCachedConfig
         worker = fakeBackgroundWorker()
         service = createService(worker = worker, action = {})
+        assertFalse(service.isOnlyUsingOtelExporters())
     }
 
     /**
@@ -312,8 +313,9 @@ internal class EmbraceConfigServiceTest {
             SystemInfo()
         )
         cfg.addLogExporter(FakeLogRecordExporter())
-        val service = createService(worker = worker, appId = "abcdefoi", config = cfg)
+        val service = createService(worker = worker, appId = "", config = cfg)
         assertNotNull(service)
+        assertTrue(service.isOnlyUsingOtelExporters())
     }
 
     /**

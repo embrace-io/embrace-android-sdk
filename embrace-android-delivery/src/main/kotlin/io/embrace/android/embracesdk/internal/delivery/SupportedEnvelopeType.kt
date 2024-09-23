@@ -7,12 +7,12 @@ import java.lang.reflect.Type
  * Enumerates the different types of telemetry that are supported when persisting to disk.
  */
 enum class SupportedEnvelopeType(
-    val type: Type,
+    val serializedType: Type,
     val description: String
 ) {
 
-    SESSION(Envelope.sessionEnvelopeType, "session"),
     CRASH(Envelope.logEnvelopeType, "crash"),
+    SESSION(Envelope.sessionEnvelopeType, "session"),
     LOG(Envelope.logEnvelopeType, "log"),
     NETWORK(Envelope.logEnvelopeType, "network");
 

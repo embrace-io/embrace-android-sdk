@@ -205,11 +205,6 @@ internal class EmbraceInternalInterfaceImplTest {
     }
 
     @Test
-    fun `test isInternalNetworkCaptureDisabled`() {
-        assertFalse(internalImpl.isInternalNetworkCaptureDisabled())
-    }
-
-    @Test
     fun `check isNetworkSpanForwardingEnabled`() {
         assertFalse(internalImpl.isNetworkSpanForwardingEnabled())
         fakeConfigService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)

@@ -104,7 +104,6 @@ internal class EmbraceInternalInterfaceTest {
             setProcessStartedByNotification()
             assertFalse(isNetworkSpanForwardingEnabled())
             getSdkCurrentTime()
-            assertFalse(isInternalNetworkCaptureDisabled())
         }
     }
 
@@ -239,15 +238,6 @@ internal class EmbraceInternalInterfaceTest {
             assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
             harness.overriddenClock.tick()
             assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
-        }
-    }
-
-    @Test
-    fun `test isInternalNetworkCaptureDisabled`() {
-        with(testRule) {
-            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertFalse(embrace.internalInterface.isInternalNetworkCaptureDisabled())
         }
     }
 

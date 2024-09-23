@@ -82,7 +82,6 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private var postNetworkInterceptorBeforeRequestSupplier: (Request) -> Request = { request -> request }
     private var postNetworkInterceptorAfterResponseSupplier: (Response) -> Response = { response -> response }
     private var isSDKStarted = true
-    private var isNetworkCaptureDisabled = false
     private var isNetworkSpanForwardingEnabled = false
 
     @Before
@@ -93,7 +92,6 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
-        every { mockInternalInterface.isInternalNetworkCaptureDisabled() } answers { isNetworkCaptureDisabled }
         every { mockInternalInterface.getSdkCurrentTime() } answers { FAKE_SDK_TIME }
         applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
@@ -127,7 +125,6 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
         every { mockEmbrace.internalInterface } answers { mockInternalInterface }
         isSDKStarted = true
-        isNetworkCaptureDisabled = false
         isNetworkSpanForwardingEnabled = false
     }
 
@@ -179,16 +176,6 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `completed requests are not recorded if the SDK has not started`() {
         isSDKStarted = false
-        server.enqueue(createBaseMockResponse())
-        runGetRequest()
-        server.enqueue(createBaseMockResponse())
-        runPostRequest()
-        verify(exactly = 0) { mockEmbrace.recordNetworkRequest(any()) }
-    }
-
-    @Test
-    fun `completed requests are not recorded if network capture has been disabled internally`() {
-        isNetworkCaptureDisabled = true
         server.enqueue(createBaseMockResponse())
         runGetRequest()
         server.enqueue(createBaseMockResponse())

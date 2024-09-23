@@ -61,30 +61,30 @@ open class FakeDeliveryService : DeliveryService {
         lastSavedLogPayloads.add(logEnvelope)
     }
 
-    fun getSentSessions(): List<Envelope<SessionPayload>> {
-        return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.FOREGROUND }.map { it.first }
-    }
+    fun getSentSessions(): List<Envelope<SessionPayload>> =
+        sentSessionEnvelopes.filterSessionEnvelopes(appState = ApplicationState.FOREGROUND)
 
-    fun getSentBackgroundActivities(): List<Envelope<SessionPayload>> {
-        return sentSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
-    }
+    fun getSentBackgroundActivities(): List<Envelope<SessionPayload>> =
+        sentSessionEnvelopes.filterSessionEnvelopes(appState = ApplicationState.BACKGROUND)
 
-    fun getSavedBackgroundActivities(): List<Envelope<SessionPayload>> {
-        return savedSessionEnvelopes.filter { it.first.findAppState() == ApplicationState.BACKGROUND }.map { it.first }
-    }
+    fun getSavedSessions(): List<Envelope<SessionPayload>> =
+        savedSessionEnvelopes.filterSessionEnvelopes(appState = ApplicationState.FOREGROUND)
 
-    private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
-        val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.uppercase(Locale.ENGLISH)
-        return ApplicationState.valueOf(checkNotNull(value))
-    }
+    fun getSavedBackgroundActivities(): List<Envelope<SessionPayload>> =
+        savedSessionEnvelopes.filterSessionEnvelopes(appState = ApplicationState.BACKGROUND)
 
     fun getLastSentSession(): Envelope<SessionPayload>? {
         return getSentSessions().lastOrNull()
     }
 
-    fun getLastSavedSession(): Envelope<SessionPayload>? {
-        return savedSessionEnvelopes.map { it.first }.lastOrNull {
-            it.findAppState() == ApplicationState.FOREGROUND
-        }
+    private fun Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>>.filterSessionEnvelopes(
+        appState: ApplicationState
+    ): List<Envelope<SessionPayload>> {
+        return filter { it.first.findAppState() == appState }.map { it.first }
+    }
+
+    private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
+        val value = findSessionSpan().attributes?.findAttributeValue(embState.name)?.uppercase(Locale.ENGLISH)
+        return ApplicationState.valueOf(checkNotNull(value))
     }
 }

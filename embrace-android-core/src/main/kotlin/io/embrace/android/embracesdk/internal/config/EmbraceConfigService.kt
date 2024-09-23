@@ -166,6 +166,8 @@ internal class EmbraceConfigService(
 
     override val appId: String? = resolveAppId(customAppId, openTelemetryCfg)
 
+    override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
+
     /**
      * Loads the build information from resources provided by the config file packaged within the application by Gradle at
      * build-time.

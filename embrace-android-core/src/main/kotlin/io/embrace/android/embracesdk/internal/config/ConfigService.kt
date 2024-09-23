@@ -112,6 +112,13 @@ interface ConfigService {
     val appId: String?
 
     /**
+     * Whether only OTel exporters should be used. If this returns true,
+     * the SDK should avoid enabling unnecessary systems (such as anything that creates requests
+     * to Embrace).
+     */
+    fun isOnlyUsingOtelExporters(): Boolean
+
+    /**
      * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the
      * [ConfigService] refreshes its configuration.
      *

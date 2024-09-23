@@ -11,25 +11,42 @@ import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResur
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 
-internal class DeliveryModule2Impl : DeliveryModule2 {
+internal class DeliveryModule2Impl(
+    configModule: ConfigModule
+) : DeliveryModule2 {
 
-    override val intakeService: IntakeService by singleton {
-        IntakeServiceImpl(schedulingService)
+    override val intakeService: IntakeService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            return@singleton null
+        }
+        IntakeServiceImpl(checkNotNull(schedulingService))
     }
 
-    override val payloadResurrectionService: PayloadResurrectionService by singleton {
-        PayloadResurrectionServiceImpl(intakeService)
+    override val payloadResurrectionService: PayloadResurrectionService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            return@singleton null
+        }
+        PayloadResurrectionServiceImpl(checkNotNull(intakeService))
     }
 
-    override val payloadCachingService: PayloadCachingService by singleton {
+    override val payloadCachingService: PayloadCachingService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            return@singleton null
+        }
         PayloadCachingServiceImpl()
     }
 
-    override val requestExecutionService: RequestExecutionService by singleton {
+    override val requestExecutionService: RequestExecutionService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            return@singleton null
+        }
         RequestExecutionServiceImpl()
     }
 
-    override val schedulingService: SchedulingService by singleton {
-        SchedulingServiceImpl(requestExecutionService)
+    override val schedulingService: SchedulingService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            return@singleton null
+        }
+        SchedulingServiceImpl(checkNotNull(requestExecutionService))
     }
 }

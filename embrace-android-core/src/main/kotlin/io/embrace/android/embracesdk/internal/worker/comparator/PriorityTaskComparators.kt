@@ -33,7 +33,7 @@ inline fun <reified T> extractPriorityFromRunnable(
         "Runnables must be PriorityRunnableFuture"
     }
     require(lhs.priorityInfo is T && rhs.priorityInfo is T) {
-        "PriorityInfo must be of type T"
+        "PriorityInfo must be of type ${T::class.java.simpleName}"
     }
     return Pair(lhs.priorityInfo as T, rhs.priorityInfo as T)
 }

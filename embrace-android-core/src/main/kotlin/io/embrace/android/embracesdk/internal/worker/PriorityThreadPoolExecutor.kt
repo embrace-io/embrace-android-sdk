@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
  * in good prioritisation. Submitting a bunch of miscellaneous tasks that have no relation to each
  * other will probably not.
  */
-internal class PriorityThreadPoolExecutor(
+class PriorityThreadPoolExecutor(
     threadFactory: ThreadFactory,
     handler: RejectedExecutionHandler,
     corePoolSize: Int,

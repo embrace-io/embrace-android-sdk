@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.worker.comparator.extractPriorityF
  */
 internal val storedTelemetryComparator = Comparator { lhs: Runnable, rhs: Runnable ->
     val (lhsPrio, rhsPrio) = extractPriorityFromRunnable<StoredTelemetryMetadata>(lhs, rhs)
-    return@Comparator compareBy(StoredTelemetryMetadata::envelopeType)
-        .thenBy(StoredTelemetryMetadata::timestamp)
+    return@Comparator compareBy<StoredTelemetryMetadata>(StoredTelemetryMetadata::envelopeType)
+        .thenBy<StoredTelemetryMetadata>(StoredTelemetryMetadata::timestamp)
         .compare(lhsPrio, rhsPrio)
 }

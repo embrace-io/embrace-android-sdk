@@ -58,7 +58,7 @@ internal fun fakeModuleInitBootstrapper(
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _ -> FakeCrashModule() },
     payloadSourceModuleSupplier: PayloadSourceModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() },
-    fakeDeliveryModule2Supplier: DeliveryModule2Supplier = { FakeDeliveryModule2() },
+    fakeDeliveryModule2Supplier: DeliveryModule2Supplier = { _, _, _ -> FakeDeliveryModule2() },
 ) = ModuleInitBootstrapper(
     logger = fakeEmbLogger,
     initModule = fakeInitModule,

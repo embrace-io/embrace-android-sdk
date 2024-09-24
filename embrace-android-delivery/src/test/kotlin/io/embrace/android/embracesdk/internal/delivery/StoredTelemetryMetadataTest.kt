@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -22,7 +23,7 @@ class StoredTelemetryMetadataTest {
     fun `construct objects`() {
         typeNameMap.entries.forEach { (type, description) ->
             assertEquals(
-                "v1_${TIMESTAMP}_${description}_$UUID.json",
+                "${TIMESTAMP}_${description}_${UUID}_v1.json",
                 StoredTelemetryMetadata(TIMESTAMP, UUID, type).filename
             )
         }
@@ -34,9 +35,9 @@ class StoredTelemetryMetadataTest {
             "",
             "foo",
             "my_session.json",
-            "v1_1234567890_session.json",
-            "v1_a_b_c.json",
-            "v1_${TIMESTAMP}_b_c.json"
+            "1234567890_session_v1.json",
+            "a_b_c_v1.json",
+            "${TIMESTAMP}_b_c_v1.json"
         )
         badFilenames.forEach { filename ->
             val result = StoredTelemetryMetadata.fromFilename(filename)
@@ -47,13 +48,27 @@ class StoredTelemetryMetadataTest {
     @Test
     fun `from valid filename`() {
         typeNameMap.entries.forEach { (type, description) ->
-            val input = "v1_${TIMESTAMP}_${description}_$UUID.json"
+            val input = "${TIMESTAMP}_${description}_${UUID}_v1.json"
             with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
                 assertEquals(input, filename)
                 assertEquals(TIMESTAMP, timestamp)
                 assertEquals(UUID, uuid)
                 assertEquals(type, this.envelopeType)
             }
+        }
+    }
+
+    @Test
+    fun `construct from envelope`() {
+        val metadata = StoredTelemetryMetadata.fromEnvelope(
+            FakeClock(TIMESTAMP),
+            SupportedEnvelopeType.CRASH,
+            UUID
+        )
+        with(metadata) {
+            assertEquals(TIMESTAMP, timestamp)
+            assertEquals(UUID, uuid)
+            assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
         }
     }
 }

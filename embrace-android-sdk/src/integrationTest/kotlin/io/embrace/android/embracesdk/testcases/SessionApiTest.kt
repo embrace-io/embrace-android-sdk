@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.toMap
@@ -60,7 +61,9 @@ internal class SessionApiTest {
             val sessionSpan = snapshots.single { it.name == "emb-session" }
             assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
             assertNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-            val attrs = checkNotNull(sessionSpan.attributes?.filter { it.key != SessionIncubatingAttributes.SESSION_ID.key }?.toMap())
+            val attrs = checkNotNull(sessionSpan.attributes?.filterNot {
+                ignoredAttributes.contains(it.key)
+            }?.toMap())
 
             val expected = mapOf(
                 "emb.cold_start" to "true",
@@ -73,9 +76,16 @@ internal class SessionApiTest {
                 "emb.session_number" to "1",
                 "emb.type" to "ux.session",
                 "emb.error_log_count" to "0",
-                "emb.disk_free_bytes" to "0",
             )
             assertEquals(expected, attrs)
         }
+    }
+
+    private companion object {
+        // Attributes that are unstable that we should not try to verify
+        val ignoredAttributes = setOf(
+            SessionIncubatingAttributes.SESSION_ID,
+            embFreeDiskBytes.attributeKey
+        ).map { it.key }
     }
 }

@@ -24,7 +24,8 @@ class FakeInitModule(
         systemInfo = systemInfo
     )
 ) : InitModule by initModule {
-    val openTelemetryModule: OpenTelemetryModule = createOpenTelemetryModule(initModule)
+
+    val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule) }
 
     fun getFakeClock(): FakeClock? = clock as? FakeClock
 }

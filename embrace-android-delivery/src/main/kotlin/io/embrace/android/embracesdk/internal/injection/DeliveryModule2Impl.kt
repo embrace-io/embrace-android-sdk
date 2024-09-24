@@ -10,12 +10,15 @@ import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResur
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModule2Impl(
     configModule: ConfigModule,
     initModule: InitModule,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
+    storageModule: StorageModule
 ) : DeliveryModule2 {
 
     override val intakeService: IntakeService? by singleton {
@@ -24,6 +27,8 @@ internal class DeliveryModule2Impl(
         }
         IntakeServiceImpl(
             checkNotNull(schedulingService),
+            checkNotNull(payloadStorageService),
+            initModule.internalErrorService,
             initModule.jsonSerializer,
             workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
         )
@@ -41,6 +46,13 @@ internal class DeliveryModule2Impl(
             return@singleton null
         }
         PayloadCachingServiceImpl()
+    }
+
+    override val payloadStorageService: PayloadStorageService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            return@singleton null
+        }
+        PayloadStorageServiceImpl(storageModule.cacheService)
     }
 
     override val requestExecutionService: RequestExecutionService? by singleton {

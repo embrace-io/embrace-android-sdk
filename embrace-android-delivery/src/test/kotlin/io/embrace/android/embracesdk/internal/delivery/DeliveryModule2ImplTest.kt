@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.delivery
 
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule2Impl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -12,7 +14,9 @@ class DeliveryModule2ImplTest {
     @Test
     fun testModule() {
         val module = DeliveryModule2Impl(
-            FakeConfigModule()
+            FakeConfigModule(),
+            FakeInitModule(),
+            FakeWorkerThreadModule()
         )
         assertNotNull(module)
         assertNotNull(module.intakeService)
@@ -25,7 +29,9 @@ class DeliveryModule2ImplTest {
     @Test
     fun `test otel export only`() {
         val module = DeliveryModule2Impl(
-            FakeConfigModule(configService = FakeConfigService(onlyUsingOtelExporters = true))
+            FakeConfigModule(configService = FakeConfigService(onlyUsingOtelExporters = true)),
+            FakeInitModule(),
+            FakeWorkerThreadModule()
         )
         assertNotNull(module)
         assertNull(module.intakeService)

@@ -25,7 +25,7 @@ internal val apiRequestComparator = Comparator { lhs: Runnable, rhs: Runnable ->
     }
 }
 
-private inline fun <reified T> extractPriorityFromRunnable(
+inline fun <reified T> extractPriorityFromRunnable(
     lhs: Runnable,
     rhs: Runnable
 ): Pair<T, T> {

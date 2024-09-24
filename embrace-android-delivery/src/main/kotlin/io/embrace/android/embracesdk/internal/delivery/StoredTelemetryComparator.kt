@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery
 
+import io.embrace.android.embracesdk.internal.worker.comparator.extractPriorityFromRunnable
+
 /**
  * Compares [StoredTelemetryMetadata] in priority order. Our priority rules are:
  *
@@ -12,11 +14,9 @@ package io.embrace.android.embracesdk.internal.delivery
  * We considered the possibility of starvation & scoring payloads based on age, but we decided
  * that crashes/sessions are generally far more important so should always be delivered first.
  */
-internal object StoredTelemetryComparator : Comparator<StoredTelemetryMetadata> {
-
-    override fun compare(lhs: StoredTelemetryMetadata, rhs: StoredTelemetryMetadata): Int {
-        return compareBy(StoredTelemetryMetadata::envelopeType)
-            .thenBy(StoredTelemetryMetadata::timestamp)
-            .compare(lhs, rhs)
-    }
+internal val storedTelemetryComparator = Comparator { lhs: Runnable, rhs: Runnable ->
+    val (lhsPrio, rhsPrio) = extractPriorityFromRunnable<StoredTelemetryMetadata>(lhs, rhs)
+    return@Comparator compareBy(StoredTelemetryMetadata::envelopeType)
+        .thenBy(StoredTelemetryMetadata::timestamp)
+        .compare(lhsPrio, rhsPrio)
 }

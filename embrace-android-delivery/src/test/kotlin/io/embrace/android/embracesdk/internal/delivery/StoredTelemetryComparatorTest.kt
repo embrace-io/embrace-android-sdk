@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRA
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.NETWORK
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
+import io.embrace.android.embracesdk.internal.worker.PriorityRunnableFuture
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -19,7 +21,9 @@ class StoredTelemetryComparatorTest {
     @Test
     fun `sort values`() {
         val result = listOf(network, log, session2, crash, session3, session)
-            .sortedWith(StoredTelemetryComparator)
+            .map { PriorityRunnableFuture<StoredTelemetryMetadata>(mockk(relaxed = true), it) }
+            .sortedWith(storedTelemetryComparator)
+            .map { it.priorityInfo as StoredTelemetryMetadata }
             .map(StoredTelemetryMetadata::uuid)
         val expected = listOf(crash, session, session2, session3, log, network)
             .map(StoredTelemetryMetadata::uuid)

@@ -32,7 +32,7 @@ internal class PeriodicSessionCacheTest {
         IntegrationTestRule.Harness(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, name = PeriodicCacheWorker)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, testWorkerName = PeriodicCacheWorker)
         )
     }
 

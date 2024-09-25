@@ -25,7 +25,8 @@ internal class LastRunCrashVerifierTest {
     fun setUp() {
         mockCrashFileMarker = mockk()
         lastRunCrashVerifier = LastRunCrashVerifier(mockCrashFileMarker, EmbLoggerImpl())
-        fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = FakeInitModule(), name = Worker.Background.NonIoRegWorker)
+        fakeWorkerThreadModule =
+            FakeWorkerThreadModule(fakeInitModule = FakeInitModule(), testWorkerName = Worker.Background.NonIoRegWorker)
         worker = fakeWorkerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
     }
 

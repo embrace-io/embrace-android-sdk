@@ -42,7 +42,7 @@ internal class FlutterInternalInterfaceTest {
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
-                name = Worker.Background.LogMessageWorker
+                testWorkerName = Worker.Background.LogMessageWorker
             )
         )
     }

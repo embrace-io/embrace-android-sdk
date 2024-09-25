@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import java.util.LinkedList
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Delayed
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -97,6 +98,7 @@ class BlockingScheduledExecutorService(
     var submitCount: Int = 0
 
     override fun execute(command: Runnable?) {
+        submitCount++
         requireNotNull(command)
         delegateExecutorService.execute(command)
     }
@@ -199,6 +201,17 @@ class BlockingScheduledExecutorService(
         }
 
         return futureTask
+    }
+
+    /**
+     * Queue a task to run that returns a [CountDownLatch]
+     */
+    fun queueCompletionTask(): CountDownLatch {
+        val latch = CountDownLatch(1)
+        submit {
+            latch.countDown()
+        }
+        return latch
     }
 
     private fun <V> submitOrQueue(delay: Long, futureTask: BlockedFutureScheduledTask<V>) {

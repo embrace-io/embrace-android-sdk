@@ -220,7 +220,7 @@ internal class ModuleInitBootstrapper(
                             configModule,
                             initModule,
                             workerThreadModule,
-                            storageModule
+                            coreModule
                         )
                     }
 

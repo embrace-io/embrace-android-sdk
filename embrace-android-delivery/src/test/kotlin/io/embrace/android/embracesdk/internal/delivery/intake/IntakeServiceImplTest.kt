@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRA
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.NETWORK
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
-import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
+import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -157,7 +157,7 @@ class IntakeServiceImplTest {
             { _, _ -> },
             1,
             1,
-            storedTelemetryComparator
+            storedTelemetryRunnableComparator
         )
         val latch = CountDownLatch(1)
         executor.submit(

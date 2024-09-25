@@ -1,17 +1,22 @@
 package io.embrace.android.embracesdk.internal.delivery
 
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule2
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule2Impl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
+@RunWith(AndroidJUnit4::class)
 class DeliveryModule2ImplTest {
 
     private lateinit var module: DeliveryModule2
@@ -24,7 +29,7 @@ class DeliveryModule2ImplTest {
             FakeConfigModule(configService),
             FakeInitModule(),
             FakeWorkerThreadModule(),
-            FakeStorageModule()
+            CoreModuleImpl(ApplicationProvider.getApplicationContext(), FakeEmbLogger())
         )
     }
 

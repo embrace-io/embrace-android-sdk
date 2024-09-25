@@ -53,5 +53,10 @@ sealed class Worker(internal val threadName: String) {
          * Monitor thread that checks the main thread for ANRs.
          */
         object AnrWatchdogWorker : Background("anr-watchdog")
+
+        /**
+         * Delivery Worker
+         */
+        object DeliveryWorker : Background("delivery")
     }
 }

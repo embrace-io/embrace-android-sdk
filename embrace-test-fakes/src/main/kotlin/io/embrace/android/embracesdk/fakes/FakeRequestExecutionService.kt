@@ -13,6 +13,7 @@ class FakeRequestExecutionService : RequestExecutionService {
     private val serializer = TestPlatformSerializer()
     var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> ApiResponse.None }
     val attemptedHttpRequests = mutableListOf<Envelope<*>>()
+    var constantResponse: ApiResponse? = null
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getRequests(): List<Envelope<T>> {
@@ -23,10 +24,13 @@ class FakeRequestExecutionService : RequestExecutionService {
     }
 
     override fun attemptHttpRequest(
-        payloadStream: () -> InputStream,
+        payloadStream: () -> InputStream?,
         envelopeType: SupportedEnvelopeType
     ): ApiResponse {
-        val json: Envelope<*> = serializer.fromJson(payloadStream().buffered(), envelopeType.serializedType)
+        constantResponse?.run { return this }
+
+        val bufferedStream = payloadStream()?.buffered() ?: return ApiResponse.None
+        val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
         return responseAction(json)
     }
 }

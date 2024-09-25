@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
-import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -73,6 +73,6 @@ internal class DeliveryModule2Impl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             return@singleton null
         }
-        SchedulingServiceImpl(checkNotNull(requestExecutionService))
+        NoopSchedulingService()
     }
 }

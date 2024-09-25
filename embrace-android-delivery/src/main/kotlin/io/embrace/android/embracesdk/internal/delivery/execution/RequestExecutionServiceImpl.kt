@@ -7,7 +7,7 @@ import java.io.InputStream
 internal class RequestExecutionServiceImpl : RequestExecutionService {
 
     override fun attemptHttpRequest(
-        payloadStream: () -> InputStream,
+        payloadStream: () -> InputStream?,
         envelopeType: SupportedEnvelopeType
     ): ApiResponse {
         return ApiResponse.None

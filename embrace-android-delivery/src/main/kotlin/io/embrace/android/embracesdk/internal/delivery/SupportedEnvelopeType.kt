@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery
 
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import java.lang.reflect.Type
 
@@ -8,13 +9,14 @@ import java.lang.reflect.Type
  */
 enum class SupportedEnvelopeType(
     val serializedType: Type,
-    val description: String
+    val description: String,
+    val endpoint: Endpoint,
 ) {
 
-    CRASH(Envelope.logEnvelopeType, "crash"),
-    SESSION(Envelope.sessionEnvelopeType, "session"),
-    LOG(Envelope.logEnvelopeType, "log"),
-    NETWORK(Envelope.logEnvelopeType, "network");
+    CRASH(Envelope.logEnvelopeType, "crash", Endpoint.LOGS),
+    SESSION(Envelope.sessionEnvelopeType, "session", Endpoint.SESSIONS_V2),
+    LOG(Envelope.logEnvelopeType, "log", Endpoint.LOGS),
+    NETWORK(Envelope.logEnvelopeType, "network", Endpoint.LOGS);
 
     companion object {
         private val valueMap =

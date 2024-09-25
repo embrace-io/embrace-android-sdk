@@ -13,3 +13,9 @@ interface SchedulingService : CrashTeardownHandler {
      */
     fun onPayloadIntake()
 }
+
+class NoopSchedulingService : SchedulingService {
+    override fun onPayloadIntake() { }
+
+    override fun handleCrash(crashId: String) { }
+}

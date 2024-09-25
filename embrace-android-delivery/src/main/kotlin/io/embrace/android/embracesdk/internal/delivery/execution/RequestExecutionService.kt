@@ -14,7 +14,7 @@ interface RequestExecutionService {
      * Takes an [InputStream] of a payload and attempts an HTTP request to the Embrace backend.
      */
     fun attemptHttpRequest(
-        payloadStream: () -> InputStream,
+        payloadStream: () -> InputStream?,
         envelopeType: SupportedEnvelopeType
     ): ApiResponse
 }

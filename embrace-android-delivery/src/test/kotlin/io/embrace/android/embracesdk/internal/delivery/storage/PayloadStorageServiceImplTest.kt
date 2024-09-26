@@ -81,6 +81,7 @@ class PayloadStorageServiceImplTest {
 
     @Test
     fun `test objects pruned past limit`() {
+        assertNull(outputDir.listFiles())
         service = PayloadStorageServiceImpl(internalErrorService, lazy { outputDir }, 4)
 
         // exceed storage limit
@@ -95,8 +96,8 @@ class PayloadStorageServiceImplTest {
             Pair(1000L, NETWORK)
         ).forEach {
             val metadata = StoredTelemetryMetadata(it.first, UUID, it.second)
-            service.store(metadata) {
-                it.write("test".toByteArray())
+            service.store(metadata) { stream ->
+                stream.write("test".toByteArray())
             }
         }
 
@@ -109,8 +110,10 @@ class PayloadStorageServiceImplTest {
             Pair(0L, CRASH),
             Pair(1000L, CRASH),
             Pair(0L, SESSION),
-            Pair(1000L, NETWORK)
+            Pair(1000L, SESSION)
         )
         assertEquals(expected, outputs)
+        val msg = internalErrorService.throwables.first().message
+        assertEquals("Pruned payload storage", msg)
     }
 }

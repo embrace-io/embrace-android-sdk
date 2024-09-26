@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.caching
 
+import io.embrace.android.embracesdk.assertions.assertCountedDown
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
@@ -10,7 +11,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class PeriodicBackgroundActivityCacherTest {
@@ -41,7 +41,7 @@ internal class PeriodicBackgroundActivityCacherTest {
     fun `do not save more than once if delay time has not elapsed`() {
         queueScheduleSave()
         queueScheduleSave()
-        val latch = queueCompletionTask()
+        val latch = executor.queueCompletionTask()
         executor.blockingMode = false
         latch.assertCountedDown()
         assertEquals(1, executionCount.get())
@@ -57,7 +57,7 @@ internal class PeriodicBackgroundActivityCacherTest {
         assertEquals(1, executor.scheduledTasksCount())
         executor.moveForwardAndRunBlocked(1999)
         executor.blockingMode = false
-        queueCompletionTask().assertCountedDown()
+        executor.queueCompletionTask().assertCountedDown()
         assertEquals(1, latch2.count)
         assertEquals(1, executionCount.get())
         executor.moveForwardAndRunBlocked(2)
@@ -69,7 +69,7 @@ internal class PeriodicBackgroundActivityCacherTest {
     fun `stopping cacher prevents execution of the pending scheduled save`() {
         queueScheduleSave()
         cacher.stop()
-        val latch = queueCompletionTask()
+        val latch = executor.queueCompletionTask()
         executor.blockingMode = false
         latch.assertCountedDown()
         assertEquals(0, executionCount.get())
@@ -83,18 +83,5 @@ internal class PeriodicBackgroundActivityCacherTest {
             fakeSessionEnvelope()
         }
         return latch
-    }
-
-    private fun queueCompletionTask(): CountDownLatch {
-        val latch = CountDownLatch(1)
-        executor.submit {
-            latch.countDown()
-        }
-        return latch
-    }
-
-    private fun CountDownLatch.assertCountedDown() {
-        await(1, TimeUnit.SECONDS)
-        assertEquals(0, count)
     }
 }

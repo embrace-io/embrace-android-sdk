@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
-import java.util.zip.GZIPOutputStream
 
 internal class IntakeServiceImpl(
     private val schedulingService: SchedulingService,
@@ -15,7 +14,6 @@ internal class IntakeServiceImpl(
     private val internalErrorService: InternalErrorService,
     private val serializer: PlatformSerializer,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
-    @Suppress("unused") private val storageLimit: Int = 100,
     private val shutdownTimeoutMs: Long = 3000
 ) : IntakeService {
 
@@ -31,10 +29,8 @@ internal class IntakeServiceImpl(
 
     private fun processIntake(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {
         try {
-            payloadStorageService.store(metadata.filename) { outputStream ->
-                GZIPOutputStream(outputStream).use { gzipStream ->
-                    serializer.toJson(intake, metadata.envelopeType.serializedType, gzipStream)
-                }
+            payloadStorageService.store(metadata) { stream ->
+                serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
             }
             schedulingService.onPayloadIntake()
         } catch (exc: Throwable) {

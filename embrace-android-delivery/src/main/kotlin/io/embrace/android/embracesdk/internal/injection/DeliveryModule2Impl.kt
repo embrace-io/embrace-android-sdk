@@ -12,13 +12,15 @@ import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServ
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl.Companion.OUTPUT_DIR_NAME
 import io.embrace.android.embracesdk.internal.worker.Worker
+import java.io.File
 
 internal class DeliveryModule2Impl(
     configModule: ConfigModule,
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
-    storageModule: StorageModule
+    coreModule: CoreModule
 ) : DeliveryModule2 {
 
     override val intakeService: IntakeService? by singleton {
@@ -52,7 +54,10 @@ internal class DeliveryModule2Impl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             return@singleton null
         }
-        PayloadStorageServiceImpl(storageModule.cacheService)
+        PayloadStorageServiceImpl(
+            initModule.internalErrorService,
+            lazy { File(coreModule.context.filesDir, OUTPUT_DIR_NAME) }
+        )
     }
 
     override val requestExecutionService: RequestExecutionService? by singleton {

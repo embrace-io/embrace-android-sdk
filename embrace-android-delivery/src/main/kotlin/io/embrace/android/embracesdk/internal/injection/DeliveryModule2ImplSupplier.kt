@@ -8,17 +8,17 @@ typealias DeliveryModule2Supplier = (
     configModule: ConfigModule,
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
-    storageModule: StorageModule
+    coreModule: CoreModule
 ) -> DeliveryModule2
 
 fun createDeliveryModule2(
     configModule: ConfigModule,
     initModule: InitModule,
     workerThreadModule: WorkerThreadModule,
-    storageModule: StorageModule
+    coreModule: CoreModule
 ): DeliveryModule2 = DeliveryModule2Impl(
     configModule,
     initModule,
     workerThreadModule,
-    storageModule
+    coreModule
 )

@@ -14,9 +14,12 @@ import io.embrace.android.embracesdk.internal.worker.comparator.extractPriorityF
  * We considered the possibility of starvation & scoring payloads based on age, but we decided
  * that crashes/sessions are generally far more important so should always be delivered first.
  */
-internal val storedTelemetryComparator = Comparator { lhs: Runnable, rhs: Runnable ->
-    val (lhsPrio, rhsPrio) = extractPriorityFromRunnable<StoredTelemetryMetadata>(lhs, rhs)
-    return@Comparator compareBy<StoredTelemetryMetadata>(StoredTelemetryMetadata::envelopeType)
-        .thenBy<StoredTelemetryMetadata>(StoredTelemetryMetadata::timestamp)
-        .compare(lhsPrio, rhsPrio)
-}
+internal val storedTelemetryRunnableComparator =
+    Comparator<Runnable> { lhs: Runnable, rhs: Runnable ->
+        val (lhsPrio, rhsPrio) = extractPriorityFromRunnable<StoredTelemetryMetadata>(lhs, rhs)
+        return@Comparator storedTelemetryComparator.compare(lhsPrio, rhsPrio)
+    }
+
+internal val storedTelemetryComparator: java.util.Comparator<StoredTelemetryMetadata> =
+    compareBy(StoredTelemetryMetadata::envelopeType)
+        .thenBy(StoredTelemetryMetadata::timestamp)

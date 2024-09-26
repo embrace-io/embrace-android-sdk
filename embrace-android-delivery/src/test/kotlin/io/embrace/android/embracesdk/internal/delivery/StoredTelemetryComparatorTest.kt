@@ -22,7 +22,7 @@ class StoredTelemetryComparatorTest {
     fun `sort values`() {
         val result = listOf(network, log, session2, crash, session3, session)
             .map { PriorityRunnableFuture<StoredTelemetryMetadata>(mockk(relaxed = true), it) }
-            .sortedWith(storedTelemetryComparator)
+            .sortedWith(storedTelemetryRunnableComparator)
             .map { it.priorityInfo as StoredTelemetryMetadata }
             .map(StoredTelemetryMetadata::uuid)
         val expected = listOf(crash, session, session2, session3, log, network)

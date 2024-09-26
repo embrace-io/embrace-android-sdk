@@ -7,15 +7,18 @@ package io.embrace.android.embracesdk.internal.injection
 typealias DeliveryModule2Supplier = (
     configModule: ConfigModule,
     initModule: InitModule,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
+    storageModule: StorageModule
 ) -> DeliveryModule2
 
 fun createDeliveryModule2(
     configModule: ConfigModule,
     initModule: InitModule,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
+    storageModule: StorageModule
 ): DeliveryModule2 = DeliveryModule2Impl(
     configModule,
     initModule,
-    workerThreadModule
+    workerThreadModule,
+    storageModule
 )

@@ -216,7 +216,12 @@ internal class ModuleInitBootstrapper(
                     }
 
                     deliveryModule2 = init(DeliveryModule2::class) {
-                        deliveryModule2Supplier(configModule, initModule, workerThreadModule)
+                        deliveryModule2Supplier(
+                            configModule,
+                            initModule,
+                            workerThreadModule,
+                            storageModule
+                        )
                     }
 
                     anrModule = init(AnrModule::class) {

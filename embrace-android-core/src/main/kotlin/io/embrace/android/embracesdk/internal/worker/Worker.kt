@@ -56,6 +56,8 @@ sealed class Worker(internal val threadName: String) {
 
         /**
          * Delivery Worker
+         *
+         * TODO: Make this a PriorityWorker
          */
         object DeliveryWorker : Background("delivery")
     }

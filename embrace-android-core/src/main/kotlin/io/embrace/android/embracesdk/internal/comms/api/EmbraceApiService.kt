@@ -73,7 +73,7 @@ internal class EmbraceApiService(
                 null
             }
 
-            is ApiResponse.Failure, ApiResponse.None -> {
+            is ApiResponse.Failure, ApiResponse.None, ApiResponse.NoPayload -> {
                 null
             }
 

@@ -11,26 +11,27 @@ import java.io.InputStream
 class FakeRequestExecutionService : RequestExecutionService {
 
     private val serializer = TestPlatformSerializer()
-    var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> ApiResponse.None }
+    var constantResponse: ApiResponse = ApiResponse.None
+    var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> constantResponse }
     val attemptedHttpRequests = mutableListOf<Envelope<*>>()
-    var constantResponse: ApiResponse? = null
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getRequests(): List<Envelope<T>> {
-        if (T::class != SessionPayload::class || T::class != LogPayload::class) {
+        if (T::class != SessionPayload::class && T::class != LogPayload::class) {
             error("Unsupported type: ${T::class}")
         }
         return attemptedHttpRequests.filter { it.data is T } as List<Envelope<T>>
     }
 
     override fun attemptHttpRequest(
-        payloadStream: () -> InputStream?,
+        payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType
     ): ApiResponse {
-        constantResponse?.run { return this }
-
-        val bufferedStream = payloadStream()?.buffered() ?: return ApiResponse.None
+        val bufferedStream = payloadStream().buffered()
         val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
+        attemptedHttpRequests.add(json)
         return responseAction(json)
     }
+
+    fun sendAttempts() = getRequests<SessionPayload>().size + getRequests<LogPayload>().size
 }

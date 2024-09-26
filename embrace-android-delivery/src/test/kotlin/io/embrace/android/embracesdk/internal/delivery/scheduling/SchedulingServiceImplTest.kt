@@ -6,8 +6,9 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.FakeStorageService2
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.fixtures.fakeLogPayloadReference
-import io.embrace.android.embracesdk.fixtures.fakeSessionPayloadReference
+import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
+import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
+import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -31,10 +32,10 @@ internal class SchedulingServiceImplTest {
             anotherTestWorkerName = Worker.Background.DeliveryWorker
         )
         schedulingExecutor = workerModule.executor.apply { blockingMode = true }
-        deliveryExecutor = workerModule.anotherExecutor.apply { blockingMode = true }
+        deliveryExecutor = workerModule.anotherExecutor.apply { blockingMode = false }
         clock = workerModule.executorClock
         storageService = FakeStorageService2(
-            listOf(fakeSessionPayloadReference, fakeLogPayloadReference)
+            listOf(fakeSessionStoredTelemetryMetadata, fakeLogStoredTelemetryMetadata)
         )
         executionService = FakeRequestExecutionService()
         schedulingService = SchedulingServiceImpl(
@@ -69,50 +70,56 @@ internal class SchedulingServiceImplTest {
         schedulingService.onPayloadIntake()
         schedulingExecutor.runCurrentlyBlocked()
         val latch = deliveryExecutor.queueCompletionTask()
-        deliveryExecutor.runCurrentlyBlocked()
         latch.assertCountedDown()
-        assertEquals(3, deliveryExecutor.submitCount)
+        assertEquals(2, executionService.sendAttempts())
     }
 
     @Test
     fun `payloads remaining in storage will not be resent if retry period has not ended`() {
-        executionService.constantResponse = ApiResponse.None
+        executionService.constantResponse = ApiResponse.Failure(code = 500, emptyMap())
         schedulingExecutor.blockingMode = false
-        deliveryExecutor.blockingMode = false
         schedulingService.onPayloadIntake()
         deliveryExecutor.queueCompletionTask().assertCountedDown()
-        val submittedDeliveries = deliveryExecutor.submitCount
         schedulingService.onPayloadIntake()
         deliveryExecutor.queueCompletionTask().assertCountedDown()
-        assertEquals(submittedDeliveries + 1, deliveryExecutor.submitCount)
+        assertEquals(2, executionService.sendAttempts())
     }
 
     @Test
     fun `payloads remaining in storage will resent if retry period has ended`() {
-        executionService.constantResponse = ApiResponse.None
+        executionService.constantResponse = ApiResponse.Failure(code = 500, emptyMap())
         schedulingExecutor.blockingMode = false
-        deliveryExecutor.blockingMode = false
         schedulingService.onPayloadIntake()
         deliveryExecutor.queueCompletionTask().assertCountedDown()
-        val submittedDeliveries = deliveryExecutor.submitCount
         clock.tick(INITIAL_DELAY_MS + 1)
         schedulingService.onPayloadIntake()
         deliveryExecutor.queueCompletionTask().assertCountedDown()
-        assertEquals(submittedDeliveries + 3, deliveryExecutor.submitCount)
+        assertEquals(4, executionService.sendAttempts())
     }
 
     @Test
     fun `new payload arrival will trigger it to be sent and not resend in progress payloads`() {
         schedulingService.onPayloadIntake()
         schedulingExecutor.runCurrentlyBlocked()
-        storageService.cachedPayloads.add(fakeSessionPayloadReference.copy(fileName = "session2.json"))
+        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)
         schedulingService.onPayloadIntake()
         val scheduleLatch = schedulingExecutor.queueCompletionTask()
         schedulingExecutor.runCurrentlyBlocked()
         scheduleLatch.assertCountedDown()
         val deliveryLatch = deliveryExecutor.queueCompletionTask()
-        deliveryExecutor.runCurrentlyBlocked()
         deliveryLatch.assertCountedDown()
-        assertEquals(4, deliveryExecutor.submitCount)
+        assertEquals(3, executionService.sendAttempts())
+    }
+
+    @Test
+    fun `no sent attempt will be made if a payload cannot be found on disk`() {
+        deliveryExecutor.blockingMode = true
+        schedulingService.onPayloadIntake()
+        schedulingExecutor.runCurrentlyBlocked()
+        storageService.cachedPayloads.remove(fakeLogStoredTelemetryMetadata)
+        deliveryExecutor.blockingMode = false
+        val deliveryLatch = deliveryExecutor.queueCompletionTask()
+        deliveryLatch.assertCountedDown()
+        assertEquals(1, executionService.sendAttempts())
     }
 }

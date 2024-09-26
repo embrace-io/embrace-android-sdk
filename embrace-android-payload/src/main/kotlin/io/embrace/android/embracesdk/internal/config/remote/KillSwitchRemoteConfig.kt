@@ -12,5 +12,8 @@ data class KillSwitchRemoteConfig(
     @Json(name = "sig_handler_detection")
     val sigHandlerDetection: Boolean? = null,
     @Json(name = "jetpack_compose")
-    val jetpackCompose: Boolean? = null
+    val jetpackCompose: Boolean? = null,
+
+    @Json(name = "v2_storage")
+    val v2Storage: Boolean? = null
 )

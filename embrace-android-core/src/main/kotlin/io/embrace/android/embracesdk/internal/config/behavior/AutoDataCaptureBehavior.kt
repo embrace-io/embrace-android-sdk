@@ -56,4 +56,9 @@ interface AutoDataCaptureBehavior {
      * for apps with a lot of local files.
      */
     fun isDiskUsageCaptureEnabled(): Boolean
+
+    /**
+     * Gates whether the SDK should use the v2 storage implementation or the legacy one.
+     */
+    fun isV2StorageEnabled(): Boolean
 }

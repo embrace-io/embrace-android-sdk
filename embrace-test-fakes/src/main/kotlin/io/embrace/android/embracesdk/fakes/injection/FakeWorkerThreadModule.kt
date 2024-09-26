@@ -10,19 +10,22 @@ import java.util.concurrent.atomic.AtomicReference
 
 class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
-    private val name: Worker? = null,
+    private val testWorkerName: Worker? = null,
+    private val anotherTestWorkerName: Worker? = null,
     private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule)
 ) : WorkerThreadModule by base {
 
     val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()
-    val executor: BlockingScheduledExecutorService =
-        BlockingScheduledExecutorService(fakeClock = executorClock)
+    val executor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
+    val anotherExecutor: BlockingScheduledExecutorService = BlockingScheduledExecutorService(fakeClock = executorClock)
 
     private val backgroundWorker = BackgroundWorker(executor)
+    private val anotherBackgroundWorker = BackgroundWorker(anotherExecutor)
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
         return when (worker) {
-            name -> backgroundWorker
+            testWorkerName -> backgroundWorker
+            anotherTestWorkerName -> anotherBackgroundWorker
             else -> base.backgroundWorker(worker)
         }
     }

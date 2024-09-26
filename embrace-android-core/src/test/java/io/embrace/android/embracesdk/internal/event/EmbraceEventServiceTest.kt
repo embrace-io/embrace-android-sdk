@@ -90,7 +90,7 @@ internal class EmbraceEventServiceTest {
         sessionPropertiesService = FakeSessionPropertiesService()
         gatingService = FakeGatingService(EmbraceGatingService(configService, FakeLogService(), FakeEmbLogger()))
         val initModule = FakeInitModule(clock = fakeClock)
-        fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule, name = Worker.Background.NonIoRegWorker)
+        fakeWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule, testWorkerName = Worker.Background.NonIoRegWorker)
         eventHandler = EventHandler(
             metadataService = metadataService,
             sessionIdTracker = sessionIdTracker,

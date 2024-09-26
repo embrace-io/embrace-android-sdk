@@ -18,7 +18,7 @@ internal class DataSourceModuleImplTest {
             FakeConfigService(),
             FakeWorkerThreadModule(
                 fakeInitModule = fakeInitModule,
-                name = Worker.Background.NonIoRegWorker
+                testWorkerName = Worker.Background.NonIoRegWorker
             ),
         )
         assertSame(module.dataCaptureOrchestrator, module.embraceFeatureRegistry)

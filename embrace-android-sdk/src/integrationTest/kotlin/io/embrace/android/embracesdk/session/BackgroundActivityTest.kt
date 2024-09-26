@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
@@ -39,6 +41,7 @@ internal class BackgroundActivityTest {
             val first = bgActivities[0]
             val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
             assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
+            assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
 
             // verify second bg activity
             val second = bgActivities[1]

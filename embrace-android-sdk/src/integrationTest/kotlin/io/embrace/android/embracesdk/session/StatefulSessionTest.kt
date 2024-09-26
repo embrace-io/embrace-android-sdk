@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
@@ -60,6 +62,7 @@ internal class StatefulSessionTest {
                 )
             )
             assertEquals("0", attrs.findAttributeValue(embErrorLogCount.name))
+            assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
 
             // verify second session
             val second = messages[1]

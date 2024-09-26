@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -98,11 +99,13 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         clock.tick()
         val foregroundTime = clock.now()
+        val sessionSpan = currentSessionSpan.sessionSpan
         orchestrator.onForeground(true, foregroundTime)
         assertEquals(2, memoryCleanerService.callCount)
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         validateSession(
-            endTimeMs = foregroundTime - 1,
+            sessionSpan = sessionSpan,
+            endTimeMs = foregroundTime,
             endType = LifeEventType.BKGND_STATE
         )
     }
@@ -112,10 +115,12 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         clock.tick()
         val backgroundTime = clock.now()
+        val sessionSpan = currentSessionSpan.sessionSpan
         orchestrator.onBackground(backgroundTime)
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
-            endTimeMs = backgroundTime - 1,
+            sessionSpan = sessionSpan,
+            endTimeMs = backgroundTime,
             endType = LifeEventType.STATE
         )
     }
@@ -182,10 +187,12 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         clock.tick(10000)
         val endTimeMs = clock.now()
+        val sessionSpan = currentSessionSpan.sessionSpan
         orchestrator.endSessionWithManual(true)
         assertEquals(2, memoryCleanerService.callCount)
         validateSession(
-            endTimeMs = endTimeMs - 10000,
+            sessionSpan = sessionSpan,
+            endTimeMs = endTimeMs,
             endType = LifeEventType.MANUAL
         )
     }
@@ -416,10 +423,11 @@ internal class SessionOrchestratorTest {
     }
 
     private fun validateSession(
+        sessionSpan: PersistableEmbraceSpan?,
         endTimeMs: Long,
         endType: LifeEventType
     ) {
         assertEquals(endType, endType)
-        assertEquals(endTimeMs, checkNotNull(currentSessionSpan.sessionSpan).startEpochNanos.nanosToMillis())
+        assertEquals(endTimeMs, checkNotNull(sessionSpan).snapshot()?.endTimeNanos?.nanosToMillis())
     }
 }

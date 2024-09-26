@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.envelope.session
 
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -23,10 +24,11 @@ internal class SessionPayloadSourceImpl(
 
     override fun getSessionPayload(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger, symbolMapProvider)
+        val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
-        val snapshots: List<Span>? = retrieveSpanSnapshots()
-        val spans: List<Span>? = retrieveSpanData(endType, startNewSession, crashId)
+        val snapshots: List<Span>? = retrieveSpanSnapshots(isCacheAttempt)
+        val spans: List<Span>? = retrieveSpanData(isCacheAttempt, endType, startNewSession, crashId)
 
         return SessionPayload(
             spans = spans,
@@ -35,12 +37,15 @@ internal class SessionPayloadSourceImpl(
         )
     }
 
-    private fun retrieveSpanData(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): List<Span>? {
-        val cacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
-
+    private fun retrieveSpanData(
+        isCacheAttempt: Boolean,
+        endType: SessionSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?
+    ): List<Span>? {
         val spans: List<Span>? = captureDataSafely(logger) {
             val result = when {
-                !cacheAttempt -> {
+                !isCacheAttempt -> {
                     val appTerminationCause = when {
                         crashId != null -> AppTerminationCause.Crash
                         else -> null
@@ -60,7 +65,10 @@ internal class SessionPayloadSourceImpl(
         return spans
     }
 
-    private fun retrieveSpanSnapshots() = captureDataSafely(logger) {
-        spanRepository.getActiveSpans().mapNotNull { it.snapshot() }
+    private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(logger) {
+        // Only snapshot session spans if we are caching an in-progress session payload
+        spanRepository.getActiveSpans()
+            .filter { isCacheAttempt || !it.hasFixedAttribute(EmbType.Ux.Session) }
+            .mapNotNull { it.snapshot() }
     }
 }

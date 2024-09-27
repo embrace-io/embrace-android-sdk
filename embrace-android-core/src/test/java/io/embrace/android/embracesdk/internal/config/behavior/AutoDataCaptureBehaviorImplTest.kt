@@ -13,7 +13,8 @@ internal class AutoDataCaptureBehaviorImplTest {
     private val remote = RemoteConfig(
         killSwitchConfig = KillSwitchRemoteConfig(
             sigHandlerDetection = false,
-            jetpackCompose = false
+            jetpackCompose = false,
+            v2Storage = true
         ),
         dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
     )
@@ -31,6 +32,8 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isNativeCrashCaptureEnabled())
             assertTrue(isDiskUsageCaptureEnabled())
             assertTrue(isThermalStatusCaptureEnabled())
+            assertTrue(isThermalStatusCaptureEnabled())
+            assertFalse(isV2StorageEnabled())
         }
     }
 
@@ -40,6 +43,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(is3rdPartySigHandlerDetectionEnabled())
             assertFalse(isComposeClickCaptureEnabled())
             assertFalse(isThermalStatusCaptureEnabled())
+            assertTrue(isV2StorageEnabled())
         }
     }
 

@@ -56,48 +56,30 @@ internal class SchedulingServiceImpl(
      */
     private fun deliveryLoop() {
         try {
-            var deliveryQueue = getDeliveryQueue()
+            var deliveryQueue = createPayloadQueue()
             while (deliveryQueue.isNotEmpty() && readyToSend()) {
                 deliveryQueue.poll()?.let { payload ->
-                    queueDelivery(payload)
+                    if (payload.shouldSendPayload()) {
+                        payload.envelopeType.endpoint.updateBlockedEndpoint()
+                        queueDelivery(payload)
+                    }
                 }
 
-                if (queryForPayloads.compareAndSet(true, false)) {
-                    deliveryQueue = getDeliveryQueue()
-                }
-
-                if (deliveryQueue.isEmpty()) {
-                    deliveryQueue = getDeliveryQueue()
+                if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
+                    deliveryQueue = createPayloadQueue()
                 }
             }
         } finally {
             sendLoopActive.set(false)
-            scheduleNextCheck()
+            scheduleNextDeliveryLoop()
         }
     }
 
-    private fun getDeliveryQueue() = LinkedList(getReadyPayloads())
-
-    private fun getReadyPayloads(): List<StoredTelemetryMetadata> =
+    private fun createPayloadQueue() = LinkedList(
         storageService.getPayloadsByPriority()
             .filter { it.shouldSendPayload() }
             .sortedWith(storedTelemetryComparator)
-
-    private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {
-        // determine if the given payload is eligible to be sent
-        // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried
-        updateBlockedEndpoint(envelopeType.endpoint)
-
-        return if (activeSends.contains(this)) {
-            false
-        } else if (blockedEndpoints.containsKey(envelopeType.endpoint)) {
-            false
-        } else {
-            payloadsToRetry[this]?.run {
-                clock.now() >= nextRetryTimeMs
-            } ?: true
-        }
-    }
+    )
 
     private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ApiResponse> {
         activeSends.add(payload)
@@ -118,17 +100,18 @@ internal class SchedulingServiceImpl(
                             // If delivery of this payload should be retried, add or replace the entry in the retry map
                             // with the new values for how many times it has failed, and when the next retry should happen
                             val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
-                            val nextRetryTimeMs = calculateNextRetryTime(retryAttempts = retryAttempts)
+                            val nextRetryTimeMs = if (this is ApiResponse.TooManyRequests && retryAfter != null) {
+                                val unblockedTimestampMs = clock.now() + retryAfter as Long
+                                blockedEndpoints[endpoint] = unblockedTimestampMs
+                                unblockedTimestampMs
+                            } else {
+                                calculateNextRetryTime(retryAttempts = retryAttempts)
+                            }
+
                             payloadsToRetry[payload] = RetryInstance(
                                 failedAttempts = retryAttempts + 1,
                                 nextRetryTimeMs = nextRetryTimeMs
                             )
-                        }
-
-                        if (this is ApiResponse.TooManyRequests) {
-                            retryAfter?.let { delayMs ->
-                                blockedEndpoints[endpoint] = clock.now() + delayMs
-                            }
                         }
                     }
                 } else {
@@ -141,7 +124,7 @@ internal class SchedulingServiceImpl(
         }
     }
 
-    private fun scheduleNextCheck() {
+    private fun scheduleNextDeliveryLoop() {
         payloadsToRetry.map { it.value.nextRetryTimeMs }.minOrNull()?.let { timestampMs ->
             if (timestampMs <= clock.now()) {
                 startDeliveryLoop()
@@ -156,19 +139,38 @@ internal class SchedulingServiceImpl(
     }
 
     private fun readyToSend(): Boolean {
-        // TODO: determine if the SDK is in a state where it's ready to send payloads, i.e. have network connection and free thread
+        // TODO: determine if the SDK is in a state where it's ready to send payloads, e.g. have network connection, etc.
         return true
     }
 
-    private fun updateBlockedEndpoint(endpoint: Endpoint) {
-        blockedEndpoints[endpoint]?.let {
-            if (it <= clock.now()) {
-                blockedEndpoints.remove(endpoint)
-            }
+    private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {
+        // determine if the given payload is eligible to be sent
+        // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried
+        return if (activeSends.contains(this)) {
+            false
+        } else if (isEndpointBlocked()) {
+            false
+        } else {
+            payloadsToRetry[this]?.run {
+                clock.now() >= nextRetryTimeMs
+            } ?: true
         }
     }
 
     private fun StoredTelemetryMetadata.toStream(): InputStream? = storageService.loadPayloadAsStream(this)
+
+    private fun StoredTelemetryMetadata.isEndpointBlocked(): Boolean =
+        blockedEndpoints[envelopeType.endpoint]?.let { timestampMs ->
+            timestampMs > clock.now()
+        } ?: false
+
+    private fun Endpoint.updateBlockedEndpoint() {
+        blockedEndpoints[this]?.let {
+            if (it <= clock.now()) {
+                blockedEndpoints.remove(this)
+            }
+        }
+    }
 
     private fun calculateDelay(nextRetryTimeMs: Long): Long = nextRetryTimeMs - clock.now()
 

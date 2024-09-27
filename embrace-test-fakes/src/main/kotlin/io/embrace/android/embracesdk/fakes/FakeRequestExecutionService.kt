@@ -11,12 +11,13 @@ import java.io.InputStream
 class FakeRequestExecutionService : RequestExecutionService {
 
     private val serializer = TestPlatformSerializer()
-    var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> ApiResponse.None }
+    var constantResponse: ApiResponse = ApiResponse.None
+    var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> constantResponse }
     val attemptedHttpRequests = mutableListOf<Envelope<*>>()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getRequests(): List<Envelope<T>> {
-        if (T::class != SessionPayload::class || T::class != LogPayload::class) {
+        if (T::class != SessionPayload::class && T::class != LogPayload::class) {
             error("Unsupported type: ${T::class}")
         }
         return attemptedHttpRequests.filter { it.data is T } as List<Envelope<T>>
@@ -26,7 +27,11 @@ class FakeRequestExecutionService : RequestExecutionService {
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType
     ): ApiResponse {
-        val json: Envelope<*> = serializer.fromJson(payloadStream().buffered(), envelopeType.serializedType)
+        val bufferedStream = payloadStream().buffered()
+        val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
+        attemptedHttpRequests.add(json)
         return responseAction(json)
     }
+
+    fun sendAttempts() = getRequests<SessionPayload>().size + getRequests<LogPayload>().size
 }

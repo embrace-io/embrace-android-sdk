@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.concurrency
 
+import io.embrace.android.embracesdk.assertions.assertCountedDown
 import io.embrace.android.embracesdk.fakes.FakeClock
 import java.util.LinkedList
 import java.util.concurrent.AbstractExecutorService
@@ -211,7 +212,17 @@ class BlockingScheduledExecutorService(
         submit {
             latch.countDown()
         }
+        if (blockingMode) {
+            runCurrentlyBlocked()
+        }
         return latch
+    }
+
+    /**
+     * Wait [waitTimeMs] for all the queued up jobs on this executor to finish running
+     */
+    fun awaitExecutionCompletion(waitTimeMs: Long = 1000L) {
+        queueCompletionTask().assertCountedDown(waitTimeMs)
     }
 
     private fun <V> submitOrQueue(delay: Long, futureTask: BlockedFutureScheduledTask<V>) {

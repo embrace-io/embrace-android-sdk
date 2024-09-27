@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
@@ -30,7 +29,7 @@ internal class SessionOrchestratorImpl(
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
-    private val deliveryService: DeliveryService,
+    private val sessionPayloadStore: SessionPayloadStore,
     private val periodicSessionCacher: PeriodicSessionCacher,
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
@@ -250,11 +249,7 @@ internal class SessionOrchestratorImpl(
 
     private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
         envelope?.let {
-            val type = when (transitionType) {
-                TransitionType.CRASH -> SessionSnapshotType.JVM_CRASH
-                else -> SessionSnapshotType.NORMAL_END
-            }
-            deliveryService.sendSession(it, type)
+            sessionPayloadStore.storeSessionPayload(envelope, transitionType)
         }
     }
 
@@ -278,7 +273,7 @@ internal class SessionOrchestratorImpl(
                 synchronized(lock) {
                     updatePeriodicCacheAttrs()
                     payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                        deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+                        sessionPayloadStore.cacheSessionSnapshot(this)
                     }
                 }
             } else {
@@ -294,7 +289,7 @@ internal class SessionOrchestratorImpl(
                 synchronized(lock) {
                     updatePeriodicCacheAttrs()
                     payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                        deliveryService.sendSession(this, SessionSnapshotType.PERIODIC_CACHE)
+                        sessionPayloadStore.cacheSessionSnapshot(this)
                     }
                 }
             } else {

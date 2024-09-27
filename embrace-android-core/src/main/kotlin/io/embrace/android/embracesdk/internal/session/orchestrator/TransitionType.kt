@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 
-internal enum class TransitionType {
+enum class TransitionType {
     INITIAL, END_MANUAL, ON_FOREGROUND, ON_BACKGROUND, CRASH;
 
     fun endState(currentState: ProcessState): ProcessState = when (this) {

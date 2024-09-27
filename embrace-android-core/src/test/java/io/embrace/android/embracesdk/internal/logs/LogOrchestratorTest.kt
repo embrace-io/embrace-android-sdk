@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
@@ -47,7 +48,7 @@ internal class LogOrchestratorTest {
             worker,
             clock,
             logSink,
-            deliveryService,
+            V1PayloadStore(deliveryService),
             FakePayloadSourceModule(
                 logPayloadSource = LogPayloadSourceImpl(logSink)
             ).logEnvelopeSource

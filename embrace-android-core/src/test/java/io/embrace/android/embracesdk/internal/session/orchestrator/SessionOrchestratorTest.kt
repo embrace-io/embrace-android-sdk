@@ -404,7 +404,7 @@ internal class SessionOrchestratorTest {
                 userService,
                 sessionPropertiesService
             ),
-            V1SessionPayloadStore(deliveryService),
+            V1PayloadStore(deliveryService),
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,

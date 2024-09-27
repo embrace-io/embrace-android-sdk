@@ -29,7 +29,7 @@ internal class SessionOrchestratorImpl(
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
-    private val sessionPayloadStore: SessionPayloadStore,
+    private val payloadStore: PayloadStore,
     private val periodicSessionCacher: PeriodicSessionCacher,
     private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
@@ -249,7 +249,7 @@ internal class SessionOrchestratorImpl(
 
     private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
         envelope?.let {
-            sessionPayloadStore.storeSessionPayload(envelope, transitionType)
+            payloadStore.storeSessionPayload(envelope, transitionType == TransitionType.CRASH)
         }
     }
 
@@ -273,7 +273,7 @@ internal class SessionOrchestratorImpl(
                 synchronized(lock) {
                     updatePeriodicCacheAttrs()
                     payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                        sessionPayloadStore.cacheSessionSnapshot(this)
+                        payloadStore.cacheSessionSnapshot(this)
                     }
                 }
             } else {
@@ -289,7 +289,7 @@ internal class SessionOrchestratorImpl(
                 synchronized(lock) {
                     updatePeriodicCacheAttrs()
                     payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                        sessionPayloadStore.cacheSessionSnapshot(this)
+                        payloadStore.cacheSessionSnapshot(this)
                     }
                 }
             } else {

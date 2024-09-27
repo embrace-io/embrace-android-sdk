@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 
 /**
  * Contains dependencies that are required for delivering code to Embrace servers.
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
  * functionality.
  */
 interface DeliveryModule {
+    val payloadStore: PayloadStore
     val deliveryService: DeliveryService
     val intakeService: IntakeService?
     val payloadResurrectionService: PayloadResurrectionService?

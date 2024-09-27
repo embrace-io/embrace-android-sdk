@@ -15,6 +15,8 @@ import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServ
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -25,6 +27,10 @@ internal class DeliveryModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule
 ) : DeliveryModule {
+
+    override val payloadStore: PayloadStore by singleton {
+        V1PayloadStore(deliveryService)
+    }
 
     override val deliveryService: DeliveryService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {

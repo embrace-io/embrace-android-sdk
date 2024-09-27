@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.network.logging.NetworkLoggingService
-import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class LogModuleImpl(
@@ -74,7 +73,7 @@ internal class LogModuleImpl(
             workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.clock,
             openTelemetryModule.logSink,
-            V1PayloadStore(deliveryModule.deliveryService),
+            deliveryModule.payloadStore,
             payloadSourceModule.logEnvelopeSource,
         )
     }

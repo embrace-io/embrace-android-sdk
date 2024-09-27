@@ -3,18 +3,16 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordData
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fixtures.deferredLogRecordData
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLogRecordData
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.sdk.logs.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -33,7 +31,7 @@ internal class LogOrchestratorTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var worker: BackgroundWorker
     private lateinit var logSink: LogSink
-    private lateinit var deliveryService: FakeDeliveryService
+    private lateinit var store: FakePayloadStore
     private val clock = FakeClock()
 
     @Before
@@ -42,13 +40,13 @@ internal class LogOrchestratorTest {
         worker =
             BackgroundWorker(executorService)
         logSink = LogSinkImpl()
-        deliveryService = FakeDeliveryService()
+        store = FakePayloadStore()
         clock.setCurrentTime(now)
         logOrchestrator = LogOrchestratorImpl(
             worker,
             clock,
             logSink,
-            V1PayloadStore(deliveryService),
+            store,
             FakePayloadSourceModule(
                 logPayloadSource = LogPayloadSourceImpl(logSink)
             ).logEnvelopeSource
@@ -148,9 +146,10 @@ internal class LogOrchestratorTest {
 
         // Verify the logs are sent
         assertTrue(logSink.logsForNextBatch().isEmpty())
-        assertEquals(0, deliveryService.lastSentLogPayloads.size)
-        assertEquals(1, deliveryService.lastSavedLogPayloads.size)
-        assertEquals(4, deliveryService.lastSavedLogPayloads[0].data.logs?.size)
+        store.storedLogPayloads.single().let { (envelope, attemptImmediateRequest) ->
+            assertEquals(4, envelope.data.logs?.size)
+            assertFalse(attemptImmediateRequest)
+        }
     }
 
     @Test
@@ -177,11 +176,11 @@ internal class LogOrchestratorTest {
 
         latch.await(1000L, TimeUnit.MILLISECONDS)
 
-        assertEquals("Too many payloads sent", 1, deliveryService.lastSentLogPayloads.size)
+        assertEquals("Too many payloads sent", 1, store.storedLogPayloads.size)
         assertEquals(
             "Too many logs in payload",
             50,
-            deliveryService.lastSentLogPayloads[0].data.logs?.size
+            store.storedLogPayloads[0].first.data.logs?.size
         )
     }
 
@@ -200,18 +199,21 @@ internal class LogOrchestratorTest {
         executorService.runCurrentlyBlocked()
         // Verify the log is not in the LogSink but is saved
         assertNull(logSink.pollUnbatchedLog())
-        assertNotNull(deliveryService.lastSavedLogPayloads.single())
-        assertEquals(0, deliveryService.lastSentLogPayloads.size)
+
+        store.storedLogPayloads.single().let { (_, attemptImmediateRequest) ->
+            assertFalse(attemptImmediateRequest)
+        }
     }
 
     private fun verifyPayload(numberOfLogs: Int) {
-        assertNotNull(deliveryService.lastSentLogPayloads)
-        assertEquals(1, deliveryService.lastSentLogPayloads.size)
-        assertEquals(numberOfLogs, deliveryService.lastSentLogPayloads[0].data.logs?.size)
+        store.storedLogPayloads.single().let { (envelope, attemptImmediateRequest) ->
+            assertEquals(numberOfLogs, envelope.data.logs?.size)
+            assertTrue(attemptImmediateRequest)
+        }
     }
 
     private fun verifyPayloadNotSent() {
-        assertEquals(0, deliveryService.lastSentLogPayloads.size)
+        assertTrue(store.storedLogPayloads.isEmpty())
     }
 
     private fun moveTimeAhead(timeStep: Long) {

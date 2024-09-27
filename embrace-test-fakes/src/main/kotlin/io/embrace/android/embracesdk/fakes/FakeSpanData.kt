@@ -24,13 +24,14 @@ import kotlin.random.Random
 class FakeSpanData(
     private var name: String = "fake-started-span",
     private var kind: SpanKind = SpanKind.INTERNAL,
+    private var type: EmbType = EmbType.Performance.Default,
     private var spanContext: SpanContext = newTraceRootContext(),
     private var parentSpanContext: SpanContext = SpanContext.getInvalid(),
     private var startEpochNanos: Long = DEFAULT_START_TIME_MS.millisToNanos(),
     private var attributes: Attributes =
         Attributes.builder().fromMap(
             attributes = mapOf(
-                EmbType.Performance.Default.toEmbraceKeyValuePair(),
+                type.toEmbraceKeyValuePair(),
                 KeySpan.toEmbraceKeyValuePair(),
                 Pair("my-key", "my-value")
             ),

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
@@ -11,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -259,17 +257,6 @@ internal class TracingApiTest {
                     )
                 ),
                 key = true
-            )
-
-            val sessionSpanSnapshot = checkNotNull(snapshots["emb-session"])
-            sessionSpanSnapshot.assertIsType(EmbType.Ux.Session)
-            assertEmbraceSpanData(
-                span = sessionSpanSnapshot,
-                expectedStartTimeMs = 169220160100,
-                expectedEndTimeMs = null,
-                expectedParentId = SpanId.getInvalid(),
-                expectedStatus = Span.Status.UNSET,
-                private = false
             )
         }
     }

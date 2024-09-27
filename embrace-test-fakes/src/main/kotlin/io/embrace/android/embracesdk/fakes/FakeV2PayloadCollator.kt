@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.session.message.FinalEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.InitialEnvelopeParams
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollator
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakeV2PayloadCollator(
@@ -44,5 +45,10 @@ class FakeV2PayloadCollator(
      */
     override fun buildFinalEnvelope(
         params: FinalEnvelopeParams
-    ): Envelope<SessionPayload> = Envelope(data = SessionPayload())
+    ): Envelope<SessionPayload> {
+        if (params.endType != SessionSnapshotType.PERIODIC_CACHE) {
+            currentSessionSpan.endSession(startNewSession = params.startNewSession)
+        }
+        return Envelope(data = SessionPayload())
+    }
 }

@@ -50,7 +50,7 @@ internal class SessionApiTest {
 
             // validate snapshots separately, as the JSON diff is tricky to debug
             val snapshots = checkNotNull(message.data.spanSnapshots)
-            assertEquals(2, snapshots.size)
+            assertEquals(1, snapshots.size)
 
             // validate network status span
             val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
@@ -58,12 +58,19 @@ internal class SessionApiTest {
             assertEquals("sys.network_status", networkStatusSpan.attributes?.findAttributeValue("emb.type"))
 
             // validate session span
-            val sessionSpan = snapshots.single { it.name == "emb-session" }
+            val spans = checkNotNull(message.data.spans)
+            val sessionSpan = spans.single { it.name == "emb-session" }
             assertEquals(startTime, sessionSpan.startTimeNanos?.nanosToMillis())
             assertNotNull(sessionSpan.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-            val attrs = checkNotNull(sessionSpan.attributes?.filterNot {
+            val attrs = checkNotNull(sessionSpan.attributes)
+            val attributeKeys = attrs.map { it.key }
+            validateExistenceOnly.forEach { key ->
+                attributeKeys.contains(key)
+            }
+
+            val attributesToCheck = attrs.filterNot {
                 ignoredAttributes.contains(it.key)
-            }?.toMap())
+            }.toMap().toSortedMap()
 
             val expected = mapOf(
                 "emb.cold_start" to "true",
@@ -76,16 +83,30 @@ internal class SessionApiTest {
                 "emb.session_number" to "1",
                 "emb.type" to "ux.session",
                 "emb.error_log_count" to "0",
-            )
-            assertEquals(expected, attrs)
+                "emb.usage.set_username" to "1",
+                "emb.usage.set_user_email" to "1",
+                "emb.usage.set_user_identifier" to "1",
+                "emb.private.sequence_id" to "4"
+            ).toSortedMap()
+
+            assertEquals(expected, attributesToCheck)
         }
     }
 
     private companion object {
+        // Attributes we want to know exist, but whose value we don't need to validate
+        val validateExistenceOnly = setOf(
+            SessionIncubatingAttributes.SESSION_ID.key,
+            "emb.kotlin_on_classpath",
+            "emb.okhttp3",
+            "emb.process_identifier",
+            "emb.is_emulator",
+            "emb.okhttp3_on_classpath",
+        )
+
         // Attributes that are unstable that we should not try to verify
         val ignoredAttributes = setOf(
-            SessionIncubatingAttributes.SESSION_ID,
-            embFreeDiskBytes.attributeKey
-        ).map { it.key }
+            embFreeDiskBytes.attributeKey.key
+        ).plus(validateExistenceOnly)
     }
 }

@@ -4,12 +4,11 @@ import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.sdk.trace.data.StatusData
+import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakeCurrentSessionSpan(
@@ -18,7 +17,7 @@ class FakeCurrentSessionSpan(
     var initializedCallCount: Int = 0
     var addedEvents: MutableList<SpanEventData> = mutableListOf()
     var attributes: MutableMap<String, String> = mutableMapOf()
-    var sessionSpan: FakeSpanData? = null
+    var sessionSpan: FakePersistableEmbraceSpan? = null
 
     private val sessionIteration = AtomicInteger(1)
 
@@ -55,11 +54,16 @@ class FakeCurrentSessionSpan(
 
     override fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
         val endingSessionSpan = checkNotNull(sessionSpan)
-        endingSessionSpan.endTimeNanos = clock.nowInNanos()
-        endingSessionSpan.spanStatus = if (appTerminationCause == null) StatusData.ok() else StatusData.error()
+        val errorCode = if (appTerminationCause != null) {
+            ErrorCode.FAILURE
+        } else {
+            null
+        }
+        endingSessionSpan.stop(errorCode, clock.now())
+        val payload = listOf(checkNotNull(endingSessionSpan.snapshot()).toOldPayload())
         sessionIteration.incrementAndGet()
         sessionSpan = if (appTerminationCause == null) newSessionSpan(clock.now()) else null
-        return listOf((endingSessionSpan).toEmbraceSpanData())
+        return payload
     }
 
     override fun canStartNewSpan(parent: EmbraceSpan?, internal: Boolean): Boolean {
@@ -75,8 +79,9 @@ class FakeCurrentSessionSpan(
     fun attributeCount(): Int = attributes.size
 
     private fun newSessionSpan(startTimeMs: Long) =
-        FakeSpanData(
-            startEpochNanos = startTimeMs.millisToNanos(),
-            name = "fake-session-span${getSessionId()}"
+        FakePersistableEmbraceSpan.sessionSpan(
+            sessionId = "fake-session-span-id",
+            startTimeMs = startTimeMs,
+            lastHeartbeatTimeMs = startTimeMs
         )
 }

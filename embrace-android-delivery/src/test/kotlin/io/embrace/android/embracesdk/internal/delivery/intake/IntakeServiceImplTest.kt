@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.internal.ErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
@@ -32,11 +31,18 @@ import java.util.concurrent.TimeUnit
 
 class IntakeServiceImplTest {
 
+    companion object {
+        private const val UUID = "uuid"
+    }
+
     private lateinit var intakeService: IntakeService
     private lateinit var payloadStorageService: FakePayloadStorageService
     private lateinit var schedulingService: FakeSchedulingService
     private lateinit var executorService: BlockableExecutorService
-    private lateinit var internalErrorService: FakeInternalErrorService
+    private lateinit var throwable: Throwable
+    private val handler: ErrorHandler = {
+        throwable = it
+    }
 
     private val sessionEnvelope = Envelope(
         data = SessionPayload(spans = listOf(Span(name = "session-span")))
@@ -55,22 +61,20 @@ class IntakeServiceImplTest {
         )
     )
 
-    private val clock = FakeClock()
-    private val sessionMetadata = StoredTelemetryMetadata.fromEnvelope(clock, SESSION)
-    private val logMetadata = StoredTelemetryMetadata.fromEnvelope(clock, LOG)
-    private val networkMetadata = StoredTelemetryMetadata.fromEnvelope(clock, NETWORK)
-    private val crashMetadata = StoredTelemetryMetadata.fromEnvelope(clock, CRASH)
+    private val sessionMetadata = StoredTelemetryMetadata(0, UUID, SESSION)
+    private val logMetadata = StoredTelemetryMetadata(0, UUID, LOG)
+    private val networkMetadata = StoredTelemetryMetadata(0, UUID, NETWORK)
+    private val crashMetadata = StoredTelemetryMetadata(0, UUID, CRASH)
 
     @Before
     fun setUp() {
-        internalErrorService = FakeInternalErrorService()
         payloadStorageService = FakePayloadStorageService()
         schedulingService = FakeSchedulingService()
         executorService = BlockableExecutorService(blockingMode = true)
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
-            internalErrorService,
+            handler,
             TestPlatformSerializer(),
             PriorityWorker(executorService)
         )
@@ -81,7 +85,7 @@ class IntakeServiceImplTest {
         with(intakeService) {
             take(sessionEnvelope, sessionMetadata)
             take(logEnvelope, logMetadata)
-            handleCrash("crash-id")
+            shutdown()
             try {
                 take(sessionEnvelope, sessionMetadata)
             } catch (ignored: RejectedExecutionException) {
@@ -145,8 +149,7 @@ class IntakeServiceImplTest {
         // assert nothing was stored but no exception was thrown
         assertTrue(payloadStorageService.storedObjects.isEmpty())
         assertTrue(payloadStorageService.storedFilenames.isEmpty())
-        val exc = internalErrorService.throwables.single()
-        assertTrue(exc is IOException)
+        assertTrue(throwable is IOException)
     }
 
     @Test
@@ -169,7 +172,7 @@ class IntakeServiceImplTest {
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
-            internalErrorService,
+            handler,
             TestPlatformSerializer(),
             worker
         )
@@ -178,11 +181,10 @@ class IntakeServiceImplTest {
             take(logEnvelope, crashMetadata)
             take(logEnvelope, networkMetadata)
             take(logEnvelope, logMetadata)
-            clock.tick(1000)
-            take(logEnvelope, logMetadata)
-            take(logEnvelope, networkMetadata)
-            take(logEnvelope, crashMetadata)
-            take(sessionEnvelope, sessionMetadata)
+            take(logEnvelope, logMetadata.copy(timestamp = 1000))
+            take(logEnvelope, networkMetadata.copy(timestamp = 1000))
+            take(logEnvelope, crashMetadata.copy(timestamp = 1000))
+            take(sessionEnvelope, sessionMetadata.copy(timestamp = 1000))
 
             // stop blocking the executor
             latch.countDown()

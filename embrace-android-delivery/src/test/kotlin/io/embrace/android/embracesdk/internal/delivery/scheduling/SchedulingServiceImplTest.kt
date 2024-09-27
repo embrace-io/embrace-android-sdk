@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.FakeStorageService2
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
@@ -12,7 +11,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -31,13 +30,9 @@ internal class SchedulingServiceImplTest {
 
     @Before
     fun setup() {
-        val workerModule = FakeWorkerThreadModule(
-            testWorkerName = Worker.Background.IoRegWorker,
-            anotherTestWorkerName = Worker.Background.DeliveryWorker
-        )
-        schedulingExecutor = workerModule.executor.apply { blockingMode = false }
-        deliveryExecutor = workerModule.anotherExecutor.apply { blockingMode = false }
-        clock = workerModule.executorClock
+        clock = FakeClock()
+        schedulingExecutor = BlockingScheduledExecutorService(clock, blockingMode = false)
+        deliveryExecutor = BlockingScheduledExecutorService(clock, blockingMode = false)
         storageService = FakeStorageService2(
             listOf(fakeLogStoredTelemetryMetadata, fakeSessionStoredTelemetryMetadata)
         )
@@ -46,8 +41,8 @@ internal class SchedulingServiceImplTest {
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,
             executionService = executionService,
-            schedulingWorker = workerModule.backgroundWorker(worker = Worker.Background.IoRegWorker),
-            deliveryWorker = workerModule.backgroundWorker(worker = Worker.Background.DeliveryWorker),
+            schedulingWorker = BackgroundWorker(schedulingExecutor),
+            deliveryWorker = BackgroundWorker(deliveryExecutor),
             clock = clock,
         )
     }
@@ -154,7 +149,8 @@ internal class SchedulingServiceImplTest {
         val longBlockedDuration = 90_000L
         storageService.cachedPayloads.clear()
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, longBlockedDuration)
+        executionService.constantResponse =
+            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, longBlockedDuration)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -172,7 +168,8 @@ internal class SchedulingServiceImplTest {
     fun `payloads that fail to deliver because of a 429 will be retried before the default delay if endpoint is unblocked earlier`() {
         storageService.cachedPayloads.clear()
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse =
+            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         allSendsSucceed()
@@ -186,7 +183,8 @@ internal class SchedulingServiceImplTest {
     fun `payloads to unblocked endpoint will not affect other endpoints`() {
         storageService.cachedPayloads.clear()
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse =
+            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -203,7 +201,8 @@ internal class SchedulingServiceImplTest {
         storageService.cachedPayloads.clear()
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse =
+            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -216,7 +215,8 @@ internal class SchedulingServiceImplTest {
     fun `payloads to already blocked endpoint will not be sent`() {
         storageService.cachedPayloads.clear()
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse =
+            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)

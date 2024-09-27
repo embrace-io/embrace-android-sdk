@@ -12,6 +12,7 @@ class FakePayloadCachingService : PayloadCachingService {
     var crashId: String? = null
     var cacheAttempts: MutableList<FakePayloadIntake<*>> = mutableListOf()
     var stopRequests: MutableList<String> = mutableListOf()
+    var shutdownCount: Int = 0
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getCachedPayloads(): List<FakePayloadIntake<T>> {
@@ -21,8 +22,8 @@ class FakePayloadCachingService : PayloadCachingService {
         return cacheAttempts.filter { it.envelope.data is T } as List<FakePayloadIntake<T>>
     }
 
-    override fun handleCrash(crashId: String) {
-        this.crashId = crashId
+    override fun shutdown() {
+        shutdownCount++
     }
 
     override fun <T> startCaching(

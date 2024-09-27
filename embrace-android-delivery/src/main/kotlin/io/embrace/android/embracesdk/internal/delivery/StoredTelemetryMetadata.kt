@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery
 
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import kotlin.Result.Companion.failure
 
 /**
@@ -10,7 +7,7 @@ import kotlin.Result.Companion.failure
  *
  * This information is encoded in the filename.
  */
-class StoredTelemetryMetadata(
+data class StoredTelemetryMetadata(
     val timestamp: Long,
     val uuid: String,
     val envelopeType: SupportedEnvelopeType,
@@ -37,14 +34,5 @@ class StoredTelemetryMetadata(
             val uuid = parts[2].removeSuffix(".json")
             return Result.success(StoredTelemetryMetadata(timestamp, uuid, type, filename))
         }
-
-        /**
-         * Constructs a [StoredTelemetryMetadata] object from the given [Envelope].
-         */
-        fun fromEnvelope(
-            clock: Clock,
-            type: SupportedEnvelopeType,
-            uuid: String = Uuid.getEmbUuid()
-        ): StoredTelemetryMetadata = StoredTelemetryMetadata(clock.now(), uuid, type)
     }
 }

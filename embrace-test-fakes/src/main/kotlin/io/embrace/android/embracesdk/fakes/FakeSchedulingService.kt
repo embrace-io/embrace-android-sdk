@@ -4,11 +4,11 @@ import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServ
 
 class FakeSchedulingService : SchedulingService {
 
-    var crashId: String? = null
+    var shutdownCount: Int = 0
     var payloadIntakeCount: Int = 0
 
-    override fun handleCrash(crashId: String) {
-        this.crashId = crashId
+    override fun shutdown() {
+        shutdownCount++
     }
 
     override fun onPayloadIntake() {

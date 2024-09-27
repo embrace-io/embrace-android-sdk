@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 
 /**
  * This service is responsible for scheduling HTTP requests to the Embrace backend.
  */
-interface SchedulingService : CrashTeardownHandler {
+interface SchedulingService : Shutdownable {
 
     /**
      * Called when a new payload has been stored by the [IntakeService] and is ready for scheduling.
@@ -17,5 +17,5 @@ interface SchedulingService : CrashTeardownHandler {
 class NoopSchedulingService : SchedulingService {
     override fun onPayloadIntake() { }
 
-    override fun handleCrash(crashId: String) { }
+    override fun shutdown() { }
 }

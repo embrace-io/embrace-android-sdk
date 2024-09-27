@@ -12,5 +12,5 @@ apiValidation.validationDisabled = true
 
 dependencies {
     implementation(project(":embrace-android-payload"))
-    implementation(project(":embrace-android-core"))
+    implementation(project(":embrace-android-infra"))
 }

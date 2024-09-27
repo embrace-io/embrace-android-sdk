@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import java.io.InputStream
 
-internal class RequestExecutionServiceImpl : RequestExecutionService {
+class RequestExecutionServiceImpl : RequestExecutionService {
 
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,

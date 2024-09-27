@@ -896,7 +896,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="27"
+            line="28"
             column="44"/>
     </issue>
 
@@ -907,7 +907,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeSpanData.kt"
-            line="27"
+            line="28"
             column="44"/>
     </issue>
 
@@ -918,7 +918,7 @@
         errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="24"
+            line="26"
             column="20"/>
     </issue>
 

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.intake
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.payload.Envelope
 
@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
  * 4. Handle process termination gracefully by waiting until all payloads in the queue have been
  * written to disk
  */
-interface IntakeService : CrashTeardownHandler {
+interface IntakeService : Shutdownable {
 
     /**
      * Stores a payload on disk as its JSON representation.

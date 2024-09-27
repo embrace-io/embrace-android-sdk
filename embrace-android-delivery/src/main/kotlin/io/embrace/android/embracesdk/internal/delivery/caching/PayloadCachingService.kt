@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.caching
 
-import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
+import io.embrace.android.embracesdk.internal.delivery.Shutdownable
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
  * the [PayloadResurrectionService] will convert the cached file into a full payload on next launch
  * that is then processed by the [IntakeService].
  */
-interface PayloadCachingService : CrashTeardownHandler {
+interface PayloadCachingService : Shutdownable {
 
     /**
      * Starts caching an envelope on disk & returns a unique identifier for the caching attempt.

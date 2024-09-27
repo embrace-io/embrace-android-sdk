@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery
 
-import io.embrace.android.embracesdk.fakes.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -55,20 +54,6 @@ class StoredTelemetryMetadataTest {
                 assertEquals(UUID, uuid)
                 assertEquals(type, this.envelopeType)
             }
-        }
-    }
-
-    @Test
-    fun `construct from envelope`() {
-        val metadata = StoredTelemetryMetadata.fromEnvelope(
-            FakeClock(TIMESTAMP),
-            SupportedEnvelopeType.CRASH,
-            UUID
-        )
-        with(metadata) {
-            assertEquals(TIMESTAMP, timestamp)
-            assertEquals(UUID, uuid)
-            assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
         }
     }
 }

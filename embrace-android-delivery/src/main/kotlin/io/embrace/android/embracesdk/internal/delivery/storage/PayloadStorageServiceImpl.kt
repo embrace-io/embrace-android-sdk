@@ -1,19 +1,19 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import android.content.Context
+import io.embrace.android.embracesdk.internal.ErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.zip.GZIPOutputStream
 
-internal class PayloadStorageServiceImpl(
-    private val internalErrorService: InternalErrorService,
+class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
+    private val errorHandler: ErrorHandler,
     private val storageLimit: Int = 500
 ) : PayloadStorageService {
 
@@ -37,7 +37,7 @@ internal class PayloadStorageServiceImpl(
         try {
             storeImpl(metadata, action)
         } catch (exc: Throwable) {
-            internalErrorService.handleInternalError(exc)
+            errorHandler(exc)
         }
     }
 
@@ -70,7 +70,7 @@ internal class PayloadStorageServiceImpl(
             }
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
-                internalErrorService.handleInternalError(exc)
+                errorHandler(exc)
             }
         }
     }
@@ -79,7 +79,7 @@ internal class PayloadStorageServiceImpl(
         return try {
             metadata.asFile().inputStream().buffered()
         } catch (exc: Throwable) {
-            internalErrorService.handleInternalError(exc)
+            errorHandler(exc)
             null
         }
     }
@@ -98,7 +98,7 @@ internal class PayloadStorageServiceImpl(
             .sortedWith(storedTelemetryComparator)
             .takeLast(removalCount)
         removals.forEach(::delete)
-        internalErrorService.handleInternalError(RuntimeException("Pruned payload storage"))
+        errorHandler(RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped
         val shouldNotPersist = removals.contains(metadata)
@@ -112,12 +112,12 @@ internal class PayloadStorageServiceImpl(
 
         fun createOutputDir(
             ctx: Context,
-            internalErrorService: InternalErrorService
+            errorHandler: ErrorHandler,
         ): Lazy<File> = lazy {
             try {
                 File(ctx.filesDir, OUTPUT_DIR_NAME).apply(File::mkdirs)
             } catch (exc: Throwable) {
-                internalErrorService.handleInternalError(exc)
+                errorHandler(exc)
                 ctx.cacheDir
             }
         }

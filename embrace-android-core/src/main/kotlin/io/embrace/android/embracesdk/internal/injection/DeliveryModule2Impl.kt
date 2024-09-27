@@ -28,7 +28,7 @@ internal class DeliveryModule2Impl(
         IntakeServiceImpl(
             checkNotNull(schedulingService),
             checkNotNull(payloadStorageService),
-            initModule.internalErrorService,
+            initModule.internalErrorService::handleInternalError,
             initModule.jsonSerializer,
             workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
         )
@@ -52,13 +52,12 @@ internal class DeliveryModule2Impl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             return@singleton null
         }
-        val internalErrorService = initModule.internalErrorService
         PayloadStorageServiceImpl(
-            internalErrorService,
             PayloadStorageServiceImpl.createOutputDir(
                 coreModule.context,
-                internalErrorService
-            )
+                initModule.internalErrorService::handleInternalError
+            ),
+            initModule.internalErrorService::handleInternalError
         )
     }
 

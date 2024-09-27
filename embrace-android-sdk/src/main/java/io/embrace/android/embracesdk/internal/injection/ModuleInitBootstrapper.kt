@@ -44,8 +44,7 @@ internal class ModuleInitBootstrapper(
     private val momentsModuleSupplier: MomentsModuleSupplier = ::createMomentsModule,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
-    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
-    private val deliveryModule2Supplier: DeliveryModule2Supplier = ::createDeliveryModule2,
+    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -102,9 +101,6 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var payloadSourceModule: PayloadSourceModule
-        private set
-
-    lateinit var deliveryModule2: DeliveryModule2
         private set
 
     @Volatile
@@ -215,15 +211,6 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
-                    deliveryModule2 = init(DeliveryModule2::class) {
-                        deliveryModule2Supplier(
-                            configModule,
-                            initModule,
-                            workerThreadModule,
-                            coreModule
-                        )
-                    }
-
                     anrModule = init(AnrModule::class) {
                         anrModuleSupplier(
                             initModule,
@@ -288,9 +275,12 @@ internal class ModuleInitBootstrapper(
 
                     deliveryModule = init(DeliveryModule::class) {
                         deliveryModuleSupplier(
+                            configModule,
                             initModule,
+                            workerThreadModule,
+                            coreModule,
                             storageModule,
-                            essentialServiceModule.apiService
+                            essentialServiceModule
                         )
                     }
 

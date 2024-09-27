@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadResurrectionService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.injection.DeliveryModule2
+import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -48,6 +48,6 @@ internal inline fun <reified T> FakePayloadIntake<T>.assertPayloadIntake(
     envelopeAssertion(envelope)
 }
 
-private inline fun <reified T> IntegrationTestRule.getService(noinline fieldProvider: DeliveryModule2.() -> Any?): T =
-    fieldProvider(bootstrapper.deliveryModule2) as? T
+private inline fun <reified T> IntegrationTestRule.getService(noinline fieldProvider: DeliveryModule.() -> Any?): T =
+    fieldProvider(bootstrapper.deliveryModule) as? T
         ?: error("Intake service is not of type ${T::class.simpleName}")

@@ -34,4 +34,9 @@ interface PayloadStorageService {
      * Loads a payload as an [InputStream]
      */
     fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream?
+
+    /**
+     * Return stored payloads as a list sorted in priority order
+     */
+    fun getPayloadsByPriority(): List<StoredTelemetryMetadata>
 }

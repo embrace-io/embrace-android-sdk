@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
-import io.embrace.android.embracesdk.internal.storage.StorageService2
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.InputStream
 import java.util.Collections
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SchedulingServiceImpl(
-    private val storageService: StorageService2,
+    private val storageService: PayloadStorageService,
     private val executionService: RequestExecutionService,
     private val schedulingWorker: BackgroundWorker,
     private val deliveryWorker: BackgroundWorker,

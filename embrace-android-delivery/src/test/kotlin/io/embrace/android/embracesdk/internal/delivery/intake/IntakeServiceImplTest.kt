@@ -20,10 +20,12 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.worker.PriorityRunnable
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -38,22 +40,23 @@ class IntakeServiceImplTest {
     private lateinit var executorService: BlockableExecutorService
     private lateinit var internalErrorService: FakeInternalErrorService
 
+    private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
         data = SessionPayload(spans = listOf(Span(name = "session-span")))
     )
     private val logEnvelope = Envelope(
         data = LogPayload(logs = listOf(Log(body = "Log data")))
     )
-    private val sessionDataExpected = mapOf(
-        "data" to mapOf(
-            "spans" to listOf(mapOf("name" to "session-span"))
-        )
-    )
-    private val logDataExpected = mapOf(
-        "data" to mapOf(
-            "logs" to listOf(mapOf("body" to "Log data"))
-        )
-    )
+    private val sessionDataExpected = run {
+        val baos = ByteArrayOutputStream()
+        serializer.toJson(sessionEnvelope, Envelope.sessionEnvelopeType, baos)
+        baos.toByteArray()
+    }
+    private val logDataExpected = run {
+        val baos = ByteArrayOutputStream()
+        serializer.toJson(logEnvelope, Envelope.logEnvelopeType, baos)
+        baos.toByteArray()
+    }
 
     private val clock = FakeClock()
     private val sessionMetadata = StoredTelemetryMetadata.fromEnvelope(clock, SESSION)
@@ -71,7 +74,7 @@ class IntakeServiceImplTest {
             schedulingService,
             payloadStorageService,
             internalErrorService,
-            TestPlatformSerializer(),
+            serializer,
             PriorityWorker(executorService)
         )
     }
@@ -90,11 +93,11 @@ class IntakeServiceImplTest {
             }
         }
 
-        assertEquals(2, payloadStorageService.storedObjects.size)
-        val sessionObj = payloadStorageService.storedObjects[0]
-        val logObj = payloadStorageService.storedObjects[1]
-        assertEquals(sessionDataExpected, sessionObj)
-        assertEquals(logDataExpected, logObj)
+        assertEquals(2, payloadStorageService.storedPayloads().size)
+        val sessionObj = payloadStorageService.storedPayloads()[0]
+        val logObj = payloadStorageService.storedPayloads()[1]
+        assertArrayEquals(sessionDataExpected, sessionObj)
+        assertArrayEquals(logDataExpected, logObj)
 
         // assert scheduling service was notified
         assertEquals(2, schedulingService.payloadIntakeCount)
@@ -106,13 +109,13 @@ class IntakeServiceImplTest {
         executorService.runCurrentlyBlocked()
 
         // assert filename is valid & contains correct metadata
-        val filename = payloadStorageService.storedFilenames.single()
+        val filename = payloadStorageService.storedFilenames().single()
         val metadata = StoredTelemetryMetadata.fromFilename(filename).getOrThrow()
         assertEquals(LOG, metadata.envelopeType)
 
         // assert payload was stored
-        val obj = payloadStorageService.storedObjects.single()
-        assertEquals(logDataExpected, obj)
+        val obj = payloadStorageService.storedPayloads().single()
+        assertArrayEquals(logDataExpected, obj)
 
         // assert scheduling service was notified
         assertEquals(1, schedulingService.payloadIntakeCount)
@@ -124,13 +127,13 @@ class IntakeServiceImplTest {
         executorService.runCurrentlyBlocked()
 
         // assert filename is valid & contains correct metadata
-        val filename = payloadStorageService.storedFilenames.single()
+        val filename = payloadStorageService.storedFilenames().single()
         val metadata = StoredTelemetryMetadata.fromFilename(filename).getOrThrow()
         assertEquals(SESSION, metadata.envelopeType)
 
         // assert payload was stored
-        val obj = payloadStorageService.storedObjects.single()
-        assertEquals(sessionDataExpected, obj)
+        val obj = payloadStorageService.storedPayloads().single()
+        assertArrayEquals(sessionDataExpected, obj)
 
         // assert scheduling service was notified
         assertEquals(1, schedulingService.payloadIntakeCount)
@@ -143,8 +146,7 @@ class IntakeServiceImplTest {
         executorService.runCurrentlyBlocked()
 
         // assert nothing was stored but no exception was thrown
-        assertTrue(payloadStorageService.storedObjects.isEmpty())
-        assertTrue(payloadStorageService.storedFilenames.isEmpty())
+        assertEquals(0, payloadStorageService.storedPayloadCount())
         val exc = internalErrorService.throwables.single()
         assertTrue(exc is IOException)
     }
@@ -188,14 +190,14 @@ class IntakeServiceImplTest {
             latch.countDown()
         }
         worker.shutdownAndWait(1000)
-        assertEquals(8, payloadStorageService.storedFilenames.size)
+        assertEquals(4, payloadStorageService.storedPayloadCount())
 
         // assert payloads were prioritised in the expected order
-        val observedTypes = payloadStorageService.storedFilenames.map {
+        val observedTypes = payloadStorageService.storedFilenames().map {
             val metadata = StoredTelemetryMetadata.fromFilename(it).getOrThrow()
             metadata.envelopeType
         }
-        val expected = listOf(CRASH, CRASH, SESSION, SESSION, LOG, LOG, NETWORK, NETWORK)
+        val expected = listOf(CRASH, SESSION, LOG, NETWORK)
         assertEquals(expected, observedTypes)
     }
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.scheduling
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
@@ -27,6 +28,7 @@ internal class SchedulingServiceImplTest {
     private lateinit var schedulingExecutor: BlockingScheduledExecutorService
     private lateinit var deliveryExecutor: BlockingScheduledExecutorService
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
+    private lateinit var logger: FakeEmbLogger
     private lateinit var schedulingService: SchedulingServiceImpl
 
     @Volatile
@@ -47,6 +49,7 @@ internal class SchedulingServiceImplTest {
             addFakePayload(fakeSessionStoredTelemetryMetadata)
         }
         executionService = FakeRequestExecutionService()
+        logger = FakeEmbLogger()
         allSendsSucceed()
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,
@@ -54,6 +57,7 @@ internal class SchedulingServiceImplTest {
             schedulingWorker = workerModule.backgroundWorker(worker = Worker.Background.IoRegWorker),
             deliveryWorker = workerModule.backgroundWorker(worker = Worker.Background.DeliveryWorker),
             clock = clock,
+            logger = logger,
         )
         networkConnectivityService.addNetworkConnectivityListener(schedulingService)
     }
@@ -249,6 +253,23 @@ internal class SchedulingServiceImplTest {
         assertEquals(2, storageService.storedPayloadCount())
         networkConnectivityService.networkStatus = NetworkStatus.WIFI
         schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `unexpected exception during execution will be retried`() {
+        executionService.exceptionOnExecution = RuntimeException("die")
+        schedulingExecutor.blockingMode = true
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        assertEquals(2, logger.internalErrorMessages.size)
+        executionService.exceptionOnExecution = null
+        clock.tick(INITIAL_DELAY_MS + 1)
+        waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())

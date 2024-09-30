@@ -39,4 +39,4 @@ fun Long.normalizeTimestampAsMillis(): Long =
 /**
  * Equivalent to the epoch time of January 1, 5000 12:00:00 AM GMT
  */
-internal const val MAX_MS_CUTOFF: Long = 95_617_584_000_000L
+const val MAX_MS_CUTOFF: Long = 95_617_584_000_000L

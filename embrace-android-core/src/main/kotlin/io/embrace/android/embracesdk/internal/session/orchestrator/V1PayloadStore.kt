@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
 
-internal class V1PayloadStore(
+class V1PayloadStore(
     private val deliveryService: DeliveryService
 ) : PayloadStore {
 

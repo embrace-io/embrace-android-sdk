@@ -11,10 +11,12 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
-import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -25,6 +27,10 @@ internal class DeliveryModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule
 ) : DeliveryModule {
+
+    override val payloadStore: PayloadStore by singleton {
+        V1PayloadStore(deliveryService)
+    }
 
     override val deliveryService: DeliveryService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
@@ -90,6 +96,6 @@ internal class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             return@singleton null
         }
-        SchedulingServiceImpl(checkNotNull(requestExecutionService))
+        NoopSchedulingService()
     }
 }

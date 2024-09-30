@@ -18,7 +18,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class SchedulingServiceImpl(
+class SchedulingServiceImpl(
     private val storageService: StorageService2,
     private val executionService: RequestExecutionService,
     private val schedulingWorker: BackgroundWorker,

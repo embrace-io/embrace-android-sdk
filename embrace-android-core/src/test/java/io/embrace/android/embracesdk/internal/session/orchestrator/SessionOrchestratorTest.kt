@@ -6,11 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
@@ -32,8 +32,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,7 +49,7 @@ internal class SessionOrchestratorTest {
     private lateinit var configService: FakeConfigService
     private lateinit var memoryCleanerService: FakeMemoryCleanerService
     private lateinit var userService: FakeUserService
-    private lateinit var deliveryService: FakeDeliveryService
+    private lateinit var store: FakePayloadStore
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var periodicSessionCacher: PeriodicSessionCacher
@@ -78,7 +77,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadCollator.sessionCount.get())
         assertEquals(1, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
-        assertEquals(0, deliveryService.sentSessionEnvelopes.size)
+        assertTrue(store.storedSessionPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -90,7 +89,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(0, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
-        assertEquals(0, deliveryService.sentSessionEnvelopes.size)
+        assertTrue(store.storedSessionPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -130,16 +129,12 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         clock.tick()
         baCacheExecutor.runCurrentlyBlocked()
-        assertEquals(
-            SessionSnapshotType.PERIODIC_CACHE,
-            checkNotNull(deliveryService.savedSessionEnvelopes.last().second)
-        )
-        assertEquals(1, deliveryService.savedSessionEnvelopes.size)
+        assertEquals(1, store.cachedSessionPayloads.size)
         orchestrator.onForeground(true, clock.now())
         clock.tick()
         orchestrator.onBackground(clock.now())
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
-        assertEquals(3, deliveryService.savedSessionEnvelopes.size)
+        assertEquals(1, store.cachedSessionPayloads.size)
+        assertEquals(2, store.storedSessionPayloads.size)
     }
 
     @Test
@@ -148,10 +143,9 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onForeground(true, clock.now())
         clock.tick()
-        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
+        assertEquals(1, store.storedSessionPayloads.size)
         baCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
+        assertEquals(1, store.storedSessionPayloads.size)
     }
 
     @Test
@@ -159,15 +153,11 @@ internal class SessionOrchestratorTest {
         createOrchestrator(false)
         clock.tick()
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(
-            SessionSnapshotType.PERIODIC_CACHE,
-            checkNotNull(deliveryService.savedSessionEnvelopes.last().second)
-        )
-        assertEquals(1, deliveryService.savedSessionEnvelopes.size)
+        assertEquals(1, store.cachedSessionPayloads.size)
         orchestrator.onBackground(clock.now())
         clock.tick()
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
-        assertEquals(2, deliveryService.savedSessionEnvelopes.size)
+        assertEquals(1, store.cachedSessionPayloads.size)
+        assertEquals(1, store.storedSessionPayloads.size)
     }
 
     @Test
@@ -176,10 +166,9 @@ internal class SessionOrchestratorTest {
         clock.tick()
         orchestrator.onBackground(clock.now())
         clock.tick()
-        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
+        assertEquals(1, store.storedSessionPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, deliveryService.savedSessionEnvelopes.count())
-        assertEquals(SessionSnapshotType.NORMAL_END, checkNotNull(deliveryService.savedSessionEnvelopes.last().second))
+        assertEquals(1, store.storedSessionPayloads.size)
     }
 
     @Test
@@ -203,7 +192,7 @@ internal class SessionOrchestratorTest {
         processStateService.isInBackground = true
         orchestrator.endSessionWithManual(true)
         assertEquals(1, memoryCleanerService.callCount)
-        assertNull(deliveryService.getLastSentSession())
+        assertTrue(store.storedSessionPayloads.isEmpty())
     }
 
     @Test
@@ -218,7 +207,7 @@ internal class SessionOrchestratorTest {
         orchestrator.endSessionWithManual(false)
         assertEquals(1, payloadCollator.sessionCount.get())
         assertEquals(1, memoryCleanerService.callCount)
-        assertNull(deliveryService.getLastSentSession())
+        assertTrue(store.storedSessionPayloads.isEmpty())
     }
 
     @Test
@@ -239,7 +228,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.sessionCount.get())
         orchestrator.endSessionWithManual(true)
         assertEquals(2, payloadCollator.sessionCount.get())
-        assertNotNull(deliveryService.sentSessionEnvelopes.last().first)
+        checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
@@ -250,7 +239,7 @@ internal class SessionOrchestratorTest {
 
         orchestrator.endSessionWithManual(true)
         assertEquals(1, payloadCollator.sessionCount.get())
-        assertNull(deliveryService.getLastSentSession())
+        assertTrue(store.storedSessionPayloads.isEmpty())
     }
 
     @Test
@@ -285,16 +274,16 @@ internal class SessionOrchestratorTest {
     @Test
     fun `periodic caching started with initial session`() {
         createOrchestrator(false)
-        assertEquals(0, deliveryService.savedSessionEnvelopes.size)
+        assertEquals(0, store.cachedSessionPayloads.size)
         sessionCacheExecutor.runCurrentlyBlocked()
-        assertEquals(1, deliveryService.savedSessionEnvelopes.size)
+        assertEquals(1, store.cachedSessionPayloads.size)
     }
 
     @Test
     fun `test session span cold start`() {
         createOrchestrator(true)
         orchestrator.onForeground(true, clock.now())
-        checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
+        checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
@@ -302,7 +291,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.onBackground(orchestratorStartTimeMs)
-        checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
+        checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
@@ -310,7 +299,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(true)
         orchestrator.onForeground(true, orchestratorStartTimeMs)
         orchestrator.handleCrash("my-crash-id")
-        checkNotNull(deliveryService.sentSessionEnvelopes.last().first)
+        checkNotNull(store.storedSessionPayloads.last().first)
     }
 
     @Test
@@ -354,7 +343,7 @@ internal class SessionOrchestratorTest {
     }
 
     private fun createOrchestrator(background: Boolean) {
-        deliveryService = FakeDeliveryService()
+        store = FakePayloadStore()
         processStateService = FakeProcessStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
         payloadCollator = FakeV2PayloadCollator(currentSessionSpan = currentSessionSpan)
@@ -404,7 +393,7 @@ internal class SessionOrchestratorTest {
                 userService,
                 sessionPropertiesService
             ),
-            V1PayloadStore(deliveryService),
+            store,
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataCaptureOrchestrator,

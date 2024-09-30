@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
+import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.utils.Provider
 import org.junit.rules.ExternalResource
 
@@ -158,9 +159,11 @@ internal class IntegrationTestRule(
             coreModule = overriddenCoreModule,
             workerThreadModule = overriddenWorkerThreadModule
         ),
+        private val deliveryService: FakeDeliveryService = FakeDeliveryService(),
         val overriddenDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(
-                deliveryService = FakeDeliveryService(),
+                deliveryService = deliveryService,
+                payloadStore = V1PayloadStore(deliveryService)
             ),
         val fakeAnrModule: AnrModule = FakeAnrModule(),
         val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()

@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
-import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class SessionOrchestrationModuleImpl(
@@ -103,7 +102,7 @@ internal class SessionOrchestrationModuleImpl(
             configModule.configService,
             essentialServiceModule.sessionIdTracker,
             boundaryDelegate,
-            V1PayloadStore(deliveryModule.deliveryService),
+            deliveryModule.payloadStore,
             periodicSessionCacher,
             periodicBackgroundActivityCacher,
             dataSourceModule.dataCaptureOrchestrator,

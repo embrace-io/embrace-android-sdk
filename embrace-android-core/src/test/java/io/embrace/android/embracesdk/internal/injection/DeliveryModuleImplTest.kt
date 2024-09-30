@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
+import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -46,6 +47,7 @@ class DeliveryModuleImplTest {
         assertNotNull(module.payloadResurrectionService)
         assertNotNull(module.requestExecutionService)
         assertNotNull(module.schedulingService)
+        assertTrue(module.payloadStore is V1PayloadStore)
     }
 
     @Test
@@ -59,5 +61,6 @@ class DeliveryModuleImplTest {
         assertNull(module.payloadResurrectionService)
         assertNull(module.requestExecutionService)
         assertNull(module.schedulingService)
+        assertTrue(module.payloadStore is V1PayloadStore)
     }
 }

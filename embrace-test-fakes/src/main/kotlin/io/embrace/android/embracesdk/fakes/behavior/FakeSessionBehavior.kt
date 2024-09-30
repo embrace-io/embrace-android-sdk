@@ -4,13 +4,13 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 
 class FakeSessionBehavior(
     private val maxSessionProperties: Int = 100,
-    private val sessionControlEnabled: Boolean = false
+    private val sessionControlDisabled: Boolean = false
 ) : SessionBehavior {
 
     override fun getFullSessionEvents(): Set<String> = emptySet()
     override fun getSessionComponents(): Set<String>? = null
     override fun isGatingFeatureEnabled(): Boolean = false
-    override fun isSessionControlEnabled(): Boolean = sessionControlEnabled
+    override fun isSessionControlDisabled(): Boolean = sessionControlDisabled
     override fun getMaxSessionProperties(): Int = maxSessionProperties
     override fun shouldGateMoment(): Boolean = false
     override fun shouldGateInfoLog(): Boolean = false

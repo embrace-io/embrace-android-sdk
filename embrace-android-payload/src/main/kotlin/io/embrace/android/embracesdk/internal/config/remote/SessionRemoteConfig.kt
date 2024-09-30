@@ -10,9 +10,6 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class SessionRemoteConfig(
-    @Json(name = "enable")
-    val isEnabled: Boolean? = null,
-
     /**
      * A list of session components (i.e. Breadcrumbs, Session properties, etc) that will be
      * included in the session payload. If components list exists, the services should restrict

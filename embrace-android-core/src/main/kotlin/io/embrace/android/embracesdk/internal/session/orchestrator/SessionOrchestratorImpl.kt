@@ -110,7 +110,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.startSessionWithManual(timestamp)
             },
             earlyTerminationCondition = {
-                return@transitionState shouldEndManualSession(
+                return@transitionState !shouldEndManualSession(
                     configService,
                     clock,
                     activeSession,

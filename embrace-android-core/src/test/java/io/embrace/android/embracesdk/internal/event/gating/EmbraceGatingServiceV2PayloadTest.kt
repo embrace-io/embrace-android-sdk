@@ -71,8 +71,8 @@ internal class EmbraceGatingServiceV2PayloadTest {
 
     private fun buildCustomRemoteConfig(components: Set<String>?, fullSessionEvents: Set<String>?) =
         RemoteConfig(
+            disableSessionControl = false,
             sessionConfig = SessionRemoteConfig(
-                isEnabled = true,
                 sessionComponents = components,
                 fullSessionEvents = fullSessionEvents
             )

@@ -3,8 +3,8 @@
   "event_limits": {},
   "offset": 0,
   "personas": [],
+  "disable_session_control": false,
   "session_control": {
-    "enable": true,
     "async_end": false
   },
   "threshold": 100,

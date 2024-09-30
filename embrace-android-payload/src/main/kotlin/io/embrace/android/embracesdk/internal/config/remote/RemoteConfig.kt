@@ -66,6 +66,12 @@ data class RemoteConfig(
     val sessionConfig: SessionRemoteConfig? = null,
 
     /**
+     * Settings defining if session control is disabled or not
+     */
+    @Json(name = "disable_session_control")
+    val disableSessionControl: Boolean? = null,
+
+    /**
      * Settings defining the log configuration.
      */
     @Json(name = "logs")

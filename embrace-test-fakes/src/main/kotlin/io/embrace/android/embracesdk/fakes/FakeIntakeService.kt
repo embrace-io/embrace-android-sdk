@@ -13,7 +13,7 @@ class FakeIntakeService : IntakeService {
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getIntakes(): List<FakePayloadIntake<T>> {
-        if (T::class != SessionPayload::class || T::class != LogPayload::class) {
+        if (T::class != SessionPayload::class && T::class != LogPayload::class) {
             error("Unsupported type: ${T::class}")
         }
         return intakeList.filter { it.envelope.data is T } as List<FakePayloadIntake<T>>

@@ -15,7 +15,7 @@ interface PayloadStore {
      * Stores a final session payload that will have no further modifications
      * (i.e. the session ended or crashed)
      */
-    fun storeSessionPayload(envelope: Envelope<SessionPayload>, attemptImmediateRequest: Boolean)
+    fun storeSessionPayload(envelope: Envelope<SessionPayload>, transitionType: TransitionType)
 
     /**
      * Stores a session snapshot that is likely to have further modifications.
@@ -26,4 +26,11 @@ interface PayloadStore {
      * Stores a log payload that will have no further modifications.
      */
     fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean)
+
+    /**
+     * Handles graceful shutdown on a crash. This should be called _after_ any payloads for the
+     * crash have been added. The legacy implementation ignores this but the v2 implementation
+     * relies on it.
+     */
+    fun onCrash()
 }

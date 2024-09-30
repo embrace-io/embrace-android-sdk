@@ -38,6 +38,7 @@ internal class LogOrchestratorImpl(
 
     override fun handleCrash(crashId: String) {
         flush(true)
+        payloadStore.onCrash()
     }
 
     override fun onLogsAdded() {

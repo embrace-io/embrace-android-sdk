@@ -11,9 +11,9 @@ internal class V1PayloadStore(
     private val deliveryService: DeliveryService
 ) : PayloadStore {
 
-    override fun storeSessionPayload(envelope: Envelope<SessionPayload>, attemptImmediateRequest: Boolean) {
-        val type = when (attemptImmediateRequest) {
-            true -> JVM_CRASH
+    override fun storeSessionPayload(envelope: Envelope<SessionPayload>, transitionType: TransitionType) {
+        val type = when (transitionType) {
+            TransitionType.CRASH -> JVM_CRASH
             else -> NORMAL_END
         }
         deliveryService.sendSession(envelope, type)
@@ -29,5 +29,9 @@ internal class V1PayloadStore(
 
     override fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>) {
         deliveryService.sendSession(envelope, SessionSnapshotType.PERIODIC_CACHE)
+    }
+
+    override fun onCrash() {
+        // ignored - v1 couples this concept to storage
     }
 }

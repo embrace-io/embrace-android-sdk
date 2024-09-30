@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
@@ -13,7 +13,7 @@ internal class LogOrchestratorImpl(
     private val worker: BackgroundWorker,
     private val clock: Clock,
     private val sink: LogSink,
-    private val deliveryService: DeliveryService,
+    private val payloadStore: PayloadStore,
     private val logEnvelopeSource: LogEnvelopeSource,
 ) : LogOrchestrator {
     @Volatile
@@ -32,11 +32,7 @@ internal class LogOrchestratorImpl(
 
         val envelope = logEnvelopeSource.getBatchedLogEnvelope()
         if (!envelope.data.logs.isNullOrEmpty()) {
-            if (saveOnly) {
-                deliveryService.saveLogs(envelope)
-            } else {
-                deliveryService.sendLogs(envelope)
-            }
+            payloadStore.storeLogPayload(envelope, !saveOnly)
         }
     }
 
@@ -47,10 +43,10 @@ internal class LogOrchestratorImpl(
     override fun onLogsAdded() {
         logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
             if (logRequest.defer) {
-                deliveryService.saveLogs(logRequest.payload)
+                payloadStore.storeLogPayload(logRequest.payload, false)
             } else {
                 worker.submit {
-                    deliveryService.sendLogs(logRequest.payload)
+                    payloadStore.storeLogPayload(logRequest.payload, true)
                 }
             }
         }

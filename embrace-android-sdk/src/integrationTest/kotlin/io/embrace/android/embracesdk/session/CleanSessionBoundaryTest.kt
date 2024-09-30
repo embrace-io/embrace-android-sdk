@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -31,18 +32,19 @@ internal class CleanSessionBoundaryTest {
     @Test
     fun `session messages have a clean boundary`() {
         with(testRule) {
-            val message = harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty("foo", "bar", false)
             }
-            checkNotNull(message)
+            harness.recordSession()
+
+            val sessions = harness.getSentSessions(2)
 
             // validate info added to first session
-            val span = message.findSessionSpan()
+            val span = sessions[0].findSessionSpan()
             assertEquals("bar", span.getSessionProperty("foo"))
 
             // confirm info not added to next session
-            val nextMessage = checkNotNull(harness.recordSession())
-            val nextSpan = nextMessage.findSessionSpan()
+            val nextSpan = sessions[1].findSessionSpan()
             assertNull(nextSpan.getSessionProperty("foo"))
         }
     }

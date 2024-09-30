@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
@@ -26,7 +28,7 @@ internal class NetworkStatusFeatureTest {
         val tickTimeMs = 3000L
         with(testRule) {
             var startTimeMs: Long = 0
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 startTimeMs = harness.overriddenClock.now()
 
                 // look inside embrace internals as there isn't a good way to trigger this E2E
@@ -34,8 +36,9 @@ internal class NetworkStatusFeatureTest {
                     checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
-            })
+            }
 
+            val message = harness.getSingleSession()
             val spans = message.findSpansOfType(EmbType.System.NetworkStatus)
             assertEquals(1, spans.size)
             val span = spans.single()
@@ -63,10 +66,11 @@ internal class NetworkStatusFeatureTest {
     fun `initial session creates a span snapshot`() {
         with(testRule) {
             var startTimeMs: Long = 0
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 startTimeMs = harness.overriddenClock.now()
-            })
+            }
 
+            val message = harness.getSingleSession()
             val snapshots = message.findSpanSnapshotsOfType(EmbType.System.NetworkStatus)
             assertEquals(1, snapshots.size)
             val snapshot = snapshots.single()

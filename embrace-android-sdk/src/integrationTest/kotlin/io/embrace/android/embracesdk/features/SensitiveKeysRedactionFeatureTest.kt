@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.recordSession
@@ -31,14 +33,15 @@ internal class SensitiveKeysRedactionFeatureTest {
     fun `custom span properties are redacted if they are sensitive`() {
         with(testRule) {
             startSdk()
-            val session = harness.recordSession {
+            harness.recordSession {
                 val span = embrace.startSpan("test span")
                 span?.addAttribute("password", "1234")
                 span?.addAttribute("not a password", "1234")
                 span?.stop()
             }
 
-            val recordedSpan = session?.data?.spans?.find { it.name == "test span" }
+            val session = harness.getSingleSession()
+            val recordedSpan = session.data.spans?.find { it.name == "test span" }
             val sensitiveAttribute = recordedSpan?.attributes?.first { it.key == "password" }
             val notSensitiveAttribute = recordedSpan?.attributes?.first { it.key == "not a password" }
 
@@ -51,14 +54,15 @@ internal class SensitiveKeysRedactionFeatureTest {
     fun `custom span events are redacted if they are sensitive`() {
         with(testRule) {
             startSdk()
-            val session = harness.recordSession {
+            harness.recordSession {
                 val span = embrace.startSpan("test span")
                 span?.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
                 span?.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
                 span?.stop()
             }
 
-            val recordedSpan = session?.data?.spans?.find { it.name == "test span" }
+            val session = harness.getSingleSession()
+            val recordedSpan = session.data.spans?.find { it.name == "test span" }
 
             val event = recordedSpan?.events?.first { it.name == "event" }
             val anotherEvent = recordedSpan?.events?.first { it.name == "anotherEvent" }

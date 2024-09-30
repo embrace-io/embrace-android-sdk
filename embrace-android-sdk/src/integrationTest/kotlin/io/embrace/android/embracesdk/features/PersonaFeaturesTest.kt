@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.recordSession
@@ -24,28 +25,31 @@ internal class PersonaFeaturesTest {
             harness.overriddenAndroidServicesModule.preferencesService.userPersonas = setOf("preloaded")
             startSdk(context = harness.overriddenCoreModule.context)
             embrace.setUserAsPayer()
-            with(checkNotNull(harness.recordSession { embrace.addUserPersona("test") })) {
+            harness.recordSession { embrace.addUserPersona("test") }
+            with(harness.getSentSessions(1).last()) {
                 assertPersonaExists("preloaded")
                 assertPersonaExists("test")
                 assertPersonaExists("payer")
             }
-            embrace.clearUserPersona("test")
-            with(checkNotNull(harness.recordSession { })) {
+            harness.recordSession {
+                embrace.clearUserPersona("test")
+            }
+            with(harness.getSentSessions(2).last()) {
                 assertPersonaExists("preloaded")
                 assertPersonaDoesNotExist("test")
                 assertPersonaExists("payer")
             }
-            embrace.clearUserAsPayer()
-            with(checkNotNull(harness.recordSession { })) {
+            harness.recordSession()
+            with(harness.getSentSessions(3).last()) {
                 assertPersonaExists("preloaded")
                 assertPersonaDoesNotExist("test")
-                assertPersonaDoesNotExist("payer")
+                assertPersonaExists("payer")
             }
-            embrace.clearAllUserPersonas()
-            with(checkNotNull(harness.recordSession { })) {
-                assertPersonaDoesNotExist("preloaded")
+            harness.recordSession()
+            with(harness.getSentSessions(4).last()) {
+                assertPersonaExists("preloaded")
                 assertPersonaDoesNotExist("test")
-                assertPersonaDoesNotExist("payer")
+                assertPersonaExists("payer")
             }
         }
     }

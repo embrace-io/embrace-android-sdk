@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getLastSentLog
+import io.embrace.android.embracesdk.getLastLog
+import io.embrace.android.embracesdk.getSentLogPayloads
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.recordSession
@@ -18,6 +19,7 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceLoggingFeatureTest {
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
@@ -37,7 +39,7 @@ internal class EmbraceLoggingFeatureTest {
                 embrace.logInfo("test message")
                 flushLogs()
             }
-            val log = checkNotNull(harness.getLastSentLog())
+            val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
             assertOtelLogReceived(
                 logReceived = log,
                 expectedMessage = "test message",
@@ -53,7 +55,7 @@ internal class EmbraceLoggingFeatureTest {
         with(testRule) {
             embrace.logWarning("test message")
             flushLogs()
-            val log = checkNotNull(harness.getLastSentLog())
+            val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
             assertOtelLogReceived(
                 logReceived = log,
                 expectedMessage = "test message",
@@ -68,7 +70,7 @@ internal class EmbraceLoggingFeatureTest {
         with(testRule) {
             embrace.logError("test message")
             flushLogs()
-            val log = harness.getLastSentLog()
+            val log = harness.getSentLogPayloads(1).getLastLog()
             assertOtelLogReceived(
                 log,
                 expectedMessage = "test message",
@@ -85,7 +87,7 @@ internal class EmbraceLoggingFeatureTest {
                 val expectedMessage = "test message ${severity.name}"
                 embrace.logMessage(expectedMessage, severity)
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = expectedMessage,
@@ -103,7 +105,7 @@ internal class EmbraceLoggingFeatureTest {
                 val expectedMessage = "test message ${severity.name}"
                 embrace.logMessage(expectedMessage, severity, customProperties)
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = expectedMessage,
@@ -120,7 +122,7 @@ internal class EmbraceLoggingFeatureTest {
         with(testRule) {
             embrace.logException(testException)
             flushLogs()
-            val log = harness.getLastSentLog()
+            val log = harness.getSentLogPayloads(1).getLastLog()
             assertOtelLogReceived(
                 log,
                 expectedMessage = checkNotNull(testException.message),
@@ -140,7 +142,7 @@ internal class EmbraceLoggingFeatureTest {
         with(testRule) {
             embrace.logException(testException, io.embrace.android.embracesdk.Severity.INFO)
             flushLogs()
-            val log = harness.getLastSentLog()
+            val log = harness.getSentLogPayloads(1).getLastLog()
             assertOtelLogReceived(
                 log,
                 expectedMessage = checkNotNull(testException.message),
@@ -164,7 +166,7 @@ internal class EmbraceLoggingFeatureTest {
                     customProperties
                 )
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -188,7 +190,7 @@ internal class EmbraceLoggingFeatureTest {
                 val expectedMessage = "test message ${severity.name}"
                 embrace.logException(testException, severity, customProperties, expectedMessage)
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = expectedMessage,
@@ -210,7 +212,7 @@ internal class EmbraceLoggingFeatureTest {
         with(testRule) {
             embrace.logCustomStacktrace(stacktrace)
             flushLogs()
-            val log = harness.getLastSentLog()
+            val log = harness.getSentLogPayloads(1).getLastLog()
             assertOtelLogReceived(
                 log,
                 expectedMessage = "",
@@ -229,7 +231,7 @@ internal class EmbraceLoggingFeatureTest {
             io.embrace.android.embracesdk.Severity.values().forEach { severity ->
                 embrace.logCustomStacktrace(stacktrace, severity)
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
@@ -249,7 +251,7 @@ internal class EmbraceLoggingFeatureTest {
             io.embrace.android.embracesdk.Severity.values().forEach { severity ->
                 embrace.logCustomStacktrace(stacktrace, severity, customProperties)
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
@@ -271,7 +273,7 @@ internal class EmbraceLoggingFeatureTest {
                 val expectedMessage = "test message ${severity.name}"
                 embrace.logCustomStacktrace(stacktrace, severity, customProperties, expectedMessage)
                 flushLogs()
-                val log = harness.getLastSentLog()
+                val log = harness.getSentLogPayloads().getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = expectedMessage,

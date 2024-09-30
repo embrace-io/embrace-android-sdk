@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
@@ -39,10 +41,11 @@ internal class WebviewFeatureTest {
     @Test
     fun `webview info feature`() {
         with(testRule) {
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.trackWebViewPerformance("myWebView", expectedCompleteData)
-            })
+            }
 
+            val message = harness.getSingleSession()
             val events = message.findSessionSpan().findEventsOfType(EmbType.System.WebViewInfo)
             assertEquals(1, events.size)
 

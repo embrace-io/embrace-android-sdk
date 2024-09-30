@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.injection.createAnrModule
@@ -70,12 +72,12 @@ internal class AnrFeatureTest {
 
         with(testRule.harness) {
             var secondAnrStartTime: Long? = null
-            val message = recordSession {
+            recordSession {
                 triggerAnr(firstSampleCount)
                 secondAnrStartTime = overriddenClock.now()
                 triggerAnr(secondSampleCount)
             }
-            checkNotNull(message)
+            val message = getSingleSession()
 
             // assert ANRs received
             val spans = message.findAnrSpans()
@@ -90,10 +92,10 @@ internal class AnrFeatureTest {
         val sampleCount = 100
 
         with(testRule.harness) {
-            val message = recordSession {
+            recordSession {
                 triggerAnr(sampleCount)
             }
-            checkNotNull(message)
+            val message = getSingleSession()
 
             // assert ANRs received
             val spans = message.findAnrSpans()
@@ -110,13 +112,13 @@ internal class AnrFeatureTest {
         val startTimes = mutableListOf<Long>()
 
         with(testRule.harness) {
-            val message = recordSession {
+            recordSession {
                 repeat(intervalCount) { index ->
                     startTimes.add(overriddenClock.now())
                     triggerAnr(initialSamples + (index * extraSamples))
                 }
             }
-            checkNotNull(message)
+            val message = getSingleSession()
 
             // assert ANRs received
             val spans = message.findAnrSpans()
@@ -141,10 +143,10 @@ internal class AnrFeatureTest {
         val sampleCount = 10
 
         with(testRule.harness) {
-            val message = recordSession {
+            recordSession {
                 triggerAnr(sampleCount, incomplete = true)
             }
-            checkNotNull(message)
+            val message = getSingleSession()
 
             // assert ANRs received
             val spans = message.findAnrSpans()

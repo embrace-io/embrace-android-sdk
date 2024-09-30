@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
@@ -30,25 +31,25 @@ internal class UserFeaturesTest {
             }
 
             startSdk(harness.overriddenCoreModule.context)
-            with(checkNotNull(harness.recordSession { })) {
+            harness.recordSession { }
+
+            with(harness.getSentSessions(1).last()) {
                 assertUserInfo(preferenceService, "customId", "customUserName", "custom@domain.com")
             }
-
-            val session = harness.recordSession {
+            harness.recordSession {
                 embrace.clearUserIdentifier()
                 embrace.clearUsername()
                 embrace.clearUserEmail()
             }
-
-            with(checkNotNull(session)) {
+            with(harness.getSentSessions(2).last()) {
                 assertUserInfo(preferenceService, null, null, null)
             }
-
-            embrace.setUserIdentifier("newId")
-            embrace.setUsername("newUserName")
-            embrace.setUserEmail("new@domain.com")
-
-            with(checkNotNull(harness.recordSession { })) {
+            harness.recordSession {
+                embrace.setUserIdentifier("newId")
+                embrace.setUsername("newUserName")
+                embrace.setUserEmail("new@domain.com")
+            }
+            with(harness.getSentSessions(3).last()) {
                 assertUserInfo(preferenceService, "newId", "newUserName", "new@domain.com")
             }
         }

@@ -13,14 +13,12 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.Locale
 
 /**
  * Asserts that a stateful session can be recorded.
@@ -31,11 +29,6 @@ internal class StatefulSessionTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
-
-    @Before
-    fun setUp() {
-        assertTrue(testRule.harness.getSentSessions().isEmpty())
-    }
 
     @Test
     fun `session messages are recorded`() {
@@ -48,7 +41,7 @@ internal class StatefulSessionTest {
             harness.recordSession { }
 
             // verify first session
-            val messages = testRule.harness.getSentSessions()
+            val messages = testRule.harness.getSentSessions(2)
             val first = messages[0]
             val attrs = checkNotNull(first.findSessionSpan().attributes)
             assertEquals(
@@ -76,7 +69,7 @@ internal class StatefulSessionTest {
             harness.recordSession {
                 harness.recordSession()
             }
-            val messages = testRule.harness.getSentSessions()
+            val messages = testRule.harness.getSentSessions(1)
 
             // TODO: future the logic seems wrong here - nested calls should probably be ignored
             //  and should not drop a session. However, it's an unlikely scenario (if we trust)

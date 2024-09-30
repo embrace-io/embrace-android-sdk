@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -86,7 +87,7 @@ internal class ExternalTracerTest {
             var stacktrace: String? = null
             var wrappedSpan: Span? = null
             var parentContext: Context?
-            val sessionMessage = harness.recordSession {
+            harness.recordSession {
                 val spanBuilder = embTracer.spanBuilder("external-span")
                 startTimeMs = harness.overriddenClock.now()
                 val span = spanBuilder.startSpan()
@@ -112,7 +113,8 @@ internal class ExternalTracerTest {
                 checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
                 checkNotNull(wrappedSpan).end()
             }
-            val spans = checkNotNull(sessionMessage?.data?.spans)
+            val sessionMessage = harness.getSingleSession()
+            val spans = checkNotNull(sessionMessage.data.spans)
             val recordedSpans = spans.associateBy { it.name }
             val parent = checkNotNull(recordedSpans["external-span"])
             val child = checkNotNull(recordedSpans["child-span"])

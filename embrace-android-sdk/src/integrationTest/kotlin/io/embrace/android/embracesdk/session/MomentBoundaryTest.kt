@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.getSingleSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,12 +29,12 @@ internal class MomentBoundaryTest {
     @Test
     fun `startup moment completes within one session`() {
         with(testRule) {
-            val message = harness.recordSession {
+            harness.recordSession {
                 embrace.endAppStartup()
                 embrace.startMoment(MOMENT_NAME)
                 embrace.endMoment(MOMENT_NAME)
             }
-            checkNotNull(message)
+            val message = harness.getSingleSession()
 
             val moments = fetchDeliveredEvents()
             assertEquals(4, moments.size)
@@ -62,15 +64,16 @@ internal class MomentBoundaryTest {
     @Test
     fun `startup moment completes within two sessions`() {
         with(testRule) {
-            val firstMessage = harness.recordSession {
+            harness.recordSession {
                 embrace.startMoment(MOMENT_NAME)
             }
-            val secondMessage = harness.recordSession {
+            harness.recordSession {
                 embrace.endAppStartup()
                 embrace.endMoment(MOMENT_NAME)
             }
-            checkNotNull(firstMessage)
-            checkNotNull(secondMessage)
+            val sessions = harness.getSentSessions(2)
+            val firstMessage = sessions[0]
+            val secondMessage = sessions[1]
 
             val moments = fetchDeliveredEvents()
             assertEquals(4, moments.size)

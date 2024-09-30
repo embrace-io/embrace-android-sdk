@@ -63,6 +63,10 @@ class IntakeServiceImplTest {
     private val logMetadata = StoredTelemetryMetadata.fromEnvelope(clock, LOG)
     private val networkMetadata = StoredTelemetryMetadata.fromEnvelope(clock, NETWORK)
     private val crashMetadata = StoredTelemetryMetadata.fromEnvelope(clock, CRASH)
+    private val sessionMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, SESSION)
+    private val logMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, LOG)
+    private val networkMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, NETWORK)
+    private val crashMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, CRASH)
 
     @Before
     fun setUp() {
@@ -181,23 +185,24 @@ class IntakeServiceImplTest {
             take(logEnvelope, networkMetadata)
             take(logEnvelope, logMetadata)
             clock.tick(1000)
-            take(logEnvelope, logMetadata)
-            take(logEnvelope, networkMetadata)
-            take(logEnvelope, crashMetadata)
-            take(sessionEnvelope, sessionMetadata)
+            take(logEnvelope, logMetadata2)
+            take(logEnvelope, networkMetadata2)
+            take(logEnvelope, crashMetadata2)
+            take(sessionEnvelope, sessionMetadata2)
 
             // stop blocking the executor
             latch.countDown()
         }
         worker.shutdownAndWait(1000)
-        assertEquals(4, payloadStorageService.storedPayloadCount())
+        assertEquals(8, payloadStorageService.storedPayloadCount())
+        assertEquals(8, payloadStorageService.storeCount.get())
 
         // assert payloads were prioritised in the expected order
         val observedTypes = payloadStorageService.storedFilenames().map {
             val metadata = StoredTelemetryMetadata.fromFilename(it).getOrThrow()
             metadata.envelopeType
         }
-        val expected = listOf(CRASH, SESSION, LOG, NETWORK)
+        val expected = listOf(CRASH, CRASH, SESSION, SESSION, LOG, LOG, NETWORK, NETWORK)
         assertEquals(expected, observedTypes)
     }
 }

@@ -10,14 +10,17 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.util.concurrent.atomic.AtomicInteger
 
 class FakePayloadStorageService : PayloadStorageService {
     private val serializer = TestPlatformSerializer()
     private val cachedPayloads = LinkedHashMap<StoredTelemetryMetadata, ByteArray>()
 
+    val storeCount = AtomicInteger(0)
     var failStorage: Boolean = false
 
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
+        storeCount.incrementAndGet()
         if (failStorage) {
             throw IOException("Failed to store payload")
         }

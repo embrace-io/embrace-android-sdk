@@ -1,16 +1,21 @@
 package io.embrace.android.embracesdk
 
 import android.app.Activity
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.Provider
 import org.json.JSONObject
 import org.junit.Assert
 import org.robolectric.Robolectric
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -29,9 +34,7 @@ import java.util.concurrent.TimeoutException
 internal fun IntegrationTestRule.Harness.getSentLogPayloads(expectedSize: Int? = null): List<Envelope<LogPayload>> {
     // TODO: future: avoid null expectedSize. Flaky because we can't predict when logs are
     //  batched & sent.
-    return retrievePayload(expectedSize) {
-        overriddenDeliveryModule.deliveryService.lastSentLogPayloads
-    }
+    return retrieveLogPayloads(expectedSize, true)
 }
 
 /**
@@ -40,8 +43,15 @@ internal fun IntegrationTestRule.Harness.getSentLogPayloads(expectedSize: Int? =
  * before returning, timing out if it doesn't.
  */
 internal fun IntegrationTestRule.Harness.getStoredLogPayloads(expectedSize: Int): List<Envelope<LogPayload>> {
+    return retrieveLogPayloads(expectedSize, false)
+}
+
+private fun IntegrationTestRule.Harness.retrieveLogPayloads(
+    expectedSize: Int?,
+    sent: Boolean
+): List<Envelope<LogPayload>> {
     return retrievePayload(expectedSize) {
-        overriddenDeliveryModule.deliveryService.lastSavedLogPayloads
+        getPayloadStore().storedLogPayloads.filter { it.second == sent }.map { it.first }
     }
 }
 
@@ -75,18 +85,14 @@ internal fun IntegrationTestRule.Harness.getSentMoments(expectedSize: Int): List
  * Returns a list of session that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentSessions(expectedSize: Int? = null): List<Envelope<SessionPayload>> {
-    return retrievePayload(expectedSize) {
-        overriddenDeliveryModule.deliveryService.getSentSessions()
-    }
+    return retrieveSessionPayloads(expectedSize, ApplicationState.FOREGROUND)
 }
 
 /**
  * Returns a list of background activity payloads that were sent by the SDK since startup.
  */
 internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(expectedSize: Int? = null): List<Envelope<SessionPayload>> {
-    return retrievePayload(expectedSize) {
-        overriddenDeliveryModule.deliveryService.getSentBackgroundActivities()
-    }
+    return retrieveSessionPayloads(expectedSize, ApplicationState.BACKGROUND)
 }
 
 /**
@@ -94,6 +100,23 @@ internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(expectedSiz
  */
 internal fun IntegrationTestRule.Harness.getSingleSession(): Envelope<SessionPayload> {
     return getSentSessions(1).single()
+}
+
+private fun IntegrationTestRule.Harness.retrieveSessionPayloads(
+    expectedSize: Int?, appState: ApplicationState
+): List<Envelope<SessionPayload>> {
+    return retrievePayload(expectedSize) {
+        val sessions = getPayloadStore().storedSessionPayloads.map { it.first }
+        sessions.filter { it.findAppState() == appState }
+    }
+}
+
+private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
+    val state = checkNotNull(findSessionSpan().attributes?.findAttributeValue(embState.name)) {
+        "AppState not found in session payload."
+    }
+    val value = state.uppercase(Locale.ENGLISH)
+    return ApplicationState.valueOf(value)
 }
 
 /**
@@ -179,6 +202,9 @@ internal fun IntegrationTestRule.Harness.recordSession(
 
 /*** TEST INFRA ***/
 
+private fun IntegrationTestRule.Harness.getPayloadStore(): FakePayloadStore {
+    return overriddenDeliveryModule.payloadStore as FakePayloadStore
+}
 
 /**
  * Validates a payload against a golden file in the test resources. If the payload does not match

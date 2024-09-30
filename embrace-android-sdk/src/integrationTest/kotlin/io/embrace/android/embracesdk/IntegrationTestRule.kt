@@ -133,6 +133,16 @@ internal class IntegrationTestRule(
         Embrace.getImpl().stop()
     }
 
+    fun runTest(
+        setupAction: Harness.() -> Unit,
+        testCaseAction: Harness.() -> Unit,
+        assertAction: Harness.() -> Unit,
+    ) {
+        setupAction(harness)
+        testCaseAction(harness)
+        assertAction(harness)
+    }
+
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */

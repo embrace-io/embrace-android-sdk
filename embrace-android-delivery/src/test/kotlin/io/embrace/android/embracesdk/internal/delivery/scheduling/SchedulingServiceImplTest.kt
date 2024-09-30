@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.delivery.scheduling
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
-import io.embrace.android.embracesdk.fakes.FakeStorageService2
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
@@ -20,7 +20,7 @@ import org.junit.Test
 
 internal class SchedulingServiceImplTest {
 
-    private lateinit var storageService: FakeStorageService2
+    private lateinit var storageService: FakePayloadStorageService
     private lateinit var executionService: FakeRequestExecutionService
     private lateinit var schedulingExecutor: BlockingScheduledExecutorService
     private lateinit var deliveryExecutor: BlockingScheduledExecutorService
@@ -38,7 +38,7 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor = workerModule.executor.apply { blockingMode = false }
         deliveryExecutor = workerModule.anotherExecutor.apply { blockingMode = false }
         clock = workerModule.executorClock
-        storageService = FakeStorageService2().apply {
+        storageService = FakePayloadStorageService().apply {
             addFakePayload(fakeLogStoredTelemetryMetadata)
             addFakePayload(fakeSessionStoredTelemetryMetadata)
         }

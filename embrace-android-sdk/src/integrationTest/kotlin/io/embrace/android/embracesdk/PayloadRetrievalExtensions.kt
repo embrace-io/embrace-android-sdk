@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk
 
 import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -95,6 +97,14 @@ internal fun IntegrationTestRule.Harness.getSentBackgroundActivities(expectedSiz
     return retrieveSessionPayloads(expectedSize, ApplicationState.BACKGROUND)
 }
 
+internal fun IntegrationTestRule.Harness.getSessionFromService(bootstrapper: ModuleInitBootstrapper): Envelope<SessionPayload> {
+    return retrievePayload(1) {
+        val service = bootstrapper.deliveryModule.requestExecutionService as FakeRequestExecutionService
+        val requests = service.getRequests<SessionPayload>()
+        requests.filter { it.findAppState() == ApplicationState.FOREGROUND }
+    }.single()
+}
+
 /**
  * Returns a single session or throws.
  */
@@ -106,6 +116,8 @@ private fun IntegrationTestRule.Harness.retrieveSessionPayloads(
     expectedSize: Int?, appState: ApplicationState
 ): List<Envelope<SessionPayload>> {
     return retrievePayload(expectedSize) {
+
+
         val sessions = getPayloadStore().storedSessionPayloads.map { it.first }
         sessions.filter { it.findAppState() == appState }
     }

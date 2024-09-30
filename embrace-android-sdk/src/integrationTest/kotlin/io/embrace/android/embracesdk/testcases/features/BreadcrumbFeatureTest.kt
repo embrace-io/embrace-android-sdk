@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSessionFromService
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -30,7 +31,7 @@ internal class BreadcrumbFeatureTest {
             harness.recordSession {
                 embrace.addBreadcrumb("Hello, world!")
             }
-            val message = harness.getSingleSession()
+            val message = harness.getSessionFromService(bootstrapper)
             message.assertBreadcrumbWithMessage("Hello, world!")
             embrace.addBreadcrumb("Bye, world!")
             harness.recordSession {

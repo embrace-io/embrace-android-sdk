@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
-import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -28,6 +29,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.utils.Provider
 import org.junit.rules.ExternalResource
@@ -100,7 +102,18 @@ internal class IntegrationTestRule(
                 coreModuleSupplier = { _, _ -> overriddenCoreModule },
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-                deliveryModuleSupplier = { _, _, _, _, _, _ -> overriddenDeliveryModule },
+                deliveryModuleSupplier = { configModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule ->
+                    DecoratedDeliveryModule(
+                        createDeliveryModule(
+                            configModule,
+                            initModule,
+                            workerThreadModule,
+                            coreModule,
+                            storageModule,
+                            essentialServiceModule
+                        )
+                    )
+                },
                 anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
                 nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
             )
@@ -134,6 +147,13 @@ internal class IntegrationTestRule(
         Embrace.getImpl().stop()
     }
 
+    private class DecoratedDeliveryModule(
+        private val base: DeliveryModule,
+    ) : DeliveryModule by base {
+        override val requestExecutionService: RequestExecutionService =
+            FakeRequestExecutionService()
+    }
+
     /**
      * Test harness for which an instance is generated each test run and provided to the test by the Rule
      */
@@ -148,7 +168,9 @@ internal class IntegrationTestRule(
         val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
             logger = overriddenInitModule.logger
         ),
-        val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(overriddenInitModule),
+        val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(
+            overriddenInitModule
+        ),
         val overriddenConfigService: FakeConfigService = FakeConfigService(
             backgroundActivityCaptureEnabled = true,
             networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true),
@@ -159,15 +181,12 @@ internal class IntegrationTestRule(
             coreModule = overriddenCoreModule,
             workerThreadModule = overriddenWorkerThreadModule
         ),
-        private val deliveryService: FakeDeliveryService = FakeDeliveryService(),
-        val overriddenDeliveryModule: FakeDeliveryModule =
-            FakeDeliveryModule(
-                deliveryService = deliveryService,
-                payloadStore = FakePayloadStore(deliveryService)
-            ),
         val fakeAnrModule: AnrModule = FakeAnrModule(),
         val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()
     ) {
+        @Suppress("IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION")
+        val overriddenDeliveryModule: FakeDeliveryModule by lazy { TODO() } // TODO FUTURE: remove this.
+
         fun logWebView(url: String) {
             Embrace.getImpl().logWebView(url)
         }

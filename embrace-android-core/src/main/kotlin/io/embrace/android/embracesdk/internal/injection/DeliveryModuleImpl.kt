@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -28,8 +29,11 @@ internal class DeliveryModuleImpl(
     essentialServiceModule: EssentialServiceModule
 ) : DeliveryModule {
 
-    override val payloadStore: PayloadStore by singleton {
-        V1PayloadStore(deliveryService)
+    override val payloadStore: PayloadStore by singleton { // TODO: make this nullable?
+        V2PayloadStore(
+            checkNotNull(intakeService),
+            initModule.clock
+        )
     }
 
     override val deliveryService: DeliveryService by singleton {

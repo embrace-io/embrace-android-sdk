@@ -4,7 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastSentBackgroundActivity
+import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -25,12 +27,14 @@ internal class BreadcrumbFeatureTest {
     @Test
     fun `custom breadcrumb feature`() {
         with(testRule) {
-            checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addBreadcrumb("Hello, world!")
-            }).assertBreadcrumbWithMessage("Hello, world!")
+            }
+            val message = harness.getSingleSession()
+            message.assertBreadcrumbWithMessage("Hello, world!")
             embrace.addBreadcrumb("Bye, world!")
             harness.recordSession {
-                checkNotNull(harness.getLastSentBackgroundActivity()).assertBreadcrumbWithMessage("Bye, world!")
+                harness.getSentBackgroundActivities(2).last().assertBreadcrumbWithMessage("Bye, world!")
             }
         }
     }

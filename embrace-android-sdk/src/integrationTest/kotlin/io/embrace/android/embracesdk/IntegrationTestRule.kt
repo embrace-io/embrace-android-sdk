@@ -63,9 +63,9 @@ import org.junit.rules.ExternalResource
  * It is also possible to access internal modules & dependencies that are not exposed via the public API.
  * For example, it is possible to access the [FakeDeliveryModule] to get event/session payloads the SDK sent.
  *
- * In general, it is recommended to use functions declared in IntegrationTestRuleExtensions.kt that retrieve
+ * In general, it is recommended to use functions declared in PayloadRetrievalExtensions.kt that retrieve
  * this useful information for you. If it's not possible to get information from the SDK and you
- * need it for a test, please consider adding a new function to IntegrationTestRuleExtensions.kt so that others
+ * need it for a test, please consider adding a new function to PayloadRetrievalExtensions.kt so that others
  * find it easier to write tests in the future.
  *
  * Because there are parts of the [Embrace] instance being tested that are using fakes, unless you are careful,

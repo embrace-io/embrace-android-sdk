@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -36,11 +38,9 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native without values should return defaults`() {
         with(testRule) {
-            val session = harness.recordSession {
-
-            }
-
-            val res = checkNotNull(session?.resource)
+            harness.recordSession()
+            val session = harness.getSingleSession()
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertNull(res.hostedPlatformVersion)
             assertNull(res.javascriptPatchNumber)
@@ -50,13 +50,13 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native methods work in current session`() {
         with(testRule) {
-            val session = harness.recordSession {
+            harness.recordSession {
                 embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
                 embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
             }
-
-            val res = checkNotNull(session?.resource)
+            val session = harness.getSingleSession()
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
@@ -73,11 +73,10 @@ internal class ReactNativeInternalInterfaceTest {
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
             }
 
-            val session = harness.recordSession {
+            harness.recordSession()
+            val session = harness.getSentSessions(2).last()
 
-            }
-
-            val res = checkNotNull(session?.resource)
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
@@ -94,13 +93,14 @@ internal class ReactNativeInternalInterfaceTest {
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
             }
 
-            val session = harness.recordSession {
+            harness.recordSession {
                 embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.2")
                 embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.4")
                 embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("999")
             }
+            val session = harness.getSentSessions(2).last()
 
-            val res = checkNotNull(session?.resource)
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
             assertEquals("28.9.2", res.hostedPlatformVersion)
             assertEquals("1.2.4", res.hostedSdkVersion)
@@ -111,7 +111,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native action`() {
         with(testRule) {
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.reactNativeInternalInterface?.logRnAction(
                     "MyAction",
                     1000,
@@ -120,7 +120,8 @@ internal class ReactNativeInternalInterfaceTest {
                     100,
                     "SUCCESS"
                 )
-            })
+            }
+            val message = harness.getSingleSession()
 
             val spans = message.findSpansByName("emb-rn-action")
             assertEquals(1, spans.size)
@@ -145,12 +146,12 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native log RN view`() {
         with(testRule) {
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
                 harness.overriddenClock.tick(1000)
                 embrace.reactNativeInternalInterface?.logRnView("DetailsScreen")
-            })
-
+            }
+            val message = harness.getSingleSession()
             val spans = message.findSpansOfType(EmbType.Ux.View)
             assertEquals(1, spans.size)
 
@@ -178,11 +179,12 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native log RN view same name`() {
         with(testRule) {
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
                 harness.overriddenClock.tick(1000)
                 embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
-            })
+            }
+            val message = harness.getSingleSession()
 
             val spans = message.findSpansOfType(EmbType.Ux.View)
             assertEquals(1, spans.size)

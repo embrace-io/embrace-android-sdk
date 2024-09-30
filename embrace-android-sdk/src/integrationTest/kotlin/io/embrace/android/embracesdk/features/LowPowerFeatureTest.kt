@@ -4,6 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.recordSession
@@ -24,7 +26,7 @@ internal class LowPowerFeatureTest {
         val tickTimeMs = 3000L
         with(testRule) {
             var startTimeMs: Long = 0
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 startTimeMs = harness.overriddenClock.now()
 
                 // look inside embrace internals as there isn't a good way to trigger this E2E
@@ -33,8 +35,9 @@ internal class LowPowerFeatureTest {
                 dataSource.onPowerSaveModeChanged(true)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.onPowerSaveModeChanged(false)
-            })
+            }
 
+            val message = harness.getSingleSession()
             val spans = message.findSpansOfType(EmbType.System.LowPower)
             assertEquals(1, spans.size)
             val span = spans.single()

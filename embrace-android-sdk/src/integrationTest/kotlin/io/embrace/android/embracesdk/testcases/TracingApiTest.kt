@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.getSingleSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -62,7 +64,7 @@ internal class TracingApiTest {
             embrace.addSpanExporter(spanExporter)
             startSdk(context = harness.overriddenCoreModule.context)
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            val envelope = harness.recordSession {
+            harness.recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                 assertTrue(parentSpan.start(startTimeMs = harness.overriddenClock.now() - 1L))
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
@@ -130,9 +132,9 @@ internal class TracingApiTest {
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
+            val session = harness.getSingleSession()
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionEndTime = harness.overriddenClock.now()
-            val session = checkNotNull(envelope)
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(session.data.spans) +
                 harness.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
@@ -239,7 +241,7 @@ internal class TracingApiTest {
                 private = false
             )
 
-            val snapshots = checkNotNull(envelope.data.spanSnapshots).associateBy { it.name }
+            val snapshots = checkNotNull(session.data.spanSnapshots).associateBy { it.name }
             val unendingSpanSnapshot = checkNotNull(snapshots["unending-span"])
             unendingSpanSnapshot.assertIsTypePerformance()
             assertEmbraceSpanData(
@@ -265,7 +267,7 @@ internal class TracingApiTest {
     fun `span can be parented by a span created on a different thread`() {
         with(testRule) {
             startSdk()
-            val session = harness.recordSession {
+            harness.recordSession {
                 val latch = CountDownLatch(1)
                 val parentThreadId = Thread.currentThread().id
                 var childThreadId: Long = -1L
@@ -285,7 +287,8 @@ internal class TracingApiTest {
                 assertNotEquals(parentThreadId, childThreadId)
                 assertEquals(currentContext, currentContext2)
             }
-            val spans = checkNotNull(session?.data?.spans).associateBy { it.name }
+            val session = harness.getSingleSession()
+            val spans = checkNotNull(session.data.spans).associateBy { it.name }
             val parentSpan = checkNotNull(spans["parent"])
             val childSpan = checkNotNull(spans["child"])
             assertEquals(parentSpan.traceId, childSpan.traceId)
@@ -310,7 +313,7 @@ internal class TracingApiTest {
     }
 
     private fun getSdkInitSpanFromBackgroundActivity(): List<Span> {
-        val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities().last()
+        val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities(1).last()
         val spans = checkNotNull(lastSentBackgroundActivity.data.spans)
         return spans.filter { it.name == "emb-sdk-init" }
     }

@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -37,14 +39,15 @@ internal class ThermalStateFeatureTest {
     fun `single thermal state change generates a snapshot`() {
         with(testRule) {
             var startTimeMs = 0L
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 startTimeMs = harness.overriddenClock.now()
 
                 val dataSource =
                     checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
-            })
+            }
 
+            val message = harness.getSingleSession()
             val snapshots = message.findSpanSnapshotsOfType(EmbType.Performance.ThermalState)
             assertEquals(1, snapshots.size)
             val snapshot = snapshots.single()
@@ -65,7 +68,7 @@ internal class ThermalStateFeatureTest {
         val tickTimeMs = 3000L
         with(testRule) {
             var startTimeMs = 0L
-            val message = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 startTimeMs = harness.overriddenClock.now()
 
                 val dataSource =
@@ -75,8 +78,9 @@ internal class ThermalStateFeatureTest {
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_MODERATE)
                 harness.overriddenClock.tick(tickTimeMs)
                 dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
-            })
+            }
 
+            val message = harness.getSingleSession()
             val spans = message.findSpansOfType(EmbType.Performance.ThermalState)
             assertEquals(2, spans.size)
 

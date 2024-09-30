@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
@@ -36,7 +37,7 @@ internal class SessionApiTest {
     fun sessionEndMessageTest() {
         val startTime = testRule.harness.overriddenClock.now()
         with(testRule) {
-            val message = harness.recordSession {
+            harness.recordSession {
                 embrace.setUserIdentifier("some id")
                 embrace.setUserEmail("user@email.com")
                 embrace.setUsername("John Doe")
@@ -45,7 +46,7 @@ internal class SessionApiTest {
                 val msg = ResourceReader.readResourceAsText("expected-webview-core-vital.json")
                 embrace.trackWebViewPerformance("myWebView", msg)
             }
-            checkNotNull(message)
+            val message = harness.getSingleSession()
             validatePayloadAgainstGoldenFile(message, "v2_session_expected.json")
 
             // validate snapshots separately, as the JSON diff is tricky to debug

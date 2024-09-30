@@ -5,11 +5,12 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
-import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -20,8 +21,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,19 +46,13 @@ internal class OtelSessionGatingTest {
         )
     }
 
-    @Before
-    fun setUp() {
-        testRule.harness.overriddenConfigService.sessionBehavior
-        assertTrue(testRule.harness.getSentSessions().isEmpty())
-    }
-
     @Test
     fun `session sent in full without gating`() {
         gatingConfig = SessionRemoteConfig()
 
         with(testRule) {
             simulateSession()
-            val payload = harness.getSentSessions().single()
+            val payload = harness.getSingleSession()
             assertSessionGating(payload, gated = false)
         }
     }
@@ -76,7 +69,7 @@ internal class OtelSessionGatingTest {
 
         with(testRule) {
             simulateSession()
-            val payload = harness.getSentSessions().single()
+            val payload = harness.getSingleSession()
             assertSessionGating(payload, gated = true)
         }
     }

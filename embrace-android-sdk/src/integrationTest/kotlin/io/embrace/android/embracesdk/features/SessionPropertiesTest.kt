@@ -4,9 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.checkNextSavedBackgroundActivity
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastSentBackgroundActivity
 import io.embrace.android.embracesdk.getSentBackgroundActivities
+import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
@@ -34,19 +35,22 @@ internal class SessionPropertiesTest {
             startSdk()
             embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
             embrace.addSessionProperty(PERM_KEY_2, PERM_VAL, true)
-            val session1 = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
                 embrace.addSessionProperty(PERM_KEY_3, PERM_VAL, true)
                 embrace.removeSessionProperty(PERM_KEY_2)
                 embrace.removeSessionProperty(TEMP_KEY)
-            })
-            val ba1 = checkNotNull(harness.getLastSentBackgroundActivity())
+            }
+            val session1 = harness.getSingleSession()
+            val ba1 = harness.getSentBackgroundActivities(1).last()
             embrace.addSessionProperty(PERM_KEY_4, PERM_VAL, true)
             embrace.removeSessionProperty(PERM_KEY_3)
             embrace.removeSessionProperty(PERM_KEY_4)
 
-            val session2 = checkNotNull(harness.recordSession())
-            val ba2 = checkNotNull(harness.getLastSentBackgroundActivity())
+            harness.recordSession()
+            val session2 = harness.getSentSessions(2).last()
+
+            val ba2 = harness.getSentBackgroundActivities(2).last()
 
             ba1.findSessionSpan().assertPropertyExistence(
                 exist = listOf(PERM_KEY, PERM_KEY_2)
@@ -74,17 +78,21 @@ internal class SessionPropertiesTest {
             embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
             embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
             embrace.addSessionProperty(PERM_KEY_2, PERM_VAL, true)
-            val session1 = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty(PERM_KEY_3, PERM_VAL, true)
                 embrace.removeSessionProperty(PERM_KEY_2)
-            })
+            }
 
             embrace.addSessionProperty(TEMP_KEY_2, TEMP_VAL, false)
             embrace.removeSessionProperty(PERM_KEY_3)
 
-            val session2 = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty(PERM_KEY_4, PERM_VAL, true)
-            })
+            }
+
+            val sessions = harness.getSentSessions(2)
+            val session1 = sessions[0]
+            val session2 = sessions[1]
 
             session1.findSessionSpan().assertPropertyExistence(
                 exist = listOf(TEMP_KEY, PERM_KEY, PERM_KEY_3),
@@ -103,11 +111,16 @@ internal class SessionPropertiesTest {
         with(testRule) {
             startSdk()
             embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
-            val firstSession = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
-            })
-            val secondSession = checkNotNull(harness.recordSession())
-            val bgActivities = harness.getSentBackgroundActivities()
+            }
+            harness.recordSession()
+
+            val sessions = harness.getSentSessions(2)
+            val firstSession = sessions[0]
+            val secondSession = sessions[1]
+
+            val bgActivities = harness.getSentBackgroundActivities(2)
             assertEquals(2, bgActivities.size)
             val firstBg = bgActivities.first()
             val secondBg = bgActivities.last()
@@ -138,10 +151,11 @@ internal class SessionPropertiesTest {
                 }
             )
 
-            val session = checkNotNull(harness.recordSession())
+            harness.recordSession()
+            val session = harness.getSentSessions(2).last()
             checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
 
-            val bg = checkNotNull(harness.getLastSentBackgroundActivity())
+            val bg = harness.getSentBackgroundActivities(2).last()
             checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
         }
     }
@@ -150,7 +164,9 @@ internal class SessionPropertiesTest {
     fun `permanent properties are persisted in cached payloads`() {
         with(testRule) {
             startSdk()
-            var lastSessionId = checkNotNull(harness.recordSession()).getSessionId()
+            harness.recordSession()
+            var session = harness.getSingleSession()
+            var lastSessionId = session.getSessionId()
 
             harness.checkNextSavedBackgroundActivity(
                 action = {
@@ -167,9 +183,10 @@ internal class SessionPropertiesTest {
                 }
             )
 
-            val session = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty("perm2", "value", true)
-            })
+            }
+            session = harness.getSentSessions(2).last()
             checkNotNull(session.getSessionSpan()).assertPropertyExistence(
                 exist = listOf("perm", "perm2")
             )
@@ -189,7 +206,8 @@ internal class SessionPropertiesTest {
                 }
             )
 
-            val session2 = checkNotNull(harness.recordSession())
+            harness.recordSession()
+            val session2 = harness.getSentSessions(3).last()
             checkNotNull(session2.getSessionSpan()).assertPropertyExistence(
                 exist = listOf("perm", "perm2", "perm3")
             )
@@ -202,17 +220,17 @@ internal class SessionPropertiesTest {
             harness.overriddenConfigService.backgroundActivityCaptureEnabled = false
             startSdk()
             embrace.addSessionProperty("perm", "value", true)
-            val session = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.addSessionProperty("perm2", "value", true)
-            })
-            checkNotNull(session.getSessionSpan()).assertPropertyExistence(
+            }
+            harness.recordSession {
+                embrace.addSessionProperty("perm3", "value", true)
+            }
+            val sessions = harness.getSentSessions(2)
+            checkNotNull(sessions[0].getSessionSpan()).assertPropertyExistence(
                 exist = listOf("perm", "perm2")
             )
-
-            val session2 = checkNotNull(harness.recordSession {
-                embrace.addSessionProperty("perm3", "value", true)
-            })
-            checkNotNull(session2.getSessionSpan()).assertPropertyExistence(
+            checkNotNull(sessions[1].getSessionSpan()).assertPropertyExistence(
                 exist = listOf("perm", "perm2", "perm3")
             )
         }

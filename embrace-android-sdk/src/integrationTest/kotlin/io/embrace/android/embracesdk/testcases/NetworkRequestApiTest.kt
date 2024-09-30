@@ -4,7 +4,8 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
-import io.embrace.android.embracesdk.getLastSentSession
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -265,7 +266,7 @@ internal class NetworkRequestApiTest {
                 embrace.recordNetworkRequest(request)
             }
 
-            val session = checkNotNull(testRule.harness.getLastSentSession())
+            val session = testRule.harness.getSingleSession()
 
             val spans =
                 checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
@@ -355,7 +356,7 @@ internal class NetworkRequestApiTest {
     }
 
     private fun validateAndReturnExpectedNetworkSpan(): Span {
-        val session = checkNotNull(testRule.harness.getLastSentSession())
+        val session = testRule.harness.getSingleSession()
 
         val unfilteredSpans = checkNotNull(session.data.spans)
         val spans =

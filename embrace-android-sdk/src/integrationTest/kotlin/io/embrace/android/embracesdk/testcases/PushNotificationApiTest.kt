@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -31,9 +32,10 @@ internal class PushNotificationApiTest {
     fun `log push notification and data type`() {
         with(testRule) {
             startSdk()
-            val msg = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
-            })
+            }
+            val msg = harness.getSingleSession()
             msg.assertNotification("notif-data")
         }
     }
@@ -42,9 +44,10 @@ internal class PushNotificationApiTest {
     fun `log push data type`() {
         with(testRule) {
             startSdk()
-            val msg = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
-            })
+            }
+            val msg = harness.getSingleSession()
             msg.assertNotification("data")
         }
     }
@@ -53,9 +56,10 @@ internal class PushNotificationApiTest {
     fun `log push notification no data type`() {
         with(testRule) {
             startSdk()
-            val msg = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
-            })
+            }
+            val msg = harness.getSingleSession()
             msg.assertNotification("notif")
         }
     }
@@ -64,9 +68,10 @@ internal class PushNotificationApiTest {
     fun `log push unknown type`() {
         with(testRule) {
             startSdk()
-            val msg = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
-            })
+            }
+            val msg = harness.getSingleSession()
             msg.assertNotification("unknown")
         }
     }
@@ -78,9 +83,10 @@ internal class PushNotificationApiTest {
                 captureFcmPiiDataEnabled = true
             )
             startSdk()
-            val payload = checkNotNull(harness.recordSession {
+            harness.recordSession {
                 embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
-            })
+            }
+            val payload = harness.getSingleSession()
             val sessionSpan = payload.findSessionSpan()
             val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
             assertTrue(checkNotNull(event.timestampNanos) > 0)

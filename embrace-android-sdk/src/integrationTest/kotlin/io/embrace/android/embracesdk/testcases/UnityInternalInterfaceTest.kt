@@ -4,6 +4,8 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -30,11 +32,9 @@ internal class UnityInternalInterfaceTest {
     @Test
     fun `unity without values should return defaults`() {
         with(testRule) {
-            val session = harness.recordSession {
-
-            }
-
-            val res = checkNotNull(session?.resource)
+            harness.recordSession()
+            val session = harness.getSingleSession()
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.UNITY, res.appFramework)
             assertNull(res.hostedSdkVersion)
             assertNull(res.hostedPlatformVersion)
@@ -44,11 +44,12 @@ internal class UnityInternalInterfaceTest {
     @Test
     fun `unity methods work in current session`() {
         with(testRule) {
-            val session = harness.recordSession {
+            harness.recordSession {
                 embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
             }
+            val session = harness.getSingleSession()
 
-            val res = checkNotNull(session?.resource)
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.UNITY, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
@@ -63,11 +64,10 @@ internal class UnityInternalInterfaceTest {
                 embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
             }
 
-            val session = harness.recordSession {
+            harness.recordSession()
+            val session = harness.getSentSessions(2).last()
 
-            }
-
-            val res = checkNotNull(session?.resource)
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.UNITY, res.appFramework)
             assertEquals("28.9.1", res.hostedPlatformVersion)
             assertEquals("1.2.3", res.hostedSdkVersion)
@@ -82,11 +82,12 @@ internal class UnityInternalInterfaceTest {
                 embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
             }
 
-            val session = harness.recordSession {
+            harness.recordSession {
                 embrace.unityInternalInterface?.setUnityMetaData("28.9.2", "new unity build id", "1.2.4")
             }
+            val session = harness.getSentSessions(2).last()
 
-            val res = checkNotNull(session?.resource)
+            val res = checkNotNull(session.resource)
             assertEquals(AppFramework.UNITY, res.appFramework)
             assertEquals("28.9.2", res.hostedPlatformVersion)
             assertEquals("1.2.4", res.hostedSdkVersion)

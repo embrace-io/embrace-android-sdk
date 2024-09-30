@@ -7,11 +7,12 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastSentLog
+import io.embrace.android.embracesdk.getLastLog
 import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSentLogPayloads
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -92,7 +93,7 @@ internal class BackgroundActivityDisabledTest {
             embrace.logInfo("info")
             runLoggingThread()
 
-            val session = harness.recordSession {
+            harness.recordSession {
                 assertFalse(embrace.currentSessionId.isNullOrBlank())
                 embrace.addBreadcrumb("logged")
                 embrace.logWarning("warning")
@@ -120,11 +121,11 @@ internal class BackgroundActivityDisabledTest {
                 runLoggingThread()
             }
 
-            assertEquals(0, harness.getSentBackgroundActivities().size)
-            checkNotNull(session)
+            val session = harness.getSentSessions(2).last()
+            assertEquals(0, harness.getSentBackgroundActivities(0).size)
 
             flushLogBatch()
-            checkNotNull(harness.getLastSentLog()).run {
+            checkNotNull(harness.getSentLogPayloads(3).getLastLog()).run {
                 assertEquals("sent-after-session", body)
                 assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertEquals(session.getSessionId(), attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -150,13 +151,19 @@ internal class BackgroundActivityDisabledTest {
         with(testRule) {
             val session1StartMs = harness.overriddenClock.now()
             harness.overriddenClock.tick(500L)
-            val session1 = checkNotNull(harness.recordSession())
+
+            harness.recordSession()
             val session1EndMs = harness.overriddenClock.now()
+
             val session2StartMs = harness.overriddenClock.tick(15000)
-            val session2 = checkNotNull(harness.recordSession())
+            harness.recordSession()
             val session2EndMs = harness.overriddenClock.now()
-            assertEquals(2, harness.getSentSessions().size)
-            assertEquals(0, harness.getSentBackgroundActivities().size)
+
+            val sessions = harness.getSentSessions(2)
+            val session1 = sessions[0]
+            val session2 = sessions[1]
+            assertEquals(2, sessions.size)
+            assertEquals(0, harness.getSentBackgroundActivities(0).size)
 
             assertEquals(session1.metadata, session2.metadata)
             assertEquals(

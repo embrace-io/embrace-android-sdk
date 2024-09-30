@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
@@ -20,7 +21,8 @@ internal class SessionPayloadTest {
     @Test
     fun `device and app attributes are present in session envelope`() {
         with(testRule) {
-            with(checkNotNull(harness.recordSession())) {
+            harness.recordSession()
+            with(harness.getSingleSession()) {
                 assertEquals("spans", type)
                 with(checkNotNull(resource)) {
                     assertTrue(checkNotNull(appVersion).isNotBlank())

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.session
+package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule

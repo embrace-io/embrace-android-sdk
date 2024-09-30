@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.scheduling
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -24,6 +26,7 @@ internal class SchedulingServiceImplTest {
     private lateinit var executionService: FakeRequestExecutionService
     private lateinit var schedulingExecutor: BlockingScheduledExecutorService
     private lateinit var deliveryExecutor: BlockingScheduledExecutorService
+    private lateinit var networkConnectivityService: FakeNetworkConnectivityService
     private lateinit var schedulingService: SchedulingServiceImpl
 
     @Volatile
@@ -38,6 +41,7 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor = workerModule.executor.apply { blockingMode = false }
         deliveryExecutor = workerModule.anotherExecutor.apply { blockingMode = false }
         clock = workerModule.executorClock
+        networkConnectivityService = FakeNetworkConnectivityService()
         storageService = FakePayloadStorageService().apply {
             addFakePayload(fakeLogStoredTelemetryMetadata)
             addFakePayload(fakeSessionStoredTelemetryMetadata)
@@ -51,6 +55,7 @@ internal class SchedulingServiceImplTest {
             deliveryWorker = workerModule.backgroundWorker(worker = Worker.Background.DeliveryWorker),
             clock = clock,
         )
+        networkConnectivityService.addNetworkConnectivityListener(schedulingService)
     }
 
     @Test
@@ -73,7 +78,6 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `all payloads ready to be sent are sent in priority order`() {
-        executionService.constantResponse = success
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
@@ -234,6 +238,20 @@ internal class SchedulingServiceImplTest {
         deliveryExecutor.blockingMode = false
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
+    }
+
+    @Test
+    fun `ready payloads will not be sent if there's no network but will be sent when network comes back online`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        networkConnectivityService.networkStatus = NetworkStatus.WIFI
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
     }
 
     private fun waitForOnPayloadIntakeTaskCompletion() {

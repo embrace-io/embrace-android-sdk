@@ -1,10 +1,10 @@
-@file:Suppress("FunctionOnlyReturningConstant")
-
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -24,9 +24,10 @@ internal class SchedulingServiceImpl(
     private val schedulingWorker: BackgroundWorker,
     private val deliveryWorker: BackgroundWorker,
     private val clock: Clock
-) : SchedulingService {
+) : SchedulingService, NetworkConnectivityListener {
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
+    private val hasNetwork = AtomicBoolean(true)
     private val sendLoopActive = AtomicBoolean(false)
     private val queryForPayloads = AtomicBoolean(true)
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
@@ -39,6 +40,13 @@ internal class SchedulingServiceImpl(
 
     override fun handleCrash(crashId: String) {
         // TODO: get ready to die
+    }
+
+    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
+        val hasNetworkBefore = hasNetwork.getAndSet(status.isReachable)
+        if (!hasNetworkBefore && hasNetwork.get()) {
+            startDeliveryLoop()
+        }
     }
 
     private fun startDeliveryLoop() {
@@ -59,7 +67,7 @@ internal class SchedulingServiceImpl(
             var deliveryQueue = createPayloadQueue()
             while (deliveryQueue.isNotEmpty() && readyToSend()) {
                 deliveryQueue.poll()?.let { payload ->
-                    if (payload.shouldSendPayload()) {
+                    if (payload.shouldSendPayload() && readyToSend()) {
                         payload.envelopeType.endpoint.updateBlockedEndpoint()
                         queueDelivery(payload)
                     }
@@ -141,8 +149,7 @@ internal class SchedulingServiceImpl(
     }
 
     private fun readyToSend(): Boolean {
-        // TODO: determine if the SDK is in a state where it's ready to send payloads, e.g. have network connection, etc.
-        return true
+        return hasNetwork.get()
     }
 
     private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {

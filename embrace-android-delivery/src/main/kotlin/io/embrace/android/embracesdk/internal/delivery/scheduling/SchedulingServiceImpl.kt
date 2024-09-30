@@ -95,7 +95,7 @@ internal class SchedulingServiceImpl(
                             // If the response is such that we should not ever retry the delivery of this payload,
                             // delete it from both the in memory retry payloads map and on disk
                             payloadsToRetry.remove(payload)
-                            storageService.deletePayload(payload)
+                            storageService.delete(payload)
                         } else {
                             // If delivery of this payload should be retried, add or replace the entry in the retry map
                             // with the new values for how many times it has failed, and when the next retry should happen
@@ -118,6 +118,8 @@ internal class SchedulingServiceImpl(
                     // Could not find payload. Do not retry.
                     ApiResponse.NoPayload
                 }
+            } catch (t: Throwable) {
+                ApiResponse.Incomplete(t)
             } finally {
                 activeSends.remove(payload)
             }

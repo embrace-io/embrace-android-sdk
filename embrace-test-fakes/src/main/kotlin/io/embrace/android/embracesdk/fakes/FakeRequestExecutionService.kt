@@ -26,12 +26,15 @@ class FakeRequestExecutionService : RequestExecutionService {
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType
-    ): ApiResponse {
-        val bufferedStream = payloadStream().buffered()
-        val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
-        attemptedHttpRequests.add(json)
-        return responseAction(json)
-    }
+    ): ApiResponse =
+        try {
+            val bufferedStream = payloadStream()
+            val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
+            attemptedHttpRequests.add(json)
+            responseAction(json)
+        } catch (t: Throwable) {
+            ApiResponse.Incomplete(t)
+        }
 
     fun sendAttempts() = getRequests<SessionPayload>().size + getRequests<LogPayload>().size
 }

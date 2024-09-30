@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.features
+package io.embrace.android.embracesdk.testcases.features
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4

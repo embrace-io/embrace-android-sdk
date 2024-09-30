@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.features
+package io.embrace.android.embracesdk.testcases.features
 
 import android.app.ActivityManager
 import android.app.Application

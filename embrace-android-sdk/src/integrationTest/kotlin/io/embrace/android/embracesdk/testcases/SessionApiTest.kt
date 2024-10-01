@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.toMap
+import io.embrace.android.embracesdk.testframework.assertions.toMap
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -22,7 +23,7 @@ internal class SessionApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness().apply {
+        EmbraceSetupInterface().apply {
             overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(diskUsageReportingEnabled = false)
         }
     }

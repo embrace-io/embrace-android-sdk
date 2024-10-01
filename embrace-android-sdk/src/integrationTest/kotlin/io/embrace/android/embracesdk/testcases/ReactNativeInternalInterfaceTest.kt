@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
@@ -29,7 +30,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.REACT_NATIVE)
+        EmbraceSetupInterface(appFramework = Embrace.AppFramework.REACT_NATIVE)
     }
 
     @Test

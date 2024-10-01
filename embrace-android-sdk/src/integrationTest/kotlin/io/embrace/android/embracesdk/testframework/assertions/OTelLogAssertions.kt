@@ -1,6 +1,6 @@
-package io.embrace.android.embracesdk.assertions
+package io.embrace.android.embracesdk.testframework.assertions
 
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Log

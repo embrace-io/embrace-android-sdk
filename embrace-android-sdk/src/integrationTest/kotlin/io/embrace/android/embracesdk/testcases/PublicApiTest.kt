@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
@@ -31,7 +32,7 @@ internal class PublicApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false).apply {
+        EmbraceSetupInterface(startImmediately = false).apply {
             overriddenConfigService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)
         }
     }
@@ -99,7 +100,7 @@ internal class PublicApiTest {
             recordSession {
                 assertEquals(
                     embrace.currentSessionId,
-                    testRule.harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId()
+                    testRule.setup.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId()
                 )
                 assertNotNull(embrace.currentSessionId)
             }
@@ -136,17 +137,6 @@ internal class PublicApiTest {
             repeat(100) {
                 assertTrue(validPattern.matches(checkNotNull(embrace.generateW3cTraceparent())))
             }
-        }
-    }
-
-    @Test
-    fun `SDK can be stopped`() {
-        with(testRule.action) {
-            assertFalse(embrace.isStarted)
-            startSdk()
-            assertTrue(embrace.isStarted)
-            stopSdk()
-            assertFalse(embrace.isStarted)
         }
     }
 }

@@ -1,6 +1,6 @@
-package io.embrace.android.embracesdk.assertions
+package io.embrace.android.embracesdk.testframework.assertions
 
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakePayloadCachingService
 import io.embrace.android.embracesdk.fakes.FakePayloadIntake

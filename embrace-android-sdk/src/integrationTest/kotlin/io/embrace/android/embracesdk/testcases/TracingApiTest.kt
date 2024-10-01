@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
@@ -39,7 +40,7 @@ internal class TracingApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     private val results = mutableListOf<String>()
@@ -133,7 +134,7 @@ internal class TracingApiTest {
             val sessionEndTime = clock.now()
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(session.data.spans) +
-                testRule.harness.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
+                testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
 
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session"])

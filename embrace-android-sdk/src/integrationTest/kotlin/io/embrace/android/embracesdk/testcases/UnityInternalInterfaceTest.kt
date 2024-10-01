@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -23,7 +24,7 @@ internal class UnityInternalInterfaceTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(appFramework = Embrace.AppFramework.UNITY)
+        EmbraceSetupInterface(appFramework = Embrace.AppFramework.UNITY)
     }
 
     @Test

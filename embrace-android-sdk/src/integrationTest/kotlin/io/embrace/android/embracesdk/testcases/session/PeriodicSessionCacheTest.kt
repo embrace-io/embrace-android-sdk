@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -28,7 +29,7 @@ internal class PeriodicSessionCacheTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, testWorkerName = PeriodicCacheWorker)
@@ -38,8 +39,8 @@ internal class PeriodicSessionCacheTest {
     @Test
     fun `session is periodically cached`() {
         with(testRule) {
-            val executor = (harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
-            val deliveryService = harness.overriddenDeliveryModule.deliveryService
+            val executor = (setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
+            val deliveryService = setup.overriddenDeliveryModule.deliveryService
 
             action.recordSession {
                 executor.runCurrentlyBlocked()

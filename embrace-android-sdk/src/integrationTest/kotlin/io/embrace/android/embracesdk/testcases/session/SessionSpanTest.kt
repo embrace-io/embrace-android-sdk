@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,7 +16,7 @@ internal class SessionSpanTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     @Test

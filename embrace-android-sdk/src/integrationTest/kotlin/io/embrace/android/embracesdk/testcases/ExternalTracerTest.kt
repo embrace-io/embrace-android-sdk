@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpan
@@ -43,7 +43,7 @@ internal class ExternalTracerTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     private lateinit var spanExporter: FakeSpanExporter

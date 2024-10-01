@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import org.junit.Assert.assertEquals
@@ -15,7 +16,7 @@ internal class SensitiveKeysRedactionFeatureTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(

@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.IntegrationTestRule.Harness
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
@@ -36,7 +37,7 @@ internal class OtelSessionGatingTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        Harness(
+        EmbraceSetupInterface(
             overriddenConfigService = FakeConfigService(
                 sessionBehavior = createSessionBehavior(remoteCfg = { RemoteConfig(sessionConfig = gatingConfig) })
             )
@@ -98,7 +99,7 @@ internal class OtelSessionGatingTest {
         assertEquals(expectedCount, anrSpans.size)
     }
 
-    private fun IntegrationTestRule.EmbraceActionInterface.simulateSession(action: () -> Unit = {}) {
+    private fun EmbraceActionInterface.simulateSession(action: () -> Unit = {}) {
         recordSession {
             embrace.addBreadcrumb("Hello, world!")
             embrace.startView("MyActivity")

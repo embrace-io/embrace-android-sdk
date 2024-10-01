@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -53,7 +55,7 @@ internal class AnrFeatureTest {
         )
         blockedThreadDetector = anrModule.blockedThreadDetector
 
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             currentTimeMs = START_TIME_MS,
             overriddenClock = clock,
             overriddenInitModule = initModule,
@@ -212,7 +214,7 @@ internal class AnrFeatureTest {
      * Triggers an ANR by simulating the main thread getting blocked & unblocked. Time is controlled
      * with a fake Clock instance & a blockable executor that runs the blockage checks.
      */
-    private fun IntegrationTestRule.EmbraceActionInterface.triggerAnr(
+    private fun EmbraceActionInterface.triggerAnr(
         sampleCount: Int,
         intervalMs: Long = INTERVAL_MS,
         incomplete: Boolean = false

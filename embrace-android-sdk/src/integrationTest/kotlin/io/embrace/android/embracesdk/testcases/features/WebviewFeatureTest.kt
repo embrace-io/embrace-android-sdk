@@ -7,14 +7,12 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -33,16 +31,14 @@ internal class WebviewFeatureTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
-    @Before
-    fun setup() {
-        testRule.harness.overriddenConfigService.webViewVitalsBehavior = FakeWebViewVitalsBehavior(50, true)
-    }
-
     @Test
     fun `webview info feature`() {
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.webViewVitalsBehavior = FakeWebViewVitalsBehavior(50, true)
+            },
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.trackWebViewPerformance("myWebView", expectedCompleteData)
                 }
             },

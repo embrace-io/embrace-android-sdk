@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.getLastLog
 import io.embrace.android.embracesdk.getSentLogPayloads
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import org.junit.Rule
 import org.junit.Test
@@ -36,7 +35,7 @@ internal class EmbraceLoggingFeatureTest {
     fun `log info message sent in foreground`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.logInfo("test message")
                     flushLogs()
                 }

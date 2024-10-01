@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.getLastLog
 import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.getStoredLogPayloads
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
@@ -19,7 +18,6 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
-import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -43,7 +41,7 @@ internal class JvmCrashFeatureTest {
     fun `app crash generates an OTel Log and matches the crashId in the session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     handleException()
 
                 }
@@ -77,8 +75,8 @@ internal class JvmCrashFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                embrace.start(harness.overriddenCoreModule.context, Embrace.AppFramework.REACT_NATIVE)
-                harness.recordSession {
+                startSdk(appFramework = Embrace.AppFramework.REACT_NATIVE)
+                recordSession {
                     embrace.reactNativeInternalInterface?.logUnhandledJsException(
                         "name",
                         "message",

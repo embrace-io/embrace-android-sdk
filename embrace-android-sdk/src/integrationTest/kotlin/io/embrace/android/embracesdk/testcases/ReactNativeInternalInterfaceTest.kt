@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -39,7 +38,7 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native without values should return defaults`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 val session = harness.getSingleSession()
@@ -55,7 +54,7 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native methods work in current session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
                     embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
                     embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
@@ -76,13 +75,13 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native metadata already present from previous session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
                     embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
                     embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
                 }
 
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 val session = harness.getSentSessions(2).last()
@@ -99,13 +98,13 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native values from current session override previous values`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
                     embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
                     embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
                 }
 
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.2")
                     embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.4")
                     embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("999")
@@ -127,7 +126,7 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native action`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.logRnAction(
                         "MyAction",
                         1000,
@@ -165,9 +164,9 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native log RN view`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
-                    harness.overriddenClock.tick(1000)
+                    clock.tick(1000)
                     embrace.reactNativeInternalInterface?.logRnView("DetailsScreen")
                 }
             },
@@ -202,9 +201,9 @@ internal class ReactNativeInternalInterfaceTest {
     fun `react native log RN view same name`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
-                    harness.overriddenClock.tick(1000)
+                    clock.tick(1000)
                     embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
                 }
             },

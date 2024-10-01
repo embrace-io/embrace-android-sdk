@@ -4,7 +4,6 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
@@ -14,7 +13,6 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
@@ -200,9 +198,9 @@ internal class NetworkRequestApiTest {
                     })
             },
             testCaseAction = {
-                harness.recordSession {
-                    harness.overriddenConfigService.updateListeners()
-                    harness.overriddenClock.tick(5)
+                recordSession {
+                    configService.updateListeners()
+                    clock.tick(5)
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             DISABLED_URL,
@@ -214,7 +212,7 @@ internal class NetworkRequestApiTest {
                             200
                         )
                     )
-                    harness.overriddenClock.tick(5)
+                    clock.tick(5)
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromIncompleteRequest(
                             DISABLED_URL,
@@ -225,7 +223,7 @@ internal class NetworkRequestApiTest {
                             "Dang nothing there"
                         )
                     )
-                    harness.overriddenClock.tick(5)
+                    clock.tick(5)
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
@@ -253,9 +251,9 @@ internal class NetworkRequestApiTest {
     fun `ensure network calls with the same start time are recorded properly`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.overriddenConfigService.updateListeners()
-                    harness.overriddenClock.tick(5)
+                recordSession {
+                    configService.updateListeners()
+                    clock.tick(5)
 
                     val request = EmbraceNetworkRequest.fromCompletedRequest(
                         URL,
@@ -292,10 +290,10 @@ internal class NetworkRequestApiTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.overriddenClock.tick(2L)
-                    harness.overriddenConfigService.updateListeners()
-                    harness.overriddenClock.tick(5L)
+                recordSession {
+                    clock.tick(2L)
+                    configService.updateListeners()
+                    clock.tick(5L)
                     embrace.recordNetworkRequest(expectedRequest)
                 }
             },

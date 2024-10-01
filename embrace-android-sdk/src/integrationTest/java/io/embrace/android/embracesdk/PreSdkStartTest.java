@@ -18,26 +18,28 @@ public class PreSdkStartTest {
     public IntegrationTestRule testRule = new IntegrationTestRule(() -> new IntegrationTestRule.Harness(0, false));
 
     @NonNull
-    private final Embrace embrace = testRule.getEmbrace();
+    private final Embrace getEmbrace() {
+        return testRule.action.getEmbrace();
+    }
 
     @SuppressWarnings("deprecation")
     @Test
     public void testStartWithNullContext() {
-        embrace.start(null);
-        embrace.start(null, Embrace.AppFramework.NATIVE);
-        assertFalse(embrace.isStarted());
+        getEmbrace().start(null);
+        getEmbrace().start(null, Embrace.AppFramework.NATIVE);
+        assertFalse(getEmbrace().isStarted());
     }
 
     @SuppressWarnings("deprecation")
     @Test
     public void testStartWithNullAppFramework() {
         Context context = testRule.harness.getOverriddenCoreModule().getContext();
-        embrace.start(context, null);
-        assertFalse(embrace.isStarted());
+        getEmbrace().start(context, null);
+        assertFalse(getEmbrace().isStarted());
     }
 
     @Test
     public void testSetAppId() {
-        assertFalse(embrace.setAppId(null));
+        assertFalse(getEmbrace().setAppId(null));
     }
 }

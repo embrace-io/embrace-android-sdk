@@ -36,322 +36,324 @@ public class NullParametersTest {
     public IntegrationTestRule testRule = new IntegrationTestRule();
 
     @NonNull
-    private final Embrace embrace = testRule.getEmbrace();
+    private final Embrace getEmbrace() {
+        return testRule.action.getEmbrace();
+    }
 
     @Before
     public void before() {
-        assertTrue(embrace.isStarted());
+        assertTrue(getEmbrace().isStarted());
     }
 
     @Test
     public void testAddSessionProperty() {
-        embrace.addSessionProperty(null, "value", false);
+        getEmbrace().addSessionProperty(null, "value", false);
         assertError("addSessionProperty");
-        embrace.addSessionProperty("key", null, false);
+        getEmbrace().addSessionProperty("key", null, false);
         assertError("addSessionProperty");
     }
 
     @Test
     public void testAddUserPersona() {
-        embrace.addUserPersona(null);
+        getEmbrace().addUserPersona(null);
         assertError("addUserPersona");
     }
 
     @Test
     public void testClearUserPersona() {
-        embrace.clearUserPersona(null);
+        getEmbrace().clearUserPersona(null);
         assertError("clearUserPersona");
     }
 
     @Test
     public void testRemoveSessionProperty() {
-        embrace.removeSessionProperty(null);
+        getEmbrace().removeSessionProperty(null);
         assertError("removeSessionProperty");
     }
 
     @Test
     public void testStartMoment1Parameter() {
-        embrace.startMoment(null);
+        getEmbrace().startMoment(null);
         assertError("startMoment");
     }
 
     @Test
     public void testStartMoment2Parameters() {
-        embrace.startMoment(null, null);
+        getEmbrace().startMoment(null, null);
         assertError("startMoment");
     }
 
     @Test
     public void testStartMoment3ParametersAllowProperties() {
-        embrace.startMoment(null, null, null);
+        getEmbrace().startMoment(null, null, null);
         assertError("startMoment");
     }
 
     @Test
     public void testEndMoment1Parameter() {
-        embrace.endMoment(null);
+        getEmbrace().endMoment(null);
         assertError("endMoment");
     }
 
     @Test
     public void testEndMoment2ParametersCustomIdentifier() {
-        embrace.endMoment(null, NULL_STRING);
+        getEmbrace().endMoment(null, NULL_STRING);
         assertError("endMoment");
     }
 
     @Test
     public void testEndMoment2ParametersAllowProperties() {
-        embrace.endMoment(null, NULL_STRING);
+        getEmbrace().endMoment(null, NULL_STRING);
         assertError("endMoment");
     }
 
     @Test
     public void testEndMoment3Parameters() {
-        embrace.endMoment(null, NULL_STRING, null);
+        getEmbrace().endMoment(null, NULL_STRING, null);
         assertError("endMoment");
     }
 
     @Test
     public void testEndAppStartup() {
-        embrace.endAppStartup(null);
+        getEmbrace().endAppStartup(null);
         assertError("endAppStartup");
     }
 
     @Test
     public void testRecordNetworkRequest() {
-        embrace.recordNetworkRequest(null);
+        getEmbrace().recordNetworkRequest(null);
         assertError("recordNetworkRequest");
     }
 
     @Test
     public void testLogInfo() {
-        embrace.logInfo(null);
+        getEmbrace().logInfo(null);
         assertError("logInfo");
     }
 
     @Test
     public void testLogWarning() {
-        embrace.logWarning(null);
+        getEmbrace().logWarning(null);
         assertError("logWarning");
     }
 
     @Test
     public void testLogError() {
-        embrace.logError(NULL_STRING);
+        getEmbrace().logError(NULL_STRING);
         assertError("logError");
     }
 
     @Test
     public void testLogException() {
-        embrace.logException(null);
+        getEmbrace().logException(null);
         assertError("logException");
     }
 
     @Test
     public void testLogException2Parameters() {
-        embrace.logException(null, Severity.ERROR);
+        getEmbrace().logException(null, Severity.ERROR);
         assertError("logException");
-        embrace.logException(EXCEPTION, null);
+        getEmbrace().logException(EXCEPTION, null);
         assertError("logException");
     }
 
     @Test
     public void testLogException3Parameters() {
-        embrace.logException(null, Severity.ERROR, null);
+        getEmbrace().logException(null, Severity.ERROR, null);
         assertError("logException");
-        embrace.logException(EXCEPTION, null, null);
+        getEmbrace().logException(EXCEPTION, null, null);
         assertError("logException");
     }
 
     @Test
     public void testLogException4Parameters() {
-        embrace.logException(null, Severity.ERROR, null, null);
+        getEmbrace().logException(null, Severity.ERROR, null, null);
         assertError("logException");
-        embrace.logException(EXCEPTION, null, null, null);
+        getEmbrace().logException(EXCEPTION, null, null, null);
         assertError("logException");
     }
 
     @Test
     public void testLogCustomStacktrace() {
-        embrace.logCustomStacktrace(null);
+        getEmbrace().logCustomStacktrace(null);
         assertError("logCustomStacktrace");
     }
 
     @Test
     public void testLogCustomStacktrace2Parameters() {
-        embrace.logCustomStacktrace(null, Severity.ERROR);
+        getEmbrace().logCustomStacktrace(null, Severity.ERROR);
         assertError("logCustomStacktrace");
-        embrace.logCustomStacktrace(new StackTraceElement[0], null);
+        getEmbrace().logCustomStacktrace(new StackTraceElement[0], null);
         assertError("logCustomStacktrace");
     }
 
     @Test
     public void testLogCustomStacktrace3Parameters() {
-        embrace.logCustomStacktrace(null, Severity.ERROR, null);
+        getEmbrace().logCustomStacktrace(null, Severity.ERROR, null);
         assertError("logCustomStacktrace");
-        embrace.logCustomStacktrace(new StackTraceElement[0], null, null);
+        getEmbrace().logCustomStacktrace(new StackTraceElement[0], null, null);
         assertError("logCustomStacktrace");
     }
 
     @Test
     public void testLogCustomStacktrace4Parameters() {
-        embrace.logCustomStacktrace(null, Severity.ERROR, null, null);
+        getEmbrace().logCustomStacktrace(null, Severity.ERROR, null, null);
         assertError("logCustomStacktrace");
-        embrace.logCustomStacktrace(new StackTraceElement[0], null, null, null);
+        getEmbrace().logCustomStacktrace(new StackTraceElement[0], null, null, null);
         assertError("logCustomStacktrace");
     }
 
     @Test
     public void testStartView() {
-        embrace.startView(null);
+        getEmbrace().startView(null);
         assertError("startView");
     }
 
     @Test
     public void testEndView() {
-        embrace.endView(null);
+        getEmbrace().endView(null);
         assertError("endView");
     }
 
     @Test
     public void testAddBreadcrumb() {
-        embrace.addBreadcrumb(null);
+        getEmbrace().addBreadcrumb(null);
         assertError("addBreadcrumb");
     }
 
     @Test
     public void testLogPushNotification() {
-        embrace.logPushNotification(null, null, null, null, null, null, true, true);
+        getEmbrace().logPushNotification(null, null, null, null, null, null, true, true);
         assertError("logPushNotification");
-        embrace.logPushNotification(null, null, null, null, null, 1, null, true);
+        getEmbrace().logPushNotification(null, null, null, null, null, 1, null, true);
         assertError("logPushNotification");
-        embrace.logPushNotification(null, null, null, null, null, 1, true, null);
+        getEmbrace().logPushNotification(null, null, null, null, null, 1, true, null);
         assertError("logPushNotification");
     }
 
     @Test
     public void testTrackWebViewPerformanceWithStringMessage() {
-        embrace.trackWebViewPerformance(null, "message");
+        getEmbrace().trackWebViewPerformance(null, "message");
         assertError("trackWebViewPerformance");
-        embrace.trackWebViewPerformance("tag", NULL_STRING);
+        getEmbrace().trackWebViewPerformance("tag", NULL_STRING);
         assertError("trackWebViewPerformance");
     }
 
     @Test
     public void testTrackWebViewPerformanceWithConsoleMessage() {
-        embrace.trackWebViewPerformance(null, new ConsoleMessage("message", "id", 1, ConsoleMessage.MessageLevel.DEBUG));
+        getEmbrace().trackWebViewPerformance(null, new ConsoleMessage("message", "id", 1, ConsoleMessage.MessageLevel.DEBUG));
         assertError("trackWebViewPerformance");
-        embrace.trackWebViewPerformance("tag", (ConsoleMessage) null);
+        getEmbrace().trackWebViewPerformance("tag", (ConsoleMessage) null);
         assertError("trackWebViewPerformance");
     }
 
     @Test
     public void testCreateSpan() {
-        assertNull(embrace.createSpan(null));
+        assertNull(getEmbrace().createSpan(null));
         assertError("createSpan");
     }
 
     @Test
     public void testCreateSpanWithParent() {
-        assertNull(embrace.createSpan(null, null));
+        assertNull(getEmbrace().createSpan(null, null));
         assertError("createSpan");
     }
 
     @Test
     public void testStartSpan() {
-        assertNull(embrace.startSpan(null));
+        assertNull(getEmbrace().startSpan(null));
         assertError("startSpan");
     }
 
     @Test
     public void testStartSpanWithParent() {
-        assertNull(embrace.startSpan(null, null));
+        assertNull(getEmbrace().startSpan(null, null));
         assertError("startSpan");
     }
 
     @Test
     public void testStartSpanWithParentAndStartTime() {
-        assertNull(embrace.startSpan(null, null, null));
+        assertNull(getEmbrace().startSpan(null, null, null));
         assertError("startSpan");
     }
 
     @Test
     public void testRecordSpan() {
-        assertTrue(embrace.recordSpan(null, () -> true));
+        assertTrue(getEmbrace().recordSpan(null, () -> true));
         assertError("recordSpan");
-        assertNull(embrace.recordSpan("test-span", null));
+        assertNull(getEmbrace().recordSpan("test-span", null));
         assertError("recordSpan");
     }
 
     @Test
     public void testRecordSpanWithAttributesAndEvents() {
-        assertTrue(embrace.recordSpan(null, null, null, () -> true));
+        assertTrue(getEmbrace().recordSpan(null, null, null, () -> true));
         assertError("recordSpan");
-        assertNull(embrace.recordSpan("test-span", null, null, null));
+        assertNull(getEmbrace().recordSpan("test-span", null, null, null));
         assertError("recordSpan");
     }
 
     @Test
     public void testRecordSpanWithParent() {
-        assertTrue(embrace.recordSpan(null, null, () -> true));
+        assertTrue(getEmbrace().recordSpan(null, null, () -> true));
         assertError("recordSpan");
-        assertNull(embrace.recordSpan("test-span", null, null));
+        assertNull(getEmbrace().recordSpan("test-span", null, null));
         assertError("recordSpan");
     }
 
     @Test
     public void testRecordSpanWithParentAttributesAndEvents() {
-        assertTrue(embrace.recordSpan(null, null, null, null, () -> true));
+        assertTrue(getEmbrace().recordSpan(null, null, null, null, () -> true));
         assertError("recordSpan");
-        assertNull(embrace.recordSpan("test-span", null, null, null, null));
+        assertNull(getEmbrace().recordSpan("test-span", null, null, null, null));
         assertError("recordSpan");
     }
 
     @Test
     public void testRecordCompletedSpan() {
-        assertFalse(embrace.recordCompletedSpan(null, 0, 1));
+        assertFalse(getEmbrace().recordCompletedSpan(null, 0, 1));
         assertError("recordCompletedSpan");
     }
 
     @Test
     public void testRecordCompletedSpanWithErrorCode() {
-        assertFalse(embrace.recordCompletedSpan(null, 0, 1, (ErrorCode) null));
+        assertFalse(getEmbrace().recordCompletedSpan(null, 0, 1, (ErrorCode) null));
         assertError("recordCompletedSpan");
     }
 
     @Test
     public void testRecordCompletedSpanWithParent() {
-        assertFalse(embrace.recordCompletedSpan(null, 0, 1, (EmbraceSpan) null));
+        assertFalse(getEmbrace().recordCompletedSpan(null, 0, 1, (EmbraceSpan) null));
         assertError("recordCompletedSpan");
     }
 
     @Test
     public void testRecordCompletedSpanWithErrorCodeAndParent() {
-        assertFalse(embrace.recordCompletedSpan(null, 0, 1, (ErrorCode) null, null));
+        assertFalse(getEmbrace().recordCompletedSpan(null, 0, 1, (ErrorCode) null, null));
         assertError("recordCompletedSpan");
     }
 
     @Test
     public void testRecordCompletedSpanWithAttributesAndEvents() {
-        assertFalse(embrace.recordCompletedSpan(null, 0, 1, (Map<String, String>) null, null));
+        assertFalse(getEmbrace().recordCompletedSpan(null, 0, 1, (Map<String, String>) null, null));
         assertError("recordCompletedSpan");
     }
 
     @Test
     public void testRecordCompletedSpanWithEverything() {
-        assertFalse(embrace.recordCompletedSpan(null, 0, 1, null, null, null, null));
+        assertFalse(getEmbrace().recordCompletedSpan(null, 0, 1, null, null, null, null));
         assertError("recordCompletedSpan");
     }
 
     @Test
     public void testGetSpan() {
-        assertNull(embrace.getSpan(null));
+        assertNull(getEmbrace().getSpan(null));
         assertError("getSpan");
     }
 
     @Test
     public void testAddSpanExporter() {
-        embrace.addSpanExporter(null);
+        getEmbrace().addSpanExporter(null);
         assertError("addSpanExporter");
     }
 

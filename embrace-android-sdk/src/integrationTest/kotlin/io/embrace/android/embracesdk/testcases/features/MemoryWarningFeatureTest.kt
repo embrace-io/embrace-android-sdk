@@ -6,12 +6,10 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findEventsOfType
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.hasEventOfType
-import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -30,7 +28,7 @@ internal class MemoryWarningFeatureTest {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
                 }
             },
@@ -46,7 +44,7 @@ internal class MemoryWarningFeatureTest {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     repeat(150) {
                         ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
                     }

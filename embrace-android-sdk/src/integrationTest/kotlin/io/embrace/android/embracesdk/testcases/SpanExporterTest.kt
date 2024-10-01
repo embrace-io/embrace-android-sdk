@@ -3,14 +3,12 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
-import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.assertions.assertExpectedAttributes
 import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
+import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
-import io.embrace.android.embracesdk.recordSession
-import io.opentelemetry.api.common.AttributeKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -30,19 +28,19 @@ internal class SpanExporterTest {
 
     @Test
     fun `SDK can receive a SpanExporter`() {
-        with(testRule) {
+        with(testRule.action) {
             val fakeSpanExporter = FakeSpanExporter()
             embrace.addSpanExporter(fakeSpanExporter)
-            startSdk(context = harness.overriddenCoreModule.context)
+            startSdk()
             embrace.startSpan("test")?.stop()
             assertTrue(
                 "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
                 fakeSpanExporter.awaitSpanExport(1)
             )
             // Verify that 2 spans have been logged - the exported ones and 1 private diagnostic traces
-            assertEquals(2, harness.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
+            assertEquals(2, testRule.harness.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
 
-            harness.recordSession {
+            recordSession {
                 assertTrue(
                     "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
                     fakeSpanExporter.awaitSpanExport(2)
@@ -54,9 +52,9 @@ internal class SpanExporterTest {
                 testSpan.assertHasEmbraceAttribute(embSequenceId, "4")
                 assertNotNull(testSpan.attributes.get(embProcessIdentifier.attributeKey))
                 testSpan.resource.assertExpectedAttributes(
-                    expectedServiceName = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
-                    expectedServiceVersion = harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
-                    systemInfo = harness.overriddenInitModule.systemInfo
+                    expectedServiceName = testRule.harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
+                    expectedServiceVersion = testRule.harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
+                    systemInfo = testRule.harness.overriddenInitModule.systemInfo
                 )
                 val sessionSpan = checkNotNull(exportedSpans["emb-session"])
                 sessionSpan.assertHasEmbraceAttribute(embSequenceId, "1")
@@ -80,7 +78,7 @@ internal class SpanExporterTest {
                 startSdk()
                 embrace.addSpanExporter(fakeSpanExporter)
 
-                harness.recordSession {
+                recordSession {
                     embrace.startSpan("test")?.stop()
                     Thread.sleep(3000)
                 }

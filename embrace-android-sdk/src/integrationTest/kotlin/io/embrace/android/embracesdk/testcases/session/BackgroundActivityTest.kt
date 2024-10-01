@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -30,9 +29,9 @@ internal class BackgroundActivityTest {
     fun `bg activity messages are recorded`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession()
-                harness.overriddenClock.tick(30000)
-                harness.recordSession()
+                recordSession()
+                clock.tick(30000)
+                recordSession()
             },
             assertAction = {
                 // filter out dupes from overwritten saves

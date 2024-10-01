@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -36,8 +35,8 @@ internal class ActivityFeatureTest {
             },
             testCaseAction = {
                 startSdk()
-                harness.recordSession(simulateActivityCreation = true) {
-                    startTimeMs = harness.overriddenClock.now()
+                recordSession(simulateActivityCreation = true) {
+                    startTimeMs = clock.now()
                 }
             },
             assertAction = {

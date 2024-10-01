@@ -7,13 +7,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 class FakeNetworkConnectivityService(
     initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
     override var ipAddress: String = defaultIpAddress
-) : FakeDataCaptureService<FakeNetworkConnectivityService.Interval>(), NetworkConnectivityService {
-
-    data class Interval(
-        val startTime: Long,
-        val endTime: Long,
-        val value: String? = null
-    )
+) : NetworkConnectivityService {
 
     private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
     var networkStatus: NetworkStatus = initialNetworkStatus

@@ -13,6 +13,7 @@ class FakeRequestExecutionService : RequestExecutionService {
     private val serializer = TestPlatformSerializer()
     var constantResponse: ApiResponse = ApiResponse.None
     var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> constantResponse }
+    var exceptionOnExecution: Throwable? = null
     val attemptedHttpRequests = mutableListOf<Envelope<*>>()
 
     @Suppress("UNCHECKED_CAST")
@@ -27,7 +28,8 @@ class FakeRequestExecutionService : RequestExecutionService {
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType
     ): ApiResponse {
-        val bufferedStream = payloadStream().buffered()
+        exceptionOnExecution?.run { throw this }
+        val bufferedStream = payloadStream()
         val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
         attemptedHttpRequests.add(json)
         return responseAction(json)

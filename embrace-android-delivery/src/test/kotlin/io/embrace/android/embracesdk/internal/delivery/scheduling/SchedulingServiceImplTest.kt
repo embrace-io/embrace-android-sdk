@@ -2,13 +2,16 @@ package io.embrace.android.embracesdk.internal.delivery.scheduling
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
+import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
-import io.embrace.android.embracesdk.fakes.FakeStorageService2
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -19,10 +22,12 @@ import org.junit.Test
 
 internal class SchedulingServiceImplTest {
 
-    private lateinit var storageService: FakeStorageService2
+    private lateinit var storageService: FakePayloadStorageService
     private lateinit var executionService: FakeRequestExecutionService
     private lateinit var schedulingExecutor: BlockingScheduledExecutorService
     private lateinit var deliveryExecutor: BlockingScheduledExecutorService
+    private lateinit var networkConnectivityService: FakeNetworkConnectivityService
+    private lateinit var logger: FakeEmbLogger
     private lateinit var schedulingService: SchedulingServiceImpl
 
     @Volatile
@@ -33,10 +38,13 @@ internal class SchedulingServiceImplTest {
         clock = FakeClock()
         schedulingExecutor = BlockingScheduledExecutorService(clock, blockingMode = false)
         deliveryExecutor = BlockingScheduledExecutorService(clock, blockingMode = false)
-        storageService = FakeStorageService2(
-            listOf(fakeLogStoredTelemetryMetadata, fakeSessionStoredTelemetryMetadata)
-        )
+        networkConnectivityService = FakeNetworkConnectivityService()
+        storageService = FakePayloadStorageService().apply {
+            addFakePayload(fakeLogStoredTelemetryMetadata)
+            addFakePayload(fakeSessionStoredTelemetryMetadata)
+        }
         executionService = FakeRequestExecutionService()
+        logger = FakeEmbLogger()
         allSendsSucceed()
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,
@@ -44,7 +52,9 @@ internal class SchedulingServiceImplTest {
             schedulingWorker = BackgroundWorker(schedulingExecutor),
             deliveryWorker = BackgroundWorker(deliveryExecutor),
             clock = clock,
+            logger = logger,
         )
+        networkConnectivityService.addNetworkConnectivityListener(schedulingService)
     }
 
     @Test
@@ -67,11 +77,10 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `all payloads ready to be sent are sent in priority order`() {
-        executionService.constantResponse = success
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
-        assertEquals(0, storageService.cachedPayloads.size)
+        assertEquals(0, storageService.storedPayloadCount())
         assertTrue(executionService.attemptedHttpRequests.first().data is SessionPayload)
     }
 
@@ -79,7 +88,7 @@ internal class SchedulingServiceImplTest {
     fun `payloads being sent will not be resent when a new payload arrives`() {
         deliveryExecutor.blockingMode = true
         waitForOnPayloadIntakeTaskCompletion()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.blockingMode = false
         deliveryExecutor.awaitExecutionCompletion()
@@ -92,11 +101,11 @@ internal class SchedulingServiceImplTest {
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
-        assertEquals(2, storageService.cachedPayloads.size)
+        assertEquals(2, storageService.storedPayloadCount())
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
-        assertEquals(2, storageService.cachedPayloads.size)
+        assertEquals(2, storageService.storedPayloadCount())
     }
 
     @Test
@@ -115,7 +124,7 @@ internal class SchedulingServiceImplTest {
                 2 * (iteration + 2),
                 executionService.sendAttempts()
             )
-            assertEquals("Send attempt $iteration failed", 2, storageService.cachedPayloads.size)
+            assertEquals("Send attempt $iteration failed", 2, storageService.storedPayloadCount())
             delay *= 2
         }
     }
@@ -137,7 +146,7 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor.blockingMode = true
         deliveryExecutor.blockingMode = true
         schedulingService.onPayloadIntake()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.blockingMode = false
         deliveryExecutor.awaitExecutionCompletion()
@@ -147,10 +156,9 @@ internal class SchedulingServiceImplTest {
     @Test
     fun `payloads to blocked endpoint will not be sent or retried until duration lapses`() {
         val longBlockedDuration = 90_000L
-        storageService.cachedPayloads.clear()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse =
-            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, longBlockedDuration)
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, longBlockedDuration)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -161,48 +169,45 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor.moveForwardAndRunBlocked(longBlockedDuration - INITIAL_DELAY_MS)
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
-        assertEquals(0, storageService.cachedPayloads.size)
+        assertEquals(0, storageService.storedPayloadCount())
     }
 
     @Test
     fun `payloads that fail to deliver because of a 429 will be retried before the default delay if endpoint is unblocked earlier`() {
-        storageService.cachedPayloads.clear()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse =
-            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         allSendsSucceed()
         schedulingExecutor.moveForwardAndRunBlocked(SHORT_BLOCKED_DURATION + 1)
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
-        assertEquals(0, storageService.cachedPayloads.size)
+        assertEquals(0, storageService.storedPayloadCount())
     }
 
     @Test
     fun `payloads to unblocked endpoint will not affect other endpoints`() {
-        storageService.cachedPayloads.clear()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse =
-            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
         executionService.constantResponse = success
-        storageService.cachedPayloads.add(fakeLogStoredTelemetryMetadata)
+        storageService.addFakePayload(fakeLogStoredTelemetryMetadata)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
-        assertEquals(1, storageService.cachedPayloads.size)
+        assertEquals(1, storageService.storedPayloadCount())
     }
 
     @Test
     fun `concurrent payload sending to the same endpoint will result in only one delivery attempt`() {
-        storageService.cachedPayloads.clear()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)
-        executionService.constantResponse =
-            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -213,13 +218,12 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `payloads to already blocked endpoint will not be sent`() {
-        storageService.cachedPayloads.clear()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse =
-            ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
-        storageService.cachedPayloads.add(fakeSessionStoredTelemetryMetadata2)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -229,10 +233,41 @@ internal class SchedulingServiceImplTest {
     fun `no sent attempt will be made if a payload cannot be found on disk`() {
         deliveryExecutor.blockingMode = true
         waitForOnPayloadIntakeTaskCompletion()
-        storageService.cachedPayloads.remove(fakeLogStoredTelemetryMetadata)
+        storageService.delete(fakeLogStoredTelemetryMetadata)
         deliveryExecutor.blockingMode = false
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
+    }
+
+    @Test
+    fun `ready payloads will not be sent if there's no network but will be sent when network comes back online`() {
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        networkConnectivityService.networkStatus = NetworkStatus.WIFI
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `unexpected exception during execution will be retried`() {
+        executionService.exceptionOnExecution = RuntimeException("die")
+        schedulingExecutor.blockingMode = true
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        assertEquals(2, logger.internalErrorMessages.size)
+        executionService.exceptionOnExecution = null
+        clock.tick(INITIAL_DELAY_MS + 1)
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
     }
 
     private fun waitForOnPayloadIntakeTaskCompletion() {

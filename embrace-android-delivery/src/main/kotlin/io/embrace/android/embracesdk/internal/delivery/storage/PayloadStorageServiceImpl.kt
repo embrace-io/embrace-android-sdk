@@ -84,6 +84,8 @@ class PayloadStorageServiceImpl(
         }
     }
 
+    override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> = storedFiles.toList()
+
     private fun pruneStorage(metadata: StoredTelemetryMetadata): Boolean {
         val count = storedFiles.size
         if (count < storageLimit) {

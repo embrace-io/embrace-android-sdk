@@ -89,6 +89,21 @@ internal class IntegrationTestRule(
     lateinit var bootstrapper: ModuleInitBootstrapper
 
     /**
+     * Runs a test case. The test case should be separated into 3 parts: setup, action, and
+     * assertions. This aims to enforce the better compartmentalisation & reuse of test code within
+     * the integration test suite.
+     */
+    fun runTest(
+        setupAction: Harness.() -> Unit = {},
+        testCaseAction: IntegrationTestRule.() -> Unit,
+        assertAction: IntegrationTestRule.() -> Unit,
+    ) {
+        setupAction(harness)
+        testCaseAction(this)
+        assertAction(this)
+    }
+
+    /**
      * Setup the Embrace SDK so it's ready for testing.
      */
     override fun before() {

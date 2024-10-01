@@ -26,37 +26,40 @@ internal class MomentApiTest {
     fun customMomentTest() {
         val delay = 5000L
         val props = mapOf("key" to "value")
+        val startTime = testRule.harness.overriddenClock.now()
 
-        with(testRule) {
-            // Send start moment
-            val startTime = harness.overriddenClock.now()
-            embrace.startMoment(MOMENT_NAME, null, props)
-            harness.overriddenClock.tick(delay)
-            embrace.endMoment(MOMENT_NAME)
+        testRule.runTest(
+            testCaseAction = {
+                // Send start moment
+                embrace.startMoment(MOMENT_NAME, null, props)
+                harness.overriddenClock.tick(delay)
+                embrace.endMoment(MOMENT_NAME)
+            },
+            assertAction = {
+                // retrieve payloads
+                val messages = harness.getSentMoments(2)
+                assertEquals(2, messages.size)
+                val startMoment = messages[0].event
+                val endMoment = messages[1].event
 
-            // retrieve payloads
-            val messages = harness.getSentMoments(2)
-            assertEquals(2, messages.size)
-            val startMoment = messages[0].event
-            val endMoment = messages[1].event
+                // validate start moment
+                assertEquals(MOMENT_NAME, startMoment.name)
+                assertNull(startMoment.messageId)
+                assertEquals(EventType.START, startMoment.type)
+                assertEquals(startTime, startMoment.timestamp)
+                assertEquals(props, startMoment.customProperties)
 
-            // validate start moment
-            assertEquals(MOMENT_NAME, startMoment.name)
-            assertNull(startMoment.messageId)
-            assertEquals(EventType.START, startMoment.type)
-            assertEquals(startTime, startMoment.timestamp)
-            assertEquals(props, startMoment.customProperties)
+                // validate end moment
+                assertEquals(MOMENT_NAME, endMoment.name)
+                assertNull(endMoment.messageId)
+                assertEquals(EventType.END, endMoment.type)
+                assertEquals(startTime + delay, endMoment.timestamp)
+                assertNull(endMoment.customProperties)
 
-            // validate end moment
-            assertEquals(MOMENT_NAME, endMoment.name)
-            assertNull(endMoment.messageId)
-            assertEquals(EventType.END, endMoment.type)
-            assertEquals(startTime + delay, endMoment.timestamp)
-            assertNull(endMoment.customProperties)
-
-            // validate shared attributes
-            assertEquals(startMoment.eventId, endMoment.eventId)
-            assertEquals(startMoment.sessionId, endMoment.sessionId)
-        }
+                // validate shared attributes
+                assertEquals(startMoment.eventId, endMoment.eventId)
+                assertEquals(startMoment.sessionId, endMoment.sessionId)
+            }
+        )
     }
 }

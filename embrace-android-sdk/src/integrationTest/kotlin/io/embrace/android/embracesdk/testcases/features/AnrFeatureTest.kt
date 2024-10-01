@@ -69,39 +69,47 @@ internal class AnrFeatureTest {
     fun `trigger ANRs`() {
         val firstSampleCount = 20
         val secondSampleCount = 10
+        var secondAnrStartTime: Long? = null
 
-        with(testRule.harness) {
-            var secondAnrStartTime: Long? = null
-            recordSession {
-                triggerAnr(firstSampleCount)
-                secondAnrStartTime = overriddenClock.now()
-                triggerAnr(secondSampleCount)
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    harness.triggerAnr(firstSampleCount)
+                    secondAnrStartTime = harness.overriddenClock.now()
+                    harness.triggerAnr(secondSampleCount)
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
+
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                assertEquals(2, spans.size)
+                assertAnrReceived(spans[0], START_TIME_MS, firstSampleCount)
+                assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
             }
-            val message = getSingleSession()
-
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            assertEquals(2, spans.size)
-            assertAnrReceived(spans[0], START_TIME_MS, firstSampleCount)
-            assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
-        }
+        )
     }
 
     @Test
     fun `exceed max samples for one interval`() {
         val sampleCount = 100
 
-        with(testRule.harness) {
-            recordSession {
-                triggerAnr(sampleCount)
-            }
-            val message = getSingleSession()
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    harness.triggerAnr(sampleCount)
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
 
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount)
-        }
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                val span = spans.single()
+                assertAnrReceived(span, START_TIME_MS, sampleCount)
+            }
+        )
     }
 
     @Test
@@ -111,48 +119,56 @@ internal class AnrFeatureTest {
         val intervalCount = 8
         val startTimes = mutableListOf<Long>()
 
-        with(testRule.harness) {
-            recordSession {
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    repeat(intervalCount) { index ->
+                        startTimes.add(harness.overriddenClock.now())
+                        harness.triggerAnr(initialSamples + (index * extraSamples))
+                    }
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
+
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                assertEquals(intervalCount, spans.size)
+
                 repeat(intervalCount) { index ->
-                    startTimes.add(overriddenClock.now())
-                    triggerAnr(initialSamples + (index * extraSamples))
+                    val span = spans[index]
+                    val expectedSamples = initialSamples + (index * extraSamples)
+
+                    // older intervals get dropped because they have fewer samples.
+                    val intervalCode = when {
+                        index < intervalCount - MAX_INTERVAL_COUNT -> "1"
+                        else -> "0"
+                    }
+                    assertAnrReceived(span, startTimes[index], expectedSamples, intervalCode)
                 }
             }
-            val message = getSingleSession()
-
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            assertEquals(intervalCount, spans.size)
-
-            repeat(intervalCount) { index ->
-                val span = spans[index]
-                val expectedSamples = initialSamples + (index * extraSamples)
-
-                // older intervals get dropped because they have fewer samples.
-                val intervalCode = when {
-                    index < intervalCount - MAX_INTERVAL_COUNT -> "1"
-                    else -> "0"
-                }
-                assertAnrReceived(span, startTimes[index], expectedSamples, intervalCode)
-            }
-        }
+        )
     }
 
     @Test
     fun `in progress ANR added to payload`() {
         val sampleCount = 10
 
-        with(testRule.harness) {
-            recordSession {
-                triggerAnr(sampleCount, incomplete = true)
-            }
-            val message = getSingleSession()
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    harness.triggerAnr(sampleCount, incomplete = true)
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
 
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = testRule.harness.overriddenClock.now())
-        }
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                val span = spans.single()
+                assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = testRule.harness.overriddenClock.now())
+            }
+        )
     }
 
     private fun assertAnrReceived(

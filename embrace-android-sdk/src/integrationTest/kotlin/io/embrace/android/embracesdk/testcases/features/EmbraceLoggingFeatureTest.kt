@@ -34,257 +34,311 @@ internal class EmbraceLoggingFeatureTest {
 
     @Test
     fun `log info message sent in foreground`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.logInfo("test message")
-                flushLogs()
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.logInfo("test message")
+                    flushLogs()
+                }
+            },
+            assertAction = {
+                val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
+                assertOtelLogReceived(
+                    logReceived = log,
+                    expectedMessage = "test message",
+                    expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.INFO).severityNumber,
+                    expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name,
+                    expectedState = "foreground",
+                )
             }
-            val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
-            assertOtelLogReceived(
-                logReceived = log,
-                expectedMessage = "test message",
-                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.INFO).severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name,
-                expectedState = "foreground",
-            )
-        }
+        )
     }
 
     @Test
     fun `log warning message sent in background`() {
-        with(testRule) {
-            embrace.logWarning("test message")
-            flushLogs()
-            val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
-            assertOtelLogReceived(
-                logReceived = log,
-                expectedMessage = "test message",
-                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.WARNING).severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.WARNING.name
-            )
-        }
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logWarning("test message")
+                flushLogs()
+            },
+            assertAction = {
+                val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
+                assertOtelLogReceived(
+                    logReceived = log,
+                    expectedMessage = "test message",
+                    expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.WARNING).severityNumber,
+                    expectedSeverityText = io.embrace.android.embracesdk.Severity.WARNING.name
+                )
+            }
+        )
     }
 
     @Test
     fun `log error message sent`() {
-        with(testRule) {
-            embrace.logError("test message")
-            flushLogs()
-            val log = harness.getSentLogPayloads(1).getLastLog()
-            assertOtelLogReceived(
-                log,
-                expectedMessage = "test message",
-                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name
-            )
-        }
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logError("test message")
+                flushLogs()
+            },
+            assertAction = {
+                val log = harness.getSentLogPayloads(1).getLastLog()
+                assertOtelLogReceived(
+                    log,
+                    expectedMessage = "test message",
+                    expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
+                    expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name
+                )
+            }
+        )
     }
 
     @Test
     fun `log messages with different severities sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                val expectedMessage = "test message ${severity.name}"
-                embrace.logMessage(expectedMessage, severity)
-                flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
-                assertOtelLogReceived(
-                    log,
-                    expectedMessage = expectedMessage,
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name
-                )
-            }
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            val expectedMessage = "test message ${severity.name}"
+
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logMessage(expectedMessage, severity)
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = expectedMessage,
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name
+                    )
+                }
+            )
         }
     }
 
     @Test
     fun `log messages with different severities and properties sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                val expectedMessage = "test message ${severity.name}"
-                embrace.logMessage(expectedMessage, severity, customProperties)
-                flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
-                assertOtelLogReceived(
-                    log,
-                    expectedMessage = expectedMessage,
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name,
-                    expectedProperties = customProperties
-                )
-            }
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            val expectedMessage = "test message ${severity.name}"
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logMessage(expectedMessage, severity, customProperties)
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = expectedMessage,
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name,
+                        expectedProperties = customProperties
+                    )
+                }
+            )
         }
     }
 
     @Test
     fun `log exception message sent`() {
-        with(testRule) {
-            embrace.logException(testException)
-            flushLogs()
-            val log = harness.getSentLogPayloads(1).getLastLog()
-            assertOtelLogReceived(
-                log,
-                expectedMessage = checkNotNull(testException.message),
-                expectedSeverityNumber = Severity.ERROR.severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
-                expectedType = LogExceptionType.HANDLED.value,
-                expectedExceptionName = testException.javaClass.simpleName,
-                expectedExceptionMessage = checkNotNull(testException.message),
-                expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-                expectedEmbType = "sys.exception",
-            )
-        }
-    }
-
-    @Test
-    fun `log exception with different severities sent`() {
-        with(testRule) {
-            embrace.logException(testException, io.embrace.android.embracesdk.Severity.INFO)
-            flushLogs()
-            val log = harness.getSentLogPayloads(1).getLastLog()
-            assertOtelLogReceived(
-                log,
-                expectedMessage = checkNotNull(testException.message),
-                expectedSeverityNumber = Severity.INFO.severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name,
-                expectedType = LogExceptionType.HANDLED.value,
-                expectedExceptionName = testException.javaClass.simpleName,
-                expectedExceptionMessage = checkNotNull(testException.message),
-                expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-                expectedEmbType = "sys.exception",
-            )
-        }
-    }
-
-    @Test
-    fun `log exception with different severities and properties sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                embrace.logException(
-                    testException, severity,
-                    customProperties
-                )
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logException(testException)
                 flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
+            },
+            assertAction = {
+                val log = harness.getSentLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name,
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = testException.javaClass.simpleName,
                     expectedExceptionMessage = checkNotNull(testException.message),
                     expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-                    expectedProperties = customProperties,
                     expectedEmbType = "sys.exception",
                 )
             }
+        )
+    }
+
+    @Test
+    fun `log exception with different severities sent`() {
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logException(testException, io.embrace.android.embracesdk.Severity.INFO)
+                flushLogs()
+            },
+            assertAction = {
+                val log = harness.getSentLogPayloads(1).getLastLog()
+                assertOtelLogReceived(
+                    log,
+                    expectedMessage = checkNotNull(testException.message),
+                    expectedSeverityNumber = Severity.INFO.severityNumber,
+                    expectedSeverityText = io.embrace.android.embracesdk.Severity.INFO.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedExceptionName = testException.javaClass.simpleName,
+                    expectedExceptionMessage = checkNotNull(testException.message),
+                    expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                    expectedEmbType = "sys.exception",
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `log exception with different severities and properties sent`() {
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logException(
+                        testException, severity,
+                        customProperties
+                    )
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = checkNotNull(testException.message),
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name,
+                        expectedType = LogExceptionType.HANDLED.value,
+                        expectedExceptionName = testException.javaClass.simpleName,
+                        expectedExceptionMessage = checkNotNull(testException.message),
+                        expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                        expectedProperties = customProperties,
+                        expectedEmbType = "sys.exception",
+                    )
+                }
+            )
         }
     }
 
     @Test
     fun `log exception with different severities, properties, and custom message sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                val expectedMessage = "test message ${severity.name}"
-                embrace.logException(testException, severity, customProperties, expectedMessage)
-                flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
-                assertOtelLogReceived(
-                    log,
-                    expectedMessage = expectedMessage,
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name,
-                    expectedType = LogExceptionType.HANDLED.value,
-                    expectedExceptionName = testException.javaClass.simpleName,
-                    expectedExceptionMessage = checkNotNull(testException.message),
-                    expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-                    expectedProperties = customProperties,
-                    expectedEmbType = "sys.exception",
-                )
-            }
-        }
-    }
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            val expectedMessage = "test message ${severity.name}"
 
-    @Test
-    fun `log custom stacktrace message sent`() {
-        with(testRule) {
-            embrace.logCustomStacktrace(stacktrace)
-            flushLogs()
-            val log = harness.getSentLogPayloads(1).getLastLog()
-            assertOtelLogReceived(
-                log,
-                expectedMessage = "",
-                expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
-                expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
-                expectedType = LogExceptionType.HANDLED.value,
-                expectedStacktrace = stacktrace.toList(),
-                expectedEmbType = "sys.exception",
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logException(testException, severity, customProperties, expectedMessage)
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = expectedMessage,
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name,
+                        expectedType = LogExceptionType.HANDLED.value,
+                        expectedExceptionName = testException.javaClass.simpleName,
+                        expectedExceptionMessage = checkNotNull(testException.message),
+                        expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                        expectedProperties = customProperties,
+                        expectedEmbType = "sys.exception",
+                    )
+                }
             )
         }
     }
 
     @Test
-    fun `log custom stacktrace with different severities sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                embrace.logCustomStacktrace(stacktrace, severity)
+    fun `log custom stacktrace message sent`() {
+        testRule.runTest(
+            testCaseAction = {
+                embrace.logCustomStacktrace(stacktrace)
                 flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
+            },
+            assertAction = {
+                val log = harness.getSentLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name,
+                    expectedSeverityNumber = getOtelSeverity(io.embrace.android.embracesdk.Severity.ERROR).severityNumber,
+                    expectedSeverityText = io.embrace.android.embracesdk.Severity.ERROR.name,
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
                     expectedEmbType = "sys.exception",
                 )
             }
+        )
+    }
+
+    @Test
+    fun `log custom stacktrace with different severities sent`() {
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logCustomStacktrace(stacktrace, severity)
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = "",
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name,
+                        expectedType = LogExceptionType.HANDLED.value,
+                        expectedStacktrace = stacktrace.toList(),
+                        expectedEmbType = "sys.exception",
+                    )
+                }
+            )
         }
     }
 
     @Test
     fun `log custom stacktrace with different severities and properties sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                embrace.logCustomStacktrace(stacktrace, severity, customProperties)
-                flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
-                assertOtelLogReceived(
-                    log,
-                    expectedMessage = "",
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name,
-                    expectedType = LogExceptionType.HANDLED.value,
-                    expectedStacktrace = stacktrace.toList(),
-                    expectedProperties = customProperties,
-                    expectedEmbType = "sys.exception",
-                )
-            }
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logCustomStacktrace(stacktrace, severity, customProperties)
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = "",
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name,
+                        expectedType = LogExceptionType.HANDLED.value,
+                        expectedStacktrace = stacktrace.toList(),
+                        expectedProperties = customProperties,
+                        expectedEmbType = "sys.exception",
+                    )
+                }
+            )
         }
     }
 
     @Test
     fun `log custom stacktrace with different severities, properties, and custom message sent`() {
-        with(testRule) {
-            io.embrace.android.embracesdk.Severity.values().forEach { severity ->
-                val expectedMessage = "test message ${severity.name}"
-                embrace.logCustomStacktrace(stacktrace, severity, customProperties, expectedMessage)
-                flushLogs()
-                val log = harness.getSentLogPayloads().getLastLog()
-                assertOtelLogReceived(
-                    log,
-                    expectedMessage = expectedMessage,
-                    expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
-                    expectedSeverityText = severity.name,
-                    expectedType = LogExceptionType.HANDLED.value,
-                    expectedStacktrace = stacktrace.toList(),
-                    expectedProperties = customProperties,
-                    expectedEmbType = "sys.exception",
-                )
-            }
+        io.embrace.android.embracesdk.Severity.values().forEach { severity ->
+            val expectedMessage = "test message ${severity.name}"
+            testRule.runTest(
+                testCaseAction = {
+                    embrace.logCustomStacktrace(stacktrace, severity, customProperties, expectedMessage)
+                    flushLogs()
+                },
+                assertAction = {
+                    val log = harness.getSentLogPayloads().getLastLog()
+                    assertOtelLogReceived(
+                        log,
+                        expectedMessage = expectedMessage,
+                        expectedSeverityNumber = getOtelSeverity(severity).severityNumber,
+                        expectedSeverityText = severity.name,
+                        expectedType = LogExceptionType.HANDLED.value,
+                        expectedStacktrace = stacktrace.toList(),
+                        expectedProperties = customProperties,
+                        expectedEmbType = "sys.exception",
+                    )
+                }
+            )
         }
     }
 

@@ -41,71 +41,83 @@ internal class JvmCrashFeatureTest {
 
     @Test
     fun `app crash generates an OTel Log and matches the crashId in the session`() {
-        with(testRule) {
-            harness.recordSession {
-                handleException()
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    handleException()
+
+                }
+            },
+            assertAction = {
                 checkNotNull(harness.getStoredLogPayloads(1).getLastLog()).assertCrash(
                     state = "foreground",
                     crashId = checkNotNull(harness.getSingleSession().getCrashedId())
                 )
             }
-        }
+        )
     }
 
     @Test
     fun `app crash in the background generates a crash log`() {
-        with(testRule) {
-            handleException()
-            checkNotNull(harness.getStoredLogPayloads(1).getLastLog()).assertCrash(
-                crashId = harness.getSentBackgroundActivities(1).single().getCrashedId()
-            )
-        }
+        testRule.runTest(
+            testCaseAction = {
+                handleException()
+            },
+            assertAction = {
+                checkNotNull(harness.getStoredLogPayloads(1).getLastLog()).assertCrash(
+                    crashId = harness.getSentBackgroundActivities(1).single().getCrashedId()
+                )
+            }
+        )
     }
 
     @Suppress("DEPRECATION")
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
-        with(testRule) {
-            embrace.start(harness.overriddenCoreModule.context, Embrace.AppFramework.REACT_NATIVE)
 
-            testRule.harness.recordSession {
-                embrace.reactNativeInternalInterface?.logUnhandledJsException(
-                    "name",
-                    "message",
-                    "type",
-                    "stacktrace"
+        testRule.runTest(
+            testCaseAction = {
+                embrace.start(harness.overriddenCoreModule.context, Embrace.AppFramework.REACT_NATIVE)
+                harness.recordSession {
+                    embrace.reactNativeInternalInterface?.logUnhandledJsException(
+                        "name",
+                        "message",
+                        "type",
+                        "stacktrace"
+                    )
+                    val handler = checkNotNull(Thread.getDefaultUncaughtExceptionHandler())
+                    handler.uncaughtException(Thread.currentThread(), testException)
+                }
+            },
+            assertAction = {
+                val log = checkNotNull(testRule.harness.getStoredLogPayloads(1)).getLastLog()
+                assertOtelLogReceived(
+                    logReceived = log,
+                    expectedMessage = "",
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = Severity.ERROR.name,
+                    expectedExceptionName = testException.javaClass.canonicalName,
+                    expectedExceptionMessage = checkNotNull(testException.message),
+                    expectedStacktrace = testException.getSafeStackTrace()?.toList(),
+                    expectedProperties = emptyMap(),
+                    expectedEmbType = "sys.android.react_native_crash",
+                    expectedState = "foreground"
                 )
-                val handler = checkNotNull(Thread.getDefaultUncaughtExceptionHandler())
-                handler.uncaughtException(Thread.currentThread(), testException)
+                val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
+                val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
+                val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
+                val attrs = checkNotNull(log.attributes)
+                assertEquals(expectedJsException, attrs.findAttributeValue("emb.android.react_native_crash.js_exception"))
+                assertEquals("1", attrs.findAttributeValue("emb.android.crash_number"))
+                assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
+                assertNotNull(attrs.findAttributeValue("emb.android.threads"))
+
+                val message = checkNotNull(testRule.harness.getSingleSession())
+                val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+                assertNotNull(crashId)
+                assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
             }
-        }
-
-        val log = checkNotNull(testRule.harness.getStoredLogPayloads(1)).getLastLog()
-        assertOtelLogReceived(
-            logReceived = log,
-            expectedMessage = "",
-            expectedSeverityNumber = Severity.ERROR.severityNumber,
-            expectedSeverityText = Severity.ERROR.name,
-            expectedExceptionName = testException.javaClass.canonicalName,
-            expectedExceptionMessage = checkNotNull(testException.message),
-            expectedStacktrace = testException.getSafeStackTrace()?.toList(),
-            expectedProperties = emptyMap(),
-            expectedEmbType = "sys.android.react_native_crash",
-            expectedState = "foreground"
         )
-        val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
-        val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
-        val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
-        val attrs = checkNotNull(log.attributes)
-        assertEquals(expectedJsException, attrs.findAttributeValue("emb.android.react_native_crash.js_exception"))
-        assertEquals("1", attrs.findAttributeValue("emb.android.crash_number"))
-        assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
-        assertNotNull(attrs.findAttributeValue("emb.android.threads"))
-
-        val message = checkNotNull(testRule.harness.getSingleSession())
-        val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
-        assertNotNull(crashId)
-        assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
     }
 
     private fun handleException() {

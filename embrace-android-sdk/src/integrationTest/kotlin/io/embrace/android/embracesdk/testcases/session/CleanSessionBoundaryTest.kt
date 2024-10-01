@@ -31,21 +31,24 @@ internal class CleanSessionBoundaryTest {
      */
     @Test
     fun `session messages have a clean boundary`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.addSessionProperty("foo", "bar", false)
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.addSessionProperty("foo", "bar", false)
+                }
+                harness.recordSession()
+            },
+            assertAction = {
+                val sessions = harness.getSentSessions(2)
+
+                // validate info added to first session
+                val span = sessions[0].findSessionSpan()
+                assertEquals("bar", span.getSessionProperty("foo"))
+
+                // confirm info not added to next session
+                val nextSpan = sessions[1].findSessionSpan()
+                assertNull(nextSpan.getSessionProperty("foo"))
             }
-            harness.recordSession()
-
-            val sessions = harness.getSentSessions(2)
-
-            // validate info added to first session
-            val span = sessions[0].findSessionSpan()
-            assertEquals("bar", span.getSessionProperty("foo"))
-
-            // confirm info not added to next session
-            val nextSpan = sessions[1].findSessionSpan()
-            assertNull(nextSpan.getSessionProperty("foo"))
-        }
+        )
     }
 }

@@ -50,11 +50,15 @@ internal class OtelSessionGatingTest {
     fun `session sent in full without gating`() {
         gatingConfig = SessionRemoteConfig()
 
-        with(testRule) {
-            simulateSession()
-            val payload = harness.getSingleSession()
-            assertSessionGating(payload, gated = false)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                simulateSession()
+            },
+            assertAction = {
+                val payload = harness.getSingleSession()
+                assertSessionGating(payload, gated = false)
+            }
+        )
     }
 
     @Test
@@ -66,12 +70,15 @@ internal class OtelSessionGatingTest {
                 "errors"
             )
         )
-
-        with(testRule) {
-            simulateSession()
-            val payload = harness.getSingleSession()
-            assertSessionGating(payload, gated = true)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                simulateSession()
+            },
+            assertAction = {
+                val payload = harness.getSingleSession()
+                assertSessionGating(payload, gated = true)
+            }
+        )
     }
 
     private fun assertSessionGating(

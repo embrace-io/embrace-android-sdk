@@ -28,28 +28,31 @@ internal class BackgroundActivityTest {
 
     @Test
     fun `bg activity messages are recorded`() {
-        with(testRule) {
-            harness.recordSession()
-            harness.overriddenClock.tick(30000)
-            harness.recordSession()
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession()
+                harness.overriddenClock.tick(30000)
+                harness.recordSession()
+            },
+            assertAction = {
+                // filter out dupes from overwritten saves
+                val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.getSessionId() }
+                assertEquals(2, bgActivities.size)
 
-            // filter out dupes from overwritten saves
-            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.getSessionId() }
-            assertEquals(2, bgActivities.size)
+                // verify first bg activity
+                val first = bgActivities[0]
+                val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
+                assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
+                assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
 
-            // verify first bg activity
-            val first = bgActivities[0]
-            val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
-            assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
-            assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+                // verify second bg activity
+                val second = bgActivities[1]
+                val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
+                assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
 
-            // verify second bg activity
-            val second = bgActivities[1]
-            val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
-            assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
-
-            // ID should be different for each
-            assertNotEquals(first.getSessionId(), second.getSessionId())
-        }
+                // ID should be different for each
+                assertNotEquals(first.getSessionId(), second.getSessionId())
+            }
+        )
     }
 }

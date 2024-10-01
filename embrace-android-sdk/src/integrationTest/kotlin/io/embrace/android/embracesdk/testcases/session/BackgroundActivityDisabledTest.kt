@@ -148,59 +148,64 @@ internal class BackgroundActivityDisabledTest {
 
     @Test
     fun `session span and payloads structurally correct`() {
-        with(testRule) {
-            val session1StartMs = harness.overriddenClock.now()
-            harness.overriddenClock.tick(500L)
+        val session1StartMs = testRule.harness.overriddenClock.now()
+        testRule.harness.overriddenClock.tick(500L)
+        var session1EndMs: Long = -1
+        var session2StartMs: Long = -1
+        var session2EndMs: Long = -1
 
-            harness.recordSession()
-            val session1EndMs = harness.overriddenClock.now()
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession()
+                session1EndMs = harness.overriddenClock.now()
+                session2StartMs = harness.overriddenClock.tick(15000)
+                harness.recordSession()
+                session2EndMs = harness.overriddenClock.now()
+            },
+            assertAction = {
+                val sessions = harness.getSentSessions(2)
+                val session1 = sessions[0]
+                val session2 = sessions[1]
+                assertEquals(2, sessions.size)
+                assertEquals(0, harness.getSentBackgroundActivities(0).size)
 
-            val session2StartMs = harness.overriddenClock.tick(15000)
-            harness.recordSession()
-            val session2EndMs = harness.overriddenClock.now()
+                assertEquals(session1.metadata, session2.metadata)
+                assertEquals(
+                    session1.resource?.copy(screenResolution = null, jailbroken = null),
+                    session2.resource?.copy(screenResolution = null, jailbroken = null)
+                )
+                assertEquals(session1.version, session2.version)
+                assertEquals(session1.type, session2.type)
 
-            val sessions = harness.getSentSessions(2)
-            val session1 = sessions[0]
-            val session2 = sessions[1]
-            assertEquals(2, sessions.size)
-            assertEquals(0, harness.getSentBackgroundActivities(0).size)
+                val sessionSpan1 = session1.findSessionSpan()
+                val sessionSpan2 = session2.findSessionSpan()
+                sessionSpan1.assertExpectedSessionSpanAttributes(
+                    startMs = session1StartMs,
+                    endMs = session1EndMs,
+                    sessionNumber = 1,
+                    sequenceId = 1,
+                    coldStart = true,
+                )
 
-            assertEquals(session1.metadata, session2.metadata)
-            assertEquals(
-                session1.resource?.copy(screenResolution = null, jailbroken = null),
-                session2.resource?.copy(screenResolution = null, jailbroken = null)
-            )
-            assertEquals(session1.version, session2.version)
-            assertEquals(session1.type, session2.type)
+                sessionSpan2.assertExpectedSessionSpanAttributes(
+                    startMs = session2StartMs,
+                    endMs = session2EndMs,
+                    sessionNumber = 2,
+                    sequenceId = 4,
+                    coldStart = false,
+                )
 
-            val sessionSpan1 = session1.findSessionSpan()
-            val sessionSpan2 = session2.findSessionSpan()
-            sessionSpan1.assertExpectedSessionSpanAttributes(
-                startMs = session1StartMs,
-                endMs = session1EndMs,
-                sessionNumber = 1,
-                sequenceId = 1,
-                coldStart = true,
-            )
+                assertNotEquals(
+                    sessionSpan1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key),
+                    sessionSpan2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
+                )
 
-            sessionSpan2.assertExpectedSessionSpanAttributes(
-                startMs = session2StartMs,
-                endMs = session2EndMs,
-                sessionNumber = 2,
-                sequenceId = 4,
-                coldStart = false,
-            )
-
-            assertNotEquals(
-                sessionSpan1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key),
-                sessionSpan2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
-            )
-
-            assertEquals(
-                sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key),
-                sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key)
-            )
-        }
+                assertEquals(
+                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key),
+                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key)
+                )
+            }
+        )
     }
 
     private fun runLoggingThread() {

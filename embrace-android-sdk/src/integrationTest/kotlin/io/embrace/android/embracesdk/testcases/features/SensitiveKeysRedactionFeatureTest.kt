@@ -31,45 +31,51 @@ internal class SensitiveKeysRedactionFeatureTest {
 
     @Test
     fun `custom span properties are redacted if they are sensitive`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                val span = embrace.startSpan("test span")
-                span?.addAttribute("password", "1234")
-                span?.addAttribute("not a password", "1234")
-                span?.stop()
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    val span = embrace.startSpan("test span")
+                    span?.addAttribute("password", "1234")
+                    span?.addAttribute("not a password", "1234")
+                    span?.stop()
+                }
+            },
+            assertAction = {
+                val session = harness.getSingleSession()
+                val recordedSpan = session.data.spans?.find { it.name == "test span" }
+                val sensitiveAttribute = recordedSpan?.attributes?.first { it.key == "password" }
+                val notSensitiveAttribute = recordedSpan?.attributes?.first { it.key == "not a password" }
+
+                assertEquals(REDACTED_LABEL, sensitiveAttribute?.data)
+                assertEquals("1234", notSensitiveAttribute?.data)
             }
-
-            val session = harness.getSingleSession()
-            val recordedSpan = session.data.spans?.find { it.name == "test span" }
-            val sensitiveAttribute = recordedSpan?.attributes?.first { it.key == "password" }
-            val notSensitiveAttribute = recordedSpan?.attributes?.first { it.key == "not a password" }
-
-            assertEquals(REDACTED_LABEL, sensitiveAttribute?.data)
-            assertEquals("1234", notSensitiveAttribute?.data)
-        }
+        )
     }
 
     @Test
     fun `custom span events are redacted if they are sensitive`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                val span = embrace.startSpan("test span")
-                span?.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
-                span?.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
-                span?.stop()
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    val span = embrace.startSpan("test span")
+                    span?.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
+                    span?.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
+                    span?.stop()
+                }
+            },
+            assertAction = {
+                val session = harness.getSingleSession()
+                val recordedSpan = session.data.spans?.find { it.name == "test span" }
+
+                val event = recordedSpan?.events?.first { it.name == "event" }
+                val anotherEvent = recordedSpan?.events?.first { it.name == "anotherEvent" }
+                assertTrue(event?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
+                assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
+                assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
+                assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
             }
-
-            val session = harness.getSingleSession()
-            val recordedSpan = session.data.spans?.find { it.name == "test span" }
-
-            val event = recordedSpan?.events?.first { it.name == "event" }
-            val anotherEvent = recordedSpan?.events?.first { it.name == "anotherEvent" }
-            assertTrue(event?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
-            assertTrue(event?.attributes?.any { it.key == "status" && it.data == "ok" } ?: false)
-            assertTrue(anotherEvent?.attributes?.any { it.key == "password" && it.data == REDACTED_LABEL } ?: false)
-            assertTrue(anotherEvent?.attributes?.any { it.key == "someKey" && it.data == "someValue" } ?: false)
-        }
+        )
     }
 }

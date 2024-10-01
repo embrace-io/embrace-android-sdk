@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertExpectedAttributes
 import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
@@ -23,7 +24,7 @@ internal class SpanExporterTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     @Test
@@ -38,7 +39,7 @@ internal class SpanExporterTest {
                 fakeSpanExporter.awaitSpanExport(1)
             )
             // Verify that 2 spans have been logged - the exported ones and 1 private diagnostic traces
-            assertEquals(2, testRule.harness.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
+            assertEquals(2, testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
 
             recordSession {
                 assertTrue(
@@ -52,9 +53,9 @@ internal class SpanExporterTest {
                 testSpan.assertHasEmbraceAttribute(embSequenceId, "4")
                 assertNotNull(testSpan.attributes.get(embProcessIdentifier.attributeKey))
                 testSpan.resource.assertExpectedAttributes(
-                    expectedServiceName = testRule.harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
-                    expectedServiceVersion = testRule.harness.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
-                    systemInfo = testRule.harness.overriddenInitModule.systemInfo
+                    expectedServiceName = testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
+                    expectedServiceVersion = testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
+                    systemInfo = testRule.setup.overriddenInitModule.systemInfo
                 )
                 val sessionSpan = checkNotNull(exportedSpans["emb-session"])
                 sessionSpan.assertHasEmbraceAttribute(embSequenceId, "1")

@@ -11,11 +11,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule;
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface;
+
 @RunWith(AndroidJUnit4.class)
 public class PreSdkStartTest {
 
     @Rule
-    public IntegrationTestRule testRule = new IntegrationTestRule(() -> new IntegrationTestRule.Harness(0, false));
+    public IntegrationTestRule testRule = new IntegrationTestRule(() -> new EmbraceSetupInterface(0, false));
 
     @NonNull
     private final Embrace getEmbrace() {
@@ -33,7 +36,7 @@ public class PreSdkStartTest {
     @SuppressWarnings("deprecation")
     @Test
     public void testStartWithNullAppFramework() {
-        Context context = testRule.harness.getOverriddenCoreModule().getContext();
+        Context context = testRule.setup.getOverriddenCoreModule().getContext();
         getEmbrace().start(context, null);
         assertFalse(getEmbrace().isStarted());
     }

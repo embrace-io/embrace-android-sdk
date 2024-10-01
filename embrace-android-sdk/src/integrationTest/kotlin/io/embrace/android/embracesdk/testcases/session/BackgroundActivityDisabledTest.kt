@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -20,8 +21,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
-import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -49,7 +48,7 @@ internal class BackgroundActivityDisabledTest {
         val initModule = FakeInitModule(clock)
         val workerThreadModule = FakeWorkerThreadModule(initModule, Worker.Background.LogMessageWorker)
 
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = initModule,
             overriddenWorkerThreadModule = workerThreadModule,
@@ -215,7 +214,7 @@ internal class BackgroundActivityDisabledTest {
     }
 
     private fun runLoggingThread() {
-        (testRule.harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor.runCurrentlyBlocked()
+        (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor.runCurrentlyBlocked()
     }
 
     private fun flushLogBatch() {

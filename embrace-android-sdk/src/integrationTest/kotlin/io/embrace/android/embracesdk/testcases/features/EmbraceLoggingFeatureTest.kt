@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.assertions.getLastLog
+import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -23,7 +24,7 @@ internal class EmbraceLoggingFeatureTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, testWorkerName = Worker.Background.LogMessageWorker)
@@ -341,7 +342,7 @@ internal class EmbraceLoggingFeatureTest {
     }
 
     private fun flushLogs() {
-        val executor = (testRule.harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
+        val executor = (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
         executor.runCurrentlyBlocked()
         val logOrchestrator = testRule.bootstrapper.logModule.logOrchestrator
         logOrchestrator.flush(false)

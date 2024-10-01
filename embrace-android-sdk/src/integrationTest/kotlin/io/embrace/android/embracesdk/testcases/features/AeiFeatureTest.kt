@@ -7,7 +7,8 @@ import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.mockk.every
 import io.mockk.mockk
@@ -25,7 +26,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = IntegrationTestRule { IntegrationTestRule.Harness(startImmediately = false) }
+    val testRule = IntegrationTestRule { EmbraceSetupInterface(startImmediately = false) }
 
     @Test
     fun `application exit info feature`() {

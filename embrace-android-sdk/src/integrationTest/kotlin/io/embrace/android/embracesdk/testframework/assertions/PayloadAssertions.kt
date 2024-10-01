@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.assertions
+package io.embrace.android.embracesdk.testframework.assertions
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log

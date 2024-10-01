@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.testframework.assertions
 
 import io.embrace.android.embracesdk.internal.payload.Attribute
 

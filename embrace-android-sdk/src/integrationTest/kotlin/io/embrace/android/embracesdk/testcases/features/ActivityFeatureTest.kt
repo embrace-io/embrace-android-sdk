@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -20,7 +21,7 @@ internal class ActivityFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = IntegrationTestRule { IntegrationTestRule.Harness(startImmediately = false) }
+    val testRule = IntegrationTestRule { EmbraceSetupInterface(startImmediately = false) }
 
     @Test
     fun `automatically capture activities`() {

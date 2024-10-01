@@ -4,7 +4,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static io.embrace.android.embracesdk.Embrace.NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
-import static io.embrace.android.embracesdk.assertions.InternalErrorAssertionsKt.assertInternalErrorLogged;
+import static io.embrace.android.embracesdk.testframework.assertions.InternalErrorAssertionsKt.assertInternalErrorLogged;
 
 import android.webkit.ConsoleMessage;
 
@@ -21,6 +21,7 @@ import java.util.Map;
 
 import io.embrace.android.embracesdk.spans.EmbraceSpan;
 import io.embrace.android.embracesdk.spans.ErrorCode;
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule;
 
 /**
  * TODO: add a lint rule to verify that all public API methods that have @NonNull parameters have a corresponding test here

@@ -1,17 +1,14 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import org.junit.Assert.assertEquals
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,20 +37,23 @@ internal class SequentialSessionTest {
                 val second = sessions[1]
                 val third = sessions[2]
 
-                val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
-                assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
-                assertTrue(firstAttrs.findAttributeValue(embColdStart.name).toBoolean())
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
+                first.findSessionSpan().attributes?.assertMatches {
+                    embSessionNumber.name to 1
+                    embColdStart.name to true
+                }
 
-                val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
-                assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
-                assertFalse(secondAttrs.findAttributeValue(embColdStart.name).toBoolean())
                 assertFalse(second.hasSpanSnapshotsOfType(EmbType.Ux.Session))
+                second.findSessionSpan().attributes?.assertMatches {
+                    embSessionNumber.name to 2
+                    embColdStart.name to false
+                }
 
-                val thirdAttrs = checkNotNull(third.findSessionSpan().attributes)
-                assertEquals("3", thirdAttrs.findAttributeValue(embSessionNumber.name))
-                assertFalse(thirdAttrs.findAttributeValue(embColdStart.name).toBoolean())
                 assertFalse(third.hasSpanSnapshotsOfType(EmbType.Ux.Session))
+                third.findSessionSpan().attributes?.assertMatches {
+                    embSessionNumber.name to 3
+                    embColdStart.name to false
+                }
             }
         )
     }

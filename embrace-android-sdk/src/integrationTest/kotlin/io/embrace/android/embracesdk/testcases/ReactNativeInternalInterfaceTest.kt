@@ -5,15 +5,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.assertions.findSpansByName
-import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -144,15 +142,17 @@ internal class ReactNativeInternalInterfaceTest {
                 assertEquals(1, spans.size)
 
                 val span = spans.single()
-                val attrs = checkNotNull(span.attributes)
                 assertEquals("emb-rn-action", span.name)
-                assertEquals("sys.rn_action", attrs.findAttributeValue("emb.type"))
-                assertEquals("MyAction", attrs.findAttributeValue("name"))
-                assertEquals("SUCCESS", attrs.findAttributeValue("outcome"))
-                assertEquals("100", attrs.findAttributeValue("payload_size"))
-                assertEquals("value", attrs.findAttributeValue("emb.properties.key"))
                 assertEquals(1000L, span.startTimeNanos?.nanosToMillis())
                 assertEquals(5000L, span.endTimeNanos?.nanosToMillis())
+
+                span.attributes?.assertMatches {
+                    "emb.type" to "sys.rn_action"
+                    "name" to "MyAction"
+                    "outcome" to "SUCCESS"
+                    "payload_size" to "100"
+                    "emb.properties.key" to "value"
+                }
             }
         )
     }
@@ -175,15 +175,18 @@ internal class ReactNativeInternalInterfaceTest {
                 val message = getSingleSessionEnvelope()
                 val firstSpan = message.findSpanOfType(EmbType.Ux.View)
                 val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
-                val firstAttrs = checkNotNull(firstSpan.attributes)
-                val secondAttrs = checkNotNull(secondSpan.attributes)
 
                 assertEquals("emb-screen-view", firstSpan.name)
+                firstSpan.attributes?.assertMatches {
+                    "emb.type" to "ux.view"
+                    "view.name" to "HomeScreen"
+                }
+
                 assertEquals("emb-screen-view", secondSpan.name)
-                assertEquals("ux.view", firstAttrs.findAttributeValue("emb.type"))
-                assertEquals("ux.view", secondAttrs.findAttributeValue("emb.type"))
-                assertEquals("HomeScreen", firstAttrs.findAttributeValue("view.name"))
-                assertEquals("DetailsScreen", secondAttrs.findAttributeValue("view.name"))
+                secondSpan.attributes?.assertMatches {
+                    "emb.type" to "ux.view"
+                    "view.name" to "DetailsScreen"
+                }
             }
         )
     }
@@ -205,16 +208,18 @@ internal class ReactNativeInternalInterfaceTest {
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 val firstSpan = message.findSpanOfType(EmbType.Ux.View)
-                val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
-                val firstAttrs = checkNotNull(firstSpan.attributes)
-                val secondAttrs = checkNotNull(secondSpan.attributes)
-
                 assertEquals("emb-screen-view", firstSpan.name)
+                firstSpan.attributes?.assertMatches {
+                    "emb.type" to "ux.view"
+                    "view.name" to "HomeScreen"
+                }
+
+                val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
                 assertEquals("emb-screen-view", secondSpan.name)
-                assertEquals("ux.view", firstAttrs.findAttributeValue("emb.type"))
-                assertEquals("ux.view", secondAttrs.findAttributeValue("emb.type"))
-                assertEquals("HomeScreen", firstAttrs.findAttributeValue("view.name"))
-                assertEquals("HomeScreen", secondAttrs.findAttributeValue("view.name"))
+                secondSpan.attributes?.assertMatches {
+                    "emb.type" to "ux.view"
+                    "view.name" to "HomeScreen"
+                }
             }
         )
     }

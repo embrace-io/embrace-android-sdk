@@ -7,9 +7,9 @@ import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.mockk.every
 import io.mockk.mockk
@@ -43,20 +43,18 @@ internal class AeiFeatureTest {
                 val log = getSingleSentLogEnvelope().getLastLog()
 
                 // assert AEI fields populated
-                val attrs = checkNotNull(log.attributes)
-                assertEquals(attrs.findAttributeValue("timestamp")?.toLong(), 15000000000L)
-                assertEquals(
-                    attrs.findAttributeValue("aei_session_id"),
-                    "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
-                )
-                assertEquals(attrs.findAttributeValue("process_importance")?.toInt(), 125)
-                assertEquals(attrs.findAttributeValue("pss")?.toLong(), 1509123409L)
-                assertEquals(attrs.findAttributeValue("rss")?.toLong(), 1123409L)
-                assertEquals(attrs.findAttributeValue("exit_status")?.toInt(), 1)
-                assertEquals(attrs.findAttributeValue("description"), "testDescription")
-                assertEquals(attrs.findAttributeValue("reason")?.toInt(), 4)
+                log.attributes?.assertMatches {
+                    "timestamp" to 15000000000L
+                    "aei_session_id" to "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+                    "process_importance" to 125
+                    "pss" to 1509123409L
+                    "rss" to 1123409L
+                    "exit_status" to 1
+                    "description" to "testDescription"
+                    "reason" to 4
+                    "emb.type" to "sys.exit"
+                }
                 assertEquals("testInputStream", log.body)
-                assertEquals("sys.exit", attrs.findAttributeValue("emb.type"))
             }
         )
     }

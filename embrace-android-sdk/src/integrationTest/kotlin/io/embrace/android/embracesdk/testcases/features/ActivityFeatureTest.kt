@@ -3,13 +3,12 @@ package io.embrace.android.embracesdk.testcases.features
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
-import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -43,6 +42,10 @@ internal class ActivityFeatureTest {
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 val viewSpan = message.findSpanOfType(EmbType.Ux.View)
+
+                viewSpan.attributes?.assertMatches {
+                    "view.name" to "android.app.Activity"
+                }
 
                 with(viewSpan) {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())

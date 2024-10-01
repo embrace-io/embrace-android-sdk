@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import org.junit.Assert.assertEquals
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,11 +34,12 @@ internal class ManualSessionTest {
                 val stateSession = messages[0] // started via state, ended manually
                 val manualSession = messages[1] // started manually, ended via state
 
-                val stateAttrs = checkNotNull(stateSession.findSessionSpan().attributes)
-                assertEquals("1", stateAttrs.findAttributeValue(embSessionNumber.name))
-
-                val manualAttrs = checkNotNull(manualSession.findSessionSpan().attributes)
-                assertEquals("2", manualAttrs.findAttributeValue(embSessionNumber.name))
+                stateSession.findSessionSpan().attributes?.assertMatches {
+                    embSessionNumber.name to 1
+                }
+                manualSession.findSessionSpan().attributes?.assertMatches {
+                    embSessionNumber.name to 2
+                }
             }
         )
     }
@@ -78,8 +78,9 @@ internal class ManualSessionTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                val attrs = checkNotNull(message.findSessionSpan().attributes)
-                assertEquals("1", attrs.findAttributeValue(embSessionNumber.name))
+                message.findSessionSpan().attributes?.assertMatches {
+                    embSessionNumber.name to 1
+                }
             }
         )
     }

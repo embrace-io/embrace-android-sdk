@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -42,20 +43,22 @@ internal class NetworkStatusFeatureTest {
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 val span = message.findSpanOfType(EmbType.System.NetworkStatus)
-                val attrs = checkNotNull(span.attributes)
                 assertEquals("emb-network-status", span.name)
-                assertEquals("sys.network_status", attrs.findAttributeValue("emb.type"))
-                assertEquals("unknown", attrs.findAttributeValue("network"))
                 assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
 
-                val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
-                val snapshotAttrs = checkNotNull(snapshot.attributes)
+                span.attributes?.assertMatches {
+                    "emb.type" to "sys.network_status"
+                    "network" to "unknown"
+                }
 
+                val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
                 assertEquals("emb-network-status", snapshot.name)
-                assertEquals("sys.network_status", snapshotAttrs.findAttributeValue("emb.type"))
-                assertEquals("wifi", snapshotAttrs.findAttributeValue("network"))
                 assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos?.nanosToMillis())
+                snapshot.attributes?.assertMatches {
+                    "emb.type" to "sys.network_status"
+                    "network" to "wifi"
+                }
             }
         )
     }
@@ -72,12 +75,12 @@ internal class NetworkStatusFeatureTest {
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
-
                 assertEquals("emb-network-status", snapshot.name)
-                val snapshotAttrs = checkNotNull(snapshot.attributes)
-                assertEquals("sys.network_status", snapshotAttrs.findAttributeValue("emb.type"))
-                assertEquals("unknown", snapshotAttrs.findAttributeValue("network"))
                 assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
+                snapshot.attributes?.assertMatches {
+                    "emb.type" to "sys.network_status"
+                    "network" to "unknown"
+                }
             }
         )
     }

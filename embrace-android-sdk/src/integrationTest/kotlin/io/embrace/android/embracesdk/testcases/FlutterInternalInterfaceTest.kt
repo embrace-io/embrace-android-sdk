@@ -3,17 +3,17 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -185,10 +185,11 @@ internal class FlutterInternalInterfaceTest {
                     expectedEmbType = "sys.flutter_exception",
                     expectedState = "foreground",
                 )
-                val attrs = checkNotNull(log.attributes)
-                assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
-                assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
-                assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
+                log.attributes?.assertMatches {
+                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace
+                    "emb.exception.context" to expectedContext
+                    "emb.exception.library" to expectedLibrary
+                }
             }
         )
     }
@@ -228,10 +229,11 @@ internal class FlutterInternalInterfaceTest {
                     expectedEmbType = "sys.flutter_exception",
                     expectedState = "foreground",
                 )
-                val attrs = checkNotNull(log.attributes)
-                assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
-                assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
-                assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
+                log.attributes?.assertMatches {
+                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace
+                    "emb.exception.context" to expectedContext
+                    "emb.exception.library" to expectedLibrary
+                }
             }
         )
     }

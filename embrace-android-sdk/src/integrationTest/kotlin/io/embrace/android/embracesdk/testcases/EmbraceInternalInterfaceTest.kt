@@ -4,14 +4,12 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansByName
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -21,6 +19,9 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.HttpAttributes
 import java.net.SocketException
 import org.junit.Assert.assertEquals
@@ -200,10 +201,11 @@ internal class EmbraceInternalInterfaceTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-                val attrs = checkNotNull(tapBreadcrumb.attributes)
-                assertEquals("button", attrs.findAttributeValue("view.name"))
-                assertEquals("10,99", attrs.findAttributeValue("tap.coords"))
-                assertEquals("tap", attrs.findAttributeValue("tap.type"))
+                tapBreadcrumb.attributes?.assertMatches {
+                    "view.name" to "button"
+                    "tap.coords" to "10,99"
+                    "tap.type" to "tap"
+                }
             }
         )
     }
@@ -301,13 +303,16 @@ internal class EmbraceInternalInterfaceTest {
                         .associateBy { it.name })
                 assertEquals(4, spans.size)
                 with(checkNotNull(spans["tz-parent-span"])) {
-                    assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
+                    attributes?.assertMatches {
+                        "testkey" to "testvalue"
+                    }
                 }
                 with(checkNotNull(spans["tz-child-span"])) {
                     val spanEvent = checkNotNull(events)[0]
-                    val spanAttrs = checkNotNull(spanEvent.attributes)
+                    spanEvent.attributes?.assertMatches {
+                        "key" to "value"
+                    }
                     assertEquals("cool event bro", spanEvent.name)
-                    assertEquals("value", spanAttrs.findAttributeValue("key"))
                     assertEquals(Span.Status.ERROR, status)
                 }
                 with(checkNotNull(spans["tz-another-span"])) {

@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -16,8 +13,11 @@ import io.embrace.android.embracesdk.internal.injection.createAnrModule
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -184,9 +184,10 @@ internal class AnrFeatureTest {
         assertEquals(endTime, span.endTimeNanos?.nanosToMillis())
 
         // assert span attributes
-        val attributes = checkNotNull(span.attributes)
-        assertEquals(expectedIntervalCode, attributes.findAttributeValue("interval_code"))
-        assertEquals("perf.thread_blockage", attributes.findAttributeValue("emb.type"))
+        span.attributes?.assertMatches {
+            "emb.type" to "perf.thread_blockage"
+            "interval_code" to expectedIntervalCode
+        }
 
         val events = checkNotNull(span.events)
 
@@ -194,15 +195,14 @@ internal class AnrFeatureTest {
             assertEquals("perf.thread_blockage_sample", event.name)
 
             // assert attributes
-            val attrs = checkNotNull(event.attributes)
-            assertEquals("perf.thread_blockage_sample", attrs.findAttributeValue("emb.type"))
-            assertEquals("0", attrs.findAttributeValue("sample_overhead"))
-
-            val expectedCode = when {
-                index < MAX_SAMPLE_COUNT -> "0"
-                else -> "1"
+            event.attributes?.assertMatches {
+                "emb.type" to "perf.thread_blockage_sample"
+                "sample_overhead" to 0
+                "sample_code" to  when {
+                    index < MAX_SAMPLE_COUNT -> "0"
+                    else -> "1"
+                }
             }
-            assertEquals(expectedCode, attrs.findAttributeValue("sample_code"))
 
             // assert interval time
             val expectedTime = startTime + ANR_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)

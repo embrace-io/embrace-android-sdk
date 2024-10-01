@@ -1,18 +1,16 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.PeriodicCacheWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -31,7 +29,7 @@ internal class PeriodicSessionCacheTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, testWorkerName = PeriodicCacheWorker)
@@ -41,12 +39,12 @@ internal class PeriodicSessionCacheTest {
     @Test
     fun `session is periodically cached`() {
         with(testRule) {
-            val executor = (harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
-            val deliveryService = harness.overriddenDeliveryModule.deliveryService
+            val executor = (setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
+            val deliveryService = setup.overriddenDeliveryModule.deliveryService
 
-            harness.recordSession {
+            action.recordSession {
                 executor.runCurrentlyBlocked()
-                embrace.addSessionProperty("Test", "Test", true)
+                action.embrace.addSessionProperty("Test", "Test", true)
 
                 val endMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
                 val span = endMessage.findSpanSnapshotsOfType(EmbType.Ux.Session).single()
@@ -66,7 +64,7 @@ internal class PeriodicSessionCacheTest {
                 assertEquals("Test", nextSpan.getSessionProperty("Test"))
             }
 
-            val endMessage = harness.getSingleSession()
+            val endMessage = assertion.getSingleSession()
             val span = endMessage.findSessionSpan()
             val attrs = checkNotNull(span.attributes)
             assertEquals(true, attrs.findAttributeValue("emb.clean_exit").toBoolean())

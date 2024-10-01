@@ -4,14 +4,14 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpansByName
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -20,9 +20,9 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.semconv.HttpAttributes
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -32,7 +32,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -44,79 +43,87 @@ internal class EmbraceInternalInterfaceTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     @Test
     fun `no NPEs when SDK not started`() {
-        assertFalse(testRule.embrace.isStarted)
-        with(testRule.embrace.internalInterface) {
-            logInfo("", null)
-            logWarning("", null, null)
-            logError("", null, null, false)
-            logHandledException(NullPointerException(), LogType.ERROR, null, null)
-            recordCompletedNetworkRequest(
-                url = "",
-                httpMethod = "GET",
-                startTime = 0L,
-                endTime = 1L,
-                bytesSent = 0L,
-                bytesReceived = 0L,
-                statusCode = 200,
-                traceId = null,
-                networkCaptureData = null
-            )
+        assertFalse(testRule.action.embrace.isStarted)
 
-            recordIncompleteNetworkRequest(
-                url = "",
-                httpMethod = "GET",
-                startTime = 0L,
-                endTime = 1L,
-                error = null,
-                traceId = null,
-                networkCaptureData = null
-            )
+        testRule.runTest(
+            testCaseAction = {
+                with(testRule.action.embrace.internalInterface) {
+                    logInfo("", null)
+                    logWarning("", null, null)
+                    logError("", null, null, false)
+                    logHandledException(NullPointerException(), LogType.ERROR, null, null)
+                    recordCompletedNetworkRequest(
+                        url = "",
+                        httpMethod = "GET",
+                        startTime = 0L,
+                        endTime = 1L,
+                        bytesSent = 0L,
+                        bytesReceived = 0L,
+                        statusCode = 200,
+                        traceId = null,
+                        networkCaptureData = null
+                    )
 
-            recordIncompleteNetworkRequest(
-                url = "",
-                httpMethod = "GET",
-                startTime = 0L,
-                endTime = 1L,
-                errorType = null,
-                errorMessage = null,
-                traceId = null,
-                networkCaptureData = null
-            )
+                    recordIncompleteNetworkRequest(
+                        url = "",
+                        httpMethod = "GET",
+                        startTime = 0L,
+                        endTime = 1L,
+                        error = null,
+                        traceId = null,
+                        networkCaptureData = null
+                    )
 
-            recordNetworkRequest(
-                embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
-                    "",
-                    HttpMethod.GET,
-                    0L,
-                    1L,
-                    0L,
-                    0L,
-                    200,
-                    null
-                )
-            )
+                    recordIncompleteNetworkRequest(
+                        url = "",
+                        httpMethod = "GET",
+                        startTime = 0L,
+                        endTime = 1L,
+                        errorType = null,
+                        errorMessage = null,
+                        traceId = null,
+                        networkCaptureData = null
+                    )
 
-            logComposeTap(Pair(0.0f, 0.0f), "")
-            assertFalse(shouldCaptureNetworkBody("", ""))
-            setProcessStartedByNotification()
-            assertFalse(isNetworkSpanForwardingEnabled())
-            getSdkCurrentTime()
-        }
+                    recordNetworkRequest(
+                        embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
+                            "",
+                            HttpMethod.GET,
+                            0L,
+                            1L,
+                            0L,
+                            0L,
+                            200,
+                            null
+                        )
+                    )
+
+                    logComposeTap(Pair(0.0f, 0.0f), "")
+                    assertFalse(shouldCaptureNetworkBody("", ""))
+                    setProcessStartedByNotification()
+                    assertFalse(isNetworkSpanForwardingEnabled())
+                    getSdkCurrentTime()
+                }
+            },
+            assertAction = {
+                assertFalse(testRule.action.embrace.isStarted)
+            }
+        )
     }
 
     @Test
     fun `network recording methods work as expected`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
-                harness.overriddenClock.tick()
-                harness.overriddenConfigService.updateListeners()
-                harness.overriddenClock.tick()
+        with(testRule.action) {
+            startSdk()
+            recordSession {
+                clock.tick()
+                configService.updateListeners()
+                clock.tick()
                 embrace.internalInterface.recordCompletedNetworkRequest(
                     url = URL,
                     httpMethod = "GET",
@@ -163,7 +170,9 @@ internal class EmbraceInternalInterfaceTest {
                     )
                 )
             }
-            val session = harness.getSingleSession()
+        }
+        with(testRule) {
+            val session = assertion.getSingleSession()
 
             val spans = checkNotNull(session.data.spans)
             val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
@@ -181,121 +190,142 @@ internal class EmbraceInternalInterfaceTest {
         val expectedY = 99f
         val expectedElementName = "button"
 
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
-                embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                recordSession {
+                    embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
+                }
+            },
+            assertAction = {
+                val session = getSingleSession()
+                val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
+                val attrs = checkNotNull(tapBreadcrumb.attributes)
+                assertEquals("button", attrs.findAttributeValue("view.name"))
+                assertEquals("10,99", attrs.findAttributeValue("tap.coords"))
+                assertEquals("tap", attrs.findAttributeValue("tap.type"))
             }
-            val session = harness.getSingleSession()
-
-            val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-            val attrs = checkNotNull(tapBreadcrumb.attributes)
-            assertEquals("button", attrs.findAttributeValue("view.name"))
-            assertEquals("10,99", attrs.findAttributeValue("tap.coords"))
-            assertEquals("tap", attrs.findAttributeValue("tap.type"))
-        }
+        )
     }
 
     @Test
     fun `access check methods work as expected`() {
-        with(testRule) {
-            harness.overriddenConfigService.networkBehavior =
-                createNetworkBehavior(remoteCfg = {
-                    RemoteConfig(
-                        disabledUrlPatterns = setOf("dontlogmebro.pizza"),
-                        networkCaptureRules = setOf(
-                            NetworkCaptureRuleRemoteConfig(
-                                id = "test",
-                                duration = 10000,
-                                method = "GET",
-                                urlRegex = "capture.me",
-                                expiresIn = 10000
+        testRule.runTest(
+            setupAction = {
+                overriddenConfigService.networkBehavior =
+                    createNetworkBehavior(remoteCfg = {
+                        RemoteConfig(
+                            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+                            networkCaptureRules = setOf(
+                                NetworkCaptureRuleRemoteConfig(
+                                    id = "test",
+                                    duration = 10000,
+                                    method = "GET",
+                                    urlRegex = "capture.me",
+                                    expiresIn = 10000
+                                )
                             )
                         )
-                    )
-                })
-
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
-                assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
-                assertFalse(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
-                assertFalse(embrace.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
-                assertTrue(embrace.internalInterface.isNetworkSpanForwardingEnabled())
-            }
-        }
+                    })
+            },
+            testCaseAction = {
+                startSdk()
+                recordSession {
+                    assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
+                    assertFalse(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
+                    assertFalse(embrace.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
+                    assertTrue(embrace.internalInterface.isNetworkSpanForwardingEnabled())
+                }
+            },
+            assertAction = {}
+        )
     }
 
     @Test
     fun `set process as started by notification works as expected`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            embrace.internalInterface.setProcessStartedByNotification()
-            harness.recordSession(simulateActivityCreation = true) { }
-            assertEquals(EventType.START, harness.overriddenDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                embrace.internalInterface.setProcessStartedByNotification()
+                recordSession(simulateActivityCreation = true) { }
+            },
+            assertAction = {
+                val deliveryService = testRule.bootstrapper.deliveryModule.deliveryService as FakeDeliveryService
+                assertEquals(EventType.START, deliveryService.lastEventSentAsync?.event?.type)
+            }
+        )
     }
 
     @Test
     fun `test sdk time`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
-            harness.overriddenClock.tick()
-            assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
+        with(testRule.action) {
+            startSdk()
+            assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
+            clock.tick()
+            assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
         }
     }
 
     @Test
     fun `internal tracing APIs work as expected`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
+        with(testRule.action) {
+            startSdk()
+            recordSession {
                 with(embrace.internalInterface) {
                     val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
-                    harness.overriddenClock.tick(10)
-                    val childSpanId = checkNotNull(startSpan(name = "tz-child-span", parentSpanId = parentSpanId))
+                    clock.tick(10)
+                    val childSpanId =
+                        checkNotNull(startSpan(name = "tz-child-span", parentSpanId = parentSpanId))
                     addSpanAttribute(spanId = parentSpanId, "testkey", "testvalue")
-                    addSpanEvent(spanId = childSpanId, name = "cool event bro", attributes = mapOf("key" to "value"))
+                    addSpanEvent(
+                        spanId = childSpanId,
+                        name = "cool event bro",
+                        attributes = mapOf("key" to "value")
+                    )
                     recordSpan(name = "tz-another-span", parentSpanId = parentSpanId) { }
                     recordCompletedSpan(
                         name = "tz-old-span",
-                        startTimeMs = harness.overriddenClock.now() - 1L,
+                        startTimeMs = clock.now() - 1L,
                         endTimeMs = embrace.internalInterface.getSdkCurrentTime(),
                     )
                     stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
                     stopSpan(parentSpanId)
                 }
             }
-            val sessionPayload = harness.getSingleSession()
+            with(testRule) {
+                val sessionPayload = assertion.getSingleSession()
 
-            val unfilteredSpans = checkNotNull(sessionPayload.data.spans)
-            val spans = checkNotNull(unfilteredSpans.filter { checkNotNull(it.name).startsWith("tz-") }.associateBy { it.name })
-            assertEquals(4, spans.size)
-            with(checkNotNull(spans["tz-parent-span"])) {
-                assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
+                val unfilteredSpans = checkNotNull(sessionPayload.data.spans)
+                val spans =
+                    checkNotNull(unfilteredSpans.filter { checkNotNull(it.name).startsWith("tz-") }
+                        .associateBy { it.name })
+                assertEquals(4, spans.size)
+                with(checkNotNull(spans["tz-parent-span"])) {
+                    assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
+                }
+                with(checkNotNull(spans["tz-child-span"])) {
+                    val spanEvent = checkNotNull(events)[0]
+                    val spanAttrs = checkNotNull(spanEvent.attributes)
+                    assertEquals("cool event bro", spanEvent.name)
+                    assertEquals("value", spanAttrs.findAttributeValue("key"))
+                    assertEquals(Span.Status.ERROR, status)
+                }
+                with(checkNotNull(spans["tz-another-span"])) {
+                    assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
+                }
+                assertNotNull(spans["tz-old-span"])
             }
-            with(checkNotNull(spans["tz-child-span"])) {
-                val spanEvent = checkNotNull(events)[0]
-                val spanAttrs = checkNotNull(spanEvent.attributes)
-                assertEquals("cool event bro", spanEvent.name)
-                assertEquals("value", spanAttrs.findAttributeValue("key"))
-                assertEquals(Span.Status.ERROR, status)
-            }
-            with(checkNotNull(spans["tz-another-span"])) {
-                assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
-            }
-            assertNotNull(spans["tz-old-span"])
         }
     }
 
     @Test
     fun `span logging across sessions`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
+        with(testRule.action) {
+            startSdk()
             val internalInterface = checkNotNull(embrace.internalInterface)
             var stoppedParentId = ""
             var activeParentId = ""
-            harness.recordSession {
+            recordSession {
                 stoppedParentId = checkNotNull(internalInterface.startSpan("parent"))
                 activeParentId = checkNotNull(internalInterface.startSpan("active-parent"))
                 assertTrue(
@@ -311,7 +341,7 @@ internal class EmbraceInternalInterfaceTest {
                 assertTrue(internalInterface.stopSpan(stoppedParentId))
             }
 
-            harness.recordSession {
+            recordSession {
                 assertTrue(
                     internalInterface.stopSpan(
                         checkNotNull(
@@ -321,7 +351,12 @@ internal class EmbraceInternalInterfaceTest {
                         )
                     )
                 )
-                assertNull(internalInterface.startSpan(name = "stopped-parent-child", parentSpanId = stoppedParentId))
+                assertNull(
+                    internalInterface.startSpan(
+                        name = "stopped-parent-child",
+                        parentSpanId = stoppedParentId
+                    )
+                )
                 assertTrue(
                     internalInterface.stopSpan(
                         checkNotNull(
@@ -334,7 +369,9 @@ internal class EmbraceInternalInterfaceTest {
                 )
                 assertTrue(internalInterface.stopSpan(activeParentId))
             }
-            val sessions = harness.getSentSessions(2)
+        }
+        with(testRule) {
+            val sessions = assertion.getSentSessions(2)
             val s1 = sessions[0]
             val s2 = sessions[1]
 

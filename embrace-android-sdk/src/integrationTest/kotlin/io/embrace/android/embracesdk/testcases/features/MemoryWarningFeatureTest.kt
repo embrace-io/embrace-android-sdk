@@ -4,14 +4,11 @@ import android.app.Application
 import android.content.ComponentCallbacks2
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.findEventsOfType
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.hasEventOfType
-import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -28,27 +25,35 @@ internal class MemoryWarningFeatureTest {
     @Test
     fun `memory warning`() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
-        with(testRule) {
-            harness.recordSession {
-                ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+                }
+            },
+            assertAction = {
+                val message = getSingleSession()
+                assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
             }
-            val message = harness.getSingleSession()
-            assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
-        }
+        )
     }
 
     @Test
     fun `memory warning limits`() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
-        with(testRule) {
-            harness.recordSession {
-                repeat(150) {
-                    ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    repeat(150) {
+                        ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+                    }
                 }
+            },
+            assertAction = {
+                val message = getSingleSession()
+                val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
+                assertEquals(10, events.size)
             }
-            val message = harness.getSingleSession()
-            val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
-            assertEquals(10, events.size)
-        }
+        )
     }
 }

@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.injection.createAnrModule
@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.recordSession
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -56,7 +55,7 @@ internal class AnrFeatureTest {
         )
         blockedThreadDetector = anrModule.blockedThreadDetector
 
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             currentTimeMs = START_TIME_MS,
             overriddenClock = clock,
             overriddenInitModule = initModule,
@@ -69,39 +68,47 @@ internal class AnrFeatureTest {
     fun `trigger ANRs`() {
         val firstSampleCount = 20
         val secondSampleCount = 10
+        var secondAnrStartTime: Long? = null
 
-        with(testRule.harness) {
-            var secondAnrStartTime: Long? = null
-            recordSession {
-                triggerAnr(firstSampleCount)
-                secondAnrStartTime = overriddenClock.now()
-                triggerAnr(secondSampleCount)
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    triggerAnr(firstSampleCount)
+                    secondAnrStartTime = clock.now()
+                    triggerAnr(secondSampleCount)
+                }
+            },
+            assertAction = {
+                val message = getSingleSession()
+
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                assertEquals(2, spans.size)
+                assertAnrReceived(spans[0], START_TIME_MS, firstSampleCount)
+                assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
             }
-            val message = getSingleSession()
-
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            assertEquals(2, spans.size)
-            assertAnrReceived(spans[0], START_TIME_MS, firstSampleCount)
-            assertAnrReceived(spans[1], checkNotNull(secondAnrStartTime), secondSampleCount)
-        }
+        )
     }
 
     @Test
     fun `exceed max samples for one interval`() {
         val sampleCount = 100
 
-        with(testRule.harness) {
-            recordSession {
-                triggerAnr(sampleCount)
-            }
-            val message = getSingleSession()
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    triggerAnr(sampleCount)
+                }
+            },
+            assertAction = {
+                val message = getSingleSession()
 
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount)
-        }
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                val span = spans.single()
+                assertAnrReceived(span, START_TIME_MS, sampleCount)
+            }
+        )
     }
 
     @Test
@@ -111,48 +118,58 @@ internal class AnrFeatureTest {
         val intervalCount = 8
         val startTimes = mutableListOf<Long>()
 
-        with(testRule.harness) {
-            recordSession {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    repeat(intervalCount) { index ->
+                        startTimes.add(clock.now())
+                        triggerAnr(initialSamples + (index * extraSamples))
+                    }
+                }
+            },
+            assertAction = {
+                val message = getSingleSession()
+
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                assertEquals(intervalCount, spans.size)
+
                 repeat(intervalCount) { index ->
-                    startTimes.add(overriddenClock.now())
-                    triggerAnr(initialSamples + (index * extraSamples))
+                    val span = spans[index]
+                    val expectedSamples = initialSamples + (index * extraSamples)
+
+                    // older intervals get dropped because they have fewer samples.
+                    val intervalCode = when {
+                        index < intervalCount - MAX_INTERVAL_COUNT -> "1"
+                        else -> "0"
+                    }
+                    assertAnrReceived(span, startTimes[index], expectedSamples, intervalCode)
                 }
             }
-            val message = getSingleSession()
-
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            assertEquals(intervalCount, spans.size)
-
-            repeat(intervalCount) { index ->
-                val span = spans[index]
-                val expectedSamples = initialSamples + (index * extraSamples)
-
-                // older intervals get dropped because they have fewer samples.
-                val intervalCode = when {
-                    index < intervalCount - MAX_INTERVAL_COUNT -> "1"
-                    else -> "0"
-                }
-                assertAnrReceived(span, startTimes[index], expectedSamples, intervalCode)
-            }
-        }
+        )
     }
 
     @Test
     fun `in progress ANR added to payload`() {
         val sampleCount = 10
+        var endTime: Long = -1
 
-        with(testRule.harness) {
-            recordSession {
-                triggerAnr(sampleCount, incomplete = true)
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    triggerAnr(sampleCount, incomplete = true)
+                }
+                endTime = clock.now()
+            },
+            assertAction = {
+                val message = getSingleSession()
+
+                // assert ANRs received
+                val spans = message.findAnrSpans()
+                val span = spans.single()
+                assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = endTime)
             }
-            val message = getSingleSession()
-
-            // assert ANRs received
-            val spans = message.findAnrSpans()
-            val span = spans.single()
-            assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = testRule.harness.overriddenClock.now())
-        }
+        )
     }
 
     private fun assertAnrReceived(
@@ -197,7 +214,7 @@ internal class AnrFeatureTest {
      * Triggers an ANR by simulating the main thread getting blocked & unblocked. Time is controlled
      * with a fake Clock instance & a blockable executor that runs the blockage checks.
      */
-    private fun IntegrationTestRule.Harness.triggerAnr(
+    private fun EmbraceActionInterface.triggerAnr(
         sampleCount: Int,
         intervalMs: Long = INTERVAL_MS,
         incomplete: Boolean = false
@@ -216,7 +233,7 @@ internal class AnrFeatureTest {
 
             if (!incomplete) {
                 // simulate the main thread becoming responsive again, ending the ANR interval
-                blockedThreadDetector.onTargetThreadResponse(overriddenClock.now())
+                blockedThreadDetector.onTargetThreadResponse(clock.now())
             }
 
             // AnrService#getCapturedData() currently gets a Callable with a timeout, so we

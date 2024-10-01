@@ -3,20 +3,28 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
+import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.execution.NoopRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
+import io.embrace.android.embracesdk.internal.delivery.resurrection.NoopPayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -29,7 +37,16 @@ internal class DeliveryModuleImpl(
 ) : DeliveryModule {
 
     override val payloadStore: PayloadStore by singleton {
-        V1PayloadStore(deliveryService)
+        val configService = configModule.configService
+        if (configService.isOnlyUsingOtelExporters()) {
+            NoopPayloadStore()
+        } else {
+            if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
+                V2PayloadStore(intakeService, initModule.clock)
+            } else {
+                V1PayloadStore(deliveryService)
+            }
+        }
     }
 
     override val deliveryService: DeliveryService by singleton {
@@ -45,57 +62,70 @@ internal class DeliveryModuleImpl(
         }
     }
 
-    override val intakeService: IntakeService? by singleton {
+    override val intakeService: IntakeService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            return@singleton null
+            NoopIntakeService()
+        } else {
+            IntakeServiceImpl(
+                schedulingService,
+                payloadStorageService,
+                initModule.internalErrorService::handleInternalError,
+                initModule.jsonSerializer,
+                workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
+            )
         }
-        IntakeServiceImpl(
-            checkNotNull(schedulingService),
-            checkNotNull(payloadStorageService),
-            initModule.internalErrorService::handleInternalError,
-            initModule.jsonSerializer,
-            workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
-        )
     }
 
-    override val payloadResurrectionService: PayloadResurrectionService? by singleton {
+    override val payloadResurrectionService: PayloadResurrectionService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            return@singleton null
+            NoopPayloadResurrectionService()
+        } else {
+            PayloadResurrectionServiceImpl(intakeService)
         }
-        PayloadResurrectionServiceImpl(checkNotNull(intakeService))
     }
 
-    override val payloadCachingService: PayloadCachingService? by singleton {
+    override val payloadCachingService: PayloadCachingService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            return@singleton null
+            NoopPayloadCachingService()
+        } else {
+            PayloadCachingServiceImpl()
         }
-        PayloadCachingServiceImpl()
     }
 
-    override val payloadStorageService: PayloadStorageService? by singleton {
+    override val payloadStorageService: PayloadStorageService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            return@singleton null
-        }
-        PayloadStorageServiceImpl(
-            PayloadStorageServiceImpl.createOutputDir(
-                coreModule.context,
+            NoopPayloadStorageService()
+        } else {
+            PayloadStorageServiceImpl(
+                PayloadStorageServiceImpl.createOutputDir(
+                    coreModule.context,
+                    initModule.internalErrorService::handleInternalError
+                ),
                 initModule.internalErrorService::handleInternalError
-            ),
-            initModule.internalErrorService::handleInternalError
-        )
+            )
+        }
     }
 
-    override val requestExecutionService: RequestExecutionService? by singleton {
+    override val requestExecutionService: RequestExecutionService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            return@singleton null
+            NoopRequestExecutionService()
+        } else {
+            RequestExecutionServiceImpl()
         }
-        RequestExecutionServiceImpl()
     }
 
-    override val schedulingService: SchedulingService? by singleton {
+    override val schedulingService: SchedulingService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            return@singleton null
+            NoopSchedulingService()
+        } else {
+            SchedulingServiceImpl(
+                payloadStorageService,
+                requestExecutionService,
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.DeliveryWorker),
+                initModule.clock,
+                initModule.logger
+            )
         }
-        NoopSchedulingService()
     }
 }

@@ -1,15 +1,13 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -28,28 +26,31 @@ internal class BackgroundActivityTest {
 
     @Test
     fun `bg activity messages are recorded`() {
-        with(testRule) {
-            harness.recordSession()
-            harness.overriddenClock.tick(30000)
-            harness.recordSession()
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+                clock.tick(30000)
+                recordSession()
+            },
+            assertAction = {
+                // filter out dupes from overwritten saves
+                val bgActivities = getSentBackgroundActivities().distinctBy { it.getSessionId() }
+                assertEquals(2, bgActivities.size)
 
-            // filter out dupes from overwritten saves
-            val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.getSessionId() }
-            assertEquals(2, bgActivities.size)
+                // verify first bg activity
+                val first = bgActivities[0]
+                val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
+                assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
+                assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
 
-            // verify first bg activity
-            val first = bgActivities[0]
-            val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
-            assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
-            assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+                // verify second bg activity
+                val second = bgActivities[1]
+                val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
+                assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
 
-            // verify second bg activity
-            val second = bgActivities[1]
-            val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
-            assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
-
-            // ID should be different for each
-            assertNotEquals(first.getSessionId(), second.getSessionId())
-        }
+                // ID should be different for each
+                assertNotEquals(first.getSessionId(), second.getSessionId())
+            }
+        )
     }
 }

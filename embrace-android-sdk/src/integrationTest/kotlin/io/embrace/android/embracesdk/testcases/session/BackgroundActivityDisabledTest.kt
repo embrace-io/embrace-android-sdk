@@ -1,18 +1,15 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastLog
-import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSentLogPayloads
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -27,7 +24,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -52,7 +48,7 @@ internal class BackgroundActivityDisabledTest {
         val initModule = FakeInitModule(clock)
         val workerThreadModule = FakeWorkerThreadModule(initModule, Worker.Background.LogMessageWorker)
 
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = initModule,
             overriddenWorkerThreadModule = workerThreadModule,
@@ -63,14 +59,15 @@ internal class BackgroundActivityDisabledTest {
 
     @Test
     fun `recording telemetry in the background when background activity is disabled does the right thing`() {
-        with(testRule) {
+        var traceStopMs: Long = -1
+        with(testRule.action) {
             lateinit var trace: EmbraceSpan
-            harness.recordSession {
+            recordSession {
                 trace = checkNotNull(embrace.startSpan("test-trace"))
             }
             runLoggingThread()
 
-            val traceStopMs = harness.overriddenClock.tick(100L)
+            traceStopMs = clock.tick(100L)
             assertTrue(trace.stop())
 
             // Check what should and shouldn't be logged when there is no background activity and the app is in the background
@@ -80,28 +77,35 @@ internal class BackgroundActivityDisabledTest {
             assertNull(embrace.startSpan("test"))
             embrace.logError("error")
             runLoggingThread()
-            harness.overriddenClock.tick(2000L)
+            clock.tick(2000L)
             flushLogBatch()
 
             embrace.addBreadcrumb("not-logged")
-            harness.overriddenClock.tick(10_000L)
-            with(checkNotNull(harness.getSentLogPayloads(1).single().data.logs).single()) {
+            clock.tick(10_000L)
+        }
+        with(testRule) {
+            with(checkNotNull(assertion.getSentLogPayloads(1).single().data.logs).single()) {
                 assertEquals("error", body)
-                assertEquals("background", attributes?.findAttributeValue(embState.attributeKey.key))
+                assertEquals(
+                    "background",
+                    attributes?.findAttributeValue(embState.attributeKey.key)
+                )
                 assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
             }
+        }
+        with(testRule.action) {
             embrace.logInfo("info")
             runLoggingThread()
 
-            harness.recordSession {
+            recordSession {
                 assertFalse(embrace.currentSessionId.isNullOrBlank())
                 embrace.addBreadcrumb("logged")
                 embrace.logWarning("warning")
                 runLoggingThread()
-                harness.overriddenClock.tick(2000L)
+                clock.tick(2000L)
                 flushLogBatch()
 
-                with(checkNotNull(harness.getSentLogPayloads(2).last().data.logs)) {
+                with(checkNotNull(testRule.assertion.getSentLogPayloads(2).last().data.logs)) {
                     assertEquals(2, size)
 
                     // A log recorded when there's no session should still be sent, but without session ID
@@ -121,11 +125,11 @@ internal class BackgroundActivityDisabledTest {
                 runLoggingThread()
             }
 
-            val session = harness.getSentSessions(2).last()
-            assertEquals(0, harness.getSentBackgroundActivities(0).size)
+            val session = testRule.assertion.getSentSessions(2).last()
+            assertEquals(0, testRule.assertion.getSentBackgroundActivities(0).size)
 
             flushLogBatch()
-            checkNotNull(harness.getSentLogPayloads(3).getLastLog()).run {
+            checkNotNull(testRule.assertion.getSentLogPayloads(3).getLastLog()).run {
                 assertEquals("sent-after-session", body)
                 assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertEquals(session.getSessionId(), attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -148,63 +152,69 @@ internal class BackgroundActivityDisabledTest {
 
     @Test
     fun `session span and payloads structurally correct`() {
-        with(testRule) {
-            val session1StartMs = harness.overriddenClock.now()
-            harness.overriddenClock.tick(500L)
+        val clock = testRule.action.clock
+        val session1StartMs = clock.now()
+        clock.tick(500L)
+        var session1EndMs: Long = -1
+        var session2StartMs: Long = -1
+        var session2EndMs: Long = -1
 
-            harness.recordSession()
-            val session1EndMs = harness.overriddenClock.now()
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+                session1EndMs = clock.now()
+                session2StartMs = clock.tick(15000)
+                recordSession()
+                session2EndMs = clock.now()
+            },
+            assertAction = {
+                val sessions = getSentSessions(2)
+                val session1 = sessions[0]
+                val session2 = sessions[1]
+                assertEquals(2, sessions.size)
+                assertEquals(0, getSentBackgroundActivities(0).size)
 
-            val session2StartMs = harness.overriddenClock.tick(15000)
-            harness.recordSession()
-            val session2EndMs = harness.overriddenClock.now()
+                assertEquals(session1.metadata, session2.metadata)
+                assertEquals(
+                    session1.resource?.copy(screenResolution = null, jailbroken = null),
+                    session2.resource?.copy(screenResolution = null, jailbroken = null)
+                )
+                assertEquals(session1.version, session2.version)
+                assertEquals(session1.type, session2.type)
 
-            val sessions = harness.getSentSessions(2)
-            val session1 = sessions[0]
-            val session2 = sessions[1]
-            assertEquals(2, sessions.size)
-            assertEquals(0, harness.getSentBackgroundActivities(0).size)
+                val sessionSpan1 = session1.findSessionSpan()
+                val sessionSpan2 = session2.findSessionSpan()
+                sessionSpan1.assertExpectedSessionSpanAttributes(
+                    startMs = session1StartMs,
+                    endMs = session1EndMs,
+                    sessionNumber = 1,
+                    sequenceId = 1,
+                    coldStart = true,
+                )
 
-            assertEquals(session1.metadata, session2.metadata)
-            assertEquals(
-                session1.resource?.copy(screenResolution = null, jailbroken = null),
-                session2.resource?.copy(screenResolution = null, jailbroken = null)
-            )
-            assertEquals(session1.version, session2.version)
-            assertEquals(session1.type, session2.type)
+                sessionSpan2.assertExpectedSessionSpanAttributes(
+                    startMs = session2StartMs,
+                    endMs = session2EndMs,
+                    sessionNumber = 2,
+                    sequenceId = 4,
+                    coldStart = false,
+                )
 
-            val sessionSpan1 = session1.findSessionSpan()
-            val sessionSpan2 = session2.findSessionSpan()
-            sessionSpan1.assertExpectedSessionSpanAttributes(
-                startMs = session1StartMs,
-                endMs = session1EndMs,
-                sessionNumber = 1,
-                sequenceId = 1,
-                coldStart = true,
-            )
+                assertNotEquals(
+                    sessionSpan1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key),
+                    sessionSpan2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
+                )
 
-            sessionSpan2.assertExpectedSessionSpanAttributes(
-                startMs = session2StartMs,
-                endMs = session2EndMs,
-                sessionNumber = 2,
-                sequenceId = 4,
-                coldStart = false,
-            )
-
-            assertNotEquals(
-                sessionSpan1.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key),
-                sessionSpan2.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
-            )
-
-            assertEquals(
-                sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key),
-                sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key)
-            )
-        }
+                assertEquals(
+                    sessionSpan1.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key),
+                    sessionSpan2.attributes?.findAttributeValue(embProcessIdentifier.attributeKey.key)
+                )
+            }
+        )
     }
 
     private fun runLoggingThread() {
-        (testRule.harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor.runCurrentlyBlocked()
+        (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor.runCurrentlyBlocked()
     }
 
     private fun flushLogBatch() {

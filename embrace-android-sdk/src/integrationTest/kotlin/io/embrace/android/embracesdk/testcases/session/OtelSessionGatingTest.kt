@@ -1,16 +1,15 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.IntegrationTestRule.Harness
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -39,7 +37,7 @@ internal class OtelSessionGatingTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        Harness(
+        EmbraceSetupInterface(
             overriddenConfigService = FakeConfigService(
                 sessionBehavior = createSessionBehavior(remoteCfg = { RemoteConfig(sessionConfig = gatingConfig) })
             )
@@ -50,11 +48,15 @@ internal class OtelSessionGatingTest {
     fun `session sent in full without gating`() {
         gatingConfig = SessionRemoteConfig()
 
-        with(testRule) {
-            simulateSession()
-            val payload = harness.getSingleSession()
-            assertSessionGating(payload, gated = false)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                simulateSession()
+            },
+            assertAction = {
+                val payload = getSingleSession()
+                assertSessionGating(payload, gated = false)
+            }
+        )
     }
 
     @Test
@@ -66,12 +68,15 @@ internal class OtelSessionGatingTest {
                 "errors"
             )
         )
-
-        with(testRule) {
-            simulateSession()
-            val payload = harness.getSingleSession()
-            assertSessionGating(payload, gated = true)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                simulateSession()
+            },
+            assertAction = {
+                val payload = getSingleSession()
+                assertSessionGating(payload, gated = true)
+            }
+        )
     }
 
     private fun assertSessionGating(
@@ -94,19 +99,19 @@ internal class OtelSessionGatingTest {
         assertEquals(expectedCount, anrSpans.size)
     }
 
-    private fun IntegrationTestRule.simulateSession(action: () -> Unit = {}) {
-        harness.recordSession {
+    private fun EmbraceActionInterface.simulateSession(action: () -> Unit = {}) {
+        recordSession {
             embrace.addBreadcrumb("Hello, world!")
             embrace.startView("MyActivity")
             embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
-            harness.logWebView("https://example.com")
+            embrace.logWebView("https://example.com")
 
             // simulate ANR intervals
-            val anrService = bootstrapper.anrModule.anrService as FakeAnrService
+            val anrService = testRule.bootstrapper.anrModule.anrService as FakeAnrService
             anrService.data = listOf(fakeCompletedAnrInterval, fakeInProgressAnrInterval)
 
-            harness.overriddenClock.tick(10000) // enough to trigger new session
+            clock.tick(10000) // enough to trigger new session
             action()
         }
     }

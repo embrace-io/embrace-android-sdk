@@ -5,14 +5,22 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
+import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
+import io.embrace.android.embracesdk.internal.delivery.execution.NoopRequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
+import io.embrace.android.embracesdk.internal.delivery.resurrection.NoopPayloadResurrectionService
+import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
+import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
+import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -55,12 +63,19 @@ class DeliveryModuleImplTest {
         configService.onlyUsingOtelExporters = true
         assertNotNull(module)
         assertTrue(module.deliveryService is NoopDeliveryService)
-        assertNull(module.intakeService)
-        assertNull(module.payloadCachingService)
-        assertNull(module.payloadStorageService)
-        assertNull(module.payloadResurrectionService)
-        assertNull(module.requestExecutionService)
-        assertNull(module.schedulingService)
-        assertTrue(module.payloadStore is V1PayloadStore)
+        assertTrue(module.intakeService is NoopIntakeService)
+        assertTrue(module.payloadCachingService is NoopPayloadCachingService)
+        assertTrue(module.payloadStorageService is NoopPayloadStorageService)
+        assertTrue(module.payloadResurrectionService is NoopPayloadResurrectionService)
+        assertTrue(module.requestExecutionService is NoopRequestExecutionService)
+        assertTrue(module.schedulingService is NoopSchedulingService)
+        assertTrue(module.payloadStore is NoopPayloadStore)
+    }
+
+    @Test
+    fun testV2Store() {
+        configService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = true)
+        assertNotNull(module)
+        assertTrue(module.payloadStore is V2PayloadStore)
     }
 }

@@ -1,16 +1,12 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.createNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
-import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -36,44 +32,44 @@ internal class PublicApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false).apply {
+        EmbraceSetupInterface(startImmediately = false).apply {
             overriddenConfigService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)
         }
     }
 
     @Test
     fun `SDK can start`() {
-        with(testRule) {
+        with(testRule.action) {
             assertFalse(embrace.isStarted)
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertEquals(AppFramework.NATIVE, harness.appFramework)
-            assertFalse(harness.overriddenConfigService.isSdkDisabled())
+            startSdk()
+            assertEquals(AppFramework.NATIVE, configService.appFramework)
+            assertFalse(configService.isSdkDisabled())
             assertTrue(embrace.isStarted)
         }
     }
 
     @Test
     fun `SDK start defaults to native app framework`() {
-        with(testRule) {
+        with(testRule.action) {
             assertFalse(embrace.isStarted)
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertEquals(AppFramework.NATIVE, harness.appFramework)
+            startSdk()
+            assertEquals(AppFramework.NATIVE, configService.appFramework)
             assertTrue(embrace.isStarted)
         }
     }
 
     @Test
     fun `SDK disabled via config cannot start`() {
-        with(testRule) {
-            harness.overriddenConfigService.sdkDisabled = true
-            startSdk(context = harness.overriddenCoreModule.context)
+        with(testRule.action) {
+            configService.sdkDisabled = true
+            startSdk()
             assertFalse(embrace.isStarted)
         }
     }
 
     @Test
     fun `custom appId must be valid`() {
-        with(testRule) {
+        with(testRule.action) {
             assertFalse(embrace.setAppId(""))
             assertFalse(embrace.setAppId("abcd"))
             assertFalse(embrace.setAppId("abcdef"))
@@ -83,8 +79,8 @@ internal class PublicApiTest {
 
     @Test
     fun `custom appId cannot be set after start`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
+        with(testRule.action) {
+            startSdk()
             assertTrue(embrace.isStarted)
             assertFalse(embrace.setAppId("xyz12"))
         }
@@ -92,19 +88,19 @@ internal class PublicApiTest {
 
     @Test
     fun `getCurrentSessionId returns null when SDK is not started`() {
-        with(testRule) {
+        with(testRule.action) {
             assertNull(embrace.currentSessionId)
         }
     }
 
     @Test
     fun `getCurrentSessionId returns sessionId when SDK is started and foreground session is active`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
+        with(testRule.action) {
+            startSdk()
+            recordSession {
                 assertEquals(
                     embrace.currentSessionId,
-                    harness.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId()
+                    testRule.setup.overriddenOpenTelemetryModule.currentSessionSpan.getSessionId()
                 )
                 assertNotNull(embrace.currentSessionId)
             }
@@ -113,10 +109,10 @@ internal class PublicApiTest {
 
     @Test
     fun `getCurrentSessionId returns sessionId when SDK is started and background session is active`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
+        with(testRule.action) {
+            startSdk()
             var foregroundSessionId: String? = null
-            harness.recordSession {
+            recordSession {
                 foregroundSessionId = embrace.currentSessionId
             }
             val backgroundSessionId = embrace.currentSessionId
@@ -127,7 +123,7 @@ internal class PublicApiTest {
 
     @Test
     fun `getLastRunEndState() behave as expected`() {
-        with(testRule) {
+        with(testRule.action) {
             assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
             startSdk()
             assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState)
@@ -136,22 +132,11 @@ internal class PublicApiTest {
 
     @Test
     fun `ensure all generated W3C traceparent conforms to the expected format`() {
-        with(testRule) {
+        with(testRule.action) {
             startSdk()
             repeat(100) {
                 assertTrue(validPattern.matches(checkNotNull(embrace.generateW3cTraceparent())))
             }
-        }
-    }
-
-    @Test
-    fun `SDK can be stopped`() {
-        with(testRule) {
-            assertFalse(embrace.isStarted)
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertTrue(embrace.isStarted)
-            stopSdk()
-            assertFalse(embrace.isStarted)
         }
     }
 }

@@ -3,20 +3,17 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getLastLog
-import io.embrace.android.embracesdk.getSentLogPayloads
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -39,7 +36,7 @@ internal class FlutterInternalInterfaceTest {
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
-        IntegrationTestRule.Harness(
+        EmbraceSetupInterface(
             appFramework = Embrace.AppFramework.FLUTTER,
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
@@ -52,87 +49,105 @@ internal class FlutterInternalInterfaceTest {
 
     @Test
     fun `flutter without values should return defaults`() {
-        with(testRule) {
-            harness.recordSession()
-            val session = harness.getSingleSession()
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.FLUTTER, res.appFramework)
-            assertNull(res.hostedSdkVersion)
-            assertNull(res.hostedPlatformVersion)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                val session = getSingleSession()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.FLUTTER, res.appFramework)
+                assertNull(res.hostedSdkVersion)
+                assertNull(res.hostedPlatformVersion)
+            }
+        )
     }
 
     @Test
     fun `flutter methods work in current session`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.flutterInternalInterface?.setDartVersion("28.9.1")
-                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.flutterInternalInterface?.setDartVersion("28.9.1")
+                    embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+                }
+            },
+            assertAction = {
+                val session = getSingleSession()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.FLUTTER, res.appFramework)
+                assertEquals("28.9.1", res.hostedPlatformVersion)
+                assertEquals("1.2.3", res.hostedSdkVersion)
             }
-            val session = harness.getSingleSession()
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.FLUTTER, res.appFramework)
-            assertEquals("28.9.1", res.hostedPlatformVersion)
-            assertEquals("1.2.3", res.hostedSdkVersion)
-        }
+        )
     }
 
     @Test
     fun `flutter metadata already present from previous session`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.flutterInternalInterface?.setDartVersion("28.9.1")
-                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.flutterInternalInterface?.setDartVersion("28.9.1")
+                    embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+                }
+                recordSession()
+            },
+            assertAction = {
+                val session = getSentSessions(2).last()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.FLUTTER, res.appFramework)
+                assertEquals("28.9.1", res.hostedPlatformVersion)
+                assertEquals("1.2.3", res.hostedSdkVersion)
             }
-            harness.recordSession()
-            val session = harness.getSentSessions(2).last()
-
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.FLUTTER, res.appFramework)
-            assertEquals("28.9.1", res.hostedPlatformVersion)
-            assertEquals("1.2.3", res.hostedSdkVersion)
-        }
+        )
     }
 
     @Test
     fun `setting null is ignored`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.flutterInternalInterface?.setDartVersion("28.9.1")
-                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
-            }
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.flutterInternalInterface?.setDartVersion("28.9.1")
+                    embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+                }
 
-            harness.recordSession {
-                embrace.flutterInternalInterface?.setDartVersion(null)
-                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion(null)
+                recordSession {
+                    embrace.flutterInternalInterface?.setDartVersion(null)
+                    embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion(null)
+                }
+            },
+            assertAction = {
+                val session = getSentSessions(2).last()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.FLUTTER, res.appFramework)
+                assertEquals("28.9.1", res.hostedPlatformVersion)
+                assertEquals("1.2.3", res.hostedSdkVersion)
             }
-            val session = harness.getSentSessions(2).last()
-
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.FLUTTER, res.appFramework)
-            assertEquals("28.9.1", res.hostedPlatformVersion)
-            assertEquals("1.2.3", res.hostedSdkVersion)
-        }
+        )
     }
 
     @Test
     fun `flutter values from current session override previous values`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.flutterInternalInterface?.setDartVersion("28.9.1")
-                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
-            }
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.flutterInternalInterface?.setDartVersion("28.9.1")
+                    embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
+                }
 
-            harness.recordSession {
-                embrace.flutterInternalInterface?.setDartVersion("28.9.2")
-                embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.4")
+                recordSession {
+                    embrace.flutterInternalInterface?.setDartVersion("28.9.2")
+                    embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.4")
+                }
+            },
+            assertAction = {
+                val session = getSentSessions(2).last()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.FLUTTER, res.appFramework)
+                assertEquals("28.9.2", res.hostedPlatformVersion)
+                assertEquals("1.2.4", res.hostedSdkVersion)
             }
-            val session = harness.getSentSessions(2).last()
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.FLUTTER, res.appFramework)
-            assertEquals("28.9.2", res.hostedPlatformVersion)
-            assertEquals("1.2.4", res.hostedSdkVersion)
-        }
+        )
     }
 
     @Test
@@ -142,35 +157,40 @@ internal class FlutterInternalInterfaceTest {
         val expectedStacktrace = "stacktrace"
         val expectedContext = "context"
         val expectedLibrary = "library"
-        with(testRule) {
-            harness.recordSession {
-                embrace.flutterInternalInterface?.logHandledDartException(
-                    expectedStacktrace,
-                    expectedName,
-                    expectedMessage,
-                    expectedContext,
-                    expectedLibrary,
-                )
-                flushLogs()
-            }
-            val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
 
-            assertOtelLogReceived(
-                logReceived = log,
-                expectedMessage = "Dart error",
-                expectedSeverityNumber = Severity.ERROR.severityNumber,
-                expectedSeverityText = Severity.ERROR.name,
-                expectedType = LogExceptionType.HANDLED.value,
-                expectedExceptionName = expectedName,
-                expectedExceptionMessage = expectedMessage,
-                expectedEmbType = "sys.flutter_exception",
-                expectedState = "foreground",
-            )
-            val attrs = checkNotNull(log.attributes)
-            assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
-            assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
-            assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
-        }
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.flutterInternalInterface?.logHandledDartException(
+                        expectedStacktrace,
+                        expectedName,
+                        expectedMessage,
+                        expectedContext,
+                        expectedLibrary,
+                    )
+                    flushLogs()
+                }
+            },
+            assertAction = {
+                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
+
+                assertOtelLogReceived(
+                    logReceived = log,
+                    expectedMessage = "Dart error",
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = Severity.ERROR.name,
+                    expectedType = LogExceptionType.HANDLED.value,
+                    expectedExceptionName = expectedName,
+                    expectedExceptionMessage = expectedMessage,
+                    expectedEmbType = "sys.flutter_exception",
+                    expectedState = "foreground",
+                )
+                val attrs = checkNotNull(log.attributes)
+                assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
+                assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
+                assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
+            }
+        )
     }
 
     @Test
@@ -180,39 +200,44 @@ internal class FlutterInternalInterfaceTest {
         val expectedStacktrace = "stacktrace"
         val expectedContext = "context"
         val expectedLibrary = "library"
-        with(testRule) {
-            harness.recordSession {
-                embrace.flutterInternalInterface?.logUnhandledDartException(
-                    expectedStacktrace,
-                    expectedName,
-                    expectedMessage,
-                    expectedContext,
-                    expectedLibrary,
-                )
-                flushLogs()
-            }
-            val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
 
-            assertOtelLogReceived(
-                logReceived = log,
-                expectedMessage = "Dart error",
-                expectedSeverityNumber = Severity.ERROR.severityNumber,
-                expectedSeverityText = Severity.ERROR.name,
-                expectedType = LogExceptionType.UNHANDLED.value,
-                expectedExceptionName = expectedName,
-                expectedExceptionMessage = expectedMessage,
-                expectedEmbType = "sys.flutter_exception",
-                expectedState = "foreground",
-            )
-            val attrs = checkNotNull(log.attributes)
-            assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
-            assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
-            assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
-        }
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.flutterInternalInterface?.logUnhandledDartException(
+                        expectedStacktrace,
+                        expectedName,
+                        expectedMessage,
+                        expectedContext,
+                        expectedLibrary,
+                    )
+                    flushLogs()
+                }
+            },
+            assertAction = {
+                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
+
+                assertOtelLogReceived(
+                    logReceived = log,
+                    expectedMessage = "Dart error",
+                    expectedSeverityNumber = Severity.ERROR.severityNumber,
+                    expectedSeverityText = Severity.ERROR.name,
+                    expectedType = LogExceptionType.UNHANDLED.value,
+                    expectedExceptionName = expectedName,
+                    expectedExceptionMessage = expectedMessage,
+                    expectedEmbType = "sys.flutter_exception",
+                    expectedState = "foreground",
+                )
+                val attrs = checkNotNull(log.attributes)
+                assertEquals(expectedStacktrace, attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE.key))
+                assertEquals(expectedContext, attrs.findAttributeValue("emb.exception.context"))
+                assertEquals(expectedLibrary, attrs.findAttributeValue("emb.exception.library"))
+            }
+        )
     }
 
     private fun flushLogs() {
-        val executor = (testRule.harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
+        val executor = (testRule.setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
         executor.runCurrentlyBlocked()
         val logOrchestrator = testRule.bootstrapper.logModule.logOrchestrator
         logOrchestrator.flush(false)

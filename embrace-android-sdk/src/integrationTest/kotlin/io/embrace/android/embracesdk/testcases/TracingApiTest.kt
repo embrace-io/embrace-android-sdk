@@ -2,27 +2,26 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
-import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSingleSession
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -34,8 +33,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
@@ -43,7 +40,7 @@ internal class TracingApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     private val results = mutableListOf<String>()
@@ -57,31 +54,31 @@ internal class TracingApiTest {
 
     @Test
     fun `check spans logged in the right session when service is initialized after a session starts`() {
-        val testStartTimeMs = testRule.harness.overriddenClock.now()
+        val testStartTimeMs = testRule.action.clock.now()
         val spanExporter = FakeSpanExporter()
-        with(testRule) {
-            harness.overriddenClock.tick(100L)
+        with(testRule.action) {
+            clock.tick(100L)
             embrace.addSpanExporter(spanExporter)
-            startSdk(context = harness.overriddenCoreModule.context)
+            startSdk()
             results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            harness.recordSession {
+            recordSession {
                 val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
-                assertTrue(parentSpan.start(startTimeMs = harness.overriddenClock.now() - 1L))
+                assertTrue(parentSpan.start(startTimeMs = clock.now() - 1L))
                 assertTrue(parentSpan.addAttribute("oMg", "OmG"))
                 assertSame(parentSpan, embrace.getSpan(checkNotNull(parentSpan.spanId)))
                 assertTrue(embrace.recordSpan(name = "record-span-span", parent = parentSpan) {
-                    harness.overriddenClock.tick(100L)
+                    clock.tick(100L)
                     parentSpan.addEvent("parent event")
                     parentSpan.addEvent(
                         name = "parent event with attributes and bad input time",
-                        timestampMs = harness.overriddenClock.now().millisToNanos(),
+                        timestampMs = clock.now().millisToNanos(),
                         attributes = mapOf("key" to "value")
                     )
                     true
                 })
                 val failedOpStartTimeMs = embrace.internalInterface.getSdkCurrentTime()
-                harness.overriddenClock.tick(200L)
-                parentSpan.addEvent(name = "delayed event", timestampMs = harness.overriddenClock.now() - 50L, null)
+                clock.tick(200L)
+                parentSpan.addEvent(name = "delayed event", timestampMs = clock.now() - 50L, null)
                 val failedOpEndTimeMs = embrace.internalInterface.getSdkCurrentTime()
 
                 assertTrue(parentSpan.stop())
@@ -119,25 +116,25 @@ internal class TracingApiTest {
                     embrace.startSpan(
                         name = "bonus-span-2",
                         parent = parentSpan,
-                        startTimeMs = harness.overriddenClock.now() + 10L
+                        startTimeMs = clock.now() + 10L
                     )
                 )
-                assertTrue(bonusSpan.stop(endTimeMs = harness.overriddenClock.now() + 1))
-                harness.overriddenClock.tick(300L)
+                assertTrue(bonusSpan.stop(endTimeMs = clock.now() + 1))
+                clock.tick(300L)
                 assertTrue(bonusSpan2.stop())
                 val unendingSpan = checkNotNull(embrace.startSpan("unending-span"))
-                harness.overriddenClock.tick(100L)
+                clock.tick(100L)
                 unendingSpan.addAttribute("unending-key", "unending-value")
                 unendingSpan.addEvent("unending-event")
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
-            val session = harness.getSingleSession()
+            val session = testRule.assertion.getSingleSession()
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
-            val sessionEndTime = harness.overriddenClock.now()
+            val sessionEndTime = clock.now()
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
                 checkNotNull(session.data.spans) +
-                harness.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
+                testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
 
             val spansMap = allSpans.associateBy { it.name }
             val sessionSpan = checkNotNull(spansMap["emb-session"])
@@ -265,9 +262,9 @@ internal class TracingApiTest {
 
     @Test
     fun `span can be parented by a span created on a different thread`() {
-        with(testRule) {
+        with(testRule.action) {
             startSdk()
-            harness.recordSession {
+            recordSession {
                 val latch = CountDownLatch(1)
                 val parentThreadId = Thread.currentThread().id
                 var childThreadId: Long = -1L
@@ -287,7 +284,7 @@ internal class TracingApiTest {
                 assertNotEquals(parentThreadId, childThreadId)
                 assertEquals(currentContext, currentContext2)
             }
-            val session = harness.getSingleSession()
+            val session = testRule.assertion.getSingleSession()
             val spans = checkNotNull(session.data.spans).associateBy { it.name }
             val parentSpan = checkNotNull(spans["parent"])
             val childSpan = checkNotNull(spans["child"])
@@ -298,22 +295,22 @@ internal class TracingApiTest {
 
     @Test
     fun `can only create span if there is a valid session`() {
-        with(testRule) {
-            harness.overriddenConfigService.backgroundActivityCaptureEnabled = false
+        with(testRule.action) {
+            configService.backgroundActivityCaptureEnabled = false
             assertNull(embrace.startSpan("test"))
             startSdk()
-            checkNotNull(harness.recordSession {
+            recordSession {
                 assertNotNull(embrace.startSpan("test"))
-            })
+            }
             assertNull(embrace.startSpan("test"))
-            checkNotNull(harness.recordSession {
+            recordSession {
                 assertNotNull(embrace.startSpan("test"))
-            })
+            }
         }
     }
 
     private fun getSdkInitSpanFromBackgroundActivity(): List<Span> {
-        val lastSentBackgroundActivity = testRule.harness.getSentBackgroundActivities(1).last()
+        val lastSentBackgroundActivity = testRule.assertion.getSentBackgroundActivities(1).last()
         val spans = checkNotNull(lastSentBackgroundActivity.data.spans)
         return spans.filter { it.name == "emb-sdk-init" }
     }

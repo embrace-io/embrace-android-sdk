@@ -2,21 +2,19 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.payload.Attribute
-import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.payload.toOldPayload
-import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpan
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpanBuilder
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbTracer
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
-import io.embrace.android.embracesdk.recordSession
+import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
@@ -45,22 +43,20 @@ internal class ExternalTracerTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        IntegrationTestRule.Harness(startImmediately = false)
+        EmbraceSetupInterface(startImmediately = false)
     }
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embTracer: Tracer
-    private lateinit var clock: FakeClock
 
     @Before
     fun setup() {
         spanExporter = FakeSpanExporter()
         with(testRule) {
-            clock = harness.overriddenClock
-            embrace.addSpanExporter(spanExporter)
-            startSdk(context = harness.overriddenCoreModule.context)
-            embOpenTelemetry = embrace.getOpenTelemetry()
+            action.embrace.addSpanExporter(spanExporter)
+            action.startSdk()
+            embOpenTelemetry = action.embrace.getOpenTelemetry()
             embTracer = embOpenTelemetry.getTracer("external-tracer", "1.0.0")
         }
     }
@@ -68,7 +64,7 @@ internal class ExternalTracerTest {
     @Test
     fun `check correctness of implementations used by Tracer`() {
         assertSame(
-            testRule.embrace.getOpenTelemetry().getTracer("foo"),
+            testRule.action.embrace.getOpenTelemetry().getTracer("foo"),
             embOpenTelemetry.getTracer("foo")
         )
         assertTrue(embTracer is EmbTracer)
@@ -87,9 +83,9 @@ internal class ExternalTracerTest {
             var stacktrace: String? = null
             var wrappedSpan: Span? = null
             var parentContext: Context?
-            harness.recordSession {
+            action.recordSession {
                 val spanBuilder = embTracer.spanBuilder("external-span")
-                startTimeMs = harness.overriddenClock.now()
+                startTimeMs = clock.now()
                 val span = spanBuilder.startSpan()
                 span.makeCurrent().use {
                     val childSpan = embTracer.spanBuilder("child-span").startSpan()
@@ -97,7 +93,7 @@ internal class ExternalTracerTest {
                     val exception = RuntimeException("bah")
                     childSpan.recordException(exception, Attributes.builder().put("bad", "yes").build())
                     stacktrace = exception.truncatedStacktraceText()
-                    childEndTimeMs = harness.overriddenClock.tick()
+                    childEndTimeMs = clock.tick()
                     childSpan.end()
 
                     val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
@@ -106,14 +102,14 @@ internal class ExternalTracerTest {
                     parentContext = Context.current()
                 }
                 span.setAttribute("failures", 1)
-                endTimeMs = harness.overriddenClock.tick()
+                endTimeMs = clock.tick()
                 span.end()
                 embTracer.spanBuilder("another-parent-with-tracer").startSpan().end()
                 embTracer.spanBuilder("set-parent-explicitly").setParent(Context.root().with(span)).startSpan().end()
                 checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
                 checkNotNull(wrappedSpan).end()
             }
-            val sessionMessage = harness.getSingleSession()
+            val sessionMessage = assertion.getSingleSession()
             val spans = checkNotNull(sessionMessage.data.spans)
             val recordedSpans = spans.associateBy { it.name }
             val parent = checkNotNull(recordedSpans["external-span"])

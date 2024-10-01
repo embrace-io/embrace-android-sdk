@@ -2,15 +2,13 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -23,31 +21,38 @@ internal class ActivityFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = IntegrationTestRule { IntegrationTestRule.Harness(startImmediately = false) }
+    val testRule = IntegrationTestRule { EmbraceSetupInterface(startImmediately = false) }
 
     @Test
     fun `automatically capture activities`() {
-        with(testRule) {
-            harness.overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
-                automaticActivityCaptureEnabled = true
-            )
-            startSdk()
-            var startTimeMs: Long = 0
-            harness.recordSession(simulateActivityCreation = true) {
-                startTimeMs = harness.overriddenClock.now()
+        var startTimeMs: Long = 0
+
+        testRule.runTest(
+            setupAction = {
+                overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
+                    automaticActivityCaptureEnabled = true
+                )
+            },
+            testCaseAction = {
+                startSdk()
+                recordSession(simulateActivityCreation = true) {
+                    startTimeMs = clock.now()
+                }
+            },
+            assertAction = {
+                val message = getSingleSession()
+                val viewSpans = message.findSpansOfType(EmbType.Ux.View)
+                assertEquals(1, viewSpans.size)
+
+                with(viewSpans[0]) {
+                    assertEquals(
+                        "android.app.Activity",
+                        attributes?.findAttributeValue("view.name")
+                    )
+                    assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
+                    assertEquals(startTimeMs + 30000L, endTimeNanos?.nanosToMillis())
+                }
             }
-            val message = harness.getSingleSession()
-
-            val viewSpans = message.findSpansOfType(EmbType.Ux.View)
-            assertEquals(1, viewSpans.size)
-
-            val span1 = viewSpans[0]
-
-            with(span1) {
-                assertEquals("android.app.Activity", attributes?.findAttributeValue("view.name"))
-                assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
-                assertEquals(startTimeMs + 30000L, endTimeNanos?.nanosToMillis())
-            }
-        }
+        )
     }
 }

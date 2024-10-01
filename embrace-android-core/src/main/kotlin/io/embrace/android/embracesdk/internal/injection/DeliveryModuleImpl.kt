@@ -17,12 +17,14 @@ import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResur
 import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -35,10 +37,15 @@ internal class DeliveryModuleImpl(
 ) : DeliveryModule {
 
     override val payloadStore: PayloadStore by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        val configService = configModule.configService
+        if (configService.isOnlyUsingOtelExporters()) {
             NoopPayloadStore()
         } else {
-            V1PayloadStore(deliveryService)
+            if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
+                V2PayloadStore(intakeService, initModule.clock)
+            } else {
+                V1PayloadStore(deliveryService)
+            }
         }
     }
 
@@ -111,7 +118,14 @@ internal class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             NoopSchedulingService()
         } else {
-            NoopSchedulingService()
+            SchedulingServiceImpl(
+                payloadStorageService,
+                requestExecutionService,
+                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.DeliveryWorker),
+                initModule.clock,
+                initModule.logger
+            )
         }
     }
 }

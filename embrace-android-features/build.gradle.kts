@@ -11,6 +11,7 @@ android {
 dependencies {
     compileOnly(project(":embrace-android-api"))
     compileOnly(project(":embrace-android-core"))
+    compileOnly(project(":embrace-android-infra"))
     compileOnly(project(":embrace-android-payload"))
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)
@@ -21,6 +22,7 @@ dependencies {
 
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-core"))
+    testImplementation(project(":embrace-android-infra"))
     testImplementation(project(":embrace-android-payload"))
     testImplementation(platform(libs.opentelemetry.bom))
     testImplementation(libs.opentelemetry.api)

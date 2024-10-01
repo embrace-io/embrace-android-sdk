@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery
 
-import io.embrace.android.embracesdk.internal.worker.comparator.extractPriorityFromRunnable
+import io.embrace.android.embracesdk.internal.worker.PriorityRunnableFuture
 
 /**
  * Compares [StoredTelemetryMetadata] in priority order. Our priority rules are:
@@ -23,3 +23,16 @@ internal val storedTelemetryRunnableComparator =
 internal val storedTelemetryComparator: java.util.Comparator<StoredTelemetryMetadata> =
     compareBy(StoredTelemetryMetadata::envelopeType)
         .thenBy(StoredTelemetryMetadata::timestamp)
+
+inline fun <reified T> extractPriorityFromRunnable(
+    lhs: Runnable,
+    rhs: Runnable
+): Pair<T, T> {
+    require(lhs is PriorityRunnableFuture<*> && rhs is PriorityRunnableFuture<*>) {
+        "Runnables must be PriorityRunnableFuture"
+    }
+    require(lhs.priorityInfo is T && rhs.priorityInfo is T) {
+        "PriorityInfo must be of type ${T::class.java.simpleName}"
+    }
+    return Pair(lhs.priorityInfo as T, rhs.priorityInfo as T)
+}

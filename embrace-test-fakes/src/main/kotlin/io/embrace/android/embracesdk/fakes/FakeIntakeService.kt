@@ -8,19 +8,19 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 class FakeIntakeService : IntakeService {
 
-    var crashId: String? = null
+    var shutdownCount: Int = 0
     var intakeList: MutableList<FakePayloadIntake<*>> = mutableListOf()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getIntakes(): List<FakePayloadIntake<T>> {
-        if (T::class != SessionPayload::class || T::class != LogPayload::class) {
+        if (T::class != SessionPayload::class && T::class != LogPayload::class) {
             error("Unsupported type: ${T::class}")
         }
         return intakeList.filter { it.envelope.data is T } as List<FakePayloadIntake<T>>
     }
 
-    override fun handleCrash(crashId: String) {
-        this.crashId = crashId
+    override fun shutdown() {
+        shutdownCount++
     }
 
     override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {

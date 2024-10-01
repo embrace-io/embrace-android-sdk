@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.worker.comparator
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.isSessionRequest
-import io.embrace.android.embracesdk.internal.worker.PriorityRunnableFuture
+import io.embrace.android.embracesdk.internal.delivery.extractPriorityFromRunnable
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 
 /**
@@ -23,17 +23,4 @@ internal val apiRequestComparator = Comparator { lhs: Runnable, rhs: Runnable ->
         rhsRequest.isSessionRequest() -> 1
         else -> 0
     }
-}
-
-inline fun <reified T> extractPriorityFromRunnable(
-    lhs: Runnable,
-    rhs: Runnable
-): Pair<T, T> {
-    require(lhs is PriorityRunnableFuture<*> && rhs is PriorityRunnableFuture<*>) {
-        "Runnables must be PriorityRunnableFuture"
-    }
-    require(lhs.priorityInfo is T && rhs.priorityInfo is T) {
-        "PriorityInfo must be of type ${T::class.java.simpleName}"
-    }
-    return Pair(lhs.priorityInfo as T, rhs.priorityInfo as T)
 }

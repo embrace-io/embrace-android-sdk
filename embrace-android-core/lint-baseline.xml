@@ -2,17 +2,6 @@
 <issues format="6" by="lint 8.5.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.5.2)" variant="all" version="8.5.2">
 
     <issue
-        id="DiscouragedApi"
-        message="Use of `scheduleAtFixedRate` is strongly discouraged because it can lead to unexpected behavior when Android processes become cached (tasks may unexpectedly execute hundreds or thousands of times in quick succession when a process changes from cached to uncached); prefer using `scheduleWithFixedDelay`"
-        errorLine1="    ): ScheduledFuture&lt;*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)"
-        errorLine2="                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/internal/worker/BackgroundWorker.kt"
-            line="65"
-            column="29"/>
-    </issue>
-
-    <issue
         id="UnclosedTrace"
         message="The `beginSection()` call is not always closed with a matching `endSection()` because the code in between may return early"
         errorLine1="            Trace.beginSection(&quot;emb-$name&quot;.take(127))"

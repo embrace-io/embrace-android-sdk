@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.internal.ErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
@@ -34,11 +34,18 @@ import java.util.concurrent.TimeUnit
 
 class IntakeServiceImplTest {
 
+    companion object {
+        private const val UUID = "uuid"
+    }
+
     private lateinit var intakeService: IntakeService
     private lateinit var payloadStorageService: FakePayloadStorageService
     private lateinit var schedulingService: FakeSchedulingService
     private lateinit var executorService: BlockableExecutorService
-    private lateinit var internalErrorService: FakeInternalErrorService
+    private lateinit var throwable: Throwable
+    private val handler: ErrorHandler = {
+        throwable = it
+    }
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
@@ -59,25 +66,24 @@ class IntakeServiceImplTest {
     }
 
     private val clock = FakeClock()
-    private val sessionMetadata = StoredTelemetryMetadata.fromEnvelope(clock, SESSION)
-    private val logMetadata = StoredTelemetryMetadata.fromEnvelope(clock, LOG)
-    private val networkMetadata = StoredTelemetryMetadata.fromEnvelope(clock, NETWORK)
-    private val crashMetadata = StoredTelemetryMetadata.fromEnvelope(clock, CRASH)
-    private val sessionMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, SESSION)
-    private val logMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, LOG)
-    private val networkMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, NETWORK)
-    private val crashMetadata2 = StoredTelemetryMetadata.fromEnvelope(clock.apply { tick(100L) }, CRASH)
+    private val sessionMetadata = StoredTelemetryMetadata(clock.now(), UUID, SESSION)
+    private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, LOG)
+    private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, NETWORK)
+    private val crashMetadata = StoredTelemetryMetadata(clock.now(), UUID, CRASH)
+    private val sessionMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, SESSION)
+    private val logMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, LOG)
+    private val networkMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, NETWORK)
+    private val crashMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, CRASH)
 
     @Before
     fun setUp() {
-        internalErrorService = FakeInternalErrorService()
         payloadStorageService = FakePayloadStorageService()
         schedulingService = FakeSchedulingService()
         executorService = BlockableExecutorService(blockingMode = true)
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
-            internalErrorService,
+            handler,
             serializer,
             PriorityWorker(executorService)
         )
@@ -88,7 +94,7 @@ class IntakeServiceImplTest {
         with(intakeService) {
             take(sessionEnvelope, sessionMetadata)
             take(logEnvelope, logMetadata)
-            handleCrash("crash-id")
+            shutdown()
             try {
                 take(sessionEnvelope, sessionMetadata)
             } catch (ignored: RejectedExecutionException) {
@@ -151,8 +157,7 @@ class IntakeServiceImplTest {
 
         // assert nothing was stored but no exception was thrown
         assertEquals(0, payloadStorageService.storedPayloadCount())
-        val exc = internalErrorService.throwables.single()
-        assertTrue(exc is IOException)
+        assertTrue(throwable is IOException)
     }
 
     @Test
@@ -175,7 +180,7 @@ class IntakeServiceImplTest {
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
-            internalErrorService,
+            handler,
             TestPlatformSerializer(),
             worker
         )

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.internal.ErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
@@ -25,15 +25,17 @@ class PayloadStorageServiceImplTest {
 
     private val metadata = StoredTelemetryMetadata(TIMESTAMP, UUID, SESSION)
     private lateinit var service: PayloadStorageService
-    private lateinit var internalErrorService: FakeInternalErrorService
     private lateinit var outputDir: File
+    private lateinit var throwable: Throwable
+    private val handler: ErrorHandler = {
+        throwable = it
+    }
 
     @Before
     fun setUp() {
-        internalErrorService = FakeInternalErrorService()
         outputDir = Files.createTempDirectory("output").toFile()
         outputDir.deleteRecursively()
-        service = PayloadStorageServiceImpl(internalErrorService, lazy { outputDir })
+        service = PayloadStorageServiceImpl(lazy { outputDir }, handler)
     }
 
     @Test
@@ -68,7 +70,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `load non existent file`() {
         assertNull(service.loadPayloadAsStream(metadata))
-        assertNotNull(internalErrorService.throwables.single())
+        assertNotNull(throwable)
     }
 
     @Test
@@ -76,13 +78,13 @@ class PayloadStorageServiceImplTest {
         service.store(metadata) {
             error("Whoops!")
         }
-        assertNotNull(internalErrorService.throwables.single())
+        assertNotNull(throwable)
     }
 
     @Test
     fun `test objects pruned past limit`() {
         assertNull(outputDir.listFiles())
-        service = PayloadStorageServiceImpl(internalErrorService, lazy { outputDir }, 4)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, handler, 4)
 
         // exceed storage limit
         listOf(
@@ -113,7 +115,7 @@ class PayloadStorageServiceImplTest {
             Pair(1000L, SESSION)
         )
         assertEquals(expected, outputs)
-        val msg = internalErrorService.throwables.first().message
+        val msg = throwable.message
         assertEquals("Pruned payload storage", msg)
     }
 }

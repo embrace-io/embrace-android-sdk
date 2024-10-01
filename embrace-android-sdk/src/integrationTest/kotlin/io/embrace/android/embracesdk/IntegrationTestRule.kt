@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -99,7 +100,7 @@ internal class IntegrationTestRule(
                 coreModuleSupplier = { _, _ -> overriddenCoreModule },
                 workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
                 androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-                deliveryModuleSupplier = { _, _, _ -> overriddenDeliveryModule },
+                deliveryModuleSupplier = { _, _, _, _, _, _ -> overriddenDeliveryModule },
                 anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
                 nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
             )
@@ -158,9 +159,11 @@ internal class IntegrationTestRule(
             coreModule = overriddenCoreModule,
             workerThreadModule = overriddenWorkerThreadModule
         ),
+        private val deliveryService: FakeDeliveryService = FakeDeliveryService(),
         val overriddenDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(
-                deliveryService = FakeDeliveryService(),
+                deliveryService = deliveryService,
+                payloadStore = FakePayloadStore(deliveryService)
             ),
         val fakeAnrModule: AnrModule = FakeAnrModule(),
         val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()

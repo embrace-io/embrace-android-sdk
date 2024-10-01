@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 
 class PayloadCachingServiceImpl : PayloadCachingService {
 
-    override fun handleCrash(crashId: String) {
+    override fun shutdown() {
     }
 
     override fun <T> startCaching(

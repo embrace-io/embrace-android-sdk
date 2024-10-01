@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
@@ -15,7 +14,7 @@ import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -36,13 +35,9 @@ internal class SchedulingServiceImplTest {
 
     @Before
     fun setup() {
-        val workerModule = FakeWorkerThreadModule(
-            testWorkerName = Worker.Background.IoRegWorker,
-            anotherTestWorkerName = Worker.Background.DeliveryWorker
-        )
-        schedulingExecutor = workerModule.executor.apply { blockingMode = false }
-        deliveryExecutor = workerModule.anotherExecutor.apply { blockingMode = false }
-        clock = workerModule.executorClock
+        clock = FakeClock()
+        schedulingExecutor = BlockingScheduledExecutorService(clock, blockingMode = false)
+        deliveryExecutor = BlockingScheduledExecutorService(clock, blockingMode = false)
         networkConnectivityService = FakeNetworkConnectivityService()
         storageService = FakePayloadStorageService().apply {
             addFakePayload(fakeLogStoredTelemetryMetadata)
@@ -54,8 +49,8 @@ internal class SchedulingServiceImplTest {
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,
             executionService = executionService,
-            schedulingWorker = workerModule.backgroundWorker(worker = Worker.Background.IoRegWorker),
-            deliveryWorker = workerModule.backgroundWorker(worker = Worker.Background.DeliveryWorker),
+            schedulingWorker = BackgroundWorker(schedulingExecutor),
+            deliveryWorker = BackgroundWorker(deliveryExecutor),
             clock = clock,
             logger = logger,
         )

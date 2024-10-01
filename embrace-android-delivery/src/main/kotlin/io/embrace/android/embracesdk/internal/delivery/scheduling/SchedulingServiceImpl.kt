@@ -41,7 +41,7 @@ internal class SchedulingServiceImpl(
         startDeliveryLoop()
     }
 
-    override fun handleCrash(crashId: String) {
+    override fun shutdown() {
         // TODO: get ready to die
     }
 
@@ -121,7 +121,7 @@ internal class SchedulingServiceImpl(
                     // with the new values for how many times it has failed, and when the next retry should happen
                     val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
                     val nextRetryTimeMs = if (this is ApiResponse.TooManyRequests && retryAfter != null) {
-                        val unblockedTimestampMs = clock.now() + retryAfter as Long
+                        val unblockedTimestampMs = clock.now() + retryAfter
                         blockedEndpoints[endpoint] = unblockedTimestampMs
                         unblockedTimestampMs
                     } else {

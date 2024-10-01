@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansByName
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -41,7 +39,7 @@ internal class ReactNativeInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
                 assertNull(res.hostedPlatformVersion)
@@ -61,7 +59,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -84,7 +82,7 @@ internal class ReactNativeInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -111,7 +109,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
 
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
@@ -138,7 +136,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 val spans = message.findSpansByName("emb-rn-action")
                 assertEquals(1, spans.size)
 
@@ -171,7 +169,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 val spans = message.findSpansOfType(EmbType.Ux.View)
                 assertEquals(1, spans.size)
 
@@ -208,7 +206,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
 
                 val spans = message.findSpansOfType(EmbType.Ux.View)
                 assertEquals(1, spans.size)

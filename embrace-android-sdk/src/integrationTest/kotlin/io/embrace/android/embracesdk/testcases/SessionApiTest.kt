@@ -4,13 +4,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.toMap
-import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -49,7 +47,7 @@ internal class SessionApiTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 validatePayloadAgainstGoldenFile(message, "v2_session_expected.json")
 
                 // validate snapshots separately, as the JSON diff is tricky to debug

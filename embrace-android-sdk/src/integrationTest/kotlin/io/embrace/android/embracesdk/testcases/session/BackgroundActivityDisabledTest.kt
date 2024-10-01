@@ -2,15 +2,12 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
+import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastLog
-import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSentLogPayloads
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -23,6 +20,8 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -86,7 +85,7 @@ internal class BackgroundActivityDisabledTest {
             clock.tick(10_000L)
         }
         with(testRule) {
-            with(checkNotNull(harness.getSentLogPayloads(1).single().data.logs).single()) {
+            with(checkNotNull(assertion.getSentLogPayloads(1).single().data.logs).single()) {
                 assertEquals("error", body)
                 assertEquals(
                     "background",
@@ -107,7 +106,7 @@ internal class BackgroundActivityDisabledTest {
                 clock.tick(2000L)
                 flushLogBatch()
 
-                with(checkNotNull(testRule.harness.getSentLogPayloads(2).last().data.logs)) {
+                with(checkNotNull(testRule.assertion.getSentLogPayloads(2).last().data.logs)) {
                     assertEquals(2, size)
 
                     // A log recorded when there's no session should still be sent, but without session ID
@@ -127,11 +126,11 @@ internal class BackgroundActivityDisabledTest {
                 runLoggingThread()
             }
 
-            val session = testRule.harness.getSentSessions(2).last()
-            assertEquals(0, testRule.harness.getSentBackgroundActivities(0).size)
+            val session = testRule.assertion.getSentSessions(2).last()
+            assertEquals(0, testRule.assertion.getSentBackgroundActivities(0).size)
 
             flushLogBatch()
-            checkNotNull(testRule.harness.getSentLogPayloads(3).getLastLog()).run {
+            checkNotNull(testRule.assertion.getSentLogPayloads(3).getLastLog()).run {
                 assertEquals("sent-after-session", body)
                 assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertEquals(session.getSessionId(), attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -170,11 +169,11 @@ internal class BackgroundActivityDisabledTest {
                 session2EndMs = clock.now()
             },
             assertAction = {
-                val sessions = harness.getSentSessions(2)
+                val sessions = getSentSessions(2)
                 val session1 = sessions[0]
                 val session2 = sessions[1]
                 assertEquals(2, sessions.size)
-                assertEquals(0, harness.getSentBackgroundActivities(0).size)
+                assertEquals(0, getSentBackgroundActivities(0).size)
 
                 assertEquals(session1.metadata, session2.metadata)
                 assertEquals(

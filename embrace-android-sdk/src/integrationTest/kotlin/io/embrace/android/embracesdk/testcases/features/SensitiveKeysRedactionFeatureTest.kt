@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +38,7 @@ internal class SensitiveKeysRedactionFeatureTest {
                 }
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val recordedSpan = session.data.spans?.find { it.name == "test span" }
                 val sensitiveAttribute = recordedSpan?.attributes?.first { it.key == "password" }
                 val notSensitiveAttribute = recordedSpan?.attributes?.first { it.key == "not a password" }
@@ -67,7 +65,7 @@ internal class SensitiveKeysRedactionFeatureTest {
                 }
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val recordedSpan = session.data.spans?.find { it.name == "test span" }
 
                 val event = recordedSpan?.events?.first { it.name == "event" }

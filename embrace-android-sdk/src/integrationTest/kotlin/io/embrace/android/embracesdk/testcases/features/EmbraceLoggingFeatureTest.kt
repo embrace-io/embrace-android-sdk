@@ -4,11 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getLastLog
-import io.embrace.android.embracesdk.getSentLogPayloads
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.opentelemetry.api.logs.Severity
@@ -41,7 +40,7 @@ internal class EmbraceLoggingFeatureTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
@@ -61,7 +60,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
@@ -80,7 +79,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = harness.getSentLogPayloads(1).getLastLog()
+                val log = getSentLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "test message",
@@ -102,7 +101,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,
@@ -124,7 +123,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,
@@ -145,7 +144,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = harness.getSentLogPayloads(1).getLastLog()
+                val log = getSentLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -169,7 +168,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = harness.getSentLogPayloads(1).getLastLog()
+                val log = getSentLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -197,7 +196,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = checkNotNull(testException.message),
@@ -226,7 +225,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,
@@ -252,7 +251,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = harness.getSentLogPayloads(1).getLastLog()
+                val log = getSentLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
@@ -275,7 +274,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = "",
@@ -299,7 +298,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = "",
@@ -325,7 +324,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = harness.getSentLogPayloads().getLastLog()
+                    val log = getSentLogPayloads().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,

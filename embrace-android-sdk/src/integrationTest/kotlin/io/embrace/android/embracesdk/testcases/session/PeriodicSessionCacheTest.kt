@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
@@ -64,7 +63,7 @@ internal class PeriodicSessionCacheTest {
                 assertEquals("Test", nextSpan.getSessionProperty("Test"))
             }
 
-            val endMessage = harness.getSingleSession()
+            val endMessage = assertion.getSingleSession()
             val span = endMessage.findSessionSpan()
             val attrs = checkNotNull(span.attributes)
             assertEquals(true, attrs.findAttributeValue("emb.clean_exit").toBoolean())

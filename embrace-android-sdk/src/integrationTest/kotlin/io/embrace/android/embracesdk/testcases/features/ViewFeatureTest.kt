@@ -2,9 +2,8 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.getSingleSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import org.junit.Assert.assertEquals
@@ -36,7 +35,7 @@ internal class ViewFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 val viewSpans = message.findSpansOfType(EmbType.Ux.View)
                 assertEquals(2, viewSpans.size)
 

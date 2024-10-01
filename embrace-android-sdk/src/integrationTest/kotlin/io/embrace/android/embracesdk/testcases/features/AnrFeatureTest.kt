@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.injection.createAnrModule
@@ -78,7 +77,7 @@ internal class AnrFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()
@@ -100,7 +99,7 @@ internal class AnrFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()
@@ -127,7 +126,7 @@ internal class AnrFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()
@@ -161,7 +160,7 @@ internal class AnrFeatureTest {
                 endTime = clock.now()
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()

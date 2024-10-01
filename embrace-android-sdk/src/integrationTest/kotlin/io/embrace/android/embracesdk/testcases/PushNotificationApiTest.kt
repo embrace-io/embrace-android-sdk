@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.findEventOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -37,7 +36,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = harness.getSingleSession()
+                val msg = getSingleSession()
                 msg.assertNotification("notif-data")
             }
         )
@@ -53,7 +52,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = harness.getSingleSession()
+                val msg = getSingleSession()
                 msg.assertNotification("data")
             }
         )
@@ -69,7 +68,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = harness.getSingleSession()
+                val msg = getSingleSession()
                 msg.assertNotification("notif")
             }
         )
@@ -85,7 +84,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = harness.getSingleSession()
+                val msg = getSingleSession()
                 msg.assertNotification("unknown")
             }
         )
@@ -106,7 +105,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val payload = harness.getSingleSession()
+                val payload = getSingleSession()
                 val sessionSpan = payload.findSessionSpan()
                 val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
                 assertTrue(checkNotNull(event.timestampNanos) > 0)

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.junit.Assert.assertEquals
@@ -45,7 +44,7 @@ internal class UserFeaturesTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = harness.getSentSessions(4)
+                val sessions = getSentSessions(4)
                 sessions[0].assertUserInfo("customId", "customUserName", "custom@domain.com")
                 sessions[1].assertUserInfo(null, null, null)
                 sessions[2].assertUserInfo("newId", "newUserName", "new@domain.com")

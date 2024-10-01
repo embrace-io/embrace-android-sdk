@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
@@ -35,7 +34,7 @@ internal class SequentialSessionTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = harness.getSentSessions(3)
+                val sessions = getSentSessions(3)
                 val first = sessions[0]
                 val second = sessions[1]
                 val third = sessions[2]

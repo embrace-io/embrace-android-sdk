@@ -6,13 +6,10 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getLastLog
-import io.embrace.android.embracesdk.getSentLogPayloads
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -56,7 +53,7 @@ internal class FlutterInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertNull(res.hostedSdkVersion)
@@ -75,7 +72,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -95,7 +92,7 @@ internal class FlutterInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -119,7 +116,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -143,7 +140,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.2", res.hostedPlatformVersion)
@@ -174,7 +171,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -217,7 +214,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(harness.getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
 
                 assertOtelLogReceived(
                     logReceived = log,

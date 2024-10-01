@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,7 +53,7 @@ internal class SessionSpanTest {
                 }
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 assertEquals(100, session.getSessionSpan()?.events?.size)
             }
         )

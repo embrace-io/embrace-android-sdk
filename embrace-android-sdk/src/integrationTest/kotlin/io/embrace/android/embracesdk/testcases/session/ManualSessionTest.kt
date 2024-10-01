@@ -4,8 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import org.junit.Assert.assertEquals
@@ -33,7 +31,7 @@ internal class ManualSessionTest {
                 }
             },
             assertAction = {
-                val messages = harness.getSentSessions(2)
+                val messages = getSentSessions(2)
                 val stateSession = messages[0] // started via state, ended manually
                 val manualSession = messages[1] // started manually, ended via state
 
@@ -60,7 +58,7 @@ internal class ManualSessionTest {
                 }
             },
             assertAction = {
-                val messages = harness.getSentSessions(1)
+                val messages = getSentSessions(1)
                 checkNotNull(messages.single())
             }
         )
@@ -79,7 +77,7 @@ internal class ManualSessionTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 val attrs = checkNotNull(message.findSessionSpan().attributes)
                 assertEquals("1", attrs.findAttributeValue(embSessionNumber.name))
             }

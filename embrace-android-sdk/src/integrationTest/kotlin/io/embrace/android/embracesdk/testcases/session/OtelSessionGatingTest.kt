@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
 import io.embrace.android.embracesdk.fakes.FakeAnrService
@@ -10,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.hasSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -54,7 +52,7 @@ internal class OtelSessionGatingTest {
                 simulateSession()
             },
             assertAction = {
-                val payload = harness.getSingleSession()
+                val payload = getSingleSession()
                 assertSessionGating(payload, gated = false)
             }
         )
@@ -74,7 +72,7 @@ internal class OtelSessionGatingTest {
                 simulateSession()
             },
             assertAction = {
-                val payload = harness.getSingleSession()
+                val payload = getSingleSession()
                 assertSessionGating(payload, gated = true)
             }
         )

@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSentBackgroundActivities
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
@@ -35,7 +34,7 @@ internal class BackgroundActivityTest {
             },
             assertAction = {
                 // filter out dupes from overwritten saves
-                val bgActivities = harness.getSentBackgroundActivities().distinctBy { it.getSessionId() }
+                val bgActivities = getSentBackgroundActivities().distinctBy { it.getSessionId() }
                 assertEquals(2, bgActivities.size)
 
                 // verify first bg activity

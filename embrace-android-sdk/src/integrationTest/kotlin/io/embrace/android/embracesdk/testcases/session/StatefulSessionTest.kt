@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
@@ -42,7 +41,7 @@ internal class StatefulSessionTest {
             },
             assertAction = {
                 // verify first session
-                val messages = testRule.harness.getSentSessions(2)
+                val messages = getSentSessions(2)
                 val first = messages[0]
                 val attrs = checkNotNull(first.findSessionSpan().attributes)
                 assertEquals(
@@ -74,7 +73,7 @@ internal class StatefulSessionTest {
                 }
             },
             assertAction = {
-                val messages = testRule.harness.getSentSessions(1)
+                val messages = testRule.assertion.getSentSessions(1)
 
                 // TODO: future the logic seems wrong here - nested calls should probably be ignored
                 //  and should not drop a session. However, it's an unlikely scenario (if we trust)

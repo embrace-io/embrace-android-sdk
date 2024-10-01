@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentMoments
 import io.embrace.android.embracesdk.internal.payload.EventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -38,7 +37,7 @@ internal class MomentApiTest {
             },
             assertAction = {
                 // retrieve payloads
-                val messages = harness.getSentMoments(2)
+                val messages = getSentMoments(2)
                 assertEquals(2, messages.size)
                 val startMoment = messages[0].event
                 val endMoment = messages[1].event

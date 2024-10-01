@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -25,7 +24,7 @@ internal class SessionPayloadTest {
 
             },
             assertAction = {
-                with(harness.getSingleSession()) {
+                with(getSingleSession()) {
                     assertEquals("spans", type)
                     with(checkNotNull(resource)) {
                         assertTrue(checkNotNull(appVersion).isNotBlank())

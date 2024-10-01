@@ -8,7 +8,6 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentLogPayloads
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.mockk.every
 import io.mockk.mockk
@@ -39,7 +38,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val payload = harness.getSentLogPayloads(1).single()
+                val payload = getSentLogPayloads(1).single()
                 val log = checkNotNull(payload.data.logs?.single())
 
                 // assert AEI fields populated

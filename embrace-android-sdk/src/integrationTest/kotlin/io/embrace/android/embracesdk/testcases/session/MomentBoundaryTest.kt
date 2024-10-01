@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.EmbraceAssertionInterface
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentSessions
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.EventType
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -37,7 +37,7 @@ internal class MomentBoundaryTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
 
                 val moments = fetchDeliveredEvents()
                 assertEquals(4, moments.size)
@@ -78,7 +78,7 @@ internal class MomentBoundaryTest {
                 }
             },
             assertAction = {
-                val sessions = harness.getSentSessions(2)
+                val sessions = getSentSessions(2)
                 val firstMessage = sessions[0]
                 val secondMessage = sessions[1]
 
@@ -108,6 +108,5 @@ internal class MomentBoundaryTest {
         )
     }
 
-    private fun IntegrationTestRule.fetchDeliveredEvents() =
-        harness.overriddenDeliveryModule.deliveryService.sentMoments
+    private fun fetchDeliveredEvents() = (testRule.bootstrapper.deliveryModule.deliveryService as FakeDeliveryService).sentMoments
 }

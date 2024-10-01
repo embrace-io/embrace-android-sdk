@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
@@ -15,7 +14,6 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.opentelemetry.semconv.UrlAttributes.URL_FULL
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,7 +41,7 @@ internal class WebviewFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 val events = message.findSessionSpan().findEventsOfType(EmbType.System.WebViewInfo)
                 assertEquals(1, events.size)
 

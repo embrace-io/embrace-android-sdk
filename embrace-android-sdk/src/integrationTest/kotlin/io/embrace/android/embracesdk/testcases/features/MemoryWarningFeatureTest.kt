@@ -7,7 +7,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findEventsOfType
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.hasEventOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import org.junit.Assert.assertEquals
@@ -33,7 +32,7 @@ internal class MemoryWarningFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
             }
         )
@@ -51,7 +50,7 @@ internal class MemoryWarningFeatureTest {
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = getSingleSession()
                 val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
                 assertEquals(10, events.size)
             }

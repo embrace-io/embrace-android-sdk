@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -38,7 +37,7 @@ internal class CleanSessionBoundaryTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = harness.getSentSessions(2)
+                val sessions = getSentSessions(2)
 
                 // validate info added to first session
                 val span = sessions[0].findSessionSpan()

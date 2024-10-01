@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpan
 import io.embrace.android.embracesdk.internal.opentelemetry.EmbSpanBuilder
@@ -110,7 +109,7 @@ internal class ExternalTracerTest {
                 checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
                 checkNotNull(wrappedSpan).end()
             }
-            val sessionMessage = harness.getSingleSession()
+            val sessionMessage = assertion.getSingleSession()
             val spans = checkNotNull(sessionMessage.data.spans)
             val recordedSpans = spans.associateBy { it.name }
             val parent = checkNotNull(recordedSpans["external-span"])

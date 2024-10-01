@@ -4,8 +4,6 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -36,7 +34,7 @@ internal class UnityInternalInterfaceTest {
 
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertNull(res.hostedSdkVersion)
@@ -54,7 +52,7 @@ internal class UnityInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSingleSession()
+                val session = getSingleSession()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -74,7 +72,7 @@ internal class UnityInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -97,7 +95,7 @@ internal class UnityInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = harness.getSentSessions(2).last()
+                val session = getSentSessions(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertEquals("28.9.2", res.hostedPlatformVersion)

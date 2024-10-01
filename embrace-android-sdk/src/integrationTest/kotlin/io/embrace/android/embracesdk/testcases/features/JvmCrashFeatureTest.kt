@@ -4,10 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.getLastLog
-import io.embrace.android.embracesdk.getSentBackgroundActivities
-import io.embrace.android.embracesdk.getSingleSession
-import io.embrace.android.embracesdk.getStoredLogPayloads
+import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -47,9 +44,9 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                checkNotNull(harness.getStoredLogPayloads(1).getLastLog()).assertCrash(
+                checkNotNull(getStoredLogPayloads(1).getLastLog()).assertCrash(
                     state = "foreground",
-                    crashId = checkNotNull(harness.getSingleSession().getCrashedId())
+                    crashId = checkNotNull(getSingleSession().getCrashedId())
                 )
             }
         )
@@ -62,8 +59,8 @@ internal class JvmCrashFeatureTest {
                 handleException()
             },
             assertAction = {
-                checkNotNull(harness.getStoredLogPayloads(1).getLastLog()).assertCrash(
-                    crashId = harness.getSentBackgroundActivities(1).single().getCrashedId()
+                checkNotNull(getStoredLogPayloads(1).getLastLog()).assertCrash(
+                    crashId = getSentBackgroundActivities(1).single().getCrashedId()
                 )
             }
         )
@@ -88,7 +85,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(testRule.harness.getStoredLogPayloads(1)).getLastLog()
+                val log = getStoredLogPayloads(1).getLastLog()
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",
@@ -110,7 +107,7 @@ internal class JvmCrashFeatureTest {
                 assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
                 assertNotNull(attrs.findAttributeValue("emb.android.threads"))
 
-                val message = checkNotNull(testRule.harness.getSingleSession())
+                val message = getSingleSession()
                 val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
                 assertNotNull(crashId)
                 assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))

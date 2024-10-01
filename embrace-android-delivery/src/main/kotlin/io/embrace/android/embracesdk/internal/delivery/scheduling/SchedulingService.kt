@@ -13,9 +13,3 @@ interface SchedulingService : Shutdownable {
      */
     fun onPayloadIntake()
 }
-
-class NoopSchedulingService : SchedulingService {
-    override fun onPayloadIntake() { }
-
-    override fun shutdown() { }
-}

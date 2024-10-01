@@ -18,10 +18,10 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 interface DeliveryModule {
     val payloadStore: PayloadStore
     val deliveryService: DeliveryService
-    val intakeService: IntakeService?
-    val payloadResurrectionService: PayloadResurrectionService?
-    val payloadCachingService: PayloadCachingService?
-    val payloadStorageService: PayloadStorageService?
-    val requestExecutionService: RequestExecutionService?
-    val schedulingService: SchedulingService?
+    val intakeService: IntakeService
+    val payloadResurrectionService: PayloadResurrectionService
+    val payloadCachingService: PayloadCachingService
+    val payloadStorageService: PayloadStorageService
+    val requestExecutionService: RequestExecutionService
+    val schedulingService: SchedulingService
 }

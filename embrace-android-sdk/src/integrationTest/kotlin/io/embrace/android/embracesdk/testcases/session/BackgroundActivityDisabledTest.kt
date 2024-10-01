@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.findEventsOfType
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.assertions.findEventsOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -84,7 +85,7 @@ internal class BackgroundActivityDisabledTest {
             clock.tick(10_000L)
         }
         with(testRule) {
-            with(checkNotNull(assertion.getSentLogPayloads(1).single().data.logs).single()) {
+            with(checkNotNull(assertion.getSentLogEnvelopes(1).single().data.logs).single()) {
                 assertEquals("error", body)
                 assertEquals(
                     "background",
@@ -105,7 +106,7 @@ internal class BackgroundActivityDisabledTest {
                 clock.tick(2000L)
                 flushLogBatch()
 
-                with(checkNotNull(testRule.assertion.getSentLogPayloads(2).last().data.logs)) {
+                with(checkNotNull(testRule.assertion.getSentLogEnvelopes(2).last().data.logs)) {
                     assertEquals(2, size)
 
                     // A log recorded when there's no session should still be sent, but without session ID
@@ -125,11 +126,11 @@ internal class BackgroundActivityDisabledTest {
                 runLoggingThread()
             }
 
-            val session = testRule.assertion.getSentSessions(2).last()
-            assertEquals(0, testRule.assertion.getSentBackgroundActivities(0).size)
+            val session = testRule.assertion.getSessionEnvelopes(2).last()
+            assertEquals(0, testRule.assertion.getSessionEnvelopes(0, ApplicationState.BACKGROUND).size)
 
             flushLogBatch()
-            checkNotNull(testRule.assertion.getSentLogPayloads(3).getLastLog()).run {
+            checkNotNull(testRule.assertion.getSentLogEnvelopes(3).getLastLog()).run {
                 assertEquals("sent-after-session", body)
                 assertEquals("foreground", attributes?.findAttributeValue(embState.attributeKey.key))
                 assertEquals(session.getSessionId(), attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
@@ -168,11 +169,11 @@ internal class BackgroundActivityDisabledTest {
                 session2EndMs = clock.now()
             },
             assertAction = {
-                val sessions = getSentSessions(2)
+                val sessions = getSessionEnvelopes(2)
                 val session1 = sessions[0]
                 val session2 = sessions[1]
                 assertEquals(2, sessions.size)
-                assertEquals(0, getSentBackgroundActivities(0).size)
+                assertEquals(0, getSessionEnvelopes(0, ApplicationState.BACKGROUND).size)
 
                 assertEquals(session1.metadata, session2.metadata)
                 assertEquals(

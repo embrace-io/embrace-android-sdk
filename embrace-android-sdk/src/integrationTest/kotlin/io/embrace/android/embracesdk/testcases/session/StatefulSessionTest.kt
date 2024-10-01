@@ -2,9 +2,10 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
+import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
@@ -13,6 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import java.util.Locale
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
@@ -41,7 +43,7 @@ internal class StatefulSessionTest {
             },
             assertAction = {
                 // verify first session
-                val messages = getSentSessions(2)
+                val messages = getSessionEnvelopes(2)
                 val first = messages[0]
                 val attrs = checkNotNull(first.findSessionSpan().attributes)
                 assertEquals(
@@ -55,7 +57,7 @@ internal class StatefulSessionTest {
                     )
                 )
                 assertEquals("0", attrs.findAttributeValue(embErrorLogCount.name))
-                assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+                assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 
                 // verify second session
                 val second = messages[1]
@@ -73,12 +75,12 @@ internal class StatefulSessionTest {
                 }
             },
             assertAction = {
-                val messages = testRule.assertion.getSentSessions(1)
+                val message = testRule.assertion.getSingleSessionEnvelope()
+                checkNotNull(message.findSessionSpan())
 
                 // TODO: future the logic seems wrong here - nested calls should probably be ignored
                 //  and should not drop a session. However, it's an unlikely scenario (if we trust)
                 //  Google's process lifecycle implementation.
-                assertEquals(1, messages.size)
             }
         )
     }

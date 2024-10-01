@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testcases.session
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.internal.payload.EventType
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -36,7 +36,7 @@ internal class MomentBoundaryTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
 
                 val moments = fetchDeliveredEvents()
                 assertEquals(4, moments.size)
@@ -77,7 +77,7 @@ internal class MomentBoundaryTest {
                 }
             },
             assertAction = {
-                val sessions = getSentSessions(2)
+                val sessions = getSessionEnvelopes(2)
                 val firstMessage = sessions[0]
                 val secondMessage = sessions[1]
 

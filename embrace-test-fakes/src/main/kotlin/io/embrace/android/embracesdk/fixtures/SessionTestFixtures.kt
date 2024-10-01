@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fixtures
 
+import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
-import io.embrace.android.embracesdk.getStartTime
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 

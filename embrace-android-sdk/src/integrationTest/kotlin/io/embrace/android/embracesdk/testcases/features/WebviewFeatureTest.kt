@@ -5,8 +5,8 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeWebViewVitalsBehavior
-import io.embrace.android.embracesdk.findEventsOfType
-import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findEventsOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
@@ -41,7 +41,7 @@ internal class WebviewFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 val events = message.findSessionSpan().findEventsOfType(EmbType.System.WebViewInfo)
                 assertEquals(1, events.size)
 

@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -39,8 +40,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val payload = getSentLogPayloads(1).single()
-                val log = checkNotNull(payload.data.logs?.single())
+                val log = getSingleSentLogEnvelope().getLastLog()
 
                 // assert AEI fields populated
                 val attrs = checkNotNull(log.attributes)

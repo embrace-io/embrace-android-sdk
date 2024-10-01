@@ -2,13 +2,16 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
+import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
@@ -34,14 +37,14 @@ internal class BackgroundActivityTest {
             },
             assertAction = {
                 // filter out dupes from overwritten saves
-                val bgActivities = getSentBackgroundActivities().distinctBy { it.getSessionId() }
+                val bgActivities = getSessionEnvelopes(2, ApplicationState.BACKGROUND).distinctBy { it.getSessionId() }
                 assertEquals(2, bgActivities.size)
 
                 // verify first bg activity
                 val first = bgActivities[0]
                 val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
                 assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
-                assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+                assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 
                 // verify second bg activity
                 val second = bgActivities[1]

@@ -3,8 +3,9 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getSessionId
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
@@ -45,8 +46,8 @@ internal class SessionPropertiesTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSentSessions(2)
-                val bas = getSentBackgroundActivities(2)
+                val sessions = getSessionEnvelopes(2)
+                val bas = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
 
                 bas[0].findSessionSpan().assertPropertyExistence(
                     exist = listOf(PERM_KEY, PERM_KEY_2)
@@ -91,7 +92,7 @@ internal class SessionPropertiesTest {
                 }
             },
             assertAction = {
-                val sessions = getSentSessions(2)
+                val sessions = getSessionEnvelopes(2)
                 val session1 = sessions[0]
                 val session2 = sessions[1]
 
@@ -120,11 +121,11 @@ internal class SessionPropertiesTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSentSessions(2)
+                val sessions = getSessionEnvelopes(2)
                 val firstSession = sessions[0]
                 val secondSession = sessions[1]
 
-                val bgActivities = getSentBackgroundActivities(2)
+                val bgActivities = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
                 assertEquals(2, bgActivities.size)
                 val firstBg = bgActivities.first()
                 val secondBg = bgActivities.last()
@@ -157,10 +158,10 @@ internal class SessionPropertiesTest {
             )
 
             action.recordSession()
-            val session = assertion.getSentSessions(2).last()
+            val session = assertion.getSessionEnvelopes(2).last()
             checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
 
-            val bg = assertion.getSentBackgroundActivities(2).last()
+            val bg = assertion.getSessionEnvelopes(2, ApplicationState.BACKGROUND).last()
             checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
         }
     }
@@ -170,7 +171,7 @@ internal class SessionPropertiesTest {
         with(testRule) {
             action.startSdk()
             action.recordSession()
-            var session = assertion.getSingleSession()
+            var session = assertion.getSingleSessionEnvelope()
             var lastSessionId = session.getSessionId()
 
             assertion.checkNextSavedBackgroundActivity(
@@ -191,7 +192,7 @@ internal class SessionPropertiesTest {
             action.recordSession {
                 action.embrace.addSessionProperty("perm2", "value", true)
             }
-            session = assertion.getSentSessions(2).last()
+            session = assertion.getSessionEnvelopes(2).last()
             checkNotNull(session.getSessionSpan()).assertPropertyExistence(
                 exist = listOf("perm", "perm2")
             )
@@ -212,7 +213,7 @@ internal class SessionPropertiesTest {
             )
 
             action.recordSession()
-            val session2 = assertion.getSentSessions(3).last()
+            val session2 = assertion.getSessionEnvelopes(3).last()
             checkNotNull(session2.getSessionSpan()).assertPropertyExistence(
                 exist = listOf("perm", "perm2", "perm3")
             )
@@ -236,7 +237,7 @@ internal class SessionPropertiesTest {
                 }
             },
             assertAction = {
-                val sessions = getSentSessions(2)
+                val sessions = getSessionEnvelopes(2)
                 checkNotNull(sessions[0].getSessionSpan()).assertPropertyExistence(
                     exist = listOf("perm", "perm2")
                 )

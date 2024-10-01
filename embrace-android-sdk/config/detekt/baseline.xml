@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:ModuleInitBootstrapper.kt$ModuleInitBootstrapper$@JvmOverloads fun init( context: Context, appFramework: AppFramework, sdkStartTimeMs: Long, customAppId: String? = null, configServiceProvider: (framework: AppFramework) -&gt; ConfigService? = { null }, versionChecker: VersionChecker = BuildVersionChecker, ): Boolean</ID>
     <ID>MaxLineLength:FakeModuleInitBootstrapper.kt$sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ -&gt; FakeSessionOrchestrationModule() }</ID>
     <ID>MaximumLineLength:FakeModuleInitBootstrapper.kt$ </ID>
   </CurrentIssues>

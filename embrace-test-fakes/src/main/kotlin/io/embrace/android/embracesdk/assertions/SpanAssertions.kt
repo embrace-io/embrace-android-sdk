@@ -1,67 +1,40 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsKeySpan
-import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
-import io.embrace.android.embracesdk.arch.assertNotKeySpan
-import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
-import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.spans.ErrorCode
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 
 /**
- * Assert the [EmbraceSpanData] is as expected
+ * Finds the first Span Event matching the given [TelemetryType]
  */
-fun assertEmbraceSpanData(
-    span: Span?,
-    expectedStartTimeMs: Long,
-    expectedEndTimeMs: Long?,
-    expectedParentId: String,
-    expectedTraceId: String? = null,
-    expectedStatus: Span.Status = Span.Status.UNSET,
-    expectedErrorCode: ErrorCode? = null,
-    expectedCustomAttributes: Map<String, String> = emptyMap(),
-    expectedEvents: List<SpanEvent> = emptyList(),
-    private: Boolean = false,
-    key: Boolean = false,
-) {
-    checkNotNull(span)
-    with(span) {
-        assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
-        assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
-        assertEquals(expectedParentId, parentSpanId)
-        if (expectedTraceId != null) {
-            assertEquals(expectedTraceId, traceId)
-        } else {
-            assertEquals(32, traceId?.length)
-        }
-
-        if (expectedErrorCode != null) {
-            assertError(expectedErrorCode)
-        } else {
-            assertEquals(expectedStatus, status)
-            assertNull(attributes?.findAttributeValue(ErrorCodeAttribute.Failure.key.name))
-        }
-
-        expectedCustomAttributes.forEach { entry ->
-            assertEquals(entry.value, attributes?.findAttributeValue(entry.key))
-        }
-        assertEquals(expectedEvents, events)
-        if (private) {
-            assertIsPrivateSpan()
-        } else {
-            assertNotPrivateSpan()
-        }
-        if (key) {
-            assertIsKeySpan()
-        } else {
-            assertNotKeySpan()
-        }
+fun Span.findEventOfType(telemetryType: TelemetryType): SpanEvent {
+    val sanitizedEvents = checkNotNull(events) {
+        "No events found in span"
     }
+    return checkNotNull(sanitizedEvents.single { it.hasFixedAttribute(telemetryType) }) {
+        "Event not found: $name"
+    }
+}
+
+/**
+ * Finds the Span Events matching the given [TelemetryType]
+ */
+fun Span.findEventsOfType(telemetryType: TelemetryType): List<SpanEvent> {
+    val sanitizedEvents = checkNotNull(events) {
+        "No events found in span"
+    }
+    return checkNotNull(sanitizedEvents.filter { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) }) {
+        "Events not found: $name"
+    }
+}
+
+/**
+ * Returns true if an event exists with the given [TelemetryType]
+ */
+fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
+    val sanitizedEvents = checkNotNull(events) {
+        "No events found in span"
+    }
+    return sanitizedEvents.find { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) } != null
 }

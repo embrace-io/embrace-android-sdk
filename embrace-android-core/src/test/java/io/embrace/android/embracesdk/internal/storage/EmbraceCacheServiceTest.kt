@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
+import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -7,8 +9,6 @@ import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope2
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
-import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.getStartTime
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService

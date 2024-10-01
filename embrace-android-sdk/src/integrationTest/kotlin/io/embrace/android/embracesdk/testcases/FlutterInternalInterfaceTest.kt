@@ -54,7 +54,7 @@ internal class FlutterInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertNull(res.hostedSdkVersion)
@@ -73,7 +73,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -93,7 +93,7 @@ internal class FlutterInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -117,7 +117,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -141,7 +141,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.FLUTTER, res.appFramework)
                 assertEquals("28.9.2", res.hostedPlatformVersion)
@@ -172,7 +172,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogEnvelopes(1).getLastLog())
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -215,7 +215,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogEnvelopes(1).getLastLog())
 
                 assertOtelLogReceived(
                     logReceived = log,

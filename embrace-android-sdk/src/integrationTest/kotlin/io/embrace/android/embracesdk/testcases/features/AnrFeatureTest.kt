@@ -79,7 +79,7 @@ internal class AnrFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()
@@ -101,7 +101,7 @@ internal class AnrFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()
@@ -128,7 +128,7 @@ internal class AnrFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()
@@ -162,7 +162,7 @@ internal class AnrFeatureTest {
                 endTime = clock.now()
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
 
                 // assert ANRs received
                 val spans = message.findAnrSpans()

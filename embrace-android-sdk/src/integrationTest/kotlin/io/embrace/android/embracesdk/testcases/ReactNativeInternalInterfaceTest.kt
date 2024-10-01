@@ -3,11 +3,13 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.assertions.findSpanOfType
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.findSpansByName
-import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
+import io.embrace.android.embracesdk.assertions.findSpansByName
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -40,7 +42,7 @@ internal class ReactNativeInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
                 assertNull(res.hostedPlatformVersion)
@@ -60,7 +62,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -83,7 +85,7 @@ internal class ReactNativeInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -110,7 +112,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
 
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.REACT_NATIVE, res.appFramework)
@@ -137,7 +139,7 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 val spans = message.findSpansByName("emb-rn-action")
                 assertEquals(1, spans.size)
 
@@ -170,15 +172,9 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
-                val spans = message.findSpansOfType(EmbType.Ux.View)
-                assertEquals(1, spans.size)
-
-                val spanSnapshots = message.findSpanSnapshotsOfType(EmbType.Ux.View)
-                assertEquals(1, spanSnapshots.size)
-
-                val firstSpan = spans.single()
-                val secondSpan = spanSnapshots.single()
+                val message = getSingleSessionEnvelope()
+                val firstSpan = message.findSpanOfType(EmbType.Ux.View)
+                val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
                 val firstAttrs = checkNotNull(firstSpan.attributes)
                 val secondAttrs = checkNotNull(secondSpan.attributes)
 
@@ -207,16 +203,9 @@ internal class ReactNativeInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
-
-                val spans = message.findSpansOfType(EmbType.Ux.View)
-                assertEquals(1, spans.size)
-
-                val spanSnapshots = message.findSpanSnapshotsOfType(EmbType.Ux.View)
-                assertEquals(1, spanSnapshots.size)
-
-                val firstSpan = spans.single()
-                val secondSpan = spanSnapshots.single()
+                val message = getSingleSessionEnvelope()
+                val firstSpan = message.findSpanOfType(EmbType.Ux.View)
+                val secondSpan = message.findSpanSnapshotOfType(EmbType.Ux.View)
                 val firstAttrs = checkNotNull(firstSpan.attributes)
                 val secondAttrs = checkNotNull(secondSpan.attributes)
 

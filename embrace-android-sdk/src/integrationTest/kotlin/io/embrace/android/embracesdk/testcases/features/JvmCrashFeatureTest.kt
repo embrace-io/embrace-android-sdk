@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogRecei
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -44,9 +45,9 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                checkNotNull(getStoredLogPayloads(1).getLastLog()).assertCrash(
+                checkNotNull(getStoredLogEnvelopes(1).getLastLog()).assertCrash(
                     state = "foreground",
-                    crashId = checkNotNull(getSingleSession().getCrashedId())
+                    crashId = checkNotNull(getSingleSessionEnvelope().getCrashedId())
                 )
             }
         )
@@ -59,8 +60,8 @@ internal class JvmCrashFeatureTest {
                 handleException()
             },
             assertAction = {
-                checkNotNull(getStoredLogPayloads(1).getLastLog()).assertCrash(
-                    crashId = getSentBackgroundActivities(1).single().getCrashedId()
+                checkNotNull(getStoredLogEnvelopes(1).getLastLog()).assertCrash(
+                    crashId = getSingleSessionEnvelope(ApplicationState.BACKGROUND).getCrashedId()
                 )
             }
         )
@@ -85,7 +86,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                val log = getStoredLogPayloads(1).getLastLog()
+                val log = getStoredLogEnvelopes(1).getLastLog()
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",
@@ -107,7 +108,7 @@ internal class JvmCrashFeatureTest {
                 assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
                 assertNotNull(attrs.findAttributeValue("emb.android.threads"))
 
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
                 assertNotNull(crashId)
                 assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))

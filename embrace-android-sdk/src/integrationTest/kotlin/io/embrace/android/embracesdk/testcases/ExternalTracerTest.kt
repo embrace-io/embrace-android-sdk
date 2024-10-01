@@ -109,7 +109,7 @@ internal class ExternalTracerTest {
                 checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
                 checkNotNull(wrappedSpan).end()
             }
-            val sessionMessage = assertion.getSingleSession()
+            val sessionMessage = assertion.getSingleSessionEnvelope()
             val spans = checkNotNull(sessionMessage.data.spans)
             val recordedSpans = spans.associateBy { it.name }
             val parent = checkNotNull(recordedSpans["external-span"])

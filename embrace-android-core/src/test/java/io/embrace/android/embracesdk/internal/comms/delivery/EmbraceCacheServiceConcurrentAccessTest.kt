@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.concurrency.ExecutionCoordinator
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
@@ -7,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelope2
 import io.embrace.android.embracesdk.fixtures.testSessionEnvelopeOneMinuteLater
-import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.junit.Assert.assertEquals

@@ -8,5 +8,9 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
  * Returns the last log in a list of log payloads.
  */
 internal fun List<Envelope<LogPayload>>.getLastLog(): Log {
-    return checkNotNull(last().data.logs).last()
+    return checkNotNull(last().getLastLog())
+}
+
+internal fun Envelope<LogPayload>.getLastLog(): Log {
+    return checkNotNull(data.logs).last()
 }

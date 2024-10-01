@@ -41,7 +41,7 @@ internal class EmbraceLoggingFeatureTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogEnvelopes(1).getLastLog())
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
@@ -61,7 +61,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = checkNotNull(getSentLogPayloads(1).getLastLog())
+                val log = checkNotNull(getSentLogEnvelopes(1).getLastLog())
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "test message",
@@ -80,7 +80,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = getSentLogPayloads(1).getLastLog()
+                val log = getSentLogEnvelopes(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "test message",
@@ -102,7 +102,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,
@@ -124,7 +124,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,
@@ -145,7 +145,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = getSentLogPayloads(1).getLastLog()
+                val log = getSentLogEnvelopes(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -169,7 +169,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = getSentLogPayloads(1).getLastLog()
+                val log = getSentLogEnvelopes(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = checkNotNull(testException.message),
@@ -197,7 +197,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = checkNotNull(testException.message),
@@ -226,7 +226,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,
@@ -252,7 +252,7 @@ internal class EmbraceLoggingFeatureTest {
                 flushLogs()
             },
             assertAction = {
-                val log = getSentLogPayloads(1).getLastLog()
+                val log = getSentLogEnvelopes(1).getLastLog()
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
@@ -275,7 +275,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = "",
@@ -299,7 +299,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = "",
@@ -325,7 +325,7 @@ internal class EmbraceLoggingFeatureTest {
                     flushLogs()
                 },
                 assertAction = {
-                    val log = getSentLogPayloads().getLastLog()
+                    val log = getSentLogEnvelopes().getLastLog()
                     assertOtelLogReceived(
                         log,
                         expectedMessage = expectedMessage,

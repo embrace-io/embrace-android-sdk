@@ -27,41 +27,49 @@ internal class LogRecordExporterTest {
 
     @Test
     fun `SDK can receive a LogRecordExporter`() {
-        with(testRule) {
+        val fakeLogRecordExporter = FakeLogRecordExporter()
 
-            val fakeLogRecordExporter = FakeLogRecordExporter()
-            embrace.addLogRecordExporter(fakeLogRecordExporter)
-            startSdk()
+        testRule.runTest(
+            testCaseAction = {
+                embrace.addLogRecordExporter(fakeLogRecordExporter)
+                startSdk()
 
-            harness.recordSession {
-                embrace.logMessage("test message", Severity.INFO)
-
-                sleep(3000)
+                harness.recordSession {
+                    embrace.logMessage("test message", Severity.INFO)
+                    sleep(3000)
+                }
+            },
+            assertAction = {
+                assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) > 0)
+                assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body?.asString())
             }
-            assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) > 0)
-            assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body?.asString())
-        }
+        )
     }
 
     @Test
     fun `a LogRecordExporter added after initialization won't be used`() {
-        with(testRule) {
+        val fake = FakeInternalErrorService()
+        val fakeLogRecordExporter = FakeLogRecordExporter()
 
-            val fake = FakeInternalErrorService()
-            harness.overriddenInitModule.logger.apply {
-                internalErrorService = fake
+        testRule.runTest(
+            setupAction = {
+                overriddenInitModule.logger.apply {
+                    internalErrorService = fake
+                }
+            },
+            testCaseAction = {
+                startSdk()
+                embrace.addLogRecordExporter(fakeLogRecordExporter)
+
+                harness.recordSession {
+                    embrace.logMessage("test message", Severity.INFO)
+
+                    sleep(3000)
+                }
+            },
+            assertAction = {
+                assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) == 0)
             }
-
-            val fakeLogRecordExporter = FakeLogRecordExporter()
-            startSdk()
-            embrace.addLogRecordExporter(fakeLogRecordExporter)
-
-            harness.recordSession {
-                embrace.logMessage("test message", Severity.INFO)
-
-                sleep(3000)
-            }
-            assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) == 0)
-        }
+        )
     }
 }

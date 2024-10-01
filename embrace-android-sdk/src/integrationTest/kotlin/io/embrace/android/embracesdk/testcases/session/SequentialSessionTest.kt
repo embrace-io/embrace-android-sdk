@@ -30,29 +30,33 @@ internal class SequentialSessionTest {
 
     @Test
     fun `cold start and session number are recorded correctly`() {
-        with(testRule) {
-            harness.recordSession()
-            harness.recordSession()
-            harness.recordSession()
-            val sessions = harness.getSentSessions(3)
-            val first = sessions[0]
-            val second = sessions[1]
-            val third = sessions[2]
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession()
+                harness.recordSession()
+                harness.recordSession()
+            },
+            assertAction = {
+                val sessions = harness.getSentSessions(3)
+                val first = sessions[0]
+                val second = sessions[1]
+                val third = sessions[2]
 
-            val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
-            assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
-            assertTrue(firstAttrs.findAttributeValue(embColdStart.name).toBoolean())
-            assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+                val firstAttrs = checkNotNull(first.findSessionSpan().attributes)
+                assertEquals("1", firstAttrs.findAttributeValue(embSessionNumber.name))
+                assertTrue(firstAttrs.findAttributeValue(embColdStart.name).toBoolean())
+                assertEquals(0, first.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
 
-            val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
-            assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
-            assertFalse(secondAttrs.findAttributeValue(embColdStart.name).toBoolean())
-            assertEquals(0, second.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+                val secondAttrs = checkNotNull(second.findSessionSpan().attributes)
+                assertEquals("2", secondAttrs.findAttributeValue(embSessionNumber.name))
+                assertFalse(secondAttrs.findAttributeValue(embColdStart.name).toBoolean())
+                assertEquals(0, second.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
 
-            val thirdAttrs = checkNotNull(third.findSessionSpan().attributes)
-            assertEquals("3", thirdAttrs.findAttributeValue(embSessionNumber.name))
-            assertFalse(thirdAttrs.findAttributeValue(embColdStart.name).toBoolean())
-            assertEquals(0, third.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
-        }
+                val thirdAttrs = checkNotNull(third.findSessionSpan().attributes)
+                assertEquals("3", thirdAttrs.findAttributeValue(embSessionNumber.name))
+                assertFalse(thirdAttrs.findAttributeValue(embColdStart.name).toBoolean())
+                assertEquals(0, third.findSpanSnapshotsOfType(EmbType.Ux.Session).size)
+            }
+        )
     }
 }

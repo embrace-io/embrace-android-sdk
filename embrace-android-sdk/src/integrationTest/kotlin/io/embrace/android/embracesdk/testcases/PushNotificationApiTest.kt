@@ -30,79 +30,101 @@ internal class PushNotificationApiTest {
 
     @Test
     fun `log push notification and data type`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+                }
+            },
+            assertAction = {
+                val msg = harness.getSingleSession()
+                msg.assertNotification("notif-data")
             }
-            val msg = harness.getSingleSession()
-            msg.assertNotification("notif-data")
-        }
+        )
     }
 
     @Test
     fun `log push data type`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
+                }
+            },
+            assertAction = {
+                val msg = harness.getSingleSession()
+                msg.assertNotification("data")
             }
-            val msg = harness.getSingleSession()
-            msg.assertNotification("data")
-        }
+        )
     }
 
     @Test
     fun `log push notification no data type`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
+                }
+            },
+            assertAction = {
+                val msg = harness.getSingleSession()
+                msg.assertNotification("notif")
             }
-            val msg = harness.getSingleSession()
-            msg.assertNotification("notif")
-        }
+        )
     }
 
     @Test
     fun `log push unknown type`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
+                }
+            },
+            assertAction = {
+                val msg = harness.getSingleSession()
+                msg.assertNotification("unknown")
             }
-            val msg = harness.getSingleSession()
-            msg.assertNotification("unknown")
-        }
+        )
     }
 
     @Test
     fun `log push notification with pii`() {
-        with(testRule) {
-            harness.overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
-                captureFcmPiiDataEnabled = true
-            )
-            startSdk()
-            harness.recordSession {
-                embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+        testRule.runTest(
+            setupAction = {
+                overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
+                    captureFcmPiiDataEnabled = true
+                )
+            },
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+                }
+            },
+            assertAction = {
+                val payload = harness.getSingleSession()
+                val sessionSpan = payload.findSessionSpan()
+                val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
+                assertTrue(checkNotNull(event.timestampNanos) > 0)
+                assertEquals(
+                    mapOf(
+                        EmbType.System.PushNotification.toEmbraceKeyValuePair(),
+                        "notification.title" to "title",
+                        "notification.type" to "notif-data",
+                        "notification.body" to "body",
+                        "notification.id" to "id",
+                        "notification.from" to "from",
+                        "notification.priority" to "1"
+                    ),
+                    event.attributes?.toMap()
+                )
             }
-            val payload = harness.getSingleSession()
-            val sessionSpan = payload.findSessionSpan()
-            val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
-            assertTrue(checkNotNull(event.timestampNanos) > 0)
-            assertEquals(
-                mapOf(
-                    EmbType.System.PushNotification.toEmbraceKeyValuePair(),
-                    "notification.title" to "title",
-                    "notification.type" to "notif-data",
-                    "notification.body" to "body",
-                    "notification.id" to "id",
-                    "notification.from" to "from",
-                    "notification.priority" to "1"
-                ),
-                event.attributes?.toMap()
-            )
-        }
+        )
     }
 
     private fun Envelope<SessionPayload>.assertNotification(type: String) {

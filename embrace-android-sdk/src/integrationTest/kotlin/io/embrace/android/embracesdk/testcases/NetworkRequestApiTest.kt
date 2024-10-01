@@ -181,65 +181,69 @@ internal class NetworkRequestApiTest {
 
     @Test
     fun `disabled URLs not recorded`() {
-        testRule.harness.overriddenConfigService.networkBehavior =
-            createNetworkBehavior(remoteCfg = {
-                RemoteConfig(
-                    disabledUrlPatterns = setOf("dontlogmebro.pizza"),
-                    networkCaptureRules = setOf(
-                        NetworkCaptureRuleRemoteConfig(
-                            id = "test",
-                            duration = 10000,
-                            method = "GET",
-                            urlRegex = "capture.me",
-                            expiresIn = 10000
+        testRule.runTest(
+            setupAction = {
+                overriddenConfigService.networkBehavior =
+                    createNetworkBehavior(remoteCfg = {
+                        RemoteConfig(
+                            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+                            networkCaptureRules = setOf(
+                                NetworkCaptureRuleRemoteConfig(
+                                    id = "test",
+                                    duration = 10000,
+                                    method = "GET",
+                                    urlRegex = "capture.me",
+                                    expiresIn = 10000
+                                )
+                            )
+                        )
+                    })
+            },
+            testCaseAction = {
+                harness.recordSession {
+                    harness.overriddenConfigService.updateListeners()
+                    harness.overriddenClock.tick(5)
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            DISABLED_URL,
+                            HttpMethod.GET,
+                            START_TIME,
+                            END_TIME,
+                            BYTES_SENT,
+                            BYTES_RECEIVED,
+                            200
                         )
                     )
-                )
-            })
-
-        with(testRule) {
-            harness.recordSession {
-                harness.overriddenConfigService.updateListeners()
-                harness.overriddenClock.tick(5)
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromCompletedRequest(
-                        DISABLED_URL,
-                        HttpMethod.GET,
-                        START_TIME,
-                        END_TIME,
-                        BYTES_SENT,
-                        BYTES_RECEIVED,
-                        200
+                    harness.overriddenClock.tick(5)
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromIncompleteRequest(
+                            DISABLED_URL,
+                            HttpMethod.GET,
+                            START_TIME + 1,
+                            END_TIME,
+                            NullPointerException::class.toString(),
+                            "Dang nothing there"
+                        )
                     )
-                )
-                harness.overriddenClock.tick(5)
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromIncompleteRequest(
-                        DISABLED_URL,
-                        HttpMethod.GET,
-                        START_TIME + 1,
-                        END_TIME,
-                        NullPointerException::class.toString(),
-                        "Dang nothing there"
+                    harness.overriddenClock.tick(5)
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            URL,
+                            HttpMethod.GET,
+                            START_TIME + 2,
+                            END_TIME,
+                            BYTES_SENT,
+                            BYTES_RECEIVED,
+                            200
+                        )
                     )
-                )
-                harness.overriddenClock.tick(5)
-                embrace.recordNetworkRequest(
-                    EmbraceNetworkRequest.fromCompletedRequest(
-                        URL,
-                        HttpMethod.GET,
-                        START_TIME + 2,
-                        END_TIME,
-                        BYTES_SENT,
-                        BYTES_RECEIVED,
-                        200
-                    )
-                )
+                }
+            },
+            assertAction = {
+                val networkSpan = validateAndReturnExpectedNetworkSpan()
+                assertEquals(URL, networkSpan.attributes?.findAttributeValue("url.full"))
             }
-
-            val networkSpan = validateAndReturnExpectedNetworkSpan()
-            assertEquals(URL, networkSpan.attributes?.findAttributeValue("url.full"))
-        }
+        )
     }
 
     /**
@@ -247,112 +251,119 @@ internal class NetworkRequestApiTest {
      */
     @Test
     fun `ensure network calls with the same start time are recorded properly`() {
-        with(testRule) {
-            harness.recordSession {
-                harness.overriddenConfigService.updateListeners()
-                harness.overriddenClock.tick(5)
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    harness.overriddenConfigService.updateListeners()
+                    harness.overriddenClock.tick(5)
 
-                val request = EmbraceNetworkRequest.fromCompletedRequest(
-                    URL,
-                    HttpMethod.GET,
-                    START_TIME,
-                    END_TIME,
-                    BYTES_SENT,
-                    BYTES_RECEIVED,
-                    200
+                    val request = EmbraceNetworkRequest.fromCompletedRequest(
+                        URL,
+                        HttpMethod.GET,
+                        START_TIME,
+                        END_TIME,
+                        BYTES_SENT,
+                        BYTES_RECEIVED,
+                        200
+                    )
+
+                    embrace.recordNetworkRequest(request)
+                    embrace.recordNetworkRequest(request)
+                }
+            },
+            assertAction = {
+                val session = testRule.harness.getSingleSession()
+
+                val spans =
+                    checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
+                assertEquals(
+                    "Unexpected number of requests in sent session: ${spans.size}",
+                    2,
+                    spans.size
                 )
-
-                embrace.recordNetworkRequest(request)
-                embrace.recordNetworkRequest(request)
             }
-
-            val session = testRule.harness.getSingleSession()
-
-            val spans =
-                checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
-            assertEquals(
-                "Unexpected number of requests in sent session: ${spans.size}",
-                2,
-                spans.size
-            )
-        }
+        )
     }
 
     private fun assertSingleNetworkRequestInSession(
         expectedRequest: EmbraceNetworkRequest,
         completed: Boolean = true
     ) {
-        with(testRule) {
-            harness.recordSession {
-                harness.overriddenClock.tick(2L)
-                harness.overriddenConfigService.updateListeners()
-                harness.overriddenClock.tick(5L)
-                embrace.recordNetworkRequest(expectedRequest)
-            }
 
-            val networkSpan = validateAndReturnExpectedNetworkSpan()
-            with(networkSpan) {
-                val attrs = checkNotNull(attributes)
-                assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
-                assertEquals(
-                    expectedRequest.httpMethod,
-                    attrs.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key)
-                )
-                assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
-                assertEquals(expectedRequest.endTime.millisToNanos(), endTimeNanos)
-                assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
-                assertEquals(
-                    expectedRequest.w3cTraceparent,
-                    attrs.findAttributeValue("emb.w3c_traceparent")
-                )
-                if (completed) {
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    harness.overriddenClock.tick(2L)
+                    harness.overriddenConfigService.updateListeners()
+                    harness.overriddenClock.tick(5L)
+                    embrace.recordNetworkRequest(expectedRequest)
+                }
+            },
+            assertAction = {
+                val networkSpan = validateAndReturnExpectedNetworkSpan()
+                with(networkSpan) {
+                    val attrs = checkNotNull(attributes)
+                    assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
                     assertEquals(
-                        expectedRequest.responseCode.toString(),
-                        attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
+                        expectedRequest.httpMethod,
+                        attrs.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key)
                     )
+                    assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
+                    assertEquals(expectedRequest.endTime.millisToNanos(), endTimeNanos)
+                    assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
                     assertEquals(
-                        expectedRequest.bytesSent.toString(),
-                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
+                        expectedRequest.w3cTraceparent,
+                        attrs.findAttributeValue("emb.w3c_traceparent")
                     )
-                    assertEquals(
-                        expectedRequest.bytesReceived.toString(),
-                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
-                    )
-                    assertEquals(null, attrs.findAttributeValue("error.type"))
-                    assertEquals(
-                        null,
-                        attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
-                    )
-                    val statusCode = expectedRequest.responseCode
-                    val expectedStatus =
-                        if (statusCode != null && statusCode >= 200 && statusCode < 400) {
-                            Span.Status.UNSET
-                        } else {
-                            Span.Status.ERROR
-                        }
-                    assertEquals(expectedStatus, status)
-                } else {
-                    assertEquals(
-                        null,
-                        attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
-                    )
-                    assertEquals(
-                        null,
-                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
-                    )
-                    assertEquals(
-                        null,
-                        attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
-                    )
-                    assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
-                    assertEquals(
-                        expectedRequest.errorMessage,
-                        attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
-                    )
-                    assertEquals(Span.Status.ERROR, status)
+                    if (completed) {
+                        assertEquals(
+                            expectedRequest.responseCode.toString(),
+                            attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
+                        )
+                        assertEquals(
+                            expectedRequest.bytesSent.toString(),
+                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
+                        )
+                        assertEquals(
+                            expectedRequest.bytesReceived.toString(),
+                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
+                        )
+                        assertEquals(null, attrs.findAttributeValue("error.type"))
+                        assertEquals(
+                            null,
+                            attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
+                        )
+                        val statusCode = expectedRequest.responseCode
+                        val expectedStatus =
+                            if (statusCode != null && statusCode >= 200 && statusCode < 400) {
+                                Span.Status.UNSET
+                            } else {
+                                Span.Status.ERROR
+                            }
+                        assertEquals(expectedStatus, status)
+                    } else {
+                        assertEquals(
+                            null,
+                            attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
+                        )
+                        assertEquals(
+                            null,
+                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
+                        )
+                        assertEquals(
+                            null,
+                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
+                        )
+                        assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
+                        assertEquals(
+                            expectedRequest.errorMessage,
+                            attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
+                        )
+                        assertEquals(Span.Status.ERROR, status)
+                    }
                 }
             }
-        }
+        )
     }
 
     private fun validateAndReturnExpectedNetworkSpan(): Span {

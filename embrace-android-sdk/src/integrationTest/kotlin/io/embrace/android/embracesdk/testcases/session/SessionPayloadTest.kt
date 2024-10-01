@@ -20,21 +20,25 @@ internal class SessionPayloadTest {
 
     @Test
     fun `device and app attributes are present in session envelope`() {
-        with(testRule) {
-            harness.recordSession()
-            with(harness.getSingleSession()) {
-                assertEquals("spans", type)
-                with(checkNotNull(resource)) {
-                    assertTrue(checkNotNull(appVersion).isNotBlank())
-                    assertTrue(checkNotNull(sdkVersion).isNotBlank())
-                    assertTrue(checkNotNull(osVersion).isNotBlank())
-                    assertTrue(checkNotNull(osName).isNotBlank())
-                    assertTrue(checkNotNull(deviceModel).isNotBlank())
-                    assertEquals(AppFramework.NATIVE, appFramework)
-                }
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession()
 
-                assertTrue(getSessionId().isNotBlank())
+            },
+            assertAction = {
+                with(harness.getSingleSession()) {
+                    assertEquals("spans", type)
+                    with(checkNotNull(resource)) {
+                        assertTrue(checkNotNull(appVersion).isNotBlank())
+                        assertTrue(checkNotNull(sdkVersion).isNotBlank())
+                        assertTrue(checkNotNull(osVersion).isNotBlank())
+                        assertTrue(checkNotNull(osName).isNotBlank())
+                        assertTrue(checkNotNull(deviceModel).isNotBlank())
+                        assertEquals(AppFramework.NATIVE, appFramework)
+                    }
+                    assertTrue(getSessionId().isNotBlank())
+                }
             }
-        }
+        )
     }
 }

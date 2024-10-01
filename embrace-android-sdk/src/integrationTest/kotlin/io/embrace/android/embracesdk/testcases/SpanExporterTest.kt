@@ -67,22 +67,27 @@ internal class SpanExporterTest {
 
     @Test
     fun `a SpanExporter added after initialization won't be used`() {
-        with(testRule) {
-            val fake = FakeInternalErrorService()
-            harness.overriddenInitModule.logger.apply {
-                internalErrorService = fake
+        val fake = FakeInternalErrorService()
+        val fakeSpanExporter = FakeSpanExporter()
+
+        testRule.runTest(
+            setupAction = {
+                overriddenInitModule.logger.apply {
+                    internalErrorService = fake
+                }
+            },
+            testCaseAction = {
+                startSdk()
+                embrace.addSpanExporter(fakeSpanExporter)
+
+                harness.recordSession {
+                    embrace.startSpan("test")?.stop()
+                    Thread.sleep(3000)
+                }
+            },
+            assertAction = {
+                assertTrue(fakeSpanExporter.exportedSpans.size == 0)
             }
-
-            val fakeSpanExporter = FakeSpanExporter()
-            startSdk()
-            embrace.addSpanExporter(fakeSpanExporter)
-
-            harness.recordSession {
-                embrace.startSpan("test")?.stop()
-
-                Thread.sleep(3000)
-            }
-            assertTrue(fakeSpanExporter.exportedSpans.size == 0)
-        }
+        )
     }
 }

@@ -31,28 +31,35 @@ internal class AeiFeatureTest {
 
     @Test
     fun `application exit info feature`() {
-        setupFakeAeiData()
+        testRule.runTest(
+            setupAction = {
+                setupFakeAeiData()
+            },
+            testCaseAction = {
+                testRule.startSdk(context = ApplicationProvider.getApplicationContext())
+                harness.recordSession()
+            },
+            assertAction = {
+                val payload = harness.getSentLogPayloads(1).single()
+                val log = checkNotNull(payload.data.logs?.single())
 
-        with(testRule) {
-            testRule.startSdk(context = ApplicationProvider.getApplicationContext())
-            harness.recordSession()
-
-            val payload = harness.getSentLogPayloads(1).single()
-            val log = checkNotNull(payload.data.logs?.single())
-
-            // assert AEI fields populated
-            val attrs = checkNotNull(log.attributes)
-            assertEquals(attrs.findAttributeValue("timestamp")?.toLong(), 15000000000L)
-            assertEquals(attrs.findAttributeValue("aei_session_id"), "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d")
-            assertEquals(attrs.findAttributeValue("process_importance")?.toInt(), 125)
-            assertEquals(attrs.findAttributeValue("pss")?.toLong(), 1509123409L)
-            assertEquals(attrs.findAttributeValue("rss")?.toLong(), 1123409L)
-            assertEquals(attrs.findAttributeValue("exit_status")?.toInt(), 1)
-            assertEquals(attrs.findAttributeValue("description"), "testDescription")
-            assertEquals(attrs.findAttributeValue("reason")?.toInt(), 4)
-            assertEquals("testInputStream", log.body)
-            assertEquals("sys.exit", attrs.findAttributeValue("emb.type"))
-        }
+                // assert AEI fields populated
+                val attrs = checkNotNull(log.attributes)
+                assertEquals(attrs.findAttributeValue("timestamp")?.toLong(), 15000000000L)
+                assertEquals(
+                    attrs.findAttributeValue("aei_session_id"),
+                    "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+                )
+                assertEquals(attrs.findAttributeValue("process_importance")?.toInt(), 125)
+                assertEquals(attrs.findAttributeValue("pss")?.toLong(), 1509123409L)
+                assertEquals(attrs.findAttributeValue("rss")?.toLong(), 1123409L)
+                assertEquals(attrs.findAttributeValue("exit_status")?.toInt(), 1)
+                assertEquals(attrs.findAttributeValue("description"), "testDescription")
+                assertEquals(attrs.findAttributeValue("reason")?.toInt(), 4)
+                assertEquals("testInputStream", log.body)
+                assertEquals("sys.exit", attrs.findAttributeValue("emb.type"))
+            }
+        )
     }
 
     private fun setupFakeAeiData() {

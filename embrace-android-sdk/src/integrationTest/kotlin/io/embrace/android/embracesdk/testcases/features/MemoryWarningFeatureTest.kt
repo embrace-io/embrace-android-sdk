@@ -28,27 +28,35 @@ internal class MemoryWarningFeatureTest {
     @Test
     fun `memory warning`() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
-        with(testRule) {
-            harness.recordSession {
-                ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
+                assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
             }
-            val message = harness.getSingleSession()
-            assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
-        }
+        )
     }
 
     @Test
     fun `memory warning limits`() {
         val ctx = ApplicationProvider.getApplicationContext<Application>()
-        with(testRule) {
-            harness.recordSession {
-                repeat(150) {
-                    ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    repeat(150) {
+                        ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+                    }
                 }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
+                val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
+                assertEquals(10, events.size)
             }
-            val message = harness.getSingleSession()
-            val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
-            assertEquals(10, events.size)
-        }
+        )
     }
 }

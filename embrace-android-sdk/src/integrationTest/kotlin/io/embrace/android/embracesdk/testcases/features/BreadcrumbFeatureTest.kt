@@ -26,17 +26,22 @@ internal class BreadcrumbFeatureTest {
 
     @Test
     fun `custom breadcrumb feature`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.addBreadcrumb("Hello, world!")
+
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.addBreadcrumb("Hello, world!")
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
+                message.assertBreadcrumbWithMessage("Hello, world!")
+                embrace.addBreadcrumb("Bye, world!")
+                harness.recordSession {
+                    harness.getSentBackgroundActivities(2).last().assertBreadcrumbWithMessage("Bye, world!")
+                }
             }
-            val message = harness.getSingleSession()
-            message.assertBreadcrumbWithMessage("Hello, world!")
-            embrace.addBreadcrumb("Bye, world!")
-            harness.recordSession {
-                harness.getSentBackgroundActivities(2).last().assertBreadcrumbWithMessage("Bye, world!")
-            }
-        }
+        )
     }
 
     private fun Envelope<SessionPayload>.assertBreadcrumbWithMessage(message: String) {

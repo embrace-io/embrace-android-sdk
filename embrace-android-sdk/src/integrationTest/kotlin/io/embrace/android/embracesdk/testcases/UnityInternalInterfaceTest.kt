@@ -31,67 +31,80 @@ internal class UnityInternalInterfaceTest {
 
     @Test
     fun `unity without values should return defaults`() {
-        with(testRule) {
-            harness.recordSession()
-            val session = harness.getSingleSession()
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.UNITY, res.appFramework)
-            assertNull(res.hostedSdkVersion)
-            assertNull(res.hostedPlatformVersion)
-        }
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession()
+
+            },
+            assertAction = {
+                val session = harness.getSingleSession()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.UNITY, res.appFramework)
+                assertNull(res.hostedSdkVersion)
+                assertNull(res.hostedPlatformVersion)
+            }
+        )
     }
 
     @Test
     fun `unity methods work in current session`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+                }
+            },
+            assertAction = {
+                val session = harness.getSingleSession()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.UNITY, res.appFramework)
+                assertEquals("28.9.1", res.hostedPlatformVersion)
+                assertEquals("1.2.3", res.hostedSdkVersion)
+                assertEquals("unity build id", res.unityBuildId)
             }
-            val session = harness.getSingleSession()
-
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.UNITY, res.appFramework)
-            assertEquals("28.9.1", res.hostedPlatformVersion)
-            assertEquals("1.2.3", res.hostedSdkVersion)
-            assertEquals("unity build id", res.unityBuildId)
-        }
+        )
     }
 
     @Test
     fun `unity metadata already present from previous session`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+                }
+                harness.recordSession()
+            },
+            assertAction = {
+                val session = harness.getSentSessions(2).last()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.UNITY, res.appFramework)
+                assertEquals("28.9.1", res.hostedPlatformVersion)
+                assertEquals("1.2.3", res.hostedSdkVersion)
+                assertEquals("unity build id", res.unityBuildId)
             }
-
-            harness.recordSession()
-            val session = harness.getSentSessions(2).last()
-
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.UNITY, res.appFramework)
-            assertEquals("28.9.1", res.hostedPlatformVersion)
-            assertEquals("1.2.3", res.hostedSdkVersion)
-            assertEquals("unity build id", res.unityBuildId)
-        }
+        )
     }
 
     @Test
     fun `unity values from current session override previous values`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
-            }
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+                }
 
-            harness.recordSession {
-                embrace.unityInternalInterface?.setUnityMetaData("28.9.2", "new unity build id", "1.2.4")
+                harness.recordSession {
+                    embrace.unityInternalInterface?.setUnityMetaData("28.9.2", "new unity build id", "1.2.4")
+                }
+            },
+            assertAction = {
+                val session = harness.getSentSessions(2).last()
+                val res = checkNotNull(session.resource)
+                assertEquals(AppFramework.UNITY, res.appFramework)
+                assertEquals("28.9.2", res.hostedPlatformVersion)
+                assertEquals("1.2.4", res.hostedSdkVersion)
+                assertEquals("new unity build id", res.unityBuildId)
             }
-            val session = harness.getSentSessions(2).last()
-
-            val res = checkNotNull(session.resource)
-            assertEquals(AppFramework.UNITY, res.appFramework)
-            assertEquals("28.9.2", res.hostedPlatformVersion)
-            assertEquals("1.2.4", res.hostedSdkVersion)
-            assertEquals("new unity build id", res.unityBuildId)
-        }
+        )
     }
 }

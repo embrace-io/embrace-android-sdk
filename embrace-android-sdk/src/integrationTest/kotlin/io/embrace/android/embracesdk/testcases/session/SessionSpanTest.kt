@@ -22,30 +22,42 @@ internal class SessionSpanTest {
 
     @Test
     fun `there is always a valid session when background activity is enabled`() {
-        with(testRule) {
-            harness.overriddenConfigService.backgroundActivityCaptureEnabled = true
-            startSdk()
-            checkNotNull(harness.recordSession {
-                assertFalse(embrace.currentSessionId.isNullOrBlank())
-            })
-            assertFalse(embrace.currentSessionId.isNullOrBlank())
-            checkNotNull(harness.recordSession {
-                assertFalse(embrace.currentSessionId.isNullOrBlank())
-            })
-        }
+        val ids = mutableListOf<String?>()
+
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    ids.add(embrace.currentSessionId)
+                }
+                ids.add(embrace.currentSessionId)
+                harness.recordSession {
+                    ids.add(embrace.currentSessionId)
+                }
+            },
+            assertAction = {
+                ids.forEach {
+                    assertFalse(it.isNullOrBlank())
+                }
+            }
+        )
     }
 
     @Test
     fun `session span event limits do not affect logging maximum breadcrumbs`() {
-        with(testRule) {
-            startSdk()
-            harness.recordSession {
-                repeat(101) {
-                    embrace.addBreadcrumb("breadcrumb $it")
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                harness.recordSession {
+                    repeat(101) {
+                        embrace.addBreadcrumb("breadcrumb $it")
+                    }
                 }
+            },
+            assertAction = {
+                val session = harness.getSingleSession()
+                assertEquals(100, session.getSessionSpan()?.events?.size)
             }
-            val session = harness.getSingleSession()
-            assertEquals(100, session.getSessionSpan()?.events?.size)
-        }
+        )
     }
 }

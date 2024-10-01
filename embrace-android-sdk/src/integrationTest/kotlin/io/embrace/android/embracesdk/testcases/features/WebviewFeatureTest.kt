@@ -40,33 +40,36 @@ internal class WebviewFeatureTest {
 
     @Test
     fun `webview info feature`() {
-        with(testRule) {
-            harness.recordSession {
-                embrace.trackWebViewPerformance("myWebView", expectedCompleteData)
-            }
+        testRule.runTest(
+            testCaseAction = {
+                harness.recordSession {
+                    embrace.trackWebViewPerformance("myWebView", expectedCompleteData)
+                }
+            },
+            assertAction = {
+                val message = harness.getSingleSession()
+                val events = message.findSessionSpan().findEventsOfType(EmbType.System.WebViewInfo)
+                assertEquals(1, events.size)
 
-            val message = harness.getSingleSession()
-            val events = message.findSessionSpan().findEventsOfType(EmbType.System.WebViewInfo)
-            assertEquals(1, events.size)
+                val event = events[0]
+                val attrs = checkNotNull(event.attributes)
+                assertEquals("emb-webview-info", event.name)
+                assertEquals("myWebView", attrs.findAttributeValue("emb.webview_info.tag"))
+                assertEquals("https://embrace.io/", attrs.findAttributeValue(URL_FULL.key))
 
-            val event = events[0]
-            val attrs = checkNotNull(event.attributes)
-            assertEquals("emb-webview-info", event.name)
-            assertEquals("myWebView", attrs.findAttributeValue("emb.webview_info.tag"))
-            assertEquals("https://embrace.io/", attrs.findAttributeValue(URL_FULL.key))
+                val webVitalsAttr = checkNotNull(attrs.findAttributeValue("emb.webview_info.web_vitals"))
+                val type = Types.newParameterizedType(List::class.java, WebVital::class.java)
+                val webVitals: List<WebVital> = serializer.fromJson(webVitalsAttr, type)
 
-            val webVitalsAttr = checkNotNull(attrs.findAttributeValue("emb.webview_info.web_vitals"))
-            val type = Types.newParameterizedType(List::class.java, WebVital::class.java)
-            val webVitals: List<WebVital> = serializer.fromJson(webVitalsAttr, type)
-
-            assertEquals(4, webVitals.size)
-            webVitals.forEach { wv ->
-                when (wv.type) {
-                    WebVitalType.CLS -> assertEquals(10L, wv.duration)
-                    WebVitalType.LCP -> assertEquals(2222, wv.startTime)
-                    else -> {}
+                assertEquals(4, webVitals.size)
+                webVitals.forEach { wv ->
+                    when (wv.type) {
+                        WebVitalType.CLS -> assertEquals(10L, wv.duration)
+                        WebVitalType.LCP -> assertEquals(2222, wv.startTime)
+                        else -> {}
+                    }
                 }
             }
-        }
+        )
     }
 }

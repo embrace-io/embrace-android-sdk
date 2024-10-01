@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -26,18 +25,17 @@ internal class BreadcrumbFeatureTest {
 
     @Test
     fun `custom breadcrumb feature`() {
-
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.addBreadcrumb("Hello, world!")
                 }
             },
             assertAction = {
-                val message = harness.getSingleSession()
+                val message = testRule.harness.getSingleSession()
                 message.assertBreadcrumbWithMessage("Hello, world!")
-                embrace.addBreadcrumb("Bye, world!")
-                harness.recordSession {
+                testRule.action.embrace.addBreadcrumb("Bye, world!")
+                testRule.action.recordSession {
                     harness.getSentBackgroundActivities(2).last().assertBreadcrumbWithMessage("Bye, world!")
                 }
             }

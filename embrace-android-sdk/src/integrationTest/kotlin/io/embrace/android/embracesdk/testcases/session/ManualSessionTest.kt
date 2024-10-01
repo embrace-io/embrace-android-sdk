@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -28,8 +27,8 @@ internal class ManualSessionTest {
     fun `calling endSession ends stateful session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.overriddenClock.tick(10000) // enough to trigger new session
+                recordSession {
+                    clock.tick(10000) // enough to trigger new session
                     embrace.endSession()
                 }
             },
@@ -55,8 +54,8 @@ internal class ManualSessionTest {
                     FakeSessionBehavior(sessionControlEnabled = true)
             },
             testCaseAction = {
-                harness.recordSession {
-                    harness.overriddenClock.tick(10000)
+                recordSession {
+                    clock.tick(10000)
                     embrace.endSession()
                 }
             },
@@ -74,8 +73,8 @@ internal class ManualSessionTest {
                 overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
             },
             testCaseAction = {
-                harness.recordSession {
-                    harness.overriddenClock.tick(1000) // not enough to trigger new session
+                recordSession {
+                    clock.tick(1000) // not enough to trigger new session
                     embrace.endSession()
                 }
             },

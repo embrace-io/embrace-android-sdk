@@ -2,6 +2,7 @@
 
 package io.embrace.android.embracesdk
 
+import android.app.Activity
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace.AppFramework
 import io.embrace.android.embracesdk.IntegrationTestRule.Harness
@@ -31,6 +32,7 @@ import io.embrace.android.embracesdk.internal.injection.createAndroidServicesMod
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.utils.Provider
 import org.junit.rules.ExternalResource
+import org.robolectric.Robolectric
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -77,10 +79,11 @@ import org.junit.rules.ExternalResource
 internal class IntegrationTestRule(
     private val harnessSupplier: Provider<Harness> = { Harness() }
 ) : ExternalResource() {
+
     /**
-     * The [Embrace] instance that can be used for testing
+     * Used to perform actions on the Embrace class under test
      */
-    val embrace = Embrace.getInstance()
+    lateinit var action: EmbraceActionInterface
 
     /**
      * Instance of the test harness that is recreating on every test iteration
@@ -95,11 +98,11 @@ internal class IntegrationTestRule(
      */
     fun runTest(
         setupAction: Harness.() -> Unit = {},
-        testCaseAction: IntegrationTestRule.() -> Unit,
+        testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: IntegrationTestRule.() -> Unit,
     ) {
         setupAction(harness)
-        testCaseAction(this)
+        testCaseAction(action)
         assertAction(this)
     }
 
@@ -108,6 +111,7 @@ internal class IntegrationTestRule(
      */
     override fun before() {
         harness = harnessSupplier.invoke()
+        action = EmbraceActionInterface(harness)
         with(harness) {
             bootstrapper = ModuleInitBootstrapper(
                 initModule = overriddenInitModule,
@@ -136,17 +140,68 @@ internal class IntegrationTestRule(
         Embrace.getImpl().stop()
     }
 
-    @Suppress("DEPRECATION")
-    fun startSdk(
-        context: Context = harness.overriddenCoreModule.context,
-        appFramework: AppFramework = harness.appFramework,
-        configServiceProvider: (framework: io.embrace.android.embracesdk.internal.payload.AppFramework) -> ConfigService = { harness.overriddenConfigService }
-    ) {
-        Embrace.getImpl().start(context, appFramework, configServiceProvider)
-    }
+    /**
+     * Interface for performing actions on the [Embrace] instance under test
+     */
+    internal class EmbraceActionInterface(private val harness: Harness) {
 
-    fun stopSdk() {
-        Embrace.getImpl().stop()
+        /**
+         * The [Embrace] instance that can be used for testing
+         */
+        val embrace = Embrace.getInstance()
+
+        val clock: FakeClock
+            get() = harness.overriddenClock
+
+        val configService: FakeConfigService
+            get() = harness.overriddenConfigService
+
+        fun stopSdk() {
+            Embrace.getImpl().stop()
+        }
+
+        @Suppress("DEPRECATION")
+        fun startSdk(
+            context: Context = harness.overriddenCoreModule.context,
+            appFramework: AppFramework = harness.appFramework,
+            configServiceProvider: (framework: io.embrace.android.embracesdk.internal.payload.AppFramework) -> ConfigService = { harness.overriddenConfigService }
+        ) {
+            Embrace.getImpl().start(context, appFramework, configServiceProvider)
+        }
+
+        /**
+         * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
+         * parameter: any code inside the lambda will be executed, so can be used to add breadcrumbs,
+         * send log messages etc, while the session is active. The end session message is returned so
+         * that the caller can perform further assertions if needed.
+         *
+         * This function fakes the lifecycle events that trigger a session start & end. The session
+         * should always be 30s long. Additionally, it performs assertions against fields that
+         * are guaranteed not to change in the start/end message.
+         */
+        internal fun recordSession(
+            simulateActivityCreation: Boolean = false,
+            action: EmbraceActionInterface.() -> Unit = {}
+        ) {
+            // get the activity service & simulate the lifecycle event that triggers a new session.
+            val activityService = checkNotNull(Embrace.getImpl().activityService)
+            val activityController =
+                if (simulateActivityCreation) Robolectric.buildActivity(Activity::class.java) else null
+
+            activityController?.create()
+            activityController?.start()
+            activityService.onForeground()
+            activityController?.resume()
+
+            // perform a custom action during the session boundary, e.g. adding a breadcrumb.
+            action()
+
+            // end session 30s later by entering background
+            harness.overriddenClock.tick(30000)
+            activityController?.pause()
+            activityController?.stop()
+            activityService.onBackground()
+        }
     }
 
     /**
@@ -183,9 +238,6 @@ internal class IntegrationTestRule(
         val fakeAnrModule: AnrModule = FakeAnrModule(),
         val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()
     ) {
-        fun logWebView(url: String) {
-            Embrace.getImpl().logWebView(url)
-        }
     }
 
     companion object {

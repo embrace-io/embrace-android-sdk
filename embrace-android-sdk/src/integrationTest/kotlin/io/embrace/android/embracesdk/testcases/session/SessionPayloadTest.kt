@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -22,7 +21,7 @@ internal class SessionPayloadTest {
     fun `device and app attributes are present in session envelope`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession()
+                recordSession()
 
             },
             assertAction = {

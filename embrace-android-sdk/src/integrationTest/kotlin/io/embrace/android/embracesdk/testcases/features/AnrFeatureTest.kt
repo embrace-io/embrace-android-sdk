@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.recordSession
 import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -73,10 +71,10 @@ internal class AnrFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.triggerAnr(firstSampleCount)
-                    secondAnrStartTime = harness.overriddenClock.now()
-                    harness.triggerAnr(secondSampleCount)
+                recordSession {
+                    triggerAnr(firstSampleCount)
+                    secondAnrStartTime = clock.now()
+                    triggerAnr(secondSampleCount)
                 }
             },
             assertAction = {
@@ -97,8 +95,8 @@ internal class AnrFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.triggerAnr(sampleCount)
+                recordSession {
+                    triggerAnr(sampleCount)
                 }
             },
             assertAction = {
@@ -121,10 +119,10 @@ internal class AnrFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     repeat(intervalCount) { index ->
-                        startTimes.add(harness.overriddenClock.now())
-                        harness.triggerAnr(initialSamples + (index * extraSamples))
+                        startTimes.add(clock.now())
+                        triggerAnr(initialSamples + (index * extraSamples))
                     }
                 }
             },
@@ -153,12 +151,14 @@ internal class AnrFeatureTest {
     @Test
     fun `in progress ANR added to payload`() {
         val sampleCount = 10
+        var endTime: Long = -1
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.triggerAnr(sampleCount, incomplete = true)
+                recordSession {
+                    triggerAnr(sampleCount, incomplete = true)
                 }
+                endTime = clock.now()
             },
             assertAction = {
                 val message = harness.getSingleSession()
@@ -166,7 +166,7 @@ internal class AnrFeatureTest {
                 // assert ANRs received
                 val spans = message.findAnrSpans()
                 val span = spans.single()
-                assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = testRule.harness.overriddenClock.now())
+                assertAnrReceived(span, START_TIME_MS, sampleCount, endTime = endTime)
             }
         )
     }
@@ -213,7 +213,7 @@ internal class AnrFeatureTest {
      * Triggers an ANR by simulating the main thread getting blocked & unblocked. Time is controlled
      * with a fake Clock instance & a blockable executor that runs the blockage checks.
      */
-    private fun IntegrationTestRule.Harness.triggerAnr(
+    private fun IntegrationTestRule.EmbraceActionInterface.triggerAnr(
         sampleCount: Int,
         intervalMs: Long = INTERVAL_MS,
         incomplete: Boolean = false
@@ -232,7 +232,7 @@ internal class AnrFeatureTest {
 
             if (!incomplete) {
                 // simulate the main thread becoming responsive again, ending the ANR interval
-                blockedThreadDetector.onTargetThreadResponse(overriddenClock.now())
+                blockedThreadDetector.onTargetThreadResponse(clock.now())
             }
 
             // AnrService#getCapturedData() currently gets a Callable with a timeout, so we

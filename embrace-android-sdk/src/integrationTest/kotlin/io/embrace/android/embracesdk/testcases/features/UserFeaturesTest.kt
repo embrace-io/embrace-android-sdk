@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -31,19 +30,19 @@ internal class UserFeaturesTest {
                 }
             },
             testCaseAction = {
-                startSdk(harness.overriddenCoreModule.context)
-                harness.recordSession()
-                harness.recordSession {
+                startSdk()
+                recordSession()
+                recordSession {
                     embrace.clearUserIdentifier()
                     embrace.clearUsername()
                     embrace.clearUserEmail()
                 }
-                harness.recordSession {
+                recordSession {
                     embrace.setUserIdentifier("newId")
                     embrace.setUsername("newUserName")
                     embrace.setUserEmail("new@domain.com")
                 }
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 val sessions = harness.getSentSessions(4)

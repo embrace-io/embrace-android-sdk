@@ -20,9 +20,9 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.semconv.HttpAttributes
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -32,7 +32,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
-import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -49,11 +48,11 @@ internal class EmbraceInternalInterfaceTest {
 
     @Test
     fun `no NPEs when SDK not started`() {
-        assertFalse(testRule.embrace.isStarted)
+        assertFalse(testRule.action.embrace.isStarted)
 
         testRule.runTest(
             testCaseAction = {
-                with(testRule.embrace.internalInterface) {
+                with(testRule.action.embrace.internalInterface) {
                     logInfo("", null)
                     logWarning("", null, null)
                     logError("", null, null, false)
@@ -112,19 +111,19 @@ internal class EmbraceInternalInterfaceTest {
                 }
             },
             assertAction = {
-                assertFalse(testRule.embrace.isStarted)
+                assertFalse(testRule.action.embrace.isStarted)
             }
         )
     }
 
     @Test
     fun `network recording methods work as expected`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
-                harness.overriddenClock.tick()
-                harness.overriddenConfigService.updateListeners()
-                harness.overriddenClock.tick()
+        with(testRule.action) {
+            startSdk()
+            recordSession {
+                clock.tick()
+                configService.updateListeners()
+                clock.tick()
                 embrace.internalInterface.recordCompletedNetworkRequest(
                     url = URL,
                     httpMethod = "GET",
@@ -171,6 +170,8 @@ internal class EmbraceInternalInterfaceTest {
                     )
                 )
             }
+        }
+        with(testRule) {
             val session = harness.getSingleSession()
 
             val spans = checkNotNull(session.data.spans)
@@ -191,8 +192,8 @@ internal class EmbraceInternalInterfaceTest {
 
         testRule.runTest(
             testCaseAction = {
-                startSdk(context = harness.overriddenCoreModule.context)
-                harness.recordSession {
+                startSdk()
+                recordSession {
                     embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
                 }
             },
@@ -228,8 +229,8 @@ internal class EmbraceInternalInterfaceTest {
                     })
             },
             testCaseAction = {
-                startSdk(context = harness.overriddenCoreModule.context)
-                harness.recordSession {
+                startSdk()
+                recordSession {
                     assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
                     assertFalse(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
                     assertFalse(embrace.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
@@ -244,9 +245,9 @@ internal class EmbraceInternalInterfaceTest {
     fun `set process as started by notification works as expected`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk(context = harness.overriddenCoreModule.context)
+                startSdk()
                 embrace.internalInterface.setProcessStartedByNotification()
-                harness.recordSession(simulateActivityCreation = true) { }
+                recordSession(simulateActivityCreation = true) { }
             },
             assertAction = {
                 assertEquals(EventType.START, harness.overriddenDeliveryModule.deliveryService.lastEventSentAsync?.event?.type)
@@ -256,65 +257,74 @@ internal class EmbraceInternalInterfaceTest {
 
     @Test
     fun `test sdk time`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
-            harness.overriddenClock.tick()
-            assertEquals(harness.overriddenClock.now(), embrace.internalInterface.getSdkCurrentTime())
+        with(testRule.action) {
+            startSdk()
+            assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
+            clock.tick()
+            assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
         }
     }
 
     @Test
     fun `internal tracing APIs work as expected`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
-            harness.recordSession {
+        with(testRule.action) {
+            startSdk()
+            recordSession {
                 with(embrace.internalInterface) {
                     val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
-                    harness.overriddenClock.tick(10)
-                    val childSpanId = checkNotNull(startSpan(name = "tz-child-span", parentSpanId = parentSpanId))
+                    clock.tick(10)
+                    val childSpanId =
+                        checkNotNull(startSpan(name = "tz-child-span", parentSpanId = parentSpanId))
                     addSpanAttribute(spanId = parentSpanId, "testkey", "testvalue")
-                    addSpanEvent(spanId = childSpanId, name = "cool event bro", attributes = mapOf("key" to "value"))
+                    addSpanEvent(
+                        spanId = childSpanId,
+                        name = "cool event bro",
+                        attributes = mapOf("key" to "value")
+                    )
                     recordSpan(name = "tz-another-span", parentSpanId = parentSpanId) { }
                     recordCompletedSpan(
                         name = "tz-old-span",
-                        startTimeMs = harness.overriddenClock.now() - 1L,
+                        startTimeMs = clock.now() - 1L,
                         endTimeMs = embrace.internalInterface.getSdkCurrentTime(),
                     )
                     stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
                     stopSpan(parentSpanId)
                 }
             }
-            val sessionPayload = harness.getSingleSession()
+            with(testRule) {
+                val sessionPayload = harness.getSingleSession()
 
-            val unfilteredSpans = checkNotNull(sessionPayload.data.spans)
-            val spans = checkNotNull(unfilteredSpans.filter { checkNotNull(it.name).startsWith("tz-") }.associateBy { it.name })
-            assertEquals(4, spans.size)
-            with(checkNotNull(spans["tz-parent-span"])) {
-                assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
+                val unfilteredSpans = checkNotNull(sessionPayload.data.spans)
+                val spans =
+                    checkNotNull(unfilteredSpans.filter { checkNotNull(it.name).startsWith("tz-") }
+                        .associateBy { it.name })
+                assertEquals(4, spans.size)
+                with(checkNotNull(spans["tz-parent-span"])) {
+                    assertEquals("testvalue", attributes?.findAttributeValue("testkey"))
+                }
+                with(checkNotNull(spans["tz-child-span"])) {
+                    val spanEvent = checkNotNull(events)[0]
+                    val spanAttrs = checkNotNull(spanEvent.attributes)
+                    assertEquals("cool event bro", spanEvent.name)
+                    assertEquals("value", spanAttrs.findAttributeValue("key"))
+                    assertEquals(Span.Status.ERROR, status)
+                }
+                with(checkNotNull(spans["tz-another-span"])) {
+                    assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
+                }
+                assertNotNull(spans["tz-old-span"])
             }
-            with(checkNotNull(spans["tz-child-span"])) {
-                val spanEvent = checkNotNull(events)[0]
-                val spanAttrs = checkNotNull(spanEvent.attributes)
-                assertEquals("cool event bro", spanEvent.name)
-                assertEquals("value", spanAttrs.findAttributeValue("key"))
-                assertEquals(Span.Status.ERROR, status)
-            }
-            with(checkNotNull(spans["tz-another-span"])) {
-                assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
-            }
-            assertNotNull(spans["tz-old-span"])
         }
     }
 
     @Test
     fun `span logging across sessions`() {
-        with(testRule) {
-            startSdk(context = harness.overriddenCoreModule.context)
+        with(testRule.action) {
+            startSdk()
             val internalInterface = checkNotNull(embrace.internalInterface)
             var stoppedParentId = ""
             var activeParentId = ""
-            harness.recordSession {
+            recordSession {
                 stoppedParentId = checkNotNull(internalInterface.startSpan("parent"))
                 activeParentId = checkNotNull(internalInterface.startSpan("active-parent"))
                 assertTrue(
@@ -330,7 +340,7 @@ internal class EmbraceInternalInterfaceTest {
                 assertTrue(internalInterface.stopSpan(stoppedParentId))
             }
 
-            harness.recordSession {
+            recordSession {
                 assertTrue(
                     internalInterface.stopSpan(
                         checkNotNull(
@@ -340,7 +350,12 @@ internal class EmbraceInternalInterfaceTest {
                         )
                     )
                 )
-                assertNull(internalInterface.startSpan(name = "stopped-parent-child", parentSpanId = stoppedParentId))
+                assertNull(
+                    internalInterface.startSpan(
+                        name = "stopped-parent-child",
+                        parentSpanId = stoppedParentId
+                    )
+                )
                 assertTrue(
                     internalInterface.stopSpan(
                         checkNotNull(
@@ -353,6 +368,8 @@ internal class EmbraceInternalInterfaceTest {
                 )
                 assertTrue(internalInterface.stopSpan(activeParentId))
             }
+        }
+        with(testRule) {
             val sessions = harness.getSentSessions(2)
             val s1 = sessions[0]
             val s2 = sessions[1]

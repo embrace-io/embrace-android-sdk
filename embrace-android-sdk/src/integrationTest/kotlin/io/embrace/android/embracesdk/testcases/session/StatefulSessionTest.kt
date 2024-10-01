@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -34,12 +33,12 @@ internal class StatefulSessionTest {
     fun `session messages are recorded`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.addBreadcrumb("Hello, World!")
                 }
 
                 // capture another session
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 // verify first session
@@ -70,8 +69,8 @@ internal class StatefulSessionTest {
     fun `nested state calls`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    harness.recordSession()
+                recordSession {
+                    recordSession()
                 }
             },
             assertAction = {

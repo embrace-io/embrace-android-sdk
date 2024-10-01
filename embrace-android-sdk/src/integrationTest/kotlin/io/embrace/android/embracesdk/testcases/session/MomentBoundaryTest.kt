@@ -1,12 +1,11 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentSessions
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.getSingleSession
+import io.embrace.android.embracesdk.internal.payload.EventType
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -31,7 +30,7 @@ internal class MomentBoundaryTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.endAppStartup()
                     embrace.startMoment(MOMENT_NAME)
                     embrace.endMoment(MOMENT_NAME)
@@ -70,10 +69,10 @@ internal class MomentBoundaryTest {
     fun `startup moment completes within two sessions`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.startMoment(MOMENT_NAME)
                 }
-                harness.recordSession {
+                recordSession {
                     embrace.endAppStartup()
                     embrace.endMoment(MOMENT_NAME)
                 }

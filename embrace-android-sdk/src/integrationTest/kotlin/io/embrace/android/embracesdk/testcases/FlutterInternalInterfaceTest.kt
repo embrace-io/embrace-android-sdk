@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.recordSession
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -54,7 +53,7 @@ internal class FlutterInternalInterfaceTest {
     fun `flutter without values should return defaults`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 val session = harness.getSingleSession()
@@ -70,7 +69,7 @@ internal class FlutterInternalInterfaceTest {
     fun `flutter methods work in current session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.setDartVersion("28.9.1")
                     embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
                 }
@@ -89,11 +88,11 @@ internal class FlutterInternalInterfaceTest {
     fun `flutter metadata already present from previous session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.setDartVersion("28.9.1")
                     embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
                 }
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 val session = harness.getSentSessions(2).last()
@@ -109,12 +108,12 @@ internal class FlutterInternalInterfaceTest {
     fun `setting null is ignored`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.setDartVersion("28.9.1")
                     embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
                 }
 
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.setDartVersion(null)
                     embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion(null)
                 }
@@ -133,12 +132,12 @@ internal class FlutterInternalInterfaceTest {
     fun `flutter values from current session override previous values`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.setDartVersion("28.9.1")
                     embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.3")
                 }
 
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.setDartVersion("28.9.2")
                     embrace.flutterInternalInterface?.setEmbraceFlutterSdkVersion("1.2.4")
                 }
@@ -163,7 +162,7 @@ internal class FlutterInternalInterfaceTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.logHandledDartException(
                         expectedStacktrace,
                         expectedName,
@@ -206,7 +205,7 @@ internal class FlutterInternalInterfaceTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.flutterInternalInterface?.logUnhandledDartException(
                         expectedStacktrace,
                         expectedName,

@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -27,11 +26,11 @@ internal class SessionSpanTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     ids.add(embrace.currentSessionId)
                 }
                 ids.add(embrace.currentSessionId)
-                harness.recordSession {
+                recordSession {
                     ids.add(embrace.currentSessionId)
                 }
             },
@@ -48,7 +47,7 @@ internal class SessionSpanTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     repeat(101) {
                         embrace.addBreadcrumb("breadcrumb $it")
                     }

@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -33,7 +32,7 @@ internal class PushNotificationApiTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
                 }
             },
@@ -49,7 +48,7 @@ internal class PushNotificationApiTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
                 }
             },
@@ -65,7 +64,7 @@ internal class PushNotificationApiTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
                 }
             },
@@ -81,7 +80,7 @@ internal class PushNotificationApiTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
                 }
             },
@@ -102,7 +101,7 @@ internal class PushNotificationApiTest {
             },
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
                 }
             },

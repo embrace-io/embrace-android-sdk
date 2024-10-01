@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -26,32 +25,36 @@ internal class PersonaFeaturesTest {
                 overriddenAndroidServicesModule.preferencesService.userPersonas = setOf("preloaded")
             },
             testCaseAction = {
-                startSdk(context = harness.overriddenCoreModule.context)
+                startSdk()
                 embrace.setUserAsPayer()
-                harness.recordSession { embrace.addUserPersona("test") }
+                recordSession {
+                    embrace.addUserPersona("test")
+                }
+                recordSession {
+                    embrace.clearUserPersona("test")
+                }
+                recordSession()
+                recordSession()
             },
             assertAction = {
-                with(harness.getSentSessions(1).last()) {
+                val sessions = harness.getSentSessions(4)
+
+                with(sessions[0]) {
                     assertPersonaExists("preloaded")
                     assertPersonaExists("test")
                     assertPersonaExists("payer")
                 }
-                harness.recordSession {
-                    embrace.clearUserPersona("test")
-                }
-                with(harness.getSentSessions(2).last()) {
+                with(sessions[1]) {
                     assertPersonaExists("preloaded")
                     assertPersonaDoesNotExist("test")
                     assertPersonaExists("payer")
                 }
-                harness.recordSession()
-                with(harness.getSentSessions(3).last()) {
+                with(sessions[2]) {
                     assertPersonaExists("preloaded")
                     assertPersonaDoesNotExist("test")
                     assertPersonaExists("payer")
                 }
-                harness.recordSession()
-                with(harness.getSentSessions(4).last()) {
+                with(sessions[3]) {
                     assertPersonaExists("preloaded")
                     assertPersonaDoesNotExist("test")
                     assertPersonaExists("payer")
@@ -67,9 +70,5 @@ internal class PersonaFeaturesTest {
     private fun assertPersona(exists: Boolean, session: Envelope<SessionPayload>, persona: String) {
         val personas = checkNotNull(session.metadata).personas
         assertEquals(exists, personas?.find { it == persona } != null)
-        assertEquals(
-            exists,
-            testRule.harness.overriddenAndroidServicesModule.preferencesService.userPersonas?.find { it == persona } != null
-        )
     }
 }

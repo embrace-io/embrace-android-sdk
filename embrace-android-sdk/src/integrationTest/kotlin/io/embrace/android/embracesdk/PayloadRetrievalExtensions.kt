@@ -165,39 +165,6 @@ private fun IntegrationTestRule.Harness.checkNextSavedSessionEnvelope(
     }
 }
 
-/**
- * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
- * parameter: any code inside the lambda will be executed, so can be used to add breadcrumbs,
- * send log messages etc, while the session is active. The end session message is returned so
- * that the caller can perform further assertions if needed.
- *
- * This function fakes the lifecycle events that trigger a session start & end. The session
- * should always be 30s long. Additionally, it performs assertions against fields that
- * are guaranteed not to change in the start/end message.
- */
-internal fun IntegrationTestRule.Harness.recordSession(
-    simulateActivityCreation: Boolean = false,
-    action: () -> Unit = {}
-) {
-    // get the activity service & simulate the lifecycle event that triggers a new session.
-    val activityService = checkNotNull(Embrace.getImpl().activityService)
-    val activityController =
-        if (simulateActivityCreation) Robolectric.buildActivity(Activity::class.java) else null
-
-    activityController?.create()
-    activityController?.start()
-    activityService.onForeground()
-    activityController?.resume()
-
-    // perform a custom action during the session boundary, e.g. adding a breadcrumb.
-    action()
-
-    // end session 30s later by entering background
-    overriddenClock.tick(30000)
-    activityController?.pause()
-    activityController?.stop()
-    activityService.onBackground()
-}
 
 
 /*** TEST INFRA ***/

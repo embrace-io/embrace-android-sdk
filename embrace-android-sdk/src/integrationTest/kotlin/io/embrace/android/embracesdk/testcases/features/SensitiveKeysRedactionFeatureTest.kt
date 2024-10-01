@@ -2,11 +2,9 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -22,19 +20,19 @@ internal class SensitiveKeysRedactionFeatureTest {
         IntegrationTestRule.Harness(startImmediately = false)
     }
 
-    @Before
-    fun setUp() {
-        testRule.harness.overriddenConfigService.sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-            listOf("password")
-        )
-    }
+    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+        listOf("password")
+    )
 
     @Test
     fun `custom span properties are redacted if they are sensitive`() {
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.sensitiveKeysBehavior = sensitiveKeysBehavior
+            },
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     val span = embrace.startSpan("test span")
                     span?.addAttribute("password", "1234")
                     span?.addAttribute("not a password", "1234")
@@ -56,9 +54,12 @@ internal class SensitiveKeysRedactionFeatureTest {
     @Test
     fun `custom span events are redacted if they are sensitive`() {
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.sensitiveKeysBehavior = sensitiveKeysBehavior
+            },
             testCaseAction = {
                 startSdk()
-                harness.recordSession {
+                recordSession {
                     val span = embrace.startSpan("test span")
                     span?.addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
                     span?.addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))

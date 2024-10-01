@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentMoments
+import io.embrace.android.embracesdk.internal.payload.EventType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -26,13 +26,14 @@ internal class MomentApiTest {
     fun customMomentTest() {
         val delay = 5000L
         val props = mapOf("key" to "value")
-        val startTime = testRule.harness.overriddenClock.now()
+        var startTime: Long = -1
 
         testRule.runTest(
             testCaseAction = {
                 // Send start moment
+                startTime = clock.now()
                 embrace.startMoment(MOMENT_NAME, null, props)
-                harness.overriddenClock.tick(delay)
+                clock.tick(delay)
                 embrace.endMoment(MOMENT_NAME)
             },
             assertAction = {

@@ -7,14 +7,11 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,23 +26,22 @@ internal class ThermalStateFeatureTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
-    @Before
-    fun setUp() {
-        testRule.harness.overriddenConfigService.autoDataCaptureBehavior =
-            FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = true)
-    }
+    private val autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = true)
 
     @Test
     fun `single thermal state change generates a snapshot`() {
         var startTimeMs = 0L
 
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.autoDataCaptureBehavior = autoDataCaptureBehavior
+            },
             testCaseAction = {
-                harness.recordSession {
-                    startTimeMs = harness.overriddenClock.now()
+                recordSession {
+                    startTimeMs = clock.now()
 
                     val dataSource =
-                        checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
+                        checkNotNull(testRule.bootstrapper.featureModule.thermalStateDataSource.dataSource)
                     dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
                 }
             },
@@ -73,16 +69,19 @@ internal class ThermalStateFeatureTest {
         var startTimeMs = 0L
 
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.autoDataCaptureBehavior = autoDataCaptureBehavior
+            },
             testCaseAction = {
-                harness.recordSession {
-                    startTimeMs = harness.overriddenClock.now()
+                recordSession {
+                    startTimeMs = clock.now()
 
                     val dataSource =
-                        checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
+                        checkNotNull(testRule.bootstrapper.featureModule.thermalStateDataSource.dataSource)
                     dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
-                    harness.overriddenClock.tick(tickTimeMs)
+                    clock.tick(tickTimeMs)
                     dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_MODERATE)
-                    harness.overriddenClock.tick(tickTimeMs)
+                    clock.tick(tickTimeMs)
                     dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
                 }
             },

@@ -2,15 +2,13 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -30,13 +28,13 @@ internal class NetworkStatusFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    startTimeMs = harness.overriddenClock.now()
+                recordSession {
+                    startTimeMs = clock.now()
 
                     // look inside embrace internals as there isn't a good way to trigger this E2E
                     val dataSource =
-                        checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
-                    harness.overriddenClock.tick(tickTimeMs)
+                        checkNotNull(testRule.bootstrapper.featureModule.networkStatusDataSource.dataSource)
+                    clock.tick(tickTimeMs)
                     dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
                 }
             },
@@ -71,8 +69,8 @@ internal class NetworkStatusFeatureTest {
         var startTimeMs: Long = 0
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    startTimeMs = harness.overriddenClock.now()
+                recordSession {
+                    startTimeMs = clock.now()
                 }
             },
             assertAction = {

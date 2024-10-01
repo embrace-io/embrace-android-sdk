@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.toMap
 import io.embrace.android.embracesdk.validatePayloadAgainstGoldenFile
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
@@ -35,11 +34,11 @@ internal class SessionApiTest {
      */
     @Test
     fun sessionEndMessageTest() {
-        val startTime = testRule.harness.overriddenClock.now()
+        val startTime = testRule.action.clock.now()
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.setUserIdentifier("some id")
                     embrace.setUserEmail("user@email.com")
                     embrace.setUsername("John Doe")

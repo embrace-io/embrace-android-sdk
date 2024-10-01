@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -33,7 +32,7 @@ internal class UnityInternalInterfaceTest {
     fun `unity without values should return defaults`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession()
+                recordSession()
 
             },
             assertAction = {
@@ -50,7 +49,7 @@ internal class UnityInternalInterfaceTest {
     fun `unity methods work in current session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
                 }
             },
@@ -69,10 +68,10 @@ internal class UnityInternalInterfaceTest {
     fun `unity metadata already present from previous session`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
                 }
-                harness.recordSession()
+                recordSession()
             },
             assertAction = {
                 val session = harness.getSentSessions(2).last()
@@ -89,11 +88,11 @@ internal class UnityInternalInterfaceTest {
     fun `unity values from current session override previous values`() {
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
+                recordSession {
                     embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
                 }
 
-                harness.recordSession {
+                recordSession {
                     embrace.unityInternalInterface?.setUnityMetaData("28.9.2", "new unity build id", "1.2.4")
                 }
             },

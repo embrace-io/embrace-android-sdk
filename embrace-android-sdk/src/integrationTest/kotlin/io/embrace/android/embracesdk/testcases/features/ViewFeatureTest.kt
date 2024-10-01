@@ -4,11 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.findSpansOfType
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -27,12 +25,12 @@ internal class ViewFeatureTest {
 
         testRule.runTest(
             testCaseAction = {
-                harness.recordSession {
-                    startTimeMs = harness.overriddenClock.now()
+                recordSession {
+                    startTimeMs = clock.now()
                     embrace.startView("MyView")
-                    harness.overriddenClock.tick(1000L)
+                    clock.tick(1000L)
                     embrace.startView("AnotherView")
-                    harness.overriddenClock.tick(2000L)
+                    clock.tick(2000L)
                     embrace.endView("MyView")
                     embrace.endView("AnotherView")
                 }

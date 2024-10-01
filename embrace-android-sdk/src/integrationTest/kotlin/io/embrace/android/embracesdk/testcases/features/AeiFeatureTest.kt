@@ -10,7 +10,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
 import io.embrace.android.embracesdk.getSentLogPayloads
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.recordSession
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -36,8 +35,8 @@ internal class AeiFeatureTest {
                 setupFakeAeiData()
             },
             testCaseAction = {
-                testRule.startSdk(context = ApplicationProvider.getApplicationContext())
-                harness.recordSession()
+                startSdk(context = ApplicationProvider.getApplicationContext())
+                recordSession()
             },
             assertAction = {
                 val payload = harness.getSentLogPayloads(1).single()

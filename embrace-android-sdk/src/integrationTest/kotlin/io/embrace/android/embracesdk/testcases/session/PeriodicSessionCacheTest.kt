@@ -2,17 +2,15 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.IntegrationTestRule
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.findSessionSpan
 import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.getSentSessions
 import io.embrace.android.embracesdk.getSingleSession
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
-import io.embrace.android.embracesdk.recordSession
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.PeriodicCacheWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -44,9 +42,9 @@ internal class PeriodicSessionCacheTest {
             val executor = (harness.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
             val deliveryService = harness.overriddenDeliveryModule.deliveryService
 
-            harness.recordSession {
+            action.recordSession {
                 executor.runCurrentlyBlocked()
-                embrace.addSessionProperty("Test", "Test", true)
+                action.embrace.addSessionProperty("Test", "Test", true)
 
                 val endMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
                 val span = endMessage.findSpanSnapshotsOfType(EmbType.Ux.Session).single()

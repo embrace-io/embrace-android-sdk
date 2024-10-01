@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -28,7 +29,6 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
-import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.utils.Provider
 import org.junit.rules.ExternalResource
 
@@ -163,7 +163,7 @@ internal class IntegrationTestRule(
         val overriddenDeliveryModule: FakeDeliveryModule =
             FakeDeliveryModule(
                 deliveryService = deliveryService,
-                payloadStore = V1PayloadStore(deliveryService)
+                payloadStore = FakePayloadStore(deliveryService)
             ),
         val fakeAnrModule: AnrModule = FakeAnrModule(),
         val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule()

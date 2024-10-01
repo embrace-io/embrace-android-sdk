@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.assertions
 
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -15,8 +15,8 @@ internal fun assertInternalErrorLogged(
     errorMessage: String
 ) {
     bootstrapper.logModule.logOrchestrator.flush(false)
-    val deliveryService = bootstrapper.deliveryModule.deliveryService as FakeDeliveryService
-    val logs = deliveryService.lastSentLogPayloads.mapNotNull { it.data.logs }
+    val payloadStore = bootstrapper.deliveryModule.payloadStore as FakePayloadStore
+    val logs = payloadStore.storedLogPayloads.mapNotNull { it.first.data.logs }
         .flatten()
         .filter { log ->
             log.attributes?.findAttributeValue("emb.type") == "sys.internal"

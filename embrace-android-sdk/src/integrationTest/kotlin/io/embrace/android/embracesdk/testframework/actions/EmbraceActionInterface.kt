@@ -45,7 +45,7 @@ internal class EmbraceActionInterface(private val setup: EmbraceSetupInterface) 
      * should always be 30s long. Additionally, it performs assertions against fields that
      * are guaranteed not to change in the start/end message.
      */
-    internal fun recordSession(
+    internal inline fun recordSession(
         simulateActivityCreation: Boolean = false,
         action: EmbraceActionInterface.() -> Unit = {}
     ) {

@@ -87,7 +87,7 @@ internal class IntegrationTestRule(
      * assertions. This aims to enforce the better compartmentalisation & reuse of test code within
      * the integration test suite.
      */
-    fun runTest(
+    inline fun runTest(
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: EmbraceAssertionInterface.() -> Unit,

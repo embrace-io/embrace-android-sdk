@@ -1,6 +1,10 @@
 package io.embrace.android.embracesdk.internal.comms.delivery
 
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
+import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.fakes.FakeApiService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
@@ -14,10 +18,6 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.fakePriorityWorker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.getLastHeartbeatTimeMs
-import io.embrace.android.embracesdk.getSessionId
-import io.embrace.android.embracesdk.getStartTime
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger

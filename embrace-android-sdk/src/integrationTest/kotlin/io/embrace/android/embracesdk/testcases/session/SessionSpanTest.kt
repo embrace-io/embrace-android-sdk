@@ -54,7 +54,7 @@ internal class SessionSpanTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 assertEquals(100, session.getSessionSpan()?.events?.size)
             }
         )

@@ -269,7 +269,7 @@ internal class NetworkRequestApiTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val spans =
                     checkNotNull(session.data.spans?.filter { it.attributes?.findAttributeValue("http.request.method") != null })
                 assertEquals(
@@ -363,7 +363,7 @@ internal class NetworkRequestApiTest {
     }
 
     private fun validateAndReturnExpectedNetworkSpan(): Span {
-        val session = testRule.assertion.getSingleSession()
+        val session = testRule.assertion.getSingleSessionEnvelope()
 
         val unfilteredSpans = checkNotNull(session.data.spans)
         val spans =

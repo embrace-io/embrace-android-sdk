@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import com.squareup.moshi.Types
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
-import io.embrace.android.embracesdk.getSessionId
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import org.junit.Assert.assertEquals

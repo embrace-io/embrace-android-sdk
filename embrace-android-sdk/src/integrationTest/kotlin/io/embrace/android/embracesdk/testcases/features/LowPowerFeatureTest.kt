@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -37,11 +38,8 @@ internal class LowPowerFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
-                val spans = message.findSpansOfType(EmbType.System.LowPower)
-                assertEquals(1, spans.size)
-                val span = spans.single()
-
+                val message = getSingleSessionEnvelope()
+                val span = message.findSpanOfType(EmbType.System.LowPower)
                 val attrs = checkNotNull(span.attributes)
                 assertEquals("emb-device-low-power", span.name)
                 assertEquals("sys.low_power", attrs.findAttributeValue("emb.type"))

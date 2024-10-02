@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -6,44 +6,9 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnix
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
-
-/**
- * Finds the first Span Event matching the given [TelemetryType]
- */
-fun Span.findEventOfType(telemetryType: TelemetryType): SpanEvent {
-    val sanitizedEvents = checkNotNull(events) {
-        "No events found in span"
-    }
-    return checkNotNull(sanitizedEvents.single { it.hasFixedAttribute(telemetryType) }) {
-        "Event not found: $name"
-    }
-}
-
-/**
- * Finds the Span Events matching the given [TelemetryType]
- */
-fun Span.findEventsOfType(telemetryType: TelemetryType): List<SpanEvent> {
-    val sanitizedEvents = checkNotNull(events) {
-        "No events found in span"
-    }
-    return checkNotNull(sanitizedEvents.filter { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) }) {
-        "Events not found: $name"
-    }
-}
-
-/**
- * Returns true if an event exists with the given [TelemetryType]
- */
-fun Span.hasEventOfType(telemetryType: TelemetryType): Boolean {
-    val sanitizedEvents = checkNotNull(events) {
-        "No events found in span"
-    }
-    return sanitizedEvents.find { checkNotNull(it.attributes).hasFixedAttribute(telemetryType) } != null
-}
 
 /**
  * Returns the Session Span
@@ -121,6 +86,10 @@ fun Envelope<SessionPayload>.hasSpanOfType(telemetryType: TelemetryType): Boolea
     return findSpansOfType(telemetryType).isNotEmpty()
 }
 
+fun Envelope<SessionPayload>.findSpanSnapshotOfType(telemetryType: TelemetryType): Span {
+    return findSpanSnapshotsOfType(telemetryType).single()
+}
+
 fun Envelope<SessionPayload>.findSpanSnapshotsOfType(telemetryType: TelemetryType): List<Span> {
     val snapshots = checkNotNull(data.spanSnapshots) {
         "No span snapshots found in session message"
@@ -130,6 +99,6 @@ fun Envelope<SessionPayload>.findSpanSnapshotsOfType(telemetryType: TelemetryTyp
     }
 }
 
-fun Map<String, String>.findAttributeValue(key: String): String? {
-    return get(key)
+fun Envelope<SessionPayload>.hasSpanSnapshotsOfType(telemetryType: TelemetryType): Boolean {
+    return findSpanSnapshotsOfType(telemetryType).isNotEmpty()
 }

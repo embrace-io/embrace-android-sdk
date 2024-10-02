@@ -45,7 +45,7 @@ internal class UserFeaturesTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSentSessions(4)
+                val sessions = getSessionEnvelopes(4)
                 sessions[0].assertUserInfo("customId", "customUserName", "custom@domain.com")
                 sessions[1].assertUserInfo(null, null, null)
                 sessions[2].assertUserInfo("newId", "newUserName", "new@domain.com")

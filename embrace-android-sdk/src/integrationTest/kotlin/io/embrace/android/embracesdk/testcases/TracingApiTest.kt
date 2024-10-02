@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -129,7 +130,7 @@ internal class TracingApiTest {
                 results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 embrace.endAppStartup()
             }
-            val session = testRule.assertion.getSingleSession()
+            val session = testRule.assertion.getSingleSessionEnvelope()
             results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
             val sessionEndTime = clock.now()
             val allSpans = getSdkInitSpanFromBackgroundActivity() +
@@ -284,7 +285,7 @@ internal class TracingApiTest {
                 assertNotEquals(parentThreadId, childThreadId)
                 assertEquals(currentContext, currentContext2)
             }
-            val session = testRule.assertion.getSingleSession()
+            val session = testRule.assertion.getSingleSessionEnvelope()
             val spans = checkNotNull(session.data.spans).associateBy { it.name }
             val parentSpan = checkNotNull(spans["parent"])
             val childSpan = checkNotNull(spans["child"])
@@ -310,7 +311,7 @@ internal class TracingApiTest {
     }
 
     private fun getSdkInitSpanFromBackgroundActivity(): List<Span> {
-        val lastSentBackgroundActivity = testRule.assertion.getSentBackgroundActivities(1).last()
+        val lastSentBackgroundActivity = testRule.assertion.getSingleSessionEnvelope(ApplicationState.BACKGROUND)
         val spans = checkNotNull(lastSentBackgroundActivity.data.spans)
         return spans.filter { it.name == "emb-sdk-init" }
     }

@@ -37,7 +37,7 @@ internal class PersonaFeaturesTest {
                 recordSession()
             },
             assertAction = {
-                val sessions = getSentSessions(4)
+                val sessions = getSessionEnvelopes(4)
 
                 with(sessions[0]) {
                     assertPersonaExists("preloaded")

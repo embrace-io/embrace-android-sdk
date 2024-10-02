@@ -5,8 +5,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
-import io.embrace.android.embracesdk.findEventOfType
-import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findEventOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -38,7 +38,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = getSingleSession()
+                val msg = getSingleSessionEnvelope()
                 msg.assertNotification("notif-data")
             }
         )
@@ -54,7 +54,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = getSingleSession()
+                val msg = getSingleSessionEnvelope()
                 msg.assertNotification("data")
             }
         )
@@ -70,7 +70,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = getSingleSession()
+                val msg = getSingleSessionEnvelope()
                 msg.assertNotification("notif")
             }
         )
@@ -86,7 +86,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val msg = getSingleSession()
+                val msg = getSingleSessionEnvelope()
                 msg.assertNotification("unknown")
             }
         )
@@ -107,7 +107,7 @@ internal class PushNotificationApiTest {
                 }
             },
             assertAction = {
-                val payload = getSingleSession()
+                val payload = getSingleSessionEnvelope()
                 val sessionSpan = payload.findSessionSpan()
                 val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
                 assertTrue(checkNotNull(event.timestampNanos) > 0)

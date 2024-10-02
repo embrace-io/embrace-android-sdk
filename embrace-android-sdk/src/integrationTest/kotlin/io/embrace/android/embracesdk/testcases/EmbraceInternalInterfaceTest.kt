@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
-import io.embrace.android.embracesdk.findEventOfType
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.findSpansByName
+import io.embrace.android.embracesdk.assertions.findEventOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -172,7 +172,7 @@ internal class EmbraceInternalInterfaceTest {
             }
         }
         with(testRule) {
-            val session = assertion.getSingleSession()
+            val session = assertion.getSingleSessionEnvelope()
 
             val spans = checkNotNull(session.data.spans)
             val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
@@ -198,7 +198,7 @@ internal class EmbraceInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
                 val attrs = checkNotNull(tapBreadcrumb.attributes)
                 assertEquals("button", attrs.findAttributeValue("view.name"))
@@ -293,7 +293,7 @@ internal class EmbraceInternalInterfaceTest {
                 }
             }
             with(testRule) {
-                val sessionPayload = assertion.getSingleSession()
+                val sessionPayload = assertion.getSingleSessionEnvelope()
 
                 val unfilteredSpans = checkNotNull(sessionPayload.data.spans)
                 val spans =
@@ -371,7 +371,7 @@ internal class EmbraceInternalInterfaceTest {
             }
         }
         with(testRule) {
-            val sessions = assertion.getSentSessions(2)
+            val sessions = assertion.getSessionEnvelopes(2)
             val s1 = sessions[0]
             val s2 = sessions[1]
 

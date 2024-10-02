@@ -35,7 +35,7 @@ internal class UnityInternalInterfaceTest {
 
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertNull(res.hostedSdkVersion)
@@ -53,7 +53,7 @@ internal class UnityInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -73,7 +73,7 @@ internal class UnityInternalInterfaceTest {
                 recordSession()
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertEquals("28.9.1", res.hostedPlatformVersion)
@@ -96,7 +96,7 @@ internal class UnityInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val session = getSentSessions(2).last()
+                val session = getSessionEnvelopes(2).last()
                 val res = checkNotNull(session.resource)
                 assertEquals(AppFramework.UNITY, res.appFramework)
                 assertEquals("28.9.2", res.hostedPlatformVersion)

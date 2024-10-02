@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.hasEventOfType
-import io.embrace.android.embracesdk.hasSpanOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.hasEventOfType
+import io.embrace.android.embracesdk.assertions.hasSpanOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -53,7 +53,7 @@ internal class OtelSessionGatingTest {
                 simulateSession()
             },
             assertAction = {
-                val payload = getSingleSession()
+                val payload = getSingleSessionEnvelope()
                 assertSessionGating(payload, gated = false)
             }
         )
@@ -73,7 +73,7 @@ internal class OtelSessionGatingTest {
                 simulateSession()
             },
             assertAction = {
-                val payload = getSingleSession()
+                val payload = getSingleSessionEnvelope()
                 assertSessionGating(payload, gated = true)
             }
         )

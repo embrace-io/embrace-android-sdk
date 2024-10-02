@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
@@ -45,22 +45,24 @@ internal class EmbraceAssertionInterface(
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
      */
-    internal fun getSentLogPayloads(expectedSize: Int? = null): List<Envelope<LogPayload>> {
+    internal fun getSentLogEnvelopes(expectedSize: Int? = null): List<Envelope<LogPayload>> {
         // TODO: future: avoid null expectedSize. Flaky because we can't predict when logs are
         //  batched & sent.
-        return retrieveLogPayloads(expectedSize, true)
+        return retrieveLogEnvelopes(expectedSize, true)
     }
+
+    internal fun getSingleSentLogEnvelope(): Envelope<LogPayload> = getSentLogEnvelopes(1).single()
 
     /**
      * Returns the list of log payload envelopes that have been stored. If [expectedSize] is specified,
      * it will wait a maximum of 1 second for the number of payloads that exist to equal to that
      * before returning, timing out if it doesn't.
      */
-    internal fun getStoredLogPayloads(expectedSize: Int): List<Envelope<LogPayload>> {
-        return retrieveLogPayloads(expectedSize, false)
+    internal fun getStoredLogEnvelopes(expectedSize: Int): List<Envelope<LogPayload>> {
+        return retrieveLogEnvelopes(expectedSize, false)
     }
 
-    private fun retrieveLogPayloads(
+    private fun retrieveLogEnvelopes(
         expectedSize: Int?,
         sent: Boolean
     ): List<Envelope<LogPayload>> {
@@ -89,27 +91,23 @@ internal class EmbraceAssertionInterface(
 
 
     /**
-     * Returns a list of session that were sent by the SDK since startup.
+     * Returns a list of sessions that were completed by the SDK.
      */
-    internal fun getSentSessions(expectedSize: Int? = null): List<Envelope<SessionPayload>> {
-        return retrieveSessionPayloads(expectedSize, ApplicationState.FOREGROUND)
+    internal fun getSessionEnvelopes(
+        expectedSize: Int,
+        state: ApplicationState = ApplicationState.FOREGROUND
+    ): List<Envelope<SessionPayload>> {
+        return retrieveSessionEnvelopes(expectedSize, state)
     }
 
     /**
-     * Returns a list of background activity payloads that were sent by the SDK since startup.
+     * Asserts a single session was completed by the SDK.
      */
-    internal fun getSentBackgroundActivities(expectedSize: Int? = null): List<Envelope<SessionPayload>> {
-        return retrieveSessionPayloads(expectedSize, ApplicationState.BACKGROUND)
-    }
+    internal fun getSingleSessionEnvelope(
+        state: ApplicationState = ApplicationState.FOREGROUND
+    ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
-    /**
-     * Returns a single session or throws.
-     */
-    internal fun getSingleSession(): Envelope<SessionPayload> {
-        return getSentSessions(1).single()
-    }
-
-    private fun retrieveSessionPayloads(
+    private fun retrieveSessionEnvelopes(
         expectedSize: Int?, appState: ApplicationState
     ): List<Envelope<SessionPayload>> {
         return retrievePayload(expectedSize) {

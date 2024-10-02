@@ -48,7 +48,7 @@ internal class SessionApiTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 validatePayloadAgainstGoldenFile(message, "v2_session_expected.json")
 
                 // validate snapshots separately, as the JSON diff is tricky to debug

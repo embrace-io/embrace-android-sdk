@@ -39,7 +39,7 @@ internal class SensitiveKeysRedactionFeatureTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val recordedSpan = session.data.spans?.find { it.name == "test span" }
                 val sensitiveAttribute = recordedSpan?.attributes?.first { it.key == "password" }
                 val notSensitiveAttribute = recordedSpan?.attributes?.first { it.key == "not a password" }
@@ -66,7 +66,7 @@ internal class SensitiveKeysRedactionFeatureTest {
                 }
             },
             assertAction = {
-                val session = getSingleSession()
+                val session = getSingleSessionEnvelope()
                 val recordedSpan = session.data.spans?.find { it.name == "test span" }
 
                 val event = recordedSpan?.events?.first { it.name == "event" }

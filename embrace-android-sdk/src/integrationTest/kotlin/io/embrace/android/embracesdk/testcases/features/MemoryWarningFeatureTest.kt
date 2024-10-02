@@ -5,9 +5,9 @@ import android.content.ComponentCallbacks2
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findEventsOfType
-import io.embrace.android.embracesdk.findSessionSpan
-import io.embrace.android.embracesdk.hasEventOfType
+import io.embrace.android.embracesdk.assertions.findEventsOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.hasEventOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -32,7 +32,7 @@ internal class MemoryWarningFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 assertTrue(message.findSessionSpan().hasEventOfType(EmbType.Performance.MemoryWarning))
             }
         )
@@ -50,7 +50,7 @@ internal class MemoryWarningFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 val events = message.findSessionSpan().findEventsOfType(EmbType.Performance.MemoryWarning)
                 assertEquals(10, events.size)
             }

@@ -2,9 +2,10 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findEventOfType
-import io.embrace.android.embracesdk.findSessionSpan
+import io.embrace.android.embracesdk.assertions.findEventOfType
+import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -29,11 +30,12 @@ internal class BreadcrumbFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
+                val message = getSingleSessionEnvelope()
                 message.assertBreadcrumbWithMessage("Hello, world!")
                 testRule.action.embrace.addBreadcrumb("Bye, world!")
                 testRule.action.recordSession {
-                    getSentBackgroundActivities(2).last().assertBreadcrumbWithMessage("Bye, world!")
+                    val bas = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
+                    bas.last().assertBreadcrumbWithMessage("Bye, world!")
                 }
             }
         )

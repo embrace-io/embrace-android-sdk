@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.findSpanOfType
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.findSpanSnapshotsOfType
-import io.embrace.android.embracesdk.findSpansOfType
+import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
+import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
@@ -38,11 +40,8 @@ internal class NetworkStatusFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
-                val spans = message.findSpansOfType(EmbType.System.NetworkStatus)
-                assertEquals(1, spans.size)
-                val span = spans.single()
-
+                val message = getSingleSessionEnvelope()
+                val span = message.findSpanOfType(EmbType.System.NetworkStatus)
                 val attrs = checkNotNull(span.attributes)
                 assertEquals("emb-network-status", span.name)
                 assertEquals("sys.network_status", attrs.findAttributeValue("emb.type"))
@@ -50,9 +49,7 @@ internal class NetworkStatusFeatureTest {
                 assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
 
-                val snapshots = message.findSpanSnapshotsOfType(EmbType.System.NetworkStatus)
-                assertEquals(1, snapshots.size)
-                val snapshot = snapshots.single()
+                val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
                 val snapshotAttrs = checkNotNull(snapshot.attributes)
 
                 assertEquals("emb-network-status", snapshot.name)
@@ -73,10 +70,8 @@ internal class NetworkStatusFeatureTest {
                 }
             },
             assertAction = {
-                val message = getSingleSession()
-                val snapshots = message.findSpanSnapshotsOfType(EmbType.System.NetworkStatus)
-                assertEquals(1, snapshots.size)
-                val snapshot = snapshots.single()
+                val message = getSingleSessionEnvelope()
+                val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
 
                 assertEquals("emb-network-status", snapshot.name)
                 val snapshotAttrs = checkNotNull(snapshot.attributes)

@@ -27,15 +27,15 @@ internal class BreadcrumbFeatureTest {
                 recordSession {
                     embrace.addBreadcrumb("Hello, world!")
                 }
+                embrace.addBreadcrumb("Bye, world!")
+                clock.tick(20000)
+                recordSession()
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
-                message.assertBreadcrumbWithMessage("Hello, world!")
-                testRule.action.embrace.addBreadcrumb("Bye, world!")
-                testRule.action.recordSession {
-                    val bas = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
-                    bas.last().assertBreadcrumbWithMessage("Bye, world!")
-                }
+                val message = getSessionEnvelopes(2)
+                message.first().assertBreadcrumbWithMessage("Hello, world!")
+                val bas = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
+                bas.last().assertBreadcrumbWithMessage("Bye, world!")
             }
         )
     }

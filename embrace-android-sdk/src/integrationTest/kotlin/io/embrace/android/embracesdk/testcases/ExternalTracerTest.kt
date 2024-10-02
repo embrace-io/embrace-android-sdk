@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -53,125 +54,148 @@ internal class ExternalTracerTest {
     @Before
     fun setup() {
         spanExporter = FakeSpanExporter()
-        with(testRule) {
-            action.embrace.addSpanExporter(spanExporter)
-            action.startSdk()
-            embOpenTelemetry = action.embrace.getOpenTelemetry()
-            embTracer = embOpenTelemetry.getTracer("external-tracer", "1.0.0")
-        }
+    }
+
+    private fun EmbraceActionInterface.setupSpanExporter() {
+        embrace.addSpanExporter(spanExporter)
+        startSdk()
+        embOpenTelemetry = embrace.getOpenTelemetry()
+        embTracer = embOpenTelemetry.getTracer("external-tracer", "1.0.0")
     }
 
     @Test
     fun `check correctness of implementations used by Tracer`() {
-        assertSame(
-            testRule.action.embrace.getOpenTelemetry().getTracer("foo"),
-            embOpenTelemetry.getTracer("foo")
+        var tracer: Tracer? = null
+        testRule.runTest(
+            testCaseAction = {
+                setupSpanExporter()
+                tracer = embrace.getOpenTelemetry().getTracer("foo")
+            },
+            assertAction = {
+                assertSame(
+                    tracer,
+                    embOpenTelemetry.getTracer("foo")
+                )
+                assertTrue(embTracer is EmbTracer)
+                val spanBuilder = embTracer.spanBuilder("test")
+                val span = spanBuilder.startSpan()
+                assertTrue(spanBuilder is EmbSpanBuilder)
+                assertTrue(span is EmbSpan)
+            }
         )
-        assertTrue(embTracer is EmbTracer)
-        val spanBuilder = embTracer.spanBuilder("test")
-        val span = spanBuilder.startSpan()
-        assertTrue(spanBuilder is EmbSpanBuilder)
-        assertTrue(span is EmbSpan)
     }
 
     @Test
     fun `span created with external tracer works correctly`() {
-        with(testRule) {
-            var startTimeMs: Long? = null
-            var endTimeMs: Long? = null
-            var childEndTimeMs: Long? = null
-            var stacktrace: String? = null
-            var wrappedSpan: Span? = null
-            var parentContext: Context?
-            action.recordSession {
-                val spanBuilder = embTracer.spanBuilder("external-span")
-                startTimeMs = clock.now()
-                val span = spanBuilder.startSpan()
-                span.makeCurrent().use {
-                    val childSpan = embTracer.spanBuilder("child-span").startSpan()
-                    childSpan.setStatus(StatusCode.ERROR)
-                    val exception = RuntimeException("bah")
-                    childSpan.recordException(exception, Attributes.builder().put("bad", "yes").build())
-                    stacktrace = exception.truncatedStacktraceText()
-                    childEndTimeMs = clock.tick()
-                    childSpan.end()
+        var startTimeMs: Long? = null
+        var endTimeMs: Long? = null
+        var childEndTimeMs: Long? = null
+        var stacktrace: String? = null
+        var wrappedSpan: Span? = null
+        var parentContext: Context?
 
-                    val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
-                    embraceSpan.stop()
-                    embTracer.spanBuilder("no-parent").setNoParent().startSpan().end()
-                    parentContext = Context.current()
+        testRule.runTest(
+            testCaseAction = {
+                setupSpanExporter()
+                recordSession {
+                    val spanBuilder = embTracer.spanBuilder("external-span")
+                    startTimeMs = clock.now()
+                    val span = spanBuilder.startSpan()
+                    span.makeCurrent().use {
+                        val childSpan = embTracer.spanBuilder("child-span").startSpan()
+                        childSpan.setStatus(StatusCode.ERROR)
+                        val exception = RuntimeException("bah")
+                        childSpan.recordException(exception, Attributes.builder().put("bad", "yes").build())
+                        stacktrace = exception.truncatedStacktraceText()
+                        childEndTimeMs = clock.tick()
+                        childSpan.end()
+
+                        val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
+                        embraceSpan.stop()
+                        embTracer.spanBuilder("no-parent").setNoParent().startSpan().end()
+                        parentContext = Context.current()
+                    }
+                    span.setAttribute("failures", 1)
+                    endTimeMs = clock.tick()
+                    span.end()
+                    embTracer.spanBuilder("another-parent-with-tracer").startSpan().end()
+                    embTracer.spanBuilder("set-parent-explicitly").setParent(Context.root().with(span)).startSpan().end()
+                    checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
+                    checkNotNull(wrappedSpan).end()
                 }
-                span.setAttribute("failures", 1)
-                endTimeMs = clock.tick()
-                span.end()
-                embTracer.spanBuilder("another-parent-with-tracer").startSpan().end()
-                embTracer.spanBuilder("set-parent-explicitly").setParent(Context.root().with(span)).startSpan().end()
-                checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
-                checkNotNull(wrappedSpan).end()
-            }
-            val sessionMessage = assertion.getSingleSessionEnvelope()
-            val spans = checkNotNull(sessionMessage.data.spans)
-            val recordedSpans = spans.associateBy { it.name }
-            val parent = checkNotNull(recordedSpans["external-span"])
-            val child = checkNotNull(recordedSpans["child-span"])
-            val embraceSpan = checkNotNull(recordedSpans["another-root"])
-            val noParent = checkNotNull(recordedSpans["no-parent"])
-            val anotherTracerSpan = checkNotNull(recordedSpans["another-parent-with-tracer"])
-            val setParentExplicitly = checkNotNull(recordedSpans["set-parent-explicitly"])
-            val wrapped = checkNotNull(recordedSpans["wrapped"])
-            assertEquals(parent.traceId, child.traceId)
-            assertEquals(parent.traceId, setParentExplicitly.traceId)
-            assertEquals(parent.traceId, wrapped.traceId)
-            assertNotEquals(parent.traceId, embraceSpan.traceId)
-            assertNotEquals(parent.traceId, anotherTracerSpan.traceId)
-            assertNotEquals(parent.traceId, noParent.traceId)
-            assertEmbraceSpanData(
-                span = parent,
-                expectedStartTimeMs = checkNotNull(startTimeMs),
-                expectedEndTimeMs = checkNotNull(endTimeMs),
-                expectedParentId = SpanId.getInvalid(),
-                expectedCustomAttributes = mapOf("failures" to "1"),
-                key = true
-            )
-            assertEmbraceSpanData(
-                span = child,
-                expectedStartTimeMs = checkNotNull(startTimeMs),
-                expectedEndTimeMs = checkNotNull(childEndTimeMs),
-                expectedParentId = checkNotNull(parent.spanId),
-                expectedStatus = io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR,
-                expectedErrorCode = ErrorCode.FAILURE,
-                expectedEvents = listOf(
-                    SpanEvent(
-                        name = "exception",
-                        timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
-                        attributes = listOf(
-                            Attribute("bad", "yes"),
-                            Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
-                            Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
-                            Attribute(ExceptionAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
+            },
+            assertAction = {
+                val sessionMessage = getSingleSessionEnvelope()
+                val spans = checkNotNull(sessionMessage.data.spans)
+                val recordedSpans = spans.associateBy { it.name }
+                val parent = checkNotNull(recordedSpans["external-span"])
+                val child = checkNotNull(recordedSpans["child-span"])
+                val embraceSpan = checkNotNull(recordedSpans["another-root"])
+                val noParent = checkNotNull(recordedSpans["no-parent"])
+                val anotherTracerSpan = checkNotNull(recordedSpans["another-parent-with-tracer"])
+                val setParentExplicitly = checkNotNull(recordedSpans["set-parent-explicitly"])
+                val wrapped = checkNotNull(recordedSpans["wrapped"])
+                assertEquals(parent.traceId, child.traceId)
+                assertEquals(parent.traceId, setParentExplicitly.traceId)
+                assertEquals(parent.traceId, wrapped.traceId)
+                assertNotEquals(parent.traceId, embraceSpan.traceId)
+                assertNotEquals(parent.traceId, anotherTracerSpan.traceId)
+                assertNotEquals(parent.traceId, noParent.traceId)
+                assertEmbraceSpanData(
+                    span = parent,
+                    expectedStartTimeMs = checkNotNull(startTimeMs),
+                    expectedEndTimeMs = checkNotNull(endTimeMs),
+                    expectedParentId = SpanId.getInvalid(),
+                    expectedCustomAttributes = mapOf("failures" to "1"),
+                    key = true
+                )
+                assertEmbraceSpanData(
+                    span = child,
+                    expectedStartTimeMs = checkNotNull(startTimeMs),
+                    expectedEndTimeMs = checkNotNull(childEndTimeMs),
+                    expectedParentId = checkNotNull(parent.spanId),
+                    expectedStatus = io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR,
+                    expectedErrorCode = ErrorCode.FAILURE,
+                    expectedEvents = listOf(
+                        SpanEvent(
+                            name = "exception",
+                            timestampNanos = checkNotNull(startTimeMs?.millisToNanos()),
+                            attributes = listOf(
+                                Attribute("bad", "yes"),
+                                Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
+                                Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
+                                Attribute(ExceptionAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
+                            )
                         )
-                    )
-                ),
-                key = false
-            )
+                    ),
+                    key = false
+                )
 
-            assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))
-            val exportedSpan: SpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
-            assertEquals(parent.toOldPayload(), exportedSpan.toEmbraceSpanData())
-            with(exportedSpan.instrumentationScopeInfo) {
-                assertEquals("external-tracer", name)
-                assertEquals("1.0.0", version)
-                assertNull(schemaUrl)
+                assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))
+                val exportedSpan: SpanData = spanExporter.exportedSpans.single { it.name == "external-span" }
+                assertEquals(parent.toOldPayload(), exportedSpan.toEmbraceSpanData())
+                with(exportedSpan.instrumentationScopeInfo) {
+                    assertEquals("external-tracer", name)
+                    assertEquals("1.0.0", version)
+                    assertNull(schemaUrl)
+                }
             }
-        }
+        )
     }
 
     @Test
     fun `opentelemetry instance can be used to log spans`() {
-        assertTrue(embTracer is EmbTracer)
-        val spanBuilder = embTracer.spanBuilder("test")
-        val span = spanBuilder.startSpan()
-        assertTrue(spanBuilder is EmbSpanBuilder)
-        assertTrue(span is EmbSpan)
+        testRule.runTest(
+            testCaseAction = {
+                setupSpanExporter()
+            },
+            assertAction = {
+                assertTrue(embTracer is EmbTracer)
+                val spanBuilder = embTracer.spanBuilder("test")
+                val span = spanBuilder.startSpan()
+                assertTrue(spanBuilder is EmbSpanBuilder)
+                assertTrue(span is EmbSpan)
+            }
+        )
     }
 }

@@ -22,7 +22,7 @@ public class PreSdkStartTest {
 
     @NonNull
     private final Embrace getEmbrace() {
-        return testRule.action.getEmbrace();
+        return testRule.getEmbrace();
     }
 
     @SuppressWarnings("deprecation")

@@ -2,18 +2,24 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
 import android.content.Context
+import android.os.PowerManager
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.robolectric.Robolectric
 
 /**
  * Interface for performing actions on the [Embrace] instance under test
  */
-internal class EmbraceActionInterface(private val setup: EmbraceSetupInterface) {
+internal class EmbraceActionInterface(
+    private val setup: EmbraceSetupInterface,
+    private val bootstrapper: ModuleInitBootstrapper
+) {
 
     /**
      * The [Embrace] instance that can be used for testing
@@ -67,5 +73,20 @@ internal class EmbraceActionInterface(private val setup: EmbraceSetupInterface) 
         activityController?.pause()
         activityController?.stop()
         activityService.onBackground()
+    }
+
+    fun alterPowerSaveMode(powerSaveMode: Boolean) {
+        val dataSource = checkNotNull(bootstrapper.featureModule.lowPowerDataSource.dataSource)
+        dataSource.onPowerSaveModeChanged(powerSaveMode)
+    }
+
+    fun alterConnectivityStatus(networkStatus: NetworkStatus) {
+        val dataSource = checkNotNull(bootstrapper.featureModule.networkStatusDataSource.dataSource)
+        dataSource.onNetworkConnectivityStatusChanged(networkStatus)
+    }
+
+    fun alterThermalState(thermalState: Int) {
+        val dataSource = checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
+        dataSource.handleThermalStateChange(thermalState)
     }
 }

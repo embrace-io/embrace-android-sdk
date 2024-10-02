@@ -29,11 +29,9 @@ internal class LowPowerFeatureTest {
                     startTimeMs = clock.now()
 
                     // look inside embrace internals as there isn't a good way to trigger this E2E
-                    val dataSource =
-                        checkNotNull(testRule.bootstrapper.featureModule.lowPowerDataSource.dataSource)
-                    dataSource.onPowerSaveModeChanged(true)
+                    alterPowerSaveMode(true)
                     clock.tick(tickTimeMs)
-                    dataSource.onPowerSaveModeChanged(false)
+                    alterPowerSaveMode(false)
                 }
             },
             assertAction = {

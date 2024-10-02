@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansByName
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
@@ -252,8 +251,8 @@ internal class EmbraceInternalInterfaceTest {
                 recordSession(simulateActivityCreation = true) { }
             },
             assertAction = {
-                val deliveryService = testRule.bootstrapper.deliveryModule.deliveryService as FakeDeliveryService
-                assertEquals(EventType.START, deliveryService.lastEventSentAsync?.event?.type)
+                val moment = getSentMoments(1).single()
+                assertEquals(EventType.START, moment.event.type)
             }
         )
     }

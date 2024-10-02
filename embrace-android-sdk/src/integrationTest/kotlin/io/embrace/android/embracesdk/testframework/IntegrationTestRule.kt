@@ -102,8 +102,8 @@ internal class IntegrationTestRule(
      */
     override fun before() {
         setup = embraceSetupInterfaceSupplier.invoke()
-        action = EmbraceActionInterface(setup)
         bootstrapper = setup.createBootstrapper()
+        action = EmbraceActionInterface(setup, bootstrapper)
         assertion = EmbraceAssertionInterface(bootstrapper)
 
         with(setup) {

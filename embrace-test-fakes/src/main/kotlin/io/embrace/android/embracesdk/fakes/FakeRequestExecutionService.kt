@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import java.io.InputStream
+import java.util.zip.GZIPInputStream
 
 class FakeRequestExecutionService : RequestExecutionService {
 
@@ -29,7 +30,7 @@ class FakeRequestExecutionService : RequestExecutionService {
         envelopeType: SupportedEnvelopeType
     ): ApiResponse {
         exceptionOnExecution?.run { throw this }
-        val bufferedStream = payloadStream()
+        val bufferedStream = GZIPInputStream(payloadStream())
         val json: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)
         attemptedHttpRequests.add(json)
         return responseAction(json)

@@ -31,6 +31,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.zip.GZIPOutputStream
 
 class IntakeServiceImplTest {
 
@@ -56,12 +57,12 @@ class IntakeServiceImplTest {
     )
     private val sessionDataExpected = run {
         val baos = ByteArrayOutputStream()
-        serializer.toJson(sessionEnvelope, Envelope.sessionEnvelopeType, baos)
+        serializer.toJson(sessionEnvelope, Envelope.sessionEnvelopeType, GZIPOutputStream(baos))
         baos.toByteArray()
     }
     private val logDataExpected = run {
         val baos = ByteArrayOutputStream()
-        serializer.toJson(logEnvelope, Envelope.logEnvelopeType, baos)
+        serializer.toJson(logEnvelope, Envelope.logEnvelopeType, GZIPOutputStream(baos))
         baos.toByteArray()
     }
 

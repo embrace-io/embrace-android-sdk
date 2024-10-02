@@ -45,9 +45,7 @@ internal class EmbraceAssertionInterface(
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
      */
-    internal fun getLogEnvelopes(expectedSize: Int? = null, sent: Boolean = true): List<Envelope<LogPayload>> {
-        // TODO: future: avoid null expectedSize. Flaky because we can't predict when logs are
-        //  batched & sent.
+    internal fun getLogEnvelopes(expectedSize: Int, sent: Boolean = true): List<Envelope<LogPayload>> {
         return retrieveLogEnvelopes(expectedSize, sent)
     }
 

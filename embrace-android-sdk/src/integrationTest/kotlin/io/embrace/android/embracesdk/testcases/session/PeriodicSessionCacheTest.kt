@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -40,7 +41,7 @@ internal class PeriodicSessionCacheTest {
     fun `session is periodically cached`() {
         with(testRule) {
             val executor = (setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
-            val deliveryService = setup.overriddenDeliveryModule.deliveryService
+            val deliveryService = bootstrapper.deliveryModule.deliveryService as FakeDeliveryService
 
             action.recordSession {
                 executor.runCurrentlyBlocked()

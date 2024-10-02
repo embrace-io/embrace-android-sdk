@@ -82,8 +82,6 @@ internal class IntegrationTestRule(
     lateinit var setup: EmbraceSetupInterface
     lateinit var bootstrapper: ModuleInitBootstrapper
 
-    fun getEmbrace() = action.embrace
-
     /**
      * Runs a test case. The test case should be separated into 3 parts: setup, action, and
      * assertions. This aims to enforce the better compartmentalisation & reuse of test code within

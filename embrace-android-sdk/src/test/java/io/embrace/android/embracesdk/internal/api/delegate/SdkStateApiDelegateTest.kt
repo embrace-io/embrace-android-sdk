@@ -28,6 +28,7 @@ internal class SdkStateApiDelegateTest {
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var sdkCallChecker: SdkCallChecker
+    private lateinit var logger: FakeEmbLogger
 
     @Before
     fun setUp() {
@@ -39,8 +40,8 @@ internal class SdkStateApiDelegateTest {
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
         preferencesService = moduleInitBootstrapper.androidServicesModule.preferencesService as FakePreferenceService
         sessionIdTracker = moduleInitBootstrapper.essentialServiceModule.sessionIdTracker as FakeSessionIdTracker
-
-        sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
+        logger = FakeEmbLogger()
+        sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)
         delegate = SdkStateApiDelegate(moduleInitBootstrapper, sdkCallChecker)
     }
@@ -65,6 +66,7 @@ internal class SdkStateApiDelegateTest {
 
     @Test
     fun `device ID not returned SDK is not enabled`() {
+        logger.throwOnInternalError = false
         preferencesService.deviceIdentifier = "foo"
         sdkCallChecker.started.set(false)
         assertEquals("", delegate.deviceId)

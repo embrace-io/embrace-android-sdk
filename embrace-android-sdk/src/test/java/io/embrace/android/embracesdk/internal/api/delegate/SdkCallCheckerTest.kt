@@ -24,6 +24,7 @@ internal class SdkCallCheckerTest {
     @Test
     fun `test not started`() {
         val action = "foo"
+        logger.throwOnInternalError = false
         assertFalse(checker.started.get())
         assertFalse(checker.check(action))
         assertEquals(action, logger.sdkNotInitializedMessages.single().msg)

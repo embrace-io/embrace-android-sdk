@@ -32,12 +32,8 @@ internal class NetworkStatusFeatureTest {
             testCaseAction = {
                 recordSession {
                     startTimeMs = clock.now()
-
-                    // look inside embrace internals as there isn't a good way to trigger this E2E
-                    val dataSource =
-                        checkNotNull(testRule.bootstrapper.featureModule.networkStatusDataSource.dataSource)
                     clock.tick(tickTimeMs)
-                    dataSource.onNetworkConnectivityStatusChanged(NetworkStatus.WIFI)
+                    alterConnectivityStatus(NetworkStatus.WIFI)
                 }
             },
             assertAction = {

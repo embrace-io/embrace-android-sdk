@@ -35,8 +35,9 @@ internal class ActivityFeatureTest {
             },
             testCaseAction = {
                 startSdk()
-                recordSession(simulateActivityCreation = true) {
+                recordSession() {
                     startTimeMs = clock.now()
+                    simulateActivityLifecycle()
                 }
             },
             assertAction = {

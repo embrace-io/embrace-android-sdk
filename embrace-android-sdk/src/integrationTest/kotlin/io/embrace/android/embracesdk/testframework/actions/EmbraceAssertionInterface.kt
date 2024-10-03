@@ -173,6 +173,9 @@ internal class EmbraceAssertionInterface(
                     dataProvider = supplier,
                     condition = { data ->
                         data.size == expectedSize
+                    },
+                    errorMessageSupplier = {
+                        "Timeout. Expected $expectedSize payloads, but got ${supplier().size}."
                     }
                 )
         }

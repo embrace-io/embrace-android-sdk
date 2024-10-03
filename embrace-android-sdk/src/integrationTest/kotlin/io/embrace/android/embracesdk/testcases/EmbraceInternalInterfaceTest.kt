@@ -245,7 +245,7 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 startSdk()
                 embrace.internalInterface.setProcessStartedByNotification()
-                recordSession(simulateActivityCreation = true) { }
+                recordSession()
             },
             assertAction = {
                 val moment = getSentMoments(1).single()

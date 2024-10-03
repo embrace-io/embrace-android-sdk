@@ -45,7 +45,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                checkNotNull(getStoredLogEnvelopes(1).getLastLog()).assertCrash(
+                getSingleLogEnvelope(false).getLastLog().assertCrash(
                     state = "foreground",
                     crashId = checkNotNull(getSingleSessionEnvelope().getCrashedId())
                 )
@@ -60,7 +60,7 @@ internal class JvmCrashFeatureTest {
                 handleException()
             },
             assertAction = {
-                checkNotNull(getStoredLogEnvelopes(1).getLastLog()).assertCrash(
+                getSingleLogEnvelope(false).getLastLog().assertCrash(
                     crashId = getSingleSessionEnvelope(ApplicationState.BACKGROUND).getCrashedId()
                 )
             }
@@ -70,7 +70,6 @@ internal class JvmCrashFeatureTest {
     @Suppress("DEPRECATION")
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
-
         testRule.runTest(
             testCaseAction = {
                 startSdk(appFramework = Embrace.AppFramework.REACT_NATIVE)
@@ -86,7 +85,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                val log = getStoredLogEnvelopes(1).getLastLog()
+                val log = getSingleLogEnvelope(false).getLastLog()
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",

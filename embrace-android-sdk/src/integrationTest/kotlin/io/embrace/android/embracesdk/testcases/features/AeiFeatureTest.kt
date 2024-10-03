@@ -40,7 +40,7 @@ internal class AeiFeatureTest {
                 recordSession()
             },
             assertAction = {
-                val log = getSingleSentLogEnvelope().getLastLog()
+                val log = getSingleLogEnvelope().getLastLog()
 
                 // assert AEI fields populated
                 log.attributes?.assertMatches {

@@ -39,9 +39,7 @@ internal class ViewFeatureTest {
                 val viewSpans = message.findSpansOfType(EmbType.Ux.View)
                 assertEquals(2, viewSpans.size)
 
-                val span1 = viewSpans[0]
-
-                with(span1) {
+                with(viewSpans[0]) {
                     attributes?.assertMatches {
                         "view.name" to "MyView"
                     }
@@ -49,8 +47,7 @@ internal class ViewFeatureTest {
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }
 
-                val span2 = viewSpans[1]
-                with(span2) {
+                with(viewSpans[1]) {
                     attributes?.assertMatches {
                         "view.name" to "AnotherView"
                     }

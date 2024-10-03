@@ -87,7 +87,7 @@ internal class BackgroundActivityDisabledTest {
             clock.tick(10_000L)
         }
         with(testRule) {
-            with(checkNotNull(assertion.getSentLogEnvelopes(1).single().data.logs).single()) {
+            with(assertion.getSingleLogEnvelope().getLastLog()) {
                 assertEquals("error", body)
                 attributes?.assertMatches {
                     embState.attributeKey.key to "background"
@@ -107,7 +107,7 @@ internal class BackgroundActivityDisabledTest {
                 clock.tick(2000L)
                 flushLogBatch()
 
-                with(checkNotNull(testRule.assertion.getSentLogEnvelopes(2).last().data.logs)) {
+                with(checkNotNull(testRule.assertion.getLogEnvelopes(2).last().data.logs)) {
                     assertEquals(2, size)
 
                     // A log recorded when there's no session should still be sent, but without session ID
@@ -138,7 +138,7 @@ internal class BackgroundActivityDisabledTest {
             )
 
             flushLogBatch()
-            checkNotNull(testRule.assertion.getSentLogEnvelopes(3).getLastLog()).run {
+            checkNotNull(testRule.assertion.getLogEnvelopes(3).getLastLog()).run {
                 assertEquals("sent-after-session", body)
                 attributes?.assertMatches {
                     embState.attributeKey.key to "foreground"

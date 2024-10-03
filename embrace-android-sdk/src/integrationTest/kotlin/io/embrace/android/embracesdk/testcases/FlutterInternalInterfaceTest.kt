@@ -172,7 +172,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(getSentLogEnvelopes(1).getLastLog())
+                val log = getSingleLogEnvelope().getLastLog()
 
                 assertOtelLogReceived(
                     logReceived = log,
@@ -216,7 +216,7 @@ internal class FlutterInternalInterfaceTest {
                 }
             },
             assertAction = {
-                val log = checkNotNull(getSentLogEnvelopes(1).getLastLog())
+                val log = getSingleLogEnvelope().getLastLog()
 
                 assertOtelLogReceived(
                     logReceived = log,

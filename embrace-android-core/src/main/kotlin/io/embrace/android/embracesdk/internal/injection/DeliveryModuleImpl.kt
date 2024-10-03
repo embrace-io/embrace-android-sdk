@@ -42,7 +42,7 @@ internal class DeliveryModuleImpl(
             NoopPayloadStore()
         } else {
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
-                V2PayloadStore(intakeService, initModule.clock)
+                V2PayloadStore(intakeService, deliveryService, initModule.clock)
             } else {
                 V1PayloadStore(deliveryService)
             }

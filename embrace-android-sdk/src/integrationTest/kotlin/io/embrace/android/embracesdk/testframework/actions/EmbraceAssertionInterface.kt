@@ -108,7 +108,8 @@ internal class EmbraceAssertionInterface(
     }
 
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
-        val state = checkNotNull(findSessionSpan().attributes?.findAttributeValue(embState.name)) {
+        val attrs = findSessionSpan().attributes
+        val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {
             "AppState not found in session payload."
         }
         val value = state.uppercase(Locale.ENGLISH)

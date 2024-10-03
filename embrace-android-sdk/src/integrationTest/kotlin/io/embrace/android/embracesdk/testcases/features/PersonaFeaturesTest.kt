@@ -15,7 +15,7 @@ internal class PersonaFeaturesTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
+        EmbraceSetupInterface()
     }
 
     @Test
@@ -25,7 +25,6 @@ internal class PersonaFeaturesTest {
                 overriddenAndroidServicesModule.preferencesService.userPersonas = setOf("preloaded")
             },
             testCaseAction = {
-                startSdk()
                 embrace.setUserAsPayer()
                 recordSession {
                     embrace.addUserPersona("test")

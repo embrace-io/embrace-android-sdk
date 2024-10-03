@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
@@ -11,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 
 internal class V2PayloadStore(
     private val intakeService: IntakeService,
+    private val deliveryService: DeliveryService,
     private val clock: Clock,
     private val uuidProvider: () -> String = { Uuid.getEmbUuid() }
 ) : PayloadStore {
@@ -23,7 +25,7 @@ internal class V2PayloadStore(
     }
 
     override fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>) {
-        // TODO: implement snapshot persistence
+        deliveryService.sendSession(envelope, SessionSnapshotType.PERIODIC_CACHE)
     }
 
     override fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean) {

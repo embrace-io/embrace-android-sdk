@@ -145,79 +145,87 @@ internal class SessionPropertiesTest {
 
     @Test
     fun `adding properties in bg activity modifications change the cached payload`() {
-        with(testRule) {
-            action.startSdk()
-            action.recordSession()
-            assertion.checkNextSavedBackgroundActivity(
-                action = {
-                    action.embrace.addSessionProperty("temp", "value", false)
-                },
-                validationFn = { envelope ->
-                    checkNotNull(envelope.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
-                }
-            )
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                recordSession()
+                checkNextSavedBackgroundActivity(
+                    action = {
+                        embrace.addSessionProperty("temp", "value", false)
+                    },
+                    validationFn = { envelope ->
+                        checkNotNull(envelope.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
+                    }
+                )
+                recordSession()
+            },
+            assertAction = {
+                val session = getSessionEnvelopes(2)[0]
+                checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
 
-            action.recordSession()
-            val session = assertion.getSessionEnvelopes(2).last()
-            checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
-
-            val bg = assertion.getSessionEnvelopes(2, ApplicationState.BACKGROUND).last()
-            checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
-        }
+                val bg = getSessionEnvelopes(2, ApplicationState.BACKGROUND).last()
+                checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
+            }
+        )
     }
 
     @Test
     fun `permanent properties are persisted in cached payloads`() {
-        with(testRule) {
-            action.startSdk()
-            action.recordSession()
-            var session = assertion.getSingleSessionEnvelope()
-            var lastSessionId = session.getSessionId()
-
-            assertion.checkNextSavedBackgroundActivity(
-                action = {
-                    action.embrace.addSessionProperty("perm", "value", true)
-                },
-                validationFn = { envelope ->
-                    assertNotEquals(lastSessionId, envelope.getSessionId())
-                    with(checkNotNull(envelope.getSessionSpan())) {
-                        assertPropertyExistence(
-                            exist = listOf("perm")
-                        )
-                        lastSessionId = checkNotNull(action.embrace.currentSessionId)
-                    }
+        testRule.runTest(
+            testCaseAction = {
+                startSdk()
+                var lastSessionId: String? = null
+                recordSession {
+                    lastSessionId = checkNotNull(embrace.currentSessionId)
                 }
-            )
 
-            action.recordSession {
-                action.embrace.addSessionProperty("perm2", "value", true)
+                checkNextSavedBackgroundActivity(
+                    action = {
+                        embrace.addSessionProperty("perm", "value", true)
+                    },
+                    validationFn = { envelope ->
+                        assertNotEquals(lastSessionId, envelope.getSessionId())
+                        with(checkNotNull(envelope.getSessionSpan())) {
+                            assertPropertyExistence(
+                                exist = listOf("perm")
+                            )
+                            lastSessionId = checkNotNull(embrace.currentSessionId)
+                        }
+                    }
+                )
+
+                recordSession {
+                    embrace.addSessionProperty("perm2", "value", true)
+                }
+                checkNextSavedBackgroundActivity(
+                    action = {
+                        embrace.addSessionProperty("perm3", "value", true)
+                    },
+                    validationFn = { envelope ->
+                        assertNotEquals(lastSessionId, envelope.getSessionId())
+                        with(checkNotNull(envelope.getSessionSpan())) {
+                            assertPropertyExistence(
+                                exist = listOf("perm", "perm2", "perm3")
+                            )
+                            lastSessionId = checkNotNull(embrace.currentSessionId)
+                        }
+                    }
+                )
+                recordSession()
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(3)
+
+                val session = sessions[1]
+                checkNotNull(session.getSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2")
+                )
+                val session2 = sessions[2]
+                checkNotNull(session2.getSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2", "perm3")
+                )
             }
-            session = assertion.getSessionEnvelopes(2).last()
-            checkNotNull(session.getSessionSpan()).assertPropertyExistence(
-                exist = listOf("perm", "perm2")
-            )
-
-            assertion.checkNextSavedBackgroundActivity(
-                action = {
-                    action.embrace.addSessionProperty("perm3", "value", true)
-                },
-                validationFn = { envelope ->
-                    assertNotEquals(lastSessionId, envelope.getSessionId())
-                    with(checkNotNull(envelope.getSessionSpan())) {
-                        assertPropertyExistence(
-                            exist = listOf("perm", "perm2", "perm3")
-                        )
-                        lastSessionId = checkNotNull(action.embrace.currentSessionId)
-                    }
-                }
-            )
-
-            action.recordSession()
-            val session2 = assertion.getSessionEnvelopes(3).last()
-            checkNotNull(session2.getSessionSpan()).assertPropertyExistence(
-                exist = listOf("perm", "perm2", "perm3")
-            )
-        }
+        )
     }
 
     @Test

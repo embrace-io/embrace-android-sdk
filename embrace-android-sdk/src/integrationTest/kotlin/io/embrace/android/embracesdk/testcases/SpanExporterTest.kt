@@ -29,39 +29,41 @@ internal class SpanExporterTest {
 
     @Test
     fun `SDK can receive a SpanExporter`() {
-        with(testRule.action) {
-            val fakeSpanExporter = FakeSpanExporter()
-            embrace.addSpanExporter(fakeSpanExporter)
-            startSdk()
-            embrace.startSpan("test")?.stop()
-            assertTrue(
-                "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
-                fakeSpanExporter.awaitSpanExport(1)
-            )
-            // Verify that 2 spans have been logged - the exported ones and 1 private diagnostic traces
-            assertEquals(2, testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
-
-            recordSession {
+        testRule.runTest(
+            testCaseAction = {
+                val fakeSpanExporter = FakeSpanExporter()
+                embrace.addSpanExporter(fakeSpanExporter)
+                startSdk()
+                embrace.startSpan("test")?.stop()
                 assertTrue(
                     "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
-                    fakeSpanExporter.awaitSpanExport(2)
+                    fakeSpanExporter.awaitSpanExport(1)
                 )
-                // Verify that only 2 span is exported - the test one as well as the session span that ended
-                assertEquals(2, fakeSpanExporter.exportedSpans.size)
-                val exportedSpans = fakeSpanExporter.exportedSpans.associateBy { it.name }
-                val testSpan = checkNotNull(exportedSpans["test"])
-                testSpan.assertHasEmbraceAttribute(embSequenceId, "4")
-                assertNotNull(testSpan.attributes.get(embProcessIdentifier.attributeKey))
-                testSpan.resource.assertExpectedAttributes(
-                    expectedServiceName = testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
-                    expectedServiceVersion = testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
-                    systemInfo = testRule.setup.overriddenInitModule.systemInfo
-                )
-                val sessionSpan = checkNotNull(exportedSpans["emb-session"])
-                sessionSpan.assertHasEmbraceAttribute(embSequenceId, "1")
-                assertNotNull(sessionSpan.attributes.get(embProcessIdentifier.attributeKey))
+                // Verify that 2 spans have been logged - the exported ones and 1 private diagnostic traces
+                assertEquals(2, testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans().size)
+
+                recordSession {
+                    assertTrue(
+                        "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
+                        fakeSpanExporter.awaitSpanExport(2)
+                    )
+                    // Verify that only 2 span is exported - the test one as well as the session span that ended
+                    assertEquals(2, fakeSpanExporter.exportedSpans.size)
+                    val exportedSpans = fakeSpanExporter.exportedSpans.associateBy { it.name }
+                    val testSpan = checkNotNull(exportedSpans["test"])
+                    testSpan.assertHasEmbraceAttribute(embSequenceId, "4")
+                    assertNotNull(testSpan.attributes.get(embProcessIdentifier.attributeKey))
+                    testSpan.resource.assertExpectedAttributes(
+                        expectedServiceName = testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkName,
+                        expectedServiceVersion = testRule.setup.overriddenOpenTelemetryModule.openTelemetryConfiguration.embraceSdkVersion,
+                        systemInfo = testRule.setup.overriddenInitModule.systemInfo
+                    )
+                    val sessionSpan = checkNotNull(exportedSpans["emb-session"])
+                    sessionSpan.assertHasEmbraceAttribute(embSequenceId, "1")
+                    assertNotNull(sessionSpan.attributes.get(embProcessIdentifier.attributeKey))
+                }
             }
-        }
+        )
     }
 
     @Test

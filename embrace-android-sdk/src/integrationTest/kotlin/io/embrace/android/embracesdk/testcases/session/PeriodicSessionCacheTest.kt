@@ -32,21 +32,31 @@ internal class PeriodicSessionCacheTest {
         EmbraceSetupInterface(
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(fakeInitModule = fakeInitModule, testWorkerName = PeriodicCacheWorker)
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(
+                fakeInitModule = fakeInitModule,
+                testWorkerName = PeriodicCacheWorker
+            )
         )
     }
 
     @Test
     fun `session is periodically cached`() {
-        with(testRule) {
-            val executor = (setup.overriddenWorkerThreadModule as FakeWorkerThreadModule).executor
-            val deliveryService = setup.overriddenDeliveryModule.deliveryService
+        testRule.runTest(
+            testCaseAction = {
+                val executor =
+                    (testRule.bootstrapper.workerThreadModule as FakeWorkerThreadModule).executor
 
-            action.recordSession {
-                executor.runCurrentlyBlocked()
-                action.embrace.addSessionProperty("Test", "Test", true)
+                recordSession {
+                    executor.runCurrentlyBlocked()
+                    embrace.addSessionProperty("Test", "Test", true)
 
-                val endMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
+                    // trigger another periodic cache
+                    executor.moveForwardAndRunBlocked(2000)
+                }
+            },
+            assertAction = {
+                val envelopes = getCachedSessionEnvelopes(2)
+                val endMessage = envelopes[0]
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertNull(span.getSessionProperty("Test"))
                 span.attributes?.assertMatches {
@@ -54,25 +64,22 @@ internal class PeriodicSessionCacheTest {
                     "emb.terminated" to true
                 }
 
-                // trigger another periodic cache
-                executor.moveForwardAndRunBlocked(2000)
-
-                val nextMessage = checkNotNull(deliveryService.savedSessionEnvelopes.last().first)
+                val nextMessage = envelopes[1]
                 val nextSpan = nextMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertEquals("Test", nextSpan.getSessionProperty("Test"))
                 nextSpan.attributes?.assertMatches {
                     "emb.clean_exit" to false
                     "emb.terminated" to true
                 }
-            }
 
-            val endMessage = assertion.getSingleSessionEnvelope()
-            val span = endMessage.findSessionSpan()
-            assertEquals("Test", span.getSessionProperty("Test"))
-            span.attributes?.assertMatches {
-                "emb.clean_exit" to true
-                "emb.terminated" to false
+                val completedMessage = getSingleSessionEnvelope()
+                val completedSpan = completedMessage.findSessionSpan()
+                assertEquals("Test", completedSpan.getSessionProperty("Test"))
+                completedSpan.attributes?.assertMatches {
+                    "emb.clean_exit" to true
+                    "emb.terminated" to false
+                }
             }
-        }
+        )
     }
 }

@@ -40,10 +40,7 @@ internal class ThermalStateFeatureTest {
             testCaseAction = {
                 recordSession {
                     startTimeMs = clock.now()
-
-                    val dataSource =
-                        checkNotNull(testRule.bootstrapper.featureModule.thermalStateDataSource.dataSource)
-                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
+                    alterThermalState(PowerManager.THERMAL_STATUS_NONE)
                 }
             },
             assertAction = {
@@ -75,13 +72,11 @@ internal class ThermalStateFeatureTest {
                 recordSession {
                     startTimeMs = clock.now()
 
-                    val dataSource =
-                        checkNotNull(testRule.bootstrapper.featureModule.thermalStateDataSource.dataSource)
-                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_CRITICAL)
+                    alterThermalState(PowerManager.THERMAL_STATUS_CRITICAL)
                     clock.tick(tickTimeMs)
-                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_MODERATE)
+                    alterThermalState(PowerManager.THERMAL_STATUS_MODERATE)
                     clock.tick(tickTimeMs)
-                    dataSource.handleThermalStateChange(PowerManager.THERMAL_STATUS_NONE)
+                    alterThermalState(PowerManager.THERMAL_STATUS_NONE)
                 }
             },
             assertAction = {

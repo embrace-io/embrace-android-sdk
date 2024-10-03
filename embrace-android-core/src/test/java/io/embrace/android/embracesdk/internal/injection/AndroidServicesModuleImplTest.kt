@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.mockk.mockk
@@ -15,7 +16,7 @@ internal class AndroidServicesModuleImplTest {
         val module = AndroidServicesModuleImpl(
             initModule = initModule,
             coreModule = coreModule,
-            workerThreadModule = WorkerThreadModuleImpl(initModule)
+            workerThreadModule = WorkerThreadModuleImpl(initModule, ::FakeConfigService)
         )
 
         assertTrue(module.preferencesService is EmbracePreferencesService)

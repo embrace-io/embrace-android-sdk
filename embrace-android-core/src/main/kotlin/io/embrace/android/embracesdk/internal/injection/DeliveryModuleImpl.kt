@@ -6,9 +6,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
 import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.execution.NoopRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
-import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
@@ -25,6 +23,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadSt
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -33,7 +32,20 @@ internal class DeliveryModuleImpl(
     workerThreadModule: WorkerThreadModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
-    essentialServiceModule: EssentialServiceModule
+    essentialServiceModule: EssentialServiceModule,
+    requestExecutionServiceProvider: Provider<RequestExecutionService>,
+    deliveryServiceProvider: () -> DeliveryService = {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            NoopDeliveryService()
+        } else {
+            EmbraceDeliveryService(
+                storageModule.deliveryCacheManager,
+                checkNotNull(essentialServiceModule.apiService),
+                initModule.jsonSerializer,
+                initModule.logger
+            )
+        }
+    }
 ) : DeliveryModule {
 
     override val payloadStore: PayloadStore by singleton {
@@ -50,16 +62,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val deliveryService: DeliveryService by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopDeliveryService()
-        } else {
-            EmbraceDeliveryService(
-                storageModule.deliveryCacheManager,
-                checkNotNull(essentialServiceModule.apiService),
-                initModule.jsonSerializer,
-                initModule.logger
-            )
-        }
+        deliveryServiceProvider()
     }
 
     override val intakeService: IntakeService by singleton {
@@ -107,11 +110,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val requestExecutionService: RequestExecutionService by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopRequestExecutionService()
-        } else {
-            RequestExecutionServiceImpl()
-        }
+        requestExecutionServiceProvider()
     }
 
     override val schedulingService: SchedulingService by singleton {

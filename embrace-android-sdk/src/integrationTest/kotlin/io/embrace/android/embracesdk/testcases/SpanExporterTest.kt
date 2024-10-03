@@ -2,14 +2,13 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertExpectedAttributes
 import io.embrace.android.embracesdk.assertions.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -23,13 +22,12 @@ import org.robolectric.annotation.Config
 internal class SpanExporterTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `SDK can receive a SpanExporter`() {
         testRule.runTest(
+            startImmediately = false,
             testCaseAction = {
                 val fakeSpanExporter = FakeSpanExporter()
                 embrace.addSpanExporter(fakeSpanExporter)
@@ -78,7 +76,6 @@ internal class SpanExporterTest {
                 }
             },
             testCaseAction = {
-                startSdk()
                 embrace.addSpanExporter(fakeSpanExporter)
 
                 recordSession {

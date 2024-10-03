@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -16,6 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
@@ -43,9 +42,7 @@ internal class ExternalTracerTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embOpenTelemetry: OpenTelemetry
@@ -67,6 +64,7 @@ internal class ExternalTracerTest {
     fun `check correctness of implementations used by Tracer`() {
         var tracer: Tracer? = null
         testRule.runTest(
+            startImmediately = false,
             testCaseAction = {
                 setupSpanExporter()
                 tracer = embrace.getOpenTelemetry().getTracer("foo")
@@ -95,6 +93,7 @@ internal class ExternalTracerTest {
         var parentContext: Context?
 
         testRule.runTest(
+            startImmediately = false,
             testCaseAction = {
                 setupSpanExporter()
                 recordSession {
@@ -186,6 +185,7 @@ internal class ExternalTracerTest {
     @Test
     fun `opentelemetry instance can be used to log spans`() {
         testRule.runTest(
+            startImmediately = false,
             testCaseAction = {
                 setupSpanExporter()
             },

@@ -2,18 +2,17 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
-import java.lang.Thread.sleep
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.lang.Thread.sleep
 
 @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
@@ -21,15 +20,14 @@ internal class LogRecordExporterTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `SDK can receive a LogRecordExporter`() {
         val fakeLogRecordExporter = FakeLogRecordExporter()
 
         testRule.runTest(
+            startImmediately = false,
             testCaseAction = {
                 embrace.addLogRecordExporter(fakeLogRecordExporter)
                 startSdk()
@@ -52,6 +50,7 @@ internal class LogRecordExporterTest {
         val fakeLogRecordExporter = FakeLogRecordExporter()
 
         testRule.runTest(
+            startImmediately = false,
             setupAction = {
                 overriddenInitModule.logger.apply {
                     internalErrorService = fake

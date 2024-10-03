@@ -88,11 +88,21 @@ internal class IntegrationTestRule(
      * the integration test suite.
      */
     inline fun runTest(
+        startImmediately: Boolean = true,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: EmbraceAssertionInterface.() -> Unit = {},
     ) {
         setupAction(setup)
+        with(setup) {
+            val embraceImpl = EmbraceImpl(bootstrapper)
+            EmbraceHooks.setImpl(embraceImpl)
+            if (startImmediately) {
+                embraceImpl.start(overriddenCoreModule.context, appFramework) {
+                    overriddenConfigService.apply { appFramework = it }
+                }
+            }
+        }
         testCaseAction(action)
         assertAction(assertion)
     }
@@ -105,16 +115,6 @@ internal class IntegrationTestRule(
         bootstrapper = setup.createBootstrapper()
         action = EmbraceActionInterface(setup, bootstrapper)
         assertion = EmbraceAssertionInterface(bootstrapper)
-
-        with(setup) {
-            val embraceImpl = EmbraceImpl(bootstrapper)
-            EmbraceHooks.setImpl(embraceImpl)
-            if (startImmediately) {
-                embraceImpl.start(overriddenCoreModule.context, appFramework) {
-                    overriddenConfigService.apply { appFramework = it }
-                }
-            }
-        }
     }
 
     /**

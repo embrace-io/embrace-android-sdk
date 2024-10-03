@@ -60,7 +60,7 @@ class FakeEventService : EventService {
         return null
     }
 
-    override fun getStartupMomentInfo(): StartupEventInfo? {
+    override fun getStartupMomentInfo(): StartupEventInfo {
         return StartupEventInfo(0, 0)
     }
 

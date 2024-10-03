@@ -8,5 +8,5 @@ class FakeCpuInfoDelegate(
 ) : CpuInfoDelegate {
     override fun getCpuName(): String? = cpuName
 
-    override fun getEgl(): String? = egl
+    override fun getEgl(): String = egl
 }

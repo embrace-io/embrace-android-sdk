@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.capture.crash.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -9,7 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
  * a shim that hides whether v1 or v2 of the storage implementation is used. Once we delete
  * v1, this interface can be deleted too.
  */
-interface PayloadStore {
+interface PayloadStore : CrashTeardownHandler {
 
     /**
      * Stores a final session payload that will have no further modifications
@@ -32,5 +33,5 @@ interface PayloadStore {
      * crash have been added. The legacy implementation ignores this but the v2 implementation
      * relies on it.
      */
-    fun onCrash()
+    override fun handleCrash(crashId: String)
 }

@@ -31,7 +31,7 @@ class V1PayloadStore(
         deliveryService.sendSession(envelope, SessionSnapshotType.PERIODIC_CACHE)
     }
 
-    override fun onCrash() {
+    override fun handleCrash(crashId: String) {
         // ignored - v1 couples this concept to storage
     }
 }

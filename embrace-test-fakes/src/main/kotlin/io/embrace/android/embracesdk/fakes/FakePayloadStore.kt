@@ -32,7 +32,7 @@ class FakePayloadStore(
         storedLogPayloads.add(Pair(envelope, attemptImmediateRequest))
     }
 
-    override fun onCrash() {
+    override fun handleCrash(crashId: String) {
         crashCount++
     }
 }

@@ -50,9 +50,8 @@ class V2PayloadStoreTest {
         assertEquals(0, intakeService.shutdownCount)
     }
 
-    @Test
     fun `test shutdown`() {
-        store.onCrash()
+        store.handleCrash("fakeCrashId")
         assertEquals(1, intakeService.shutdownCount)
     }
 

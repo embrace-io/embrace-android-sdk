@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -15,11 +16,13 @@ class V2PayloadStoreTest {
 
     private lateinit var store: V2PayloadStore
     private lateinit var intakeService: FakeIntakeService
+    private lateinit var deliveryService: FakeDeliveryService
 
     @Before
     fun setUp() {
         intakeService = FakeIntakeService()
-        store = V2PayloadStore(intakeService, FakeClock()) { "fakeuuid" }
+        deliveryService = FakeDeliveryService()
+        store = V2PayloadStore(intakeService, deliveryService, FakeClock()) { "fakeuuid" }
     }
 
     @Test
@@ -51,6 +54,13 @@ class V2PayloadStoreTest {
     fun `test shutdown`() {
         store.onCrash()
         assertEquals(1, intakeService.shutdownCount)
+    }
+
+    @Test
+    fun `test snapshot`() {
+        val envelope = fakeSessionEnvelope()
+        store.cacheSessionSnapshot(envelope)
+        assertEquals(envelope, deliveryService.savedSessionEnvelopes.single().first)
     }
 
     private fun verifySessionIntake(envelope: Envelope<SessionPayload>) {

@@ -94,6 +94,10 @@ internal class EmbraceActionInterface(
         }
     }
 
+    fun simulateJvmUncaughtException(exc: Throwable) {
+        Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)
+    }
+
     fun alterPowerSaveMode(powerSaveMode: Boolean) {
         val dataSource = checkNotNull(bootstrapper.featureModule.lowPowerDataSource.dataSource)
         dataSource.onPowerSaveModeChanged(powerSaveMode)

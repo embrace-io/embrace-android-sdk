@@ -4,15 +4,15 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
 import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
-import io.embrace.android.embracesdk.internal.delivery.execution.NoopRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
 import io.embrace.android.embracesdk.internal.delivery.resurrection.NoopPayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
@@ -41,7 +41,9 @@ class DeliveryModuleImplTest {
             FakeWorkerThreadModule(),
             CoreModuleImpl(ApplicationProvider.getApplicationContext(), FakeEmbLogger()),
             FakeStorageModule(),
-            FakeEssentialServiceModule()
+            FakeEssentialServiceModule(),
+            ::FakeRequestExecutionService,
+            ::FakeDeliveryService
         )
     }
 
@@ -62,12 +64,12 @@ class DeliveryModuleImplTest {
     fun `test otel export only`() {
         configService.onlyUsingOtelExporters = true
         assertNotNull(module)
-        assertTrue(module.deliveryService is NoopDeliveryService)
+        assertTrue(module.deliveryService is FakeDeliveryService)
         assertTrue(module.intakeService is NoopIntakeService)
         assertTrue(module.payloadCachingService is NoopPayloadCachingService)
         assertTrue(module.payloadStorageService is NoopPayloadStorageService)
         assertTrue(module.payloadResurrectionService is NoopPayloadResurrectionService)
-        assertTrue(module.requestExecutionService is NoopRequestExecutionService)
+        assertTrue(module.requestExecutionService is FakeRequestExecutionService)
         assertTrue(module.schedulingService is NoopSchedulingService)
         assertTrue(module.payloadStore is NoopPayloadStore)
     }

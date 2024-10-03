@@ -255,6 +255,7 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `unexpected exception during execution will be retried`() {
+        logger.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         schedulingExecutor.blockingMode = true
         waitForOnPayloadIntakeTaskCompletion()

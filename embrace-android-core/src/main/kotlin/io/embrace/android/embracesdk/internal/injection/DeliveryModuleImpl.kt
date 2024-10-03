@@ -34,7 +34,7 @@ internal class DeliveryModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     requestExecutionServiceProvider: Provider<RequestExecutionService>,
-    deliveryServiceProvider: () -> DeliveryService = {
+    deliverServiceProvider: () -> DeliveryService = {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             NoopDeliveryService()
         } else {
@@ -62,7 +62,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val deliveryService: DeliveryService by singleton {
-        deliveryServiceProvider()
+        deliverServiceProvider()
     }
 
     override val intakeService: IntakeService by singleton {

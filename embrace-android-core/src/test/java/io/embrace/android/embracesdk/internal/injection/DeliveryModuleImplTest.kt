@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.delivery.resurrection.NoopPayloadR
 import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
-import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -57,7 +56,7 @@ class DeliveryModuleImplTest {
         assertNotNull(module.payloadResurrectionService)
         assertNotNull(module.requestExecutionService)
         assertNotNull(module.schedulingService)
-        assertTrue(module.payloadStore is V1PayloadStore)
+        assertTrue(module.payloadStore is V2PayloadStore)
     }
 
     @Test

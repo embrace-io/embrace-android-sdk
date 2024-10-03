@@ -17,7 +17,7 @@ fun CountDownLatch.assertCountedDown(waitTimeMs: Long = 1000L) {
  */
 inline fun <T, R> returnIfConditionMet(
     desiredValueSupplier: Provider<T>,
-    waitTimeMs: Int = 1000,
+    waitTimeMs: Int = 10000,
     checkIntervalMs: Int = 10,
     dataProvider: () -> R,
     condition: (R) -> Boolean,

@@ -16,7 +16,7 @@ internal class UserFeaturesTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
+        EmbraceSetupInterface()
     }
 
     @Test
@@ -30,7 +30,6 @@ internal class UserFeaturesTest {
                 }
             },
             testCaseAction = {
-                startSdk()
                 recordSession()
                 recordSession {
                     embrace.clearUserIdentifier()

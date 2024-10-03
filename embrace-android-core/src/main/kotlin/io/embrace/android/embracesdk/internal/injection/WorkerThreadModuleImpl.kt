@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -22,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference
 // for lazily initialized members
 internal class WorkerThreadModuleImpl(
     initModule: InitModule,
+    private val configServiceProvider: Provider<ConfigService>
 ) : WorkerThreadModule, RejectedExecutionHandler {
 
     private val logger = initModule.logger
@@ -53,7 +57,7 @@ internal class WorkerThreadModuleImpl(
 
             if (worker is Worker.Priority) {
                 val comparator = when (worker) {
-                    FileCacheWorker -> taskPriorityComparator
+                    FileCacheWorker -> fileCacheWorkercomparator
                     NetworkRequestWorker -> apiRequestComparator
                 }
                 PriorityThreadPoolExecutor(
@@ -66,6 +70,13 @@ internal class WorkerThreadModuleImpl(
             } else {
                 ScheduledThreadPoolExecutor(1, threadFactory, this)
             }
+        }
+    }
+
+    private val fileCacheWorkercomparator by lazy {
+        when (configServiceProvider().autoDataCaptureBehavior.isV2StorageEnabled()) {
+            true -> storedTelemetryRunnableComparator
+            false -> taskPriorityComparator
         }
     }
 

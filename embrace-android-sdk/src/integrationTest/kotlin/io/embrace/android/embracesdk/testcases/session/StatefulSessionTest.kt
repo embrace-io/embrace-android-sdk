@@ -67,7 +67,7 @@ internal class StatefulSessionTest {
                 }
             },
             assertAction = {
-                val message = testRule.assertion.getSingleSessionEnvelope()
+                val message = getSingleSessionEnvelope()
                 checkNotNull(message.findSessionSpan())
 
                 // TODO: future the logic seems wrong here - nested calls should probably be ignored

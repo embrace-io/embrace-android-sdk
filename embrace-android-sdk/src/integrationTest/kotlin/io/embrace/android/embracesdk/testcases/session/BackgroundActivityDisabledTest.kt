@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
@@ -63,117 +64,115 @@ internal class BackgroundActivityDisabledTest {
     @Test
     fun `recording telemetry in the background when background activity is disabled does the right thing`() {
         var traceStopMs: Long = -1
-        with(testRule.action) {
-            lateinit var trace: EmbraceSpan
-            recordSession {
-                trace = checkNotNull(embrace.startSpan("test-trace"))
-            }
-            runLoggingThread()
+        lateinit var trace: EmbraceSpan
 
-            traceStopMs = clock.tick(100L)
-            assertTrue(trace.stop())
-
-            // Check what should and shouldn't be logged when there is no background activity and the app is in the background
-            assertTrue(embrace.isStarted)
-            assertTrue(embrace.currentSessionId.isNullOrBlank())
-            assertTrue(embrace.deviceId.isNotBlank())
-            assertNull(embrace.startSpan("test"))
-            embrace.logError("error")
-            runLoggingThread()
-            clock.tick(2000L)
-            flushLogBatch()
-
-            embrace.addBreadcrumb("not-logged")
-            clock.tick(10_000L)
-        }
-        with(testRule) {
-            with(assertion.getSingleLogEnvelope().getLastLog()) {
-                assertEquals("error", body)
-                attributes?.assertMatches {
-                    embState.attributeKey.key to "background"
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    trace = checkNotNull(embrace.startSpan("test-trace"))
                 }
-                assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
-            }
-        }
-        with(testRule.action) {
-            embrace.logInfo("info")
-            runLoggingThread()
-
-            recordSession {
-                assertFalse(embrace.currentSessionId.isNullOrBlank())
-                embrace.addBreadcrumb("logged")
-                embrace.logWarning("warning")
                 runLoggingThread()
-                clock.tick(2000L)
-                flushLogBatch()
 
-                with(checkNotNull(testRule.assertion.getLogEnvelopes(2).last().data.logs)) {
-                    assertEquals(2, size)
+                traceStopMs = clock.tick(100L)
+                assertTrue(trace.stop())
 
-                    // A log recorded when there's no session should still be sent, but without session ID
-                    val infoLog = checkNotNull(find { it.body == "info" })
-                    with(infoLog) {
-                        attributes?.assertMatches {
-                            embState.attributeKey.key to "background"
+                // Check what should and shouldn't be logged when there is no background activity and the app is in the background
+                assertTrue(embrace.isStarted)
+                assertTrue(embrace.currentSessionId.isNullOrBlank())
+                assertTrue(embrace.deviceId.isNotBlank())
+                assertNull(embrace.startSpan("test"))
+                embrace.logError("error")
+                flushLogEnvelope()
+
+                embrace.addBreadcrumb("not-logged")
+                clock.tick(10_000L)
+
+                embrace.logInfo("info")
+                flushLogEnvelope()
+
+                recordSession {
+                    assertFalse(embrace.currentSessionId.isNullOrBlank())
+                    embrace.addBreadcrumb("logged")
+                    embrace.logWarning("warning")
+                    flushLogEnvelope()
+                    embrace.logError("sent-after-session")
+                }
+                flushLogEnvelope()
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                getSessionEnvelopes(0, ApplicationState.BACKGROUND)
+                val logs = getLogEnvelopes(4).map { it.getLastLog() }
+
+                with(logs[0]) {
+                    assertEquals("error", body)
+                    attributes?.assertMatches {
+                        embState.attributeKey.key to "background"
+                    }
+                    assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                }
+                with(logs[1]) {
+                    assertEquals("info", body)
+                    attributes?.assertMatches {
+                        embState.attributeKey.key to "background"
+                    }
+                    assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+                }
+                with(logs[2]) {
+                    assertEquals("warning", body)
+                    attributes?.assertMatches {
+                        embState.attributeKey.key to "foreground"
+                        SessionIncubatingAttributes.SESSION_ID.key to sessions[0].getSessionId()
+                    }
+                }
+                val secondSession = sessions[1]
+                assertEquals(
+                    0,
+                    getSessionEnvelopes(0, ApplicationState.BACKGROUND).size
+                )
+
+                with(logs[3]) {
+                    assertEquals("sent-after-session", body)
+                    attributes?.assertMatches {
+                        embState.attributeKey.key to "foreground"
+                        SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
+                    }
+                }
+
+                with(secondSession) {
+                    with(findSessionSpan()) {
+                        with(findEventsOfType(EmbType.System.Breadcrumb)) {
+                            assertEquals(1, size)
+                            single().attributes?.assertMatches {
+                                "message" to "logged"
+                            }
                         }
-                        assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
                     }
 
-                    val warningLog = checkNotNull(find { it.body == "warning" })
-                    with(warningLog) {
-                        attributes?.assertMatches {
-                            embState.attributeKey.key to "foreground"
-                            SessionIncubatingAttributes.SESSION_ID.key to embrace.currentSessionId
-                        }
+                    with(checkNotNull(data.spans?.find { it.name == "test-trace" })) {
+                        assertEquals(traceStopMs, endTimeNanos?.nanosToMillis())
                     }
                 }
-                embrace.logError("sent-after-session")
-                runLoggingThread()
             }
+        )
+    }
 
-            val session = testRule.assertion.getSessionEnvelopes(2).last()
-            assertEquals(
-                0,
-                testRule.assertion.getSessionEnvelopes(0, ApplicationState.BACKGROUND).size
-            )
-
-            flushLogBatch()
-            checkNotNull(testRule.assertion.getLogEnvelopes(3).getLastLog()).run {
-                assertEquals("sent-after-session", body)
-                attributes?.assertMatches {
-                    embState.attributeKey.key to "foreground"
-                    SessionIncubatingAttributes.SESSION_ID.key to session.getSessionId()
-                }
-            }
-
-            with(session) {
-                with(findSessionSpan()) {
-                    with(findEventsOfType(EmbType.System.Breadcrumb)) {
-                        assertEquals(1, size)
-                        single().attributes?.assertMatches {
-                            "message" to "logged"
-                        }
-                    }
-                }
-
-                with(checkNotNull(data.spans?.find { it.name == "test-trace" })) {
-                    assertEquals(traceStopMs, endTimeNanos?.nanosToMillis())
-                }
-            }
-        }
+    private fun EmbraceActionInterface.flushLogEnvelope() {
+        runLoggingThread()
+        clock.tick(2000L)
+        flushLogBatch()
     }
 
     @Test
     fun `session span and payloads structurally correct`() {
-        val clock = testRule.action.clock
-        val session1StartMs = clock.now()
-        clock.tick(500L)
+        var session1StartMs: Long = -1
         var session1EndMs: Long = -1
         var session2StartMs: Long = -1
         var session2EndMs: Long = -1
 
         testRule.runTest(
             testCaseAction = {
+                session1StartMs = clock.now()
                 recordSession()
                 session1EndMs = clock.now()
                 session2StartMs = clock.tick(15000)

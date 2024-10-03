@@ -79,6 +79,10 @@ fun Envelope<SessionPayload>.findSpansByName(name: String): List<Span> {
     }
 }
 
+fun Envelope<SessionPayload>.findSpanByName(name: String): Span {
+    return findSpansByName(name).single()
+}
+
 /**
  * Returns true if a span exists with the given [TelemetryType].
  */

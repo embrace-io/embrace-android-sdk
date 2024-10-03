@@ -2,11 +2,10 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -30,19 +29,18 @@ internal class LowPowerFeatureTest {
                     startTimeMs = clock.now()
 
                     // look inside embrace internals as there isn't a good way to trigger this E2E
-                    val dataSource =
-                        checkNotNull(testRule.bootstrapper.featureModule.lowPowerDataSource.dataSource)
-                    dataSource.onPowerSaveModeChanged(true)
+                    alterPowerSaveMode(true)
                     clock.tick(tickTimeMs)
-                    dataSource.onPowerSaveModeChanged(false)
+                    alterPowerSaveMode(false)
                 }
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
                 val span = message.findSpanOfType(EmbType.System.LowPower)
-                val attrs = checkNotNull(span.attributes)
+                span.attributes?.assertMatches {
+                    "emb.type" to "sys.low_power"
+                }
                 assertEquals("emb-device-low-power", span.name)
-                assertEquals("sys.low_power", attrs.findAttributeValue("emb.type"))
                 assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
             }

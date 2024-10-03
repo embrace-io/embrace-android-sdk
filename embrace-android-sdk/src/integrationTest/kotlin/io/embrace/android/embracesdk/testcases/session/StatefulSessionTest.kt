@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -11,9 +9,9 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartType
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import java.util.Locale
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Rule
@@ -45,18 +43,12 @@ internal class StatefulSessionTest {
                 // verify first session
                 val messages = getSessionEnvelopes(2)
                 val first = messages[0]
-                val attrs = checkNotNull(first.findSessionSpan().attributes)
-                assertEquals(
-                    LifeEventType.STATE.name.lowercase(Locale.ENGLISH), attrs.findAttributeValue(
-                        embSessionStartType.name
-                    )
-                )
-                assertEquals(
-                    LifeEventType.STATE.name.lowercase(Locale.ENGLISH), attrs.findAttributeValue(
-                        embSessionEndType.name
-                    )
-                )
-                assertEquals("0", attrs.findAttributeValue(embErrorLogCount.name))
+                first.findSessionSpan().attributes?.assertMatches {
+                    embSessionStartType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH)
+                    embSessionEndType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH)
+                    embErrorLogCount.name to 0
+                }
+
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 
                 // verify second session
@@ -75,7 +67,7 @@ internal class StatefulSessionTest {
                 }
             },
             assertAction = {
-                val message = testRule.assertion.getSingleSessionEnvelope()
+                val message = getSingleSessionEnvelope()
                 checkNotNull(message.findSessionSpan())
 
                 // TODO: future the logic seems wrong here - nested calls should probably be ignored

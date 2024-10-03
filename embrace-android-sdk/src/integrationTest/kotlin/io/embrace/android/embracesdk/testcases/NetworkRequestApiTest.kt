@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.testframework.actions.EmbraceAssertionInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.HttpAttributes
 import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
@@ -237,8 +239,9 @@ internal class NetworkRequestApiTest {
                 }
             },
             assertAction = {
-                val networkSpan = validateAndReturnExpectedNetworkSpan()
-                assertEquals(URL, networkSpan.attributes?.findAttributeValue("url.full"))
+                validateAndReturnExpectedNetworkSpan().attributes?.assertMatches {
+                    "url.full" to URL
+                }
             }
         )
     }
@@ -298,37 +301,10 @@ internal class NetworkRequestApiTest {
             assertAction = {
                 val networkSpan = validateAndReturnExpectedNetworkSpan()
                 with(networkSpan) {
-                    val attrs = checkNotNull(attributes)
-                    assertEquals(expectedRequest.url, attrs.findAttributeValue("url.full"))
-                    assertEquals(
-                        expectedRequest.httpMethod,
-                        attrs.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key)
-                    )
                     assertEquals(expectedRequest.startTime.millisToNanos(), startTimeNanos)
                     assertEquals(expectedRequest.endTime.millisToNanos(), endTimeNanos)
-                    assertEquals(expectedRequest.traceId, attrs.findAttributeValue("emb.trace_id"))
-                    assertEquals(
-                        expectedRequest.w3cTraceparent,
-                        attrs.findAttributeValue("emb.w3c_traceparent")
-                    )
+
                     if (completed) {
-                        assertEquals(
-                            expectedRequest.responseCode.toString(),
-                            attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
-                        )
-                        assertEquals(
-                            expectedRequest.bytesSent.toString(),
-                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
-                        )
-                        assertEquals(
-                            expectedRequest.bytesReceived.toString(),
-                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
-                        )
-                        assertEquals(null, attrs.findAttributeValue("error.type"))
-                        assertEquals(
-                            null,
-                            attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
-                        )
                         val statusCode = expectedRequest.responseCode
                         val expectedStatus =
                             if (statusCode != null && statusCode >= 200 && statusCode < 400) {
@@ -338,32 +314,42 @@ internal class NetworkRequestApiTest {
                             }
                         assertEquals(expectedStatus, status)
                     } else {
-                        assertEquals(
-                            null,
-                            attrs.findAttributeValue(HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key)
-                        )
-                        assertEquals(
-                            null,
-                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key)
-                        )
-                        assertEquals(
-                            null,
-                            attrs.findAttributeValue(HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key)
-                        )
-                        assertEquals(expectedRequest.errorType, attrs.findAttributeValue("error.type"))
-                        assertEquals(
-                            expectedRequest.errorMessage,
-                            attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_MESSAGE.key)
-                        )
                         assertEquals(Span.Status.ERROR, status)
+                    }
+
+                    attributes?.assertMatches {
+                        "url.full" to expectedRequest.url
+                        HttpAttributes.HTTP_REQUEST_METHOD.key to expectedRequest.httpMethod
+                        "emb.trace_id" to expectedRequest.traceId
+                        "emb.w3c_traceparent" to expectedRequest.w3cTraceparent
+                        HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to when {
+                            completed -> expectedRequest.responseCode
+                            else -> null
+                        }
+                        HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to when {
+                            completed -> expectedRequest.bytesSent
+                            else -> null
+                        }
+                        HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to when {
+                            completed -> expectedRequest.bytesReceived
+                            else -> null
+                        }
+                        "error.type" to when {
+                            completed -> null
+                            else -> expectedRequest.errorType
+                        }
+                        ExceptionAttributes.EXCEPTION_MESSAGE.key to when {
+                            completed -> null
+                            else -> expectedRequest.errorMessage
+                        }
                     }
                 }
             }
         )
     }
 
-    private fun validateAndReturnExpectedNetworkSpan(): Span {
-        val session = testRule.assertion.getSingleSessionEnvelope()
+    private fun EmbraceAssertionInterface.validateAndReturnExpectedNetworkSpan(): Span {
+        val session = getSingleSessionEnvelope()
 
         val unfilteredSpans = checkNotNull(session.data.spans)
         val spans =

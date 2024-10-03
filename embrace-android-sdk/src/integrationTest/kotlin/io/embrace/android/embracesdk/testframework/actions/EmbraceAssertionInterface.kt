@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.testframework.actions
 
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
@@ -14,12 +14,9 @@ import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
-import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import java.io.IOException
 import java.util.Locale
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 
@@ -45,21 +42,15 @@ internal class EmbraceAssertionInterface(
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
      */
-    internal fun getSentLogEnvelopes(expectedSize: Int? = null): List<Envelope<LogPayload>> {
-        // TODO: future: avoid null expectedSize. Flaky because we can't predict when logs are
-        //  batched & sent.
-        return retrieveLogEnvelopes(expectedSize, true)
+    internal fun getLogEnvelopes(
+        expectedSize: Int,
+        sent: Boolean = true
+    ): List<Envelope<LogPayload>> {
+        return retrieveLogEnvelopes(expectedSize, sent)
     }
 
-    internal fun getSingleSentLogEnvelope(): Envelope<LogPayload> = getSentLogEnvelopes(1).single()
-
-    /**
-     * Returns the list of log payload envelopes that have been stored. If [expectedSize] is specified,
-     * it will wait a maximum of 1 second for the number of payloads that exist to equal to that
-     * before returning, timing out if it doesn't.
-     */
-    internal fun getStoredLogEnvelopes(expectedSize: Int): List<Envelope<LogPayload>> {
-        return retrieveLogEnvelopes(expectedSize, false)
+    internal fun getSingleLogEnvelope(sent: Boolean = true): Envelope<LogPayload> {
+        return getLogEnvelopes(1, sent).single()
     }
 
     private fun retrieveLogEnvelopes(
@@ -124,49 +115,13 @@ internal class EmbraceAssertionInterface(
         return ApplicationState.valueOf(value)
     }
 
-    /**
-     * Run some [action] and the validate the next saved background activity using
-     * [validationFn]. If no background activity is saved with
-     * 1 second, this fails.
-     */
-    internal fun checkNextSavedBackgroundActivity(
-        action: () -> Unit,
-        validationFn: (Envelope<SessionPayload>) -> Unit
-    ): Envelope<SessionPayload> =
-        with(deliveryService) {
-            checkNextSavedSessionEnvelope(
-                dataProvider = ::getSavedBackgroundActivities,
-                action = action,
-                validationFn = validationFn,
-            )
-        }
-
-    private fun checkNextSavedSessionEnvelope(
-        dataProvider: () -> List<Envelope<SessionPayload>>,
-        action: () -> Unit,
-        validationFn: (Envelope<SessionPayload>) -> Unit
-    ): Envelope<SessionPayload> {
-        val startingSize = dataProvider().size
-        clock.tick(10_000L)
-        action()
-        return when (dataProvider().size) {
-            startingSize -> {
-                returnIfConditionMet(
-                    desiredValueSupplier = {
-                        dataProvider().getNth(startingSize)
-                    },
-                    condition = { data ->
-                        data.size > startingSize
-                    },
-                    dataProvider = dataProvider
-                )
-            }
-
-            else -> {
-                dataProvider().getNth(startingSize)
-            }
-        }.apply {
-            validationFn(this)
+    fun getCachedSessionEnvelopes(
+        expectedSize: Int,
+        appState: ApplicationState = ApplicationState.FOREGROUND
+    ): List<Envelope<SessionPayload>> {
+        return retrievePayload(expectedSize) {
+            checkNotNull(deliveryService.savedSessionEnvelopes).map { it.first }
+                .filter { it.findAppState() == appState }
         }
     }
 
@@ -203,8 +158,6 @@ internal class EmbraceAssertionInterface(
         }
     }
 
-    private fun <T> List<T>.getNth(n: Int) = filterIndexed { index, _ -> index == n }.single()
-
     /**
      * Retrieves a payload that was stored in the delivery service.
      */
@@ -223,33 +176,5 @@ internal class EmbraceAssertionInterface(
                     }
                 )
         }
-    }
-
-    /**
-     * Return the result of [desiredValueSupplier] if [condition] is true before [waitTimeMs]
-     * elapses. Otherwise, throws [TimeoutException]
-     */
-    private inline fun <T, R> returnIfConditionMet(
-        desiredValueSupplier: Provider<T>,
-        waitTimeMs: Int = 1000,
-        dataProvider: () -> R,
-        condition: (R) -> Boolean
-    ): T {
-        val tries: Int = waitTimeMs / CHECK_INTERVAL_MS
-        val countDownLatch = CountDownLatch(1)
-
-        repeat(tries) {
-            if (!condition(dataProvider())) {
-                countDownLatch.await(CHECK_INTERVAL_MS.toLong(), TimeUnit.MILLISECONDS)
-            } else {
-                return desiredValueSupplier.invoke()
-            }
-        }
-
-        throw TimeoutException("Timeout period elapsed before condition met.")
-    }
-
-    companion object {
-        private const val CHECK_INTERVAL_MS: Int = 10
     }
 }

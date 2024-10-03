@@ -2,16 +2,15 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.testframework.assertions.toMap
-import org.junit.Assert.assertEquals
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -111,18 +110,15 @@ internal class PushNotificationApiTest {
                 val sessionSpan = payload.findSessionSpan()
                 val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
                 assertTrue(checkNotNull(event.timestampNanos) > 0)
-                assertEquals(
-                    mapOf(
-                        EmbType.System.PushNotification.toEmbraceKeyValuePair(),
-                        "notification.title" to "title",
-                        "notification.type" to "notif-data",
-                        "notification.body" to "body",
-                        "notification.id" to "id",
-                        "notification.from" to "from",
-                        "notification.priority" to "1"
-                    ),
-                    event.attributes?.toMap()
-                )
+                event.attributes?.assertMatches {
+                    EmbType.System.PushNotification.toEmbraceKeyValuePair()
+                    "notification.title" to "title"
+                    "notification.type" to "notif-data"
+                    "notification.body" to "body"
+                    "notification.id" to "id"
+                    "notification.from" to "from"
+                    "notification.priority" to 1
+                }
             }
         )
     }
@@ -131,14 +127,11 @@ internal class PushNotificationApiTest {
         val sessionSpan = findSessionSpan()
         val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
         assertTrue(checkNotNull(event.timestampNanos) > 0)
-        assertEquals(
-            mapOf(
-                EmbType.System.PushNotification.toEmbraceKeyValuePair(),
-                "notification.type" to type,
-                "notification.id" to "id",
-                "notification.priority" to "1"
-            ),
-            event.attributes?.toMap()
-        )
+        event.attributes?.assertMatches {
+            EmbType.System.PushNotification.toEmbraceKeyValuePair()
+            "notification.type" to type
+            "notification.id" to "id"
+            "notification.priority" to 1
+        }
     }
 }

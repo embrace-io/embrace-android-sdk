@@ -2,9 +2,6 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
@@ -16,9 +13,12 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -45,7 +45,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                checkNotNull(getStoredLogEnvelopes(1).getLastLog()).assertCrash(
+                getSingleLogEnvelope(false).getLastLog().assertCrash(
                     state = "foreground",
                     crashId = checkNotNull(getSingleSessionEnvelope().getCrashedId())
                 )
@@ -60,7 +60,7 @@ internal class JvmCrashFeatureTest {
                 handleException()
             },
             assertAction = {
-                checkNotNull(getStoredLogEnvelopes(1).getLastLog()).assertCrash(
+                getSingleLogEnvelope(false).getLastLog().assertCrash(
                     crashId = getSingleSessionEnvelope(ApplicationState.BACKGROUND).getCrashedId()
                 )
             }
@@ -70,7 +70,6 @@ internal class JvmCrashFeatureTest {
     @Suppress("DEPRECATION")
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
-
         testRule.runTest(
             testCaseAction = {
                 startSdk(appFramework = Embrace.AppFramework.REACT_NATIVE)
@@ -86,7 +85,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                val log = getStoredLogEnvelopes(1).getLastLog()
+                val log = getSingleLogEnvelope(false).getLastLog()
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",
@@ -102,16 +101,17 @@ internal class JvmCrashFeatureTest {
                 val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
                 val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
                 val expectedJsException = "{\"n\":\"name\",\"m\":\"message\",\"t\":\"type\",\"st\":\"stacktrace\"}"
-                val attrs = checkNotNull(log.attributes)
-                assertEquals(expectedJsException, attrs.findAttributeValue("emb.android.react_native_crash.js_exception"))
-                assertEquals("1", attrs.findAttributeValue("emb.android.crash_number"))
-                assertEquals(expectedExceptionCause, attrs.findAttributeValue("emb.android.crash.exception_cause"))
-                assertNotNull(attrs.findAttributeValue("emb.android.threads"))
 
                 val message = getSingleSessionEnvelope()
                 val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
                 assertNotNull(crashId)
-                assertEquals(crashId, attrs.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
+                log.attributes?.assertMatches {
+                    "emb.android.react_native_crash.js_exception" to expectedJsException
+                    "emb.android.crash_number" to 1
+                    "emb.android.crash.exception_cause" to expectedExceptionCause
+                    LogIncubatingAttributes.LOG_RECORD_UID.key to crashId
+                }
+                assertNotNull(log.attributes?.findAttributeValue("emb.android.threads"))
             }
         )
     }
@@ -146,12 +146,12 @@ internal class JvmCrashFeatureTest {
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
-        with(checkNotNull(attributes)) {
-            assertEquals(state, findAttributeValue(embState.attributeKey.key))
-            assertEquals("1", findAttributeValue("emb.android.crash_number"))
-            assertEquals(expectedExceptionCause, findAttributeValue("emb.android.crash.exception_cause"))
-            assertNotNull(findAttributeValue("emb.android.threads"))
-            assertEquals(crashId, findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key))
+        attributes?.assertMatches {
+            embState.attributeKey.key to state
+            "emb.android.crash_number" to 1
+            "emb.android.crash.exception_cause" to expectedExceptionCause
+            LogIncubatingAttributes.LOG_RECORD_UID.key to crashId
         }
+        assertNotNull(attributes?.findAttributeValue("emb.android.threads"))
     }
 }

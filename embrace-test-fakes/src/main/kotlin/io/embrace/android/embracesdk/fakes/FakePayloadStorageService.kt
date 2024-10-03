@@ -11,6 +11,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.zip.GZIPOutputStream
 
 class FakePayloadStorageService : PayloadStorageService {
     private val serializer = TestPlatformSerializer()
@@ -26,7 +27,7 @@ class FakePayloadStorageService : PayloadStorageService {
         }
 
         val baos = ByteArrayOutputStream()
-        action(baos)
+        action(GZIPOutputStream(baos))
         cachedPayloads[metadata] = baos.toByteArray()
     }
 

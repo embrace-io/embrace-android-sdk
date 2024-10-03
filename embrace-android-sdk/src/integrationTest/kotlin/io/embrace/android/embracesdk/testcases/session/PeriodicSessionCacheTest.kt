@@ -55,7 +55,7 @@ internal class PeriodicSessionCacheTest {
                 }
             },
             assertAction = {
-                val envelopes = getCachedSessionEnvelopes(3)
+                val envelopes = getCachedSessionEnvelopes(2)
                 val endMessage = envelopes[0]
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertNull(span.getSessionProperty("Test"))

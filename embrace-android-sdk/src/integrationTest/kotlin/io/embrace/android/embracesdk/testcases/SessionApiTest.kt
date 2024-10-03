@@ -32,10 +32,11 @@ internal class SessionApiTest {
      */
     @Test
     fun sessionEndMessageTest() {
-        val startTime = testRule.action.clock.now()
+        var startTime: Long = -1
 
         testRule.runTest(
             testCaseAction = {
+                startTime = clock.now()
                 recordSession {
                     embrace.setUserIdentifier("some id")
                     embrace.setUserEmail("user@email.com")

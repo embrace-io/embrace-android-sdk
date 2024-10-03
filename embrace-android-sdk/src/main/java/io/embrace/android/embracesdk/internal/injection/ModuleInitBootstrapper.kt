@@ -4,7 +4,11 @@ import android.content.Context
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
+import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
+import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.execution.NoopRequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionServiceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
@@ -129,8 +133,9 @@ internal class ModuleInitBootstrapper(
                     coreModule = init(CoreModule::class) { coreModuleSupplier(context, logger) }
 
                     val serviceRegistry = coreModule.serviceRegistry
-                    workerThreadModule =
-                        init(WorkerThreadModule::class) { workerThreadModuleSupplier(initModule) }
+                    workerThreadModule = init(WorkerThreadModule::class) {
+                        workerThreadModuleSupplier(initModule) { configModule.configService }
+                    }
 
                     postInit(OpenTelemetryModule::class) {
                         Systrace.traceSynchronous("span-service-init") {
@@ -280,7 +285,26 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             coreModule,
                             storageModule,
-                            essentialServiceModule
+                            essentialServiceModule,
+                            {
+                                if (configModule.configService.isOnlyUsingOtelExporters()) {
+                                    NoopRequestExecutionService()
+                                } else {
+                                    RequestExecutionServiceImpl()
+                                }
+                            },
+                            {
+                                if (configModule.configService.isOnlyUsingOtelExporters()) {
+                                    NoopDeliveryService()
+                                } else {
+                                    EmbraceDeliveryService(
+                                        storageModule.deliveryCacheManager,
+                                        checkNotNull(essentialServiceModule.apiService),
+                                        initModule.jsonSerializer,
+                                        initModule.logger
+                                    )
+                                }
+                            }
                         )
                     }
 

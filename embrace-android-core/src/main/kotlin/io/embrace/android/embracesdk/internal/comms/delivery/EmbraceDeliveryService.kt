@@ -26,7 +26,7 @@ import java.io.OutputStream
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-internal class EmbraceDeliveryService(
+class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
     private val serializer: PlatformSerializer,

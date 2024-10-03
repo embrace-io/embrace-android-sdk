@@ -17,7 +17,7 @@ internal object EmbraceHooks {
         Embrace.getImpl().start(context, appFramework, configServiceProvider)
     }
 
-    internal fun getActivityService() = checkNotNull(Embrace.getImpl().activityService)
+    internal fun getProcessStateService() = checkNotNull(Embrace.getImpl().processStateService)
 
     internal fun setImpl(impl: EmbraceImpl) {
         Embrace.setImpl(impl)

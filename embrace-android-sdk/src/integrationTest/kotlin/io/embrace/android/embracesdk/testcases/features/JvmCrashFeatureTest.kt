@@ -40,14 +40,14 @@ internal class JvmCrashFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    handleException()
-
+                    simulateJvmUncaughtException(testException)
                 }
             },
             assertAction = {
+                val session = getSingleSessionEnvelope()
                 getSingleLogEnvelope(false).getLastLog().assertCrash(
                     state = "foreground",
-                    crashId = checkNotNull(getSingleSessionEnvelope().getCrashedId())
+                    crashId = session.getCrashedId()
                 )
             }
         )
@@ -57,11 +57,12 @@ internal class JvmCrashFeatureTest {
     fun `app crash in the background generates a crash log`() {
         testRule.runTest(
             testCaseAction = {
-                handleException()
+                simulateJvmUncaughtException(testException)
             },
             assertAction = {
+                val ba = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
                 getSingleLogEnvelope(false).getLastLog().assertCrash(
-                    crashId = getSingleSessionEnvelope(ApplicationState.BACKGROUND).getCrashedId()
+                    crashId = ba.getCrashedId()
                 )
             }
         )
@@ -114,10 +115,6 @@ internal class JvmCrashFeatureTest {
                 assertNotNull(log.attributes?.findAttributeValue("emb.android.threads"))
             }
         )
-    }
-
-    private fun handleException() {
-        Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), testException)
     }
 
     private fun Envelope<SessionPayload>.getCrashedId(): String {

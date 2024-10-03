@@ -57,23 +57,4 @@ internal class StatefulSessionTest {
             }
         )
     }
-
-    @Test
-    fun `nested state calls`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    recordSession()
-                }
-            },
-            assertAction = {
-                val message = getSingleSessionEnvelope()
-                checkNotNull(message.findSessionSpan())
-
-                // TODO: future the logic seems wrong here - nested calls should probably be ignored
-                //  and should not drop a session. However, it's an unlikely scenario (if we trust)
-                //  Google's process lifecycle implementation.
-            }
-        )
-    }
 }

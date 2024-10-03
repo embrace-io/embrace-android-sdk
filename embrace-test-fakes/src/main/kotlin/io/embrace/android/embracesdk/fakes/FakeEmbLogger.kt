@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
-class FakeEmbLogger : EmbLogger {
+class FakeEmbLogger(
+    var throwOnInternalError: Boolean = true
+) : EmbLogger {
 
     data class LogMessage(
         val msg: String,
@@ -37,10 +39,16 @@ class FakeEmbLogger : EmbLogger {
     }
 
     override fun logSdkNotInitialized(action: String) {
+        if (throwOnInternalError) {
+            error("SDK not initialized: $action")
+        }
         sdkNotInitializedMessages.add(LogMessage(action, null))
     }
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+        if (throwOnInternalError) {
+            throw IllegalStateException("Internal error: $type", throwable)
+        }
         internalErrorMessages.add(LogMessage(type.toString(), throwable))
     }
 }

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
 import android.content.Context
-import android.os.PowerManager
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
@@ -16,6 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
 
 /**
  * Interface for performing actions on the [Embrace] instance under test
@@ -55,28 +55,47 @@ internal class EmbraceActionInterface(
      * should always be 30s long. Additionally, it performs assertions against fields that
      * are guaranteed not to change in the start/end message.
      */
-    internal inline fun recordSession(
-        simulateActivityCreation: Boolean = false,
-        action: EmbraceActionInterface.() -> Unit = {}
-    ) {
-        // get the activity service & simulate the lifecycle event that triggers a new session.
-        val activityService = EmbraceHooks.getActivityService()
-        val activityController =
-            if (simulateActivityCreation) Robolectric.buildActivity(Activity::class.java) else null
-
-        activityController?.create()
-        activityController?.start()
-        activityService.onForeground()
-        activityController?.resume()
+    internal fun recordSession(action: EmbraceActionInterface.() -> Unit = {}) {
+        onForeground()
 
         // perform a custom action during the session boundary, e.g. adding a breadcrumb.
         action()
 
         // end session 30s later by entering background
         setup.overriddenClock.tick(30000)
-        activityController?.pause()
-        activityController?.stop()
-        activityService.onBackground()
+        onBackground()
+    }
+
+    private fun onForeground() {
+        val processStateService = EmbraceHooks.getProcessStateService()
+        if (!processStateService.isInBackground) {
+            error("Unbalanced call to onForeground() within a test case. Please correct the test.")
+        }
+        processStateService.onForeground()
+    }
+
+    private fun onBackground() {
+        val processStateService = EmbraceHooks.getProcessStateService()
+        if (processStateService.isInBackground) {
+            error("Unbalanced call to onBackground() within a test case. Please correct the test.")
+        }
+        processStateService.onBackground()
+    }
+
+    fun simulateActivityLifecycle() {
+        with(Robolectric.buildActivity(Activity::class.java)) {
+            create()
+            start()
+            resume()
+            clock.tick(30000)
+            pause()
+            stop()
+            destroy()
+        }
+    }
+
+    fun simulateJvmUncaughtException(exc: Throwable) {
+        Thread.getDefaultUncaughtExceptionHandler()?.uncaughtException(Thread.currentThread(), exc)
     }
 
     fun alterPowerSaveMode(powerSaveMode: Boolean) {

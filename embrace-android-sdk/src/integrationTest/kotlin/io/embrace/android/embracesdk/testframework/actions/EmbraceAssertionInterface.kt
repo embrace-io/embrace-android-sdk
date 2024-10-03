@@ -3,9 +3,7 @@ package io.embrace.android.embracesdk.testframework.actions
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
@@ -29,8 +27,6 @@ internal class EmbraceAssertionInterface(
 ) {
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
-    private val payloadStore by lazy { bootstrapper.deliveryModule.payloadStore as FakePayloadStore }
-    private val clock by lazy { bootstrapper.initModule.clock as FakeClock }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
 
 
@@ -58,7 +54,11 @@ internal class EmbraceAssertionInterface(
         sent: Boolean
     ): List<Envelope<LogPayload>> {
         return retrievePayload(expectedSize) {
-            payloadStore.storedLogPayloads.filter { it.second == sent }.map { it.first }
+            if (sent) {
+                deliveryService.lastSentLogPayloads
+            } else {
+                deliveryService.lastSavedLogPayloads
+            }
         }
     }
 
@@ -102,13 +102,14 @@ internal class EmbraceAssertionInterface(
         expectedSize: Int?, appState: ApplicationState
     ): List<Envelope<SessionPayload>> {
         return retrievePayload(expectedSize) {
-            val sessions = payloadStore.storedSessionPayloads.map { it.first }
-            sessions.filter { it.findAppState() == appState }
+            deliveryService.sentSessionEnvelopes.map { it.first }
+                .filter { it.findAppState() == appState }
         }
     }
 
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
-        val state = checkNotNull(findSessionSpan().attributes?.findAttributeValue(embState.name)) {
+        val attrs = findSessionSpan().attributes
+        val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {
             "AppState not found in session payload."
         }
         val value = state.uppercase(Locale.ENGLISH)
@@ -173,6 +174,9 @@ internal class EmbraceAssertionInterface(
                     dataProvider = supplier,
                     condition = { data ->
                         data.size == expectedSize
+                    },
+                    errorMessageSupplier = {
+                        "Timeout. Expected $expectedSize payloads, but got ${supplier().size}."
                     }
                 )
         }

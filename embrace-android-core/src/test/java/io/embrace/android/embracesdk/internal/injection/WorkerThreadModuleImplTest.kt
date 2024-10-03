@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -25,7 +26,7 @@ internal class WorkerThreadModuleImplTest {
 
     @Test
     fun testModule() {
-        val module = WorkerThreadModuleImpl(initModule)
+        val module = WorkerThreadModuleImpl(initModule, ::FakeConfigService)
         assertNotNull(module)
 
         val backgroundExecutor = module.backgroundWorker(Worker.Background.PeriodicCacheWorker)
@@ -40,14 +41,14 @@ internal class WorkerThreadModuleImplTest {
 
     @Test
     fun `network request executor uses custom queue`() {
-        val module = WorkerThreadModuleImpl(initModule)
+        val module = WorkerThreadModuleImpl(initModule, ::FakeConfigService)
         assertNotNull(module.priorityWorker<ApiRequest>(Worker.Priority.NetworkRequestWorker))
         assertNotNull(module.priorityWorker<TaskPriority>(Worker.Priority.FileCacheWorker))
     }
 
     @Test
     fun `rejected execution policy`() {
-        val module = WorkerThreadModuleImpl(initModule)
+        val module = WorkerThreadModuleImpl(initModule, ::FakeConfigService)
         val worker = module.backgroundWorker(Worker.Background.PeriodicCacheWorker)
         module.close()
 

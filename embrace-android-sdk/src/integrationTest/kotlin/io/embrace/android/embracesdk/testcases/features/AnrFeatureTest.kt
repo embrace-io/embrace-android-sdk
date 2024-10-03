@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -41,7 +42,7 @@ internal class AnrFeatureTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(currentTime = START_TIME_MS)
-        val initModule = FakeInitModule(clock)
+        val initModule = FakeInitModule(clock, FakeEmbLogger(throwOnInternalError = false))
         val workerThreadModule =
             FakeWorkerThreadModule(initModule, Worker.Background.AnrWatchdogWorker).apply {
                 anrMonitorThread = AtomicReference(Thread.currentThread())

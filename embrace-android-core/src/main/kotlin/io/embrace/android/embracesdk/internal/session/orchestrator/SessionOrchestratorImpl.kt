@@ -8,14 +8,13 @@ import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
@@ -30,8 +29,7 @@ internal class SessionOrchestratorImpl(
     private val sessionIdTracker: SessionIdTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
     private val payloadStore: PayloadStore,
-    private val periodicSessionCacher: PeriodicSessionCacher,
-    private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher,
+    private val payloadCachingService: PayloadCachingService,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
@@ -136,7 +134,9 @@ internal class SessionOrchestratorImpl(
     override fun reportBackgroundActivityStateChange() {
         if (state == ProcessState.BACKGROUND) {
             val initial = activeSession ?: return
-            scheduleBackgroundActivitySave(ProcessState.BACKGROUND, initial)
+            payloadCachingService.startCaching(true) {
+                onSessionCache(initial, ProcessState.BACKGROUND)
+            }
         }
     }
 
@@ -178,14 +178,7 @@ internal class SessionOrchestratorImpl(
             Systrace.startSynchronous("transition-state-start")
 
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
-            Systrace.startSynchronous("periodic-cache-stop")
-            val endProcessState = transitionType.endState(state)
-            val inForeground = endProcessState == ProcessState.FOREGROUND
-            when (endProcessState) {
-                ProcessState.FOREGROUND -> periodicBackgroundActivityCacher.stop()
-                ProcessState.BACKGROUND -> periodicSessionCacher.stop()
-            }
-            Systrace.endSynchronous()
+            payloadCachingService.stopCaching()
 
             // second, end the current session or background activity, if either exist.
             Systrace.startSynchronous("end-current-session")
@@ -202,6 +195,10 @@ internal class SessionOrchestratorImpl(
             Systrace.startSynchronous("prepare-new-session")
             boundaryDelegate.prepareForNewSession(clearUserInfo)
             Systrace.endSynchronous()
+
+            // calculate new session state
+            val endProcessState = transitionType.endState(state)
+            val inForeground = endProcessState == ProcessState.FOREGROUND
 
             // create the next session span if we should, and update the SDK state to reflect the transition
             Systrace.startSynchronous("create-new-session")
@@ -257,35 +254,18 @@ internal class SessionOrchestratorImpl(
         endProcessState: ProcessState,
         newState: SessionZygote
     ) {
-        when (endProcessState) {
-            ProcessState.FOREGROUND -> scheduleSessionSave(endProcessState, newState)
-            ProcessState.BACKGROUND -> scheduleBackgroundActivitySave(endProcessState, newState)
+        updatePeriodicCacheAttrs()
+        payloadCachingService.startCaching(endProcessState == ProcessState.BACKGROUND) {
+            onSessionCache(newState, endProcessState)
         }
     }
 
-    private fun scheduleSessionSave(
-        endProcessState: ProcessState,
-        initial: SessionZygote
-    ) {
-        updatePeriodicCacheAttrs()
-        periodicSessionCacher.start {
-            if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {
-                synchronized(lock) {
-                    updatePeriodicCacheAttrs()
-                    payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                        payloadStore.cacheSessionSnapshot(this)
-                    }
-                }
-            } else {
-                null
-            }
-        }
-    }
-
-    private fun scheduleBackgroundActivitySave(endProcessState: ProcessState, initial: SessionZygote) {
-        updatePeriodicCacheAttrs()
-        periodicBackgroundActivityCacher.scheduleSave {
-            if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {
+    private fun onSessionCache(
+        initial: SessionZygote,
+        endProcessState: ProcessState
+    ): Envelope<SessionPayload>? {
+        Systrace.traceSynchronous("on-session-cache") {
+            return if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {
                 synchronized(lock) {
                     updatePeriodicCacheAttrs()
                     payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {

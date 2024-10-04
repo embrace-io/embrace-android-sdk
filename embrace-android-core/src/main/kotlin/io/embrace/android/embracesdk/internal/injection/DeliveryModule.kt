@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
-import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
@@ -19,7 +18,6 @@ interface DeliveryModule {
     val payloadStore: PayloadStore
     val deliveryService: DeliveryService
     val intakeService: IntakeService
-    val payloadResurrectionService: PayloadResurrectionService
     val payloadCachingService: PayloadCachingService
     val payloadStorageService: PayloadStorageService
     val requestExecutionService: RequestExecutionService

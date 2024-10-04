@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 
 class FakePayloadResurrectionService : PayloadResurrectionService {
 

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
-import io.embrace.android.embracesdk.internal.delivery.resurrection.NoopPayloadResurrectionService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
@@ -54,7 +53,6 @@ class DeliveryModuleImplTest {
         assertNotNull(module.intakeService)
         assertNotNull(module.payloadCachingService)
         assertNotNull(module.payloadStorageService)
-        assertNotNull(module.payloadResurrectionService)
         assertNotNull(module.requestExecutionService)
         assertNotNull(module.schedulingService)
         assertTrue(module.payloadStore is V1PayloadStore)
@@ -68,7 +66,6 @@ class DeliveryModuleImplTest {
         assertTrue(module.intakeService is NoopIntakeService)
         assertTrue(module.payloadCachingService is NoopPayloadCachingService)
         assertTrue(module.payloadStorageService is NoopPayloadStorageService)
-        assertTrue(module.payloadResurrectionService is NoopPayloadResurrectionService)
         assertTrue(module.requestExecutionService is FakeRequestExecutionService)
         assertTrue(module.schedulingService is NoopSchedulingService)
         assertTrue(module.payloadStore is NoopPayloadStore)

@@ -447,6 +447,7 @@ internal class ModuleInitBootstrapper(
                             addCrashTeardownHandler(lazy { anrModule.anrService })
                             addCrashTeardownHandler(lazy { logModule.logOrchestrator })
                             addCrashTeardownHandler(lazy { sessionOrchestrationModule.sessionOrchestrator })
+                            addCrashTeardownHandler(lazy { deliveryModule.payloadStore })
                         }
                     }
 

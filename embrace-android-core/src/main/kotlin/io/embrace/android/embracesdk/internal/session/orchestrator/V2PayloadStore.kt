@@ -33,7 +33,9 @@ internal class V2PayloadStore(
         intakeService.take(envelope, createMetadata(type))
     }
 
-    override fun onCrash() = intakeService.shutdown()
+    override fun handleCrash(crashId: String) {
+        intakeService.shutdown()
+    }
 
     /**
      * Constructs a [StoredTelemetryMetadata] object from the given [Envelope].

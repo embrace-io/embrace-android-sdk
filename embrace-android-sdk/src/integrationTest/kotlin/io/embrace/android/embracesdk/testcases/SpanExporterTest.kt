@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,14 +25,20 @@ internal class SpanExporterTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
+    private lateinit var fakeSpanExporter: FakeSpanExporter
+
+    @Before
+    fun setup() {
+        fakeSpanExporter = FakeSpanExporter()
+    }
+
     @Test
     fun `SDK can receive a SpanExporter`() {
         testRule.runTest(
-            startImmediately = false,
-            testCaseAction = {
-                val fakeSpanExporter = FakeSpanExporter()
+            postSetupAction = {
                 embrace.addSpanExporter(fakeSpanExporter)
-                startSdk()
+            },
+            testCaseAction = {
                 embrace.startSpan("test")?.stop()
                 assertTrue(
                     "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
@@ -67,8 +74,6 @@ internal class SpanExporterTest {
     @Test
     fun `a SpanExporter added after initialization won't be used`() {
         val fake = FakeInternalErrorService()
-        val fakeSpanExporter = FakeSpanExporter()
-
         testRule.runTest(
             setupAction = {
                 overriddenInitModule.logger.apply {
@@ -77,9 +82,9 @@ internal class SpanExporterTest {
             },
             testCaseAction = {
                 embrace.addSpanExporter(fakeSpanExporter)
-
                 recordSession {
                     embrace.startSpan("test")?.stop()
+                    // TODO: get rid of this
                     Thread.sleep(3000)
                 }
             },

@@ -58,12 +58,12 @@ internal class TracingApiTest {
         val spanExporter = FakeSpanExporter()
 
         testRule.runTest(
-            startImmediately = false,
-            testCaseAction = {
+            postSetupAction = {
                 testStartTimeMs = clock.now()
                 clock.tick(100L)
                 embrace.addSpanExporter(spanExporter)
-                startSdk()
+            },
+            testCaseAction = {
                 results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 recordSession {
                     val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
@@ -306,13 +306,13 @@ internal class TracingApiTest {
     @Test
     fun `can only create span if there is a valid session`() {
         testRule.runTest(
-            startImmediately = false,
             setupAction = {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
             },
-            testCaseAction = {
+            postSetupAction = {
                 assertNull(embrace.startSpan("test"))
-                startSdk()
+            },
+            testCaseAction = {
                 recordSession {
                     assertNotNull(embrace.startSpan("test"))
                 }

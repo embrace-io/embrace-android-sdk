@@ -41,10 +41,10 @@ internal class PublicApiTest {
     @Test
     fun `SDK can start`() {
         testRule.runTest(
-            startImmediately = false,
-            testCaseAction = {
+            postSetupAction = {
                 assertFalse(embrace.isStarted)
-                startSdk()
+            },
+            testCaseAction = {
                 assertEquals(AppFramework.NATIVE, configService.appFramework)
                 assertFalse(configService.isSdkDisabled())
                 assertTrue(embrace.isStarted)
@@ -77,7 +77,7 @@ internal class PublicApiTest {
     @Test
     fun `custom appId must be valid`() {
         testRule.runTest(
-            startImmediately = false,
+            startSdk = false,
             testCaseAction = {
                 assertFalse(embrace.setAppId(""))
                 assertFalse(embrace.setAppId("abcd"))
@@ -100,7 +100,7 @@ internal class PublicApiTest {
     @Test
     fun `getCurrentSessionId returns null when SDK is not started`() {
         testRule.runTest(
-            startImmediately = false,
+            startSdk = false,
             testCaseAction = {
                 assertNull(embrace.currentSessionId)
             }
@@ -143,10 +143,10 @@ internal class PublicApiTest {
     @Test
     fun `getLastRunEndState() behave as expected`() {
         testRule.runTest(
-            startImmediately = false,
-            testCaseAction = {
+            postSetupAction = {
                 assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
-                startSdk()
+            },
+            testCaseAction = {
                 assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState)
             }
         )

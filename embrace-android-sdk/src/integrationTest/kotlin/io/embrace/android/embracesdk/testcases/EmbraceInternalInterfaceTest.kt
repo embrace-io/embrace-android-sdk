@@ -46,7 +46,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `no NPEs when SDK not started`() {
         testRule.runTest(
-            startImmediately = false,
+            startSdk = false,
             testCaseAction = {
                 assertFalse(embrace.isStarted)
                 with(embrace.internalInterface) {

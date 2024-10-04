@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,22 +19,27 @@ import java.lang.Thread.sleep
 @RunWith(AndroidJUnit4::class)
 internal class LogRecordExporterTest {
 
+    private lateinit var fakeLogRecordExporter: FakeLogRecordExporter
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
+    @Before
+    fun setup() {
+        fakeLogRecordExporter = FakeLogRecordExporter()
+    }
+
     @Test
     fun `SDK can receive a LogRecordExporter`() {
-        val fakeLogRecordExporter = FakeLogRecordExporter()
-
         testRule.runTest(
-            startImmediately = false,
-            testCaseAction = {
+            postSetupAction = {
                 embrace.addLogRecordExporter(fakeLogRecordExporter)
-                startSdk()
-
+            },
+            testCaseAction = {
                 recordSession {
                     embrace.logMessage("test message", Severity.INFO)
+                    // TODO: get rid of this
                     sleep(3000)
                 }
             },
@@ -47,22 +53,17 @@ internal class LogRecordExporterTest {
     @Test
     fun `a LogRecordExporter added after initialization won't be used`() {
         val fake = FakeInternalErrorService()
-        val fakeLogRecordExporter = FakeLogRecordExporter()
-
         testRule.runTest(
-            startImmediately = false,
             setupAction = {
                 overriddenInitModule.logger.apply {
                     internalErrorService = fake
                 }
             },
             testCaseAction = {
-                startSdk()
                 embrace.addLogRecordExporter(fakeLogRecordExporter)
-
                 recordSession {
                     embrace.logMessage("test message", Severity.INFO)
-
+                    // TODO: get rid of this
                     sleep(3000)
                 }
             },

@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePostSetupInterface
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -47,31 +48,27 @@ internal class ExternalTracerTest {
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embTracer: Tracer
+    private lateinit var otelTracer: Tracer
 
     @Before
     fun setup() {
         spanExporter = FakeSpanExporter()
     }
 
-    private fun EmbraceActionInterface.setupSpanExporter() {
-        embrace.addSpanExporter(spanExporter)
-        startSdk()
-        embOpenTelemetry = embrace.getOpenTelemetry()
-        embTracer = embOpenTelemetry.getTracer("external-tracer", "1.0.0")
-    }
-
     @Test
     fun `check correctness of implementations used by Tracer`() {
-        var tracer: Tracer? = null
         testRule.runTest(
-            startImmediately = false,
+            postSetupAction = {
+                setupExporter()
+            },
             testCaseAction = {
-                setupSpanExporter()
-                tracer = embrace.getOpenTelemetry().getTracer("foo")
+                initializeTracer()
+                embOpenTelemetry = embrace.getOpenTelemetry()
+                otelTracer = embrace.getOpenTelemetry().getTracer("foo")
             },
             assertAction = {
                 assertSame(
-                    tracer,
+                    otelTracer,
                     embOpenTelemetry.getTracer("foo")
                 )
                 assertTrue(embTracer is EmbTracer)
@@ -93,9 +90,11 @@ internal class ExternalTracerTest {
         var parentContext: Context?
 
         testRule.runTest(
-            startImmediately = false,
+            postSetupAction = {
+                setupExporter()
+            },
             testCaseAction = {
-                setupSpanExporter()
+                initializeTracer()
                 recordSession {
                     val spanBuilder = embTracer.spanBuilder("external-span")
                     startTimeMs = clock.now()
@@ -185,9 +184,11 @@ internal class ExternalTracerTest {
     @Test
     fun `opentelemetry instance can be used to log spans`() {
         testRule.runTest(
-            startImmediately = false,
+            postSetupAction = {
+                setupExporter()
+            },
             testCaseAction = {
-                setupSpanExporter()
+                initializeTracer()
             },
             assertAction = {
                 assertTrue(embTracer is EmbTracer)
@@ -196,6 +197,17 @@ internal class ExternalTracerTest {
                 assertTrue(spanBuilder is EmbSpanBuilder)
                 assertTrue(span is EmbSpan)
             }
+        )
+    }
+
+    private fun EmbracePostSetupInterface.setupExporter() {
+        embrace.addSpanExporter(spanExporter)
+    }
+
+    private fun EmbraceActionInterface.initializeTracer() {
+        embTracer = embrace.getOpenTelemetry().getTracer(
+            "external-tracer",
+            "1.0.0"
         )
     }
 }

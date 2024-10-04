@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.robolectric.Robolectric
-import org.robolectric.RuntimeEnvironment
 
 /**
  * Interface for performing actions on the [Embrace] instance under test

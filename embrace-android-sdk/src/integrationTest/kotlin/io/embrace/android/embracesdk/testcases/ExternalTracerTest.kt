@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePostSetupInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -58,7 +58,7 @@ internal class ExternalTracerTest {
     @Test
     fun `check correctness of implementations used by Tracer`() {
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 setupExporter()
             },
             testCaseAction = {
@@ -90,7 +90,7 @@ internal class ExternalTracerTest {
         var parentContext: Context?
 
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 setupExporter()
             },
             testCaseAction = {
@@ -184,7 +184,7 @@ internal class ExternalTracerTest {
     @Test
     fun `opentelemetry instance can be used to log spans`() {
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 setupExporter()
             },
             testCaseAction = {
@@ -200,7 +200,7 @@ internal class ExternalTracerTest {
         )
     }
 
-    private fun EmbracePostSetupInterface.setupExporter() {
+    private fun EmbracePreSdkStartInterface.setupExporter() {
         embrace.addSpanExporter(spanExporter)
     }
 

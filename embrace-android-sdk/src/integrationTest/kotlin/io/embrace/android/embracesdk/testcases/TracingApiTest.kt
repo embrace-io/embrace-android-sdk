@@ -58,7 +58,7 @@ internal class TracingApiTest {
         val spanExporter = FakeSpanExporter()
 
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 testStartTimeMs = clock.now()
                 clock.tick(100L)
                 embrace.addSpanExporter(spanExporter)
@@ -309,7 +309,7 @@ internal class TracingApiTest {
             setupAction = {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
             },
-            postSetupAction = {
+            preSdkStartAction = {
                 assertNull(embrace.startSpan("test"))
             },
             testCaseAction = {

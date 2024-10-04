@@ -41,7 +41,7 @@ internal class PublicApiTest {
     @Test
     fun `SDK can start`() {
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 assertFalse(embrace.isStarted)
             },
             testCaseAction = {
@@ -143,7 +143,7 @@ internal class PublicApiTest {
     @Test
     fun `getLastRunEndState() behave as expected`() {
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
             },
             testCaseAction = {

@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceAssertionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePostSetupInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.rules.ExternalResource
 
@@ -81,7 +81,7 @@ internal class IntegrationTestRule(
      * Instance of the test harness that is recreating on every test iteration
      */
     lateinit var setup: EmbraceSetupInterface
-    lateinit var postSetup: EmbracePostSetupInterface
+    lateinit var preSdkStart: EmbracePreSdkStartInterface
     lateinit var bootstrapper: ModuleInitBootstrapper
 
     /**
@@ -92,7 +92,7 @@ internal class IntegrationTestRule(
     inline fun runTest(
         startSdk: Boolean = true,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
-        postSetupAction: EmbracePostSetupInterface.() -> Unit = {},
+        preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: EmbraceAssertionInterface.() -> Unit = {},
     ) {
@@ -100,7 +100,7 @@ internal class IntegrationTestRule(
         with(setup) {
             val embraceImpl = EmbraceImpl(bootstrapper)
             EmbraceHooks.setImpl(embraceImpl)
-            postSetupAction(postSetup)
+            preSdkStartAction(preSdkStart)
             if (startSdk) {
                 embraceImpl.start(overriddenCoreModule.context, appFramework) {
                     overriddenConfigService.apply { appFramework = it }
@@ -116,7 +116,7 @@ internal class IntegrationTestRule(
      */
     override fun before() {
         setup = embraceSetupInterfaceSupplier.invoke()
-        postSetup = EmbracePostSetupInterface(setup)
+        preSdkStart = EmbracePreSdkStartInterface(setup)
         bootstrapper = setup.createBootstrapper()
         action = EmbraceActionInterface(setup, bootstrapper)
         assertion = EmbraceAssertionInterface(bootstrapper)

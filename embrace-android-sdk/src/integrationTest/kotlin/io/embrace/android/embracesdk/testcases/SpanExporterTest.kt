@@ -35,7 +35,7 @@ internal class SpanExporterTest {
     @Test
     fun `SDK can receive a SpanExporter`() {
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 embrace.addSpanExporter(fakeSpanExporter)
             },
             testCaseAction = {

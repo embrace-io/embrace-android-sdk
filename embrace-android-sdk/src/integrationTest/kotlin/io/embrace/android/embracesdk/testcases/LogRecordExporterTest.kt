@@ -33,7 +33,7 @@ internal class LogRecordExporterTest {
     @Test
     fun `SDK can receive a LogRecordExporter`() {
         testRule.runTest(
-            postSetupAction = {
+            preSdkStartAction = {
                 embrace.addLogRecordExporter(fakeLogRecordExporter)
             },
             testCaseAction = {

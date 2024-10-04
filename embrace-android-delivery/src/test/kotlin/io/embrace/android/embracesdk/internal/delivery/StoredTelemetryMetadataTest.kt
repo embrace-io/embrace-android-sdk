@@ -21,10 +21,12 @@ class StoredTelemetryMetadataTest {
     @Test
     fun `construct objects`() {
         typeNameMap.entries.forEach { (type, description) ->
-            assertEquals(
-                "${TIMESTAMP}_${description}_${UUID}_v1.json",
-                StoredTelemetryMetadata(TIMESTAMP, UUID, type).filename
-            )
+            listOf(true, false).forEach { payloadComplete ->
+                assertEquals(
+                    "${TIMESTAMP}_${description}_${UUID}_${payloadComplete}_v1.json",
+                    StoredTelemetryMetadata(TIMESTAMP, UUID, type, payloadComplete).filename
+                )
+            }
         }
     }
 
@@ -36,7 +38,8 @@ class StoredTelemetryMetadataTest {
             "my_session.json",
             "1234567890_session_v1.json",
             "a_b_c_v1.json",
-            "${TIMESTAMP}_b_c_v1.json"
+            "${TIMESTAMP}_b_c_v1.json",
+            "${TIMESTAMP}_session_c_v1.json"
         )
         badFilenames.forEach { filename ->
             val result = StoredTelemetryMetadata.fromFilename(filename)
@@ -47,12 +50,15 @@ class StoredTelemetryMetadataTest {
     @Test
     fun `from valid filename`() {
         typeNameMap.entries.forEach { (type, description) ->
-            val input = "${TIMESTAMP}_${description}_${UUID}_v1.json"
-            with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
-                assertEquals(input, filename)
-                assertEquals(TIMESTAMP, timestamp)
-                assertEquals(UUID, uuid)
-                assertEquals(type, this.envelopeType)
+            listOf(true, false).forEach { payloadComplete ->
+                val input = "${TIMESTAMP}_${description}_${UUID}_${payloadComplete}_v1.json"
+                with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
+                    assertEquals(input, filename)
+                    assertEquals(TIMESTAMP, timestamp)
+                    assertEquals(UUID, uuid)
+                    assertEquals(type, envelopeType)
+                    assertEquals(payloadComplete, complete)
+                }
             }
         }
     }

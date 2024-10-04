@@ -46,7 +46,7 @@ class V2PayloadStoreTest {
 
         val intake = intakeService.getIntakes<LogPayload>().single()
         assertSame(envelope, intake.envelope)
-        assertEquals("1692201601000_log_fakeuuid_v1.json", intake.metadata.filename)
+        assertEquals("1692201601000_log_fakeuuid_true_v1.json", intake.metadata.filename)
         assertEquals(0, intakeService.shutdownCount)
     }
 
@@ -65,7 +65,7 @@ class V2PayloadStoreTest {
     private fun verifySessionIntake(envelope: Envelope<SessionPayload>) {
         val intake = intakeService.getIntakes<SessionPayload>().single()
         assertSame(envelope, intake.envelope)
-        assertEquals("1692201601000_session_fakeuuid_v1.json", intake.metadata.filename)
+        assertEquals("1692201601000_session_fakeuuid_true_v1.json", intake.metadata.filename)
         assertEquals(0, intakeService.shutdownCount)
     }
 }

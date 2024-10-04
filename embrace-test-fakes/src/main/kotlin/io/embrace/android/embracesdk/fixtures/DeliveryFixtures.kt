@@ -4,15 +4,22 @@ import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURR
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 
-val fakeSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
-    timestamp = DEFAULT_FAKE_CURRENT_TIME + 2000L,
+val fakeCachedSessionStoredTelemetryMetadata = StoredTelemetryMetadata(
+    timestamp = DEFAULT_FAKE_CURRENT_TIME + 1000L,
     uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
-    envelopeType = SupportedEnvelopeType.SESSION
+    envelopeType = SupportedEnvelopeType.SESSION,
+    complete = false
 )
+
+val fakeSessionStoredTelemetryMetadata =
+    fakeCachedSessionStoredTelemetryMetadata.copy(
+        timestamp = fakeCachedSessionStoredTelemetryMetadata.timestamp + 1000L,
+        complete = true
+    )
 
 val fakeSessionStoredTelemetryMetadata2 = StoredTelemetryMetadata(
     timestamp = DEFAULT_FAKE_CURRENT_TIME + 10_000L,
-    uuid = "30690ad1-6b87-4e08-b72c-7deca14451d8",
+    uuid = "e6cfe01a-990e-4af7-b30e-f862947cef9b",
     envelopeType = SupportedEnvelopeType.SESSION
 )
 

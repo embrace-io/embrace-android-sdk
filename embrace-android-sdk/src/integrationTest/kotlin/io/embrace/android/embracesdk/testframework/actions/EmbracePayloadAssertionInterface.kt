@@ -2,9 +2,13 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -15,6 +19,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import java.io.IOException
 import java.util.Locale
+import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 
@@ -27,6 +32,7 @@ internal class EmbracePayloadAssertionInterface(
 ) {
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
+    private val requestExecutionService by lazy { bootstrapper.deliveryModule.requestExecutionService as FakeRequestExecutionService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
 
 
@@ -38,27 +44,19 @@ internal class EmbracePayloadAssertionInterface(
      * it will wait a maximum of 1 second for the number of payloads that exist to equal
      * to that before returning, timing out if it doesn't.
      */
-    internal fun getLogEnvelopes(
-        expectedSize: Int,
-        sent: Boolean = true
-    ): List<Envelope<LogPayload>> {
-        return retrieveLogEnvelopes(expectedSize, sent)
+    internal fun getLogEnvelopes(expectedSize: Int): List<Envelope<LogPayload>> {
+        return retrieveLogEnvelopes(expectedSize)
     }
 
-    internal fun getSingleLogEnvelope(sent: Boolean = true): Envelope<LogPayload> {
-        return getLogEnvelopes(1, sent).single()
+    internal fun getSingleLogEnvelope(): Envelope<LogPayload> {
+        return getLogEnvelopes(1).single()
     }
 
     private fun retrieveLogEnvelopes(
-        expectedSize: Int?,
-        sent: Boolean
+        expectedSize: Int
     ): List<Envelope<LogPayload>> {
         return retrievePayload(expectedSize) {
-            if (sent) {
-                deliveryService.lastSentLogPayloads
-            } else {
-                deliveryService.lastSavedLogPayloads
-            }
+            requestExecutionService.getRequests<LogPayload>()
         }
     }
 
@@ -130,10 +128,23 @@ internal class EmbracePayloadAssertionInterface(
     private fun retrieveSessionEnvelopes(
         expectedSize: Int, appState: ApplicationState
     ): List<Envelope<SessionPayload>> {
-        return retrievePayload(expectedSize) {
-            deliveryService.sentSessionEnvelopes.map { it.first }
+        val supplier = {
+            requestExecutionService.getRequests<SessionPayload>()
                 .filter { it.findAppState() == appState }
         }
+        try {
+            return retrievePayload(expectedSize, supplier)
+        } catch (exc: TimeoutException) {
+            val sessions: List<Map<String, String?>> = supplier().map {
+                mapOf(
+                    "sessionId" to it.getSessionId(),
+                    "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(embCleanExit.name),
+                    "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
+                )
+            }
+            throw IllegalStateException("Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions", exc)
+        }
+
     }
 
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
@@ -228,7 +239,8 @@ internal class EmbracePayloadAssertionInterface(
                         data.size == expectedSize
                     },
                     errorMessageSupplier = {
-                        "Timeout. Expected $expectedSize payloads, but got ${supplier().size}."
+                        val payloads = supplier()
+                        "Timeout. Expected $expectedSize payloads, but got ${payloads.size}."
                     }
                 )
         }

@@ -63,5 +63,5 @@ internal class StartupServiceImpl(
 
     override fun endedInForeground(): Boolean? = endedInForeground
 
-    override fun getInitThreadName(): String? = threadName
+    override fun getInitThreadName(): String = threadName
 }

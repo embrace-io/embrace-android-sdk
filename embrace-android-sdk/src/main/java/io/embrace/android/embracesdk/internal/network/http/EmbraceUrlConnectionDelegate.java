@@ -661,7 +661,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             try {
                 String traceIdHeader = internalNetworkApi.getTraceIdHeader();
                 traceId = getRequestProperty(traceIdHeader);
-                traceId.toString();
             } catch (Exception e) {
                 // don't do anything
             }

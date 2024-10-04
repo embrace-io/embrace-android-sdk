@@ -20,7 +20,7 @@ class FakeUserService : UserService {
         clearedCount += 1
     }
 
-    override fun loadUserInfoFromDisk(): UserInfo? {
+    override fun loadUserInfoFromDisk(): UserInfo {
         return obj
     }
 

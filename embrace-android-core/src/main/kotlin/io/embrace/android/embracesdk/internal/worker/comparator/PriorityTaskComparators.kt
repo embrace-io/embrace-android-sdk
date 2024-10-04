@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.worker.TaskPriority
 /**
  * Prioritises based on [TaskPriority]
  */
-val taskPriorityComparator: java.util.Comparator<Runnable> = Comparator { lhs: Runnable, rhs: Runnable ->
+val taskPriorityComparator: Comparator<Runnable> = Comparator { lhs: Runnable, rhs: Runnable ->
     val (lhsPrio, rhsPrio) = extractPriorityFromRunnable<TaskPriority>(lhs, rhs)
     return@Comparator lhsPrio.compareTo(rhsPrio)
 }

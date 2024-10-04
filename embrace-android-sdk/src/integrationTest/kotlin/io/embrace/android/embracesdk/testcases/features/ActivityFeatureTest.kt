@@ -4,11 +4,14 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.testframework.export.ExportedSpanValidator
+import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -26,6 +29,7 @@ internal class ActivityFeatureTest {
     @Test
     fun `automatically capture activities`() {
         var startTimeMs: Long = 0
+        val exporter = FilteredSpanExporter()
 
         testRule.runTest(
             setupAction = {
@@ -34,6 +38,7 @@ internal class ActivityFeatureTest {
                 )
             },
             testCaseAction = {
+                embrace.addSpanExporter(exporter)
                 startSdk()
                 recordSession() {
                     startTimeMs = clock.now()
@@ -41,6 +46,10 @@ internal class ActivityFeatureTest {
                 }
             },
             assertAction = {
+                val spans = exporter.awaitSpansWithType(EmbType.Ux.View, 1)
+                val validator = ExportedSpanValidator(TestPlatformSerializer())
+                validator.validate(spans.single(), "ux-view-export.json")
+
                 val message = getSingleSessionEnvelope()
                 val viewSpan = message.findSpanOfType(EmbType.Ux.View)
 

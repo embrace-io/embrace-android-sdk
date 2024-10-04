@@ -1,0 +1,9 @@
+{
+  "name": "emb-screen-view",
+  "kind": "INTERNAL",
+  "attributes": {
+    "emb.private.sequence_id": "5",
+    "emb.type": "ux.view",
+    "view.name": "android.app.Activity"
+  }
+}

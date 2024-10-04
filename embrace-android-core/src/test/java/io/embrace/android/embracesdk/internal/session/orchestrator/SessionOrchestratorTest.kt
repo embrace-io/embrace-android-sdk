@@ -22,12 +22,12 @@ import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker

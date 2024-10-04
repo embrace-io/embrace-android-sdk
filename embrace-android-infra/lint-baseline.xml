@@ -12,4 +12,15 @@
             column="29"/>
     </issue>
 
+    <issue
+        id="UnclosedTrace"
+        message="The `beginSection()` call is not always closed with a matching `endSection()` because the code in between may return early"
+        errorLine1="            Trace.beginSection(&quot;emb-$name&quot;.take(127))"
+        errorLine2="                  ~~~~~~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/internal/Systrace.kt"
+            line="50"
+            column="19"/>
+    </issue>
+
 </issues>

@@ -9,3 +9,7 @@ android {
 }
 
 apiValidation.validationDisabled = true
+
+dependencies {
+    compileOnly(libs.annotation)
+}

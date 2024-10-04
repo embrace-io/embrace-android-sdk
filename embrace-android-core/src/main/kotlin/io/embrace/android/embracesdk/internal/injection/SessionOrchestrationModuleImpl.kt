@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl

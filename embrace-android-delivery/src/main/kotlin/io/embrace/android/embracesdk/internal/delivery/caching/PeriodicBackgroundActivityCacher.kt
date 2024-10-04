@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.session.caching
+package io.embrace.android.embracesdk.internal.delivery.caching
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger

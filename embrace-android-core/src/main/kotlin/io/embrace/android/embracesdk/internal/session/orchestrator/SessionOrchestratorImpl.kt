@@ -8,14 +8,14 @@ import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicBackgroundActivityCacher
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService

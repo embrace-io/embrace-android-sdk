@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
+import io.embrace.android.embracesdk.internal.delivery.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals

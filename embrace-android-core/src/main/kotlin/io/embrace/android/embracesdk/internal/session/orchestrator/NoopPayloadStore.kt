@@ -18,6 +18,6 @@ internal class NoopPayloadStore : PayloadStore {
     override fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean) {
     }
 
-    override fun onCrash() {
+    override fun handleCrash(crashId: String) {
     }
 }

@@ -84,6 +84,17 @@ internal class CrashDataSourceImplTest {
     }
 
     @Test
+    fun `test crash handler order`() {
+        setupForHandleCrash()
+        val observedOrder = mutableListOf<Int>()
+        crashDataSource.addCrashTeardownHandler(lazy { CrashTeardownHandler { observedOrder.add(1) } })
+        crashDataSource.addCrashTeardownHandler(lazy { CrashTeardownHandler { observedOrder.add(2) } })
+        crashDataSource.addCrashTeardownHandler(lazy { CrashTeardownHandler { observedOrder.add(3) } })
+        crashDataSource.handleCrash(testException)
+        assertEquals(listOf(1, 2, 3), observedOrder)
+    }
+
+    @Test
     fun `test SessionOrchestrator and LogOrchestrator are called when handleCrash is called`() {
         setupForHandleCrash()
 

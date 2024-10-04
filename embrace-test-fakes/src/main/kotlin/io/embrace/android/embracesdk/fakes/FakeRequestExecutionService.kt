@@ -12,7 +12,7 @@ import java.util.zip.GZIPInputStream
 class FakeRequestExecutionService : RequestExecutionService {
 
     private val serializer = TestPlatformSerializer()
-    var constantResponse: ApiResponse = ApiResponse.None
+    var constantResponse: ApiResponse = ApiResponse.Success(null, null)
     var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> constantResponse }
     var exceptionOnExecution: Throwable? = null
     val attemptedHttpRequests = mutableListOf<Envelope<*>>()

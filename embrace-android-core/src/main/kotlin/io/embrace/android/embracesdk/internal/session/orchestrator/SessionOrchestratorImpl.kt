@@ -250,9 +250,6 @@ internal class SessionOrchestratorImpl(
     private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
         envelope?.let {
             payloadStore.storeSessionPayload(envelope, transitionType)
-            if (transitionType == TransitionType.CRASH) {
-                payloadStore.onCrash()
-            }
         }
     }
 

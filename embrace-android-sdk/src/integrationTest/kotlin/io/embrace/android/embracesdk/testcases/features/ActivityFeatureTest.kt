@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -21,7 +20,7 @@ internal class ActivityFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = IntegrationTestRule { EmbraceSetupInterface(startImmediately = false) }
+    val testRule = IntegrationTestRule()
 
     @Test
     fun `automatically capture activities`() {
@@ -34,7 +33,6 @@ internal class ActivityFeatureTest {
                 )
             },
             testCaseAction = {
-                startSdk()
                 recordSession() {
                     startTimeMs = clock.now()
                     simulateActivityLifecycle()

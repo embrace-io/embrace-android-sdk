@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import java.io.InputStream
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.GZIPInputStream
 
 class FakeRequestExecutionService : RequestExecutionService {
@@ -15,7 +16,7 @@ class FakeRequestExecutionService : RequestExecutionService {
     var constantResponse: ApiResponse = ApiResponse.Success(null, null)
     var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> constantResponse }
     var exceptionOnExecution: Throwable? = null
-    val attemptedHttpRequests = mutableListOf<Envelope<*>>()
+    val attemptedHttpRequests = ConcurrentLinkedQueue<Envelope<*>>()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getRequests(): List<Envelope<T>> {

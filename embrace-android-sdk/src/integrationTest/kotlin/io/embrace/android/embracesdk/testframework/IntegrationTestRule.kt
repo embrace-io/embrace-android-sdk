@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceAssertionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.rules.ExternalResource
 
@@ -80,6 +81,7 @@ internal class IntegrationTestRule(
      * Instance of the test harness that is recreating on every test iteration
      */
     lateinit var setup: EmbraceSetupInterface
+    lateinit var preSdkStart: EmbracePreSdkStartInterface
     lateinit var bootstrapper: ModuleInitBootstrapper
 
     /**
@@ -88,11 +90,23 @@ internal class IntegrationTestRule(
      * the integration test suite.
      */
     inline fun runTest(
+        startSdk: Boolean = true,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
+        preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: EmbraceAssertionInterface.() -> Unit = {},
     ) {
         setupAction(setup)
+        with(setup) {
+            val embraceImpl = EmbraceImpl(bootstrapper)
+            EmbraceHooks.setImpl(embraceImpl)
+            preSdkStartAction(preSdkStart)
+            if (startSdk) {
+                embraceImpl.start(overriddenCoreModule.context, appFramework) {
+                    overriddenConfigService.apply { appFramework = it }
+                }
+            }
+        }
         testCaseAction(action)
         assertAction(assertion)
     }
@@ -102,19 +116,10 @@ internal class IntegrationTestRule(
      */
     override fun before() {
         setup = embraceSetupInterfaceSupplier.invoke()
+        preSdkStart = EmbracePreSdkStartInterface(setup)
         bootstrapper = setup.createBootstrapper()
         action = EmbraceActionInterface(setup, bootstrapper)
         assertion = EmbraceAssertionInterface(bootstrapper)
-
-        with(setup) {
-            val embraceImpl = EmbraceImpl(bootstrapper)
-            EmbraceHooks.setImpl(embraceImpl)
-            if (startImmediately) {
-                embraceImpl.start(overriddenCoreModule.context, appFramework) {
-                    overriddenConfigService.apply { appFramework = it }
-                }
-            }
-        }
     }
 
     /**

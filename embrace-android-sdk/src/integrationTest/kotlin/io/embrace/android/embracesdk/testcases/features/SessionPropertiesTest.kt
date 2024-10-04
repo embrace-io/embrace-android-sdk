@@ -1,14 +1,13 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -22,15 +21,12 @@ internal class SessionPropertiesTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `session properties additions and removal works at all stages app state transition`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
                 embrace.addSessionProperty(PERM_KEY_2, PERM_VAL, true)
                 recordSession {
@@ -75,7 +71,6 @@ internal class SessionPropertiesTest {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
             },
             testCaseAction = {
-                startSdk()
                 embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
                 embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
                 embrace.addSessionProperty(PERM_KEY_2, PERM_VAL, true)
@@ -113,7 +108,6 @@ internal class SessionPropertiesTest {
     fun `temp properties are cleared in next session`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
                 recordSession {
                     embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
@@ -147,7 +141,6 @@ internal class SessionPropertiesTest {
     fun `adding properties in bg activity modifications change the cached payload`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession()
                 checkNextSavedBackgroundActivity(
                     action = {
@@ -173,7 +166,6 @@ internal class SessionPropertiesTest {
     fun `permanent properties are persisted in cached payloads`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 var lastSessionId: String? = null
                 recordSession {
                     lastSessionId = checkNotNull(embrace.currentSessionId)
@@ -235,7 +227,6 @@ internal class SessionPropertiesTest {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
             },
             testCaseAction = {
-                startSdk()
                 embrace.addSessionProperty("perm", "value", true)
                 recordSession {
                     embrace.addSessionProperty("perm2", "value", true)

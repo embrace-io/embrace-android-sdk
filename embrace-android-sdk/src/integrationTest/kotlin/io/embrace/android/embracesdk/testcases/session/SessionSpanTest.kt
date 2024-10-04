@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -15,9 +14,7 @@ internal class SessionSpanTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `there is always a valid session when background activity is enabled`() {
@@ -25,7 +22,6 @@ internal class SessionSpanTest {
 
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     ids.add(embrace.currentSessionId)
                 }
@@ -46,7 +42,6 @@ internal class SessionSpanTest {
     fun `session span event limits do not affect logging maximum breadcrumbs`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     repeat(101) {
                         embrace.addBreadcrumb("breadcrumb $it")

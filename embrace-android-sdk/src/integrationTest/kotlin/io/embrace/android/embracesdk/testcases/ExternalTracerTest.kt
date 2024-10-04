@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -16,7 +14,9 @@ import io.embrace.android.embracesdk.internal.payload.toOldPayload
 import io.embrace.android.embracesdk.internal.spans.toEmbraceSpanData
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -43,37 +43,32 @@ internal class ExternalTracerTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embOpenTelemetry: OpenTelemetry
     private lateinit var embTracer: Tracer
+    private lateinit var otelTracer: Tracer
 
     @Before
     fun setup() {
         spanExporter = FakeSpanExporter()
     }
 
-    private fun EmbraceActionInterface.setupSpanExporter() {
-        embrace.addSpanExporter(spanExporter)
-        startSdk()
-        embOpenTelemetry = embrace.getOpenTelemetry()
-        embTracer = embOpenTelemetry.getTracer("external-tracer", "1.0.0")
-    }
-
     @Test
     fun `check correctness of implementations used by Tracer`() {
-        var tracer: Tracer? = null
         testRule.runTest(
+            preSdkStartAction = {
+                setupExporter()
+            },
             testCaseAction = {
-                setupSpanExporter()
-                tracer = embrace.getOpenTelemetry().getTracer("foo")
+                initializeTracer()
+                embOpenTelemetry = embrace.getOpenTelemetry()
+                otelTracer = embrace.getOpenTelemetry().getTracer("foo")
             },
             assertAction = {
                 assertSame(
-                    tracer,
+                    otelTracer,
                     embOpenTelemetry.getTracer("foo")
                 )
                 assertTrue(embTracer is EmbTracer)
@@ -95,8 +90,11 @@ internal class ExternalTracerTest {
         var parentContext: Context?
 
         testRule.runTest(
+            preSdkStartAction = {
+                setupExporter()
+            },
             testCaseAction = {
-                setupSpanExporter()
+                initializeTracer()
                 recordSession {
                     val spanBuilder = embTracer.spanBuilder("external-span")
                     startTimeMs = clock.now()
@@ -186,8 +184,11 @@ internal class ExternalTracerTest {
     @Test
     fun `opentelemetry instance can be used to log spans`() {
         testRule.runTest(
+            preSdkStartAction = {
+                setupExporter()
+            },
             testCaseAction = {
-                setupSpanExporter()
+                initializeTracer()
             },
             assertAction = {
                 assertTrue(embTracer is EmbTracer)
@@ -196,6 +197,17 @@ internal class ExternalTracerTest {
                 assertTrue(spanBuilder is EmbSpanBuilder)
                 assertTrue(span is EmbSpan)
             }
+        )
+    }
+
+    private fun EmbracePreSdkStartInterface.setupExporter() {
+        embrace.addSpanExporter(spanExporter)
+    }
+
+    private fun EmbraceActionInterface.initializeTracer() {
+        embTracer = embrace.getOpenTelemetry().getTracer(
+            "external-tracer",
+            "1.0.0"
         )
     }
 }

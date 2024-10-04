@@ -5,10 +5,7 @@ import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,9 +14,7 @@ import org.junit.runner.RunWith
 internal class SensitiveKeysRedactionFeatureTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
         listOf("password")
@@ -32,7 +27,6 @@ internal class SensitiveKeysRedactionFeatureTest {
                 overriddenConfigService.sensitiveKeysBehavior = sensitiveKeysBehavior
             },
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.startSpan("test span")?.apply {
                         addAttribute("password", "1234")
@@ -59,7 +53,6 @@ internal class SensitiveKeysRedactionFeatureTest {
                 overriddenConfigService.sensitiveKeysBehavior = sensitiveKeysBehavior
             },
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.startSpan("test span")?.apply {
                         addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))

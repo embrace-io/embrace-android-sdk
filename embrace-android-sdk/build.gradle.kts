@@ -49,6 +49,7 @@ dependencies {
     kover(project(":embrace-android-features"))
     kover(project(":embrace-android-payload"))
     kover(project(":embrace-android-api"))
+    kover(project(":embrace-android-delivery"))
 }
 
 kover {

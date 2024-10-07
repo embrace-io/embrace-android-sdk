@@ -39,4 +39,9 @@ interface PayloadStorageService {
      * Return stored payloads as a list sorted in priority order
      */
     fun getPayloadsByPriority(): List<StoredTelemetryMetadata>
+
+    /**
+     * Return cached payloads from previous app instances
+     */
+    fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> = emptyList()
 }

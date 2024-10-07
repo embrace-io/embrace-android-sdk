@@ -45,13 +45,19 @@ class FakePayloadStorageService : PayloadStorageService {
         cachedPayloads.remove(metadata)
     }
 
-    override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> = cachedPayloads.keys.toList()
+    override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> =
+        cachedPayloads.filter { it.key.complete }.keys.toList()
 
-    fun addFakePayload(metadata: StoredTelemetryMetadata) {
+    override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
+        cachedPayloads.filterNot { it.key.complete }.keys.toList()
+
+    fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
         store(metadata) { stream ->
-            serializer.toJson(createFakePayload(metadata), metadata.envelopeType.serializedType, stream)
+            serializer.toJson(data, metadata.envelopeType.serializedType, stream)
         }
     }
+
+    fun addFakePayload(metadata: StoredTelemetryMetadata) = addPayload(metadata, createFakePayload(metadata))
 
     fun storedFilenames(): List<String> = cachedPayloads.keys.map { it.filename }
 
@@ -59,7 +65,9 @@ class FakePayloadStorageService : PayloadStorageService {
 
     fun storedPayloadCount() = cachedPayloads.size
 
-    fun clearStorage() = cachedPayloads.clear()
+    fun clearStorage() {
+        cachedPayloads.clear()
+    }
 
     private fun createFakePayload(metadata: StoredTelemetryMetadata) =
         when (metadata.envelopeType.serializedType) {

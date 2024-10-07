@@ -24,6 +24,7 @@ internal val storedTelemetryComparator: java.util.Comparator<StoredTelemetryMeta
     compareBy(StoredTelemetryMetadata::envelopeType)
         .thenBy(StoredTelemetryMetadata::timestamp)
         .thenBy(StoredTelemetryMetadata::uuid)
+        .thenBy(StoredTelemetryMetadata::complete)
 
 inline fun <reified T> extractPriorityFromRunnable(
     lhs: Runnable,

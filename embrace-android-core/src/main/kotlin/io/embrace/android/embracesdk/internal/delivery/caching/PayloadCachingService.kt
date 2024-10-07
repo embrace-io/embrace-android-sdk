@@ -13,7 +13,7 @@ interface PayloadCachingService : Shutdownable {
     /**
      * Starts caching a payload.
      */
-    fun startCaching(isInBackground: Boolean, supplier: () -> Envelope<SessionPayload>?)
+    fun startCaching(supplier: () -> Envelope<SessionPayload>?)
 
     /**
      * Stops caching a payload.

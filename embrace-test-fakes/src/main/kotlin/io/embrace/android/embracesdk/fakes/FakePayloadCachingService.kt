@@ -9,7 +9,7 @@ class FakePayloadCachingService : PayloadCachingService {
     override fun shutdown() {
     }
 
-    override fun startCaching(isInBackground: Boolean, supplier: () -> Envelope<SessionPayload>?) {
+    override fun startCaching(supplier: () -> Envelope<SessionPayload>?) {
     }
 
     override fun stopCaching() {

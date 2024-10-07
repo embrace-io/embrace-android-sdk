@@ -208,8 +208,11 @@ internal class SessionOrchestratorImpl(
             Systrace.startSynchronous("initiate-periodic-caching")
             if (transitionType != TransitionType.CRASH && newState != null) {
                 updatePeriodicCacheAttrs()
-                payloadCachingService.startCaching(endProcessState) {
-                    onSessionCache(newState, endProcessState)
+                payloadCachingService.startCaching(newState, endProcessState) { state, timestamp, zygote ->
+                    synchronized(lock) {
+                        updatePeriodicCacheAttrs()
+                        payloadFactory.snapshotPayload(state, timestamp, zygote)
+                    }
                 }
             }
             Systrace.endSynchronous()
@@ -245,23 +248,6 @@ internal class SessionOrchestratorImpl(
     private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
         envelope?.let {
             payloadStore.storeSessionPayload(envelope, transitionType)
-        }
-    }
-
-    private fun onSessionCache(
-        initial: SessionZygote,
-        endProcessState: ProcessState
-    ): Envelope<SessionPayload>? {
-        Systrace.traceSynchronous("on-session-cache") {
-            return synchronized(lock) {
-                if (initial.sessionId != sessionIdTracker.getActiveSessionId()) {
-                    return@synchronized null
-                }
-                updatePeriodicCacheAttrs()
-                payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                    payloadStore.cacheSessionSnapshot(this)
-                }
-            }
         }
     }
 

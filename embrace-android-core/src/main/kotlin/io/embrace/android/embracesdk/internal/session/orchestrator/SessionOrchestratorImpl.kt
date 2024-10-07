@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.utils.Provider
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SessionOrchestratorImpl(
     processStateService: ProcessStateService,
@@ -43,7 +42,6 @@ internal class SessionOrchestratorImpl(
      * The currently active session.
      */
     private var activeSession: SessionZygote? = null
-    private var shouldCacheBgActivity: AtomicBoolean = AtomicBoolean(true)
     private var state = when {
         processStateService.isInBackground -> ProcessState.BACKGROUND
         else -> ProcessState.FOREGROUND
@@ -134,9 +132,7 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun reportBackgroundActivityStateChange() {
-        if (state == ProcessState.BACKGROUND) {
-            shouldCacheBgActivity.set(true)
-        }
+        payloadCachingService.reportBackgroundActivityStateChange()
     }
 
     /**
@@ -178,7 +174,6 @@ internal class SessionOrchestratorImpl(
 
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
             payloadCachingService.stopCaching()
-            shouldCacheBgActivity.set(true) // reset the flag
 
             // second, end the current session or background activity, if either exist.
             Systrace.startSynchronous("end-current-session")
@@ -212,7 +207,10 @@ internal class SessionOrchestratorImpl(
             // initiate periodic caching of the payload if a new session has started
             Systrace.startSynchronous("initiate-periodic-caching")
             if (transitionType != TransitionType.CRASH && newState != null) {
-                initiatePeriodicCaching(endProcessState, newState)
+                updatePeriodicCacheAttrs()
+                payloadCachingService.startCaching(endProcessState) {
+                    onSessionCache(newState, endProcessState)
+                }
             }
             Systrace.endSynchronous()
 
@@ -250,34 +248,15 @@ internal class SessionOrchestratorImpl(
         }
     }
 
-    private fun initiatePeriodicCaching(
-        endProcessState: ProcessState,
-        newState: SessionZygote
-    ) {
-        updatePeriodicCacheAttrs()
-        payloadCachingService.startCaching {
-            if (newState.sessionId != sessionIdTracker.getActiveSessionId()) {
-                return@startCaching null
-            }
-
-            return@startCaching if (endProcessState == ProcessState.BACKGROUND) {
-                if (shouldCacheBgActivity.getAndSet(false)) {
-                    onSessionCache(newState, endProcessState)
-                } else {
-                    null
-                }
-            } else {
-                onSessionCache(newState, endProcessState)
-            }
-        }
-    }
-
     private fun onSessionCache(
         initial: SessionZygote,
         endProcessState: ProcessState
     ): Envelope<SessionPayload>? {
         Systrace.traceSynchronous("on-session-cache") {
             return synchronized(lock) {
+                if (initial.sessionId != sessionIdTracker.getActiveSessionId()) {
+                    return@synchronized null
+                }
                 updatePeriodicCacheAttrs()
                 payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
                     payloadStore.cacheSessionSnapshot(this)

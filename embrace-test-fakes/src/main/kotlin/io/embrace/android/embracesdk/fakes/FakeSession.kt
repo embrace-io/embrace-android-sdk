@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.SessionZygote
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.opentelemetry.api.trace.SpanId
 
 fun fakeSessionZygote(): SessionZygote = SessionZygote(
@@ -64,16 +63,6 @@ fun fakeIncompleteSessionEnvelope(
                 incompleteSessionSpan.snapshot(),
                 FakePersistableEmbraceSpan.started(clock = fakeClock).snapshot()
             )
-        )
-    )
-}
-
-fun Envelope<SessionPayload>.mutateSessionSpan(action: (original: Span) -> Span): Envelope<SessionPayload> {
-    val spans = data.spans
-    val sessionSpan = checkNotNull(getSessionSpan())
-    return copy(
-        data = data.copy(
-            spans?.minus(sessionSpan)?.plus(action(sessionSpan))
         )
     )
 }

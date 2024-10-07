@@ -59,7 +59,7 @@ class FakeSpanData(
     override fun getEvents(): MutableList<EventData> = events
     override fun getLinks(): MutableList<LinkData> = links
     override fun getEndEpochNanos(): Long = endTimeNanos
-    override fun hasEnded(): Boolean = status != StatusData.unset()
+    override fun hasEnded(): Boolean = endTimeNanos > 0
     override fun getTotalRecordedEvents(): Int = events.size
     override fun getTotalRecordedLinks(): Int = links.size
     override fun getTotalAttributeCount(): Int = attributes.size()
@@ -74,7 +74,6 @@ class FakeSpanData(
         val perfSpanCompleted: FakeSpanData =
             FakeSpanData(
                 name = "completed-perf-span",
-                spanStatus = StatusData.ok(),
                 endTimeNanos = (DEFAULT_START_TIME_MS + 60000L).millisToNanos()
             )
 

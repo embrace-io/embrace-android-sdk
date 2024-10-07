@@ -10,9 +10,6 @@ import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutio
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
-import io.embrace.android.embracesdk.internal.delivery.resurrection.NoopPayloadResurrectionService
-import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionService
-import io.embrace.android.embracesdk.internal.delivery.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
@@ -78,14 +75,6 @@ internal class DeliveryModuleImpl(
                 initModule.jsonSerializer,
                 workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
             )
-        }
-    }
-
-    override val payloadResurrectionService: PayloadResurrectionService by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadResurrectionService()
-        } else {
-            PayloadResurrectionServiceImpl(intakeService)
         }
     }
 

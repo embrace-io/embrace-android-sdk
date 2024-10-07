@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.GatingService
 import io.embrace.android.embracesdk.internal.session.EmbraceMemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -15,7 +13,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSpanAttrPopulatorImpl
-import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class SessionOrchestrationModuleImpl(
     initModule: InitModule,
@@ -24,7 +21,6 @@ internal class SessionOrchestrationModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     deliveryModule: DeliveryModule,
-    workerThreadModule: WorkerThreadModule,
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: (coldStart: Boolean) -> Long?,
@@ -50,21 +46,6 @@ internal class SessionOrchestrationModuleImpl(
             Systrace.traceSynchronous("sessionEnvelopeSource") { payloadSourceModule.sessionEnvelopeSource },
             androidServicesModule.preferencesService,
             openTelemetryModule.currentSessionSpan,
-        )
-    }
-
-    private val periodicSessionCacher: PeriodicSessionCacher by singleton {
-        PeriodicSessionCacher(
-            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
-            initModule.logger
-        )
-    }
-
-    private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
-        PeriodicBackgroundActivityCacher(
-            initModule.clock,
-            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
-            initModule.logger
         )
     }
 
@@ -103,8 +84,7 @@ internal class SessionOrchestrationModuleImpl(
             essentialServiceModule.sessionIdTracker,
             boundaryDelegate,
             deliveryModule.payloadStore,
-            periodicSessionCacher,
-            periodicBackgroundActivityCacher,
+            deliveryModule.payloadCachingService,
             dataSourceModule.dataCaptureOrchestrator,
             openTelemetryModule.currentSessionSpan,
             sessionSpanAttrPopulator,

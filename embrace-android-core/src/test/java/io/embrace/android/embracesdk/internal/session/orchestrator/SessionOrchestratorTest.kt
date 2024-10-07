@@ -22,6 +22,8 @@ import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
+import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
@@ -52,8 +54,7 @@ internal class SessionOrchestratorTest {
     private lateinit var store: FakePayloadStore
     private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private lateinit var periodicSessionCacher: PeriodicSessionCacher
-    private lateinit var periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher
+    private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
     private lateinit var baCacheExecutor: BlockingScheduledExecutorService
     private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
@@ -358,16 +359,17 @@ internal class SessionOrchestratorTest {
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         baCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        periodicSessionCacher = PeriodicSessionCacher(
-            BackgroundWorker(sessionCacheExecutor),
-            logger
-        )
-        periodicBackgroundActivityCacher =
+        payloadCachingService = PayloadCachingServiceImpl(
+            PeriodicSessionCacher(
+                BackgroundWorker(sessionCacheExecutor),
+                logger
+            ),
             PeriodicBackgroundActivityCacher(
                 clock,
                 BackgroundWorker(baCacheExecutor),
                 logger
             )
+        )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
             configService,
@@ -394,8 +396,7 @@ internal class SessionOrchestratorTest {
                 sessionPropertiesService
             ),
             store,
-            periodicSessionCacher,
-            periodicBackgroundActivityCacher,
+            payloadCachingService,
             dataCaptureOrchestrator,
             currentSessionSpan,
             SessionSpanAttrPopulatorImpl(

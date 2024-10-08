@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 class IntakeServiceImpl(
     private val schedulingService: SchedulingService,
     private val payloadStorageService: PayloadStorageService,
+    private val cacheStorageService: PayloadStorageService,
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
@@ -28,12 +29,21 @@ class IntakeServiceImpl(
         }
     }
 
-    private fun processIntake(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {
+    private fun processIntake(
+        intake: Envelope<*>,
+        metadata: StoredTelemetryMetadata,
+    ) {
         try {
-            payloadStorageService.store(metadata) { stream ->
+            val service = when {
+                metadata.complete -> payloadStorageService
+                else -> cacheStorageService
+            }
+            service.store(metadata) { stream ->
                 serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
             }
-            schedulingService.onPayloadIntake()
+            if (metadata.complete) {
+                schedulingService.onPayloadIntake()
+            }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.INTAKE_FAIL, exc)
         }

@@ -67,7 +67,7 @@ class PayloadResurrectionServiceImplTest {
     @Test
     fun `dead session resurrected and delivered`() {
         deadSessionEnvelope.resurrectPayload()
-        val intake = intakeService.getIntakes<SessionPayload>().single()
+        val intake = intakeService.getIntakes<SessionPayload>(false).single()
         assertEquals(intake.metadata, fakeCachedSessionStoredTelemetryMetadata)
         assertEquals(0, payloadStorageService.storedPayloadCount())
 
@@ -91,7 +91,7 @@ class PayloadResurrectionServiceImplTest {
     fun `snapshot will be delivered as failed span once resurrected`() {
         deadSessionEnvelope.resurrectPayload()
 
-        val sentSession = intakeService.getIntakes<SessionPayload>().single().envelope
+        val sentSession = intakeService.getIntakes<SessionPayload>(false).single().envelope
         assertEquals(2, sentSession.data.spans?.size)
         assertEquals(0, sentSession.data.spanSnapshots?.size)
 
@@ -116,7 +116,7 @@ class PayloadResurrectionServiceImplTest {
     fun `do not add failed span from a snapshot if a span with the same id is already in the payload`() {
         messedUpSessionEnvelope.resurrectPayload()
 
-        with(intakeService.getIntakes<SessionPayload>().single().envelope) {
+        with(intakeService.getIntakes<SessionPayload>(false).single().envelope) {
             assertEquals(3, data.spans?.size)
             assertEquals(0, data.spanSnapshots?.size)
         }
@@ -127,14 +127,14 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService.data = createNativeCrashData(deadSessionEnvelope.getSessionId())
         deadSessionEnvelope.resurrectPayload()
 
-        val sessionSpan = intakeService.getIntakes<SessionPayload>().single().envelope.getSessionSpan()
+        val sessionSpan = intakeService.getIntakes<SessionPayload>(false).single().envelope.getSessionSpan()
         assertEquals("my-crash-id", sessionSpan?.attributes?.findAttributeValue(embCrashId.name))
 
         nativeCrashService.data = createNativeCrashData("fake-id")
         deadSessionEnvelope.resurrectPayload()
 
         val attributes =
-            checkNotNull(intakeService.getIntakes<SessionPayload>().last().envelope.getSessionSpan()?.attributes)
+            checkNotNull(intakeService.getIntakes<SessionPayload>(false).last().envelope.getSessionSpan()?.attributes)
         assertNull(attributes.findAttributeValue(embCrashId.name))
     }
 

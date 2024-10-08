@@ -49,7 +49,7 @@ internal class DeliveryModuleImpl(
             val deliveryService = deliveryService ?: return@singleton null
             val intakeService = intakeService ?: return@singleton null
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
-                V2PayloadStore(intakeService, deliveryService, initModule.clock)
+                V2PayloadStore(intakeService, initModule.clock)
             } else {
                 V1PayloadStore(deliveryService)
             }
@@ -66,9 +66,11 @@ internal class DeliveryModuleImpl(
         } else {
             val payloadStorageService = payloadStorageService ?: return@singleton null
             val schedulingService = schedulingService ?: return@singleton null
+            val cacheStorageService = cacheStorageService ?: return@singleton null
             IntakeServiceImpl(
                 schedulingService,
                 payloadStorageService,
+                cacheStorageService,
                 initModule.logger,
                 initModule.jsonSerializer,
                 workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
@@ -102,10 +104,20 @@ internal class DeliveryModuleImpl(
             null
         } else {
             PayloadStorageServiceImpl(
-                PayloadStorageServiceImpl.createOutputDir(
-                    coreModule.context,
-                    initModule.logger
-                ),
+                coreModule.context,
+                PayloadStorageServiceImpl.OutputType.PAYLOAD,
+                initModule.logger
+            )
+        }
+    }
+
+    override val cacheStorageService: PayloadStorageService? by singleton {
+        if (configModule.configService.isOnlyUsingOtelExporters()) {
+            null
+        } else {
+            PayloadStorageServiceImpl(
+                coreModule.context,
+                PayloadStorageServiceImpl.OutputType.CACHE,
                 initModule.logger
             )
         }

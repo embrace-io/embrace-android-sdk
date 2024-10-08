@@ -20,8 +20,30 @@ import java.util.zip.GZIPOutputStream
 class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
     private val logger: EmbLogger,
-    private val storageLimit: Int = 500
+    private val storageLimit: Int = 500,
 ) : PayloadStorageService {
+
+    enum class OutputType(internal val dir: String) {
+
+        /**
+         * A complete payload that is ready to send
+         */
+        PAYLOAD("embrace_payloads"),
+
+        /**
+         * An incomplete cached payload that is not ready to send
+         */
+        CACHE("embrace_cache")
+    }
+
+    constructor(
+        ctx: Context,
+        outputType: OutputType,
+        logger: EmbLogger,
+        storageLimit: Int = 500,
+    ) : this(createOutputDir(ctx, outputType, logger), logger, storageLimit)
+
+    private val payloadDir by outputDir
 
     // maintain an in-memory list of payloads to avoid calling listFiles() every time we need
     // to check the storage limit. This will always remain in sync with the actual files on disk
@@ -37,8 +59,6 @@ class PayloadStorageServiceImpl(
         }
     }
 
-    private val payloadDir by outputDir
-
     /**
      * [SerializationAction] is expected to return bytes that are not compressed, and they will be gzipped before
      * being persisted.
@@ -53,7 +73,7 @@ class PayloadStorageServiceImpl(
 
     private fun storeImpl(
         metadata: StoredTelemetryMetadata,
-        action: SerializationAction
+        action: SerializationAction,
     ) {
         if (pruneStorage(metadata)) {
             return
@@ -123,18 +143,17 @@ class PayloadStorageServiceImpl(
 
     private fun StoredTelemetryMetadata.asFile(): File = File(payloadDir, filename)
 
-    companion object {
-        private const val OUTPUT_DIR_NAME = "embrace_payloads"
-
+    private companion object {
         fun createOutputDir(
             ctx: Context,
+            outputType: OutputType,
             logger: EmbLogger
-        ): Lazy<File> = lazy {
+        ) = lazy {
             try {
-                File(ctx.filesDir, OUTPUT_DIR_NAME).apply(File::mkdirs)
+                File(ctx.filesDir, outputType.dir).apply(File::mkdirs)
             } catch (exc: Throwable) {
                 logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
-                ctx.cacheDir
+                File(ctx.cacheDir, outputType.dir).apply(File::mkdirs)
             }
         }
     }

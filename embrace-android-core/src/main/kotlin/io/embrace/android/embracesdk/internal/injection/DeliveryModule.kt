@@ -20,6 +20,7 @@ interface DeliveryModule {
     val intakeService: IntakeService?
     val payloadCachingService: PayloadCachingService?
     val payloadStorageService: PayloadStorageService?
+    val cacheStorageService: PayloadStorageService?
     val requestExecutionService: RequestExecutionService?
     val schedulingService: SchedulingService?
 }

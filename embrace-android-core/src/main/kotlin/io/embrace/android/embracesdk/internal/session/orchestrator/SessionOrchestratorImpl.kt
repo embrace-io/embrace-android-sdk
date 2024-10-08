@@ -28,8 +28,8 @@ internal class SessionOrchestratorImpl(
     private val configService: ConfigService,
     private val sessionIdTracker: SessionIdTracker,
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
-    private val payloadStore: PayloadStore,
-    private val payloadCachingService: PayloadCachingService,
+    private val payloadStore: PayloadStore?,
+    private val payloadCachingService: PayloadCachingService?,
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
@@ -132,7 +132,7 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun reportBackgroundActivityStateChange() {
-        payloadCachingService.reportBackgroundActivityStateChange()
+        payloadCachingService?.reportBackgroundActivityStateChange()
     }
 
     /**
@@ -173,7 +173,7 @@ internal class SessionOrchestratorImpl(
             Systrace.startSynchronous("transition-state-start")
 
             // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
-            payloadCachingService.stopCaching()
+            payloadCachingService?.stopCaching()
 
             // second, end the current session or background activity, if either exist.
             Systrace.startSynchronous("end-current-session")
@@ -208,7 +208,7 @@ internal class SessionOrchestratorImpl(
             Systrace.startSynchronous("initiate-periodic-caching")
             if (transitionType != TransitionType.CRASH && newState != null) {
                 updatePeriodicCacheAttrs()
-                payloadCachingService.startCaching(newState, endProcessState) { state, timestamp, zygote ->
+                payloadCachingService?.startCaching(newState, endProcessState) { state, timestamp, zygote ->
                     synchronized(lock) {
                         updatePeriodicCacheAttrs()
                         payloadFactory.snapshotPayload(state, timestamp, zygote)
@@ -247,7 +247,7 @@ internal class SessionOrchestratorImpl(
 
     private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
         envelope?.let {
-            payloadStore.storeSessionPayload(envelope, transitionType)
+            payloadStore?.storeSessionPayload(envelope, transitionType)
         }
     }
 

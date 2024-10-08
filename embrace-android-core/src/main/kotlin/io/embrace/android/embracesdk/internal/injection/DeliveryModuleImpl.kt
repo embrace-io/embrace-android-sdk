@@ -2,22 +2,16 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
-import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
-import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
-import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
-import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
@@ -31,10 +25,10 @@ internal class DeliveryModuleImpl(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    requestExecutionServiceProvider: Provider<RequestExecutionService>,
-    deliveryServiceProvider: () -> DeliveryService = {
+    requestExecutionServiceProvider: Provider<RequestExecutionService?>,
+    deliveryServiceProvider: () -> DeliveryService? = {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopDeliveryService()
+            null
         } else {
             EmbraceDeliveryService(
                 storageModule.deliveryCacheManager,
@@ -46,30 +40,30 @@ internal class DeliveryModuleImpl(
     }
 ) : DeliveryModule {
 
-    override val payloadStore: PayloadStore by singleton {
+    override val payloadStore: PayloadStore? by singleton {
         val configService = configModule.configService
         if (configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadStore()
+            null
         } else {
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
-                V2PayloadStore(intakeService, deliveryService, initModule.clock)
+                V2PayloadStore(checkNotNull(intakeService), checkNotNull(deliveryService), initModule.clock)
             } else {
-                V1PayloadStore(deliveryService)
+                V1PayloadStore(checkNotNull(deliveryService))
             }
         }
     }
 
-    override val deliveryService: DeliveryService by singleton {
+    override val deliveryService: DeliveryService? by singleton {
         deliveryServiceProvider()
     }
 
-    override val intakeService: IntakeService by singleton {
+    override val intakeService: IntakeService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopIntakeService()
+            null
         } else {
             IntakeServiceImpl(
-                schedulingService,
-                payloadStorageService,
+                checkNotNull(schedulingService),
+                checkNotNull(payloadStorageService),
                 initModule.logger,
                 initModule.jsonSerializer,
                 workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
@@ -84,22 +78,22 @@ internal class DeliveryModuleImpl(
         )
     }
 
-    override val payloadCachingService: PayloadCachingService by singleton {
+    override val payloadCachingService: PayloadCachingService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadCachingService()
+            null
         } else {
             PayloadCachingServiceImpl(
                 periodicSessionCacher,
                 initModule.clock,
                 essentialServiceModule.sessionIdTracker,
-                payloadStore
+                checkNotNull(payloadStore)
             )
         }
     }
 
-    override val payloadStorageService: PayloadStorageService by singleton {
+    override val payloadStorageService: PayloadStorageService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadStorageService()
+            null
         } else {
             PayloadStorageServiceImpl(
                 PayloadStorageServiceImpl.createOutputDir(
@@ -111,17 +105,17 @@ internal class DeliveryModuleImpl(
         }
     }
 
-    override val requestExecutionService: RequestExecutionService by singleton {
+    override val requestExecutionService: RequestExecutionService? by singleton {
         requestExecutionServiceProvider()
     }
 
-    override val schedulingService: SchedulingService by singleton {
+    override val schedulingService: SchedulingService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopSchedulingService()
+            null
         } else {
             SchedulingServiceImpl(
-                payloadStorageService,
-                requestExecutionService,
+                checkNotNull(payloadStorageService),
+                checkNotNull(requestExecutionService),
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 workerThreadModule.backgroundWorker(Worker.Background.DeliveryWorker),
                 initModule.clock,

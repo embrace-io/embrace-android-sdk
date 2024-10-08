@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentMap
  */
 internal class EmbraceEventService(
     private val startupStartTimeMs: Long,
-    deliveryService: DeliveryService,
+    deliveryService: DeliveryService?,
     private val configService: ConfigService,
     metadataService: MetadataService,
     processStateService: ProcessStateService,

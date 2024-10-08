@@ -28,7 +28,7 @@ class FakeCrashDataSource : CrashDataSource {
         TODO("Not yet implemented")
     }
 
-    override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler>) {
+    override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler?>) {
     }
 
     override fun handleCrash(exception: Throwable) {

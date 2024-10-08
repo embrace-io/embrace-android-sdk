@@ -5,9 +5,7 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
-import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.delivery.execution.NoopRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionServiceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -289,14 +287,14 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             {
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {
-                                    NoopRequestExecutionService()
+                                    null
                                 } else {
                                     RequestExecutionServiceImpl()
                                 }
                             },
                             {
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {
-                                    NoopDeliveryService()
+                                    null
                                 } else {
                                     EmbraceDeliveryService(
                                         storageModule.deliveryCacheManager,

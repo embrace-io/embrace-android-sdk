@@ -62,7 +62,6 @@ internal class LogModuleImpl(
             essentialServiceModule.logWriter,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
-            workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker),
             initModule.logger,
             initModule.jsonSerializer
         )

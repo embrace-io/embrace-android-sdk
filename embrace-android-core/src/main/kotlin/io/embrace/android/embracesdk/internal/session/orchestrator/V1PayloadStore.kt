@@ -6,8 +6,10 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.JVM_CRASH
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType.NORMAL_END
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 class V1PayloadStore(
+    private val worker: BackgroundWorker,
     private val deliveryService: DeliveryService
 ) : PayloadStore {
 
@@ -23,7 +25,9 @@ class V1PayloadStore(
         if (attemptImmediateRequest) {
             deliveryService.sendLogs(envelope)
         } else {
-            deliveryService.saveLogs(envelope)
+            worker.submit {
+                deliveryService.saveLogs(envelope)
+            }
         }
     }
 

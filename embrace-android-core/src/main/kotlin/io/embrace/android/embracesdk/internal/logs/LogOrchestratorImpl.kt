@@ -16,6 +16,7 @@ internal class LogOrchestratorImpl(
     private val payloadStore: PayloadStore?,
     private val logEnvelopeSource: LogEnvelopeSource,
 ) : LogOrchestrator {
+
     @Volatile
     private var lastLogTime: AtomicLong = AtomicLong(0)
 
@@ -45,9 +46,7 @@ internal class LogOrchestratorImpl(
             if (logRequest.defer) {
                 payloadStore?.storeLogPayload(logRequest.payload, false)
             } else {
-                worker.submit {
-                    payloadStore?.storeLogPayload(logRequest.payload, true)
-                }
+                payloadStore?.storeLogPayload(logRequest.payload, true)
             }
         }
 

@@ -11,6 +11,11 @@ import java.io.InputStream
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.zip.GZIPOutputStream
 
+/**
+ * Implementation of [PayloadStorageService] that will persist and load payloads as gzipped bytes streams.
+ * Callers of the [store] method are expected to pass in a [SerializationAction] that streams back uncompressed bytes,
+ * while the callers of [loadPayloadAsStream] should expect the bytes from the stream to be gzipped.
+ */
 class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
     private val errorHandler: ErrorHandler,
@@ -33,6 +38,10 @@ class PayloadStorageServiceImpl(
 
     private val payloadDir by outputDir
 
+    /**
+     * [SerializationAction] is expected to return bytes that are not compressed, and they will be gzipped before
+     * being persisted.
+     */
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
         try {
             storeImpl(metadata, action)
@@ -75,6 +84,10 @@ class PayloadStorageServiceImpl(
         }
     }
 
+    /**
+     * The [InputStream] returned is expected to be gzipped, so callers of this method need to unzip it before
+     * deserializing the bytes.
+     */
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
             metadata.asFile().inputStream().buffered()

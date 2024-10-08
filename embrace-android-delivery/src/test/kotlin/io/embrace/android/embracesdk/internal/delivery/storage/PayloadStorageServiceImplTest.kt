@@ -48,11 +48,12 @@ class PayloadStorageServiceImplTest {
         }
         val files = outputDir.listFiles()
         val file = files?.single() ?: error("File not found")
+
+        // verify file content was gzipped by reading the bytes through a GZIPInputStream
         assertEquals(fileContents, GZIPInputStream(file.inputStream()).bufferedReader().readText())
 
-        // read file
-        val observed =
-            GZIPInputStream(service.loadPayloadAsStream(metadata)).bufferedReader().readText()
+        // verify file content that is loaded is gzipped
+        val observed = GZIPInputStream(service.loadPayloadAsStream(metadata)).bufferedReader().readText()
         assertEquals(fileContents, observed)
 
         // delete file

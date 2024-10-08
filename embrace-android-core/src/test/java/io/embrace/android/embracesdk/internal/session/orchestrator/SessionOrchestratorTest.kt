@@ -362,7 +362,10 @@ internal class SessionOrchestratorTest {
             PeriodicSessionCacher(
                 BackgroundWorker(sessionCacheExecutor),
                 logger
-            )
+            ),
+            clock,
+            sessionIdTracker,
+            store
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(

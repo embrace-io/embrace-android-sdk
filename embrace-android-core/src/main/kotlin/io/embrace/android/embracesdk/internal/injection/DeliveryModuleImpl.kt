@@ -88,7 +88,12 @@ internal class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             NoopPayloadCachingService()
         } else {
-            PayloadCachingServiceImpl(periodicSessionCacher)
+            PayloadCachingServiceImpl(
+                periodicSessionCacher,
+                initModule.clock,
+                essentialServiceModule.sessionIdTracker,
+                payloadStore
+            )
         }
     }
 

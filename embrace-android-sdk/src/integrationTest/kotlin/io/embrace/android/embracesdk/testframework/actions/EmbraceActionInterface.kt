@@ -4,18 +4,13 @@ import android.app.Activity
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceHooks
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.robolectric.Robolectric
-import org.robolectric.RuntimeEnvironment
 
 /**
  * Interface for performing actions on the [Embrace] instance under test
@@ -112,52 +107,4 @@ internal class EmbraceActionInterface(
         val dataSource = checkNotNull(bootstrapper.featureModule.thermalStateDataSource.dataSource)
         dataSource.handleThermalStateChange(thermalState)
     }
-
-    /**
-     * Run some [action] and the validate the next saved background activity using
-     * [validationFn]. If no background activity is saved with
-     * 1 second, this fails.
-     */
-    internal fun checkNextSavedBackgroundActivity(
-        action: () -> Unit,
-        validationFn: (Envelope<SessionPayload>) -> Unit
-    ): Envelope<SessionPayload> =
-        with(bootstrapper.deliveryModule.deliveryService as FakeDeliveryService) {
-            checkNextSavedSessionEnvelope(
-                dataProvider = ::getSavedBackgroundActivities,
-                action = action,
-                validationFn = validationFn,
-            )
-        }
-
-    private fun checkNextSavedSessionEnvelope(
-        dataProvider: () -> List<Envelope<SessionPayload>>,
-        action: () -> Unit,
-        validationFn: (Envelope<SessionPayload>) -> Unit
-    ): Envelope<SessionPayload> {
-        val startingSize = dataProvider().size
-        clock.tick(10_000L)
-        action()
-        return when (dataProvider().size) {
-            startingSize -> {
-                returnIfConditionMet(
-                    desiredValueSupplier = {
-                        dataProvider().getNth(startingSize)
-                    },
-                    condition = { data ->
-                        data.size > startingSize
-                    },
-                    dataProvider = dataProvider
-                )
-            }
-
-            else -> {
-                dataProvider().getNth(startingSize)
-            }
-        }.apply {
-            validationFn(this)
-        }
-    }
-
-    private fun <T> List<T>.getNth(n: Int) = filterIndexed { index, _ -> index == n }.single()
 }

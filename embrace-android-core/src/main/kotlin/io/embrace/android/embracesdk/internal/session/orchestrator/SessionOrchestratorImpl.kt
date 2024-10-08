@@ -132,12 +132,7 @@ internal class SessionOrchestratorImpl(
     }
 
     override fun reportBackgroundActivityStateChange() {
-        if (state == ProcessState.BACKGROUND) {
-            val initial = activeSession ?: return
-            payloadCachingService.startCaching(true) {
-                onSessionCache(initial, ProcessState.BACKGROUND)
-            }
-        }
+        payloadCachingService.reportBackgroundActivityStateChange()
     }
 
     /**
@@ -212,7 +207,13 @@ internal class SessionOrchestratorImpl(
             // initiate periodic caching of the payload if a new session has started
             Systrace.startSynchronous("initiate-periodic-caching")
             if (transitionType != TransitionType.CRASH && newState != null) {
-                initiatePeriodicCaching(endProcessState, newState)
+                updatePeriodicCacheAttrs()
+                payloadCachingService.startCaching(newState, endProcessState) { state, timestamp, zygote ->
+                    synchronized(lock) {
+                        updatePeriodicCacheAttrs()
+                        payloadFactory.snapshotPayload(state, timestamp, zygote)
+                    }
+                }
             }
             Systrace.endSynchronous()
 
@@ -247,34 +248,6 @@ internal class SessionOrchestratorImpl(
     private fun processEndMessage(envelope: Envelope<SessionPayload>?, transitionType: TransitionType) {
         envelope?.let {
             payloadStore.storeSessionPayload(envelope, transitionType)
-        }
-    }
-
-    private fun initiatePeriodicCaching(
-        endProcessState: ProcessState,
-        newState: SessionZygote
-    ) {
-        updatePeriodicCacheAttrs()
-        payloadCachingService.startCaching(endProcessState == ProcessState.BACKGROUND) {
-            onSessionCache(newState, endProcessState)
-        }
-    }
-
-    private fun onSessionCache(
-        initial: SessionZygote,
-        endProcessState: ProcessState
-    ): Envelope<SessionPayload>? {
-        Systrace.traceSynchronous("on-session-cache") {
-            return if (initial.sessionId == sessionIdTracker.getActiveSessionId()) {
-                synchronized(lock) {
-                    updatePeriodicCacheAttrs()
-                    payloadFactory.snapshotPayload(endProcessState, clock.now(), initial)?.apply {
-                        payloadStore.cacheSessionSnapshot(this)
-                    }
-                }
-            } else {
-                null
-            }
         }
     }
 

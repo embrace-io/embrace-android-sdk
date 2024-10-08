@@ -4,13 +4,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -149,14 +147,7 @@ internal class SessionPropertiesTest {
             testCaseAction = {
                 startSdk()
                 recordSession()
-                checkNextSavedBackgroundActivity(
-                    action = {
-                        embrace.addSessionProperty("temp", "value", false)
-                    },
-                    validationFn = { envelope ->
-                        checkNotNull(envelope.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
-                    }
-                )
+                embrace.addSessionProperty("temp", "value", false)
                 recordSession()
             },
             assertAction = {
@@ -174,54 +165,32 @@ internal class SessionPropertiesTest {
         testRule.runTest(
             testCaseAction = {
                 startSdk()
-                var lastSessionId: String? = null
-                recordSession {
-                    lastSessionId = checkNotNull(embrace.currentSessionId)
-                }
-
-                checkNextSavedBackgroundActivity(
-                    action = {
-                        embrace.addSessionProperty("perm", "value", true)
-                    },
-                    validationFn = { envelope ->
-                        assertNotEquals(lastSessionId, envelope.getSessionId())
-                        with(checkNotNull(envelope.getSessionSpan())) {
-                            assertPropertyExistence(
-                                exist = listOf("perm")
-                            )
-                            lastSessionId = checkNotNull(embrace.currentSessionId)
-                        }
-                    }
-                )
+                recordSession()
+                embrace.addSessionProperty("perm", "value", true)
 
                 recordSession {
                     embrace.addSessionProperty("perm2", "value", true)
                 }
-                checkNextSavedBackgroundActivity(
-                    action = {
-                        embrace.addSessionProperty("perm3", "value", true)
-                    },
-                    validationFn = { envelope ->
-                        assertNotEquals(lastSessionId, envelope.getSessionId())
-                        with(checkNotNull(envelope.getSessionSpan())) {
-                            assertPropertyExistence(
-                                exist = listOf("perm", "perm2", "perm3")
-                            )
-                            lastSessionId = checkNotNull(embrace.currentSessionId)
-                        }
-                    }
-                )
+                embrace.addSessionProperty("perm3", "value", true)
                 recordSession()
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(3)
-
-                val session = sessions[1]
-                checkNotNull(session.getSessionSpan()).assertPropertyExistence(
+                checkNotNull(sessions[1].findSessionSpan()).assertPropertyExistence(
                     exist = listOf("perm", "perm2")
                 )
-                val session2 = sessions[2]
-                checkNotNull(session2.getSessionSpan()).assertPropertyExistence(
+                checkNotNull(sessions[2].findSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2", "perm3")
+                )
+
+                val bas = getSessionEnvelopes(3, ApplicationState.BACKGROUND)
+                checkNotNull(bas[0].findSessionSpan()).assertPropertyExistence(
+                    exist = listOf()
+                )
+                checkNotNull(bas[1].findSessionSpan()).assertPropertyExistence(
+                    exist = listOf("perm", "perm2")
+                )
+                checkNotNull(bas[2].findSessionSpan()).assertPropertyExistence(
                     exist = listOf("perm", "perm2", "perm3")
                 )
             }

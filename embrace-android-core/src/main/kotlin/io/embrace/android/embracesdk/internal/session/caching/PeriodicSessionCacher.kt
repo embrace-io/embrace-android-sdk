@@ -12,16 +12,9 @@ import java.util.concurrent.TimeUnit
 
 class PeriodicSessionCacher(
     private val worker: BackgroundWorker,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
+    private val intervalMs: Long = 2000,
 ) {
-
-    private companion object {
-
-        /**
-         * Session caching interval in seconds.
-         */
-        private const val SESSION_CACHING_INTERVAL = 2
-    }
 
     private var scheduledFuture: ScheduledFuture<*>? = null
 
@@ -32,7 +25,7 @@ class PeriodicSessionCacher(
         scheduledFuture = this.worker.scheduleWithFixedDelay(
             onPeriodicCache(provider),
             0,
-            SESSION_CACHING_INTERVAL.toLong(),
+            intervalMs,
             TimeUnit.SECONDS
         )
     }
@@ -50,5 +43,10 @@ class PeriodicSessionCacher(
 
     fun stop() {
         scheduledFuture?.cancel(false)
+    }
+
+    fun shutdownAndWait() {
+        stop()
+        worker.shutdownAndWait()
     }
 }

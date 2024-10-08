@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServ
 import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
@@ -85,19 +84,16 @@ internal class DeliveryModuleImpl(
         )
     }
 
-    private val periodicBackgroundActivityCacher: PeriodicBackgroundActivityCacher by singleton {
-        PeriodicBackgroundActivityCacher(
-            initModule.clock,
-            workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
-            initModule.logger
-        )
-    }
-
     override val payloadCachingService: PayloadCachingService by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             NoopPayloadCachingService()
         } else {
-            PayloadCachingServiceImpl(periodicSessionCacher, periodicBackgroundActivityCacher)
+            PayloadCachingServiceImpl(
+                periodicSessionCacher,
+                initModule.clock,
+                essentialServiceModule.sessionIdTracker,
+                payloadStore
+            )
         }
     }
 

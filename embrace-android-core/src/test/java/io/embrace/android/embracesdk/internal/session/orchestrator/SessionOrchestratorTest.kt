@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
-import io.embrace.android.embracesdk.internal.session.caching.PeriodicBackgroundActivityCacher
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
@@ -56,7 +55,6 @@ internal class SessionOrchestratorTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var payloadCachingService: PayloadCachingService
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
-    private lateinit var baCacheExecutor: BlockingScheduledExecutorService
     private lateinit var dataCaptureOrchestrator: DataCaptureOrchestrator
     private lateinit var fakeDataSource: FakeDataSource
     private lateinit var logger: EmbLogger
@@ -129,7 +127,8 @@ internal class SessionOrchestratorTest {
     fun `saved background activity save overridden after is sent`() {
         createOrchestrator(true)
         clock.tick()
-        baCacheExecutor.runCurrentlyBlocked()
+        orchestrator.reportBackgroundActivityStateChange()
+        sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.cachedSessionPayloads.size)
         orchestrator.onForeground(true, clock.now())
         clock.tick()
@@ -145,7 +144,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onForeground(true, clock.now())
         clock.tick()
         assertEquals(1, store.storedSessionPayloads.size)
-        baCacheExecutor.runCurrentlyBlocked()
+        sessionCacheExecutor.runCurrentlyBlocked()
         assertEquals(1, store.storedSessionPayloads.size)
     }
 
@@ -329,7 +328,8 @@ internal class SessionOrchestratorTest {
 
         // run periodic cache
         clock.tick(6000)
-        baCacheExecutor.runCurrentlyBlocked()
+        orchestrator.reportBackgroundActivityStateChange()
+        sessionCacheExecutor.runCurrentlyBlocked()
         assertHeartbeatMatchesClock()
         assertEquals("true", currentSessionSpan.getAttribute("emb.terminated"))
 
@@ -358,17 +358,14 @@ internal class SessionOrchestratorTest {
         userService = FakeUserService()
         sessionIdTracker = FakeSessionIdTracker()
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
-        baCacheExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionCacher(
                 BackgroundWorker(sessionCacheExecutor),
                 logger
             ),
-            PeriodicBackgroundActivityCacher(
-                clock,
-                BackgroundWorker(baCacheExecutor),
-                logger
-            )
+            clock,
+            sessionIdTracker,
+            store
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(

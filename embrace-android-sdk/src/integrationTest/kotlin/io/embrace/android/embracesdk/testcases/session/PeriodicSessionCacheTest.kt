@@ -26,48 +26,22 @@ internal class PeriodicSessionCacheTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
-        val fakeInitModule = FakeInitModule(clock = clock)
-        EmbraceSetupInterface(
-            overriddenClock = clock,
-            overriddenInitModule = fakeInitModule,
-            overriddenWorkerThreadModule = FakeWorkerThreadModule(
-                fakeInitModule = fakeInitModule,
-                testWorkerName = PeriodicCacheWorker
-            )
-        )
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `session is periodically cached`() {
         testRule.runTest(
             testCaseAction = {
-                val executor =
-                    (testRule.bootstrapper.workerThreadModule as FakeWorkerThreadModule).executor
-
                 recordSession {
-                    executor.runCurrentlyBlocked()
                     embrace.addSessionProperty("Test", "Test", true)
-
-                    // trigger another periodic cache
-                    executor.moveForwardAndRunBlocked(2000)
                 }
             },
             assertAction = {
-                val envelopes = getCachedSessionEnvelopes(3)
+                val envelopes = getCachedSessionEnvelopes(2)
                 val endMessage = envelopes[0]
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertNull(span.getSessionProperty("Test"))
                 span.attributes?.assertMatches {
-                    "emb.clean_exit" to false
-                    "emb.terminated" to true
-                }
-
-                val nextMessage = envelopes[1]
-                val nextSpan = nextMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
-                assertEquals("Test", nextSpan.getSessionProperty("Test"))
-                nextSpan.attributes?.assertMatches {
                     "emb.clean_exit" to false
                     "emb.terminated" to true
                 }

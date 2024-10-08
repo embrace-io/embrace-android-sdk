@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -28,7 +27,6 @@ import io.embrace.android.embracesdk.internal.spans.CurrentSessionSpan
 import io.embrace.android.embracesdk.internal.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.mockk.clearAllMocks
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
@@ -52,7 +50,6 @@ internal class PayloadFactorySessionTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var activityService: FakeProcessStateService
     private lateinit var userService: UserService
-    private lateinit var internalErrorService: InternalErrorService
     private lateinit var ndkService: FakeNdkService
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionSpan: CurrentSessionSpan
@@ -88,7 +85,6 @@ internal class PayloadFactorySessionTest {
         metadataService = FakeMetadataService()
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
-        internalErrorService = FakeInternalErrorService()
         ndkService = FakeNdkService()
         preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
         userService = FakeUserService()

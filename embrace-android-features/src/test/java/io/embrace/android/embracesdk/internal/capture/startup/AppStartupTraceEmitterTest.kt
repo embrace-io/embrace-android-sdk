@@ -6,13 +6,12 @@ import io.embrace.android.embracesdk.arch.assertDoesNotHaveEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsKeySpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.internal.spans.SpanService
@@ -40,8 +39,7 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var fakeInternalErrorService: FakeInternalErrorService
-    private lateinit var logger: EmbLoggerImpl
+    private lateinit var logger: FakeEmbLogger
     private lateinit var backgroundWorker: BackgroundWorker
     private lateinit var appStartupTraceEmitter: AppStartupTraceEmitter
 
@@ -58,8 +56,7 @@ internal class AppStartupTraceEmitterTest {
             backgroundWorker
         )
         clock.tick(100L)
-        fakeInternalErrorService = FakeInternalErrorService()
-        logger = EmbLoggerImpl().apply { internalErrorService = fakeInternalErrorService }
+        logger = FakeEmbLogger(false)
         appStartupTraceEmitter = AppStartupTraceEmitter(
             clock = initModule.openTelemetryModule.openTelemetryClock,
             startupServiceProvider = { startupService },
@@ -68,7 +65,6 @@ internal class AppStartupTraceEmitterTest {
             versionChecker = BuildVersionChecker,
             logger = logger
         )
-        fakeInternalErrorService.throwables.clear()
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
@@ -246,8 +242,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
-
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun verifyColdStartWithRenderWithoutAppInitEvents(processCreateDelayMs: Long? = null) {
@@ -280,8 +275,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityInitDelay, sdkInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
-
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun verifyColdStartWithResume(trackProcessStart: Boolean = true, firePreAndPostCreate: Boolean = true) {
@@ -324,8 +318,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityInitDelay, applicationInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
-
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun verifyColdStartWithResumeWithoutAppInitEvents(trackProcessStart: Boolean = true) {
@@ -359,8 +352,7 @@ internal class AppStartupTraceEmitterTest {
         assertChildSpan(activityInitDelay, sdkInitEnd, startupActivityStart)
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
-
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun verifyWarmStartWithRenderWithoutAppInitEvents(processCreateDelayMs: Long? = null) {
@@ -393,8 +385,7 @@ internal class AppStartupTraceEmitterTest {
         }
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(firstRender, startupActivityEnd, traceEnd)
-
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun verifyWarmStartWithResumeWithoutAppInitEvents() {
@@ -424,7 +415,7 @@ internal class AppStartupTraceEmitterTest {
         }
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
         assertChildSpan(activityResume, startupActivityEnd, traceEnd)
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun verifyStartMultipleActivityCreated(isWarm: Boolean = false) {
@@ -467,7 +458,7 @@ internal class AppStartupTraceEmitterTest {
         )
 
         assertChildSpan(activityCreate, startupActivityStart, startupActivityEnd)
-        assertEquals(0, fakeInternalErrorService.throwables.size)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     private fun startSdk(): Pair<Long, Long> {

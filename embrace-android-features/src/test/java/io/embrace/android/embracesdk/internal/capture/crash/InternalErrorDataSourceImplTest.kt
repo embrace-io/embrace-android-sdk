@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -31,7 +32,7 @@ internal class InternalErrorDataSourceImplTest {
 
     @Test
     fun `handle throwable with no message`() {
-        dataSource.handleInternalError(IllegalStateException())
+        dataSource.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, IllegalStateException())
         val data = logWriter.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalStateException", attrs[ExceptionAttributes.EXCEPTION_TYPE.key])
@@ -41,7 +42,7 @@ internal class InternalErrorDataSourceImplTest {
 
     @Test
     fun `handle throwable with message`() {
-        dataSource.handleInternalError(IllegalArgumentException("Whoops!"))
+        dataSource.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, IllegalArgumentException("Whoops!"))
         val data = logWriter.logEvents.single()
         val attrs = assertInternalErrorLogged(data)
         assertEquals("java.lang.IllegalArgumentException", attrs[ExceptionAttributes.EXCEPTION_TYPE.key])
@@ -52,7 +53,7 @@ internal class InternalErrorDataSourceImplTest {
     @Test
     fun `limit not exceeded`() {
         repeat(15) {
-            dataSource.handleInternalError(IllegalStateException())
+            dataSource.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, IllegalStateException())
         }
         assertEquals(10, logWriter.logEvents.size)
     }

@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.ErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
+import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -18,7 +19,7 @@ import java.util.zip.GZIPOutputStream
  */
 class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
-    private val errorHandler: ErrorHandler,
+    private val logger: EmbLogger,
     private val storageLimit: Int = 500
 ) : PayloadStorageService {
 
@@ -46,7 +47,7 @@ class PayloadStorageServiceImpl(
         try {
             storeImpl(metadata, action)
         } catch (exc: Throwable) {
-            errorHandler(exc)
+            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
         }
     }
 
@@ -79,7 +80,7 @@ class PayloadStorageServiceImpl(
             }
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
-                errorHandler(exc)
+                logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
             }
         }
     }
@@ -92,7 +93,7 @@ class PayloadStorageServiceImpl(
         return try {
             metadata.asFile().inputStream().buffered()
         } catch (exc: Throwable) {
-            errorHandler(exc)
+            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
             null
         }
     }
@@ -113,7 +114,7 @@ class PayloadStorageServiceImpl(
             .sortedWith(storedTelemetryComparator)
             .takeLast(removalCount)
         removals.forEach(::delete)
-        errorHandler(RuntimeException("Pruned payload storage"))
+        logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped
         val shouldNotPersist = removals.contains(metadata)
@@ -127,12 +128,12 @@ class PayloadStorageServiceImpl(
 
         fun createOutputDir(
             ctx: Context,
-            errorHandler: ErrorHandler,
+            logger: EmbLogger
         ): Lazy<File> = lazy {
             try {
                 File(ctx.filesDir, OUTPUT_DIR_NAME).apply(File::mkdirs)
             } catch (exc: Throwable) {
-                errorHandler(exc)
+                logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
                 ctx.cacheDir
             }
         }

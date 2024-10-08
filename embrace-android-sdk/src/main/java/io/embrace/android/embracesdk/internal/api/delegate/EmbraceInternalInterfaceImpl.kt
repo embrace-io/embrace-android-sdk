@@ -12,12 +12,12 @@ import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
@@ -27,7 +27,6 @@ internal class EmbraceInternalInterfaceImpl(
     private val initModule: InitModule,
     private val networkCaptureService: NetworkCaptureService,
     private val eventService: EventService,
-    private val internalErrorService: InternalErrorService,
     private val configService: ConfigService,
     internalTracer: InternalTracer
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
@@ -185,11 +184,11 @@ internal class EmbraceInternalInterfaceImpl(
         } else {
             message
         }
-        internalErrorService.handleInternalError(RuntimeException(messageWithDetails))
+        initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException(messageWithDetails))
     }
 
     override fun logInternalError(error: Throwable) {
-        internalErrorService.handleInternalError(error)
+        initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, error)
     }
 
     override fun stopSdk() {

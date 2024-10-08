@@ -2,11 +2,10 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.fakes.FakeInternalErrorService
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import java.lang.Thread.sleep
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -48,15 +47,9 @@ internal class LogRecordExporterTest {
 
     @Test
     fun `a LogRecordExporter added after initialization won't be used`() {
-        val fake = FakeInternalErrorService()
         val fakeLogRecordExporter = FakeLogRecordExporter()
 
         testRule.runTest(
-            setupAction = {
-                overriddenInitModule.logger.apply {
-                    internalErrorService = fake
-                }
-            },
             testCaseAction = {
                 startSdk()
                 embrace.addLogRecordExporter(fakeLogRecordExporter)

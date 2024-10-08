@@ -70,7 +70,7 @@ internal class DeliveryModuleImpl(
             IntakeServiceImpl(
                 schedulingService,
                 payloadStorageService,
-                initModule.internalErrorService::handleInternalError,
+                initModule.logger,
                 initModule.jsonSerializer,
                 workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
             )
@@ -104,9 +104,9 @@ internal class DeliveryModuleImpl(
             PayloadStorageServiceImpl(
                 PayloadStorageServiceImpl.createOutputDir(
                     coreModule.context,
-                    initModule.internalErrorService::handleInternalError
+                    initModule.logger
                 ),
-                initModule.internalErrorService::handleInternalError
+                initModule.logger
             )
         }
     }

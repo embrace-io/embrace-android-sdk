@@ -249,9 +249,10 @@ internal class ModuleInitBootstrapper(
                     }
                     postInit(FeatureModule::class) {
                         featureModule.registerFeatures()
+                        (initModule.logger as? EmbLoggerImpl)?.let {
+                            it.errorHandler = featureModule.internalErrorDataSource.dataSource
+                        }
                     }
-                    initModule.internalErrorService.handler =
-                        { featureModule.internalErrorDataSource.dataSource }
 
                     dataCaptureServiceModule = init(DataCaptureServiceModule::class) {
                         dataCaptureServiceModuleSupplier(

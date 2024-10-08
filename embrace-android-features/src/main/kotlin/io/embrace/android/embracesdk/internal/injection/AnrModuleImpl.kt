@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
-import io.embrace.android.embracesdk.internal.anr.NoOpAnrService
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
@@ -25,7 +24,7 @@ internal class AnrModuleImpl(
 
     private val anrMonitorWorker = workerModule.backgroundWorker(Worker.Background.AnrWatchdogWorker)
 
-    override val anrService: AnrService by singleton {
+    override val anrService: AnrService? by singleton {
         if (configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
             // the customer didn't enable early ANR detection, so construct the service
             // as part of normal initialization.
@@ -39,12 +38,16 @@ internal class AnrModuleImpl(
                 clock = initModule.clock
             )
         } else {
-            NoOpAnrService()
+            null
         }
     }
 
-    override val anrOtelMapper: AnrOtelMapper by singleton {
-        AnrOtelMapper(anrService, initModule.clock)
+    override val anrOtelMapper: AnrOtelMapper? by singleton {
+        if (configService.autoDataCaptureBehavior.isAnrCaptureEnabled()) {
+            AnrOtelMapper(checkNotNull(anrService), initModule.clock)
+        } else {
+            null
+        }
     }
 
     override val sigquitDataSource: SigquitDataSource by singleton {

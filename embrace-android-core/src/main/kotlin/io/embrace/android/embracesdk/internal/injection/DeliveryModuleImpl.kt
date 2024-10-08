@@ -27,12 +27,13 @@ internal class DeliveryModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     requestExecutionServiceProvider: Provider<RequestExecutionService?>,
     deliveryServiceProvider: () -> DeliveryService? = {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        val apiService = essentialServiceModule.apiService
+        if (configModule.configService.isOnlyUsingOtelExporters() || apiService == null) {
             null
         } else {
             EmbraceDeliveryService(
                 storageModule.deliveryCacheManager,
-                checkNotNull(essentialServiceModule.apiService),
+                apiService,
                 initModule.jsonSerializer,
                 initModule.logger
             )
@@ -45,10 +46,12 @@ internal class DeliveryModuleImpl(
         if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
+            val deliveryService = deliveryService ?: return@singleton null
+            val intakeService = intakeService ?: return@singleton null
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
-                V2PayloadStore(checkNotNull(intakeService), checkNotNull(deliveryService), initModule.clock)
+                V2PayloadStore(intakeService, deliveryService, initModule.clock)
             } else {
-                V1PayloadStore(checkNotNull(deliveryService))
+                V1PayloadStore(deliveryService)
             }
         }
     }
@@ -61,9 +64,11 @@ internal class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
+            val payloadStorageService = payloadStorageService ?: return@singleton null
+            val schedulingService = schedulingService ?: return@singleton null
             IntakeServiceImpl(
-                checkNotNull(schedulingService),
-                checkNotNull(payloadStorageService),
+                schedulingService,
+                payloadStorageService,
                 initModule.logger,
                 initModule.jsonSerializer,
                 workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
@@ -82,11 +87,12 @@ internal class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
+            val payloadStore = payloadStore ?: return@singleton null
             PayloadCachingServiceImpl(
                 periodicSessionCacher,
                 initModule.clock,
                 essentialServiceModule.sessionIdTracker,
-                checkNotNull(payloadStore)
+                payloadStore
             )
         }
     }
@@ -113,9 +119,11 @@ internal class DeliveryModuleImpl(
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
+            val payloadStorageService = payloadStorageService ?: return@singleton null
+            val requestExecutionService = requestExecutionService ?: return@singleton null
             SchedulingServiceImpl(
-                checkNotNull(payloadStorageService),
-                checkNotNull(requestExecutionService),
+                payloadStorageService,
+                requestExecutionService,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 workerThreadModule.backgroundWorker(Worker.Background.DeliveryWorker),
                 initModule.clock,

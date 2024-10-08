@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetecto
 import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 
 interface AnrModule {
-    val anrService: AnrService
-    val anrOtelMapper: AnrOtelMapper
+    val anrService: AnrService?
+    val anrOtelMapper: AnrOtelMapper?
     val sigquitDataSource: SigquitDataSource
     val blockedThreadDetector: BlockedThreadDetector
 }

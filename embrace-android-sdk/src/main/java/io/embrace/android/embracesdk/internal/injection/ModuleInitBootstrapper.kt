@@ -311,7 +311,7 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerServices(
                             lazy { anrModule.anrService }
                         )
-                        anrModule.anrService.startAnrCapture()
+                        anrModule.anrService?.startAnrCapture()
                     }
 
                     payloadSourceModule = init(PayloadSourceModule::class) {

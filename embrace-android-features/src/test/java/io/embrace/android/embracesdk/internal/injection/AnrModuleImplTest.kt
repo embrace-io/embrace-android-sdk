@@ -6,12 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.anr.NoOpAnrService
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -45,7 +44,7 @@ internal class AnrModuleImplTest {
             FakeWorkerThreadModule(),
             FakeOpenTelemetryModule()
         )
-        assertTrue(module.anrService is NoOpAnrService)
-        assertNotNull(module.anrOtelMapper)
+        assertNull(module.anrService)
+        assertNull(module.anrOtelMapper)
     }
 }

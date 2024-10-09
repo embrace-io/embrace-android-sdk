@@ -26,14 +26,32 @@ internal class PeriodicSessionCacheTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule()
+    val testRule: IntegrationTestRule = IntegrationTestRule {
+        val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
+        val fakeInitModule = FakeInitModule(clock = clock)
+        EmbraceSetupInterface(
+            overriddenClock = clock,
+            overriddenInitModule = fakeInitModule,
+            overriddenWorkerThreadModule = FakeWorkerThreadModule(
+                fakeInitModule = fakeInitModule,
+                testWorkerName = PeriodicCacheWorker
+            )
+        )
+    }
 
     @Test
     fun `session is periodically cached`() {
         testRule.runTest(
             testCaseAction = {
+                val executor =
+                    (testRule.bootstrapper.workerThreadModule as FakeWorkerThreadModule).executor
+
                 recordSession {
+                    executor.runCurrentlyBlocked()
                     embrace.addSessionProperty("Test", "Test", true)
+
+                    // trigger another periodic cache
+                    executor.moveForwardAndRunBlocked(2000)
                 }
             },
             assertAction = {

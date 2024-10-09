@@ -24,7 +24,6 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.Uuid
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 
@@ -35,7 +34,6 @@ class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
-    private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer
 ) : LogService {
@@ -125,14 +123,12 @@ class EmbraceLogService(
         severity: Severity,
         properties: Map<String, Any>?,
     ) {
-        backgroundWorker.submit {
-            addLogEventData(
-                message = message,
-                severity = severity,
-                attributes = createTelemetryAttributes(properties),
-                schemaProvider = ::Log
-            )
-        }
+        addLogEventData(
+            message = message,
+            severity = severity,
+            attributes = createTelemetryAttributes(properties),
+            schemaProvider = ::Log
+        )
     }
 
     private fun logException(
@@ -144,23 +140,21 @@ class EmbraceLogService(
         exceptionName: String?,
         exceptionMessage: String?,
     ) {
-        backgroundWorker.submit {
-            val attributes = createTelemetryAttributes(properties)
-            populateLogExceptionAttributes(
-                attributes = attributes,
-                logExceptionType = logExceptionType,
-                stackTrace = stackTrace,
-                type = exceptionName,
-                message = exceptionMessage,
-            )
+        val attributes = createTelemetryAttributes(properties)
+        populateLogExceptionAttributes(
+            attributes = attributes,
+            logExceptionType = logExceptionType,
+            stackTrace = stackTrace,
+            type = exceptionName,
+            message = exceptionMessage,
+        )
 
-            addLogEventData(
-                message = message,
-                severity = severity,
-                attributes = attributes,
-                schemaProvider = ::Exception
-            )
-        }
+        addLogEventData(
+            message = message,
+            severity = severity,
+            attributes = attributes,
+            schemaProvider = ::Exception
+        )
     }
 
     private fun logFlutterException(
@@ -174,26 +168,24 @@ class EmbraceLogService(
         context: String?,
         library: String?,
     ) {
-        backgroundWorker.submit {
-            val attributes = createTelemetryAttributes(properties)
-            populateLogExceptionAttributes(
-                attributes = attributes,
-                logExceptionType = logExceptionType,
-                stackTrace = stackTrace,
-                type = exceptionName,
-                message = exceptionMessage,
-            )
+        val attributes = createTelemetryAttributes(properties)
+        populateLogExceptionAttributes(
+            attributes = attributes,
+            logExceptionType = logExceptionType,
+            stackTrace = stackTrace,
+            type = exceptionName,
+            message = exceptionMessage,
+        )
 
-            context?.let { attributes.setAttribute(embFlutterExceptionContext, it) }
-            library?.let { attributes.setAttribute(embFlutterExceptionLibrary, it) }
+        context?.let { attributes.setAttribute(embFlutterExceptionContext, it) }
+        library?.let { attributes.setAttribute(embFlutterExceptionLibrary, it) }
 
-            addLogEventData(
-                message = message,
-                severity = severity,
-                attributes = attributes,
-                schemaProvider = ::FlutterException
-            )
-        }
+        addLogEventData(
+            message = message,
+            severity = severity,
+            attributes = attributes,
+            schemaProvider = ::FlutterException
+        )
     }
 
     override fun getErrorLogsCount(): Int {

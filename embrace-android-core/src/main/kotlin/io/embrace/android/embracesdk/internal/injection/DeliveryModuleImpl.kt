@@ -51,7 +51,8 @@ internal class DeliveryModuleImpl(
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
                 V2PayloadStore(intakeService, initModule.clock)
             } else {
-                V1PayloadStore(deliveryService)
+                val worker = workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker)
+                V1PayloadStore(worker, deliveryService)
             }
         }
     }

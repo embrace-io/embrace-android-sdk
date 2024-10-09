@@ -13,7 +13,7 @@ interface NdkService {
     val unityCrashId: String?
 
     /**
-     * Get the latest stored [NativeCrashData] instance and purge all existing native crash data.
+     * Get the latest stored [NativeCrashData] instance and purge all existing native crash data files.
      */
     fun getLatestNativeCrash(): NativeCrashData?
 
@@ -29,5 +29,8 @@ interface NdkService {
 
     fun initializeService(sessionIdTracker: SessionIdTracker)
 
+    /**
+     * Purge all existing native crash data files.
+     */
     fun deleteAllNativeCrashes()
 }

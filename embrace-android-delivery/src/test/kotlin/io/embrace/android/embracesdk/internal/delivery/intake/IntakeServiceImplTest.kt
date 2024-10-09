@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.internal.ErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
@@ -43,10 +43,7 @@ class IntakeServiceImplTest {
     private lateinit var payloadStorageService: FakePayloadStorageService
     private lateinit var schedulingService: FakeSchedulingService
     private lateinit var executorService: BlockableExecutorService
-    private lateinit var throwable: Throwable
-    private val handler: ErrorHandler = {
-        throwable = it
-    }
+    private lateinit var logger: FakeEmbLogger
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
@@ -81,10 +78,11 @@ class IntakeServiceImplTest {
         payloadStorageService = FakePayloadStorageService()
         schedulingService = FakeSchedulingService()
         executorService = BlockableExecutorService(blockingMode = true)
+        logger = FakeEmbLogger(false)
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
-            handler,
+            logger,
             serializer,
             PriorityWorker(executorService)
         )
@@ -158,6 +156,7 @@ class IntakeServiceImplTest {
 
         // assert nothing was stored but no exception was thrown
         assertEquals(0, payloadStorageService.storedPayloadCount())
+        val throwable = logger.internalErrorMessages.single().throwable
         assertTrue(throwable is IOException)
     }
 
@@ -181,7 +180,7 @@ class IntakeServiceImplTest {
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
-            handler,
+            logger,
             TestPlatformSerializer(),
             worker
         )

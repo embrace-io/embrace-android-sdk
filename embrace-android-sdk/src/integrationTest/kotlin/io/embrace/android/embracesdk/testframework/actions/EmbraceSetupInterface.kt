@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -29,7 +30,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     val startImmediately: Boolean = true,
     @Suppress("DEPRECATION") val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
-    val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock),
+    val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock, logger = FakeEmbLogger()),
     val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
     val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
         logger = overriddenInitModule.logger

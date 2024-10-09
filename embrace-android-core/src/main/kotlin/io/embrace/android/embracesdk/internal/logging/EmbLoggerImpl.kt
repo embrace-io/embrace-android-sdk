@@ -10,7 +10,7 @@ internal const val EMBRACE_TAG = "[Embrace]"
  */
 class EmbLoggerImpl : EmbLogger {
 
-    override var internalErrorService: InternalErrorHandler? = null
+    var errorHandler: InternalErrorHandler? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
         log(msg, EmbLogger.Severity.DEBUG, throwable)
@@ -35,7 +35,7 @@ class EmbLoggerImpl : EmbLogger {
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
         try {
-            internalErrorService?.handleInternalError(throwable)
+            errorHandler?.trackInternalError(type, throwable)
         } catch (exc: Throwable) {
             // don't cause a crash loop!
             Log.w(EMBRACE_TAG, "Failed to track internal error", exc)

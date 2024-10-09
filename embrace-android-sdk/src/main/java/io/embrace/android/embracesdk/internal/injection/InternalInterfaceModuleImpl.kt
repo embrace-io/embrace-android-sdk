@@ -27,7 +27,6 @@ internal class InternalInterfaceModuleImpl(
             initModule,
             logModule.networkCaptureService,
             momentsModule.eventService,
-            initModule.internalErrorService,
             configModule.configService,
             openTelemetryModule.internalTracer
         )

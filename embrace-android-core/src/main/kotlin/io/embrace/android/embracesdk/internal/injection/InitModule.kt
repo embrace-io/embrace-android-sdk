@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
-import io.embrace.android.embracesdk.internal.telemetry.errors.InternalErrorService
 
 /**
  * A module of components and services required at [EmbraceImpl] instantiation time, i.e. before the SDK evens starts
@@ -29,11 +28,6 @@ interface InitModule {
      * Info about the system available at startup time without expensive disk or API calls
      */
     val systemInfo: SystemInfo
-
-    /**
-     * Tracks internal errors
-     */
-    val internalErrorService: InternalErrorService
 
     /**
      * Returns the serializer used to serialize data to JSON

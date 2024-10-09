@@ -4,7 +4,13 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakePayloadIntake
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import org.junit.Assert.assertEquals
@@ -59,6 +65,49 @@ class V2PayloadStoreTest {
         val envelope = fakeSessionEnvelope()
         store.cacheSessionSnapshot(envelope)
         verifySessionIntake(envelope, intakeService.getIntakes(false), "1692201601000_session_fakeuuid_fakeProcessId_false_v1.json")
+    }
+
+    @Test
+    fun `test different log types`() {
+        // crash
+        listOf(
+            System.Crash,
+            System.NativeCrash,
+            System.ReactNativeCrash,
+            System.FlutterException
+        ).forEach { type ->
+            storeLogWithType(type)
+            assertEquals(SupportedEnvelopeType.CRASH, getLastLogMetadata().envelopeType)
+        }
+
+        // log
+        listOf(
+            System.Exit,
+            System.Exception,
+            System.Log
+        ).forEach { type ->
+            storeLogWithType(type)
+            assertEquals(SupportedEnvelopeType.LOG, getLastLogMetadata().envelopeType)
+        }
+
+        // network
+        storeLogWithType(System.NetworkCapturedRequest)
+        assertEquals(SupportedEnvelopeType.NETWORK, getLastLogMetadata().envelopeType)
+    }
+
+    private fun storeLogWithType(type: TelemetryType) {
+        val envelope = Envelope(
+            data = LogPayload(
+                logs = listOf(
+                    Log(attributes = listOf(Attribute("emb.type", type.value)))
+                )
+            )
+        )
+        store.storeLogPayload(envelope, true)
+    }
+
+    private fun getLastLogMetadata(): StoredTelemetryMetadata {
+        return intakeService.getIntakes<LogPayload>().last().metadata
     }
 
     private fun verifySessionIntake(

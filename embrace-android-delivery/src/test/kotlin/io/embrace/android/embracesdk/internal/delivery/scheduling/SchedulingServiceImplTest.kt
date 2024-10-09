@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.RejectedExecutionException
 
 internal class SchedulingServiceImplTest {
 
@@ -269,6 +270,18 @@ internal class SchedulingServiceImplTest {
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(2, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test(expected = RejectedExecutionException::class)
+    fun `test shutdown`() {
+        logger.throwOnInternalError = false
+        schedulingService.onPayloadIntake()
+        schedulingService.shutdown()
+
+        // Throws RejectedExecutionException. Note that this is a consequence of the
+        // test setup & the real executor has its own rejection handler,
+        // meaning the exception will never get thrown in prod.
+        schedulingService.onPayloadIntake()
     }
 
     private fun waitForOnPayloadIntakeTaskCompletion() {

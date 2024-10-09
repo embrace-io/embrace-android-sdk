@@ -209,6 +209,7 @@ internal class ModuleInitBootstrapper(
                                 Systrace.traceSynchronous("network-connectivity-listeners") {
                                     networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
                                     apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                                    deliveryModule.schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
                                 }
                             }
                         }

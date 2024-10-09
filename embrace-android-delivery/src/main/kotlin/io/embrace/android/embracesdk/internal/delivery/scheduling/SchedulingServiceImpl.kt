@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
@@ -27,7 +26,7 @@ class SchedulingServiceImpl(
     private val deliveryWorker: BackgroundWorker,
     private val clock: Clock,
     private val logger: EmbLogger,
-) : SchedulingService, NetworkConnectivityListener {
+) : SchedulingService {
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
     private val hasNetwork = AtomicBoolean(true)

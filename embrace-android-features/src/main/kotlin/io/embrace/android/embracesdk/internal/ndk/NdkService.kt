@@ -28,4 +28,6 @@ interface NdkService {
     val symbolsForCurrentArch: Map<String, String>?
 
     fun initializeService(sessionIdTracker: SessionIdTracker)
+
+    fun deleteAllNativeCrashes()
 }

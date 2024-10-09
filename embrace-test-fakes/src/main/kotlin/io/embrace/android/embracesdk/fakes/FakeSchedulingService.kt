@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 
 class FakeSchedulingService : SchedulingService {
@@ -13,5 +14,8 @@ class FakeSchedulingService : SchedulingService {
 
     override fun onPayloadIntake() {
         payloadIntakeCount++
+    }
+
+    override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
     }
 }

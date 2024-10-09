@@ -80,7 +80,7 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent when there is one to be found`() {
-        fakeNdkService.setNativeCrashData(testNativeCrashData)
+        fakeNdkService.addNativeCrashData(testNativeCrashData)
         assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
 
         with(otelLogger.builders.single()) {

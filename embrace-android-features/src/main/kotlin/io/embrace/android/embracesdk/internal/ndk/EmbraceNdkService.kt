@@ -232,6 +232,10 @@ internal class EmbraceNdkService(
 
     override fun getNativeCrashes(): List<NativeCrashData> = getAllNativeCrashes()
 
+    override fun deleteAllNativeCrashes() {
+        getAllNativeCrashes(repository::deleteFiles)
+    }
+
     private fun getAllNativeCrashes(
         cleanup: CleanupFunction? = null,
     ): List<NativeCrashData> {

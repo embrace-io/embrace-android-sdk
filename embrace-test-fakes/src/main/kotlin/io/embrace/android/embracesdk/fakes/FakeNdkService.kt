@@ -14,6 +14,10 @@ class FakeNdkService : NdkService {
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
     }
 
+    override fun deleteAllNativeCrashes() {
+        nativeCrashDataBlobs.clear()
+    }
+
     override fun updateSessionId(newSessionId: String) {
         sessionId = newSessionId
     }
@@ -37,7 +41,7 @@ class FakeNdkService : NdkService {
 
     override val symbolsForCurrentArch: Map<String, String>? = null
 
-    fun setNativeCrashData(data: NativeCrashData) {
+    fun addNativeCrashData(data: NativeCrashData) {
         nativeCrashDataBlobs.add(data)
     }
 }

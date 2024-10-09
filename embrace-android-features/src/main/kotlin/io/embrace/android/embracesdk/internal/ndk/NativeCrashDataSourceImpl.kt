@@ -39,7 +39,9 @@ internal class NativeCrashDataSourceImpl(
         }
     }
 
-    private fun sendNativeCrash(nativeCrash: NativeCrashData) {
+    override fun getNativeCrashes(): List<NativeCrashData> = ndkService.getNativeCrashes()
+
+    override fun sendNativeCrash(nativeCrash: NativeCrashData) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(
             configService = configService,
@@ -55,6 +57,10 @@ internal class NativeCrashDataSourceImpl(
         crashAttributes.setAttribute(EmbType.System.NativeCrash.embNativeCrashUnwindError, nativeCrash.unwindError.toString())
 
         logWriter.addLog(SchemaType.NativeCrash(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
+    }
+
+    override fun deleteAllNativeCrashes() {
+        ndkService.deleteAllNativeCrashes()
     }
 
     private companion object {

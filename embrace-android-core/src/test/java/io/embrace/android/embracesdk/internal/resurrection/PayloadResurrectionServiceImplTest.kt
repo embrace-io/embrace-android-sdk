@@ -16,6 +16,8 @@ import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -97,7 +99,10 @@ class PayloadResurrectionServiceImplTest {
 
         val sessionSpan = checkNotNull(sentSession.getSessionSpan())
         val spanSnapshot =
-            checkNotNull(deadSessionEnvelope.data.spanSnapshots?.filterNot { it.spanId == sessionSpan.spanId }?.single())
+            checkNotNull(
+                deadSessionEnvelope.data.spanSnapshots?.filterNot { it.spanId == sessionSpan.spanId }
+                    ?.single()
+            )
         val resurrectedSnapshot = sentSession.findSpansByName(checkNotNull(spanSnapshot.name)).single()
 
         assertEmbraceSpanData(
@@ -124,13 +129,23 @@ class PayloadResurrectionServiceImplTest {
 
     @Test
     fun `crash ID is only added to session span with matching session ID`() {
-        nativeCrashService.addNativeCrashData(createNativeCrashData(deadSessionEnvelope.getSessionId()))
+        nativeCrashService.addNativeCrashData(
+            createNativeCrashData(
+                nativeCrashId = "dead-session-native-crash",
+                sessionId = deadSessionEnvelope.getSessionId()
+            )
+        )
         deadSessionEnvelope.resurrectPayload()
 
         val sessionSpan = intakeService.getIntakes<SessionPayload>(false).single().envelope.getSessionSpan()
-        assertEquals("my-crash-id", sessionSpan?.attributes?.findAttributeValue(embCrashId.name))
+        assertEquals("dead-session-native-crash", sessionSpan?.attributes?.findAttributeValue(embCrashId.name))
 
-        nativeCrashService.addNativeCrashData(createNativeCrashData("fake-id"))
+        nativeCrashService.addNativeCrashData(
+            createNativeCrashData(
+                nativeCrashId = "dead-session-native-crash",
+                sessionId = "fake-id"
+            )
+        )
         deadSessionEnvelope.resurrectPayload()
 
         val attributes =
@@ -161,6 +176,67 @@ class PayloadResurrectionServiceImplTest {
         assertResurrectionFailure()
     }
 
+    @Test
+    fun `multiple native crashes will be resurrected properly with the crash data sent separately`() {
+        val deadSessionCrashData = createNativeCrashData(
+            nativeCrashId = "native-crash-1",
+            sessionId = deadSessionEnvelope.getSessionId()
+        )
+        nativeCrashService.addNativeCrashData(deadSessionCrashData)
+        payloadStorageService.addPayload(
+            metadata = sessionMetadata,
+            data = deadSessionEnvelope
+        )
+
+        val earlierDeadSession = fakeIncompleteSessionEnvelope(
+            sessionId = "anotherFakeSessionId",
+            startMs = deadSessionEnvelope.getStartTime() - 100_000L,
+            lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L
+
+        )
+        val earlierSessionCrashData = createNativeCrashData(
+            nativeCrashId = "native-crash-2",
+            sessionId = earlierDeadSession.getSessionId()
+        )
+        val earlierDeadSessionMetadata = StoredTelemetryMetadata(
+            timestamp = earlierDeadSession.getStartTime(),
+            uuid = "fake-uuid",
+            envelopeType = SupportedEnvelopeType.SESSION,
+            complete = false
+        )
+        nativeCrashService.addNativeCrashData(earlierSessionCrashData)
+        payloadStorageService.addPayload(
+            metadata = earlierDeadSessionMetadata,
+            data = earlierDeadSession
+        )
+
+        resurrectionService.resurrectOldPayloads()
+
+        val sessionPayloads = intakeService.getIntakes<SessionPayload>(false)
+        assertEquals(2, sessionPayloads.size)
+        with(sessionPayloads.first()) {
+            assertEquals(sessionMetadata, metadata)
+            assertEquals(deadSessionEnvelope.getSessionId(), envelope.getSessionId())
+            assertEquals(
+                "native-crash-1",
+                envelope.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+            )
+        }
+
+        with(sessionPayloads.last()) {
+            assertEquals(earlierDeadSessionMetadata, metadata)
+            assertEquals(earlierDeadSession.getSessionId(), envelope.getSessionId())
+            assertEquals(
+                "native-crash-2",
+                envelope.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+            )
+        }
+
+        assertEquals(2, nativeCrashService.nativeCrashesSent.size)
+        assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.first())
+        assertEquals(earlierSessionCrashData, nativeCrashService.nativeCrashesSent.last())
+    }
+
     private fun Envelope<SessionPayload>.resurrectPayload() {
         payloadStorageService.addPayload(
             metadata = sessionMetadata,
@@ -170,9 +246,10 @@ class PayloadResurrectionServiceImplTest {
     }
 
     private fun createNativeCrashData(
+        nativeCrashId: String,
         sessionId: String,
     ) = NativeCrashData(
-        nativeCrashId = "my-crash-id",
+        nativeCrashId = nativeCrashId,
         sessionId = sessionId,
         timestamp = 0L,
         appState = null,
@@ -200,7 +277,9 @@ class PayloadResurrectionServiceImplTest {
         val messedUpSessionEnvelope = with(deadSessionEnvelope) {
             copy(
                 data = data.copy(
-                    spans = listOf(startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toNewPayload()),
+                    spans = listOf(
+                        startedSnapshot.copy(endTimeNanos = startedSnapshot.startTimeNanos + 10000000L).toNewPayload()
+                    ),
                     spanSnapshots = data.spanSnapshots?.plus(listOfNotNull(startedSnapshot).map(EmbraceSpanData::toNewPayload))
                 )
             )

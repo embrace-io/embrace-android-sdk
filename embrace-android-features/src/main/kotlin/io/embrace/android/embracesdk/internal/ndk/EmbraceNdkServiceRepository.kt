@@ -17,9 +17,9 @@ import java.io.FilenameFilter
 internal class EmbraceNdkServiceRepository(
     private val storageService: StorageService,
     private val logger: EmbLogger
-) {
+) : NdkServiceRepository {
 
-    fun sortNativeCrashes(byOldest: Boolean): List<File> {
+    override fun sortNativeCrashes(byOldest: Boolean): List<File> {
         val nativeCrashFiles: Array<File> = getNativeCrashFiles()
         val nativeCrashList: MutableList<File> = mutableListOf()
 
@@ -80,15 +80,15 @@ internal class EmbraceNdkServiceRepository(
         }
     }
 
-    fun errorFileForCrash(crashFile: File): File? {
+    override fun errorFileForCrash(crashFile: File): File? {
         return companionFileForCrash(crashFile, NATIVE_CRASH_ERROR_FILE_SUFFIX)
     }
 
-    fun mapFileForCrash(crashFile: File): File? {
+    override fun mapFileForCrash(crashFile: File): File? {
         return companionFileForCrash(crashFile, NATIVE_CRASH_MAP_FILE_SUFFIX)
     }
 
-    fun deleteFiles(
+    override fun deleteFiles(
         crashFile: File,
         errorFile: File?,
         mapFile: File?,

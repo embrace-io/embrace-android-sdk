@@ -50,7 +50,7 @@ internal class EmbraceNdkService(
     private val sessionPropertiesService: SessionPropertiesService,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
-    private val repository: EmbraceNdkServiceRepository,
+    private val repository: NdkServiceRepository,
     private val delegate: NdkServiceDelegate.NdkDelegate,
     private val backgroundWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
@@ -229,6 +229,8 @@ internal class EmbraceNdkService(
     }
 
     override fun getLatestNativeCrash(): NativeCrashData? = getAllNativeCrashes(repository::deleteFiles).lastOrNull()
+
+    override fun getNativeCrashes(): List<NativeCrashData> = getAllNativeCrashes()
 
     private fun getAllNativeCrashes(
         cleanup: CleanupFunction? = null,

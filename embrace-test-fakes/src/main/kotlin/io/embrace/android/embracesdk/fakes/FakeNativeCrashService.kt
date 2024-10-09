@@ -5,11 +5,15 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 
 class FakeNativeCrashService : NativeCrashService {
 
-    var data: NativeCrashData? = null
+    private val nativeCrashDataBlobs = mutableListOf<NativeCrashData>()
     var checkAndSendNativeCrashInvocation: Int = 0
 
     override fun getAndSendNativeCrash(): NativeCrashData? {
         checkAndSendNativeCrashInvocation++
-        return data
+        return nativeCrashDataBlobs.lastOrNull()
+    }
+
+    fun addNativeCrashData(nativeCrashData: NativeCrashData) {
+        nativeCrashDataBlobs.add(nativeCrashData)
     }
 }

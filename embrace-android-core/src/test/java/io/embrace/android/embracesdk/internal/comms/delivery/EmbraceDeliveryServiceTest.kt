@@ -260,17 +260,19 @@ internal class EmbraceDeliveryServiceTest {
     fun `crash ID is added to previous session`() {
         assertNotNull(cacheService.writeSession(sessionWithSnapshotFileName, sessionWithSnapshot))
         apiService.throwExceptionSendSession = true
-        fakeNativeCrashService.data = NativeCrashData(
-            "my-crash-id",
-            sessionWithSnapshot.getSessionId(),
-            0L,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
+        fakeNativeCrashService.addNativeCrashData(
+            NativeCrashData(
+                "my-crash-id",
+                sessionWithSnapshot.getSessionId(),
+                0L,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            )
         )
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertTrue(apiService.sessionRequests.isEmpty())

@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.FilenameFilter
 import java.io.IOException
 import java.io.InputStreamReader
@@ -54,7 +55,7 @@ internal class EmbraceNdkService(
     private val backgroundWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,
-    private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper()))
+    private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
 ) : NdkService, ProcessStateListener {
 
     override var unityCrashId: String? = null
@@ -194,7 +195,7 @@ internal class EmbraceNdkService(
      */
     private fun getNativeCrashErrors(
         nativeCrash: NativeCrashData,
-        errorFile: File?
+        errorFile: File?,
     ): List<NativeCrashDataError?>? {
         if (errorFile != null) {
             val absolutePath = errorFile.absolutePath
@@ -227,52 +228,50 @@ internal class EmbraceNdkService(
         return null
     }
 
-    override fun getNativeCrash(): NativeCrashData? {
-        var nativeCrash: NativeCrashData? = null
+    override fun getLatestNativeCrash(): NativeCrashData? = getAllNativeCrashes(repository::deleteFiles).lastOrNull()
+
+    private fun getAllNativeCrashes(
+        cleanup: CleanupFunction? = null,
+    ): List<NativeCrashData> {
+        val nativeCrashes = mutableListOf<NativeCrashData>()
         if (sharedObjectLoader.loaded.get()) {
             val matchingFiles = repository.sortNativeCrashes(false)
             for (crashFile in matchingFiles) {
                 try {
                     val path = crashFile.path
-                    val crashRaw = delegate._getCrashReport(path)
-                    if (crashRaw != null) {
-                        nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
-                    } else {
-                        logger.logError("Failed to load crash report at $path")
-                    }
-                    val errorFile = repository.errorFileForCrash(crashFile)
-                    if (nativeCrash != null) {
-                        val errors = getNativeCrashErrors(nativeCrash, errorFile)
-                        if (errors != null) {
-                            nativeCrash.errors = errors
+                    delegate._getCrashReport(path)?.let { crashRaw ->
+                        val nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
+                        val errorFile = repository.errorFileForCrash(crashFile)?.apply {
+                            getNativeCrashErrors(nativeCrash, this).let { errors ->
+                                nativeCrash.errors = errors
+                            }
                         }
-                    }
-                    val mapFile = repository.mapFileForCrash(crashFile)
-                    if (mapFile != null && nativeCrash != null) {
-                        nativeCrash.map = getMapFileContent(mapFile)
-                    }
+                        val mapFile = repository.mapFileForCrash(crashFile)?.apply {
+                            nativeCrash.map = getMapFileContent(this)
+                        }
+                        nativeCrash.symbols = symbolsForCurrentArch?.toMap()
 
-                    // Retrieve deobfuscated symbols
-                    if (nativeCrash != null) {
-                        val symbols = symbolsForCurrentArch
-                        if (symbols == null) {
-                            logger.logError("Failed to find symbols for native crash - stacktraces will not symbolicate correctly.")
-                        } else {
-                            nativeCrash.symbols = symbols.toMap()
-                        }
+                        nativeCrashes.add(nativeCrash)
+                        cleanup?.invoke(crashFile, errorFile, mapFile, nativeCrash)
+                    } ?: {
+                        logger.trackInternalError(
+                            type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
+                            throwable = FileNotFoundException("Failed to load crash report at $path")
+                        )
                     }
-                    repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash)
-                } catch (ex: Exception) {
+                } catch (t: Throwable) {
                     crashFile.delete()
-                    logger.logError(
-                        "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                        ex
+                    logger.trackInternalError(
+                        type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
+                        throwable = RuntimeException(
+                            "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
+                            t
+                        )
                     )
-                    logger.trackInternalError(InternalErrorType.NATIVE_CRASH_LOAD_FAIL, ex)
                 }
             }
         }
-        return nativeCrash
+        return nativeCrashes
     }
 
     @SuppressLint("DiscouragedApi")

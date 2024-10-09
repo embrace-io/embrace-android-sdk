@@ -306,7 +306,7 @@ internal class EmbraceNdkServiceTest {
     fun `test checkForNativeCrash does nothing if there are no matchingFiles`() {
         every { repository.sortNativeCrashes(false) } returns listOf()
         initializeService()
-        val result = embraceNdkService.getNativeCrash()
+        val result = embraceNdkService.getLatestNativeCrash()
         assertNull(result)
         verify { repository.sortNativeCrashes(false) }
         verify(exactly = 0) { delegate._getCrashReport(any()) }
@@ -325,27 +325,7 @@ internal class EmbraceNdkServiceTest {
 
     @Test
     fun `test getSymbolsForCurrentArch`() {
-        mockkStatic(Base64::class)
-        val resourceId = 10
-        val nativeSymbolsJson = "{\"symbols\":{\"arm64-v8a\":{\"symbol1\":\"test\"}}}"
-
-        every { context.resources } returns resources
-        every { context.packageName } returns "package-name"
-        every { resources.getString(resourceId) } returns "result"
-        every {
-            resources.getIdentifier(
-                "emb_ndk_symbols",
-                "string",
-                "package-name"
-            )
-        } returns resourceId
-        every { resources.getString(resourceId) } returns nativeSymbolsJson
-        every {
-            Base64.decode(
-                nativeSymbolsJson,
-                Base64.DEFAULT
-            )
-        } returns nativeSymbolsJson.encodeToByteArray()
+        mockNativeSymbols()
         initializeService()
 
         val result = embraceNdkService.symbolsForCurrentArch
@@ -360,7 +340,7 @@ internal class EmbraceNdkServiceTest {
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
         every { delegate._getCrashReport(any()) } returns ""
         initializeService()
-        val crashData = embraceNdkService.getNativeCrash()
+        val crashData = embraceNdkService.getLatestNativeCrash()
         assertNull(crashData)
     }
 
@@ -379,7 +359,7 @@ internal class EmbraceNdkServiceTest {
         every { delegate._getCrashReport(any()) } returns json
 
         initializeService()
-        val crashData = embraceNdkService.getNativeCrash()
+        val crashData = embraceNdkService.getLatestNativeCrash()
         assertNull(crashData)
     }
 
@@ -398,10 +378,11 @@ internal class EmbraceNdkServiceTest {
         every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
 
         configService.appFramework = AppFramework.UNITY
-        initializeService()
-        every { embraceNdkService.symbolsForCurrentArch } returns mockk()
 
-        val result = embraceNdkService.getNativeCrash()
+        initializeService()
+        mockNativeSymbols()
+
+        val result = embraceNdkService.getLatestNativeCrash()
         assertNotNull(result)
 
         verify { embraceNdkService["getNativeCrashErrors"](any() as NativeCrashData, errorFile) }
@@ -418,7 +399,7 @@ internal class EmbraceNdkServiceTest {
         configService.appFramework = AppFramework.UNITY
         initializeService()
 
-        val result = embraceNdkService.getNativeCrash()
+        val result = embraceNdkService.getLatestNativeCrash()
         assertNull(result)
 
         verify(exactly = 1) { repository.sortNativeCrashes(false) }
@@ -468,4 +449,28 @@ internal class EmbraceNdkServiceTest {
     }
 
     private fun getNativeCrashRaw() = ResourceReader.readResourceAsText("native_crash_raw.txt")
+
+    private fun mockNativeSymbols() {
+        mockkStatic(Base64::class)
+        val resourceId = 10
+        val nativeSymbolsJson = "{\"symbols\":{\"arm64-v8a\":{\"symbol1\":\"test\"}}}"
+
+        every { context.resources } returns resources
+        every { context.packageName } returns "package-name"
+        every { resources.getString(resourceId) } returns "result"
+        every {
+            resources.getIdentifier(
+                "emb_ndk_symbols",
+                "string",
+                "package-name"
+            )
+        } returns resourceId
+        every { resources.getString(resourceId) } returns nativeSymbolsJson
+        every {
+            Base64.decode(
+                nativeSymbolsJson,
+                Base64.DEFAULT
+            )
+        } returns nativeSymbolsJson.encodeToByteArray()
+    }
 }

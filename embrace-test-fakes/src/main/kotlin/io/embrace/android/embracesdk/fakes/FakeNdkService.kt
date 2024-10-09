@@ -32,7 +32,7 @@ class FakeNdkService : NdkService {
             return lastUnityCrashId
         }
 
-    override fun getNativeCrash(): NativeCrashData? {
+    override fun getLatestNativeCrash(): NativeCrashData? {
         val data = nativeCrashData
         nativeCrashData = null
         return data

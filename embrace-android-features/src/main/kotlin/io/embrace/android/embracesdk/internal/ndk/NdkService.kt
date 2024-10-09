@@ -13,9 +13,9 @@ interface NdkService {
     val unityCrashId: String?
 
     /**
-     * Get and delete the stored [NativeCrashData] from a previous instance of the app that ended in a native crash if it exists
+     * Get the latest stored [NativeCrashData] instance and purge all existing native crash data.
      */
-    fun getNativeCrash(): NativeCrashData?
+    fun getLatestNativeCrash(): NativeCrashData?
 
     /**
      * Retrieves symbol information for the current architecture.

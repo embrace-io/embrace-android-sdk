@@ -34,10 +34,11 @@ internal class NativeCrashDataSourceImpl(
     limitStrategy = NoopLimitStrategy,
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {
-        return ndkService.getNativeCrash()?.apply {
+        return ndkService.getLatestNativeCrash()?.apply {
             sendNativeCrash(this)
         }
     }
+
     private fun sendNativeCrash(nativeCrash: NativeCrashData) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(

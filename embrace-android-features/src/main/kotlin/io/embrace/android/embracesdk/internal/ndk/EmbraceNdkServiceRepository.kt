@@ -110,3 +110,10 @@ internal class EmbraceNdkServiceRepository(
         mapFile?.delete()
     }
 }
+
+typealias CleanupFunction = (
+    crashFile: File,
+    errorFile: File?,
+    mapFile: File?,
+    nativeCrash: NativeCrashData?,
+) -> Unit

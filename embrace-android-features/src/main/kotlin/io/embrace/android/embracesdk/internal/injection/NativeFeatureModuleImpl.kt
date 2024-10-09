@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
 import io.embrace.android.embracesdk.internal.ndk.NdkService
-import io.embrace.android.embracesdk.internal.ndk.NoopNativeCrashService
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class NativeFeatureModuleImpl(
@@ -82,9 +81,9 @@ internal class NativeFeatureModuleImpl(
         }
     }
 
-    override val nativeCrashService: NativeCrashService by singleton {
+    override val nativeCrashService: NativeCrashService? by singleton {
         if (!configModule.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
-            NoopNativeCrashService()
+            null
         } else {
             NativeCrashDataSourceImpl(
                 sessionPropertiesService = essentialServiceModule.sessionPropertiesService,

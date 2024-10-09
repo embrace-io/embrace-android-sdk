@@ -2,22 +2,16 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
-import io.embrace.android.embracesdk.internal.comms.delivery.NoopDeliveryService
-import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
-import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
-import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
@@ -31,14 +25,15 @@ internal class DeliveryModuleImpl(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
-    requestExecutionServiceProvider: Provider<RequestExecutionService>,
-    deliveryServiceProvider: () -> DeliveryService = {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopDeliveryService()
+    requestExecutionServiceProvider: Provider<RequestExecutionService?>,
+    deliveryServiceProvider: () -> DeliveryService? = {
+        val apiService = essentialServiceModule.apiService
+        if (configModule.configService.isOnlyUsingOtelExporters() || apiService == null) {
+            null
         } else {
             EmbraceDeliveryService(
                 storageModule.deliveryCacheManager,
-                checkNotNull(essentialServiceModule.apiService),
+                apiService,
                 initModule.jsonSerializer,
                 initModule.logger
             )
@@ -46,11 +41,13 @@ internal class DeliveryModuleImpl(
     }
 ) : DeliveryModule {
 
-    override val payloadStore: PayloadStore by singleton {
+    override val payloadStore: PayloadStore? by singleton {
         val configService = configModule.configService
         if (configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadStore()
+            null
         } else {
+            val deliveryService = deliveryService ?: return@singleton null
+            val intakeService = intakeService ?: return@singleton null
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
                 V2PayloadStore(intakeService, deliveryService, initModule.clock)
             } else {
@@ -59,14 +56,16 @@ internal class DeliveryModuleImpl(
         }
     }
 
-    override val deliveryService: DeliveryService by singleton {
+    override val deliveryService: DeliveryService? by singleton {
         deliveryServiceProvider()
     }
 
-    override val intakeService: IntakeService by singleton {
+    override val intakeService: IntakeService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopIntakeService()
+            null
         } else {
+            val payloadStorageService = payloadStorageService ?: return@singleton null
+            val schedulingService = schedulingService ?: return@singleton null
             IntakeServiceImpl(
                 schedulingService,
                 payloadStorageService,
@@ -84,10 +83,11 @@ internal class DeliveryModuleImpl(
         )
     }
 
-    override val payloadCachingService: PayloadCachingService by singleton {
+    override val payloadCachingService: PayloadCachingService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadCachingService()
+            null
         } else {
+            val payloadStore = payloadStore ?: return@singleton null
             PayloadCachingServiceImpl(
                 periodicSessionCacher,
                 initModule.clock,
@@ -97,9 +97,9 @@ internal class DeliveryModuleImpl(
         }
     }
 
-    override val payloadStorageService: PayloadStorageService by singleton {
+    override val payloadStorageService: PayloadStorageService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopPayloadStorageService()
+            null
         } else {
             PayloadStorageServiceImpl(
                 PayloadStorageServiceImpl.createOutputDir(
@@ -111,14 +111,16 @@ internal class DeliveryModuleImpl(
         }
     }
 
-    override val requestExecutionService: RequestExecutionService by singleton {
+    override val requestExecutionService: RequestExecutionService? by singleton {
         requestExecutionServiceProvider()
     }
 
-    override val schedulingService: SchedulingService by singleton {
+    override val schedulingService: SchedulingService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
-            NoopSchedulingService()
+            null
         } else {
+            val payloadStorageService = payloadStorageService ?: return@singleton null
+            val requestExecutionService = requestExecutionService ?: return@singleton null
             SchedulingServiceImpl(
                 payloadStorageService,
                 requestExecutionService,

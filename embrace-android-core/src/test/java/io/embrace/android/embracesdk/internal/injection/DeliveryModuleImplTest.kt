@@ -12,14 +12,10 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
-import io.embrace.android.embracesdk.internal.delivery.caching.NoopPayloadCachingService
-import io.embrace.android.embracesdk.internal.delivery.intake.NoopIntakeService
-import io.embrace.android.embracesdk.internal.delivery.scheduling.NoopSchedulingService
-import io.embrace.android.embracesdk.internal.delivery.storage.NoopPayloadStorageService
-import io.embrace.android.embracesdk.internal.session.orchestrator.NoopPayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -63,12 +59,12 @@ class DeliveryModuleImplTest {
         configService.onlyUsingOtelExporters = true
         assertNotNull(module)
         assertTrue(module.deliveryService is FakeDeliveryService)
-        assertTrue(module.intakeService is NoopIntakeService)
-        assertTrue(module.payloadCachingService is NoopPayloadCachingService)
-        assertTrue(module.payloadStorageService is NoopPayloadStorageService)
+        assertNull(module.intakeService)
+        assertNull(module.payloadCachingService)
+        assertNull(module.payloadStorageService)
         assertTrue(module.requestExecutionService is FakeRequestExecutionService)
-        assertTrue(module.schedulingService is NoopSchedulingService)
-        assertTrue(module.payloadStore is NoopPayloadStore)
+        assertNull(module.schedulingService)
+        assertNull(module.payloadStore)
     }
 
     @Test

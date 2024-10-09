@@ -10,13 +10,13 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
  * Handles logic for features that are not fully integrated into the OTel pipeline.
  */
 class OtelPayloadMapperImpl(
-    private val anrOtelMapper: AnrOtelMapper,
+    private val anrOtelMapper: AnrOtelMapper?,
     private val nativeAnrOtelMapper: NativeAnrOtelMapper?,
 ) : OtelPayloadMapper {
 
     override fun getSessionPayload(endType: SessionSnapshotType, crashId: String?): List<Span> {
         val cacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
-        return anrOtelMapper.snapshot(!cacheAttempt)
+        return anrOtelMapper?.snapshot(!cacheAttempt) ?: emptyList<Span>()
             .plus(nativeAnrOtelMapper?.snapshot(!cacheAttempt) ?: emptyList())
     }
 }

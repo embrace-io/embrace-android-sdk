@@ -11,5 +11,5 @@ interface NativeFeatureModule {
     val nativeThreadSamplerService: NativeThreadSamplerService?
     val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller?
     val nativeAnrOtelMapper: NativeAnrOtelMapper
-    val nativeCrashService: NativeCrashService
+    val nativeCrashService: NativeCrashService?
 }

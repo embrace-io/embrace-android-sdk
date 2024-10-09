@@ -43,7 +43,7 @@ internal class CrashDataSourceImpl(
         limitStrategy = NoopLimitStrategy,
     ) {
 
-    private val handlers: CopyOnWriteArrayList<Lazy<CrashTeardownHandler>> = CopyOnWriteArrayList()
+    private val handlers: CopyOnWriteArrayList<Lazy<CrashTeardownHandler?>> = CopyOnWriteArrayList()
     private var mainCrashHandled = false
     private var jsException: JsException? = null
 
@@ -114,7 +114,7 @@ internal class CrashDataSourceImpl(
             logWriter.addLog(getSchemaType(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
 
             // finally, notify other services that need to perform tear down
-            handlers.forEach { it.value.handleCrash(crashId) }
+            handlers.forEach { it.value?.handleCrash(crashId) }
         }
     }
 
@@ -122,8 +122,8 @@ internal class CrashDataSourceImpl(
         this.jsException = exception
     }
 
-    override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler>) {
-        handlers.add(handler)
+    override fun addCrashTeardownHandler(handler: Lazy<CrashTeardownHandler?>) {
+        handler.let { handlers.add(it) }
     }
 
     private fun getSchemaType(attributes: TelemetryAttributes): SchemaType =

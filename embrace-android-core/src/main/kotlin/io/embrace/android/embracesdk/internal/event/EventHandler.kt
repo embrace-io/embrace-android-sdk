@@ -29,7 +29,7 @@ internal class EventHandler(
     private val processStateService: ProcessStateService,
     private val configService: ConfigService,
     private val userService: UserService,
-    private val deliveryService: DeliveryService,
+    private val deliveryService: DeliveryService?,
     private val logger: EmbLogger,
     private val clock: Clock,
     private val worker: BackgroundWorker
@@ -63,7 +63,7 @@ internal class EventHandler(
 
         if (shouldSendMoment(eventName)) {
             val eventMessage = buildStartEventMessage(event)
-            deliveryService.sendMoment(eventMessage)
+            deliveryService?.sendMoment(eventMessage)
         } else {
             logger.logDebug("$eventName start moment not sent based on gating config.")
         }
@@ -100,7 +100,7 @@ internal class EventHandler(
         val endEventMessage = buildEndEventMessage(endEvent)
 
         if (shouldSendMoment(event.name)) {
-            deliveryService.sendMoment(endEventMessage)
+            deliveryService?.sendMoment(endEventMessage)
         } else {
             logger.logDebug("${event.name} end moment not sent based on gating config.")
         }

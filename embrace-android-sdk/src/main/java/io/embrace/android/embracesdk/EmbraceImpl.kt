@@ -201,7 +201,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val worker = bootstrapper.workerThreadModule.priorityWorker<TaskPriority>(Worker.Priority.FileCacheWorker)
         worker.submit(TaskPriority.NORMAL) {
             val essentialServiceModule = bootstrapper.essentialServiceModule
-            bootstrapper.deliveryModule.deliveryService.sendCachedSessions(
+            bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
                 bootstrapper.nativeFeatureModule::nativeCrashService,
                 essentialServiceModule.sessionIdTracker
             )

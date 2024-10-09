@@ -13,7 +13,7 @@ internal class LogOrchestratorImpl(
     private val worker: BackgroundWorker,
     private val clock: Clock,
     private val sink: LogSink,
-    private val payloadStore: PayloadStore,
+    private val payloadStore: PayloadStore?,
     private val logEnvelopeSource: LogEnvelopeSource,
 ) : LogOrchestrator {
     @Volatile
@@ -32,7 +32,7 @@ internal class LogOrchestratorImpl(
 
         val envelope = logEnvelopeSource.getBatchedLogEnvelope()
         if (!envelope.data.logs.isNullOrEmpty()) {
-            payloadStore.storeLogPayload(envelope, !saveOnly)
+            payloadStore?.storeLogPayload(envelope, !saveOnly)
         }
     }
 
@@ -43,10 +43,10 @@ internal class LogOrchestratorImpl(
     override fun onLogsAdded() {
         logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
             if (logRequest.defer) {
-                payloadStore.storeLogPayload(logRequest.payload, false)
+                payloadStore?.storeLogPayload(logRequest.payload, false)
             } else {
                 worker.submit {
-                    payloadStore.storeLogPayload(logRequest.payload, true)
+                    payloadStore?.storeLogPayload(logRequest.payload, true)
                 }
             }
         }

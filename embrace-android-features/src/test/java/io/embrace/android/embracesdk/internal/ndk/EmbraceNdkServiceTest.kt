@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakeNdkServiceRepository
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -25,7 +26,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -81,7 +81,7 @@ internal class EmbraceNdkServiceTest {
     private lateinit var sharedObjectLoader: SharedObjectLoader
     private lateinit var logger: EmbLogger
     private lateinit var delegate: NdkServiceDelegate.NdkDelegate
-    private lateinit var repository: EmbraceNdkServiceRepository
+    private lateinit var repository: FakeNdkServiceRepository
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -109,10 +109,11 @@ internal class EmbraceNdkServiceTest {
         sharedObjectLoader = mockk()
         logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
-        repository = mockk(relaxUnitFun = true)
+        repository = FakeNdkServiceRepository()
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         sessionIdTracker = FakeSessionIdTracker()
+        mockNativeSymbols()
         every { sharedObjectLoader.loadEmbraceNative() } returns true
         every { sharedObjectLoader.loaded.get() } returns true
     }
@@ -303,23 +304,11 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test checkForNativeCrash does nothing if there are no matchingFiles`() {
-        every { repository.sortNativeCrashes(false) } returns listOf()
+    fun `test getLatestNativeCrash does nothing if there are no matchingFiles`() {
         initializeService()
         val result = embraceNdkService.getLatestNativeCrash()
         assertNull(result)
-        verify { repository.sortNativeCrashes(false) }
         verify(exactly = 0) { delegate._getCrashReport(any()) }
-        verify(exactly = 0) { repository.errorFileForCrash(any()) }
-        verify(exactly = 0) { repository.mapFileForCrash(any()) }
-        verify(exactly = 0) {
-            repository.deleteFiles(
-                any(),
-                any(),
-                any(),
-                any() as NativeCrashData
-            )
-        }
         assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
@@ -335,18 +324,16 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test checkForNativeCrash catches an exception if _getCrashReport returns an empty string`() {
-        val crashFile = File.createTempFile("test", "test")
-        every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
-        every { delegate._getCrashReport(any()) } returns ""
+    fun `test getLatestNativeCrash catches an exception if _getCrashReport returns an empty string`() {
+        repository.addCrashFiles(File.createTempFile("test", "test"))
         initializeService()
         val crashData = embraceNdkService.getLatestNativeCrash()
         assertNull(crashData)
     }
 
     @Test
-    fun `test checkForNativeCrash catches an exception if _getCrashReport returns invalid json syntax`() {
-        val crashFile = File.createTempFile("test", "test")
+    fun `test getLatestNativeCrash catches an exception if _getCrashReport returns invalid json syntax`() {
+        repository.addCrashFiles(File.createTempFile("test", "test"))
         every { Uuid.getEmbUuid() } returns "unityId"
 
         val json = "{\n" +
@@ -355,7 +342,6 @@ internal class EmbraceNdkServiceTest {
             "    }\n" +
             "  ]\n" +
             "}"
-        every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
         every { delegate._getCrashReport(any()) } returns json
 
         initializeService()
@@ -364,58 +350,32 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test checkForNativeCrash when a native crash was captured`() {
-        val crashFile: File = File.createTempFile("test", "test")
-        val errorFile: File = File.createTempFile("test", "test")
-        val mapFile: File = File.createTempFile("test", "test")
-
-        every { Uuid.getEmbUuid() } returns "unityId"
-
-        every { repository.errorFileForCrash(crashFile) } returns errorFile
-        every { repository.mapFileForCrash(crashFile) } returns mapFile
-
+    fun `test getLatestNativeCrash when a native crash was captured`() {
+        repository.addCrashFiles(
+            nativeCrashFile = File.createTempFile("test", "crash-test")
+        )
         every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
-        every { repository.sortNativeCrashes(false) } returns listOf(crashFile)
 
         configService.appFramework = AppFramework.UNITY
 
         initializeService()
         mockNativeSymbols()
 
-        val result = embraceNdkService.getLatestNativeCrash()
-        assertNotNull(result)
-
-        verify { embraceNdkService["getNativeCrashErrors"](any() as NativeCrashData, errorFile) }
-        verify(exactly = 1) { repository.sortNativeCrashes(false) }
-        verify(exactly = 1) { delegate._getCrashReport(any()) }
-        verify(exactly = 1) { repository.errorFileForCrash(crashFile) }
-        verify(exactly = 1) { repository.mapFileForCrash(crashFile) }
+        val result = checkNotNull(embraceNdkService.getLatestNativeCrash())
+        with(result) {
+            assertNotNull(crash)
+            assertNull(map)
+            assertNull(errors)
+        }
     }
 
     @Test
-    fun `test checkForNativeCrash when there is no native crash does not execute crash files logic`() {
-        every { repository.sortNativeCrashes(false) } returns listOf()
-
+    fun `test getLatestNativeCrash when there is no native crash does not execute crash files logic`() {
         configService.appFramework = AppFramework.UNITY
         initializeService()
 
         val result = embraceNdkService.getLatestNativeCrash()
         assertNull(result)
-
-        verify(exactly = 1) { repository.sortNativeCrashes(false) }
-        verify(exactly = 0) { delegate._getCrashReport(any()) }
-        verify(exactly = 0) { repository.errorFileForCrash(any()) }
-        verify(exactly = 0) { repository.mapFileForCrash(any()) }
-        assertTrue(deliveryService.sentMoments.isEmpty())
-        verify(exactly = 0) {
-            repository.deleteFiles(
-                any() as File,
-                any() as File,
-                any() as File,
-                any() as NativeCrashData
-            )
-        }
-        assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
     @Test
@@ -431,6 +391,26 @@ internal class EmbraceNdkServiceTest {
         blockableExecutorService.blockingMode = true
         initializeService()
         assertNativeSignalHandlerInstalled()
+    }
+
+    @Test
+    fun `getNativeCrashes returns all the crashes in the repository and doesn't invoke delete`() {
+        every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
+        initializeService()
+        repository.addCrashFiles(File.createTempFile("file1", "tmp"))
+        repository.addCrashFiles(File.createTempFile("file2", "temp"))
+        assertEquals(2, embraceNdkService.getNativeCrashes().size)
+        assertEquals(2, embraceNdkService.getNativeCrashes().size)
+    }
+
+    @Test
+    fun `getLatestNativeCrash returns only one crash even if there are many and deletes them all`() {
+        every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
+        initializeService()
+        repository.addCrashFiles(File.createTempFile("file1", "tmp"))
+        repository.addCrashFiles(File.createTempFile("file2", "temp"))
+        assertNotNull(embraceNdkService.getLatestNativeCrash())
+        assertEquals(0, embraceNdkService.getNativeCrashes().size)
     }
 
     private fun assertNativeSignalHandlerInstalled() {

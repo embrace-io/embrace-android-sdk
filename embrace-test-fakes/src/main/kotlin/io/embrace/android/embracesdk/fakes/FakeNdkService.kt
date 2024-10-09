@@ -6,11 +6,10 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 
 class FakeNdkService : NdkService {
     val propUpdates: MutableList<Map<String, String>> = mutableListOf()
-
     var sessionId: String? = null
     var userUpdateCount: Int = 0
     var lastUnityCrashId: String? = null
-    private var nativeCrashData: NativeCrashData? = null
+    private val nativeCrashDataBlobs = mutableListOf<NativeCrashData>()
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
     }
@@ -32,20 +31,13 @@ class FakeNdkService : NdkService {
             return lastUnityCrashId
         }
 
-    override fun getLatestNativeCrash(): NativeCrashData? {
-        val data = nativeCrashData
-        nativeCrashData = null
-        return data
-    }
+    override fun getLatestNativeCrash(): NativeCrashData? = nativeCrashDataBlobs.lastOrNull()
 
-    override val symbolsForCurrentArch: Map<String, String>?
-        get() {
-            TODO("Not yet implemented")
-        }
+    override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashDataBlobs
 
-    fun hasNativeCrash(): Boolean = nativeCrashData != null
+    override val symbolsForCurrentArch: Map<String, String>? = null
 
     fun setNativeCrashData(data: NativeCrashData) {
-        nativeCrashData = data
+        nativeCrashDataBlobs.add(data)
     }
 }

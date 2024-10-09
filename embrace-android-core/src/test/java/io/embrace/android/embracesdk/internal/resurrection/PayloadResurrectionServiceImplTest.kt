@@ -124,13 +124,13 @@ class PayloadResurrectionServiceImplTest {
 
     @Test
     fun `crash ID is only added to session span with matching session ID`() {
-        nativeCrashService.data = createNativeCrashData(deadSessionEnvelope.getSessionId())
+        nativeCrashService.addNativeCrashData(createNativeCrashData(deadSessionEnvelope.getSessionId()))
         deadSessionEnvelope.resurrectPayload()
 
         val sessionSpan = intakeService.getIntakes<SessionPayload>(false).single().envelope.getSessionSpan()
         assertEquals("my-crash-id", sessionSpan?.attributes?.findAttributeValue(embCrashId.name))
 
-        nativeCrashService.data = createNativeCrashData("fake-id")
+        nativeCrashService.addNativeCrashData(createNativeCrashData("fake-id"))
         deadSessionEnvelope.resurrectPayload()
 
         val attributes =

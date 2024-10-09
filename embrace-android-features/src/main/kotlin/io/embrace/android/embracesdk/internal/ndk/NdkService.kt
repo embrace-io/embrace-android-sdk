@@ -18,6 +18,11 @@ interface NdkService {
     fun getLatestNativeCrash(): NativeCrashData?
 
     /**
+     * Get all the native crash instances that have been persisted without deleting anything
+     */
+    fun getNativeCrashes(): List<NativeCrashData>
+
+    /**
      * Retrieves symbol information for the current architecture.
      */
     val symbolsForCurrentArch: Map<String, String>?

@@ -39,17 +39,10 @@ android {
 }
 
 // include these projects in code coverage
-dependencies {
-    kover(project(":embrace-android-compose"))
-    kover(project(":embrace-android-fcm"))
-    kover(project(":embrace-android-okhttp3"))
-    kover(project(":embrace-android-core"))
-    kover(project(":embrace-android-infra"))
-    kover(project(":embrace-android-delivery"))
-    kover(project(":embrace-android-features"))
-    kover(project(":embrace-android-payload"))
-    kover(project(":embrace-android-api"))
-    kover(project(":embrace-android-delivery"))
+rootProject.childProjects.forEach { key, proj ->
+    if (proj.plugins.hasPlugin("embrace-prod-defaults")) {
+        dependencies.add("kover", proj)
+    }
 }
 
 kover {

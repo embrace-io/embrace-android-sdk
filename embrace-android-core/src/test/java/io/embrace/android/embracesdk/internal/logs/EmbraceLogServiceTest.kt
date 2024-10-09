@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -35,7 +34,6 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
 
-    private val backgroundWorker = fakeBackgroundWorker()
     private val fakeEmbLogger = FakeEmbLogger()
     private val embraceSerializer = EmbraceSerializer()
 
@@ -54,7 +52,6 @@ internal class EmbraceLogServiceTest {
         logWriter = fakeLogWriter,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
-        backgroundWorker = backgroundWorker,
         logger = fakeEmbLogger,
         serializer = embraceSerializer,
     )

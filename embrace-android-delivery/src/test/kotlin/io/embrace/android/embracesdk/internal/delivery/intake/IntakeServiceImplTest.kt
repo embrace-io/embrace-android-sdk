@@ -41,6 +41,7 @@ class IntakeServiceImplTest {
 
     private lateinit var intakeService: IntakeService
     private lateinit var payloadStorageService: FakePayloadStorageService
+    private lateinit var cacheStorageService: FakePayloadStorageService
     private lateinit var schedulingService: FakeSchedulingService
     private lateinit var executorService: BlockableExecutorService
     private lateinit var logger: FakeEmbLogger
@@ -76,12 +77,14 @@ class IntakeServiceImplTest {
     @Before
     fun setUp() {
         payloadStorageService = FakePayloadStorageService()
+        cacheStorageService = FakePayloadStorageService()
         schedulingService = FakeSchedulingService()
         executorService = BlockableExecutorService(blockingMode = true)
         logger = FakeEmbLogger(false)
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
+            cacheStorageService,
             logger,
             serializer,
             PriorityWorker(executorService)
@@ -149,6 +152,24 @@ class IntakeServiceImplTest {
     }
 
     @Test
+    fun `cache session`() {
+        intakeService.take(sessionEnvelope, sessionMetadata.copy(complete = false))
+        executorService.runCurrentlyBlocked()
+
+        // assert filename is valid & contains correct metadata
+        val filename = cacheStorageService.storedFilenames().single()
+        val metadata = StoredTelemetryMetadata.fromFilename(filename).getOrThrow()
+        assertEquals(SESSION, metadata.envelopeType)
+
+        // assert payload was stored
+        val obj = cacheStorageService.storedPayloads().single()
+        assertArrayEquals(sessionDataExpected, obj)
+
+        // assert scheduling service was NOT notified
+        assertEquals(0, schedulingService.payloadIntakeCount)
+    }
+
+    @Test
     fun `exception in payload storage`() {
         payloadStorageService.failStorage = true
         intakeService.take(logEnvelope, logMetadata)
@@ -180,6 +201,7 @@ class IntakeServiceImplTest {
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
+            cacheStorageService,
             logger,
             TestPlatformSerializer(),
             worker

@@ -2,11 +2,12 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 
 /**
  * Creates log records to be sent using the Open Telemetry Logs data model.
  */
-interface LogService : BaseLogService {
+interface LogService : MemoryCleanerListener {
 
     /**
      * Creates a remote log.
@@ -35,4 +36,11 @@ interface LogService : BaseLogService {
         exceptionName: String? = null,
         exceptionMessage: String? = null
     )
+
+    /**
+     * Gets the number of error logs that have been recorded.
+     *
+     * @return the error logs count
+     */
+    fun getErrorLogsCount(): Int
 }

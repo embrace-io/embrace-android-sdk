@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
+import io.embrace.android.embracesdk.fakes.FakePayloadIntake
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -16,27 +16,25 @@ class V2PayloadStoreTest {
 
     private lateinit var store: V2PayloadStore
     private lateinit var intakeService: FakeIntakeService
-    private lateinit var deliveryService: FakeDeliveryService
 
     @Before
     fun setUp() {
         intakeService = FakeIntakeService()
-        deliveryService = FakeDeliveryService()
-        store = V2PayloadStore(intakeService, deliveryService, FakeClock()) { "fakeuuid" }
+        store = V2PayloadStore(intakeService, FakeClock()) { "fakeuuid" }
     }
 
     @Test
-    fun `test session`() {
+    fun `test store session`() {
         val envelope = fakeSessionEnvelope()
         store.storeSessionPayload(envelope, TransitionType.ON_BACKGROUND)
-        verifySessionIntake(envelope)
+        verifySessionIntake(envelope, intakeService.getIntakes(), "1692201601000_session_fakeuuid_true_v1.json")
     }
 
     @Test
-    fun `test session with crash`() {
+    fun `test store session with crash`() {
         val envelope = fakeSessionEnvelope()
         store.storeSessionPayload(envelope, TransitionType.CRASH)
-        verifySessionIntake(envelope)
+        verifySessionIntake(envelope, intakeService.getIntakes(), "1692201601000_session_fakeuuid_true_v1.json")
     }
 
     @Test
@@ -50,6 +48,7 @@ class V2PayloadStoreTest {
         assertEquals(0, intakeService.shutdownCount)
     }
 
+    @Test
     fun `test shutdown`() {
         store.handleCrash("fakeCrashId")
         assertEquals(1, intakeService.shutdownCount)
@@ -59,13 +58,17 @@ class V2PayloadStoreTest {
     fun `test snapshot`() {
         val envelope = fakeSessionEnvelope()
         store.cacheSessionSnapshot(envelope)
-        assertEquals(envelope, deliveryService.savedSessionEnvelopes.single().first)
+        verifySessionIntake(envelope, intakeService.getIntakes(false), "1692201601000_session_fakeuuid_false_v1.json")
     }
 
-    private fun verifySessionIntake(envelope: Envelope<SessionPayload>) {
-        val intake = intakeService.getIntakes<SessionPayload>().single()
+    private fun verifySessionIntake(
+        envelope: Envelope<SessionPayload>,
+        intakes: List<FakePayloadIntake<SessionPayload>>,
+        filename: String,
+    ) {
+        val intake = intakes.single()
         assertSame(envelope, intake.envelope)
-        assertEquals("1692201601000_session_fakeuuid_true_v1.json", intake.metadata.filename)
+        assertEquals(filename, intake.metadata.filename)
         assertEquals(0, intakeService.shutdownCount)
     }
 }

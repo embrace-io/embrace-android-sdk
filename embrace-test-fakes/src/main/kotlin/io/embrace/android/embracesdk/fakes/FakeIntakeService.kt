@@ -10,13 +10,18 @@ class FakeIntakeService : IntakeService {
 
     var shutdownCount: Int = 0
     var intakeList: MutableList<FakePayloadIntake<*>> = mutableListOf()
+    var cacheList: MutableList<FakePayloadIntake<*>> = mutableListOf()
 
     @Suppress("UNCHECKED_CAST")
-    inline fun <reified T : Any> getIntakes(): List<FakePayloadIntake<T>> {
+    inline fun <reified T : Any> getIntakes(complete: Boolean = true): List<FakePayloadIntake<T>> {
         if (T::class != SessionPayload::class && T::class != LogPayload::class) {
             error("Unsupported type: ${T::class}")
         }
-        return intakeList.filter { it.envelope.data is T } as List<FakePayloadIntake<T>>
+        val dst = when (complete) {
+            true -> intakeList
+            false -> cacheList
+        }
+        return dst.filter { it.envelope.data is T } as List<FakePayloadIntake<T>>
     }
 
     override fun shutdown() {
@@ -24,6 +29,10 @@ class FakeIntakeService : IntakeService {
     }
 
     override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {
-        intakeList.add(FakePayloadIntake(intake, metadata))
+        val dst = when (metadata.complete) {
+            true -> intakeList
+            false -> cacheList
+        }
+        dst.add(FakePayloadIntake(intake, metadata))
     }
 }

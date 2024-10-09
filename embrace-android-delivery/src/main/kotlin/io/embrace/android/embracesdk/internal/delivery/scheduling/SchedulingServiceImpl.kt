@@ -41,7 +41,10 @@ class SchedulingServiceImpl(
     }
 
     override fun shutdown() {
-        // TODO: get ready to die
+        // shutdown workers from further scheduling but don't wait for completion as
+        // we can just retry in the next process
+        schedulingWorker.shutdownAndWait(0)
+        deliveryWorker.shutdownAndWait(0)
     }
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {

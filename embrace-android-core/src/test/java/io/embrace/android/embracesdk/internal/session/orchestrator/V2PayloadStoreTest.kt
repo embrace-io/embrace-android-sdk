@@ -20,21 +20,21 @@ class V2PayloadStoreTest {
     @Before
     fun setUp() {
         intakeService = FakeIntakeService()
-        store = V2PayloadStore(intakeService, FakeClock()) { "fakeuuid" }
+        store = V2PayloadStore(intakeService, FakeClock(), { "fakeProcessId" }) { "fakeuuid" }
     }
 
     @Test
     fun `test store session`() {
         val envelope = fakeSessionEnvelope()
         store.storeSessionPayload(envelope, TransitionType.ON_BACKGROUND)
-        verifySessionIntake(envelope, intakeService.getIntakes(), "1692201601000_session_fakeuuid_true_v1.json")
+        verifySessionIntake(envelope, intakeService.getIntakes(), "1692201601000_session_fakeuuid_fakeProcessId_true_v1.json")
     }
 
     @Test
     fun `test store session with crash`() {
         val envelope = fakeSessionEnvelope()
         store.storeSessionPayload(envelope, TransitionType.CRASH)
-        verifySessionIntake(envelope, intakeService.getIntakes(), "1692201601000_session_fakeuuid_true_v1.json")
+        verifySessionIntake(envelope, intakeService.getIntakes(), "1692201601000_session_fakeuuid_fakeProcessId_true_v1.json")
     }
 
     @Test
@@ -44,7 +44,7 @@ class V2PayloadStoreTest {
 
         val intake = intakeService.getIntakes<LogPayload>().single()
         assertSame(envelope, intake.envelope)
-        assertEquals("1692201601000_log_fakeuuid_true_v1.json", intake.metadata.filename)
+        assertEquals("1692201601000_log_fakeuuid_fakeProcessId_true_v1.json", intake.metadata.filename)
         assertEquals(0, intakeService.shutdownCount)
     }
 
@@ -58,7 +58,7 @@ class V2PayloadStoreTest {
     fun `test snapshot`() {
         val envelope = fakeSessionEnvelope()
         store.cacheSessionSnapshot(envelope)
-        verifySessionIntake(envelope, intakeService.getIntakes(false), "1692201601000_session_fakeuuid_false_v1.json")
+        verifySessionIntake(envelope, intakeService.getIntakes(false), "1692201601000_session_fakeuuid_fakeProcessId_false_v1.json")
     }
 
     private fun verifySessionIntake(

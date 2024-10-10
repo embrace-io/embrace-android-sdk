@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -33,6 +34,7 @@ class DeliveryModuleImplTest {
         module = DeliveryModuleImpl(
             FakeConfigModule(configService),
             FakeInitModule(),
+            FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
             CoreModuleImpl(ApplicationProvider.getApplicationContext(), FakeEmbLogger()),
             FakeStorageModule(),

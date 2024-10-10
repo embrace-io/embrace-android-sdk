@@ -48,7 +48,7 @@ class OpenTelemetryConfiguration(
      * This allows us to explicitly relate all the sessions associated with a particular app launch rather than having the backend figure
      * this out by proximity for stitched sessions.
      */
-    private val processIdentifier: String by lazy {
+    val processIdentifier: String by lazy {
         Systrace.traceSynchronous("process-identifier-init", IdGenerator.Companion::generateLaunchInstanceId)
     }
 

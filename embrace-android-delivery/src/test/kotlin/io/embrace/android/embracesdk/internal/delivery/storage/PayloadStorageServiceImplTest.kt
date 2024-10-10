@@ -21,9 +21,10 @@ class PayloadStorageServiceImplTest {
     companion object {
         private const val TIMESTAMP = 1500000000L
         private const val UUID = "uuid"
+        private const val PROCESS_ID = "pid"
     }
 
-    private val metadata = StoredTelemetryMetadata(TIMESTAMP, UUID, SESSION)
+    private val metadata = StoredTelemetryMetadata(TIMESTAMP, UUID, PROCESS_ID, SESSION)
     private lateinit var service: PayloadStorageService
     private lateinit var outputDir: File
     private lateinit var logger: FakeEmbLogger
@@ -96,7 +97,7 @@ class PayloadStorageServiceImplTest {
             Pair(1000L, LOG),
             Pair(1000L, NETWORK)
         ).forEach {
-            val metadata = StoredTelemetryMetadata(it.first, UUID, it.second)
+            val metadata = StoredTelemetryMetadata(it.first, UUID, PROCESS_ID, it.second)
             service.store(metadata) { stream ->
                 stream.write("test".toByteArray())
             }

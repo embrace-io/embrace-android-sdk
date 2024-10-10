@@ -11,12 +11,12 @@ import org.junit.Test
 
 class StoredTelemetryComparatorTest {
 
-    private val crash = StoredTelemetryMetadata(1, "crash", CRASH)
-    private val session = StoredTelemetryMetadata(1, "session", SESSION)
-    private val session2 = StoredTelemetryMetadata(100, "session2", SESSION)
-    private val session3 = StoredTelemetryMetadata(1000, "session3", SESSION)
-    private val log = StoredTelemetryMetadata(1, "log", LOG)
-    private val network = StoredTelemetryMetadata(1, "network", NETWORK)
+    private val crash = StoredTelemetryMetadata(1, "crash", "pid", CRASH)
+    private val session = StoredTelemetryMetadata(1, "session", "pid", SESSION)
+    private val session2 = StoredTelemetryMetadata(100, "session2", "pid", SESSION)
+    private val session3 = StoredTelemetryMetadata(1000, "session3", "pid", SESSION)
+    private val log = StoredTelemetryMetadata(1, "log", "pid", LOG)
+    private val network = StoredTelemetryMetadata(1, "network", "pid", NETWORK)
 
     @Test
     fun `sort values`() {

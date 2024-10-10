@@ -282,6 +282,7 @@ internal class ModuleInitBootstrapper(
                         deliveryModuleSupplier(
                             configModule,
                             initModule,
+                            openTelemetryModule,
                             workerThreadModule,
                             coreModule,
                             storageModule,

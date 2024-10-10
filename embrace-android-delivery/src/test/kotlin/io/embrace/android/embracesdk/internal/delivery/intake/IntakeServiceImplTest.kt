@@ -37,6 +37,7 @@ class IntakeServiceImplTest {
 
     companion object {
         private const val UUID = "uuid"
+        private const val PROCESS_ID = "pid"
     }
 
     private lateinit var intakeService: IntakeService
@@ -65,14 +66,14 @@ class IntakeServiceImplTest {
     }
 
     private val clock = FakeClock()
-    private val sessionMetadata = StoredTelemetryMetadata(clock.now(), UUID, SESSION)
-    private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, LOG)
-    private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, NETWORK)
-    private val crashMetadata = StoredTelemetryMetadata(clock.now(), UUID, CRASH)
-    private val sessionMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, SESSION)
-    private val logMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, LOG)
-    private val networkMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, NETWORK)
-    private val crashMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, CRASH)
+    private val sessionMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, SESSION)
+    private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, LOG)
+    private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, NETWORK)
+    private val crashMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH)
+    private val sessionMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, SESSION)
+    private val logMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, LOG)
+    private val networkMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, NETWORK)
+    private val crashMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, CRASH)
 
     @Before
     fun setUp() {

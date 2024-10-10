@@ -54,7 +54,10 @@ import io.embrace.android.embracesdk.spans.TracingApi
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl @JvmOverloads constructor(
-    private val bootstrapper: ModuleInitBootstrapper = Systrace.traceSynchronous("bootstrapper-init", ::ModuleInitBootstrapper),
+    private val bootstrapper: ModuleInitBootstrapper = Systrace.traceSynchronous(
+        "bootstrapper-init",
+        ::ModuleInitBootstrapper
+    ),
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger, bootstrapper.initModule.telemetryService),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
@@ -148,7 +151,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun start(
         context: Context,
         appFramework: Embrace.AppFramework,
-        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null }
+        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
     ) {
         try {
             startSynchronous("sdk-start")
@@ -157,16 +160,19 @@ internal class EmbraceImpl @JvmOverloads constructor(
         } catch (t: Throwable) {
             runCatching {
                 logger.trackInternalError(InternalErrorType.SDK_START_FAIL, t)
-                logger.logError("Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.", t)
+                logger.logError(
+                    "Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.",
+                    t
+                )
             }
         }
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION", "CyclomaticComplexMethod", "ComplexMethod")
     private fun startImpl(
         context: Context,
         framework: Embrace.AppFramework,
-        configServiceProvider: (framework: AppFramework) -> ConfigService?
+        configServiceProvider: (framework: AppFramework) -> ConfigService?,
     ) {
         if (application != null) {
             // We don't hard fail if the SDK has been already initialized.
@@ -198,14 +204,21 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         // Send any sessions that were cached and not yet sent.
         startSynchronous("send-cached-sessions")
-        val worker = bootstrapper.workerThreadModule.priorityWorker<TaskPriority>(Worker.Priority.DataPersistenceWorker)
-        worker.submit(TaskPriority.NORMAL) {
-            val essentialServiceModule = bootstrapper.essentialServiceModule
-            bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
-                bootstrapper.nativeFeatureModule::nativeCrashService,
-                essentialServiceModule.sessionIdTracker
-            )
+
+        val resurrectionWorker =
+            bootstrapper.workerThreadModule.priorityWorker<TaskPriority>(Worker.Priority.DataPersistenceWorker)
+        if (useLegacyResurrection()) {
+            resurrectionWorker.submit(TaskPriority.NORMAL) {
+                if (useLegacyResurrection()) {
+                    val essentialServiceModule = bootstrapper.essentialServiceModule
+                    bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
+                        bootstrapper.nativeFeatureModule::nativeCrashService,
+                        essentialServiceModule.sessionIdTracker
+                    )
+                }
+            }
         }
+
         endSynchronous()
 
         crashModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -252,8 +265,23 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
         startSynchronous("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
-        dataCaptureServiceModule.startupService.setSdkStartupInfo(startTimeMs, endTimeMs, inForeground, Thread.currentThread().name)
+        dataCaptureServiceModule.startupService.setSdkStartupInfo(
+            startTimeMs,
+            endTimeMs,
+            inForeground,
+            Thread.currentThread().name
+        )
         endSynchronous()
+
+        if (!useLegacyResurrection()) {
+            resurrectionWorker.submit(TaskPriority.NORMAL) {
+                if (!useLegacyResurrection()) {
+                    bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
+                        nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
+                    )
+                }
+            }
+        }
     }
 
     /**
@@ -283,7 +311,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         context: String?,
         library: String?,
         exceptionName: String? = null,
-        exceptionMessage: String? = null
+        exceptionMessage: String? = null,
     ) {
         logsApiDelegate.logMessage(
             type,
@@ -303,14 +331,15 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Gets the [EmbraceInternalInterface] that should be used as the sole source of
      * communication with other Android SDK modules.
      */
-    override val internalInterface get(): EmbraceInternalInterface {
-        val internalInterface = embraceInternalInterface
-        return if (isStarted && internalInterface != null) {
-            internalInterface
-        } else {
-            uninitializedSdkInternalInterface
+    override val internalInterface
+        get(): EmbraceInternalInterface {
+            val internalInterface = embraceInternalInterface
+            return if (isStarted && internalInterface != null) {
+                internalInterface
+            } else {
+                uninitializedSdkInternalInterface
+            }
         }
-    }
 
     override val reactNativeInternalInterface get() = internalInterfaceModule?.reactNativeInternalInterface
     override val unityInternalInterface get() = internalInterfaceModule?.unityInternalInterface
@@ -344,5 +373,9 @@ internal class EmbraceImpl @JvmOverloads constructor(
         } catch (exc: Exception) {
             logger.logError("Failed to sample current thread during ANRs", exc)
         }
+    }
+
+    private fun useLegacyResurrection(): Boolean {
+        return configService?.autoDataCaptureBehavior?.isV2StorageEnabled() != true
     }
 }

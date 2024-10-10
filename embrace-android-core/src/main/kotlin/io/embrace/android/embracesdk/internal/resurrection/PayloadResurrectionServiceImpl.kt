@@ -36,16 +36,20 @@ internal class PayloadResurrectionServiceImpl(
 
     override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
-        val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionId } ?: emptyMap()
-        nativeCrashes.values.forEach { nativeCrash ->
-            nativeCrashService?.sendNativeCrash(nativeCrash)
-        }
+        val nativeCrashes = nativeCrashService
+            ?.getNativeCrashes()
+            ?.associateBy { it.sessionId }
+            ?.apply {
+                values.forEach { nativeCrash ->
+                    nativeCrashService.sendNativeCrash(nativeCrash)
+                }
+            } ?: emptyMap()
+
         payloadStorageService
             .getUndeliveredPayloads()
             .forEach { deadSessionMetadata ->
                 deadSessionMetadata.sendResurrectedPayload(nativeCrashes::get)
             }
-        // TODO: delete each native crash after its associated session is resurrected and sent
         nativeCrashService?.deleteAllNativeCrashes()
     }
 
@@ -103,7 +107,7 @@ internal class PayloadResurrectionServiceImpl(
      * exactly one session span.
      */
     private fun Envelope<SessionPayload>.resurrectSession(
-        nativeCrashData: NativeCrashData?
+        nativeCrashData: NativeCrashData?,
     ): Envelope<SessionPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
         val failedSpans = data.spanSnapshots

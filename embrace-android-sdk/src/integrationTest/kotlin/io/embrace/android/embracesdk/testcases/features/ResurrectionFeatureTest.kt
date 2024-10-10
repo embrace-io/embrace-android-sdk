@@ -1,0 +1,51 @@
+package io.embrace.android.embracesdk.testcases.features
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import org.junit.Assert.assertNotNull
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+internal class ResurrectionFeatureTest {
+    @Rule
+    @JvmField
+    val testRule: IntegrationTestRule = IntegrationTestRule()
+
+    @Test
+    fun `resurrection attempt does not crash the SDK`() {
+        testRule.runTest(
+            setupAction = {
+                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                    v2StorageEnabled = true
+                )
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                // can't validate this until the work until the PR to update the assertions using the v2 delivery layer
+                // is merged
+            }
+        )
+    }
+
+    @Test
+    fun `resurrection attempt with v2 delivery layer off does not crash the SDK`() {
+        testRule.runTest(
+            setupAction = {
+                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
+                    v2StorageEnabled = false
+                )
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                assertNotNull(getSingleSessionEnvelope())
+            }
+        )
+    }
+}

@@ -59,7 +59,7 @@ internal class PayloadResurrectionServiceImpl(
      */
     private fun StoredTelemetryMetadata.sendResurrectedPayload(nativeCrashProvider: (String) -> NativeCrashData?) {
         val result = runCatching {
-            val deadPayload = when (envelopeType) {
+            val resurrectedPayload = when (envelopeType) {
                 SupportedEnvelopeType.SESSION -> {
                     val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
                         inputStream = GZIPInputStream(payloadStorageService.loadPayloadAsStream(this)),
@@ -79,9 +79,9 @@ internal class PayloadResurrectionServiceImpl(
                 else -> null
             }
 
-            if (deadPayload != null) {
+            if (resurrectedPayload != null) {
                 intakeService.take(
-                    intake = deadPayload,
+                    intake = resurrectedPayload,
                     metadata = this
                 )
             }

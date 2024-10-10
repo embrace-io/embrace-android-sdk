@@ -205,18 +205,19 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // Send any sessions that were cached and not yet sent.
         startSynchronous("send-cached-sessions")
 
-        val resurrectionWorker =
-            bootstrapper.workerThreadModule.priorityWorker<TaskPriority>(Worker.Priority.DataPersistenceWorker)
         if (useLegacyResurrection()) {
-            resurrectionWorker.submit(TaskPriority.NORMAL) {
-                if (useLegacyResurrection()) {
-                    val essentialServiceModule = bootstrapper.essentialServiceModule
-                    bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
-                        bootstrapper.nativeFeatureModule::nativeCrashService,
-                        essentialServiceModule.sessionIdTracker
-                    )
+            bootstrapper
+                .workerThreadModule
+                .priorityWorker<TaskPriority>(Worker.Priority.DataPersistenceWorker)
+                .submit(TaskPriority.NORMAL) {
+                    if (useLegacyResurrection()) {
+                        val essentialServiceModule = bootstrapper.essentialServiceModule
+                        bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
+                            bootstrapper.nativeFeatureModule::nativeCrashService,
+                            essentialServiceModule.sessionIdTracker
+                        )
+                    }
                 }
-            }
         }
 
         endSynchronous()
@@ -274,13 +275,16 @@ internal class EmbraceImpl @JvmOverloads constructor(
         endSynchronous()
 
         if (!useLegacyResurrection()) {
-            resurrectionWorker.submit(TaskPriority.NORMAL) {
-                if (!useLegacyResurrection()) {
-                    bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-                        nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
-                    )
+            bootstrapper
+                .workerThreadModule
+                .backgroundWorker(Worker.Background.NonIoRegWorker)
+                .submit {
+                    if (!useLegacyResurrection()) {
+                        bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
+                            nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
+                        )
+                    }
                 }
-            }
         }
     }
 

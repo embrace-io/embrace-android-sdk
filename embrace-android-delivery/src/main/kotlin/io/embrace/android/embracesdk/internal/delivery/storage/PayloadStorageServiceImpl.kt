@@ -19,6 +19,7 @@ import java.util.zip.GZIPOutputStream
  */
 class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
+    private val processIdProvider: () -> String,
     private val logger: EmbLogger,
     private val storageLimit: Int = 500,
 ) : PayloadStorageService {
@@ -40,8 +41,9 @@ class PayloadStorageServiceImpl(
         ctx: Context,
         outputType: OutputType,
         logger: EmbLogger,
+        processIdProvider: () -> String,
         storageLimit: Int = 500,
-    ) : this(createOutputDir(ctx, outputType, logger), logger, storageLimit)
+    ) : this(createOutputDir(ctx, outputType, logger), processIdProvider, logger, storageLimit)
 
     private val payloadDir by outputDir
 
@@ -119,6 +121,12 @@ class PayloadStorageServiceImpl(
     }
 
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> = storedFiles.toList()
+
+    override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> {
+        return storedFiles
+            .filter { !it.complete && it.processId != processIdProvider() }
+            .toList()
+    }
 
     private fun pruneStorage(metadata: StoredTelemetryMetadata): Boolean {
         val count = storedFiles.size

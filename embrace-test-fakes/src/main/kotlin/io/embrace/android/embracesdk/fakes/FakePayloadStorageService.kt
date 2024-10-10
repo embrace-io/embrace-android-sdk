@@ -13,7 +13,9 @@ import java.io.InputStream
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPOutputStream
 
-class FakePayloadStorageService : PayloadStorageService {
+class FakePayloadStorageService(
+    var currentProcessId: String = "pid"
+) : PayloadStorageService {
     private val serializer = TestPlatformSerializer()
     private val cachedPayloads = LinkedHashMap<StoredTelemetryMetadata, ByteArray>()
 
@@ -49,7 +51,7 @@ class FakePayloadStorageService : PayloadStorageService {
         cachedPayloads.filter { it.key.complete }.keys.toList()
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> =
-        cachedPayloads.filterNot { it.key.complete }.keys.toList()
+        cachedPayloads.filterNot { it.key.complete && it.key.processId != currentProcessId }.keys.toList()
 
     fun <T> addPayload(metadata: StoredTelemetryMetadata, data: T) {
         store(metadata) { stream ->

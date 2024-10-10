@@ -30,12 +30,11 @@ import kotlin.math.max
 internal class PayloadResurrectionServiceImpl(
     private val intakeService: IntakeService,
     private val payloadStorageService: PayloadStorageService,
-    private val nativeCrashServiceProvider: Provider<NativeCrashService?>,
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
 ) : PayloadResurrectionService {
 
-    override fun resurrectOldPayloads() {
+    override fun resurrectOldPayloads(nativeCrashServiceProvider: Provider<NativeCrashService?>) {
         val nativeCrashService = nativeCrashServiceProvider()
         val nativeCrashes = nativeCrashService?.getNativeCrashes()?.associateBy { it.sessionId } ?: emptyMap()
         nativeCrashes.values.forEach { nativeCrash ->

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 
 /**
  * Modules containing classes that generate the payloads.
@@ -21,4 +22,5 @@ interface PayloadSourceModule {
     val metadataService: MetadataService
     val hostedSdkVersionInfo: HostedSdkVersionInfo
     val rnBundleIdTracker: RnBundleIdTracker
+    val payloadResurrectionService: PayloadResurrectionService?
 }

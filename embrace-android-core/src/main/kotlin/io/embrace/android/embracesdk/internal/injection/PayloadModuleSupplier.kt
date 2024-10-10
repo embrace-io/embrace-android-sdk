@@ -4,7 +4,8 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
- * Function that returns an instance of [PayloadSourceModule]. Matches the signature of the constructor for [PayloadSourceModuleImpl]
+ * Function that returns an instance of [PayloadSourceModule].
+ * Matches the signature of the constructor for [PayloadSourceModuleImpl]
  */
 typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
@@ -17,9 +18,11 @@ typealias PayloadSourceModuleSupplier = (
     nativeCoreModuleProvider: Provider<NativeCoreModule?>,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper>
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper>,
+    deliveryModule: DeliveryModule,
 ) -> PayloadSourceModule
 
+@Suppress("LongParameterList")
 fun createPayloadSourceModule(
     initModule: InitModule,
     coreModule: CoreModule,
@@ -31,7 +34,8 @@ fun createPayloadSourceModule(
     nativeCoreModuleProvider: Provider<NativeCoreModule?>,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper>
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper>,
+    deliveryModule: DeliveryModule,
 ): PayloadSourceModule = PayloadSourceModuleImpl(
     initModule,
     coreModule,
@@ -43,5 +47,6 @@ fun createPayloadSourceModule(
     nativeCoreModuleProvider,
     nativeSymbolsProvider,
     otelModule,
-    otelPayloadMapperProvider
+    otelPayloadMapperProvider,
+    deliveryModule,
 )

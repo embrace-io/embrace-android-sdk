@@ -19,10 +19,8 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.HttpAttributes
-import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -32,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -42,13 +41,12 @@ internal class EmbraceInternalInterfaceTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `no NPEs when SDK not started`() {
         testRule.runTest(
+            startSdk = false,
             testCaseAction = {
                 assertFalse(embrace.isStarted)
                 with(embrace.internalInterface) {
@@ -117,7 +115,6 @@ internal class EmbraceInternalInterfaceTest {
     fun `network recording methods work as expected`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     clock.tick()
                     configService.updateListeners()
@@ -172,7 +169,8 @@ internal class EmbraceInternalInterfaceTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 val spans = checkNotNull(session.data.spans)
-                val requests = checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
+                val requests =
+                    checkNotNull(spans.filter { it.attributes?.findAttributeValue(HttpAttributes.HTTP_REQUEST_METHOD.key) != null })
                 assertEquals(
                     "Unexpected number of requests in sent session: ${requests.size}",
                     4,
@@ -190,7 +188,6 @@ internal class EmbraceInternalInterfaceTest {
 
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
                 }
@@ -228,7 +225,6 @@ internal class EmbraceInternalInterfaceTest {
                     })
             },
             testCaseAction = {
-                startSdk()
                 recordSession {
                     assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
                     assertFalse(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
@@ -243,7 +239,6 @@ internal class EmbraceInternalInterfaceTest {
     fun `set process as started by notification works as expected`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 embrace.internalInterface.setProcessStartedByNotification()
                 recordSession()
             },
@@ -258,7 +253,6 @@ internal class EmbraceInternalInterfaceTest {
     fun `test sdk time`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
                 clock.tick()
                 assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
@@ -270,7 +264,6 @@ internal class EmbraceInternalInterfaceTest {
     fun `internal tracing APIs work as expected`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     with(embrace.internalInterface) {
                         val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
@@ -326,7 +319,6 @@ internal class EmbraceInternalInterfaceTest {
     fun `span logging across sessions`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 val internalInterface = checkNotNull(embrace.internalInterface)
                 var stoppedParentId = ""
                 var activeParentId = ""

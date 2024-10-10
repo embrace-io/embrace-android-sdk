@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
@@ -19,11 +17,10 @@ import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceAssertionInterface
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -35,15 +32,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     private val results = mutableListOf<String>()
     private lateinit var executor: SingleThreadTestScheduledExecutor
@@ -61,11 +58,12 @@ internal class TracingApiTest {
         val spanExporter = FakeSpanExporter()
 
         testRule.runTest(
-            testCaseAction = {
+            preSdkStartAction = {
                 testStartTimeMs = clock.now()
                 clock.tick(100L)
                 embrace.addSpanExporter(spanExporter)
-                startSdk()
+            },
+            testCaseAction = {
                 results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
                 recordSession {
                     val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
@@ -273,7 +271,6 @@ internal class TracingApiTest {
     fun `span can be parented by a span created on a different thread`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     val latch = CountDownLatch(1)
                     val parentThreadId = Thread.currentThread().id
@@ -312,9 +309,10 @@ internal class TracingApiTest {
             setupAction = {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
             },
-            testCaseAction = {
+            preSdkStartAction = {
                 assertNull(embrace.startSpan("test"))
-                startSdk()
+            },
+            testCaseAction = {
                 recordSession {
                     assertNotNull(embrace.startSpan("test"))
                 }

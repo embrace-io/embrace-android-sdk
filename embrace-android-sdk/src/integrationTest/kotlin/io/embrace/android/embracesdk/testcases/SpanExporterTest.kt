@@ -22,17 +22,17 @@ import org.robolectric.annotation.Config
 internal class SpanExporterTest {
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `SDK can receive a SpanExporter`() {
+        val fakeSpanExporter = FakeSpanExporter()
+
         testRule.runTest(
-            testCaseAction = {
-                val fakeSpanExporter = FakeSpanExporter()
+            preSdkStartAction = {
                 embrace.addSpanExporter(fakeSpanExporter)
-                startSdk()
+            },
+            testCaseAction = {
                 embrace.startSpan("test")?.stop()
                 assertTrue(
                     "Timed out waiting for the span to be exported: ${fakeSpanExporter.exportedSpans.map { it.name }}",
@@ -71,7 +71,6 @@ internal class SpanExporterTest {
 
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 embrace.addSpanExporter(fakeSpanExporter)
 
                 recordSession {

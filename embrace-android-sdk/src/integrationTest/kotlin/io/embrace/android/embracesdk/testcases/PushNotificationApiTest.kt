@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -23,15 +22,12 @@ internal class PushNotificationApiTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `log push notification and data type`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
                 }
@@ -47,7 +43,6 @@ internal class PushNotificationApiTest {
     fun `log push data type`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
                 }
@@ -63,7 +58,6 @@ internal class PushNotificationApiTest {
     fun `log push notification no data type`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
                 }
@@ -79,7 +73,6 @@ internal class PushNotificationApiTest {
     fun `log push unknown type`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
                 }
@@ -100,7 +93,6 @@ internal class PushNotificationApiTest {
                 )
             },
             testCaseAction = {
-                startSdk()
                 recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
                 }

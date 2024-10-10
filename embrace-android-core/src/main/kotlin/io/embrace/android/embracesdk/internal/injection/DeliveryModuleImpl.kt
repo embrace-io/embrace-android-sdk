@@ -77,7 +77,7 @@ internal class DeliveryModuleImpl(
                 cacheStorageService,
                 initModule.logger,
                 initModule.jsonSerializer,
-                workerThreadModule.priorityWorker(Worker.Priority.FileCacheWorker)
+                workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
             )
         }
     }
@@ -140,8 +140,8 @@ internal class DeliveryModuleImpl(
             SchedulingServiceImpl(
                 payloadStorageService,
                 requestExecutionService,
-                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-                workerThreadModule.backgroundWorker(Worker.Background.DeliveryWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 initModule.clock,
                 initModule.logger
             )

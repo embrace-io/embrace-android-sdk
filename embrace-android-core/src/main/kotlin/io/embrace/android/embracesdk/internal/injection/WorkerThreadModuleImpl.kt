@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.internal.worker.Worker.Priority.FileCacheWorker
+import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DataPersistenceWorker
 import io.embrace.android.embracesdk.internal.worker.Worker.Priority.NetworkRequestWorker
 import io.embrace.android.embracesdk.internal.worker.comparator.apiRequestComparator
 import io.embrace.android.embracesdk.internal.worker.comparator.taskPriorityComparator
@@ -57,7 +57,7 @@ internal class WorkerThreadModuleImpl(
 
             if (worker is Worker.Priority) {
                 val comparator = when (worker) {
-                    FileCacheWorker -> fileCacheWorkercomparator
+                    DataPersistenceWorker -> fileCacheWorkercomparator
                     NetworkRequestWorker -> apiRequestComparator
                 }
                 PriorityThreadPoolExecutor(

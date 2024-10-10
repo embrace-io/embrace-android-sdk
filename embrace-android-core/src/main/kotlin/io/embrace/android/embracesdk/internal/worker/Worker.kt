@@ -13,7 +13,7 @@ sealed class Worker(internal val threadName: String) {
         /**
          * Saves/loads request information from files cached on disk.
          */
-        object FileCacheWorker : Priority("file-cache")
+        object DataPersistenceWorker : Priority("data-persistence")
 
         /**
          * All HTTP requests are performed on this executor.
@@ -55,10 +55,8 @@ sealed class Worker(internal val threadName: String) {
         object AnrWatchdogWorker : Background("anr-watchdog")
 
         /**
-         * Delivery Worker
-         *
-         * TODO: Make this a PriorityWorker
+         * Worker that performs HTTP requests that push data to the server.
          */
-        object DeliveryWorker : Background("delivery")
+        object HttpRequestWorker : Background("http-request")
     }
 }

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
+import io.embrace.android.embracesdk.fakes.FakePayloadResurrectionService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionEnvelopeSource
@@ -18,6 +19,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersion
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSource
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 
 class FakePayloadSourceModule(
     override val metadataService: MetadataService = FakeMetadataService(),
@@ -26,6 +28,7 @@ class FakePayloadSourceModule(
     override val resourceSource: FakeEnvelopeResourceSource = FakeEnvelopeResourceSource(),
     override val metadataSource: FakeEnvelopeMetadataSource = FakeEnvelopeMetadataSource(),
     override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
+    override val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),
     sessionPayloadSource: SessionPayloadSource = FakeSessionPayloadSource(),
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource()
 ) : PayloadSourceModule {

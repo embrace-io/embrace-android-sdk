@@ -10,6 +10,6 @@ fun Envelope<SessionPayload>.getSessionSpan(): Span? {
         ?: data.spanSnapshots?.singleOrNull { it.hasFixedAttribute(EmbType.Ux.Session) }
 }
 
-internal fun Envelope<SessionPayload>.getSessionId(): String? {
+fun Envelope<SessionPayload>.getSessionId(): String? {
     return getSessionSpan()?.attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
 }

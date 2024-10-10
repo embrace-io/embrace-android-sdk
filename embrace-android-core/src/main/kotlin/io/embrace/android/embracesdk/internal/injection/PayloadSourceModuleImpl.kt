@@ -19,6 +19,8 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -33,7 +35,8 @@ internal class PayloadSourceModuleImpl(
     nativeCoreModuleProvider: Provider<NativeCoreModule?>,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
-    otelPayloadMapperProvider: Provider<OtelPayloadMapper>
+    otelPayloadMapperProvider: Provider<OtelPayloadMapper>,
+    deliveryModule: DeliveryModule,
 ) : PayloadSourceModule {
 
     override val rnBundleIdTracker: RnBundleIdTracker by singleton {
@@ -126,6 +129,24 @@ internal class PayloadSourceModuleImpl(
                 initModule.clock,
                 initModule.logger
             )
+        }
+    }
+
+    override val payloadResurrectionService: PayloadResurrectionService? by singleton {
+        val intakeService = deliveryModule.intakeService
+        val payloadStorageService = deliveryModule.payloadStorageService
+        if (configModule.configService.autoDataCaptureBehavior.isV2StorageEnabled() &&
+            intakeService != null &&
+            payloadStorageService != null
+        ) {
+            PayloadResurrectionServiceImpl(
+                intakeService = intakeService,
+                payloadStorageService = payloadStorageService,
+                logger = initModule.logger,
+                serializer = initModule.jsonSerializer
+            )
+        } else {
+            null
         }
     }
 }

@@ -46,7 +46,7 @@ internal class ModuleInitBootstrapper(
     private val momentsModuleSupplier: MomentsModuleSupplier = ::createMomentsModule,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
-    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule
+    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
 ) {
     lateinit var coreModule: CoreModule
         private set
@@ -329,7 +329,8 @@ internal class ModuleInitBootstrapper(
                             { nativeCoreModule },
                             { nativeFeatureModule.nativeThreadSamplerService?.getNativeSymbols() },
                             openTelemetryModule,
-                            { OtelPayloadMapperImpl(anrModule.anrOtelMapper, nativeFeatureModule.nativeAnrOtelMapper) }
+                            { OtelPayloadMapperImpl(anrModule.anrOtelMapper, nativeFeatureModule.nativeAnrOtelMapper) },
+                            deliveryModule
                         )
                     }
                     postInit(PayloadSourceModule::class) {

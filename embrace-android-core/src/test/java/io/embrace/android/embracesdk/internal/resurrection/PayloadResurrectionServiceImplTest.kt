@@ -54,7 +54,6 @@ class PayloadResurrectionServiceImplTest {
         resurrectionService = PayloadResurrectionServiceImpl(
             intakeService = intakeService,
             payloadStorageService = payloadStorageService,
-            nativeCrashServiceProvider = { nativeCrashService },
             logger = logger,
             serializer = serializer,
         )
@@ -62,7 +61,7 @@ class PayloadResurrectionServiceImplTest {
 
     @Test
     fun `if no previous cached session then send previous cached sessions should not send anything`() {
-        resurrectionService.resurrectOldPayloads()
+        resurrectionService.resurrectOldPayloads({ nativeCrashService })
         assertTrue(intakeService.intakeList.isEmpty())
     }
 
@@ -166,7 +165,7 @@ class PayloadResurrectionServiceImplTest {
             data = deadSessionEnvelope
         )
         serializer.errorOnNextOperation()
-        resurrectionService.resurrectOldPayloads()
+        resurrectionService.resurrectOldPayloads({ nativeCrashService })
         assertResurrectionFailure()
     }
 
@@ -211,7 +210,7 @@ class PayloadResurrectionServiceImplTest {
             data = earlierDeadSession
         )
 
-        resurrectionService.resurrectOldPayloads()
+        resurrectionService.resurrectOldPayloads({ nativeCrashService })
 
         val sessionPayloads = intakeService.getIntakes<SessionPayload>(false)
         assertEquals(2, sessionPayloads.size)
@@ -243,7 +242,7 @@ class PayloadResurrectionServiceImplTest {
             metadata = sessionMetadata,
             data = this
         )
-        resurrectionService.resurrectOldPayloads()
+        resurrectionService.resurrectOldPayloads({ nativeCrashService })
     }
 
     private fun createNativeCrashData(

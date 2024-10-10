@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 typealias DeliveryModuleSupplier = (
     configModule: ConfigModule,
     initModule: InitModule,
+    otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -21,6 +22,7 @@ typealias DeliveryModuleSupplier = (
 fun createDeliveryModule(
     configModule: ConfigModule,
     initModule: InitModule,
+    otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -30,6 +32,7 @@ fun createDeliveryModule(
 ): DeliveryModule = DeliveryModuleImpl(
     configModule,
     initModule,
+    otelModule,
     workerThreadModule,
     coreModule,
     storageModule,

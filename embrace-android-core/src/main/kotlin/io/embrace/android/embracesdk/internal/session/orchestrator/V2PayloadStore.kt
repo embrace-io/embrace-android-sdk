@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 internal class V2PayloadStore(
     private val intakeService: IntakeService,
     private val clock: Clock,
+    private val processIdProvider: () -> String,
     private val uuidProvider: () -> String = { Uuid.getEmbUuid() },
 ) : PayloadStore {
 
@@ -39,6 +40,6 @@ internal class V2PayloadStore(
      * Constructs a [StoredTelemetryMetadata] object from the given [Envelope].
      */
     private fun createMetadata(type: SupportedEnvelopeType, complete: Boolean = true): StoredTelemetryMetadata {
-        return StoredTelemetryMetadata(clock.now(), uuidProvider(), type, complete)
+        return StoredTelemetryMetadata(clock.now(), uuidProvider(), processIdProvider(), type, complete)
     }
 }

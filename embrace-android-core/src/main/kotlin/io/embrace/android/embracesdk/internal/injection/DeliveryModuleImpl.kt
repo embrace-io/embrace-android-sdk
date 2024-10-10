@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 internal class DeliveryModuleImpl(
     configModule: ConfigModule,
     initModule: InitModule,
+    otelModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     coreModule: CoreModule,
     storageModule: StorageModule,
@@ -38,7 +39,7 @@ internal class DeliveryModuleImpl(
                 initModule.logger
             )
         }
-    }
+    },
 ) : DeliveryModule {
 
     override val payloadStore: PayloadStore? by singleton {
@@ -49,7 +50,9 @@ internal class DeliveryModuleImpl(
             val deliveryService = deliveryService ?: return@singleton null
             val intakeService = intakeService ?: return@singleton null
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
-                V2PayloadStore(intakeService, initModule.clock)
+                V2PayloadStore(intakeService, initModule.clock, {
+                    otelModule.openTelemetryConfiguration.processIdentifier
+                })
             } else {
                 val worker = workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker)
                 V1PayloadStore(worker, deliveryService)

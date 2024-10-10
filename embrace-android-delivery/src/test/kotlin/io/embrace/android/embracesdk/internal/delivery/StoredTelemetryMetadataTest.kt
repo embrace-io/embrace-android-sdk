@@ -9,6 +9,7 @@ class StoredTelemetryMetadataTest {
     companion object {
         private const val TIMESTAMP = 1726739283136
         private const val UUID = "c2610cd1-389f-422a-bfbc-25312c7a599a"
+        private const val PROCESS_ID = "fakeProcessId"
     }
 
     private val typeNameMap = mapOf(
@@ -23,8 +24,8 @@ class StoredTelemetryMetadataTest {
         typeNameMap.entries.forEach { (type, description) ->
             listOf(true, false).forEach { payloadComplete ->
                 assertEquals(
-                    "${TIMESTAMP}_${description}_${UUID}_${payloadComplete}_v1.json",
-                    StoredTelemetryMetadata(TIMESTAMP, UUID, type, payloadComplete).filename
+                    "${TIMESTAMP}_${description}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json",
+                    StoredTelemetryMetadata(TIMESTAMP, UUID, PROCESS_ID, type, payloadComplete).filename
                 )
             }
         }
@@ -51,7 +52,7 @@ class StoredTelemetryMetadataTest {
     fun `from valid filename`() {
         typeNameMap.entries.forEach { (type, description) ->
             listOf(true, false).forEach { payloadComplete ->
-                val input = "${TIMESTAMP}_${description}_${UUID}_${payloadComplete}_v1.json"
+                val input = "${TIMESTAMP}_${description}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json"
                 with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
                     assertEquals(input, filename)
                     assertEquals(TIMESTAMP, timestamp)

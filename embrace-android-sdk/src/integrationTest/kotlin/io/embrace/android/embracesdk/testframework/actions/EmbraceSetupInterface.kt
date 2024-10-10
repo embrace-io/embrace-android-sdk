@@ -56,9 +56,10 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
         workerThreadModuleSupplier = { _, _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-        deliveryModuleSupplier = { configModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _ ->
+        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _ ->
             createDeliveryModule(
                 configModule,
+                otelModule,
                 initModule,
                 workerThreadModule,
                 coreModule,

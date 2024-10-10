@@ -171,6 +171,23 @@ class IntakeServiceImplTest {
     }
 
     @Test
+    fun `multiple cache attempts are ignored`() {
+        val cache1 = StoredTelemetryMetadata(clock.now(), UUID, "1", SESSION, complete = false)
+        val cache2 = StoredTelemetryMetadata(clock.now(), UUID, "2", SESSION, complete = false)
+        val cache3 = StoredTelemetryMetadata(clock.now(), UUID, "3", SESSION, complete = false)
+        intakeService.take(sessionEnvelope, cache1)
+        intakeService.take(sessionEnvelope, cache2)
+        intakeService.take(sessionEnvelope, cache3)
+        executorService.runCurrentlyBlocked()
+
+        // only one file was stored and it's the most recent one
+        val filename = cacheStorageService.storedFilenames().single()
+        val metadata = StoredTelemetryMetadata.fromFilename(filename).getOrThrow()
+        assertEquals(SESSION, metadata.envelopeType)
+        assertEquals("3", metadata.processId)
+    }
+
+    @Test
     fun `exception in payload storage`() {
         payloadStorageService.failStorage = true
         intakeService.take(logEnvelope, logMetadata)

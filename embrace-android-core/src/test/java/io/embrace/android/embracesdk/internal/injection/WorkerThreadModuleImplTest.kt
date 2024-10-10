@@ -40,7 +40,7 @@ internal class WorkerThreadModuleImplTest {
     fun `network request executor uses custom queue`() {
         val module = WorkerThreadModuleImpl(initModule, ::FakeConfigService)
         assertNotNull(module.priorityWorker<ApiRequest>(Worker.Priority.NetworkRequestWorker))
-        assertNotNull(module.priorityWorker<TaskPriority>(Worker.Priority.FileCacheWorker))
+        assertNotNull(module.priorityWorker<TaskPriority>(Worker.Priority.DataPersistenceWorker))
     }
 
     @Test

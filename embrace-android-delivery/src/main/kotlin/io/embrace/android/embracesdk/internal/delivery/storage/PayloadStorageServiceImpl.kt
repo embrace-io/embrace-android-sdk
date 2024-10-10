@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -19,6 +20,7 @@ import java.util.zip.GZIPOutputStream
  */
 class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
+    private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val logger: EmbLogger,
     private val storageLimit: Int = 500,
 ) : PayloadStorageService {
@@ -38,10 +40,11 @@ class PayloadStorageServiceImpl(
 
     constructor(
         ctx: Context,
+        worker: PriorityWorker<StoredTelemetryMetadata>,
         outputType: OutputType,
         logger: EmbLogger,
         storageLimit: Int = 500,
-    ) : this(createOutputDir(ctx, outputType, logger), logger, storageLimit)
+    ) : this(createOutputDir(ctx, outputType, logger), worker, logger, storageLimit)
 
     private val payloadDir by outputDir
 
@@ -94,6 +97,12 @@ class PayloadStorageServiceImpl(
     }
 
     override fun delete(metadata: StoredTelemetryMetadata) {
+        worker.submit(metadata) {
+            processDelete(metadata)
+        }
+    }
+
+    private fun processDelete(metadata: StoredTelemetryMetadata) {
         try {
             if (metadata.asFile().delete()) {
                 storedFiles.remove(metadata)
@@ -133,7 +142,7 @@ class PayloadStorageServiceImpl(
         val removals = input
             .sortedWith(storedTelemetryComparator)
             .takeLast(removalCount)
-        removals.forEach(::delete)
+        removals.forEach(::processDelete)
         logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))
 
         // notify the caller whether the new payload should be dropped

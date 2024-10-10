@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -16,6 +17,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class DeliveryModuleImpl(
@@ -64,6 +66,10 @@ internal class DeliveryModuleImpl(
         deliveryServiceProvider()
     }
 
+    private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata> by singleton {
+        workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
+    }
+
     override val intakeService: IntakeService? by singleton {
         if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
@@ -77,7 +83,7 @@ internal class DeliveryModuleImpl(
                 cacheStorageService,
                 initModule.logger,
                 initModule.jsonSerializer,
-                workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
+                dataPersistenceWorker
             )
         }
     }
@@ -109,6 +115,7 @@ internal class DeliveryModuleImpl(
         } else {
             PayloadStorageServiceImpl(
                 coreModule.context,
+                dataPersistenceWorker,
                 PayloadStorageServiceImpl.OutputType.PAYLOAD,
                 initModule.logger
             )
@@ -121,6 +128,7 @@ internal class DeliveryModuleImpl(
         } else {
             PayloadStorageServiceImpl(
                 coreModule.context,
+                dataPersistenceWorker,
                 PayloadStorageServiceImpl.OutputType.CACHE,
                 initModule.logger
             )

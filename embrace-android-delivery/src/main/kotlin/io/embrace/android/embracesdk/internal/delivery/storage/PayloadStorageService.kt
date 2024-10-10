@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
+import java.io.IOException
 import java.io.InputStream
 
 /**
@@ -9,13 +10,10 @@ import java.io.InputStream
  * that MUST be adhered to:
  *
  * 1. All calls to [store] are made from thread A
- * 2. All (external) calls to [delete] are executed on thread A (but can be submitted from
- * a different thread)
- * 3. The service may call [delete] internally on thread A to enforce storage limits
- * 4. [store] will be called exactly once when each payload is complete & ready to send. I.e. it
- * will never be called multiple times to persist an incomplete/transformed payload
- * 5. For a given payload, [delete] will always be called after [store]
- * 6. Callers to [loadPayloadAsStream] must be able to handle IOException when manipulating the
+ * 2. All external calls to [delete] can be made from any thread but will be enqueued on thread A
+ * 3. The service may delete files internally on thread A to enforce storage limits
+ * 4. For any given payload [store] will always be called before [delete]
+ * 5. Callers to [loadPayloadAsStream] must be able to handle IOException when manipulating the
  * stream as the payload file backing the stream could be deleted at any time
  */
 interface PayloadStorageService {
@@ -33,6 +31,7 @@ interface PayloadStorageService {
     /**
      * Loads a payload as an [InputStream]
      */
+    @Throws(IOException::class)
     fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream?
 
     /**

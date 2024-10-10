@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
+import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
@@ -7,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.NETWORK
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -28,13 +30,15 @@ class PayloadStorageServiceImplTest {
     private lateinit var service: PayloadStorageService
     private lateinit var outputDir: File
     private lateinit var logger: FakeEmbLogger
+    private lateinit var worker: PriorityWorker<StoredTelemetryMetadata>
 
     @Before
     fun setUp() {
         outputDir = Files.createTempDirectory("output").toFile()
         outputDir.deleteRecursively()
+        worker = PriorityWorker(BlockableExecutorService(false))
         logger = FakeEmbLogger(false)
-        service = PayloadStorageServiceImpl(lazy { outputDir }, logger)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, logger)
     }
 
     @Test
@@ -84,7 +88,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `test objects pruned past limit`() {
         assertNull(outputDir.listFiles())
-        service = PayloadStorageServiceImpl(lazy { outputDir }, logger, 4)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, logger, 4)
 
         // exceed storage limit
         listOf(

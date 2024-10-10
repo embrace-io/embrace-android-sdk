@@ -43,6 +43,10 @@ internal class LowPowerFeatureTest {
                 assertEquals("emb-device-low-power", span.name)
                 assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
+            },
+            otelExportAssertion = {
+                val spans = awaitSpansWithType(EmbType.System.LowPower, 1)
+                assertSpansMatchGoldenFile(spans, "system-low-power-export.json")
             }
         )
     }

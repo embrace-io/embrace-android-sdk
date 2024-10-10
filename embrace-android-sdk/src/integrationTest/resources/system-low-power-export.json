@@ -1,0 +1,17 @@
+[
+  {
+    "name": "emb-device-low-power",
+    "kind": "INTERNAL",
+    "status": "UNSET",
+    "startEpochNanos": "169220160000000000",
+    "endEpochNanos": "169220163000000000",
+    "hasEnded": "true",
+    "totalAttributeCount": "3",
+    "attributes": {
+      "emb.type": "sys.low_power"
+    },
+    "totalRecordedEvents": "0",
+    "events": [],
+    "instrumentationScopeName": "io.embrace.android.embracesdk.core"
+  }
+]

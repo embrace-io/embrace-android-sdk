@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import io.embrace.android.embracesdk.testframework.actions.EmbraceAssertionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.HttpAttributes
@@ -348,7 +348,7 @@ internal class NetworkRequestApiTest {
         )
     }
 
-    private fun EmbraceAssertionInterface.validateAndReturnExpectedNetworkSpan(): Span {
+    private fun EmbracePayloadAssertionInterface.validateAndReturnExpectedNetworkSpan(): Span {
         val session = getSingleSessionEnvelope()
 
         val unfilteredSpans = checkNotNull(session.data.spans)

@@ -22,7 +22,7 @@ import org.junit.Assert
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
  * specifically in what its payload looks like.
  */
-internal class EmbraceAssertionInterface(
+internal class EmbracePayloadAssertionInterface(
     bootstrapper: ModuleInitBootstrapper
 ) {
 

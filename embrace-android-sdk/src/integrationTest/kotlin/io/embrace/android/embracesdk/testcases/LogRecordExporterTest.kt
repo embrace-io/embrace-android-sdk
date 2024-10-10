@@ -20,19 +20,17 @@ internal class LogRecordExporterTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `SDK can receive a LogRecordExporter`() {
         val fakeLogRecordExporter = FakeLogRecordExporter()
 
         testRule.runTest(
-            testCaseAction = {
+            preSdkStartAction = {
                 embrace.addLogRecordExporter(fakeLogRecordExporter)
-                startSdk()
-
+            },
+            testCaseAction = {
                 recordSession {
                     embrace.logMessage("test message", Severity.INFO)
                     sleep(3000)
@@ -51,7 +49,6 @@ internal class LogRecordExporterTest {
 
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 embrace.addLogRecordExporter(fakeLogRecordExporter)
 
                 recordSession {

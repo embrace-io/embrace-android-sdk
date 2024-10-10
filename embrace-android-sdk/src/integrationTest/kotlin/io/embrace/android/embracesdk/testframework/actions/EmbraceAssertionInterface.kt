@@ -99,7 +99,7 @@ internal class EmbraceAssertionInterface(
     ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int?, appState: ApplicationState
+        expectedSize: Int, appState: ApplicationState
     ): List<Envelope<SessionPayload>> {
         return retrievePayload(expectedSize) {
             deliveryService.sentSessionEnvelopes.map { it.first }

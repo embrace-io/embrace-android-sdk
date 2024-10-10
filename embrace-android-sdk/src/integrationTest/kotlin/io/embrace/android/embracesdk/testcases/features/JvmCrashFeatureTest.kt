@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -72,8 +73,10 @@ internal class JvmCrashFeatureTest {
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.appFramework = AppFramework.REACT_NATIVE
+            },
             testCaseAction = {
-                startSdk(appFramework = Embrace.AppFramework.REACT_NATIVE)
                 recordSession {
                     embrace.reactNativeInternalInterface?.logUnhandledJsException(
                         "name",

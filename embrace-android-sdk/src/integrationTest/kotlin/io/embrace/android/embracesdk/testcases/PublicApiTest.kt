@@ -3,10 +3,10 @@ package io.embrace.android.embracesdk.testcases
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace.LastRunEndState
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -32,7 +32,7 @@ internal class PublicApiTest {
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(startImmediately = false).apply {
+        EmbraceSetupInterface().apply {
             overriddenConfigService.networkSpanForwardingBehavior =
                 FakeNetworkSpanForwardingBehavior(true)
         }
@@ -41,9 +41,10 @@ internal class PublicApiTest {
     @Test
     fun `SDK can start`() {
         testRule.runTest(
-            testCaseAction = {
+            preSdkStartAction = {
                 assertFalse(embrace.isStarted)
-                startSdk()
+            },
+            testCaseAction = {
                 assertEquals(AppFramework.NATIVE, configService.appFramework)
                 assertFalse(configService.isSdkDisabled())
                 assertTrue(embrace.isStarted)
@@ -55,8 +56,6 @@ internal class PublicApiTest {
     fun `SDK start defaults to native app framework`() {
         testRule.runTest(
             testCaseAction = {
-                assertFalse(embrace.isStarted)
-                startSdk()
                 assertEquals(AppFramework.NATIVE, configService.appFramework)
                 assertTrue(embrace.isStarted)
             }
@@ -66,9 +65,10 @@ internal class PublicApiTest {
     @Test
     fun `SDK disabled via config cannot start`() {
         testRule.runTest(
+            setupAction = {
+                overriddenConfigService.sdkDisabled = true
+            },
             testCaseAction = {
-                configService.sdkDisabled = true
-                startSdk()
                 assertFalse(embrace.isStarted)
             }
         )
@@ -77,6 +77,7 @@ internal class PublicApiTest {
     @Test
     fun `custom appId must be valid`() {
         testRule.runTest(
+            startSdk = false,
             testCaseAction = {
                 assertFalse(embrace.setAppId(""))
                 assertFalse(embrace.setAppId("abcd"))
@@ -90,7 +91,6 @@ internal class PublicApiTest {
     fun `custom appId cannot be set after start`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 assertTrue(embrace.isStarted)
                 assertFalse(embrace.setAppId("xyz12"))
             }
@@ -100,6 +100,7 @@ internal class PublicApiTest {
     @Test
     fun `getCurrentSessionId returns null when SDK is not started`() {
         testRule.runTest(
+            startSdk = false,
             testCaseAction = {
                 assertNull(embrace.currentSessionId)
             }
@@ -110,7 +111,6 @@ internal class PublicApiTest {
     fun `getCurrentSessionId returns sessionId when SDK is started and foreground session is active`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     assertEquals(
                         embrace.currentSessionId,
@@ -128,7 +128,6 @@ internal class PublicApiTest {
         var backgroundSessionId: String? = null
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 recordSession {
                     foregroundSessionId = embrace.currentSessionId
                 }
@@ -144,9 +143,10 @@ internal class PublicApiTest {
     @Test
     fun `getLastRunEndState() behave as expected`() {
         testRule.runTest(
-            testCaseAction = {
+            preSdkStartAction = {
                 assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
-                startSdk()
+            },
+            testCaseAction = {
                 assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState)
             }
         )
@@ -156,7 +156,6 @@ internal class PublicApiTest {
     fun `ensure all generated W3C traceparent conforms to the expected format`() {
         testRule.runTest(
             testCaseAction = {
-                startSdk()
                 repeat(100) {
                     assertTrue(validPattern.matches(checkNotNull(embrace.generateW3cTraceparent())))
                 }

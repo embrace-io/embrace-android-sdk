@@ -8,7 +8,6 @@ import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.mockk.every
@@ -27,7 +26,7 @@ internal class AeiFeatureTest {
 
     @Rule
     @JvmField
-    val testRule = IntegrationTestRule { EmbraceSetupInterface(startImmediately = false) }
+    val testRule = IntegrationTestRule()
 
     @Test
     fun `application exit info feature`() {
@@ -36,7 +35,6 @@ internal class AeiFeatureTest {
                 setupFakeAeiData()
             },
             testCaseAction = {
-                startSdk(context = ApplicationProvider.getApplicationContext())
                 recordSession()
             },
             assertAction = {

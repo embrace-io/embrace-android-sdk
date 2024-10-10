@@ -31,15 +31,6 @@ internal class EmbraceActionInterface(
     val configService: FakeConfigService
         get() = setup.overriddenConfigService
 
-    @Suppress("DEPRECATION")
-    fun startSdk(
-        context: Context = setup.overriddenCoreModule.context,
-        appFramework: Embrace.AppFramework = setup.appFramework,
-        configServiceProvider: (framework: AppFramework) -> ConfigService = { setup.overriddenConfigService }
-    ) {
-        EmbraceHooks.start(context, appFramework, configServiceProvider)
-    }
-
     /**
      * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
      * parameter: any code inside the lambda will be executed, so can be used to add breadcrumbs,

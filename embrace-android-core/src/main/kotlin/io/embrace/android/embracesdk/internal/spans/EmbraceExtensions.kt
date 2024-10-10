@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttri
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isAttributeValid
+import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.AttributesBuilder
@@ -21,6 +22,17 @@ import io.opentelemetry.semconv.ExceptionAttributes
 
 internal fun LogRecordBuilder.setFixedAttribute(fixedAttribute: FixedAttribute): LogRecordBuilder {
     setAttribute(fixedAttribute.key.attributeKey, fixedAttribute.value)
+    return this
+}
+
+internal fun LogRecordBuilder.setAttribute(
+    attributeKey: AttributeKey<String>,
+    value: String,
+    keepBlankishValues: Boolean = true,
+): LogRecordBuilder {
+    if (keepBlankishValues || !value.isBlankish()) {
+        setAttribute(attributeKey, value)
+    }
     return this
 }
 

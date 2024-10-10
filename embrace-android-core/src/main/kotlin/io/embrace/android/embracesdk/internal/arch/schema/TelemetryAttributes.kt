@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.opentelemetry.api.common.AttributeKey
 
 /**
@@ -37,12 +38,14 @@ class TelemetryAttributes(
         return result
     }
 
-    fun setAttribute(key: EmbraceAttributeKey, value: String) {
-        setAttribute(key.attributeKey, value)
+    fun setAttribute(key: EmbraceAttributeKey, value: String, keepBlankishValues: Boolean = true) {
+        setAttribute(key.attributeKey, value, keepBlankishValues)
     }
 
-    fun setAttribute(key: AttributeKey<String>, value: String) {
-        map[key] = value
+    fun setAttribute(key: AttributeKey<String>, value: String, keepBlankishValues: Boolean = true) {
+        if (keepBlankishValues || !value.isBlankish()) {
+            map[key] = value
+        }
     }
 
     fun getAttribute(key: EmbraceAttributeKey): String? = map[key.attributeKey]

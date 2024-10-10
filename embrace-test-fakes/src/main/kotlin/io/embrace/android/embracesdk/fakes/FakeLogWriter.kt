@@ -8,7 +8,13 @@ class FakeLogWriter : LogWriter {
 
     val logEvents: MutableList<LogEventData> = mutableListOf()
 
-    override fun addLog(schemaType: SchemaType, severity: Severity, message: String, isPrivate: Boolean) {
+    override fun addLog(
+        schemaType: SchemaType,
+        severity: Severity,
+        message: String,
+        isPrivate: Boolean,
+        addCurrentSessionId: Boolean,
+    ) {
         logEvents.add(LogEventData(schemaType, severity, message))
     }
 }

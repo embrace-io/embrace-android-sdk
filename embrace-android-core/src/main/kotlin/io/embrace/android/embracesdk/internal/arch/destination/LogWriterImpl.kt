@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.FOREGROUND_STATE
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.spans.setAttribute
 import io.embrace.android.embracesdk.internal.spans.setFixedAttribute
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.api.common.AttributeKey
@@ -25,7 +26,8 @@ class LogWriterImpl(
         schemaType: SchemaType,
         severity: Severity,
         message: String,
-        isPrivate: Boolean
+        isPrivate: Boolean,
+        addCurrentSessionId: Boolean,
     ) {
         val builder = logger.logRecordBuilder()
             .setBody(message)
@@ -36,7 +38,9 @@ class LogWriterImpl(
 
         var sessionState: String? = null
         sessionIdTracker.getActiveSession()?.let { session ->
-            builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, session.id)
+            if (addCurrentSessionId) {
+                builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, session.id, false)
+            }
             sessionState = if (session.isForeground) {
                 FOREGROUND_STATE
             } else {

@@ -295,12 +295,13 @@ internal class ModuleInitBootstrapper(
                                 }
                             },
                             {
-                                if (configModule.configService.isOnlyUsingOtelExporters()) {
+                                val apiService = essentialServiceModule.apiService
+                                if (configModule.configService.isOnlyUsingOtelExporters() || apiService == null) {
                                     null
                                 } else {
                                     EmbraceDeliveryService(
                                         storageModule.deliveryCacheManager,
-                                        checkNotNull(essentialServiceModule.apiService),
+                                        apiService,
                                         initModule.jsonSerializer,
                                         initModule.logger
                                     )

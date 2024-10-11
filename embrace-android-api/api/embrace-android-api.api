@@ -238,7 +238,6 @@ public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/
 	public static final field POST Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static final field PUT Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static final field TRACE Lio/embrace/android/embracesdk/network/http/HttpMethod;
-	public static fun fromInt (Ljava/lang/Integer;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static fun fromString (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static fun values ()[Lio/embrace/android/embracesdk/network/http/HttpMethod;

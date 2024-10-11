@@ -57,7 +57,7 @@ internal class WorkerThreadModuleImpl(
 
             if (worker is Worker.Priority) {
                 val comparator = when (worker) {
-                    DataPersistenceWorker -> fileCacheWorkercomparator
+                    DataPersistenceWorker -> fileCacheWorkerComparator
                     NetworkRequestWorker -> apiRequestComparator
                 }
                 PriorityThreadPoolExecutor(
@@ -73,7 +73,7 @@ internal class WorkerThreadModuleImpl(
         }
     }
 
-    private val fileCacheWorkercomparator by lazy {
+    private val fileCacheWorkerComparator by lazy {
         when (configServiceProvider().autoDataCaptureBehavior.isV2StorageEnabled()) {
             true -> storedTelemetryRunnableComparator
             false -> taskPriorityComparator

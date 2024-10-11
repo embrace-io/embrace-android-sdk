@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.delivery
 
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.NETWORK
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.worker.PriorityRunnableFuture
 import io.mockk.mockk
@@ -16,7 +16,7 @@ class StoredTelemetryComparatorTest {
     private val session2 = StoredTelemetryMetadata(100, "session2", "pid", SESSION)
     private val session3 = StoredTelemetryMetadata(1000, "session3", "pid", SESSION)
     private val log = StoredTelemetryMetadata(1, "log", "pid", LOG)
-    private val network = StoredTelemetryMetadata(1, "network", "pid", NETWORK)
+    private val network = StoredTelemetryMetadata(1, "network", "pid", BLOB)
 
     @Test
     fun `sort values`() {

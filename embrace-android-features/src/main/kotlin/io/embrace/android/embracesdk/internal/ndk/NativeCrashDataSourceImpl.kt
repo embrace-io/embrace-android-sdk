@@ -47,16 +47,66 @@ internal class NativeCrashDataSourceImpl(
             configService = configService,
             sessionPropertiesProvider = sessionPropertiesService::getProperties
         )
-        crashAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, nativeCrash.sessionId)
-        crashAttributes.setAttribute(embCrashNumber, nativeCrashNumber.toString())
-        nativeCrash.crash?.let { crashAttributes.setAttribute(EmbType.System.NativeCrash.embNativeCrashException, it) }
-        val nativeErrorsJson = serializer.toJson(nativeCrash.errors, errorSerializerType)
-        crashAttributes.setAttribute(EmbType.System.NativeCrash.embNativeCrashErrors, nativeErrorsJson.toByteArray().toUTF8String())
-        val nativeSymbolsJson = serializer.toJson(nativeCrash.symbols, Map::class.java)
-        crashAttributes.setAttribute(EmbType.System.NativeCrash.embNativeCrashSymbols, nativeSymbolsJson)
-        crashAttributes.setAttribute(EmbType.System.NativeCrash.embNativeCrashUnwindError, nativeCrash.unwindError.toString())
+        crashAttributes.setAttribute(
+            key = SessionIncubatingAttributes.SESSION_ID,
+            value = nativeCrash.sessionId,
+            keepBlankishValues = false,
+        )
 
-        logWriter.addLog(SchemaType.NativeCrash(crashAttributes), Severity.ERROR.toOtelSeverity(), "")
+        crashAttributes.setAttribute(
+            key = embCrashNumber,
+            value = nativeCrashNumber.toString(),
+            keepBlankishValues = false,
+        )
+
+        nativeCrash.crash?.let { crashData ->
+            crashAttributes.setAttribute(
+                key = EmbType.System.NativeCrash.embNativeCrashException,
+                value = crashData,
+                keepBlankishValues = false,
+            )
+        }
+
+        if (!nativeCrash.errors.isNullOrEmpty()) {
+            runCatching {
+                serializer.toJson(nativeCrash.errors, errorSerializerType).let { nativeErrorsJson ->
+                    crashAttributes.setAttribute(
+                        key = EmbType.System.NativeCrash.embNativeCrashErrors,
+                        value = nativeErrorsJson.toByteArray().toUTF8String(),
+                        keepBlankishValues = false,
+                    )
+                }
+            }
+        }
+
+        if (!nativeCrash.symbols.isNullOrEmpty()) {
+            runCatching {
+                serializer.toJson(nativeCrash.symbols, Map::class.java).let { nativeSymbolsJson ->
+                    crashAttributes.setAttribute(
+                        EmbType.System.NativeCrash.embNativeCrashSymbols,
+                        nativeSymbolsJson,
+                        keepBlankishValues = false,
+                    )
+                }
+            }
+        }
+
+        if (nativeCrash.unwindError != null) {
+            runCatching {
+                crashAttributes.setAttribute(
+                    key = EmbType.System.NativeCrash.embNativeCrashUnwindError,
+                    value = nativeCrash.unwindError.toString(),
+                    keepBlankishValues = false,
+                )
+            }
+        }
+
+        logWriter.addLog(
+            schemaType = SchemaType.NativeCrash(crashAttributes),
+            severity = Severity.ERROR.toOtelSeverity(),
+            message = "",
+            addCurrentSessionId = false
+        )
     }
 
     override fun deleteAllNativeCrashes() {

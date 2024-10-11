@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
+import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.spans.getAttribute
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.opentelemetry.api.logs.Severity
@@ -118,6 +119,25 @@ internal class LogWriterImplTest {
     fun `use app state for background or foreground if no session exists`() {
         sessionIdTracker.sessionData = null
         processStateService.isInBackground = true
+        logWriterImpl.addLog(
+            schemaType = SchemaType.Log(
+                TelemetryAttributes(
+                    configService = FakeConfigService()
+                )
+            ),
+            severity = Severity.ERROR,
+            message = "test"
+        )
+
+        with(logger.builders.last()) {
+            assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            assertEquals("background", attributes.findAttributeValue(embState.attributeKey.key))
+        }
+    }
+
+    @Test
+    fun `no activity session will result in log written without sessionId`() {
+        sessionIdTracker.sessionData = SessionData("", false)
         logWriterImpl.addLog(
             schemaType = SchemaType.Log(
                 TelemetryAttributes(

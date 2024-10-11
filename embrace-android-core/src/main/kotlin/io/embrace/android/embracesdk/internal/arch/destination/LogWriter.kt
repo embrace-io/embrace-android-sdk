@@ -11,6 +11,7 @@ interface LogWriter {
         schemaType: SchemaType,
         severity: Severity,
         message: String,
-        isPrivate: Boolean = false
+        isPrivate: Boolean = false,
+        addCurrentSessionId: Boolean = true,
     )
 }

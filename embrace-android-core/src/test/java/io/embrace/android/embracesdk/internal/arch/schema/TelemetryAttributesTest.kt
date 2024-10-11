@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
+import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -154,5 +155,38 @@ internal class TelemetryAttributesTest {
 
         val attributes = telemetryAttributes.snapshot()
         assertEquals(4, attributes.size)
+    }
+
+    @Test
+    fun `blankish values skipped when directed to do so`() {
+        telemetryAttributes = TelemetryAttributes(
+            configService = configService,
+        )
+        val blankishValues = listOf("", " ", "null", "NULL")
+
+        // Give me Union types, plz
+        blankishValues.forEach { value ->
+            telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, value, true)
+            assertEquals(value, telemetryAttributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
+        }
+
+        telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, "test")
+
+        blankishValues.forEach { value ->
+            telemetryAttributes.setAttribute(SessionIncubatingAttributes.SESSION_ID, value, false)
+            assertEquals("test", telemetryAttributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
+        }
+
+        blankishValues.forEach { value ->
+            telemetryAttributes.setAttribute(embProcessIdentifier, value, true)
+            assertEquals(value, telemetryAttributes.getAttribute(embProcessIdentifier))
+        }
+
+        telemetryAttributes.setAttribute(embProcessIdentifier, "test")
+
+        blankishValues.forEach { value ->
+            telemetryAttributes.setAttribute(embProcessIdentifier, value, false)
+            assertEquals("test", telemetryAttributes.getAttribute(embProcessIdentifier))
+        }
     }
 }

@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -31,6 +32,7 @@ import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -99,6 +101,68 @@ internal class NativeCrashDataSourceImplTest {
                 attributes.getAttribute(embNativeCrashSymbols)
             )
             assertEquals(testNativeCrashData.unwindError.toString(), attributes.getAttribute(embNativeCrashUnwindError))
+        }
+    }
+
+    @Test
+    fun `native crash sent without attributes that are null`() {
+        fakeNdkService.addNativeCrashData(
+            NativeCrashData(
+                nativeCrashId = "nativeCrashId",
+                sessionId = "null",
+                timestamp = 1700000000000,
+                appState = null,
+                metadata = null,
+                unwindError = null,
+                crash = null,
+                symbols = null,
+                errors = null,
+                map = null
+            )
+        )
+        assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
+
+        with(otelLogger.builders.single()) {
+            assertEquals(1, emitCalled)
+            assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
+            assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
+            assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
+            assertEquals("1", attributes.getAttribute(embCrashNumber))
+            assertNull(attributes.getAttribute(embNativeCrashException))
+            assertNull(attributes.getAttribute(embNativeCrashErrors))
+            assertNull(attributes.getAttribute(embNativeCrashSymbols))
+            assertNull(attributes.getAttribute(embNativeCrashUnwindError))
+        }
+    }
+
+    @Test
+    fun `native crash sent without attributes that are blankish`() {
+        fakeNdkService.addNativeCrashData(
+            NativeCrashData(
+                nativeCrashId = "nativeCrashId",
+                sessionId = "",
+                timestamp = 1700000000000,
+                appState = "",
+                metadata = null,
+                unwindError = null,
+                crash = "",
+                symbols = emptyMap(),
+                errors = emptyList(),
+                map = ""
+            )
+        )
+        assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
+
+        with(otelLogger.builders.single()) {
+            assertEquals(1, emitCalled)
+            assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
+            assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
+            assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
+            assertEquals("1", attributes.getAttribute(embCrashNumber))
+            assertNull(attributes.getAttribute(embNativeCrashException))
+            assertNull(attributes.getAttribute(embNativeCrashErrors))
+            assertNull(attributes.getAttribute(embNativeCrashSymbols))
+            assertNull(attributes.getAttribute(embNativeCrashUnwindError))
         }
     }
 }

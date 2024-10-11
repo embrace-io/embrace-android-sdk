@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
@@ -291,7 +292,13 @@ internal class ModuleInitBootstrapper(
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {
                                     null
                                 } else {
-                                    RequestExecutionServiceImpl()
+                                    val appId = checkNotNull(configModule.configService.appId)
+                                    RequestExecutionServiceImpl(
+                                        configModule.configService.sdkEndpointBehavior.getData(appId),
+                                        lazy(androidServicesModule.preferencesService::deviceIdentifier),
+                                        appId,
+                                        BuildConfig.VERSION_NAME
+                                    )
                                 }
                             },
                             {

@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.spans.EmbraceSpanData
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceAssertionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
@@ -324,7 +324,7 @@ internal class TracingApiTest {
         )
     }
 
-    private fun EmbraceAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
+    private fun EmbracePayloadAssertionInterface.getSdkInitSpanFromBackgroundActivity(): List<Span> {
         val lastSentBackgroundActivity = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
         val spans = checkNotNull(lastSentBackgroundActivity.data.spans)
         return spans.filter { it.name == "emb-sdk-init" }

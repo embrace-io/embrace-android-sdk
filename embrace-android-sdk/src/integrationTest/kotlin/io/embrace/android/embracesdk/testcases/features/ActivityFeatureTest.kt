@@ -4,10 +4,13 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import io.embrace.android.embracesdk.testframework.export.ExportedSpanValidator
+import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +36,7 @@ internal class ActivityFeatureTest {
                 )
             },
             testCaseAction = {
-                recordSession() {
+                recordSession {
                     startTimeMs = clock.now()
                     simulateActivityLifecycle()
                 }
@@ -50,6 +53,10 @@ internal class ActivityFeatureTest {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 30000L, endTimeNanos?.nanosToMillis())
                 }
+            },
+            otelExportAssertion = {
+                val spans = awaitSpansWithType(EmbType.Ux.View, 1)
+                assertSpansMatchGoldenFile(spans, "ux-view-export.json")
             }
         )
     }

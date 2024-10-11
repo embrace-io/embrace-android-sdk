@@ -1,0 +1,18 @@
+[
+  {
+    "name": "emb-screen-view",
+    "kind": "INTERNAL",
+    "status": "UNSET",
+    "startEpochNanos": "169220160000000000",
+    "endEpochNanos": "169220190000000000",
+    "hasEnded": "true",
+    "totalAttributeCount": "4",
+    "attributes": {
+      "emb.type": "ux.view",
+      "view.name": "android.app.Activity"
+    },
+    "totalRecordedEvents": "0",
+    "events": [],
+    "instrumentationScopeName": "io.embrace.android.embracesdk.core"
+  }
+]

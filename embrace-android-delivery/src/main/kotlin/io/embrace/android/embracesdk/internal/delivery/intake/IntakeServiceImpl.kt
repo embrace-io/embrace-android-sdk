@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -8,6 +9,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import java.util.concurrent.Future
 
 class IntakeServiceImpl(
     private val schedulingService: SchedulingService,
@@ -19,13 +21,29 @@ class IntakeServiceImpl(
     private val shutdownTimeoutMs: Long = 3000
 ) : IntakeService {
 
+    private var lastCacheAttempt: Future<*>? = null
+    private var lastCacheType: SupportedEnvelopeType? = null
+
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
     }
 
     override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {
-        worker.submit(metadata) {
+        val future = worker.submit(metadata) {
             processIntake(intake, metadata)
+        }
+
+        // cancel any cache attempts that are already pending to avoid unnecessary I/O.
+        if (!metadata.complete) {
+            val prev = lastCacheAttempt
+            lastCacheAttempt = future
+
+            val lastType = lastCacheType
+            lastCacheType = metadata.envelopeType
+
+            if (lastType == metadata.envelopeType) {
+                prev?.cancel(false)
+            }
         }
     }
 

@@ -208,7 +208,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         if (useLegacyResurrection()) {
             bootstrapper
                 .workerThreadModule
-                .priorityWorker<TaskPriority>(Worker.Priority.DataPersistenceWorker)
+                .priorityWorker<TaskPriority>(Worker.Priority.DeliveryCacheWorker)
                 .submit(TaskPriority.NORMAL) {
                     if (useLegacyResurrection()) {
                         val essentialServiceModule = bootstrapper.essentialServiceModule

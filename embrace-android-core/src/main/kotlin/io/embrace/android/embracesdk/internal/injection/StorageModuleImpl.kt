@@ -44,7 +44,7 @@ internal class StorageModuleImpl(
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
         EmbraceDeliveryCacheManager(
             cacheService,
-            workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker),
+            workerThreadModule.priorityWorker(Worker.Priority.DeliveryCacheWorker),
             initModule.logger
         )
     }

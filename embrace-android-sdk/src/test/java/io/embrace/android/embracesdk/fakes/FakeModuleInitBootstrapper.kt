@@ -42,7 +42,7 @@ internal fun fakeModuleInitBootstrapper(
     coreModuleSupplier: CoreModuleSupplier = { _, _ -> FakeCoreModule() },
     systemServiceModuleSupplier: SystemServiceModuleSupplier = { _, _ -> FakeSystemServiceModule() },
     androidServicesModuleSupplier: AndroidServicesModuleSupplier = { _, _, _ -> FakeAndroidServicesModule() },
-    workerThreadModuleSupplier: WorkerThreadModuleSupplier = { _, _ -> FakeWorkerThreadModule() },
+    workerThreadModuleSupplier: WorkerThreadModuleSupplier = { _ -> FakeWorkerThreadModule() },
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
     essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
     configModuleSupplier: ConfigModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeConfigModule() },

@@ -42,5 +42,5 @@ interface PayloadStorageService {
     /**
      * Return cached payloads from previous app instances
      */
-    fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> = emptyList()
+    fun getUndeliveredPayloads(): List<StoredTelemetryMetadata>
 }

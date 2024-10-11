@@ -44,6 +44,8 @@ internal class DeliveryModuleImpl(
     },
 ) : DeliveryModule {
 
+    private val processIdProvider = { otelModule.openTelemetryConfiguration.processIdentifier }
+
     override val payloadStore: PayloadStore? by singleton {
         val configService = configModule.configService
         if (configService.isOnlyUsingOtelExporters()) {
@@ -52,9 +54,7 @@ internal class DeliveryModuleImpl(
             val deliveryService = deliveryService ?: return@singleton null
             val intakeService = intakeService ?: return@singleton null
             if (configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
-                V2PayloadStore(intakeService, initModule.clock, {
-                    otelModule.openTelemetryConfiguration.processIdentifier
-                })
+                V2PayloadStore(intakeService, initModule.clock, processIdProvider)
             } else {
                 val worker = workerThreadModule.backgroundWorker(Worker.Background.LogMessageWorker)
                 V1PayloadStore(worker, deliveryService)
@@ -116,8 +116,9 @@ internal class DeliveryModuleImpl(
             PayloadStorageServiceImpl(
                 coreModule.context,
                 dataPersistenceWorker,
+                processIdProvider,
                 PayloadStorageServiceImpl.OutputType.PAYLOAD,
-                initModule.logger
+                initModule.logger,
             )
         }
     }
@@ -129,8 +130,9 @@ internal class DeliveryModuleImpl(
             PayloadStorageServiceImpl(
                 coreModule.context,
                 dataPersistenceWorker,
+                processIdProvider,
                 PayloadStorageServiceImpl.OutputType.CACHE,
-                initModule.logger
+                initModule.logger,
             )
         }
     }

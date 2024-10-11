@@ -31,6 +31,7 @@ class PayloadStorageServiceImplTest {
     private lateinit var outputDir: File
     private lateinit var logger: FakeEmbLogger
     private lateinit var worker: PriorityWorker<StoredTelemetryMetadata>
+    private lateinit var currentProcessId: String
 
     @Before
     fun setUp() {
@@ -38,7 +39,8 @@ class PayloadStorageServiceImplTest {
         outputDir.deleteRecursively()
         worker = PriorityWorker(BlockableExecutorService(false))
         logger = FakeEmbLogger(false)
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, logger)
+        currentProcessId = PROCESS_ID
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger)
     }
 
     @Test
@@ -88,7 +90,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `test objects pruned past limit`() {
         assertNull(outputDir.listFiles())
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, logger, 4)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, 4)
 
         // exceed storage limit
         listOf(
@@ -121,5 +123,46 @@ class PayloadStorageServiceImplTest {
         assertEquals(expected, outputs)
         val msg = logger.internalErrorMessages.last().throwable?.message
         assertEquals("Pruned payload storage", msg)
+    }
+
+    @Test
+    fun `getUndeliveredPayloads only returns incomplete ones with a different process identifier than the current`() {
+        listOf("old_pid" to 100_000L, PROCESS_ID to 200_000L).forEach { appInstance ->
+            listOf(true, false).forEach { complete ->
+                listOf(CRASH, SESSION, LOG, NETWORK).forEach { type ->
+                    val metadata = StoredTelemetryMetadata(
+                        timestamp = appInstance.second,
+                        uuid = UUID,
+                        processId = appInstance.first,
+                        envelopeType = type,
+                        complete = complete,
+                    )
+                    service.store(metadata) { stream ->
+                        stream.write("test".toByteArray())
+                    }
+                }
+            }
+        }
+
+        with(service.getUndeliveredPayloads()) {
+            assertEquals(4, size)
+            assertEquals(0, filter { it.complete }.size)
+            assertEquals(0, filter { it.processId == PROCESS_ID }.size)
+            assertNotNull(singleOrNull { it.envelopeType == CRASH })
+            assertNotNull(singleOrNull { it.envelopeType == SESSION })
+            assertNotNull(singleOrNull { it.envelopeType == LOG })
+            assertNotNull(singleOrNull { it.envelopeType == NETWORK })
+        }
+    }
+
+    @Test
+    fun `incomplete payload becomes undelivered when process identifier changes`() {
+        service.store(metadata.copy(complete = false)) { stream ->
+            stream.write("test".toByteArray())
+        }
+
+        assertEquals(0, service.getUndeliveredPayloads().size)
+        currentProcessId = "new-pid"
+        assertEquals(1, service.getUndeliveredPayloads().size)
     }
 }

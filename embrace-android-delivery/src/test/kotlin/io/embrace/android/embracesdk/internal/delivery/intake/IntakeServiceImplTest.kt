@@ -7,9 +7,9 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.NETWORK
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -68,11 +68,11 @@ class IntakeServiceImplTest {
     private val clock = FakeClock()
     private val sessionMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, SESSION)
     private val logMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, LOG)
-    private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, NETWORK)
+    private val networkMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, BLOB)
     private val crashMetadata = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH)
     private val sessionMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, SESSION)
     private val logMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, LOG)
-    private val networkMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, NETWORK)
+    private val networkMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, BLOB)
     private val crashMetadata2 = StoredTelemetryMetadata(clock.apply { tick(100L) }.now(), UUID, PROCESS_ID, CRASH)
 
     @Before
@@ -247,7 +247,7 @@ class IntakeServiceImplTest {
             val metadata = StoredTelemetryMetadata.fromFilename(it).getOrThrow()
             metadata.envelopeType
         }
-        val expected = listOf(CRASH, CRASH, SESSION, SESSION, LOG, LOG, NETWORK, NETWORK)
+        val expected = listOf(CRASH, CRASH, SESSION, SESSION, LOG, LOG, BLOB, BLOB)
         assertEquals(expected, observedTypes)
     }
 }

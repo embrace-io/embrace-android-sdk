@@ -13,7 +13,7 @@ data class StoredTelemetryMetadata(
     val processId: String,
     val envelopeType: SupportedEnvelopeType,
     val complete: Boolean = true,
-    val filename: String = "${timestamp}_${envelopeType.description}_${uuid}_${processId}_${complete}_v1.json",
+    val filename: String = "${envelopeType.priority}_${timestamp}_${uuid}_${processId}_${complete}_v1.json",
 ) {
 
     companion object {
@@ -27,18 +27,18 @@ data class StoredTelemetryMetadata(
             if (parts.size != 6) {
                 return failure(IllegalArgumentException("Invalid filename: $filename"))
             }
-            val timestamp = parts[0].toLongOrNull() ?: return failure(
-                IllegalArgumentException("Invalid timestamp: $filename")
+            val envelopeType = SupportedEnvelopeType.fromPriority(parts[0]) ?: return failure(
+                IllegalArgumentException("Invalid priority: $filename")
             )
-            val type = SupportedEnvelopeType.fromDescription(parts[1]) ?: return failure(
-                IllegalArgumentException("Invalid type: $filename")
+            val timestamp = parts[1].toLongOrNull() ?: return failure(
+                IllegalArgumentException("Invalid timestamp: $filename")
             )
             val uuid = parts[2]
             val processId = parts[3]
             val complete = parts[4].toBooleanStrictOrNull() ?: return failure(
                 IllegalArgumentException("Invalid completeness state: $filename")
             )
-            return Result.success(StoredTelemetryMetadata(timestamp, uuid, processId, type, complete, filename))
+            return Result.success(StoredTelemetryMetadata(timestamp, uuid, processId, envelopeType, complete, filename))
         }
     }
 }

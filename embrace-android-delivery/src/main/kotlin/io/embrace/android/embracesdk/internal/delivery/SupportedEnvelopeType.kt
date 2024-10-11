@@ -9,22 +9,22 @@ import java.lang.reflect.Type
  */
 enum class SupportedEnvelopeType(
     val serializedType: Type,
-    val description: String,
+    val priority: String,
     val endpoint: Endpoint,
 ) {
 
-    CRASH(Envelope.logEnvelopeType, "crash", Endpoint.LOGS),
-    SESSION(Envelope.sessionEnvelopeType, "session", Endpoint.SESSIONS_V2),
-    LOG(Envelope.logEnvelopeType, "log", Endpoint.LOGS),
-    NETWORK(Envelope.logEnvelopeType, "network", Endpoint.LOGS);
+    CRASH(Envelope.logEnvelopeType, "p1", Endpoint.LOGS),
+    SESSION(Envelope.sessionEnvelopeType, "p3", Endpoint.SESSIONS_V2),
+    LOG(Envelope.logEnvelopeType, "p5", Endpoint.LOGS),
+    BLOB(Envelope.logEnvelopeType, "p7", Endpoint.LOGS);
 
     companion object {
         private val valueMap =
-            SupportedEnvelopeType.values().associateBy(SupportedEnvelopeType::description)
+            SupportedEnvelopeType.values().associateBy(SupportedEnvelopeType::priority)
 
         /**
-         * Returns the [SupportedEnvelopeType] that corresponds to the given description, if any.
+         * Returns the [SupportedEnvelopeType] that corresponds to the given priority, if any.
          */
-        fun fromDescription(description: String): SupportedEnvelopeType? = valueMap[description]
+        fun fromPriority(priority: String): SupportedEnvelopeType? = valueMap[priority]
     }
 }

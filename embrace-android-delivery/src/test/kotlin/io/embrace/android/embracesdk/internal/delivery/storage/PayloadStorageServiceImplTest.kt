@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.NETWORK
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -97,11 +97,11 @@ class PayloadStorageServiceImplTest {
             Pair(0L, CRASH),
             Pair(0L, SESSION),
             Pair(0L, LOG),
-            Pair(0L, NETWORK),
+            Pair(0L, BLOB),
             Pair(1000L, CRASH),
             Pair(1000L, SESSION),
             Pair(1000L, LOG),
-            Pair(1000L, NETWORK)
+            Pair(1000L, BLOB)
         ).forEach {
             val metadata = StoredTelemetryMetadata(it.first, UUID, PROCESS_ID, it.second)
             service.store(metadata) { stream ->
@@ -129,7 +129,7 @@ class PayloadStorageServiceImplTest {
     fun `getUndeliveredPayloads only returns incomplete ones with a different process identifier than the current`() {
         listOf("old_pid" to 100_000L, PROCESS_ID to 200_000L).forEach { appInstance ->
             listOf(true, false).forEach { complete ->
-                listOf(CRASH, SESSION, LOG, NETWORK).forEach { type ->
+                listOf(CRASH, SESSION, LOG, BLOB).forEach { type ->
                     val metadata = StoredTelemetryMetadata(
                         timestamp = appInstance.second,
                         uuid = UUID,
@@ -151,7 +151,7 @@ class PayloadStorageServiceImplTest {
             assertNotNull(singleOrNull { it.envelopeType == CRASH })
             assertNotNull(singleOrNull { it.envelopeType == SESSION })
             assertNotNull(singleOrNull { it.envelopeType == LOG })
-            assertNotNull(singleOrNull { it.envelopeType == NETWORK })
+            assertNotNull(singleOrNull { it.envelopeType == BLOB })
         }
     }
 

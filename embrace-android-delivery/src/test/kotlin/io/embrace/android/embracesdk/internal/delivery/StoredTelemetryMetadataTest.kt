@@ -13,18 +13,18 @@ class StoredTelemetryMetadataTest {
     }
 
     private val typeNameMap = mapOf(
-        SupportedEnvelopeType.CRASH to "crash",
-        SupportedEnvelopeType.SESSION to "session",
-        SupportedEnvelopeType.LOG to "log",
-        SupportedEnvelopeType.NETWORK to "network"
+        SupportedEnvelopeType.CRASH to "p1",
+        SupportedEnvelopeType.SESSION to "p3",
+        SupportedEnvelopeType.LOG to "p5",
+        SupportedEnvelopeType.BLOB to "p7"
     )
 
     @Test
     fun `construct objects`() {
-        typeNameMap.entries.forEach { (type, description) ->
+        typeNameMap.entries.forEach { (type, priority) ->
             listOf(true, false).forEach { payloadComplete ->
                 assertEquals(
-                    "${TIMESTAMP}_${description}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json",
+                    "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json",
                     StoredTelemetryMetadata(TIMESTAMP, UUID, PROCESS_ID, type, payloadComplete).filename
                 )
             }
@@ -38,9 +38,10 @@ class StoredTelemetryMetadataTest {
             "foo",
             "my_session.json",
             "1234567890_session_v1.json",
-            "a_b_c_v1.json",
-            "${TIMESTAMP}_b_c_v1.json",
-            "${TIMESTAMP}_session_c_v1.json"
+            "p4_${TIMESTAMP}_b_c_true_v1.json",
+            "p1_b_c_false_v1.json",
+            "p3_${TIMESTAMP}_b_c_d_v1.json",
+            "p3_${TIMESTAMP}_c_d_v1.json"
         )
         badFilenames.forEach { filename ->
             val result = StoredTelemetryMetadata.fromFilename(filename)
@@ -50,9 +51,9 @@ class StoredTelemetryMetadataTest {
 
     @Test
     fun `from valid filename`() {
-        typeNameMap.entries.forEach { (type, description) ->
+        typeNameMap.entries.forEach { (type, priority) ->
             listOf(true, false).forEach { payloadComplete ->
-                val input = "${TIMESTAMP}_${description}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json"
+                val input = "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json"
                 with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
                     assertEquals(input, filename)
                     assertEquals(TIMESTAMP, timestamp)

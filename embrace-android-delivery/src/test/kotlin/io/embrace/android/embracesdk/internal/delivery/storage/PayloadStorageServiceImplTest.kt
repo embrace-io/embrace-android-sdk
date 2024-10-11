@@ -148,6 +148,10 @@ class PayloadStorageServiceImplTest {
             assertEquals(4, size)
             assertEquals(0, filter { it.complete }.size)
             assertEquals(0, filter { it.processId == PROCESS_ID }.size)
+            assertNotNull(singleOrNull { it.envelopeType == CRASH })
+            assertNotNull(singleOrNull { it.envelopeType == SESSION })
+            assertNotNull(singleOrNull { it.envelopeType == LOG })
+            assertNotNull(singleOrNull { it.envelopeType == NETWORK })
         }
     }
 

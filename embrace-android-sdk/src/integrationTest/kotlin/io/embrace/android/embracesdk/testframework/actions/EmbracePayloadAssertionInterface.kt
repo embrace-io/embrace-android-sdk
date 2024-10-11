@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -17,11 +16,11 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
+import org.json.JSONObject
+import org.junit.Assert
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
-import org.json.JSONObject
-import org.junit.Assert
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -55,8 +54,19 @@ internal class EmbracePayloadAssertionInterface(
     private fun retrieveLogEnvelopes(
         expectedSize: Int
     ): List<Envelope<LogPayload>> {
-        return retrievePayload(expectedSize) {
-            requestExecutionService.getRequests<LogPayload>()
+        val supplier = { requestExecutionService.getRequests<LogPayload>() }
+        try {
+            return retrievePayload(expectedSize, supplier)
+        } catch (exc: TimeoutException) {
+            val envelopes: List<Map<String, String?>> = supplier().map { envelope ->
+                mapOf(
+                    "type" to envelope.type,
+                    "logCount" to envelope.data.logs?.size.toString(),
+                    "hashCodes" to envelope.data.logs?.map { it.hashCode() }?.joinToString { ", " }
+                )
+            }
+            throw IllegalStateException("Expected $expectedSize envelopes, but got ${envelopes.size}. " +
+                "Envelopes: $envelopes", exc)
         }
     }
 
@@ -144,7 +154,6 @@ internal class EmbracePayloadAssertionInterface(
             }
             throw IllegalStateException("Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions", exc)
         }
-
     }
 
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {

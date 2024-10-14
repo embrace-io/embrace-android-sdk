@@ -20,6 +20,7 @@ class FakePayloadStorageService(
     private val cachedPayloads = LinkedHashMap<StoredTelemetryMetadata, ByteArray>()
 
     val storeCount = AtomicInteger(0)
+    val deleteCount = AtomicInteger(0)
     var failStorage: Boolean = false
 
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
@@ -45,6 +46,7 @@ class FakePayloadStorageService(
 
     override fun delete(metadata: StoredTelemetryMetadata) {
         cachedPayloads.remove(metadata)
+        deleteCount.getAndIncrement()
     }
 
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> =

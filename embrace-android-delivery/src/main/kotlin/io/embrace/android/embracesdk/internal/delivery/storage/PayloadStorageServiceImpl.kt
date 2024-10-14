@@ -92,8 +92,9 @@ class PayloadStorageServiceImpl(
         }
 
         // move the complete file to its final location.
-        metadata.asFile().parentFile?.mkdirs()
-        if (tmpFile.renameTo(metadata.asFile())) {
+        val dst = metadata.asFile()
+        dst.parentFile?.mkdirs()
+        if (tmpFile.renameTo(dst)) {
             storedFiles.add(metadata)
         }
     }

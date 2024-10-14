@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -22,7 +21,7 @@ class IntakeServiceImpl(
 ) : IntakeService {
 
     private var lastCacheAttempt: Future<*>? = null
-    private var lastCacheType: SupportedEnvelopeType? = null
+    private var lastCacheRef: StoredTelemetryMetadata? = null
 
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
@@ -37,13 +36,7 @@ class IntakeServiceImpl(
         if (!metadata.complete) {
             val prev = lastCacheAttempt
             lastCacheAttempt = future
-
-            val lastType = lastCacheType
-            lastCacheType = metadata.envelopeType
-
-            if (lastType == metadata.envelopeType) {
-                prev?.cancel(false)
-            }
+            prev?.cancel(false)
         }
     }
 
@@ -59,8 +52,17 @@ class IntakeServiceImpl(
             service.store(metadata) { stream ->
                 serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
             }
+            val last = lastCacheRef
+
             if (metadata.complete) {
                 schedulingService.onPayloadIntake()
+            } else {
+                lastCacheRef = metadata
+            }
+
+            // delete any old cache attempts
+            if (last != null) {
+                cacheStorageService.delete(last)
             }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.INTAKE_FAIL, exc)

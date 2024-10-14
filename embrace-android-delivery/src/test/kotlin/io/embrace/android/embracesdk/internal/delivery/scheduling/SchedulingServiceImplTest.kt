@@ -44,7 +44,7 @@ internal class SchedulingServiceImplTest {
             addFakePayload(fakeLogStoredTelemetryMetadata)
             addFakePayload(fakeSessionStoredTelemetryMetadata)
         }
-        executionService = FakeRequestExecutionService()
+        executionService = FakeRequestExecutionService(strictMode = false)
         logger = FakeEmbLogger()
         allSendsSucceed()
         schedulingService = SchedulingServiceImpl(

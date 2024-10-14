@@ -287,6 +287,7 @@ internal class ModuleInitBootstrapper(
                             coreModule,
                             storageModule,
                             essentialServiceModule,
+                            { null },
                             {
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {
                                     null

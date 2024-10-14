@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBeh
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 
 /**
@@ -47,7 +49,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModule = overriddenCoreModule,
         workerThreadModule = overriddenWorkerThreadModule
     ),
-    val fakeAnrModule: AnrModule = FakeAnrModule()
+    val fakeAnrModule: AnrModule = FakeAnrModule(),
+    var cacheStorageServiceProvider: Provider<PayloadStorageService?> = { null },
 ) {
     fun createBootstrapper(): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule,
@@ -55,7 +58,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
         workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _ ->
+        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, _ ->
             createDeliveryModule(
                 configModule,
                 otelModule,
@@ -64,6 +67,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 coreModule,
                 storageModule,
                 essentialServiceModule,
+                cacheStorageServiceProvider = cacheStorageServiceProvider,
                 requestExecutionServiceProvider = { FakeRequestExecutionService() },
                 deliveryServiceProvider = { FakeDeliveryService() }
             )

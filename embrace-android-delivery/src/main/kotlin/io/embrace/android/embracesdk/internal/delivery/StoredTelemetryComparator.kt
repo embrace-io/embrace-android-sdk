@@ -20,7 +20,7 @@ val storedTelemetryRunnableComparator =
         return@Comparator storedTelemetryComparator.compare(lhsPrio, rhsPrio)
     }
 
-internal val storedTelemetryComparator: java.util.Comparator<StoredTelemetryMetadata> =
+val storedTelemetryComparator: java.util.Comparator<StoredTelemetryMetadata> =
     compareBy(StoredTelemetryMetadata::envelopeType)
         .thenBy(StoredTelemetryMetadata::timestamp)
         .thenBy(StoredTelemetryMetadata::uuid)

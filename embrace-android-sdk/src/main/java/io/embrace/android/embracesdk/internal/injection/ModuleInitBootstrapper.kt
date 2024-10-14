@@ -132,7 +132,7 @@ internal class ModuleInitBootstrapper(
 
                     val serviceRegistry = coreModule.serviceRegistry
                     workerThreadModule = init(WorkerThreadModule::class) {
-                        workerThreadModuleSupplier(initModule) { configModule.configService }
+                        workerThreadModuleSupplier(initModule)
                     }
 
                     postInit(OpenTelemetryModule::class) {

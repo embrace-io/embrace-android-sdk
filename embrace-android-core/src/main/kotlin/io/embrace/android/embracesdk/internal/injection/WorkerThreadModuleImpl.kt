@@ -1,13 +1,12 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DataPersistenceWorker
+import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DeliveryCacheWorker
 import io.embrace.android.embracesdk.internal.worker.Worker.Priority.NetworkRequestWorker
 import io.embrace.android.embracesdk.internal.worker.comparator.apiRequestComparator
 import io.embrace.android.embracesdk.internal.worker.comparator.taskPriorityComparator
@@ -24,8 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
 internal class WorkerThreadModuleImpl(
-    initModule: InitModule,
-    private val configServiceProvider: Provider<ConfigService>
+    initModule: InitModule
 ) : WorkerThreadModule, RejectedExecutionHandler {
 
     private val logger = initModule.logger
@@ -57,7 +55,8 @@ internal class WorkerThreadModuleImpl(
 
             if (worker is Worker.Priority) {
                 val comparator = when (worker) {
-                    DataPersistenceWorker -> fileCacheWorkerComparator
+                    DataPersistenceWorker -> storedTelemetryRunnableComparator
+                    DeliveryCacheWorker -> taskPriorityComparator
                     NetworkRequestWorker -> apiRequestComparator
                 }
                 PriorityThreadPoolExecutor(
@@ -70,13 +69,6 @@ internal class WorkerThreadModuleImpl(
             } else {
                 ScheduledThreadPoolExecutor(1, threadFactory, this)
             }
-        }
-    }
-
-    private val fileCacheWorkerComparator by lazy {
-        when (configServiceProvider().autoDataCaptureBehavior.isV2StorageEnabled()) {
-            true -> storedTelemetryRunnableComparator
-            false -> taskPriorityComparator
         }
     }
 

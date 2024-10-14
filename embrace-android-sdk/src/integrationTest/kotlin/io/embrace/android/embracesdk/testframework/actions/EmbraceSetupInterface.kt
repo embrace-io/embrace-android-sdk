@@ -41,7 +41,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     ),
     val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(
         overriddenInitModule
-    ) { overriddenConfigService },
+    ),
     val overriddenAndroidServicesModule: AndroidServicesModule = createAndroidServicesModule(
         initModule = overriddenInitModule,
         coreModule = overriddenCoreModule,
@@ -53,7 +53,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         initModule = overriddenInitModule,
         openTelemetryModule = overriddenInitModule.openTelemetryModule,
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
-        workerThreadModuleSupplier = { _, _ -> overriddenWorkerThreadModule },
+        workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
         deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _ ->
             createDeliveryModule(

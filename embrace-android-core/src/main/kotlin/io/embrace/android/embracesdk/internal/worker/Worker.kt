@@ -16,6 +16,11 @@ sealed class Worker(internal val threadName: String) {
         object DataPersistenceWorker : Priority("data-persistence")
 
         /**
+         * Delivery cache worker for v1 delivery
+         */
+        object DeliveryCacheWorker : Priority("delivery-cache")
+
+        /**
          * All HTTP requests are performed on this executor.
          */
         object NetworkRequestWorker : Priority("network-request")

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -13,7 +12,7 @@ class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
     private val testWorkerName: Worker? = null,
     private val anotherTestWorkerName: Worker? = null,
-    private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule, ::FakeConfigService)
+    private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule)
 ) : WorkerThreadModule by base {
 
     val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()

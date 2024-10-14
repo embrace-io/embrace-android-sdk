@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.atomic.AtomicReference
 
@@ -12,7 +13,8 @@ class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
     private val testWorkerName: Worker? = null,
     private val anotherTestWorkerName: Worker? = null,
-    private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule)
+    private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule),
+    private val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*>? = { null }
 ) : WorkerThreadModule by base {
 
     val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()
@@ -21,6 +23,12 @@ class FakeWorkerThreadModule(
 
     private val backgroundWorker = BackgroundWorker(executor)
     private val anotherBackgroundWorker = BackgroundWorker(anotherExecutor)
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> {
+        val override = priorityWorkerSupplier(worker) as PriorityWorker<T>?
+        return override ?: base.priorityWorker(worker)
+    }
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
         return when (worker) {

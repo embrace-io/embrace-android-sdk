@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -15,6 +16,7 @@ typealias DeliveryModuleSupplier = (
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    cacheStorageServiceProvider: Provider<PayloadStorageService?>,
     requestExecutionServiceProvider: Provider<RequestExecutionService?>,
     deliveryServiceProvider: Provider<DeliveryService?>
 ) -> DeliveryModule
@@ -27,6 +29,7 @@ fun createDeliveryModule(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    cacheStorageServiceProvider: Provider<PayloadStorageService?>,
     requestExecutionServiceProvider: Provider<RequestExecutionService?>,
     deliveryServiceProvider: Provider<DeliveryService?>
 ): DeliveryModule = DeliveryModuleImpl(
@@ -38,5 +41,6 @@ fun createDeliveryModule(
     storageModule,
     essentialServiceModule,
     requestExecutionServiceProvider,
+    cacheStorageServiceProvider,
     deliveryServiceProvider
 )

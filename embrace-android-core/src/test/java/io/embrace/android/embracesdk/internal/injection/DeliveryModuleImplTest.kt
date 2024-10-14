@@ -40,6 +40,7 @@ class DeliveryModuleImplTest {
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             ::FakeRequestExecutionService,
+            { null },
             ::FakeDeliveryService
         )
     }

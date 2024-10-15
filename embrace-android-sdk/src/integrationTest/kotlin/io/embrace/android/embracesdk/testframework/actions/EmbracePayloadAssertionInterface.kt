@@ -156,6 +156,31 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
+    /**
+     * Returns a list of sessions that were completed by the SDK.
+     */
+    internal fun getSessionEnvelopesV1(
+        expectedSize: Int,
+        state: ApplicationState = ApplicationState.FOREGROUND
+    ): List<Envelope<SessionPayload>> {
+        return retrieveSessionEnvelopesV1(expectedSize, state)
+    }
+
+    private fun retrieveSessionEnvelopesV1(
+        expectedSize: Int, appState: ApplicationState
+    ): List<Envelope<SessionPayload>> {
+        val supplier = {
+            deliveryService.sentSessionEnvelopes.map { it.first }
+                .filter { it.findAppState() == appState }
+        }
+        try {
+            return retrievePayload(expectedSize, supplier)
+        } catch (exc: TimeoutException) {
+            val sessions = supplier()
+            throw IllegalStateException("Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions", exc)
+        }
+    }
+
     private fun Envelope<SessionPayload>.findAppState(): ApplicationState {
         val attrs = findSessionSpan().attributes
         val state = checkNotNull(attrs?.findAttributeValue(embState.name)) {

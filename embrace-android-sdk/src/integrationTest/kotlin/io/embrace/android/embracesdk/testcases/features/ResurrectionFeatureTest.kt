@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertNotNull
@@ -26,7 +27,7 @@ internal class ResurrectionFeatureTest {
                 recordSession()
             },
             assertAction = {
-                assertNotNull(getSingleSessionEnvelope())
+                assertNotNull(getSessionEnvelopesV1(1).single())
             }
         )
     }

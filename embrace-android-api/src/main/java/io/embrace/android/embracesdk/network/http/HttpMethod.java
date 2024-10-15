@@ -50,4 +50,28 @@ public enum HttpMethod {
                 return null;
         }
     }
+
+    /**
+     * Given the int representation of the HTTP request method, returns the corresponding HttpMethod enum.
+     */
+    public static HttpMethod fromInt(Integer method) {
+        if (method == null) {
+            return null;
+        }
+
+        switch (method) {
+            case 1:
+                return HttpMethod.GET;
+            case 2:
+                return HttpMethod.POST;
+            case 3:
+                return HttpMethod.PUT;
+            case 4:
+                return HttpMethod.DELETE;
+            case 5:
+                return HttpMethod.PATCH;
+            default:
+                return null;
+        }
+    }
 }

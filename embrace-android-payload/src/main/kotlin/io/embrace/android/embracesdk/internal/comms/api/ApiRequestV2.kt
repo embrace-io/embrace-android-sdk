@@ -25,4 +25,20 @@ data class ApiRequestV2(
     val url: String,
 
     val eTag: String? = null,
-)
+) {
+    fun getHeaders(): Map<String, String> {
+        val headers = mutableMapOf(
+            "Accept" to accept,
+            "User-Agent" to userAgent,
+            "Content-Type" to contentType
+        )
+        contentEncoding?.let { headers["Content-Encoding"] = it }
+        acceptEncoding?.let { headers["Accept-Encoding"] = it }
+        appId?.let { headers["X-EM-AID"] = it }
+        deviceId?.let { headers["X-EM-DID"] = it }
+        eventId?.let { headers["X-EM-SID"] = it }
+        logId?.let { headers["X-EM-LID"] = it }
+        eTag?.let { headers["If-None-Match"] = it }
+        return headers
+    }
+}

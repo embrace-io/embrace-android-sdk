@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.execution.EmbraceOkHttpClient
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionServiceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -297,7 +298,8 @@ internal class ModuleInitBootstrapper(
                                         configModule.configService.sdkEndpointBehavior.getData(appId),
                                         lazy(androidServicesModule.preferencesService::deviceIdentifier),
                                         appId,
-                                        BuildConfig.VERSION_NAME
+                                        BuildConfig.VERSION_NAME,
+                                        EmbraceOkHttpClient()
                                     )
                                 }
                             },

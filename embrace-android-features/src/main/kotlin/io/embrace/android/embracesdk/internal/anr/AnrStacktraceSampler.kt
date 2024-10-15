@@ -52,12 +52,13 @@ internal class AnrStacktraceSampler(
     override fun onThreadUnblocked(thread: Thread, timestamp: Long) {
         // Finalize AnrInterval
         val responseMs = lastUnblockedMs
+        val sanitizedSamples = samples.filter { it.timestamp in responseMs..timestamp }
         val anrInterval = AnrInterval(
             responseMs,
             null,
             timestamp,
             AnrInterval.Type.UI,
-            AnrSampleList(samples.toList())
+            AnrSampleList(sanitizedSamples)
         )
 
         synchronized(anrIntervals) {

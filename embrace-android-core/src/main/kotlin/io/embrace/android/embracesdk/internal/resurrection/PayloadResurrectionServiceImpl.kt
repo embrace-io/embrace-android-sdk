@@ -29,7 +29,7 @@ import kotlin.math.max
 
 internal class PayloadResurrectionServiceImpl(
     private val intakeService: IntakeService,
-    private val payloadStorageService: PayloadStorageService,
+    private val cacheStorageService: PayloadStorageService,
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
 ) : PayloadResurrectionService {
@@ -45,7 +45,7 @@ internal class PayloadResurrectionServiceImpl(
                 }
             } ?: emptyMap()
 
-        payloadStorageService
+        cacheStorageService
             .getUndeliveredPayloads()
             .forEach { deadSessionMetadata ->
                 deadSessionMetadata.sendResurrectedPayload(nativeCrashes::get)
@@ -62,7 +62,7 @@ internal class PayloadResurrectionServiceImpl(
             val resurrectedPayload = when (envelopeType) {
                 SupportedEnvelopeType.SESSION -> {
                     val deadSession = serializer.fromJson<Envelope<SessionPayload>>(
-                        inputStream = GZIPInputStream(payloadStorageService.loadPayloadAsStream(this)),
+                        inputStream = GZIPInputStream(cacheStorageService.loadPayloadAsStream(this)),
                         type = envelopeType.serializedType
                     )
 
@@ -82,13 +82,13 @@ internal class PayloadResurrectionServiceImpl(
             if (resurrectedPayload != null) {
                 intakeService.take(
                     intake = resurrectedPayload,
-                    metadata = this
+                    metadata = copy(complete = true)
                 )
             }
         }
 
         if (result.isSuccess) {
-            payloadStorageService.delete(this)
+            cacheStorageService.delete(this)
         } else {
             val exception = IllegalStateException(
                 "Resurrecting and sending incomplete payloads from previous app launches failed.",

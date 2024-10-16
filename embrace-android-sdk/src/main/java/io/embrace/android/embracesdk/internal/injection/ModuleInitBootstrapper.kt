@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.delivery.execution.OkHttpRequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.execution.HttpUrlConnectionRequestExecutionService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
@@ -293,7 +293,7 @@ internal class ModuleInitBootstrapper(
                                     null
                                 } else {
                                     val appId = checkNotNull(configModule.configService.appId)
-                                    OkHttpRequestExecutionService(
+                                    HttpUrlConnectionRequestExecutionService(
                                         configModule.configService.sdkEndpointBehavior.getData(appId),
                                         lazy(androidServicesModule.preferencesService::deviceIdentifier),
                                         appId,

@@ -14,9 +14,11 @@ import okio.buffer
 import okio.source
 import java.io.InputStream
 import java.net.HttpURLConnection
+import java.util.concurrent.TimeUnit
 
 private const val NO_HTTP_RESPONSE = -1
 private const val TOO_MANY_REQUESTS = 429
+private const val DEFAULT_TIMEOUT_SECONDS = 60L
 
 class OkHttpRequestExecutionService(
     private val coreBaseUrl: String,
@@ -27,6 +29,8 @@ class OkHttpRequestExecutionService(
 
     private val okHttpClient = OkHttpClient()
         .newBuilder()
+        .connectTimeout(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
         .build()
 

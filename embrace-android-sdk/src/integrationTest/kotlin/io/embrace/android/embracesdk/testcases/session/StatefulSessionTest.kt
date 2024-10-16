@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType
@@ -31,6 +32,10 @@ internal class StatefulSessionTest {
     @Test
     fun `session messages are recorded`() {
         testRule.runTest(
+            setupAction = {
+                useMockWebServer = true
+                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = true)
+            },
             testCaseAction = {
                 recordSession {
                     embrace.addBreadcrumb("Hello, World!")
@@ -41,7 +46,7 @@ internal class StatefulSessionTest {
             },
             assertAction = {
                 // verify first session
-                val messages = getSessionEnvelopes(2)
+                val messages = getSessionEnvelopesFromMockServer(2)
                 val first = messages[0]
                 first.findSessionSpan().attributes?.assertMatches {
                     embSessionStartType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH)

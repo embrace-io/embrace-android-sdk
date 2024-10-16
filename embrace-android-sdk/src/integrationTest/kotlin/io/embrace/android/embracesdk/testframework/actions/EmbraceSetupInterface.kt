@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
  */
 internal class EmbraceSetupInterface @JvmOverloads constructor(
     currentTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
-    var useMockWebServer: Boolean = false,
+    var useMockWebServer: Boolean = true,
     @Suppress("DEPRECATION") val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
     val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock, logger = FakeEmbLogger()),

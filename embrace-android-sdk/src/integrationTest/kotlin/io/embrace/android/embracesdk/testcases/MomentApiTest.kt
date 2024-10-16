@@ -28,6 +28,9 @@ internal class MomentApiTest {
         var startTime: Long = -1
 
         testRule.runTest(
+            setupAction = {
+                useMockWebServer = false
+            },
             testCaseAction = {
                 // Send start moment
                 startTime = clock.now()

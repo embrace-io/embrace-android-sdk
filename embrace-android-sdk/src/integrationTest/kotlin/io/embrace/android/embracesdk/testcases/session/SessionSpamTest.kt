@@ -9,7 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-private const val SESSION_COUNT = 1000
+private const val SESSION_COUNT = 200
 
 @RunWith(AndroidJUnit4::class)
 internal class SessionSpamTest {

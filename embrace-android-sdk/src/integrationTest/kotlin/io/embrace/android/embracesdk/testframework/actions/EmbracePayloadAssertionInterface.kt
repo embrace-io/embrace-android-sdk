@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException
  */
 internal class EmbracePayloadAssertionInterface(
     bootstrapper: ModuleInitBootstrapper,
-    private val apiServer: FakeApiServer,
+    private val apiServer: FakeApiServer?,
 ) {
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
@@ -60,14 +60,14 @@ internal class EmbracePayloadAssertionInterface(
         expectedSize: Int
     ): List<Envelope<LogPayload>> {
         return retrievePayload(expectedSize) {
-            apiServer.getLogEnvelopes()
+            checkNotNull(apiServer).getLogEnvelopes()
         }
     }
 
     private fun retrieveLogEnvelopes(
         expectedSize: Int
     ): List<Envelope<LogPayload>> {
-        val supplier = { requestExecutionService.getRequests<LogPayload>() }
+        val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
             return retrievePayload(expectedSize, supplier)
         } catch (exc: TimeoutException) {
@@ -138,7 +138,7 @@ internal class EmbracePayloadAssertionInterface(
         state: ApplicationState = ApplicationState.FOREGROUND,
     ): List<Envelope<SessionPayload>> {
         return retrievePayload(expectedSize) {
-            apiServer.getSessionEnvelopes().filter { it.findAppState() == state }
+            checkNotNull(apiServer).getSessionEnvelopes().filter { it.findAppState() == state }
         }
     }
 
@@ -163,7 +163,7 @@ internal class EmbracePayloadAssertionInterface(
         expectedSize: Int, appState: ApplicationState,
     ): List<Envelope<SessionPayload>> {
         val supplier = {
-            requestExecutionService.getRequests<SessionPayload>()
+            checkNotNull(apiServer).getSessionEnvelopes()
                 .filter { it.findAppState() == appState }
         }
         try {

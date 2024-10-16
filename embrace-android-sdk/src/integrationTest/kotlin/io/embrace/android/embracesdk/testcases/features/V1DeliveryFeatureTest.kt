@@ -36,6 +36,7 @@ internal class V1DeliveryFeatureTest {
     fun `v1 session delivery`() {
         testRule.runTest(
             setupAction = {
+                useMockWebServer = false
                 overriddenConfigService.autoDataCaptureBehavior = behavior
             },
             testCaseAction = {
@@ -54,6 +55,7 @@ internal class V1DeliveryFeatureTest {
     fun `v1 background activity delivery`() {
         testRule.runTest(
             setupAction = {
+                useMockWebServer = false
                 overriddenConfigService.autoDataCaptureBehavior = behavior
             },
             testCaseAction = {
@@ -71,6 +73,7 @@ internal class V1DeliveryFeatureTest {
     fun `v1 crash delivery`() {
         testRule.runTest(
             setupAction = {
+                useMockWebServer = false
                 overriddenConfigService.autoDataCaptureBehavior = behavior
             },
             testCaseAction = {
@@ -89,6 +92,7 @@ internal class V1DeliveryFeatureTest {
     fun `v1 log delivery`() {
         testRule.runTest(
             setupAction = {
+                useMockWebServer = false
                 overriddenConfigService.autoDataCaptureBehavior = behavior
                 setupFakeAeiData()
             },

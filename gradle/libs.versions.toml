@@ -1,6 +1,6 @@
 [versions]
 
-detektGradlePlugin = "1.23.6"
+detektGradlePlugin = "1.23.7"
 junit = "4.13.2"
 kotlinExposed = "1.8.22"
 dokka = "1.9.20"
@@ -15,6 +15,7 @@ profileinstaller = "1.3.1"
 okhttp = "4.12.0"
 firebase = "23.1.0"
 compose = "1.0.5"
+robolectric = "4.12.1"
 
 [libraries]
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detektGradlePlugin" }
@@ -43,5 +44,6 @@ okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhtt
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebase" }
 compose = { group = "androidx.compose.ui", name = "ui", version.ref = "compose" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 
 [plugins]

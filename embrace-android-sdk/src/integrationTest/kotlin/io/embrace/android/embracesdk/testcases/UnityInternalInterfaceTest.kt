@@ -32,7 +32,6 @@ internal class UnityInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession()
-
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()

@@ -50,7 +50,7 @@ internal class PeriodicSessionCacheTest {
             testWorkerName = PeriodicCacheWorker,
             priorityWorkerSupplier = { worker ->
                 when (worker) {
-                    Worker.Priority.DeliveryCacheWorker -> PriorityWorker<StoredTelemetryMetadata>(executor)
+                    Worker.Priority.DataPersistenceWorker -> PriorityWorker<StoredTelemetryMetadata>(executor)
                     else -> null
                 }
             }
@@ -64,19 +64,25 @@ internal class PeriodicSessionCacheTest {
 
     @Test
     fun `session is periodically cached`() {
+        var snapshot: Envelope<SessionPayload>? = null
         testRule.runTest(
             setupAction = {
                 cacheStorageServiceProvider = ::FakeCacheStorageService
             },
             testCaseAction = {
+                val cacheStorageService = getCacheStorageService()
+
                 recordSession {
+                    assertEquals(0, cacheStorageService.storedPayloads.size)
                     embrace.addSessionProperty("Test", "Test", true)
                     allowPeriodicCacheExecution()
+                    assertEquals(1, cacheStorageService.storedPayloads.size)
+                    snapshot = loadSnapshot(cacheStorageService)
                 }
                 allowPeriodicCacheExecution()
             },
             assertAction = {
-                val endMessage = getCachedSessionEnvelopes(2).first()
+                val endMessage = checkNotNull(snapshot)
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertNotNull(span.getSessionProperty("Test"))
                 span.attributes?.assertMatches {

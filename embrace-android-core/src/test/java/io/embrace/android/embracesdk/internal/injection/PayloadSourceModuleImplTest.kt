@@ -47,11 +47,11 @@ internal class PayloadSourceModuleImplTest {
         assertNotNull(module.sessionEnvelopeSource)
         assertNotNull(module.logEnvelopeSource)
         assertTrue(module.deviceArchitecture is DeviceArchitectureImpl)
-        assertNull(module.payloadResurrectionService)
+        assertNotNull(module.payloadResurrectionService)
     }
 
     @Test
-    fun `payload resurrection service is created when v2 delivery layer is on`() {
+    fun `payload resurrection service is created when v2 delivery layer is off`() {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
@@ -63,7 +63,7 @@ internal class PayloadSourceModuleImplTest {
             FakeConfigModule(
                 configService = FakeConfigService(
                     autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                        v2StorageEnabled = true
+                        v2StorageEnabled = false
                     )
                 )
             ),
@@ -73,6 +73,6 @@ internal class PayloadSourceModuleImplTest {
             ::FakeOtelPayloadMapper,
             FakeDeliveryModule(),
         )
-        assertNotNull(module.payloadResurrectionService)
+        assertNull(module.payloadResurrectionService)
     }
 }

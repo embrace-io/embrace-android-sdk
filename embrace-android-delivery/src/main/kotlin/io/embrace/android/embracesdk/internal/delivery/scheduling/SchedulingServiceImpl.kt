@@ -33,6 +33,8 @@ class SchedulingServiceImpl(
     private val sendLoopActive = AtomicBoolean(false)
     private val queryForPayloads = AtomicBoolean(true)
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
+    private val completedSendsSinceQueueDrain: MutableSet<StoredTelemetryMetadata> =
+        Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
 
     override fun onPayloadIntake() {
@@ -80,6 +82,7 @@ class SchedulingServiceImpl(
 
                 if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
                     deliveryQueue = createPayloadQueue()
+                    completedSendsSinceQueueDrain.clear()
                 }
             }
         } catch (t: Throwable) {
@@ -136,6 +139,7 @@ class SchedulingServiceImpl(
                     )
                 }
             }
+            completedSendsSinceQueueDrain.add(payload)
             activeSends.remove(payload)
             response
         }
@@ -162,7 +166,7 @@ class SchedulingServiceImpl(
     private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {
         // determine if the given payload is eligible to be sent
         // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried
-        return if (activeSends.contains(this)) {
+        return if (activeSends.contains(this) || completedSendsSinceQueueDrain.contains(this)) {
             false
         } else if (isEndpointBlocked()) {
             false
@@ -190,11 +194,13 @@ class SchedulingServiceImpl(
 
     private fun calculateDelay(nextRetryTimeMs: Long): Long = nextRetryTimeMs - clock.now()
 
-    private fun calculateNextRetryTime(retryAttempts: Int): Long = clock.now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))
+    private fun calculateNextRetryTime(
+        retryAttempts: Int,
+    ): Long = clock.now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))
 
     private data class RetryInstance(
         val failedAttempts: Int,
-        val nextRetryTimeMs: Long
+        val nextRetryTimeMs: Long,
     )
 
     companion object {

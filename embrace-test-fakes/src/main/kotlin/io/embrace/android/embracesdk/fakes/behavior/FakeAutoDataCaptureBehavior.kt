@@ -13,7 +13,7 @@ class FakeAutoDataCaptureBehavior(
     private val sigHandlerDetectionEnabled: Boolean = true,
     private val ndkEnabled: Boolean = false,
     private val diskUsageReportingEnabled: Boolean = true,
-    private val v2StorageEnabled: Boolean = false
+    private val v2StorageEnabled: Boolean = true
 ) : AutoDataCaptureBehavior {
 
     override fun isMemoryWarningCaptureEnabled(): Boolean = memoryServiceEnabled

@@ -46,7 +46,7 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                getSingleLogEnvelope(false).getLastLog().assertCrash(
+                getSingleLogEnvelope().getLastLog().assertCrash(
                     state = "foreground",
                     crashId = session.getCrashedId()
                 )
@@ -62,7 +62,7 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 val ba = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
-                getSingleLogEnvelope(false).getLastLog().assertCrash(
+                getSingleLogEnvelope().getLastLog().assertCrash(
                     crashId = ba.getCrashedId()
                 )
             }
@@ -89,7 +89,7 @@ internal class JvmCrashFeatureTest {
                 }
             },
             assertAction = {
-                val log = getSingleLogEnvelope(false).getLastLog()
+                val log = getSingleLogEnvelope().getLastLog()
                 assertOtelLogReceived(
                     logReceived = log,
                     expectedMessage = "",

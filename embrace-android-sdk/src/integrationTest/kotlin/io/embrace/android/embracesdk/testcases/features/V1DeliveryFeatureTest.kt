@@ -89,6 +89,7 @@ internal class V1DeliveryFeatureTest {
     fun `v1 log delivery`() {
         testRule.runTest(
             setupAction = {
+                overriddenConfigService.autoDataCaptureBehavior = behavior
                 setupFakeAeiData()
             },
             testCaseAction = {

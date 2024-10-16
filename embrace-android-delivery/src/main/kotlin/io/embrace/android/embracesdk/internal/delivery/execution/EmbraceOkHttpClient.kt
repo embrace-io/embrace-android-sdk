@@ -12,7 +12,7 @@ import okio.buffer
 import okio.source
 import java.io.InputStream
 
-class EmbraceOkHttpClient: EmbraceHttpClient {
+class EmbraceOkHttpClient : EmbraceHttpClient {
 
     private val okHttpClient = OkHttpClient()
         .newBuilder()

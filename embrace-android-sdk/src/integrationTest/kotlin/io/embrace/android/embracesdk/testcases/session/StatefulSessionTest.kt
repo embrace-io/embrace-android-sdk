@@ -32,10 +32,6 @@ internal class StatefulSessionTest {
     @Test
     fun `session messages are recorded`() {
         testRule.runTest(
-            setupAction = {
-                useMockWebServer = true
-                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = true)
-            },
             testCaseAction = {
                 recordSession {
                     embrace.addBreadcrumb("Hello, World!")

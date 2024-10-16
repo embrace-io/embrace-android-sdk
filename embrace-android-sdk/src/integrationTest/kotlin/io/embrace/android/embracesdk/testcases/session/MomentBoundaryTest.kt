@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionId
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -25,8 +26,11 @@ internal class MomentBoundaryTest {
 
     @Test
     fun `startup moment completes within one session`() {
-
         testRule.runTest(
+            setupAction = {
+                useMockWebServer = false
+                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = false)
+            },
             testCaseAction = {
                 recordSession {
                     embrace.endAppStartup()
@@ -35,7 +39,7 @@ internal class MomentBoundaryTest {
                 }
             },
             assertAction = {
-                val message = getSingleSessionEnvelope()
+                val message = getSessionEnvelopesV1(1).single()
 
                 val moments = getSentMoments(4)
                 assertEquals(4, moments.size)
@@ -66,6 +70,10 @@ internal class MomentBoundaryTest {
     @Test
     fun `startup moment completes within two sessions`() {
         testRule.runTest(
+            setupAction = {
+                useMockWebServer = false
+                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = false)
+            },
             testCaseAction = {
                 recordSession {
                     embrace.startMoment(MOMENT_NAME)
@@ -76,7 +84,7 @@ internal class MomentBoundaryTest {
                 }
             },
             assertAction = {
-                val sessions = getSessionEnvelopes(2)
+                val sessions = getSessionEnvelopesV1(2)
                 val firstMessage = sessions[0]
                 val secondMessage = sessions[1]
 

@@ -238,6 +238,9 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `set process as started by notification works as expected`() {
         testRule.runTest(
+            setupAction = {
+                useMockWebServer = false
+            },
             testCaseAction = {
                 embrace.internalInterface.setProcessStartedByNotification()
                 recordSession()

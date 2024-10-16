@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,6 +37,7 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 internal class AppStartupTraceEmitterTest {
     private var startupService: StartupService? = null
+    private var dataCollectionCompletedCallbackInvoked: Boolean = false
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
@@ -71,7 +73,8 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in T`() {
         startupService = null
-        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        assertTrue(dataCollectionCompletedCallbackInvoked)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
@@ -102,7 +105,8 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in S`() {
         startupService = null
-        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        assertTrue(dataCollectionCompletedCallbackInvoked)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
@@ -133,7 +137,8 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in P`() {
         startupService = null
-        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        assertTrue(dataCollectionCompletedCallbackInvoked)
     }
 
     @Config(sdk = [Build.VERSION_CODES.P])
@@ -158,7 +163,8 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in M`() {
         startupService = null
-        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        assertTrue(dataCollectionCompletedCallbackInvoked)
     }
 
     @Config(sdk = [Build.VERSION_CODES.M])
@@ -183,7 +189,8 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `no crashes if startup service not available in L`() {
         startupService = null
-        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        assertTrue(dataCollectionCompletedCallbackInvoked)
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -202,6 +209,10 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `verify warm start trace without application init start and end triggered in L`() {
         verifyWarmStartWithResumeWithoutAppInitEvents()
+    }
+
+    private fun dataCollectionCompletedCallback() {
+        dataCollectionCompletedCallbackInvoked = true
     }
 
     private fun verifyColdStartWithRender(processCreateDelayMs: Long? = null) {
@@ -509,11 +520,11 @@ internal class AppStartupTraceEmitterTest {
     }
 
     private fun startupActivityRender(renderFrame: Boolean = true): Pair<Long, Long> {
-        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME)
+        appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
         val resumed = clock.now()
         if (renderFrame) {
             clock.tick(199L)
-            appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME)
+            appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
         }
         return Pair(resumed, clock.now())
     }
@@ -540,6 +551,7 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(expectedFirstActivityLifecycleEventMs?.toString(), attrs.findAttributeValue("first-activity-init-ms"))
         assertEquals("false", attrs.findAttributeValue("embrace-init-in-foreground"))
         assertEquals("main", attrs.findAttributeValue("embrace-init-thread-name"))
+        assertTrue(dataCollectionCompletedCallbackInvoked)
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

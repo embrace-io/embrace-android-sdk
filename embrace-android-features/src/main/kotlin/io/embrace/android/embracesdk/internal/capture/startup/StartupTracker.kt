@@ -63,7 +63,12 @@ class StartupTracker(
                             decorView.onNextDraw {
                                 if (!isFirstDraw) {
                                     isFirstDraw = true
-                                    val callback = { appStartupDataCollector.firstFrameRendered(activityName = activityName) }
+                                    val callback = {
+                                        appStartupDataCollector.firstFrameRendered(
+                                            activityName = activityName,
+                                            collectionCompleteCallback = {}
+                                        )
+                                    }
                                     decorView.viewTreeObserver.registerFrameCommitCallback(callback)
                                 }
                             }
@@ -91,7 +96,10 @@ class StartupTracker(
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
-            appStartupDataCollector.startupActivityResumed(activityName = activity.localClassName)
+            appStartupDataCollector.startupActivityResumed(
+                activityName = activity.localClassName,
+                collectionCompleteCallback = { }
+            )
         }
     }
 

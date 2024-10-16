@@ -10,13 +10,14 @@ import java.net.URL
 
 private const val NO_HTTP_RESPONSE = -1
 private const val TOO_MANY_REQUESTS = 429
-private const val DEFAULT_TIMEOUT_SECONDS = 60
+private const val DEFAULT_TIMEOUT_MILLISECONDS = 10 * 1000
 
 class HttpUrlConnectionRequestExecutionService(
     private val coreBaseUrl: String,
     private val lazyDeviceId: Lazy<String>,
     private val appId: String,
     private val embraceVersionName: String,
+    private val connectionTimeoutMilliseconds: Int = DEFAULT_TIMEOUT_MILLISECONDS
 ) : RequestExecutionService {
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
@@ -78,8 +79,8 @@ class HttpUrlConnectionRequestExecutionService(
         connection.requestMethod = "POST"
         connection.setDoOutput(true)
 
-        connection.connectTimeout = DEFAULT_TIMEOUT_SECONDS
-        connection.readTimeout = DEFAULT_TIMEOUT_SECONDS
+        connection.connectTimeout = connectionTimeoutMilliseconds
+        connection.readTimeout = connectionTimeoutMilliseconds
 
         return connection
     }

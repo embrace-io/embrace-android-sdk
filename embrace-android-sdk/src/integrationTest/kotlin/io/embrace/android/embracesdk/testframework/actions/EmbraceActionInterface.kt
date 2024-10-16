@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.robolectric.Robolectric
+import org.robolectric.android.controller.ActivityController
 
 /**
  * Interface for performing actions on the [Embrace] instance under test
@@ -67,6 +68,61 @@ internal class EmbraceActionInterface(
         }
         processStateService.onBackground()
     }
+
+    internal fun simulateOpeningActivities(
+        addStartupActivity: Boolean = true,
+        startInBackground: Boolean = false,
+        createFirstActivity: Boolean = true,
+        activitiesAndActions: List<Pair<ActivityController<*>, () -> Unit>> = listOf(),
+        lifecycleEventGap: Long = 100L,
+        postActionDwell: Long = 20000L,
+        activityGap: Long = 50L,
+    ) {
+        var lastActivity: ActivityController<*>? = if (addStartupActivity) {
+            Robolectric.buildActivity(Activity::class.java)
+        } else {
+            null
+        }?.apply {
+            create()
+            start()
+            onForeground()
+            resume()
+            pause()
+            if (startInBackground) {
+                stop()
+                onBackground()
+                setup.overriddenClock.tick(10000L)
+            } else {
+                setup.overriddenClock.tick(activityGap)
+            }
+        }
+        activitiesAndActions.forEachIndexed { index, (activityController, action) ->
+            if (index != 0 || createFirstActivity) {
+                activityController.create()
+                setup.overriddenClock.tick(lifecycleEventGap)
+            }
+            activityController.start()
+            setup.overriddenClock.tick(lifecycleEventGap)
+            if (index == 0 && startInBackground) {
+                onForeground()
+            }
+            activityController.resume()
+            setup.overriddenClock.tick(lifecycleEventGap)
+            lastActivity?.stop()
+            setup.overriddenClock.tick()
+
+            action()
+
+            setup.overriddenClock.tick(postActionDwell)
+            activityController.pause()
+            setup.overriddenClock.tick(activityGap)
+            lastActivity = activityController
+        }
+        lastActivity?.stop()
+        setup.overriddenClock.tick()
+        onBackground()
+    }
+
 
     fun simulateActivityLifecycle() {
         with(Robolectric.buildActivity(Activity::class.java)) {

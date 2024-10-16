@@ -44,6 +44,7 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isNativeCrashCaptureEnabled(): Boolean = cfg.isNativeCrashCaptureEnabled()
     override fun isDiskUsageCaptureEnabled(): Boolean = cfg.isDiskUsageCaptureEnabled()
+    override fun isActivityOpenPerfCaptureEnabled(): Boolean = cfg.isActivityOpenPerfCaptureEnabled()
 
     // this should remain immutable across the process lifecycle
     private val v2StorageImpl by lazy { remote?.killSwitchConfig?.v2Storage ?: false }

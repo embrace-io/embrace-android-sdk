@@ -32,6 +32,7 @@ internal class AutoDataCaptureBehaviorImplTest {
             assertFalse(isNativeCrashCaptureEnabled())
             assertTrue(isDiskUsageCaptureEnabled())
             assertTrue(isThermalStatusCaptureEnabled())
+            assertFalse(isActivityOpenPerfCaptureEnabled())
             assertTrue(isThermalStatusCaptureEnabled())
             assertFalse(isV2StorageEnabled())
         }

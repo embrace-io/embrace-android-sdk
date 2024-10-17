@@ -1,5 +1,3 @@
-import io.embrace.gradle.Versions
-
 plugins {
     id("embrace-test-defaults")
 }

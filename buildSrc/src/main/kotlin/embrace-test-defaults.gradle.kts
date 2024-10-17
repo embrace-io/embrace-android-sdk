@@ -32,7 +32,7 @@ android {
 }
 
 dependencies {
-    add("detektPlugins", "io.gitlab.arturbosch.detekt:detekt-formatting:${Versions.DETEKT}")
+    add("detektPlugins", findLibrary("detekt.formatting"))
 }
 
 detekt {
@@ -70,3 +70,7 @@ project.tasks.withType(KotlinCompile::class.java).configureEach {
         allWarningsAsErrors = true
     }
 }
+
+// workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c
+private fun Project.findLibrary(alias: String) =
+    project.extensions.getByType<VersionCatalogsExtension>().named("libs").findLibrary(alias).get()

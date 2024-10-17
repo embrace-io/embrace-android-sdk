@@ -33,7 +33,8 @@ internal class EssentialServiceModuleImplTest {
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
-            configModule = FakeConfigModule()
+            configModule = FakeConfigModule(),
+            networkConnectivityServiceProvider = { null }
         )
 
         assertNotNull(module.processStateService)

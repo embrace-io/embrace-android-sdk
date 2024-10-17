@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class EssentialServiceModuleImpl(
@@ -33,7 +34,8 @@ class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule
+    storageModule: StorageModule,
+    networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>
 ) : EssentialServiceModule {
 
     private val configService by lazy { configModule.configService }
@@ -79,7 +81,7 @@ class EssentialServiceModuleImpl(
     }
 
     override val networkConnectivityService: NetworkConnectivityService by singleton {
-        Systrace.traceSynchronous("network-connectivity-service-init") {
+        networkConnectivityServiceProvider() ?: Systrace.traceSynchronous("network-connectivity-service-init") {
             EmbraceNetworkConnectivityService(
                 coreModule.context,
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
@@ -20,6 +21,7 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
+import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
@@ -52,6 +54,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     val fakeAnrModule: AnrModule = FakeAnrModule(),
     val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule(),
     var cacheStorageServiceProvider: Provider<PayloadStorageService?> = { null },
+    var payloadStorageServiceProvider: Provider<PayloadStorageService?> = { null },
+    val networkConnectivityService: FakeNetworkConnectivityService = FakeNetworkConnectivityService()
 ) {
     fun createBootstrapper(): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule,
@@ -59,7 +63,19 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
         workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, _ ->
+        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _ ->
+            createEssentialServiceModule(
+                initModule,
+                configModule,
+                openTelemetryModule,
+                coreModule,
+                workerThreadModule,
+                systemServiceModule,
+                androidServicesModule,
+                storageModule
+            ) { networkConnectivityService }
+        },
+        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, _, _ ->
             createDeliveryModule(
                 configModule,
                 otelModule,
@@ -68,6 +84,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 coreModule,
                 storageModule,
                 essentialServiceModule,
+                payloadStorageServiceProvider = payloadStorageServiceProvider,
                 cacheStorageServiceProvider = cacheStorageServiceProvider,
                 requestExecutionServiceProvider = { FakeRequestExecutionService() },
                 deliveryServiceProvider = { FakeDeliveryService() }

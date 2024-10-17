@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.utils.Provider
+
 /**
  * Function that returns an instance of [EssentialServiceModule]. Matches the signature of the constructor for [EssentialServiceModuleImpl]
  */
@@ -11,7 +14,8 @@ typealias EssentialServiceModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule
+    storageModule: StorageModule,
+    networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>
 ) -> EssentialServiceModule
 
 fun createEssentialServiceModule(
@@ -22,7 +26,8 @@ fun createEssentialServiceModule(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule
+    storageModule: StorageModule,
+    networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>
 ): EssentialServiceModule = EssentialServiceModuleImpl(
     initModule,
     configModule,
@@ -31,5 +36,6 @@ fun createEssentialServiceModule(
     workerThreadModule,
     systemServiceModule,
     androidServicesModule,
-    storageModule
+    storageModule,
+    networkConnectivityServiceProvider
 )

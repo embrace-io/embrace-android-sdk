@@ -6,6 +6,8 @@ class FakeSessionPropertiesService : SessionPropertiesService {
 
     var props: MutableMap<String, String> = mutableMapOf()
     var listeners: MutableList<(Map<String, String>) -> Unit> = mutableListOf()
+    var cleanupAfterSessionEndCallCount = 0
+    var prepareNewSessionCallCount = 0
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         props[originalKey] = originalValue
@@ -19,8 +21,13 @@ class FakeSessionPropertiesService : SessionPropertiesService {
 
     override fun getProperties(): Map<String, String> = props
 
-    override fun prepareForNewSession() {
+    override fun cleanupAfterSessionEnd() {
         props.clear()
+        cleanupAfterSessionEndCallCount++
+    }
+
+    override fun prepareForNewSession() {
+        prepareNewSessionCallCount++
     }
 
     override fun addChangeListener(listener: (Map<String, String>) -> Unit) {

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeFeatureRegistry
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
-import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeSystemServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -28,7 +27,6 @@ internal class FeatureModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),
             androidServicesModule = FakeAndroidServicesModule(),
-            anrModule = FakeAnrModule(),
             logWriter = FakeLogWriter(),
             configService = FakeConfigService()
         )
@@ -42,7 +40,7 @@ internal class FeatureModuleImplTest {
         assertNotNull(module.applicationExitInfoDataSource)
         assertNotNull(module.internalErrorDataSource)
 
-        val expectedFeatures = 13
+        val expectedFeatures = 12
         assertEquals(expectedFeatures, registry.states.size)
         module.registerFeatures()
         assertEquals(expectedFeatures + 1, registry.states.size)

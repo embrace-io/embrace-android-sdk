@@ -10,7 +10,6 @@ class FakeAnrBehavior(
     var nativeThreadAnrSamplingEnabled: Boolean = false,
     var idleHandlerEnabled: Boolean = false,
     var anrCaptureEnabled: Boolean = true,
-    var googleAnrCaptureEnabled: Boolean = false,
     var bgAnrCaptureEnabled: Boolean = false,
     var nativeThreadAnrSamplingAllowlistIgnored: Boolean = true,
     var monitorThreadPriorityImpl: Int = 5,
@@ -22,7 +21,6 @@ class FakeAnrBehavior(
     var nativeThreadAnrSamplingAllowlistImpl: List<AllowedNdkSampleMethod> = emptyList(),
 ) : AnrBehavior {
 
-    override fun isSigquitCaptureEnabled(): Boolean = googleAnrCaptureEnabled
     override fun isAnrCaptureEnabled(): Boolean = anrCaptureEnabled
     override fun isAnrProcessErrorsCaptureEnabled(): Boolean = false
     override fun getMonitorThreadPriority(): Int = monitorThreadPriorityImpl

@@ -6,9 +6,9 @@ import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 
 internal class EnvelopeResourceSourceImpl(
     private val hosted: HostedSdkVersionInfo,

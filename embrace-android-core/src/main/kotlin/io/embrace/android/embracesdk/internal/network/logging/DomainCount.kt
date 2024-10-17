@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.payload
+package io.embrace.android.embracesdk.internal.network.logging
 
 /**
  * Included in the payload when the network request capture limit has been exceeded for a

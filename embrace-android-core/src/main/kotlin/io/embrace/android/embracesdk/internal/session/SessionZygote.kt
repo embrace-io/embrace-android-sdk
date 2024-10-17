@@ -1,4 +1,7 @@
-package io.embrace.android.embracesdk.internal.payload
+package io.embrace.android.embracesdk.internal.session
+
+import io.embrace.android.embracesdk.internal.payload.ApplicationState
+import io.embrace.android.embracesdk.internal.payload.LifeEventType
 
 /**
  * A precursor object that holds state associated with a newly started session.

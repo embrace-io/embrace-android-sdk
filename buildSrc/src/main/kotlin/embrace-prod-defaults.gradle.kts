@@ -70,21 +70,21 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${Versions.KOTLIN_EXPOSED}")
+    implementation(findLibrary("kotlin.stdlib"))
     add("lintChecks", project.project(":embrace-lint"))
 
-    testImplementation("junit:junit:${Versions.JUNIT}")
-    testImplementation("io.mockk:mockk:${Versions.MOCKK}")
-    testImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
-    testImplementation("androidx.test.ext:junit:${Versions.ANDROIDX_JUNIT}")
-    testImplementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")
-    testImplementation("com.squareup.okhttp3:mockwebserver:${Versions.MOCKWEBSERVER}")
+    testImplementation(findLibrary("junit"))
+    testImplementation(findLibrary("mockk"))
+    testImplementation(findLibrary("androidx.test.core"))
+    testImplementation(findLibrary("androidx.test.junit"))
+    testImplementation(findLibrary("robolectric"))
+    testImplementation(findLibrary("mockwebserver"))
     testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-test-fakes"))
 
-    androidTestImplementation("androidx.test:core:${Versions.ANDROIDX_TEST}")
-    androidTestImplementation("androidx.test:runner:${Versions.ANDROIDX_TEST}")
-    androidTestUtil("androidx.test:orchestrator:${Versions.ANDROIDX_TEST}")
+    androidTestImplementation(findLibrary("androidx.test.core"))
+    androidTestImplementation(findLibrary("androidx.test.runner"))
+    androidTestUtil(findLibrary("androidx.test.orchestrator"))
 }
 
 checkstyle {
@@ -174,3 +174,7 @@ signing {
 project.tasks.withType(Sign::class).configureEach {
     enabled = !project.version.toString().endsWith("-SNAPSHOT")
 }
+
+// workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c
+private fun Project.findLibrary(alias: String) =
+    project.extensions.getByType<VersionCatalogsExtension>().named("libs").findLibrary(alias).get()

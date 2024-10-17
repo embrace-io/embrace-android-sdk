@@ -29,6 +29,7 @@ internal class DeliveryModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     requestExecutionServiceProvider: Provider<RequestExecutionService?>,
+    payloadStorageServiceProvider: Provider<PayloadStorageService?>,
     cacheStorageServiceProvider: Provider<PayloadStorageService?>,
     deliveryServiceProvider: () -> DeliveryService? = {
         val apiService = essentialServiceModule.apiService
@@ -111,7 +112,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val payloadStorageService: PayloadStorageService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        payloadStorageServiceProvider() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
             PayloadStorageServiceImpl(

@@ -185,7 +185,7 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             androidServicesModule,
                             storageModule
-                        )
+                        ) { null }
                     }
                     postInit(EssentialServiceModule::class) {
                         // Allow config service to start making HTTP requests
@@ -211,7 +211,6 @@ internal class ModuleInitBootstrapper(
                                 Systrace.traceSynchronous("network-connectivity-listeners") {
                                     networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
                                     apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
-                                    deliveryModule.schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
                                 }
                             }
                         }
@@ -290,6 +289,7 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             essentialServiceModule,
                             { null },
+                            { null },
                             {
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {
                                     null
@@ -317,6 +317,11 @@ internal class ModuleInitBootstrapper(
                                     )
                                 }
                             }
+                        )
+                    }
+                    postInit(DeliveryModule::class) {
+                        deliveryModule.schedulingService?.let(
+                            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener
                         )
                     }
 

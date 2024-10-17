@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.annotation.BetaApi
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanContext
 
@@ -8,8 +7,8 @@ import io.opentelemetry.api.trace.SpanContext
  * Represents a Span that can be started and stopped with the appropriate [ErrorCode] if applicable. This wraps the OpenTelemetry Span
  * by adding an additional layer for local validation
  */
-@BetaApi
 public interface EmbraceSpan {
+
     /**
      * The [SpanContext] for this [EmbraceSpan] instance. This is null if the span has not been started.
      */

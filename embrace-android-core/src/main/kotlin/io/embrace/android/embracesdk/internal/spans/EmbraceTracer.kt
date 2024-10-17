@@ -71,7 +71,4 @@ class EmbraceTracer(
      * in used for [recordCompletedSpan] so the timestamps will be in sync with those used by the SDK when a time is implicitly recorded.
      */
     fun getSdkCurrentTimeMs(): Long = clock.now()
-
-    @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
-    override fun isTracingAvailable(): Boolean = spanService.initialized()
 }

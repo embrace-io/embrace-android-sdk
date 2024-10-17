@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.DomainCount
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import java.util.concurrent.ConcurrentHashMap

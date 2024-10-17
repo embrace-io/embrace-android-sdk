@@ -50,6 +50,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         workerThreadModule = overriddenWorkerThreadModule
     ),
     val fakeAnrModule: AnrModule = FakeAnrModule(),
+    val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule(),
     var cacheStorageServiceProvider: Provider<PayloadStorageService?> = { null },
 ) {
     fun createBootstrapper(): ModuleInitBootstrapper = ModuleInitBootstrapper(
@@ -73,6 +74,6 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
             )
         },
         anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
-        nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() }
+        nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
     )
 }

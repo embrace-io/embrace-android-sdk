@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -27,13 +28,15 @@ import java.util.concurrent.TimeoutException
  * specifically in what its payload looks like.
  */
 internal class EmbracePayloadAssertionInterface(
-    bootstrapper: ModuleInitBootstrapper
+    bootstrapper: ModuleInitBootstrapper,
 ) {
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
     private val requestExecutionService by lazy { bootstrapper.deliveryModule.requestExecutionService as FakeRequestExecutionService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
-
+    private val nativeCrashService by lazy {
+        bootstrapper.nativeFeatureModule.nativeCrashService as FakeNativeCrashService
+    }
 
     /*** LOGS ***/
 
@@ -69,7 +72,6 @@ internal class EmbracePayloadAssertionInterface(
                 "Envelopes: $envelopes", exc)
         }
     }
-
 
     /*** LOGS V1 ***/
 
@@ -123,7 +125,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun getSessionEnvelopes(
         expectedSize: Int,
-        state: ApplicationState = ApplicationState.FOREGROUND
+        state: ApplicationState = ApplicationState.FOREGROUND,
     ): List<Envelope<SessionPayload>> {
         return retrieveSessionEnvelopes(expectedSize, state)
     }
@@ -132,11 +134,11 @@ internal class EmbracePayloadAssertionInterface(
      * Asserts a single session was completed by the SDK.
      */
     internal fun getSingleSessionEnvelope(
-        state: ApplicationState = ApplicationState.FOREGROUND
+        state: ApplicationState = ApplicationState.FOREGROUND,
     ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: ApplicationState
+        expectedSize: Int, appState: ApplicationState,
     ): List<Envelope<SessionPayload>> {
         val supplier = {
             requestExecutionService.getRequests<SessionPayload>()
@@ -152,7 +154,10 @@ internal class EmbracePayloadAssertionInterface(
                     "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
                 )
             }
-            throw IllegalStateException("Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions", exc)
+            throw IllegalStateException(
+                "Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions",
+                exc
+            )
         }
     }
 
@@ -165,15 +170,9 @@ internal class EmbracePayloadAssertionInterface(
         return ApplicationState.valueOf(value)
     }
 
-    fun getCachedSessionEnvelopes(
-        expectedSize: Int,
-        appState: ApplicationState = ApplicationState.FOREGROUND
-    ): List<Envelope<SessionPayload>> {
-        return retrievePayload(expectedSize) {
-            checkNotNull(deliveryService.savedSessionEnvelopes).map { it.first }
-                .filter { it.findAppState() == appState }
-        }
-    }
+    /*** Native ***/
+
+    internal fun getSentNativeCrashes() = nativeCrashService.nativeCrashesSent.toList()
 
 
     /*** SESSIONS V1 ***/
@@ -208,7 +207,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun <T> validatePayloadAgainstGoldenFile(
         payload: T,
-        goldenFileName: String
+        goldenFileName: String,
     ) {
         try {
             val observedJson = serializer.toJson(
@@ -236,7 +235,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
-        supplier: () -> List<T>
+        supplier: () -> List<T>,
     ): List<T> {
         return when (expectedSize) {
             null -> supplier()

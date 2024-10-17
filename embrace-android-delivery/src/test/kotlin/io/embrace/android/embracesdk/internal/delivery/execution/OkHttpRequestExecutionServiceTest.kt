@@ -11,10 +11,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
-class HttpUrlConnectionRequestExecutionServiceTest {
-    private lateinit var requestExecutionService: HttpUrlConnectionRequestExecutionService
+class OkHttpRequestExecutionServiceTest {
+    private lateinit var requestExecutionService: OkHttpRequestExecutionService
     private lateinit var server: MockWebServer
     private lateinit var testServerUrl: String
 
@@ -40,14 +41,15 @@ class HttpUrlConnectionRequestExecutionServiceTest {
     @Before
     fun setUp() {
         server = MockWebServer()
+        server.protocols = listOf(okhttp3.Protocol.H2_PRIOR_KNOWLEDGE)
         server.start()
         testServerUrl = server.url("").toString().removeSuffix("/")
-        requestExecutionService = HttpUrlConnectionRequestExecutionService(
+        requestExecutionService = OkHttpRequestExecutionService(
             coreBaseUrl = testServerUrl,
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
-            connectionTimeoutMilliseconds = 2000
+            connectionTimeoutSeconds = 2L
         )
     }
 
@@ -59,7 +61,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
     @Test
     fun `return incomplete if the server does not exist`() {
         // given a request execution service with a non existent url
-        requestExecutionService = HttpUrlConnectionRequestExecutionService(
+        requestExecutionService = OkHttpRequestExecutionService(
             coreBaseUrl = "http://nonexistenturl:1565",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
@@ -143,9 +145,9 @@ class HttpUrlConnectionRequestExecutionServiceTest {
     }
 
     @Test
-    fun `return incomplete if the server returns an unexpected response code`() {
-        // given a server that disconnects before sending a response (thus causing a timeout)
-        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+    fun `return incomplete if the server times out`() {
+        // given a server that times out
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
@@ -155,7 +157,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
 
         // then the response should be incomplete
         check(response is ApiResponse.Incomplete)
-        assertTrue(response.exception is IllegalStateException)
+        assertTrue(response.exception is SocketTimeoutException)
     }
 
     @Test
@@ -164,7 +166,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
-                .setHeaders(mapOf("Custom-Error-Header" to "ouch").toHeaders())
+                .setHeaders(mapOf("custom-error-header" to "ouch").toHeaders())
         )
 
         // when attempting to make a request
@@ -176,7 +178,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // then the response should be failure
         check(response is ApiResponse.Failure)
         assertEquals(500, response.code)
-        assertEquals("ouch", response.headers?.get("Custom-Error-Header"))
+        assertEquals("ouch", response.headers?.get("custom-error-header"))
     }
 
     @Test

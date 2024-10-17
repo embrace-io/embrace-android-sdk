@@ -148,8 +148,13 @@ class PayloadStorageServiceImpl(
         if (removalCount < 0) {
             return false
         }
-        val removals = input
-            .sortedWith(storedTelemetryComparator)
+        val sortedWith = input
+            .sortedWith(
+                compareByDescending(StoredTelemetryMetadata::envelopeType)
+                    .thenByDescending(StoredTelemetryMetadata::timestamp)
+            )
+
+        val removals = sortedWith
             .takeLast(removalCount)
         removals.forEach(::processDelete)
         logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))

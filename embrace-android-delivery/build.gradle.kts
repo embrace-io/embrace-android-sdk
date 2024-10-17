@@ -11,6 +11,7 @@ android {
 apiValidation.validationDisabled = true
 
 dependencies {
+    implementation(libs.okhttp)
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-infra"))
 }

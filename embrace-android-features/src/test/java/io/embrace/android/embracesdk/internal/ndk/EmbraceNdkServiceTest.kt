@@ -43,7 +43,6 @@ import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -309,7 +308,6 @@ internal class EmbraceNdkServiceTest {
         val result = embraceNdkService.getLatestNativeCrash()
         assertNull(result)
         verify(exactly = 0) { delegate._getCrashReport(any()) }
-        assertTrue(deliveryService.sentMoments.isEmpty())
     }
 
     @Test

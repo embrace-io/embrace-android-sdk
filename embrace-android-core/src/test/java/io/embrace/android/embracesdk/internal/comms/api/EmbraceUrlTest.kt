@@ -8,13 +8,9 @@ internal class EmbraceUrlTest {
 
     @Test
     fun `test endpoint()`() {
-        val embraceUrlSessions = EmbraceUrl.create("https://embrace.io/sessions")
-        val embraceUrlEvents = EmbraceUrl.create("https://embrace.io/events")
         val embraceUrlLogs = EmbraceUrl.create("https://embrace.io/logs")
         val embraceUrlOther = EmbraceUrl.create("https://embrace.io/other")
 
-        assertEquals(Endpoint.SESSIONS, embraceUrlSessions.endpoint())
-        assertEquals(Endpoint.EVENTS, embraceUrlEvents.endpoint())
         assertEquals(Endpoint.LOGS, embraceUrlLogs.endpoint())
         assertEquals(Endpoint.UNKNOWN, embraceUrlOther.endpoint())
     }

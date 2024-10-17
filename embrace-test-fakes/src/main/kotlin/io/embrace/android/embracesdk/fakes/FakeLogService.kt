@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.logs.LogService
-import io.embrace.android.embracesdk.internal.payload.EventType
 
 class FakeLogService : LogService {
     class LogData(
         val message: String,
-        val type: EventType,
+        val severity: Severity,
         val logExceptionType: LogExceptionType,
         val properties: Map<String, Any>?,
         val stackTraceElements: Array<StackTraceElement>?,
@@ -24,7 +24,7 @@ class FakeLogService : LogService {
 
     override fun log(
         message: String,
-        type: EventType,
+        severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
@@ -37,7 +37,7 @@ class FakeLogService : LogService {
         loggedMessages.add(
             LogData(
                 message = message,
-                type = type,
+                severity = severity,
                 logExceptionType = logExceptionType,
                 properties = properties,
                 stackTraceElements = stackTraceElements,

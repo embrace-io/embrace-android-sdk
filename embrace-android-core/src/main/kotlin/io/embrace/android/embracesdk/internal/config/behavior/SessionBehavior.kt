@@ -34,11 +34,6 @@ interface SessionBehavior {
     fun getMaxSessionProperties(): Int
 
     /**
-     * Check if should gate Moment based on gating config.
-     */
-    fun shouldGateMoment(): Boolean
-
-    /**
      * Check if should gate Info Logs based on gating config.
      */
     fun shouldGateInfoLog(): Boolean
@@ -47,11 +42,6 @@ interface SessionBehavior {
      * Check if should gate Warning Logs based on gating config.
      */
     fun shouldGateWarnLog(): Boolean
-
-    /**
-     * Check if should gate Startup moment based on gating config.
-     */
-    fun shouldGateStartupMoment(): Boolean
 
     /**
      * Checks if a full payload should be sent for a session with an associated crash

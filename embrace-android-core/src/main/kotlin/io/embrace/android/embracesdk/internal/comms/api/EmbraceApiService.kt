@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -120,10 +119,6 @@ internal class EmbraceApiService(
             }
         }
         pendingApiCallsSender.savePendingApiCall(request, action, sync = true)
-    }
-
-    override fun sendEvent(eventMessage: EventMessage) {
-        post(eventMessage, mapper::eventMessageRequest)
     }
 
     override fun sendSession(action: SerializationAction, onFinish: ((response: ApiResponse) -> Unit)): Future<*> {

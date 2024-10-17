@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallQueue
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapshotType
@@ -15,8 +14,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 class FakeDeliveryCacheManager : DeliveryCacheManager {
 
     val saveSessionRequests: MutableList<Pair<Envelope<SessionPayload>, SessionSnapshotType>> = mutableListOf()
-    val saveBgActivityRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
-    val saveCrashRequests: MutableList<EventMessage> = mutableListOf()
 
     private val cachedSessions = mutableListOf<Envelope<SessionPayload>>()
     private val serializer = EmbraceSerializer()
@@ -67,9 +64,5 @@ class FakeDeliveryCacheManager : DeliveryCacheManager {
         transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>
     ) {
         TODO("Not yet implemented")
-    }
-
-    fun addCachedSessions(vararg envelopes: Envelope<SessionPayload>) {
-        cachedSessions.addAll(envelopes)
     }
 }

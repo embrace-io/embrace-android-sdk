@@ -18,17 +18,21 @@ import java.util.concurrent.TimeUnit
 
 private const val NO_HTTP_RESPONSE = -1
 private const val TOO_MANY_REQUESTS = 429
+private const val DEFAULT_TIMEOUT_SECONDS = 10L
 
 class OkHttpRequestExecutionService(
     private val coreBaseUrl: String,
     private val lazyDeviceId: Lazy<String>,
     private val appId: String,
     private val embraceVersionName: String,
+    connectionTimeoutSeconds: Long = DEFAULT_TIMEOUT_SECONDS
 ) : RequestExecutionService {
 
     private val okHttpClient = OkHttpClient()
         .newBuilder()
         .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
+        .connectTimeout(connectionTimeoutSeconds, TimeUnit.SECONDS)
+        .readTimeout(connectionTimeoutSeconds, TimeUnit.SECONDS)
         .build()
 
     override fun attemptHttpRequest(

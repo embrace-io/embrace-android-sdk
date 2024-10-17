@@ -13,8 +13,8 @@ import org.junit.Before
 import org.junit.Test
 import java.net.UnknownHostException
 
-class HttpUrlConnectionRequestExecutionServiceTest {
-    private lateinit var requestExecutionService: HttpUrlConnectionRequestExecutionService
+class OkHttpRequestExecutionServiceTest {
+    private lateinit var requestExecutionService: OkHttpRequestExecutionService
     private lateinit var server: MockWebServer
     private lateinit var testServerUrl: String
 
@@ -42,12 +42,12 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         server = MockWebServer()
         server.start()
         testServerUrl = server.url("").toString().removeSuffix("/")
-        requestExecutionService = HttpUrlConnectionRequestExecutionService(
+        requestExecutionService = OkHttpRequestExecutionService(
             coreBaseUrl = testServerUrl,
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
-            connectionTimeoutMilliseconds = 2000
+            connectionTimeoutSeconds = 2L
         )
     }
 
@@ -59,7 +59,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
     @Test
     fun `return incomplete if the server does not exist`() {
         // given a request execution service with a non existent url
-        requestExecutionService = HttpUrlConnectionRequestExecutionService(
+        requestExecutionService = OkHttpRequestExecutionService(
             coreBaseUrl = "http://nonexistenturl:1565",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,

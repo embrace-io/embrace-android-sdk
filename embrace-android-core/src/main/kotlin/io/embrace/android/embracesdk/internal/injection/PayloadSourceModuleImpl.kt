@@ -134,14 +134,14 @@ internal class PayloadSourceModuleImpl(
 
     override val payloadResurrectionService: PayloadResurrectionService? by singleton {
         val intakeService = deliveryModule.intakeService
-        val payloadStorageService = deliveryModule.payloadStorageService
+        val cacheStorageService = deliveryModule.cacheStorageService
         if (configModule.configService.autoDataCaptureBehavior.isV2StorageEnabled() &&
             intakeService != null &&
-            payloadStorageService != null
+            cacheStorageService != null
         ) {
             PayloadResurrectionServiceImpl(
                 intakeService = intakeService,
-                payloadStorageService = payloadStorageService,
+                cacheStorageService = cacheStorageService,
                 logger = initModule.logger,
                 serializer = initModule.jsonSerializer
             )

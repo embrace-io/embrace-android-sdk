@@ -30,7 +30,7 @@ class OkHttpRequestExecutionService(
 
     private val okHttpClient = OkHttpClient()
         .newBuilder()
-        .protocols(listOf(Protocol.H2_PRIOR_KNOWLEDGE))
+        .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .connectTimeout(connectionTimeoutSeconds, TimeUnit.SECONDS)
         .readTimeout(connectionTimeoutSeconds, TimeUnit.SECONDS)
         .build()

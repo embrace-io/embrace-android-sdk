@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.execution
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -40,16 +41,17 @@ class OkHttpRequestExecutionServiceTest {
 
     @Before
     fun setUp() {
-        server = MockWebServer()
-        server.protocols = listOf(okhttp3.Protocol.H2_PRIOR_KNOWLEDGE)
-        server.start()
+        server = MockWebServer().apply {
+            protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+            start()
+        }
         testServerUrl = server.url("").toString().removeSuffix("/")
         requestExecutionService = OkHttpRequestExecutionService(
             coreBaseUrl = testServerUrl,
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
-            connectionTimeoutSeconds = 2L
+            connectionTimeoutSeconds = 2L,
         )
     }
 
@@ -62,7 +64,7 @@ class OkHttpRequestExecutionServiceTest {
     fun `return incomplete if the server does not exist`() {
         // given a request execution service with a non existent url
         requestExecutionService = OkHttpRequestExecutionService(
-            coreBaseUrl = "http://nonexistenturl:1565",
+            coreBaseUrl = "https://nonexistenturl:1565",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName

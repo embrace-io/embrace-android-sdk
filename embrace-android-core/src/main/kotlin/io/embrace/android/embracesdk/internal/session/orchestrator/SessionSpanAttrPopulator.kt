@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
-import io.embrace.android.embracesdk.internal.payload.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionZygote
 
 /**
  * Populates the attributes of a session span.

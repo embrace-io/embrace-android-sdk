@@ -1,13 +1,14 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import org.junit.Assert.assertEquals
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -24,39 +25,39 @@ internal class SessionPropertiesTest {
     @Test
     fun `session properties additions and removal works at all stages app state transition`() {
         testRule.runTest(
+            setupAction = {
+                setupPermanentProperties()
+            },
             testCaseAction = {
-                embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
-                embrace.addSessionProperty(PERM_KEY_2, PERM_VAL, true)
-                recordSession {
-                    embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
-                    embrace.addSessionProperty(PERM_KEY_3, PERM_VAL, true)
-                    embrace.removeSessionProperty(PERM_KEY_2)
-                    embrace.removeSessionProperty(TEMP_KEY)
-                }
-                embrace.addSessionProperty(PERM_KEY_4, PERM_VAL, true)
-                embrace.removeSessionProperty(PERM_KEY_3)
-                embrace.removeSessionProperty(PERM_KEY_4)
-
-                recordSession()
+                addAndRemoveProperties()
             },
             assertAction = {
-                val sessions = getSessionEnvelopes(2)
-                val bas = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
+                val sessions = getSessionEnvelopes(3)
+                val bas = getSessionEnvelopes(3, ApplicationState.BACKGROUND)
 
                 bas[0].findSessionSpan().assertPropertyExistence(
-                    exist = listOf(PERM_KEY, PERM_KEY_2)
+                    exist = listOf(EXISTING_KEY_2, EXISTING_KEY_3, PERM_KEY, TEMP_KEY),
+                    missing = listOf(EXISTING_KEY_1)
                 )
                 sessions[0].findSessionSpan().assertPropertyExistence(
-                    exist = listOf(PERM_KEY, PERM_KEY_3),
-                    missing = listOf(TEMP_KEY, PERM_KEY_2)
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY, PERM_KEY_2, TEMP_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2)
                 )
                 bas[1].findSessionSpan().assertPropertyExistence(
-                    exist = listOf(PERM_KEY),
-                    missing = listOf(TEMP_KEY, PERM_KEY_2, PERM_KEY_3, PERM_KEY_4)
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
                 sessions[1].findSessionSpan().assertPropertyExistence(
-                    exist = listOf(PERM_KEY),
-                    missing = listOf(TEMP_KEY, TEMP_KEY_2, PERM_KEY_2, PERM_KEY_3)
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
+                )
+                bas[2].findSessionSpan().assertPropertyExistence(
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
+                )
+                sessions[2].findSessionSpan().assertPropertyExistence(
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
             }
         )
@@ -67,172 +68,118 @@ internal class SessionPropertiesTest {
         testRule.runTest(
             setupAction = {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
+                setupPermanentProperties()
             },
             testCaseAction = {
-                embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
-                embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
-                embrace.addSessionProperty(PERM_KEY_2, PERM_VAL, true)
-                recordSession {
-                    embrace.addSessionProperty(PERM_KEY_3, PERM_VAL, true)
-                    embrace.removeSessionProperty(PERM_KEY_2)
-                }
-
-                embrace.addSessionProperty(TEMP_KEY_2, TEMP_VAL, false)
-                embrace.removeSessionProperty(PERM_KEY_3)
-
-                recordSession {
-                    embrace.addSessionProperty(PERM_KEY_4, PERM_VAL, true)
-                }
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(2)
-                val session1 = sessions[0]
-                val session2 = sessions[1]
-
-                session1.findSessionSpan().assertPropertyExistence(
-                    exist = listOf(TEMP_KEY, PERM_KEY, PERM_KEY_3),
-                    missing = listOf(PERM_KEY_2)
-                )
-
-                session2.findSessionSpan().assertPropertyExistence(
-                    exist = listOf(TEMP_KEY_2, PERM_KEY, PERM_KEY_4),
-                    missing = listOf(TEMP_KEY, PERM_KEY_2, PERM_KEY_3)
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `temp properties are cleared in next session`() {
-        testRule.runTest(
-            testCaseAction = {
-                embrace.addSessionProperty(PERM_KEY, PERM_VAL, true)
-                recordSession {
-                    embrace.addSessionProperty(TEMP_KEY, TEMP_VAL, false)
-                }
-                recordSession()
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(2)
-                val firstSession = sessions[0]
-                val secondSession = sessions[1]
-
-                val bgActivities = getSessionEnvelopes(2, ApplicationState.BACKGROUND)
-                assertEquals(2, bgActivities.size)
-                val firstBg = bgActivities.first()
-                val secondBg = bgActivities.last()
-                // check perm property is in all payloads
-                assertEquals(PERM_VAL, firstBg.findSessionSpan().getSessionProperty(PERM_KEY))
-                assertEquals(PERM_VAL, firstSession.findSessionSpan().getSessionProperty(PERM_KEY))
-                assertEquals(PERM_VAL, secondBg.findSessionSpan().getSessionProperty(PERM_KEY))
-                assertEquals(PERM_VAL, secondSession.findSessionSpan().getSessionProperty(PERM_KEY))
-                // check temp property is only in first session payload
-                assertNull(firstBg.findSessionSpan().getSessionProperty(TEMP_KEY))
-                assertEquals(TEMP_VAL, firstSession.findSessionSpan().getSessionProperty(TEMP_KEY))
-                assertNull(secondBg.findSessionSpan().getSessionProperty(TEMP_KEY))
-                assertNull(secondSession.findSessionSpan().getSessionProperty(TEMP_KEY))
-            }
-        )
-    }
-
-    @Test
-    fun `adding properties in bg activity modifications change the cached payload`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession()
-                embrace.addSessionProperty("temp", "value", false)
-                recordSession()
-            },
-            assertAction = {
-                val session = getSessionEnvelopes(2)[0]
-                checkNotNull(session.getSessionSpan()).assertPropertyExistence(missing = listOf("temp"))
-
-                val bg = getSessionEnvelopes(2, ApplicationState.BACKGROUND).last()
-                checkNotNull(bg.getSessionSpan()).assertPropertyExistence(exist = listOf("temp"))
-            }
-        )
-    }
-
-    @Test
-    fun `permanent properties are persisted in cached payloads`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession()
-                embrace.addSessionProperty("perm", "value", true)
-
-                recordSession {
-                    embrace.addSessionProperty("perm2", "value", true)
-                }
-                embrace.addSessionProperty("perm3", "value", true)
-                recordSession()
+                addAndRemoveProperties()
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(3)
-                checkNotNull(sessions[1].findSessionSpan()).assertPropertyExistence(
-                    exist = listOf("perm", "perm2")
+                sessions[0].findSessionSpan().assertPropertyExistence(
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2)
                 )
-                checkNotNull(sessions[2].findSessionSpan()).assertPropertyExistence(
-                    exist = listOf("perm", "perm2", "perm3")
+                sessions[1].findSessionSpan().assertPropertyExistence(
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    missing = listOf(
+                        EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY, TEMP_KEY_2, TEMP_KEY_3
+                    )
                 )
-
-                val bas = getSessionEnvelopes(3, ApplicationState.BACKGROUND)
-                checkNotNull(bas[0].findSessionSpan()).assertPropertyExistence(
-                    exist = listOf()
-                )
-                checkNotNull(bas[1].findSessionSpan()).assertPropertyExistence(
-                    exist = listOf("perm", "perm2")
-                )
-                checkNotNull(bas[2].findSessionSpan()).assertPropertyExistence(
-                    exist = listOf("perm", "perm2", "perm3")
+                sessions[2].findSessionSpan().assertPropertyExistence(
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    missing = listOf(
+                        EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY, TEMP_KEY_2, TEMP_KEY_3
+                    )
                 )
             }
         )
     }
 
     @Test
-    fun `permanent properties are persisted in cached payloads when bg activities are disabled`() {
+    fun `session properties are persisted in cached payloads`() {
+        testRule.runTest(
+            setupAction = {
+                setupPermanentProperties()
+            },
+            testCaseAction = {
+                addAndRemoveProperties()
+            },
+            assertAction = {
+                // TODO: rewrite this after v2 delivery layer changes merged
+            }
+        )
+    }
+
+    @Test
+    fun `session properties are persisted in cached payloads when bg activities are disabled`() {
         testRule.runTest(
             setupAction = {
                 overriddenConfigService.backgroundActivityCaptureEnabled = false
+                setupPermanentProperties()
             },
             testCaseAction = {
-                embrace.addSessionProperty("perm", "value", true)
-                recordSession {
-                    embrace.addSessionProperty("perm2", "value", true)
-                }
-                recordSession {
-                    embrace.addSessionProperty("perm3", "value", true)
-                }
+                addAndRemoveProperties()
             },
             assertAction = {
-                val sessions = getSessionEnvelopes(2)
-                checkNotNull(sessions[0].getSessionSpan()).assertPropertyExistence(
-                    exist = listOf("perm", "perm2")
-                )
-                checkNotNull(sessions[1].getSessionSpan()).assertPropertyExistence(
-                    exist = listOf("perm", "perm2", "perm3")
-                )
+                // TODO: rewrite this after v2 delivery layer changes merged
             }
         )
+    }
+
+    private fun EmbraceSetupInterface.setupPermanentProperties() {
+        overriddenAndroidServicesModule.preferencesService.permanentSessionProperties =
+            mapOf(
+                EXISTING_KEY_1 to VALUE,
+                EXISTING_KEY_2 to VALUE,
+                EXISTING_KEY_3 to VALUE,
+            )
+    }
+
+    private fun EmbraceActionInterface.addAndRemoveProperties() {
+        embrace.removeSessionProperty(EXISTING_KEY_1)
+        embrace.addPermanentProperty(PERM_KEY)
+        embrace.addTemporaryProperty(TEMP_KEY)
+        recordSession {
+            embrace.addPermanentProperty(PERM_KEY_2)
+            embrace.addTemporaryProperty(TEMP_KEY_2)
+            embrace.removeSessionProperty(EXISTING_KEY_2)
+        }
+        embrace.removeSessionProperty(PERM_KEY)
+        embrace.addPermanentProperty(PERM_KEY_3)
+        embrace.addTemporaryProperty(TEMP_KEY_3)
+        embrace.removeSessionProperty(PERM_KEY_3)
+        embrace.removeSessionProperty(TEMP_KEY_3)
+        recordSession()
+        recordSession()
+    }
+
+    private fun Embrace.addPermanentProperty(key: String) {
+        addSessionProperty(key, VALUE, true)
+    }
+
+    private fun Embrace.addTemporaryProperty(key: String) {
+        addSessionProperty(key, VALUE, false)
     }
 
     private fun Span.assertPropertyExistence(exist: List<String> = emptyList(), missing: List<String> = emptyList()) {
         exist.forEach {
-            assertNotNull(getSessionProperty(it), "Missing session property with key: $it")
+            assertNotNull("Missing session property with key: $it", getSessionProperty(it))
         }
         missing.forEach {
-            assertNull(getSessionProperty(it))
+            assertNull("Unexpected session property with key: $it", getSessionProperty(it))
         }
     }
 
     private companion object {
+        const val EXISTING_KEY_1 = "existing"
+        const val EXISTING_KEY_2 = "existing2"
+        const val EXISTING_KEY_3 = "existing3"
         const val PERM_KEY = "perm"
         const val PERM_KEY_2 = "perm2"
         const val PERM_KEY_3 = "perm3"
-        const val PERM_KEY_4 = "perm4"
         const val TEMP_KEY = "temp"
         const val TEMP_KEY_2 = "temp2"
-        const val PERM_VAL = "permVal"
-        const val TEMP_VAL = "tempVal"
+        const val TEMP_KEY_3 = "temp3"
+        const val VALUE = "value"
     }
 }

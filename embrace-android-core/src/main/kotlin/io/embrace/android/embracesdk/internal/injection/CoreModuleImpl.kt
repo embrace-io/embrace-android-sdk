@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoServiceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 class CoreModuleImpl(

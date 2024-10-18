@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.payload
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.logs.data.LogRecordData
 
+@Suppress("DEPRECATION") // suppress for backwards compat
 fun LogRecordData.toNewPayload(): Log {
     val isSpanContextValid = spanContext.isValid
     return Log(

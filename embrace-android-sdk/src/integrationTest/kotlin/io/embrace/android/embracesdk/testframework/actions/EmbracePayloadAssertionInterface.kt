@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import org.json.JSONObject
 import org.junit.Assert
+import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
@@ -27,7 +28,8 @@ import java.util.concurrent.TimeoutException
  * specifically in what its payload looks like.
  */
 internal class EmbracePayloadAssertionInterface(
-    bootstrapper: ModuleInitBootstrapper
+    bootstrapper: ModuleInitBootstrapper,
+    private val apiServer: FakeApiServer,
 ) {
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
@@ -49,6 +51,17 @@ internal class EmbracePayloadAssertionInterface(
 
     internal fun getSingleLogEnvelope(): Envelope<LogPayload> {
         return getLogEnvelopes(1).single()
+    }
+
+    /**
+     * Returns a list of logs that were completed by the SDK & sent to a mock web server.
+     */
+    internal fun getLogEnvelopesFromMockServer(
+        expectedSize: Int
+    ): List<Envelope<LogPayload>> {
+        return retrievePayload(expectedSize) {
+            apiServer.getLogEnvelopes()
+        }
     }
 
     private fun retrieveLogEnvelopes(
@@ -117,13 +130,24 @@ internal class EmbracePayloadAssertionInterface(
 
     /*** SESSIONS ***/
 
+    /**
+     * Returns a list of sessions that were completed by the SDK & sent to a mock web server.
+     */
+    internal fun getSessionEnvelopesFromMockServer(
+        expectedSize: Int,
+        state: ApplicationState = ApplicationState.FOREGROUND,
+    ): List<Envelope<SessionPayload>> {
+        return retrievePayload(expectedSize) {
+            apiServer.getSessionEnvelopes().filter { it.findAppState() == state }
+        }
+    }
 
     /**
      * Returns a list of sessions that were completed by the SDK.
      */
     internal fun getSessionEnvelopes(
         expectedSize: Int,
-        state: ApplicationState = ApplicationState.FOREGROUND
+        state: ApplicationState = ApplicationState.FOREGROUND,
     ): List<Envelope<SessionPayload>> {
         return retrieveSessionEnvelopes(expectedSize, state)
     }
@@ -132,11 +156,11 @@ internal class EmbracePayloadAssertionInterface(
      * Asserts a single session was completed by the SDK.
      */
     internal fun getSingleSessionEnvelope(
-        state: ApplicationState = ApplicationState.FOREGROUND
+        state: ApplicationState = ApplicationState.FOREGROUND,
     ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: ApplicationState
+        expectedSize: Int, appState: ApplicationState,
     ): List<Envelope<SessionPayload>> {
         val supplier = {
             requestExecutionService.getRequests<SessionPayload>()
@@ -167,7 +191,7 @@ internal class EmbracePayloadAssertionInterface(
 
     fun getCachedSessionEnvelopes(
         expectedSize: Int,
-        appState: ApplicationState = ApplicationState.FOREGROUND
+        appState: ApplicationState = ApplicationState.FOREGROUND,
     ): List<Envelope<SessionPayload>> {
         return retrievePayload(expectedSize) {
             checkNotNull(deliveryService.savedSessionEnvelopes).map { it.first }
@@ -208,7 +232,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun <T> validatePayloadAgainstGoldenFile(
         payload: T,
-        goldenFileName: String
+        goldenFileName: String,
     ) {
         try {
             val observedJson = serializer.toJson(
@@ -236,7 +260,7 @@ internal class EmbracePayloadAssertionInterface(
      */
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
-        supplier: () -> List<T>
+        supplier: () -> List<T>,
     ): List<T> {
         return when (expectedSize) {
             null -> supplier()

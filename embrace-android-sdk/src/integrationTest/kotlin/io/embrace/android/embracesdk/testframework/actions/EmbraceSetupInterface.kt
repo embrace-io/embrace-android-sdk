@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
  */
 internal class EmbraceSetupInterface @JvmOverloads constructor(
     currentTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
+    var useMockWebServer: Boolean = false,
     @Suppress("DEPRECATION") val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
     val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock, logger = FakeEmbLogger()),
@@ -58,7 +59,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
         workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, _ ->
+        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, requestExecutionServiceProvider, deliveryServiceProvider ->
             createDeliveryModule(
                 configModule,
                 otelModule,
@@ -68,11 +69,19 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 storageModule,
                 essentialServiceModule,
                 cacheStorageServiceProvider = cacheStorageServiceProvider,
-                requestExecutionServiceProvider = { FakeRequestExecutionService() },
-                deliveryServiceProvider = { FakeDeliveryService() }
-            )
+                requestExecutionServiceProvider = {
+                    when {
+                        useMockWebServer -> requestExecutionServiceProvider()
+                        else -> FakeRequestExecutionService()
+                    }
+                },
+                deliveryServiceProvider = {
+                    when {
+                        useMockWebServer -> deliveryServiceProvider()
+                        else -> FakeDeliveryService()
+                    }
+                })
         },
         anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
-        nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() }
-    )
+        nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() })
 }

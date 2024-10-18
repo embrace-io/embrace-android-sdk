@@ -126,8 +126,9 @@ internal class EmbracePayloadAssertionInterface(
     internal fun getSessionEnvelopes(
         expectedSize: Int,
         state: ApplicationState = ApplicationState.FOREGROUND,
+        waitTimeMs: Int = 1000,
     ): List<Envelope<SessionPayload>> {
-        return retrieveSessionEnvelopes(expectedSize, state)
+        return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
     }
 
     /**
@@ -138,14 +139,14 @@ internal class EmbracePayloadAssertionInterface(
     ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: ApplicationState,
+        expectedSize: Int, appState: ApplicationState, waitTimeMs: Int
     ): List<Envelope<SessionPayload>> {
         val supplier = {
             requestExecutionService.getRequests<SessionPayload>()
                 .filter { it.findAppState() == appState }
         }
         try {
-            return retrievePayload(expectedSize, supplier)
+            return retrievePayload(expectedSize, waitTimeMs, supplier)
         } catch (exc: TimeoutException) {
             val sessions: List<Map<String, String?>> = supplier().map {
                 mapOf(
@@ -236,11 +237,21 @@ internal class EmbracePayloadAssertionInterface(
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
         supplier: () -> List<T>,
+    ): List<T> = retrievePayload(expectedSize, 1000, supplier)
+
+    /**
+     * Retrieves a payload that was stored in the delivery service.
+     */
+    private inline fun <reified T> retrievePayload(
+        expectedSize: Int?,
+        waitTimeMs: Int = 1000,
+        supplier: () -> List<T>,
     ): List<T> {
         return when (expectedSize) {
             null -> supplier()
             else ->
                 returnIfConditionMet(
+                    waitTimeMs = waitTimeMs,
                     desiredValueSupplier = supplier,
                     dataProvider = supplier,
                     condition = { data ->

@@ -26,7 +26,6 @@ internal class EmbraceSessionProperties(
             synchronized(permanentPropertiesReference) {
                 if (permanentPropertiesReference.get() === NOT_LOADED) {
                     permanentPropertiesReference.set(permanentPropertiesProvider())
-                    addPermPropsToSessionSpan()
                 }
             }
         }
@@ -94,15 +93,14 @@ internal class EmbraceSessionProperties(
 
     private fun size(): Int = permanentProperties().size + temporary.size
 
-    fun prepareForNewSession() {
+    fun clear() {
         synchronized(permanentPropertiesReference) {
             temporary.clear()
-            addPermPropsToSessionSpan()
         }
     }
 
-    private fun addPermPropsToSessionSpan() {
-        permanentPropertiesReference.get().entries.forEach {
+    fun addPermPropsToSessionSpan() {
+        permanentProperties().entries.forEach {
             writer.addSystemAttribute(
                 SpanAttributeData(
                     it.key.toSessionPropertyAttributeName(),

@@ -9,8 +9,8 @@ import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll

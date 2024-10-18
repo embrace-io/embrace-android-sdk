@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.fakes.system.mockApplication
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.injection.CoreModule
+import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 import io.mockk.every
 import io.mockk.isMockKMock

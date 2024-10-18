@@ -17,9 +17,9 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
@@ -122,6 +122,7 @@ internal class IntegrationTestRule(
         }
         testCaseAction(action)
         assertAction(payloadAssertion)
+        spanExporter.failOnDuplicate()
         otelExportAssertion(otelAssertion)
     }
 
@@ -135,7 +136,7 @@ internal class IntegrationTestRule(
         if (setup.useMockWebServer) {
             apiServer = FakeApiServer()
             val server: MockWebServer = MockWebServer().apply {
-                protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
+                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
                 dispatcher = apiServer
                 start()
             }

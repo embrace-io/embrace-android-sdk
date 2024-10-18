@@ -61,14 +61,9 @@ internal class SessionPropertiesServiceImplTest {
 
     @Test
     fun `populate session span with all set properties`() {
-        service = SessionPropertiesServiceImpl(
-            FakePreferenceService().apply { permanentSessionProperties = mapOf("key" to "value") },
-            FakeConfigService(),
-            FakeEmbLogger(),
-            fakeCurrentSessionSpan
-        )
         assertEquals(0, fakeCurrentSessionSpan.attributeCount())
         service.addProperty("temp", "value", false)
+        service.addProperty("perm", "value", true)
         assertEquals(2, fakeCurrentSessionSpan.attributeCount())
     }
 

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
-import io.embrace.android.embracesdk.internal.payload.DiskUsage
 
 interface MetadataService {
 

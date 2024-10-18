@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSessionStartupThr
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
-import io.embrace.android.embracesdk.internal.payload.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionZygote
 import java.util.Locale
 
 internal class SessionSpanAttrPopulatorImpl(

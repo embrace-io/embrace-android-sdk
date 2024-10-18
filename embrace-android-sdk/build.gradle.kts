@@ -30,8 +30,8 @@ android {
             path = file("CMakeLists.txt")
         }
     }
-    packagingOptions {
-        pickFirst("**/*.so")
+    packaging {
+        jniLibs.pickFirsts.add("**/*.so")
     }
     buildFeatures {
         buildConfig = true
@@ -39,7 +39,7 @@ android {
 }
 
 // include these projects in code coverage
-rootProject.childProjects.forEach { key, proj ->
+rootProject.childProjects.forEach { (_, proj) ->
     if (proj.plugins.hasPlugin("embrace-prod-defaults")) {
         dependencies.add("kover", proj)
     }

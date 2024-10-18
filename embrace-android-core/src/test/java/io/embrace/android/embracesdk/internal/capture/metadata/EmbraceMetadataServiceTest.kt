@@ -19,8 +19,8 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
+import io.embrace.android.embracesdk.internal.injection.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer

@@ -85,6 +85,7 @@ internal class ResurrectionFeatureTest {
     fun `resurrection attempt with v2 delivery layer off does not crash the SDK`() {
         testRule.runTest(
             setupAction = {
+                useMockWebServer = false
                 overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
                     v2StorageEnabled = false
                 )

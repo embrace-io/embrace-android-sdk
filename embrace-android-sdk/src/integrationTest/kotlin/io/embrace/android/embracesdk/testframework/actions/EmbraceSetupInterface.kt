@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -20,6 +22,7 @@ import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
+import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
@@ -51,6 +54,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     ),
     val fakeAnrModule: AnrModule = FakeAnrModule(),
     var cacheStorageServiceProvider: Provider<PayloadStorageService?> = { null },
+    val lifecycleOwner: TestLifecycleOwner = TestLifecycleOwner(initialState = Lifecycle.State.INITIALIZED),
 ) {
     fun createBootstrapper(): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule,
@@ -58,6 +62,18 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
         workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
+        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _ ->
+            createEssentialServiceModule(
+                initModule,
+                configModule,
+                openTelemetryModule,
+                coreModule,
+                workerThreadModule,
+                systemServiceModule,
+                androidServicesModule,
+                storageModule
+            ) { lifecycleOwner }
+        },
         deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, _ ->
             createDeliveryModule(
                 configModule,

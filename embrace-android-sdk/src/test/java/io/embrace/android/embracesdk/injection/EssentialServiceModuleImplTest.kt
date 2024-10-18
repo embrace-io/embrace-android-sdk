@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.injection
 
 import android.os.Looper
+import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -34,6 +35,7 @@ internal class EssentialServiceModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             storageModule = FakeStorageModule(),
             configModule = FakeConfigModule(),
+            lifecycleOwnerProvider = { TestLifecycleOwner() },
             networkConnectivityServiceProvider = { null }
         )
 

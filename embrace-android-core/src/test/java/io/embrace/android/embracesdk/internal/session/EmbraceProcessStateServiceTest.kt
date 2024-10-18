@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session
 import android.app.Application
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
@@ -64,7 +65,8 @@ internal class EmbraceProcessStateServiceTest {
         fakeEmbLogger = FakeEmbLogger()
         stateService = EmbraceProcessStateService(
             fakeClock,
-            fakeEmbLogger
+            fakeEmbLogger,
+            TestLifecycleOwner(Lifecycle.State.INITIALIZED)
         )
     }
 

@@ -183,8 +183,10 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             systemServiceModule,
                             androidServicesModule,
-                            storageModule
-                        ) { null }
+                            storageModule,
+                            { null },
+                            { null }
+                        )
                     }
                     postInit(EssentialServiceModule::class) {
                         // Allow config service to start making HTTP requests

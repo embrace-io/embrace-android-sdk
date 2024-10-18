@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
 import android.content.Context
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -54,19 +57,11 @@ internal class EmbraceActionInterface(
     }
 
     private fun onForeground() {
-        val processStateService = EmbraceHooks.getProcessStateService()
-        if (!processStateService.isInBackground) {
-            error("Unbalanced call to onForeground() within a test case. Please correct the test.")
-        }
-        processStateService.onForeground()
+        setup.lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
     }
 
     private fun onBackground() {
-        val processStateService = EmbraceHooks.getProcessStateService()
-        if (processStateService.isInBackground) {
-            error("Unbalanced call to onBackground() within a test case. Please correct the test.")
-        }
-        processStateService.onBackground()
+        setup.lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
     }
 
     fun simulateNetworkChange(status: NetworkStatus) {

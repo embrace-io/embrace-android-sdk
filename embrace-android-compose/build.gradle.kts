@@ -9,8 +9,8 @@ android {
 }
 
 dependencies {
-    implementation(libs.lifecycle.common.java8)
-    implementation(libs.lifecycle.extensions)
+    implementation(libs.lifecycle.runtime)
+    implementation(libs.lifecycle.process)
     compileOnly(libs.compose)
     compileOnly(project(":embrace-android-sdk"))
     testImplementation(project(":embrace-android-sdk"))

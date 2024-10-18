@@ -20,14 +20,21 @@ internal class OrchestratorBoundaryDelegate(
 
     /**
      * Prepares all services/state for a new session. Practically this involves
-     * resetting collections in services etc.
+     * resetting collections in services etc.. This will be invoked AFTER the final session payload has been created.
      */
-    fun prepareForNewSession(clearUserInfo: Boolean = false) {
+    fun cleanupAfterSessionEnd(clearUserInfo: Boolean = false) {
         memoryCleanerService.cleanServicesCollections()
-        sessionPropertiesService.prepareForNewSession()
+        sessionPropertiesService.cleanupAfterSessionEnd()
 
         if (clearUserInfo) {
             userService.clearAllUserInfo()
         }
+    }
+
+    /**
+     * Prepare the SDK to create another session. This will be invoked AFTER a new session span has been created.
+     */
+    fun prepareForNewSession() {
+        sessionPropertiesService.prepareForNewSession()
     }
 }

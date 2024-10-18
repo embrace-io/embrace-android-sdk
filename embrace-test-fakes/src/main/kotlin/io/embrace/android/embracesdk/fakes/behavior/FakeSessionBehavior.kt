@@ -12,10 +12,8 @@ class FakeSessionBehavior(
     override fun isGatingFeatureEnabled(): Boolean = false
     override fun isSessionControlEnabled(): Boolean = sessionControlEnabled
     override fun getMaxSessionProperties(): Int = maxSessionProperties
-    override fun shouldGateMoment(): Boolean = false
     override fun shouldGateInfoLog(): Boolean = false
     override fun shouldGateWarnLog(): Boolean = false
-    override fun shouldGateStartupMoment(): Boolean = false
     override fun shouldSendFullForCrash(): Boolean = false
     override fun shouldSendFullForErrorLog(): Boolean = false
     override fun shouldGateSessionProperties(): Boolean = false

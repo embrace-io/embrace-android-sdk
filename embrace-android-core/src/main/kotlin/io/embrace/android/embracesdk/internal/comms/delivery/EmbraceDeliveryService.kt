@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -162,9 +161,5 @@ class EmbraceDeliveryService(
         val lastHeartbeatTimeMs =
             sessionSpan.attributes?.findAttributeValue(embHeartbeatTimeUnixNano.attributeKey.key)?.toLongOrNull() ?: 0L
         return max(endTimeMs, lastHeartbeatTimeMs).nanosToMillis()
-    }
-
-    override fun sendMoment(eventMessage: EventMessage) {
-        apiService.sendEvent(eventMessage)
     }
 }

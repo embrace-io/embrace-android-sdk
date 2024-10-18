@@ -1,8 +1,14 @@
 # Upgrade guide
 
+# Upgrading from 6.x to 7.x
+
+Version 7 of the Embrace Android SDK has breaking changes:
+
+- The `startMoment/endMoment` API has been removed. Use `startSpan/recordSpan` instead.
+
 # Upgrading from 5.x to 6.x
 
-Version X of the Embrace <platform> SDK renames some functions. This has been done to reduce
+Version 6 of the Embrace Android SDK renames some functions. This has been done to reduce
 confusion & increase consistency across our SDKs.
 
 Functions that have been marked as deprecated will still work as before, but will be removed in

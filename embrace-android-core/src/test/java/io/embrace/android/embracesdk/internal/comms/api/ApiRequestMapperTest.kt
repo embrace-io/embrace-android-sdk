@@ -2,9 +2,6 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.Event
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -69,35 +66,6 @@ internal class ApiRequestMapperTest {
     fun testSessionRequest() {
         val request = mapper.sessionRequest()
         request.assertCoreFieldsPopulated("/v2/spans")
-    }
-
-    @Test
-    fun testEventMessageRequest() {
-        val request = mapper.eventMessageRequest(
-            EventMessage(
-                Event(
-                    type = EventType.INFO_LOG,
-                    eventId = "eventId"
-                )
-            )
-        )
-        request.assertCoreFieldsPopulated("/v1/log/events")
-        assertEquals("il:eventId", request.eventId)
-    }
-
-    @Test
-    fun testCrashRequest() {
-        val request = mapper.eventMessageRequest(
-            EventMessage(
-                Event(
-                    type = EventType.CRASH,
-                    eventId = "eventId",
-                    activeEventIds = listOf("activeEventId1", "activeEventId2")
-                )
-            )
-        )
-        request.assertCoreFieldsPopulated("/v1/log/events")
-        assertEquals("c:activeEventId1,activeEventId2", request.eventId)
     }
 
     private fun ApiRequest.assertCoreFieldsPopulated(endpoint: String) {

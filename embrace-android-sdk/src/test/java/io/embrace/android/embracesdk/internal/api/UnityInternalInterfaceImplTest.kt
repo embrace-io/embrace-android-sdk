@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.mockk.every
 import io.mockk.mockk
@@ -63,7 +63,7 @@ internal class UnityInternalInterfaceImplTest {
         impl.logUnhandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
-                EventType.ERROR_LOG,
+                Severity.ERROR,
                 "Unity exception",
                 null,
                 null,
@@ -83,7 +83,7 @@ internal class UnityInternalInterfaceImplTest {
         impl.logHandledUnityException("name", "msg", "stack")
         verify(exactly = 1) {
             embrace.logMessage(
-                EventType.ERROR_LOG,
+                Severity.ERROR,
                 "Unity exception",
                 null,
                 null,

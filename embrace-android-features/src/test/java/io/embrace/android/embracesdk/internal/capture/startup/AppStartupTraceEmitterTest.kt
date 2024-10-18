@@ -52,8 +52,7 @@ internal class AppStartupTraceEmitterTest {
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
         startupService = StartupServiceImpl(
-            spanService,
-            backgroundWorker
+            spanService
         )
         clock.tick(100L)
         logger = FakeEmbLogger(false)

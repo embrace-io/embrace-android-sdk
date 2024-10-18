@@ -28,8 +28,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.StartupBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
@@ -130,8 +128,6 @@ internal class EmbraceConfigService(
             thresholdCheck = thresholdCheck,
             remoteSupplier = remoteSupplier
         )
-
-    override val startupBehavior: StartupBehavior = StartupBehaviorImpl()
 
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(
         thresholdCheck = thresholdCheck,

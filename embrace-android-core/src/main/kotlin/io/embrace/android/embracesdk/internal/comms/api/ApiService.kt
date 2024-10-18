@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnec
 import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import java.util.concurrent.Future
 
@@ -23,13 +22,6 @@ interface ApiService : RemoteConfigSource, NetworkConnectivityListener {
      * @param logEnvelope containing the logs
      */
     fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>)
-
-    /**
-     * Sends an event to the API.
-     *
-     * @param eventMessage the event message containing the event
-     */
-    fun sendEvent(eventMessage: EventMessage)
 
     /**
      * Sends a session to the API. This can be either a v1 or v2 session - the implementation

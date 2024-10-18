@@ -294,7 +294,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -306,7 +305,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
-            eventId = "request_2",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -319,7 +317,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
-            eventId = "request_3",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -405,7 +402,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -417,7 +413,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
-            eventId = "request_2",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -430,7 +425,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
-            eventId = "request_3",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -465,7 +459,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id_1",
             deviceId = "test_device_id",
-            eventId = "request_1",
             contentEncoding = "gzip",
             userAgent = ""
         )
@@ -477,7 +470,6 @@ internal class EmbraceDeliveryCacheManagerTest {
             httpMethod = HttpMethod.POST,
             appId = "test_app_id",
             deviceId = "test_device_id",
-            eventId = "request_2",
             contentEncoding = "gzip",
             userAgent = ""
         )

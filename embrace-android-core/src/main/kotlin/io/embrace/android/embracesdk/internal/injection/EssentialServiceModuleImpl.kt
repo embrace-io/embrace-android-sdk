@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
@@ -23,6 +25,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 class EssentialServiceModuleImpl(
@@ -33,7 +36,8 @@ class EssentialServiceModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    storageModule: StorageModule
+    storageModule: StorageModule,
+    lifecycleOwnerProvider: Provider<LifecycleOwner?>
 ) : EssentialServiceModule {
 
     private val configService by lazy { configModule.configService }
@@ -42,7 +46,8 @@ class EssentialServiceModuleImpl(
 
     override val processStateService: ProcessStateService by singleton {
         Systrace.traceSynchronous("process-state-service-init") {
-            EmbraceProcessStateService(initModule.clock, initModule.logger)
+            val lifecycleOwner = lifecycleOwnerProvider() ?: ProcessLifecycleOwner.get()
+            EmbraceProcessStateService(initModule.clock, initModule.logger, lifecycleOwner)
         }
     }
 

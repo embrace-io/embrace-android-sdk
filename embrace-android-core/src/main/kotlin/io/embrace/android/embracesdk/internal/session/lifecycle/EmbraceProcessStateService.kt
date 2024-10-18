@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.session.lifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -19,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class EmbraceProcessStateService(
     private val clock: Clock,
     private val logger: EmbLogger,
-    private val lifecycleOwner: LifecycleOwner = ProcessLifecycleOwner.get()
+    private val lifecycleOwner: LifecycleOwner
 ) : ProcessStateService, LifecycleEventObserver {
 
     /**

@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
+import io.embrace.android.embracesdk.BuildConfig
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.execution.HttpUrlConnectionRequestExecutionService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
@@ -291,7 +292,13 @@ internal class ModuleInitBootstrapper(
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {
                                     null
                                 } else {
-                                    RequestExecutionServiceImpl()
+                                    val appId = checkNotNull(configModule.configService.appId)
+                                    HttpUrlConnectionRequestExecutionService(
+                                        configModule.configService.sdkEndpointBehavior.getData(appId),
+                                        lazy(androidServicesModule.preferencesService::deviceIdentifier),
+                                        appId,
+                                        BuildConfig.VERSION_NAME
+                                    )
                                 }
                             },
                             {

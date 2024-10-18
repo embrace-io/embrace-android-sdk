@@ -35,6 +35,23 @@ internal class FilteredSpanExporter : SpanExporter {
         }, expectedCount)
     }
 
+    fun failOnDuplicate() {
+        val exportedSpans = spanData.toList()
+        val seen = exportedSpans.map { it.spanId }.distinct()
+        val duplicates = exportedSpans
+            .filterNot {
+                seen.contains(it.spanId)
+            }.map {
+                Pair(
+                    "spanId" to it.spanId,
+                    "name" to it.name,
+                )
+            }.distinct()
+        if (duplicates.isNotEmpty()) {
+            error("Duplicate spans exported: $duplicates")
+        }
+    }
+
     private fun awaitSpanExport(
         spanFilter: (SpanData) -> Boolean,
         expectedCount: Int,

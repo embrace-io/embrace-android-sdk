@@ -35,10 +35,6 @@ class LegacyExceptionInfo(
     @Json(name = "length")
     val originalLength: Int? = lines.size.takeIf { it > STACK_FRAME_LIMIT }
 
-    fun toNewPayload(): ExceptionInfo {
-        return ExceptionInfo(name, message, lines)
-    }
-
     companion object {
 
         /**

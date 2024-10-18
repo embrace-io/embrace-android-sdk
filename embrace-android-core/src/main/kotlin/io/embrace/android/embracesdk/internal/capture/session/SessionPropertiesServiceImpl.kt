@@ -54,8 +54,12 @@ internal class SessionPropertiesServiceImpl(
 
     override fun getProperties(): Map<String, String> = props.get()
 
+    override fun cleanupAfterSessionEnd() {
+        props.clear()
+    }
+
     override fun prepareForNewSession() {
-        props.prepareForNewSession()
+        props.addPermPropsToSessionSpan()
     }
 
     override fun addChangeListener(listener: (Map<String, String>) -> Unit) {

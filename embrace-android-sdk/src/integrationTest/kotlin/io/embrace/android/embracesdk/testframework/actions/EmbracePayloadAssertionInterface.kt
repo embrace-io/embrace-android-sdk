@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import org.json.JSONObject
 import org.junit.Assert
+import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeoutException
  */
 internal class EmbracePayloadAssertionInterface(
     bootstrapper: ModuleInitBootstrapper,
+    private val apiServer: FakeApiServer?,
 ) {
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
@@ -54,10 +56,21 @@ internal class EmbracePayloadAssertionInterface(
         return getLogEnvelopes(1).single()
     }
 
+    /**
+     * Returns a list of logs that were completed by the SDK & sent to a mock web server.
+     */
+    internal fun getLogEnvelopesFromMockServer(
+        expectedSize: Int
+    ): List<Envelope<LogPayload>> {
+        return retrievePayload(expectedSize) {
+            checkNotNull(apiServer).getLogEnvelopes()
+        }
+    }
+
     private fun retrieveLogEnvelopes(
         expectedSize: Int
     ): List<Envelope<LogPayload>> {
-        val supplier = { requestExecutionService.getRequests<LogPayload>() }
+        val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
             return retrievePayload(expectedSize, supplier)
         } catch (exc: TimeoutException) {
@@ -119,6 +132,17 @@ internal class EmbracePayloadAssertionInterface(
 
     /*** SESSIONS ***/
 
+    /**
+     * Returns a list of sessions that were completed by the SDK & sent to a mock web server.
+     */
+    internal fun getSessionEnvelopesFromMockServer(
+        expectedSize: Int,
+        state: ApplicationState = ApplicationState.FOREGROUND,
+    ): List<Envelope<SessionPayload>> {
+        return retrievePayload(expectedSize) {
+            checkNotNull(apiServer).getSessionEnvelopes().filter { it.findAppState() == state }
+        }
+    }
 
     /**
      * Returns a list of sessions that were completed by the SDK.
@@ -141,7 +165,7 @@ internal class EmbracePayloadAssertionInterface(
         expectedSize: Int, appState: ApplicationState,
     ): List<Envelope<SessionPayload>> {
         val supplier = {
-            requestExecutionService.getRequests<SessionPayload>()
+            checkNotNull(apiServer).getSessionEnvelopes()
                 .filter { it.findAppState() == appState }
         }
         try {

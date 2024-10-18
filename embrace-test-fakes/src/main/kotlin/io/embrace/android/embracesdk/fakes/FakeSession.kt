@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
-import io.embrace.android.embracesdk.internal.payload.SessionZygote
+import io.embrace.android.embracesdk.internal.session.SessionZygote
 
 fun fakeSessionZygote(): SessionZygote = SessionZygote(
     sessionId = "fakeSessionId",

@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.payload
+package io.embrace.android.embracesdk.internal.capture.metadata
 
 /**
  * Disk space used by the app and available memory on the device.

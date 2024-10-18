@@ -1,5 +1,3 @@
-import io.embrace.gradle.Versions
-
 plugins {
     id("embrace-test-defaults")
 }
@@ -23,7 +21,7 @@ dependencies {
     compileOnly(libs.opentelemetry.semconv.incubating)
 
     implementation(libs.junit)
-    implementation("org.robolectric:robolectric:${Versions.ROBOLECTRIC}")
+    implementation(libs.robolectric)
     implementation(libs.lifecycle.common.java8)
     implementation(libs.lifecycle.process)
 }

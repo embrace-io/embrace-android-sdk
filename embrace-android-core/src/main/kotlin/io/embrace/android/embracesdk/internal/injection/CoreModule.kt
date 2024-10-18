@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.AndroidResourcesService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
-import io.embrace.android.embracesdk.internal.payload.PackageVersionInfo
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 /**

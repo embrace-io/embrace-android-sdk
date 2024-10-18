@@ -94,6 +94,7 @@ internal class SessionApiTest {
                     "emb.usage.set_username" to "1",
                     "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
+                    "emb.usage.get_trace_id_header" to "1",
                     "emb.private.sequence_id" to "4"
                 ).toSortedMap()
 

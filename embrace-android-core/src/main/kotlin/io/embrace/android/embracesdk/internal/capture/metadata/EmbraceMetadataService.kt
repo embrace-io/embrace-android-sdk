@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppInfo
 import io.embrace.android.embracesdk.internal.payload.DeviceInfo
-import io.embrace.android.embracesdk.internal.payload.DiskUsage
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 

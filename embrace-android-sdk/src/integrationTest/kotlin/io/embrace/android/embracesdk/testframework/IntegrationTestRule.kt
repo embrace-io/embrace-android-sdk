@@ -136,7 +136,7 @@ internal class IntegrationTestRule(
         if (setup.useMockWebServer) {
             apiServer = FakeApiServer()
             val server: MockWebServer = MockWebServer().apply {
-                protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
+                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
                 dispatcher = apiServer
                 start()
             }

@@ -219,8 +219,7 @@ internal class ModuleInitBootstrapper(
                         anrModuleSupplier(
                             initModule,
                             configModule.configService,
-                            workerThreadModule,
-                            openTelemetryModule
+                            workerThreadModule
                         )
                     }
 
@@ -241,7 +240,6 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             systemServiceModule,
                             androidServicesModule,
-                            anrModule,
                             essentialServiceModule.logWriter,
                             configModule.configService,
                         )

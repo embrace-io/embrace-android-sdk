@@ -91,7 +91,6 @@ internal class IntegrationTestRule(
     lateinit var preSdkStart: EmbracePreSdkStartInterface
     private lateinit var otelAssertion: EmbraceOtelExportAssertionInterface
     private lateinit var spanExporter: FilteredSpanExporter
-    private lateinit var server: MockWebServer
 
     lateinit var bootstrapper: ModuleInitBootstrapper
 
@@ -130,19 +129,24 @@ internal class IntegrationTestRule(
      * Setup the Embrace SDK so it's ready for testing.
      */
     override fun before() {
-        val apiServer = FakeApiServer()
-        server = MockWebServer().apply {
-            protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
-            dispatcher = apiServer
-            start()
-        }
-        val baseUrl = server.url("api").toString()
-
         setup = embraceSetupInterfaceSupplier.invoke()
-        setup.overriddenConfigService.sdkEndpointBehavior = FakeSdkEndpointBehavior(
-            baseUrl,
-            baseUrl
-        )
+        var apiServer: FakeApiServer? = null
+
+        if (setup.useMockWebServer) {
+            apiServer = FakeApiServer()
+            val server: MockWebServer = MockWebServer().apply {
+                protocols = listOf(Protocol.H2_PRIOR_KNOWLEDGE)
+                dispatcher = apiServer
+                start()
+            }
+            val baseUrl = server.url("api").toString()
+
+            setup.overriddenConfigService.sdkEndpointBehavior = FakeSdkEndpointBehavior(
+                baseUrl,
+                baseUrl
+            )
+        }
+
         preSdkStart = EmbracePreSdkStartInterface(setup)
         bootstrapper = setup.createBootstrapper()
         action = EmbraceActionInterface(setup, bootstrapper)

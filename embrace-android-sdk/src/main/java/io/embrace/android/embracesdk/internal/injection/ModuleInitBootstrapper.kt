@@ -184,7 +184,7 @@ internal class ModuleInitBootstrapper(
                             systemServiceModule,
                             androidServicesModule,
                             storageModule
-                        )
+                        ) { null }
                     }
                     postInit(EssentialServiceModule::class) {
                         // Allow config service to start making HTTP requests
@@ -287,6 +287,7 @@ internal class ModuleInitBootstrapper(
                             coreModule,
                             storageModule,
                             essentialServiceModule,
+                            { null },
                             { null },
                             {
                                 if (configModule.configService.isOnlyUsingOtelExporters()) {

@@ -18,6 +18,7 @@ class FakeNetworkConnectivityService(
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
         networkConnectivityListeners.add(listener)
+        listener.onNetworkConnectivityStatusChanged(networkStatus)
     }
 
     override fun removeNetworkConnectivityListener(listener: NetworkConnectivityListener) {

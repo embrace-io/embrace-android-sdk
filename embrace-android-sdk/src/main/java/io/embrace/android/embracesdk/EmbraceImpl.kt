@@ -205,12 +205,12 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // Send any sessions that were cached and not yet sent.
         startSynchronous("send-cached-sessions")
 
-        if (useLegacyResurrection()) {
+        if (useLegacyResurrection(configModule.configService)) {
             bootstrapper
                 .workerThreadModule
                 .priorityWorker<TaskPriority>(Worker.Priority.DeliveryCacheWorker)
                 .submit(TaskPriority.NORMAL) {
-                    if (useLegacyResurrection()) {
+                    if (useLegacyResurrection(configModule.configService)) {
                         val essentialServiceModule = bootstrapper.essentialServiceModule
                         bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
                             bootstrapper.nativeFeatureModule::nativeCrashService,
@@ -274,17 +274,20 @@ internal class EmbraceImpl @JvmOverloads constructor(
         )
         endSynchronous()
 
-        if (!useLegacyResurrection()) {
-            bootstrapper
+        if (!useLegacyResurrection(configModule.configService)) {
+            val worker = bootstrapper
                 .workerThreadModule
                 .backgroundWorker(Worker.Background.IoRegWorker)
-                .submit {
-                    if (!useLegacyResurrection()) {
-                        bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
-                            nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
-                        )
-                    }
+            worker.submit {
+                if (!useLegacyResurrection(configModule.configService)) {
+                    bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
+                        nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
+                    )
                 }
+            }
+            worker.submit {
+                bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
+            }
         }
     }
 
@@ -379,7 +382,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    private fun useLegacyResurrection(): Boolean {
-        return configService?.autoDataCaptureBehavior?.isV2StorageEnabled() != true
+    private fun useLegacyResurrection(cfgService: ConfigService?): Boolean {
+        return cfgService?.autoDataCaptureBehavior?.isV2StorageEnabled() != true
     }
 }

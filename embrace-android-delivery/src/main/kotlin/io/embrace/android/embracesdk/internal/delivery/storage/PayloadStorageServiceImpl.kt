@@ -148,9 +148,11 @@ class PayloadStorageServiceImpl(
         if (removalCount < 0) {
             return false
         }
-        val removals = input
-            .sortedWith(storedTelemetryComparator)
-            .takeLast(removalCount)
+        val removals = input.sortedWith(
+            compareByDescending(StoredTelemetryMetadata::envelopeType)
+                .thenBy(StoredTelemetryMetadata::timestamp)
+        )
+            .take(removalCount)
         removals.forEach(::processDelete)
         logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, RuntimeException("Pruned payload storage"))
 
@@ -165,7 +167,7 @@ class PayloadStorageServiceImpl(
         fun createOutputDir(
             ctx: Context,
             outputType: OutputType,
-            logger: EmbLogger
+            logger: EmbLogger,
         ) = lazy {
             try {
                 File(ctx.filesDir, outputType.dir).apply(File::mkdirs)

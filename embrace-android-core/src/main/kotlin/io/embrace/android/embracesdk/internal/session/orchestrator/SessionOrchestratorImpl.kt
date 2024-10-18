@@ -188,7 +188,7 @@ internal class SessionOrchestratorImpl(
             // the previous session has fully ended at this point
             // now, we can clear the SDK state and prepare for the next session
             Systrace.startSynchronous("prepare-new-session")
-            boundaryDelegate.prepareForNewSession(clearUserInfo)
+            boundaryDelegate.cleanupAfterSessionEnd(clearUserInfo)
             Systrace.endSynchronous()
 
             // calculate new session state
@@ -201,19 +201,22 @@ internal class SessionOrchestratorImpl(
             activeSession = newState
             val sessionId = newState?.sessionId
             sessionIdTracker.setActiveSession(sessionId, inForeground)
-            newState?.let(sessionSpanAttrPopulator::populateSessionSpanStartAttrs)
-            Systrace.endSynchronous()
 
-            // initiate periodic caching of the payload if a new session has started
-            Systrace.startSynchronous("initiate-periodic-caching")
-            if (transitionType != TransitionType.CRASH && newState != null) {
-                updatePeriodicCacheAttrs()
-                payloadCachingService?.startCaching(newState, endProcessState) { state, timestamp, zygote ->
-                    synchronized(lock) {
-                        updatePeriodicCacheAttrs()
-                        payloadFactory.snapshotPayload(state, timestamp, zygote)
+            if (newState != null) {
+                boundaryDelegate.prepareForNewSession()
+                sessionSpanAttrPopulator.populateSessionSpanStartAttrs(newState)
+                // initiate periodic caching of the payload if a new session has started
+                Systrace.startSynchronous("initiate-periodic-caching")
+                if (transitionType != TransitionType.CRASH) {
+                    updatePeriodicCacheAttrs()
+                    payloadCachingService?.startCaching(newState, endProcessState) { state, timestamp, zygote ->
+                        synchronized(lock) {
+                            updatePeriodicCacheAttrs()
+                            payloadFactory.snapshotPayload(state, timestamp, zygote)
+                        }
                     }
                 }
+                Systrace.endSynchronous()
             }
             Systrace.endSynchronous()
 

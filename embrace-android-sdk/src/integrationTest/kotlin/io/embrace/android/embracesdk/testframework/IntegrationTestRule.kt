@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.behavior.FakeSdkEndpointBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -21,6 +22,9 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAsserti
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
+import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import okhttp3.Protocol
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.rules.ExternalResource
 
 /**
@@ -66,7 +70,7 @@ import org.junit.rules.ExternalResource
  * production.
  */
 internal class IntegrationTestRule(
-    private val embraceSetupInterfaceSupplier: Provider<EmbraceSetupInterface> = { EmbraceSetupInterface() }
+    private val embraceSetupInterfaceSupplier: Provider<EmbraceSetupInterface> = { EmbraceSetupInterface() },
 ) : ExternalResource() {
 
     /**
@@ -127,10 +131,27 @@ internal class IntegrationTestRule(
      */
     override fun before() {
         setup = embraceSetupInterfaceSupplier.invoke()
+        var apiServer: FakeApiServer? = null
+
+        if (setup.useMockWebServer) {
+            apiServer = FakeApiServer()
+            val server: MockWebServer = MockWebServer().apply {
+                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+                dispatcher = apiServer
+                start()
+            }
+            val baseUrl = server.url("api").toString()
+
+            setup.overriddenConfigService.sdkEndpointBehavior = FakeSdkEndpointBehavior(
+                baseUrl,
+                baseUrl
+            )
+        }
+
         preSdkStart = EmbracePreSdkStartInterface(setup)
         bootstrapper = setup.createBootstrapper()
         action = EmbraceActionInterface(setup, bootstrapper)
-        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper)
+        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
         otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter)
     }

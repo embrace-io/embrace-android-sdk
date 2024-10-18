@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertNotNull
@@ -18,6 +19,7 @@ internal class ResurrectionFeatureTest {
     fun `resurrection attempt with v2 delivery layer off does not crash the SDK`() {
         testRule.runTest(
             setupAction = {
+                useMockWebServer = false
                 overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
                     v2StorageEnabled = false
                 )
@@ -26,7 +28,7 @@ internal class ResurrectionFeatureTest {
                 recordSession()
             },
             assertAction = {
-                assertNotNull(getSingleSessionEnvelope())
+                assertNotNull(getSessionEnvelopesV1(1).single())
             }
         )
     }

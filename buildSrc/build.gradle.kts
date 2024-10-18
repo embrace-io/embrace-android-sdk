@@ -15,7 +15,7 @@ dependencies {
     implementation(gradleApi())
 
     // Version of Kotlin used at build time
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
     implementation("com.android.tools.build:gradle:8.7.1")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.7")
     implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.16.3")

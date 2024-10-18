@@ -22,6 +22,7 @@ internal class LogRecordExporterTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
+    @Suppress("deprecation")
     @Test
     fun `SDK can receive a LogRecordExporter`() {
         val fakeLogRecordExporter = FakeLogRecordExporter()
@@ -38,7 +39,8 @@ internal class LogRecordExporterTest {
             },
             assertAction = {
                 assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) > 0)
-                assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body?.asString())
+                val body = fakeLogRecordExporter.exportedLogs?.first()?.body
+                assertEquals("test message", body?.asString())
             }
         )
     }

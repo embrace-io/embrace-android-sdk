@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.EXCEPTION_EVENT_NAME
@@ -204,6 +205,7 @@ class FakePersistableEmbraceSpan(
             ).apply {
                 start(startTimeMs)
                 setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, sessionId)
+                setSystemAttribute(embState.attributeKey, "foreground")
                 setSystemAttribute(
                     embHeartbeatTimeUnixNano.attributeKey,
                     (lastHeartbeatTimeMs ?: this.spanStartTimeMs)!!.millisToNanos().toString()

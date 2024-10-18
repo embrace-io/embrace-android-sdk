@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
@@ -35,7 +36,9 @@ internal class EmbracePayloadAssertionInterface(
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
     private val requestExecutionService by lazy { bootstrapper.deliveryModule.requestExecutionService as FakeRequestExecutionService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
-
+    private val nativeCrashService by lazy {
+        bootstrapper.nativeFeatureModule.nativeCrashService as FakeNativeCrashService
+    }
 
     /*** LOGS ***/
 
@@ -82,7 +85,6 @@ internal class EmbracePayloadAssertionInterface(
                 "Envelopes: $envelopes", exc)
         }
     }
-
 
     /*** LOGS V1 ***/
 
@@ -176,7 +178,10 @@ internal class EmbracePayloadAssertionInterface(
                     "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
                 )
             }
-            throw IllegalStateException("Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions", exc)
+            throw IllegalStateException(
+                "Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions",
+                exc
+            )
         }
     }
 
@@ -189,15 +194,9 @@ internal class EmbracePayloadAssertionInterface(
         return ApplicationState.valueOf(value)
     }
 
-    fun getCachedSessionEnvelopes(
-        expectedSize: Int,
-        appState: ApplicationState = ApplicationState.FOREGROUND,
-    ): List<Envelope<SessionPayload>> {
-        return retrievePayload(expectedSize) {
-            checkNotNull(deliveryService.savedSessionEnvelopes).map { it.first }
-                .filter { it.findAppState() == appState }
-        }
-    }
+    /*** Native ***/
+
+    internal fun getSentNativeCrashes() = nativeCrashService.nativeCrashesSent.toList()
 
 
     /*** SESSIONS V1 ***/

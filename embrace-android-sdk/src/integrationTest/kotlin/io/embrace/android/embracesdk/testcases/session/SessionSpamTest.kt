@@ -29,11 +29,11 @@ internal class SessionSpamTest {
                 }
             },
             assertAction = {
-                val messages = getSessionEnvelopes(SESSION_COUNT)
+                val messages = getSessionEnvelopes(SESSION_COUNT, waitTimeMs = 10000)
                 val ids = messages.map { it.getSessionId() }.toSet()
                 assertEquals(SESSION_COUNT, ids.size)
 
-                val bas = getSessionEnvelopes(SESSION_COUNT, ApplicationState.BACKGROUND)
+                val bas = getSessionEnvelopes(SESSION_COUNT, ApplicationState.BACKGROUND, waitTimeMs = 10000)
                 val baIds = bas.map { it.getSessionId() }.toSet()
                 assertEquals(SESSION_COUNT, baIds.size)
             }

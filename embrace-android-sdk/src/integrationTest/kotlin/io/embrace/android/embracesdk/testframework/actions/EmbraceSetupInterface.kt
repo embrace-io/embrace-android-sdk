@@ -76,7 +76,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 storageModule
             ) { networkConnectivityService }
         },
-        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, requestExecutionServiceProvider, deliveryServiceProvider ->
+        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, requestExecutionServiceProvider, deliveryServiceProvider ->
             createDeliveryModule(
                 configModule,
                 otelModule,

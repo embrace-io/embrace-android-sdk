@@ -16,6 +16,7 @@ typealias DeliveryModuleSupplier = (
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    payloadStorageServiceProvider: Provider<PayloadStorageService?>,
     cacheStorageServiceProvider: Provider<PayloadStorageService?>,
     requestExecutionServiceProvider: Provider<RequestExecutionService?>,
     deliveryServiceProvider: Provider<DeliveryService?>
@@ -29,6 +30,7 @@ fun createDeliveryModule(
     coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
+    payloadStorageServiceProvider: Provider<PayloadStorageService?>,
     cacheStorageServiceProvider: Provider<PayloadStorageService?>,
     requestExecutionServiceProvider: Provider<RequestExecutionService?>,
     deliveryServiceProvider: Provider<DeliveryService?>
@@ -41,6 +43,7 @@ fun createDeliveryModule(
     storageModule,
     essentialServiceModule,
     requestExecutionServiceProvider,
+    payloadStorageServiceProvider,
     cacheStorageServiceProvider,
     deliveryServiceProvider
 )

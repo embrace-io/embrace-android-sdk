@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -66,6 +67,11 @@ internal class EmbraceActionInterface(
             error("Unbalanced call to onBackground() within a test case. Please correct the test.")
         }
         processStateService.onBackground()
+    }
+
+    fun simulateNetworkChange(status: NetworkStatus) {
+        val service = (bootstrapper.essentialServiceModule.networkConnectivityService as FakeNetworkConnectivityService)
+        service.networkStatus = status
     }
 
     fun simulateActivityLifecycle() {

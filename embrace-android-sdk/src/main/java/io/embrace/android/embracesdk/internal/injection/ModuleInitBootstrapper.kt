@@ -207,9 +207,11 @@ internal class ModuleInitBootstrapper(
                                 Systrace.traceSynchronous("network-connectivity-registration") {
                                     essentialServiceModule.networkConnectivityService.register()
                                 }
-                                Systrace.traceSynchronous("network-connectivity-listeners") {
-                                    networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
-                                    apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                                if (!configModule.configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
+                                    Systrace.traceSynchronous("network-connectivity-listeners") {
+                                        networkConnectivityService.addNetworkConnectivityListener(pendingApiCallsSender)
+                                        apiService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                                    }
                                 }
                             }
                         }

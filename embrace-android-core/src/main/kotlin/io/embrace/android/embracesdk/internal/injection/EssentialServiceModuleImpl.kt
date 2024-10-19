@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
+import io.embrace.android.embracesdk.internal.comms.delivery.NoopPendingApiCallSender
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTrackerImpl
@@ -91,14 +92,18 @@ class EssentialServiceModuleImpl(
         }
     }
 
-    override val pendingApiCallsSender: PendingApiCallsSender by singleton {
+    override val pendingApiCallsSender: PendingApiCallsSender by lazy {
         Systrace.traceSynchronous("pending-call-sender-init") {
-            EmbracePendingApiCallsSender(
-                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                storageModule.deliveryCacheManager,
-                initModule.clock,
-                initModule.logger
-            )
+            if (!configService.autoDataCaptureBehavior.isV2StorageEnabled()) {
+                EmbracePendingApiCallsSender(
+                    workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                    storageModule.deliveryCacheManager,
+                    initModule.clock,
+                    initModule.logger
+                )
+            } else {
+                NoopPendingApiCallSender()
+            }
         }
     }
 

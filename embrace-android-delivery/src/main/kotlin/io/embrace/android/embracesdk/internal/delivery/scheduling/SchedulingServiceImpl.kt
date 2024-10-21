@@ -128,7 +128,7 @@ class SchedulingServiceImpl(
                     val nextRetryTimeMs = if (this is ApiResponse.TooManyRequests && retryAfter != null) {
                         val unblockedTimestampMs = clock.now() + retryAfter
                         blockedEndpoints[endpoint] = unblockedTimestampMs
-                        unblockedTimestampMs
+                        unblockedTimestampMs + 1L
                     } else {
                         calculateNextRetryTime(retryAttempts = retryAttempts)
                     }
@@ -194,6 +194,11 @@ class SchedulingServiceImpl(
 
     private fun calculateDelay(nextRetryTimeMs: Long): Long = nextRetryTimeMs - clock.now()
 
+    /**
+     * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of
+     * doing this, and as much as it pains me to do this, it's isolated and tested, and the runtime penalty, however
+     * tiny, is not worth incurring if we can instead do this.
+     */
     private fun calculateNextRetryTime(
         retryAttempts: Int,
     ): Long = clock.now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))

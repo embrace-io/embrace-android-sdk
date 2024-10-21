@@ -25,7 +25,7 @@ interface PayloadStorageService {
     /**
      * Deletes a payload
      */
-    fun delete(metadata: StoredTelemetryMetadata)
+    fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit = {})
 
     /**
      * Loads a payload as an [InputStream]

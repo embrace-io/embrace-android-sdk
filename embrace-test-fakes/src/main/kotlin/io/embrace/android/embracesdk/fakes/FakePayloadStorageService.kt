@@ -44,9 +44,10 @@ class FakePayloadStorageService(
         }
     }
 
-    override fun delete(metadata: StoredTelemetryMetadata) {
+    override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
         cachedPayloads.remove(metadata)
         deleteCount.getAndIncrement()
+        callback()
     }
 
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> =

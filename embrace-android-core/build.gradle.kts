@@ -43,5 +43,6 @@ dependencies {
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
     testImplementation(libs.lifecycle.common.java8)
+    testImplementation(libs.lifecycle.testing)
     testImplementation(libs.kotlin.reflect)
 }

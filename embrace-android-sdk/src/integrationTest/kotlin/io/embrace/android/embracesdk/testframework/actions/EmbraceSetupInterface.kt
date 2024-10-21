@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -56,7 +58,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule(),
     var cacheStorageServiceProvider: Provider<PayloadStorageService?> = { null },
     var payloadStorageServiceProvider: Provider<PayloadStorageService?> = { null },
-    val networkConnectivityService: FakeNetworkConnectivityService = FakeNetworkConnectivityService()
+    val networkConnectivityService: FakeNetworkConnectivityService = FakeNetworkConnectivityService(),
+    val lifecycleOwner: TestLifecycleOwner = TestLifecycleOwner(initialState = Lifecycle.State.INITIALIZED),
 ) {
     fun createBootstrapper(): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule,
@@ -64,7 +67,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
         coreModuleSupplier = { _, _ -> overriddenCoreModule },
         workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
-        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _ ->
+        essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _, _ ->
             createEssentialServiceModule(
                 initModule,
                 configModule,
@@ -73,7 +76,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 workerThreadModule,
                 systemServiceModule,
                 androidServicesModule,
-                storageModule
+                storageModule,
+                { lifecycleOwner }
             ) { networkConnectivityService }
         },
         deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, _, _, requestExecutionServiceProvider, deliveryServiceProvider ->

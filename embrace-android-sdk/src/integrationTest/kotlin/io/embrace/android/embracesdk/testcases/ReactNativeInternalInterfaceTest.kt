@@ -1,8 +1,10 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansByName
@@ -26,11 +28,10 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceTest {
 
-    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(appFramework = Embrace.AppFramework.REACT_NATIVE)
+        EmbraceSetupInterface(appFramework = REACT_NATIVE)
     }
 
     @Test

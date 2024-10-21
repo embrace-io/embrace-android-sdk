@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace.LastRunEndState
+import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule

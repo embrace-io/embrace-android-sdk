@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
@@ -83,16 +83,16 @@ internal class SdkStateApiDelegate(
             return null
         }
 
-    override val lastRunEndState: Embrace.LastRunEndState
+    override val lastRunEndState: LastRunEndState
         get() {
             return if (isStarted && crashVerifier != null) {
                 if (crashVerifier?.didLastRunCrash() == true) {
-                    Embrace.LastRunEndState.CRASH
+                    LastRunEndState.CRASH
                 } else {
-                    Embrace.LastRunEndState.CLEAN_EXIT
+                    LastRunEndState.CLEAN_EXIT
                 }
             } else {
-                Embrace.LastRunEndState.INVALID
+                LastRunEndState.INVALID
             }
         }
 

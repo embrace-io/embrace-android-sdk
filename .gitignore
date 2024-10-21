@@ -62,3 +62,4 @@ fastlane/readme.md
 docs/
 
 .DS_Store
+.kotlin

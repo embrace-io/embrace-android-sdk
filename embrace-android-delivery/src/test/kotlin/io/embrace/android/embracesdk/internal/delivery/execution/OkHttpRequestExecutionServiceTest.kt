@@ -51,7 +51,8 @@ class OkHttpRequestExecutionServiceTest {
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
-            connectionTimeoutSeconds = 2L,
+            connectionTimeoutSeconds = 1L,
+            readTimeoutSeconds = 1L,
         )
     }
 

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import java.io.IOException
 import java.io.InputStream
 
 /**
@@ -31,7 +30,6 @@ interface PayloadStorageService {
     /**
      * Loads a payload as an [InputStream]
      */
-    @Throws(IOException::class)
     fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream?
 
     /**

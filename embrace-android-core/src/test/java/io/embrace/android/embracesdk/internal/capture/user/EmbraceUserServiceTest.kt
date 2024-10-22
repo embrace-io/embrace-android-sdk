@@ -27,15 +27,6 @@ internal class EmbraceUserServiceTest {
         "persona",
     )
 
-    private val customPersonas = setOf(
-        "PERSONA1",
-        "1persona2",
-        "a",
-        "7",
-        "Persona_2",
-        "1Persona_3_"
-    )
-
     private lateinit var service: EmbraceUserService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var logger: EmbLogger
@@ -159,8 +150,6 @@ internal class EmbraceUserServiceTest {
         preferencesService.userIdentifier = "f0a923498c"
         preferencesService.username = "Mr Test"
         preferencesService.userPersonas = userPersonas
-        @Suppress("DEPRECATION")
-        preferencesService.customPersonas = customPersonas
         preferencesService.userPayer = true
         preferencesService.firstDay = true
 
@@ -173,8 +162,6 @@ internal class EmbraceUserServiceTest {
         preferencesService.userIdentifier = null
         preferencesService.username = null
         preferencesService.userPersonas = null
-        @Suppress("DEPRECATION")
-        preferencesService.customPersonas = null
         preferencesService.userPayer = false
         preferencesService.firstDay = false
 
@@ -186,7 +173,7 @@ internal class EmbraceUserServiceTest {
         assertEquals("test@example.com", email)
         assertEquals("f0a923498c", userId)
         assertEquals("Mr Test", username)
-        val expectedPersonas = userPersonas.plus(customPersonas).plus(extraPersonas)
+        val expectedPersonas = userPersonas.plus(extraPersonas)
         assertEquals(expectedPersonas, personas)
     }
 

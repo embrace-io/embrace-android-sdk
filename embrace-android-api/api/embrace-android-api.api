@@ -160,7 +160,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Sessi
 	public abstract fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public abstract fun endSession ()V
 	public abstract fun endSession (Z)V
-	public abstract fun getSessionProperties ()Ljava/util/Map;
 	public abstract fun removeSessionProperty (Ljava/lang/String;)Z
 }
 

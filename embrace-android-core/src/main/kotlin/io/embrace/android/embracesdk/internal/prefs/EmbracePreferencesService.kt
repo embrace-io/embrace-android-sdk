@@ -183,10 +183,6 @@ internal class EmbracePreferencesService(
         get() = prefs.getMapPreference(SESSION_PROPERTIES_KEY)
         set(value) = prefs.setMapPreference(SESSION_PROPERTIES_KEY, value)
 
-    @Deprecated("")
-    override val customPersonas: Set<String>?
-        get() = prefs.getArrayPreference(CUSTOM_PERSONAS_KEY)
-
     override var username: String?
         get() = prefs.getStringPreference(USER_USERNAME_KEY)
         set(value) = prefs.setStringPreference(USER_USERNAME_KEY, value)
@@ -332,7 +328,6 @@ internal class EmbracePreferencesService(
         private const val USER_USERNAME_KEY = "io.embrace.username"
         private const val USER_IS_PAYER_KEY = "io.embrace.userispayer"
         private const val USER_PERSONAS_KEY = "io.embrace.userpersonas"
-        private const val CUSTOM_PERSONAS_KEY = "io.embrace.custompersonas"
         private const val LAST_USER_MESSAGE_FAILED_KEY = "io.embrace.userupdatefailed"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
         private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"

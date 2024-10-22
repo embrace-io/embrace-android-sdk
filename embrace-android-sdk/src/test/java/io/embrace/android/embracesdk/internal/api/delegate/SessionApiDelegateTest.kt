@@ -62,14 +62,6 @@ internal class SessionApiDelegateTest {
         assertEquals(2, orchestrator.stateChangeCount)
     }
 
-    @Suppress("DEPRECATION")
-    @Test
-    fun `get session properties`() {
-        sessionPropertiesService.props["key"] = "value"
-        assertEquals(mapOf("key" to "value"), delegate.getSessionProperties())
-        assertEquals(0, orchestrator.stateChangeCount)
-    }
-
     @Test
     fun `end session`() {
         delegate.endSession()

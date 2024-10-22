@@ -54,9 +54,6 @@ class BackgroundWorker(
         return impl.scheduleWithFixedDelay(command, initialDelay, delay, unit)
     }
 
-    @Deprecated(
-        "Use scheduleWithFixedDelay instead.",
-    )
     fun scheduleAtFixedRate(
         runnable: Runnable,
         initialDelay: Long,

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
@@ -80,11 +81,12 @@ class OkHttpRequestExecutionService(
         }
     }
 
+    private val mediaType = "application/json".toMediaType()
+
     private fun generateRequestBody(payloadStream: () -> InputStream) = object : RequestBody() {
-        override fun contentType() = null
+        override fun contentType() = mediaType
 
         override fun writeTo(sink: BufferedSink) {
-            // TODO: test throwing an exception here to see if it's caught by okHttpClient
             payloadStream().source().buffer().use { source ->
                 sink.writeAll(source)
             }

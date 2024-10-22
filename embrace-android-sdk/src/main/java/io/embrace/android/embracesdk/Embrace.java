@@ -37,9 +37,8 @@ public final class Embrace implements SdkApi {
     @NonNull
     private static final Embrace embrace = new Embrace();
 
+    @NonNull
     private static EmbraceImpl impl = Systrace.traceSynchronous("embrace-impl-init", EmbraceImpl::new);
-
-    static final String NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE = " cannot be invoked because it contains null parameters";
 
     /**
      * Gets the singleton instance of the Embrace SDK.
@@ -60,7 +59,7 @@ public final class Embrace implements SdkApi {
         return impl;
     }
 
-    static void setImpl(@Nullable EmbraceImpl instance) {
+    static void setImpl(@NonNull EmbraceImpl instance) {
         impl = instance;
     }
 
@@ -70,9 +69,7 @@ public final class Embrace implements SdkApi {
     @SuppressWarnings("deprecation")
     @Override
     public void start(@NonNull Context context) {
-        if (verifyNonNullParameters("start", context)) {
-            start(context, AppFramework.NATIVE);
-        }
+        start(context, AppFramework.NATIVE);
     }
 
     /**
@@ -81,9 +78,7 @@ public final class Embrace implements SdkApi {
     @Override
     @Deprecated
     public void start(@NonNull Context context, @NonNull AppFramework appFramework) {
-        if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, (framework) -> null);
-        }
+        impl.start(context, appFramework, (framework) -> null);
     }
 
     /**
@@ -92,9 +87,7 @@ public final class Embrace implements SdkApi {
     @Override
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode) {
-        if (verifyNonNullParameters("start", context)) {
-            start(context);
-        }
+        start(context);
     }
 
     /**
@@ -103,9 +96,7 @@ public final class Embrace implements SdkApi {
     @Override
     @Deprecated
     public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
-        if (verifyNonNullParameters("start", context, appFramework)) {
-            impl.start(context, appFramework, (framework) -> null);
-        }
+        impl.start(context, appFramework, (framework) -> null);
     }
 
     @Override
@@ -115,11 +106,7 @@ public final class Embrace implements SdkApi {
 
     @Override
     public boolean setAppId(@NonNull String appId) {
-        if (verifyNonNullParameters("setAppId", appId)) {
-            return impl.setAppId(appId);
-        } else {
-            return false;
-        }
+        return impl.setAppId(appId);
     }
 
     @Override
@@ -154,16 +141,12 @@ public final class Embrace implements SdkApi {
 
     @Override
     public void addUserPersona(@NonNull String persona) {
-        if (verifyNonNullParameters("addUserPersona", persona)) {
-            impl.addUserPersona(persona);
-        }
+        impl.addUserPersona(persona);
     }
 
     @Override
     public void clearUserPersona(@NonNull String persona) {
-        if (verifyNonNullParameters("clearUserPersona", persona)) {
-            impl.clearUserPersona(persona);
-        }
+        impl.clearUserPersona(persona);
     }
 
     @Override
@@ -173,20 +156,12 @@ public final class Embrace implements SdkApi {
 
     @Override
     public boolean addSessionProperty(@NonNull String key, @NonNull String value, boolean permanent) {
-        if (verifyNonNullParameters("addSessionProperty", key, value)) {
-            return impl.addSessionProperty(key, value, permanent);
-        }
-
-        return false;
+        return impl.addSessionProperty(key, value, permanent);
     }
 
     @Override
     public boolean removeSessionProperty(@NonNull String key) {
-        if (verifyNonNullParameters("removeSessionProperty", key)) {
-            return impl.removeSessionProperty(key);
-        }
-
-        return false;
+        return impl.removeSessionProperty(key);
     }
 
     @Override
@@ -208,53 +183,39 @@ public final class Embrace implements SdkApi {
 
     @Override
     public void startMoment(@NonNull String name) {
-        if (verifyNonNullParameters("startMoment", name)) {
-            startMoment(name, null);
-        }
+        startMoment(name, null);
     }
 
     @Override
     public void startMoment(@NonNull String name, @Nullable String identifier) {
-        if (verifyNonNullParameters("startMoment", name)) {
-            startMoment(name, identifier, null);
-        }
+        startMoment(name, identifier, null);
     }
 
     @Override
     public void startMoment(@NonNull String name,
                             @Nullable String identifier,
                             @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("startMoment", name)) {
-            impl.startMoment(name, identifier, properties);
-        }
+        impl.startMoment(name, identifier, properties);
     }
 
     @Override
     public void endMoment(@NonNull String name) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            endMoment(name, null, null);
-        }
+        endMoment(name, null, null);
     }
 
     @Override
     public void endMoment(@NonNull String name, @Nullable String identifier) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            endMoment(name, identifier, null);
-        }
+        endMoment(name, identifier, null);
     }
 
     @Override
     public void endMoment(@NonNull String name, @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            endMoment(name, null, properties);
-        }
+        endMoment(name, null, properties);
     }
 
     @Override
     public void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            impl.endMoment(name, identifier, properties);
-        }
+        impl.endMoment(name, identifier, properties);
     }
 
     @Override
@@ -264,9 +225,7 @@ public final class Embrace implements SdkApi {
 
     @Override
     public void endAppStartup(@NonNull Map<String, ?> properties) {
-        if (verifyNonNullParameters("endAppStartup", properties)) {
-            impl.endAppStartup(properties);
-        }
+        impl.endAppStartup(properties);
     }
 
     @Override
@@ -283,76 +242,56 @@ public final class Embrace implements SdkApi {
 
     @Override
     public void recordNetworkRequest(@NonNull EmbraceNetworkRequest networkRequest) {
-        if (verifyNonNullParameters("recordNetworkRequest", networkRequest)) {
-            impl.recordNetworkRequest(networkRequest);
-        }
+        impl.recordNetworkRequest(networkRequest);
     }
 
     @Override
     public void logInfo(@NonNull String message) {
-        if (verifyNonNullParameters("logInfo", message)) {
-            impl.logInfo(message);
-        }
+        impl.logInfo(message);
     }
 
     @Override
     public void logWarning(@NonNull String message) {
-        if (verifyNonNullParameters("logWarning", message)) {
-            impl.logWarning(message);
-        }
+        impl.logWarning(message);
     }
 
     @Override
     public void logError(@NonNull String message) {
-        if (verifyNonNullParameters("logError", message)) {
-            impl.logError(message);
-        }
+        impl.logError(message);
     }
 
     @Override
     public void addBreadcrumb(@NonNull String message) {
-        if (verifyNonNullParameters("addBreadcrumb", message)) {
-            impl.addBreadcrumb(message);
-        }
+        impl.addBreadcrumb(message);
     }
 
     @Override
     public void logMessage(@NonNull String message, @NonNull Severity severity) {
-        if (verifyNonNullParameters("logMessage", message, severity)) {
-            impl.logMessage(message, severity);
-        }
+        impl.logMessage(message, severity);
     }
 
     @Override
     public void logMessage(@NonNull String message,
                            @NonNull Severity severity,
                            @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("logMessage", message, severity)) {
-            impl.logMessage(message, severity, properties);
-        }
+        impl.logMessage(message, severity, properties);
     }
 
     @Override
     public void logException(@NonNull Throwable throwable) {
-        if (verifyNonNullParameters("logException", throwable)) {
-            impl.logException(throwable);
-        }
+        impl.logException(throwable);
     }
 
     @Override
     public void logException(@NonNull Throwable throwable, @NonNull Severity severity) {
-        if (verifyNonNullParameters("logException", throwable, severity)) {
-            impl.logException(throwable, severity);
-        }
+        impl.logException(throwable, severity);
     }
 
     @Override
     public void logException(@NonNull Throwable throwable,
                              @NonNull Severity severity,
                              @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("logException", throwable, severity)) {
-            impl.logException(throwable, severity, properties);
-        }
+        impl.logException(throwable, severity, properties);
     }
 
     @Override
@@ -360,32 +299,24 @@ public final class Embrace implements SdkApi {
                              @NonNull Severity severity,
                              @Nullable Map<String, ?> properties,
                              @Nullable String message) {
-        if (verifyNonNullParameters("logException", throwable, severity)) {
-            impl.logException(throwable, severity, properties, message);
-        }
+        impl.logException(throwable, severity, properties, message);
     }
 
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements) {
-        if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements)) {
-            impl.logCustomStacktrace(stacktraceElements);
-        }
+        impl.logCustomStacktrace(stacktraceElements);
     }
 
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements, @NonNull Severity severity) {
-        if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
-            impl.logCustomStacktrace(stacktraceElements, severity);
-        }
+        impl.logCustomStacktrace(stacktraceElements, severity);
     }
 
     @Override
     public void logCustomStacktrace(@NonNull StackTraceElement[] stacktraceElements,
                                     @NonNull Severity severity,
                                     @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
-            impl.logCustomStacktrace(stacktraceElements, severity, properties);
-        }
+        impl.logCustomStacktrace(stacktraceElements, severity, properties);
     }
 
     @Override
@@ -393,9 +324,7 @@ public final class Embrace implements SdkApi {
                                     @NonNull Severity severity,
                                     @Nullable Map<String, ?> properties,
                                     @Nullable String message) {
-        if (verifyNonNullParameters("logCustomStacktrace", (Object) stacktraceElements, severity)) {
-            impl.logCustomStacktrace(stacktraceElements, severity, properties, message);
-        }
+        impl.logCustomStacktrace(stacktraceElements, severity, properties, message);
     }
 
     @Override
@@ -416,38 +345,24 @@ public final class Embrace implements SdkApi {
 
     @Override
     public boolean startView(@NonNull String name) {
-        if (verifyNonNullParameters("startView", name)) {
-            return impl.startView(name);
-        }
-        return false;
+        return impl.startView(name);
     }
 
     @Override
     public boolean endView(@NonNull String name) {
-        if (verifyNonNullParameters("endView", name)) {
-            return impl.endView(name);
-        }
-        return false;
+        return impl.endView(name);
     }
 
     @Nullable
     @Override
     public EmbraceSpan createSpan(@NonNull String name) {
-        if (verifyNonNullParameters("createSpan", name)) {
-            return impl.createSpan(name);
-        }
-
-        return null;
+        return impl.createSpan(name);
     }
 
     @Nullable
     @Override
     public EmbraceSpan createSpan(@NonNull String name, @Nullable EmbraceSpan parent) {
-        if (verifyNonNullParameters("createSpan", name)) {
-            return impl.createSpan(name, parent);
-        }
-
-        return null;
+        return impl.createSpan(name, parent);
     }
 
     @Nullable
@@ -465,11 +380,7 @@ public final class Embrace implements SdkApi {
     @Nullable
     @Override
     public EmbraceSpan startSpan(@NonNull String name, @Nullable EmbraceSpan parent, @Nullable Long startTimeMs) {
-        if (verifyNonNullParameters("startSpan", name)) {
-            return impl.startSpan(name, parent, startTimeMs);
-        }
-
-        return null;
+        return impl.startSpan(name, parent, startTimeMs);
     }
 
     @Override
@@ -491,22 +402,14 @@ public final class Embrace implements SdkApi {
     @Override
     public <T> T recordSpan(@NonNull String name, @Nullable EmbraceSpan parent, @Nullable Map<String, String> attributes,
                             @Nullable List<EmbraceSpanEvent> events, @NonNull Function0<? extends T> code) {
-        if (verifyNonNullParameters("recordSpan", name, code)) {
-            return impl.recordSpan(name, parent, attributes, events, code);
-        }
-
-        return code != null ? code.invoke() : null;
+        return impl.recordSpan(name, parent, attributes, events, code);
     }
 
     @Override
     public boolean recordCompletedSpan(@NonNull String name, long startTimeMs, long endTimeMs, @Nullable ErrorCode errorCode,
                                        @Nullable EmbraceSpan parent, @Nullable Map<String, String> attributes,
                                        @Nullable List<EmbraceSpanEvent> events) {
-        if (verifyNonNullParameters("recordCompletedSpan", name)) {
-            return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events);
-        }
-
-        return false;
+        return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events);
     }
 
     @Override
@@ -539,11 +442,7 @@ public final class Embrace implements SdkApi {
     @Nullable
     @Override
     public EmbraceSpan getSpan(@NonNull String spanId) {
-        if (verifyNonNullParameters("getSpan", spanId)) {
-            return impl.getSpan(spanId);
-        }
-
-        return null;
+        return impl.getSpan(spanId);
     }
 
     /**
@@ -553,9 +452,7 @@ public final class Embrace implements SdkApi {
      */
     @Override
     public void addSpanExporter(@NonNull SpanExporter spanExporter) {
-        if (verifyNonNullParameters("addSpanExporter", spanExporter)) {
-            impl.addSpanExporter(spanExporter);
-        }
+        impl.addSpanExporter(spanExporter);
     }
 
     @NonNull
@@ -571,9 +468,7 @@ public final class Embrace implements SdkApi {
      */
     @Override
     public void addLogRecordExporter(@NonNull LogRecordExporter logRecordExporter) {
-        if (verifyNonNullParameters("addLogRecordExporter", logRecordExporter)) {
-            impl.addLogRecordExporter(logRecordExporter);
-        }
+        impl.addLogRecordExporter(logRecordExporter);
     }
 
     @Override
@@ -585,41 +480,33 @@ public final class Embrace implements SdkApi {
                                     @Nullable Integer messageDeliveredPriority,
                                     @Nullable Boolean isNotification,
                                     @Nullable Boolean hasData) {
-        if (verifyNonNullParameters("logPushNotification", messageDeliveredPriority, isNotification, hasData)) {
-            impl.logPushNotification(
-                title,
-                body,
-                topic,
-                id,
-                notificationPriority,
-                messageDeliveredPriority,
-                isNotification,
-                hasData
-            );
-        }
+        impl.logPushNotification(
+            title,
+            body,
+            topic,
+            id,
+            notificationPriority,
+            messageDeliveredPriority,
+            isNotification,
+            hasData
+        );
     }
 
     @Override
     public void trackWebViewPerformance(@NonNull String tag, @NonNull ConsoleMessage consoleMessage) {
-        if (verifyNonNullParameters("trackWebViewPerformance", tag, consoleMessage)) {
-            if (consoleMessage.message() != null) {
-                trackWebViewPerformance(tag, consoleMessage.message());
-            }
+        if (consoleMessage.message() != null) {
+            trackWebViewPerformance(tag, consoleMessage.message());
         }
     }
 
     @Override
     public void trackWebViewPerformance(@NonNull String tag, @NonNull String message) {
-        if (verifyNonNullParameters("trackWebViewPerformance", tag, message)) {
-            impl.trackWebViewPerformance(tag, message);
-        }
+        impl.trackWebViewPerformance(tag, message);
     }
 
     @Override
     public void logWebView(@Nullable String url) {
-        if (verifyNonNullParameters("logWebView", url)) {
-            impl.logWebView(url);
-        }
+        impl.logWebView(url);
     }
 
     @Nullable
@@ -656,19 +543,6 @@ public final class Embrace implements SdkApi {
     @Override
     public FlutterInternalInterface getFlutterInternalInterface() {
         return impl.getFlutterInternalInterface();
-    }
-
-    private boolean verifyNonNullParameters(@NonNull String functionName, @NonNull Object... params) {
-        for (Object param : params) {
-            if (param == null) {
-                final String errorMessage = functionName + NULL_PARAMETER_ERROR_MESSAGE_TEMPLATE;
-                if (isStarted()) {
-                    impl.getInternalInterface().logInternalError(new IllegalArgumentException(errorMessage));
-                }
-                return false;
-            }
-        }
-        return true;
     }
 
 }

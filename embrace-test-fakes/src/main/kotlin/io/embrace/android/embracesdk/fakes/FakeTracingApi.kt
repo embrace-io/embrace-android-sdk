@@ -43,9 +43,4 @@ class FakeTracingApi : TracingApi {
     override fun getSpan(spanId: String): EmbraceSpan? {
         TODO("Not yet implemented")
     }
-
-    @Deprecated("Not required. Use Embrace.isStarted() to know when the full tracing API is available")
-    override fun isTracingAvailable(): Boolean {
-        TODO("Not yet implemented")
-    }
 }

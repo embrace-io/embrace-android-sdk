@@ -54,7 +54,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getTraceIdHeader ()Ljava/lang/String;
 	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 	public fun isStarted ()Z
-	public fun isTracingAvailable ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V

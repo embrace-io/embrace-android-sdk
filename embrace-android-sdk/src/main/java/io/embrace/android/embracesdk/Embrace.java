@@ -430,12 +430,6 @@ public final class Embrace implements SdkApi {
         return false;
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public boolean isTracingAvailable() {
-        return impl.isTracingAvailable();
-    }
-
     @Nullable
     @Override
     public EmbraceSpan createSpan(@NonNull String name) {

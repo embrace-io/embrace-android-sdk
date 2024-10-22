@@ -9,9 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata2
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -159,7 +159,10 @@ internal class SchedulingServiceImplTest {
         val longBlockedDuration = 90_000L
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, longBlockedDuration)
+        executionService.constantResponse = ExecutionResult.TooManyRequests(
+            endpoint = Endpoint.SESSIONS_V2,
+            retryAfter = longBlockedDuration
+        )
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -177,7 +180,10 @@ internal class SchedulingServiceImplTest {
     fun `payloads that fail to deliver because of a 429 will be retried before the default delay if endpoint is unblocked earlier`() {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse = ExecutionResult.TooManyRequests(
+            endpoint = Endpoint.SESSIONS_V2,
+            retryAfter = SHORT_BLOCKED_DURATION
+        )
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         allSendsSucceed()
@@ -191,11 +197,14 @@ internal class SchedulingServiceImplTest {
     fun `payloads to unblocked endpoint will not affect other endpoints`() {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse = ExecutionResult.TooManyRequests(
+            endpoint = Endpoint.SESSIONS_V2,
+            retryAfter = SHORT_BLOCKED_DURATION
+        )
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
-        executionService.constantResponse = success
+        allSendsSucceed()
         storageService.addFakePayload(fakeLogStoredTelemetryMetadata)
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
@@ -208,7 +217,10 @@ internal class SchedulingServiceImplTest {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse = ExecutionResult.TooManyRequests(
+            endpoint = Endpoint.SESSIONS_V2,
+            retryAfter = SHORT_BLOCKED_DURATION
+        )
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(1, executionService.sendAttempts())
@@ -221,7 +233,10 @@ internal class SchedulingServiceImplTest {
     fun `payloads to already blocked endpoint will not be sent`() {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
-        executionService.constantResponse = ApiResponse.TooManyRequests(endpoint = Endpoint.SESSIONS_V2, SHORT_BLOCKED_DURATION)
+        executionService.constantResponse = ExecutionResult.TooManyRequests(
+            endpoint = Endpoint.SESSIONS_V2,
+            retryAfter = SHORT_BLOCKED_DURATION
+        )
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
@@ -313,7 +328,7 @@ internal class SchedulingServiceImplTest {
     }
 
     private fun allSendsSucceed() {
-        executionService.constantResponse = success
+        executionService.constantResponse = ExecutionResult.Success
     }
 
     private fun allSendsFail() {
@@ -322,7 +337,6 @@ internal class SchedulingServiceImplTest {
 
     private companion object {
         const val SHORT_BLOCKED_DURATION = 30_000L
-        val success = ApiResponse.Success(body = "", headers = emptyMap())
-        val failure = ApiResponse.Failure(code = 500, emptyMap())
+        val failure = ExecutionResult.Failure(code = 500)
     }
 }

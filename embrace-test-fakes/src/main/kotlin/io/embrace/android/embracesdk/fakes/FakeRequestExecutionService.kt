@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -18,8 +18,8 @@ class FakeRequestExecutionService(
 ) : RequestExecutionService {
 
     private val serializer = TestPlatformSerializer()
-    var constantResponse: ApiResponse = ApiResponse.Success(null, null)
-    var responseAction: (intake: Envelope<*>) -> ApiResponse = { _ -> constantResponse }
+    var constantResponse: ExecutionResult = ExecutionResult.Success
+    var responseAction: (intake: Envelope<*>) -> ExecutionResult = { _ -> constantResponse }
     var exceptionOnExecution: Throwable? = null
     val attemptedHttpRequests = ConcurrentLinkedQueue<Envelope<*>>()
     val sessionIds = mutableSetOf<String>()
@@ -36,7 +36,7 @@ class FakeRequestExecutionService(
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType,
-    ): ApiResponse {
+    ): ExecutionResult {
         exceptionOnExecution?.run { throw this }
         val bufferedStream = GZIPInputStream(payloadStream())
         val envelope: Envelope<*> = serializer.fromJson(bufferedStream, envelopeType.serializedType)

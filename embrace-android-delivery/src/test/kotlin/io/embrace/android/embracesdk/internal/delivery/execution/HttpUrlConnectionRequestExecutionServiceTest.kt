@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.mockwebserver.MockResponse
@@ -73,7 +72,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be incomplete
-        check(response is ApiResponse.Incomplete)
+        check(response is ExecutionResult.Incomplete)
         assertTrue(response.exception is UnknownHostException)
     }
 
@@ -89,11 +88,11 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be successful
-        assertTrue(response is ApiResponse.Success)
+        assertTrue(response is ExecutionResult.Success)
     }
 
     @Test
-    fun `return not modified if the server returns a 304 response`() {
+    fun `return other result if 304 response received`() {
         // given a server that returns a 304 response
         server.enqueue(MockResponse().setResponseCode(304))
 
@@ -104,7 +103,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be not modified
-        assertTrue(response is ApiResponse.NotModified)
+        assertTrue(response is ExecutionResult.Other)
     }
 
     @Test
@@ -119,7 +118,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be payload too large
-        assertTrue(response is ApiResponse.PayloadTooLarge)
+        assertTrue(response is ExecutionResult.PayloadTooLarge)
     }
 
     @Test
@@ -138,7 +137,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be too many requests
-        check(response is ApiResponse.TooManyRequests)
+        check(response is ExecutionResult.TooManyRequests)
         assertEquals(10L, response.retryAfter)
     }
 
@@ -154,7 +153,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be incomplete
-        check(response is ApiResponse.Incomplete)
+        check(response is ExecutionResult.Incomplete)
         assertTrue(response.exception is IllegalStateException)
     }
 
@@ -174,9 +173,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         )
 
         // then the response should be failure
-        check(response is ApiResponse.Failure)
+        check(response is ExecutionResult.Failure)
         assertEquals(500, response.code)
-        assertEquals("ouch", response.headers?.get("Custom-Error-Header"))
     }
 
     @Test

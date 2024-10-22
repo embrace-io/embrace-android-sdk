@@ -205,12 +205,12 @@ internal class EmbraceImpl @JvmOverloads constructor(
         // Send any sessions that were cached and not yet sent.
         startSynchronous("send-cached-sessions")
 
-        if (useLegacyResurrection(configModule.configService)) {
+        if (useV1DeliveryLayer(configModule.configService)) {
             bootstrapper
                 .workerThreadModule
                 .priorityWorker<TaskPriority>(Worker.Priority.DeliveryCacheWorker)
                 .submit(TaskPriority.NORMAL) {
-                    if (useLegacyResurrection(configModule.configService)) {
+                    if (useV1DeliveryLayer(configModule.configService)) {
                         val essentialServiceModule = bootstrapper.essentialServiceModule
                         bootstrapper.deliveryModule.deliveryService?.sendCachedSessions(
                             bootstrapper.nativeFeatureModule::nativeCrashService,
@@ -274,12 +274,12 @@ internal class EmbraceImpl @JvmOverloads constructor(
         )
         endSynchronous()
 
-        if (!useLegacyResurrection(configModule.configService)) {
+        if (!useV1DeliveryLayer(configModule.configService)) {
             val worker = bootstrapper
                 .workerThreadModule
                 .backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
-                if (!useLegacyResurrection(configModule.configService)) {
+                if (!useV1DeliveryLayer(configModule.configService)) {
                     bootstrapper.payloadSourceModule.payloadResurrectionService?.resurrectOldPayloads(
                         nativeCrashServiceProvider = { bootstrapper.nativeFeatureModule.nativeCrashService }
                     )
@@ -382,7 +382,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         }
     }
 
-    private fun useLegacyResurrection(cfgService: ConfigService?): Boolean {
+    private fun useV1DeliveryLayer(cfgService: ConfigService?): Boolean {
         return cfgService?.autoDataCaptureBehavior?.isV2StorageEnabled() != true
     }
 }

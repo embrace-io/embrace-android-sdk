@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
@@ -103,23 +103,23 @@ class SchedulingServiceImpl(
             .sortedWith(storedTelemetryComparator)
     )
 
-    private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ApiResponse> {
+    private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ExecutionResult> {
         activeSends.add(payload)
-        return deliveryWorker.submit<ApiResponse> {
-            val response: ApiResponse =
+        return deliveryWorker.submit<ExecutionResult> {
+            val result: ExecutionResult =
                 try {
                     payload.toStream()?.run {
                         executionService.attemptHttpRequest(
                             payloadStream = { this },
                             envelopeType = payload.envelopeType
                         )
-                    } ?: ApiResponse.NoPayload
+                    } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {
                     logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, t)
-                    ApiResponse.Incomplete(t)
+                    ExecutionResult.Incomplete(t)
                 }
 
-            with(response) {
+            with(result) {
                 if (!shouldRetry) {
                     // If the response is such that we should not ever retry the delivery of this payload,
                     // delete it from both the in memory retry payloads map and on disk
@@ -132,7 +132,7 @@ class SchedulingServiceImpl(
                     // If delivery of this payload should be retried, add or replace the entry in the retry map
                     // with the new values for how many times it has failed, and when the next retry should happen
                     val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
-                    val nextRetryTimeMs = if (this is ApiResponse.TooManyRequests && retryAfter != null) {
+                    val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfter != null) {
                         val unblockedTimestampMs = clock.now() + retryAfter
                         blockedEndpoints[endpoint] = unblockedTimestampMs
                         unblockedTimestampMs + 1L
@@ -147,7 +147,7 @@ class SchedulingServiceImpl(
                 }
             }
             activeSends.remove(payload)
-            response
+            result
         }
     }
 

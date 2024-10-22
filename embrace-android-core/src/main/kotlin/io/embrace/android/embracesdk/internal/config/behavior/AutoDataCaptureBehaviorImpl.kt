@@ -23,6 +23,7 @@ class AutoDataCaptureBehaviorImpl(
 
     private val cfg = InstrumentedConfig.enabledFeatures
 
+    @Suppress("DEPRECATION")
     override fun isMemoryWarningCaptureEnabled(): Boolean = cfg.isMemoryWarningCaptureEnabled()
 
     override fun isThermalStatusCaptureEnabled(): Boolean {

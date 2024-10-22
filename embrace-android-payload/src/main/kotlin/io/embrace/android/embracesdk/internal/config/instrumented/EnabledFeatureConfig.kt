@@ -47,6 +47,7 @@ object EnabledFeatureConfig {
      *
      * sdk_config.automatic_data_capture.memory_info
      */
+    @Deprecated("Will be removed in a future release.")
     fun isMemoryWarningCaptureEnabled(): Boolean = true
 
     /**

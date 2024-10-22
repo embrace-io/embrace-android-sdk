@@ -124,8 +124,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun endView (Ljava/lang/String;)Z
 	public abstract fun start (Landroid/content/Context;)V
 	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
-	public abstract fun start (Landroid/content/Context;Z)V
-	public abstract fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/AppFramework;)V
 	public abstract fun startView (Ljava/lang/String;)Z
 }
 
@@ -200,7 +198,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Sessi
 	public abstract fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
 	public abstract fun endSession ()V
 	public abstract fun endSession (Z)V
-	public abstract fun getSessionProperties ()Ljava/util/Map;
 	public abstract fun removeSessionProperty (Ljava/lang/String;)Z
 }
 

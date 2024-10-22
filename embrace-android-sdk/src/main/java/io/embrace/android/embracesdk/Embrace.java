@@ -81,24 +81,6 @@ public final class Embrace implements SdkApi {
         impl.start(context, appFramework, (framework) -> null);
     }
 
-    /**
-     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
-     */
-    @Override
-    @Deprecated
-    public void start(@NonNull Context context, boolean isDevMode) {
-        start(context);
-    }
-
-    /**
-     * @deprecated Use {@link #start(Context)} instead. The isDevMode parameter has no effect.
-     */
-    @Override
-    @Deprecated
-    public void start(@NonNull Context context, boolean isDevMode, @NonNull AppFramework appFramework) {
-        impl.start(context, appFramework, (framework) -> null);
-    }
-
     @Override
     public boolean isStarted() {
         return impl.isStarted();
@@ -162,13 +144,6 @@ public final class Embrace implements SdkApi {
     @Override
     public boolean removeSessionProperty(@NonNull String key) {
         return impl.removeSessionProperty(key);
-    }
-
-    @Override
-    @Nullable
-    @Deprecated
-    public Map<String, String> getSessionProperties() {
-        return impl.getSessionProperties();
     }
 
     @Override

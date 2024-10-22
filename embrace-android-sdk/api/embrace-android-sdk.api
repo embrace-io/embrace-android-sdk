@@ -24,7 +24,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
-	public fun getSessionProperties ()Ljava/util/Map;
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun getTraceIdHeader ()Ljava/lang/String;
 	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
@@ -63,8 +62,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
 	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
-	public fun start (Landroid/content/Context;Z)V
-	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/AppFramework;)V
 	public fun startSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;

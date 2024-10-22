@@ -53,17 +53,6 @@ interface PreferencesService {
     var permanentSessionProperties: Map<String, String>?
 
     /**
-     * No longer used, will be removed in a future version.
-     *
-     * Method is still present to ensure that during any upgrades to SDK3, any custom
-     * personas are merged with the user personas list.
-     *
-     * @return custom personas
-     */
-    @Deprecated("")
-    val customPersonas: Set<String>?
-
-    /**
      * Username for the user
      */
     var username: String?

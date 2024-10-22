@@ -7,11 +7,6 @@ import java.util.regex.Pattern
 interface AnrBehavior {
 
     /**
-     * Control whether SIGQUIT capture is enabled.
-     */
-    fun isSigquitCaptureEnabled(): Boolean
-
-    /**
      * Allow listed threads by pattern
      */
     val allowPatternList: List<Pattern>

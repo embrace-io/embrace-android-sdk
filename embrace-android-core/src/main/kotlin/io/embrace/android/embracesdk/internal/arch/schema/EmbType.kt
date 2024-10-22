@@ -122,8 +122,6 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         object LowPower : System("low_power")
 
-        object Sigquit : System("sigquit")
-
         object NetworkCapturedRequest : System("network_capture", SendMode.IMMEDIATE)
 
         object NetworkStatus : System("network_status")

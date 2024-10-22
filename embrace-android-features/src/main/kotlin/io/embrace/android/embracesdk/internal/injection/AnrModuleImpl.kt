@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Looper
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.anr.EmbraceAnrService
@@ -9,17 +8,13 @@ import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetecto
 import io.embrace.android.embracesdk.internal.anr.detection.LivenessCheckScheduler
 import io.embrace.android.embracesdk.internal.anr.detection.TargetThreadHandler
 import io.embrace.android.embracesdk.internal.anr.detection.ThreadMonitoringState
-import io.embrace.android.embracesdk.internal.anr.sigquit.AnrThreadIdDelegate
-import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
-import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSourceImpl
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class AnrModuleImpl(
     initModule: InitModule,
     configService: ConfigService,
-    workerModule: WorkerThreadModule,
-    otelModule: OpenTelemetryModule
+    workerModule: WorkerThreadModule
 ) : AnrModule {
 
     private val anrMonitorWorker = workerModule.backgroundWorker(Worker.Background.AnrWatchdogWorker)
@@ -48,16 +43,6 @@ internal class AnrModuleImpl(
         } else {
             null
         }
-    }
-
-    override val sigquitDataSource: SigquitDataSource by singleton {
-        SigquitDataSourceImpl(
-            sharedObjectLoader = SharedObjectLoader(logger = initModule.logger),
-            anrThreadIdDelegate = AnrThreadIdDelegate(),
-            anrBehavior = configService.anrBehavior,
-            logger = initModule.logger,
-            writer = otelModule.currentSessionSpan
-        )
     }
 
     private val looper by singleton { Looper.getMainLooper() }

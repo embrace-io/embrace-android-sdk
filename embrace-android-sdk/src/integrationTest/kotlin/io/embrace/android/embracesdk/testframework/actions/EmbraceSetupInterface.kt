@@ -106,7 +106,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                     }
                 })
         },
-        anrModuleSupplier = { _, _, _, _ -> fakeAnrModule },
+        anrModuleSupplier = { _, _, _ -> fakeAnrModule },
         nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
     )
 }

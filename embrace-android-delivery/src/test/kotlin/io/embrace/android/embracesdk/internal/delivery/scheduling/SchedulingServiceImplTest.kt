@@ -255,6 +255,29 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `losing network will cause payload sends to stop and reconnection makes it start again`() {
+        schedulingExecutor.blockingMode = true
+        allSendsFail()
+        networkConnectivityService.networkStatus = NetworkStatus.WAN
+        waitForOnPayloadIntakeTaskCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        networkConnectivityService.networkStatus = NetworkStatus.NOT_REACHABLE
+        schedulingExecutor.moveForwardAndRunBlocked(INITIAL_DELAY_MS + 1)
+        schedulingExecutor.awaitExecutionCompletion()
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+        allSendsSucceed()
+        networkConnectivityService.networkStatus = NetworkStatus.UNKNOWN
+        schedulingExecutor.moveForwardAndRunBlocked((INITIAL_DELAY_MS * 2) + 1)
+        schedulingExecutor.awaitExecutionCompletion()
+        deliveryExecutor.awaitExecutionCompletion()
+        assertEquals(4, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
     fun `unexpected exception during execution will be retried`() {
         logger.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")

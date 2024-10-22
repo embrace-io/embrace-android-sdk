@@ -49,9 +49,15 @@ class SchedulingServiceImpl(
     }
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-        val hasNetworkBefore = hasNetwork.getAndSet(status.isReachable)
-        if (!hasNetworkBefore && hasNetwork.get()) {
-            startDeliveryLoop()
+        val currentlyConnected = status.isReachable
+
+        // Set a new connection status if it differs from the current one
+        if (currentlyConnected != hasNetwork.get()) {
+            hasNetwork.set(currentlyConnected)
+            // trigger a new delivery loop we went from being offline to being connected
+            if (currentlyConnected) {
+                startDeliveryLoop()
+            }
         }
     }
 

@@ -17,8 +17,9 @@ internal class FakeCacheStorageService: PayloadStorageService {
         storedPayloads[metadata] = action
     }
 
-    override fun delete(metadata: StoredTelemetryMetadata) {
+    override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
         deletedPayloads.add(metadata)
+        callback()
     }
 
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {

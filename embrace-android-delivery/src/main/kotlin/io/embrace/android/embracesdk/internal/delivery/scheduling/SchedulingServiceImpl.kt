@@ -33,8 +33,7 @@ class SchedulingServiceImpl(
     private val sendLoopActive = AtomicBoolean(false)
     private val queryForPayloads = AtomicBoolean(true)
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
-    private val completedSendsSinceQueueDrain: MutableSet<StoredTelemetryMetadata> =
-        Collections.newSetFromMap(ConcurrentHashMap())
+    private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
 
     override fun onPayloadIntake() {
@@ -82,7 +81,6 @@ class SchedulingServiceImpl(
 
                 if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
                     deliveryQueue = createPayloadQueue()
-                    completedSendsSinceQueueDrain.clear()
                 }
             }
         } catch (t: Throwable) {
@@ -120,7 +118,10 @@ class SchedulingServiceImpl(
                     // If the response is such that we should not ever retry the delivery of this payload,
                     // delete it from both the in memory retry payloads map and on disk
                     payloadsToRetry.remove(payload)
-                    storageService.delete(payload)
+                    deleteInProgress.add(payload)
+                    storageService.delete(payload) {
+                        deleteInProgress.remove(payload)
+                    }
                 } else {
                     // If delivery of this payload should be retried, add or replace the entry in the retry map
                     // with the new values for how many times it has failed, and when the next retry should happen
@@ -139,7 +140,6 @@ class SchedulingServiceImpl(
                     )
                 }
             }
-            completedSendsSinceQueueDrain.add(payload)
             activeSends.remove(payload)
             response
         }
@@ -166,7 +166,7 @@ class SchedulingServiceImpl(
     private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {
         // determine if the given payload is eligible to be sent
         // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried
-        return if (activeSends.contains(this) || completedSendsSinceQueueDrain.contains(this)) {
+        return if (activeSends.contains(this) || deleteInProgress.contains(this)) {
             false
         } else if (isEndpointBlocked()) {
             false

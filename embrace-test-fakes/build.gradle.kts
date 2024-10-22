@@ -22,6 +22,5 @@ dependencies {
 
     implementation(libs.junit)
     implementation(libs.robolectric)
-    implementation(libs.lifecycle.common.java8)
-    implementation(libs.lifecycle.process)
+    implementation(libs.lifecycle.runtime)
 }

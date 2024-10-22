@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.compose.internal
 
+import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.Window
-import androidx.core.view.GestureDetectorCompat
 
 /**
  * Custom Window callback that triggers onTouch event
@@ -10,7 +10,7 @@ import androidx.core.view.GestureDetectorCompat
  */
 internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
-    private val gestureDetector: GestureDetectorCompat
+    private val gestureDetector: GestureDetector
 ) :
     Window.Callback by delegate {
 

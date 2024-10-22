@@ -68,8 +68,12 @@ dependencies {
     implementation(project(":embrace-android-delivery"))
 
     implementation(platform(libs.opentelemetry.bom))
-    implementation(libs.lifecycle.common.java8)
+
+    // lifecycle
+    implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
+    ksp(libs.lifecycle.compiler)
+    testImplementation(libs.lifecycle.testing)
 
     // json
     implementation(libs.moshi)
@@ -89,7 +93,6 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
-    testImplementation(libs.lifecycle.testing)
 
     androidTestImplementation(project(":embrace-test-fakes"))
 }

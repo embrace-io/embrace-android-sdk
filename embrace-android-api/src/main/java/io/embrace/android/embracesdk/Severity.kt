@@ -1,9 +1,9 @@
-package io.embrace.android.embracesdk;
+package io.embrace.android.embracesdk
 
 /**
  * The severity of the log message.
  */
-public enum Severity {
+public enum class Severity {
 
     /**
      * Reports log messages with info level severity.

@@ -1,3 +1,13 @@
+public final class io/embrace/android/embracesdk/AppFramework : java/lang/Enum {
+	public static final field FLUTTER Lio/embrace/android/embracesdk/AppFramework;
+	public static final field NATIVE Lio/embrace/android/embracesdk/AppFramework;
+	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/AppFramework;
+	public static final field UNITY Lio/embrace/android/embracesdk/AppFramework;
+	public fun getValue ()I
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/AppFramework;
+	public static fun values ()[Lio/embrace/android/embracesdk/AppFramework;
+}
+
 public final class io/embrace/android/embracesdk/BuildConfig {
 	public static final field BUILD_TYPE Ljava/lang/String;
 	public static final field DEBUG Z
@@ -36,7 +46,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
 	public static fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
-	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
 	public fun getSessionProperties ()Ljava/util/Map;
@@ -78,9 +88,9 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
-	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public fun start (Landroid/content/Context;Z)V
-	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/AppFramework;)V
 	public fun startMoment (Ljava/lang/String;)V
 	public fun startMoment (Ljava/lang/String;Ljava/lang/String;)V
 	public fun startMoment (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;)V
@@ -92,31 +102,21 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
 }
 
-public final class io/embrace/android/embracesdk/Embrace$AppFramework : java/lang/Enum {
-	public static final field FLUTTER Lio/embrace/android/embracesdk/Embrace$AppFramework;
-	public static final field NATIVE Lio/embrace/android/embracesdk/Embrace$AppFramework;
-	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/Embrace$AppFramework;
-	public static final field UNITY Lio/embrace/android/embracesdk/Embrace$AppFramework;
-	public fun getValue ()I
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Embrace$AppFramework;
-	public static fun values ()[Lio/embrace/android/embracesdk/Embrace$AppFramework;
-}
-
-public final class io/embrace/android/embracesdk/Embrace$LastRunEndState : java/lang/Enum {
-	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
-	public static final field CRASH Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
-	public static final field INVALID Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
-	public fun getValue ()I
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
-	public static fun values ()[Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
-}
-
 public final class io/embrace/android/embracesdk/EmbraceSamples {
 	public static final field INSTANCE Lio/embrace/android/embracesdk/EmbraceSamples;
 	public static final fun causeNdkIllegalInstruction ()V
 	public static final fun throwJvmException ()V
 	public static final fun triggerAnr ()V
 	public static final fun triggerLongAnr ()V
+}
+
+public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enum {
+	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
+	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
+	public static final field INVALID Lio/embrace/android/embracesdk/LastRunEndState;
+	public fun getValue ()I
+	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LastRunEndState;
+	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
 }
 
 public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
@@ -141,9 +141,9 @@ public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
 public abstract interface class io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi {
 	public abstract fun endView (Ljava/lang/String;)Z
 	public abstract fun start (Landroid/content/Context;)V
-	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public abstract fun start (Landroid/content/Context;Z)V
-	public abstract fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/Embrace$AppFramework;)V
+	public abstract fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/AppFramework;)V
 	public abstract fun startView (Ljava/lang/String;)Z
 }
 
@@ -167,7 +167,7 @@ public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpl
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {
 	public abstract fun getCurrentSessionId ()Ljava/lang/String;
 	public abstract fun getDeviceId ()Ljava/lang/String;
-	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/Embrace$LastRunEndState;
+	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public abstract fun isStarted ()Z
 	public abstract fun setAppId (Ljava/lang/String;)Z
 }

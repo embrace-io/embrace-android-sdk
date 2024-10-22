@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 @InternalApi
@@ -26,5 +26,5 @@ public interface SdkStateApi {
 
     public val currentSessionId: String?
 
-    public val lastRunEndState: Embrace.LastRunEndState
+    public val lastRunEndState: LastRunEndState
 }

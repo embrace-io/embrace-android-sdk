@@ -1,8 +1,10 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.testframework.actions
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.AppFramework
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
@@ -34,7 +36,7 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 internal class EmbraceSetupInterface @JvmOverloads constructor(
     currentTimeMs: Long = IntegrationTestRule.DEFAULT_SDK_START_TIME_MS,
     var useMockWebServer: Boolean = true,
-    @Suppress("DEPRECATION") val appFramework: Embrace.AppFramework = Embrace.AppFramework.NATIVE,
+    val appFramework: AppFramework = AppFramework.NATIVE,
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
     val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock, logger = FakeEmbLogger()),
     val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,

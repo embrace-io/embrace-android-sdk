@@ -41,14 +41,6 @@ internal class SessionApiDelegate(
         return false
     }
 
-    @Deprecated("This method will be removed in a future release.")
-    override fun getSessionProperties(): Map<String, String>? {
-        if (sdkCallChecker.check("get_session_properties")) {
-            return sessionPropertiesService?.getProperties()
-        }
-        return null
-    }
-
     override fun endSession() = endSession(false)
 
     /**

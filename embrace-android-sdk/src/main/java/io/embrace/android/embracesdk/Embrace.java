@@ -207,69 +207,6 @@ public final class Embrace implements SdkApi {
     }
 
     @Override
-    public void startMoment(@NonNull String name) {
-        if (verifyNonNullParameters("startMoment", name)) {
-            startMoment(name, null);
-        }
-    }
-
-    @Override
-    public void startMoment(@NonNull String name, @Nullable String identifier) {
-        if (verifyNonNullParameters("startMoment", name)) {
-            startMoment(name, identifier, null);
-        }
-    }
-
-    @Override
-    public void startMoment(@NonNull String name,
-                            @Nullable String identifier,
-                            @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("startMoment", name)) {
-            impl.startMoment(name, identifier, properties);
-        }
-    }
-
-    @Override
-    public void endMoment(@NonNull String name) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            endMoment(name, null, null);
-        }
-    }
-
-    @Override
-    public void endMoment(@NonNull String name, @Nullable String identifier) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            endMoment(name, identifier, null);
-        }
-    }
-
-    @Override
-    public void endMoment(@NonNull String name, @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            endMoment(name, null, properties);
-        }
-    }
-
-    @Override
-    public void endMoment(@NonNull String name, @Nullable String identifier, @Nullable Map<String, ?> properties) {
-        if (verifyNonNullParameters("endMoment", name)) {
-            impl.endMoment(name, identifier, properties);
-        }
-    }
-
-    @Override
-    public void endAppStartup() {
-        impl.endAppStartup();
-    }
-
-    @Override
-    public void endAppStartup(@NonNull Map<String, ?> properties) {
-        if (verifyNonNullParameters("endAppStartup", properties)) {
-            impl.endAppStartup(properties);
-        }
-    }
-
-    @Override
     @NonNull
     public String getTraceIdHeader() {
         return impl.getTraceIdHeader();

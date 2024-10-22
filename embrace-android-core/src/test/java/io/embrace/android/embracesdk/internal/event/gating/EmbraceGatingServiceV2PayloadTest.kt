@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.gating.EmbraceGatingService
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -36,7 +35,7 @@ internal class EmbraceGatingServiceV2PayloadTest {
         sessionBehavior = createSessionBehavior { cfg }
         configService = FakeConfigService(sessionBehavior = createSessionBehavior { cfg })
         logService = FakeLogService()
-        gatingService = EmbraceGatingService(configService, logService, EmbLoggerImpl())
+        gatingService = EmbraceGatingService(configService, logService)
     }
 
     @Test

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -111,21 +110,6 @@ internal class EmbracePayloadAssertionInterface(
             } else {
                 deliveryService.lastSavedLogPayloads
             }
-        }
-    }
-
-
-    /*** MOMENTS ***/
-
-
-    /**
-     * Returns the list of Moments that have been sent. If [expectedSize] is specified, it
-     * will wait a maximum of 1 second for the number of payloads that exist to equal that before
-     * returning, timing out if it doesn't.
-     */
-    internal fun getSentMoments(expectedSize: Int): List<EventMessage> {
-        return retrievePayload(expectedSize) {
-            deliveryService.sentMoments
         }
     }
 

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -102,7 +101,6 @@ internal class EmbraceInternalInterfaceTest {
 
                     logComposeTap(Pair(0.0f, 0.0f), "")
                     assertFalse(shouldCaptureNetworkBody("", ""))
-                    setProcessStartedByNotification()
                     assertFalse(isNetworkSpanForwardingEnabled())
                     getSdkCurrentTime()
                 }
@@ -231,23 +229,6 @@ internal class EmbraceInternalInterfaceTest {
                     assertFalse(embrace.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
                     assertTrue(embrace.internalInterface.isNetworkSpanForwardingEnabled())
                 }
-            }
-        )
-    }
-
-    @Test
-    fun `set process as started by notification works as expected`() {
-        testRule.runTest(
-            setupAction = {
-                useMockWebServer = false
-            },
-            testCaseAction = {
-                embrace.internalInterface.setProcessStartedByNotification()
-                recordSession()
-            },
-            assertAction = {
-                val moment = getSentMoments(1).single()
-                assertEquals(EventType.START, moment.event.type)
             }
         )
     }

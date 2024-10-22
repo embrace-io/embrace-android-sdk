@@ -13,8 +13,6 @@ internal fun ApiRequest.getHeaders(): Map<String, String> {
     acceptEncoding?.let { headers["Accept-Encoding"] = it }
     appId?.let { headers["X-EM-AID"] = it }
     deviceId?.let { headers["X-EM-DID"] = it }
-    eventId?.let { headers["X-EM-SID"] = it }
-    logId?.let { headers["X-EM-LID"] = it }
     eTag?.let { headers["If-None-Match"] = it }
     return headers
 }

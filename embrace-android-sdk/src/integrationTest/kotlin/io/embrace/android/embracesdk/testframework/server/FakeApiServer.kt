@@ -41,7 +41,7 @@ internal class FakeApiServer : Dispatcher() {
         validateHeaders(request.headers.toMultimap().mapValues { it.value.joinToString() })
 
         when (endpoint) {
-            Endpoint.SESSIONS_V2 -> sessionRequests.add(envelope as Envelope<SessionPayload>)
+            Endpoint.SESSIONS -> sessionRequests.add(envelope as Envelope<SessionPayload>)
             Endpoint.LOGS -> logRequests.add(envelope as Envelope<LogPayload>)
             else -> error("Unsupported request type $endpoint")
         }
@@ -61,7 +61,7 @@ internal class FakeApiServer : Dispatcher() {
     private fun findRequestEndpoint(request: RecordedRequest): Endpoint {
         return when (val path = request.path?.removePrefix("/api/v2/")) {
             Endpoint.LOGS.path -> Endpoint.LOGS
-            Endpoint.SESSIONS_V2.path -> Endpoint.SESSIONS_V2
+            Endpoint.SESSIONS.path -> Endpoint.SESSIONS
             else -> error("Unsupported path $path")
         }
     }
@@ -70,7 +70,7 @@ internal class FakeApiServer : Dispatcher() {
         try {
             val type = when (endpoint) {
                 Endpoint.LOGS -> LogPayload::class
-                Endpoint.SESSIONS_V2 -> SessionPayload::class
+                Endpoint.SESSIONS -> SessionPayload::class
                 else -> error("Unsupported endpoint $endpoint")
             }
             val envelopeType = TypeUtils.parameterizedType(Envelope::class, type)

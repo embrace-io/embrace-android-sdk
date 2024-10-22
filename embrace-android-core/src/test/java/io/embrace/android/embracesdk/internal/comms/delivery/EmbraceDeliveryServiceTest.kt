@@ -24,9 +24,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.Event
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -310,13 +307,6 @@ internal class EmbraceDeliveryServiceTest {
     fun `check for native crash info if native crash service found`() {
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)
         assertEquals(1, fakeNativeCrashService.checkAndSendNativeCrashInvocation)
-    }
-
-    @Test
-    fun testSendEventAsync() {
-        val obj = EventMessage(Event(eventId = "abc", type = EventType.END))
-        deliveryService.sendMoment(obj)
-        assertEquals(obj, apiService.eventRequests.single())
     }
 
     @Test

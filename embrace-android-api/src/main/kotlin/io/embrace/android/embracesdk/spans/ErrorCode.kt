@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.annotation.BetaApi
-
 /**
  * Categorize the broad reason a Span completed unsuccessfully.
  */
-@BetaApi
 public enum class ErrorCode {
     /**
      * An application failure caused the Span to terminate

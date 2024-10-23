@@ -56,6 +56,7 @@ internal class MemoryWarningDataSource(
      * @param trimLevel the context of the trim, giving a hint of the amount of trimming.
      */
     override fun onTrimMemory(trimLevel: Int) {
+        @Suppress("DEPRECATION")
         if (trimLevel == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
             try {
                 onMemoryWarning(clock.now())

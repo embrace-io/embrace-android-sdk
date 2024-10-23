@@ -49,7 +49,7 @@ internal fun fakeModuleInitBootstrapper(
     dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _ -> FakeDataSourceModule() },
     dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeDeliveryModule() },
-    anrModuleSupplier: AnrModuleSupplier = { _, _, _, _ -> FakeAnrModule() },
+    anrModuleSupplier: AnrModuleSupplier = { _, _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule() },
     nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _ -> FakeNativeCoreModule() },
     momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _, _, _ -> FakeMomentsModule() },

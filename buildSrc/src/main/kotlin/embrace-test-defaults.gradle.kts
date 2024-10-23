@@ -1,6 +1,8 @@
 import io.embrace.gradle.Versions
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -28,6 +30,15 @@ android {
         checkReleaseBuilds = false // run on CI instead, speeds up release builds
         baseline = project.file("lint-baseline.xml")
         disable.addAll(mutableSetOf("GradleDependency", "NewerVersionAvailable"))
+    }
+
+    kotlin {
+        compilerOptions {
+            apiVersion.set(KotlinVersion.KOTLIN_1_8)
+            languageVersion.set(KotlinVersion.KOTLIN_1_8)
+            jvmTarget.set(JvmTarget.JVM_1_8)
+            allWarningsAsErrors = true
+        }
     }
 }
 
@@ -60,15 +71,6 @@ project.tasks.withType(DetektCreateBaselineTask::class.java).configureEach {
 
 project.tasks.withType(JavaCompile::class.java).configureEach {
     options.compilerArgs.addAll(listOf("-Xlint:unchecked", "-Xlint:deprecation"))
-}
-
-project.tasks.withType(KotlinCompile::class.java).configureEach {
-    kotlinOptions {
-        apiVersion = "1.8"
-        languageVersion = "1.8"
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
-        allWarningsAsErrors = true
-    }
 }
 
 // workaround: see https://medium.com/@saulmm2/android-gradle-precompiled-scripts-tomls-kotlin-dsl-df3c27ea017c

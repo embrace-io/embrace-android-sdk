@@ -1,8 +1,10 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.testcases
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.AppFramework.FLUTTER
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -30,14 +32,13 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
 
-    @Suppress("DEPRECATION")
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
         EmbraceSetupInterface(
-            appFramework = Embrace.AppFramework.FLUTTER,
+            appFramework = FLUTTER,
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(

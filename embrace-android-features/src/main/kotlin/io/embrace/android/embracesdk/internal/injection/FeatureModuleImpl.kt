@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Build
-import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.EmbraceFeatureRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
@@ -35,7 +34,6 @@ internal class FeatureModuleImpl(
     workerThreadModule: WorkerThreadModule,
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
-    anrModule: AnrModule,
     logWriter: LogWriter,
     configService: ConfigService,
 ) : FeatureModule {
@@ -228,13 +226,6 @@ internal class FeatureModuleImpl(
             configGate = {
                 configService.autoDataCaptureBehavior.isNetworkConnectivityCaptureEnabled()
             }
-        )
-    }
-
-    override val sigquitDataSource: DataSourceState<SigquitDataSource> by dataSourceState {
-        DataSourceState(
-            factory = anrModule::sigquitDataSource,
-            configGate = { configService.anrBehavior.isSigquitCaptureEnabled() }
         )
     }
 

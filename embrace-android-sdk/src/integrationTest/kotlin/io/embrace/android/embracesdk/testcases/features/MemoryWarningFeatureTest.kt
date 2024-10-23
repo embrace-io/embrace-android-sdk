@@ -28,6 +28,7 @@ internal class MemoryWarningFeatureTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
+                    @Suppress("DEPRECATION")
                     ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
                 }
             },
@@ -45,6 +46,7 @@ internal class MemoryWarningFeatureTest {
             testCaseAction = {
                 recordSession {
                     repeat(150) {
+                        @Suppress("DEPRECATION")
                         ctx.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
                     }
                 }

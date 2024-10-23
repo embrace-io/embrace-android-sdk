@@ -1,6 +1,9 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
+import io.embrace.android.embracesdk.AppFramework
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.annotation.InternalApi
 
@@ -40,7 +43,7 @@ public interface EmbraceAndroidApi {
     @Deprecated("Use {@link #start(Context)} instead.")
     public fun start(
         context: Context,
-        appFramework: Embrace.AppFramework
+        appFramework: AppFramework
     )
 
     /**
@@ -80,7 +83,7 @@ public interface EmbraceAndroidApi {
     public fun start(
         context: Context,
         isDevMode: Boolean,
-        appFramework: Embrace.AppFramework
+        appFramework: AppFramework
     )
 
     /**

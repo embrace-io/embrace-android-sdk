@@ -81,12 +81,6 @@ data class AnrRemoteConfig(
     @Json(name = "unity_ndk_sampling_allowlist")
     val nativeThreadAnrSamplingAllowlist: List<AllowedNdkSampleMethod>? = null,
 
-    /**
-     * Percentage of users for which Google ANR timestamp capture is enabled.
-     */
-    @Json(name = "google_pct_enabled")
-    val googlePctEnabled: Int? = null,
-
     @Json(name = "monitor_thread_priority")
     val monitorThreadPriority: Int? = null
 )

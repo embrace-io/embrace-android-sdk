@@ -47,11 +47,6 @@ class AnrBehaviorImpl(
             android.os.Process.THREAD_PRIORITY_DEFAULT
     }
 
-    override fun isSigquitCaptureEnabled(): Boolean {
-        return thresholdCheck.isBehaviorEnabled(remote?.googlePctEnabled)
-            ?: InstrumentedConfig.enabledFeatures.isSigquitCaptureEnabled()
-    }
-
     override val allowPatternList: List<Pattern> by lazy {
         remote?.allowList?.map(Pattern::compile) ?: emptyList()
     }

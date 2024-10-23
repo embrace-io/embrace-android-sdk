@@ -4,14 +4,13 @@ package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
 import io.embrace.android.embracesdk.AppFramework
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Declares the functions that consist of Embrace's public API - specifically
  * those that are only declared on Android. You should not use
  * [EmbraceAndroidApi] directly or implement it in your own custom classes,
- * as new functions may be added in future. Use the [Embrace] class instead.
+ * as new functions may be added in future. Use the Embrace class instead.
  */
 @InternalApi
 public interface EmbraceAndroidApi {

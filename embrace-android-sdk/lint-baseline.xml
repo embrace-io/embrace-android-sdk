@@ -4,34 +4,12 @@
     <issue
         id="EmbracePublicApiPackageRule"
         message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="public enum AppFramework {"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/AppFramework.java"
-            line="7"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
         errorLine1="public object EmbraceSamples {"
         errorLine2="              ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/EmbraceSamples.kt"
             line="14"
             column="15"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="public enum LastRunEndState {"
-        errorLine2="            ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/LastRunEndState.java"
-            line="6"
-            column="13"/>
     </issue>
 
     <issue

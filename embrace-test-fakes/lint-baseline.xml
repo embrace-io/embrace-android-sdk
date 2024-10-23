@@ -728,17 +728,6 @@
     </issue>
 
     <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        TODO(&quot;Not yet implemented&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeTracingApi.kt"
-            line="49"
-            column="9"/>
-    </issue>
-
-    <issue
         id="InvalidPackage"
         message="Invalid package reference in org.bouncycastle:bcprov-jdk18on; not included in Android: `javax.naming.directory`. Referenced from `org.bouncycastle.jce.provider.CrlCache`.">
         <location

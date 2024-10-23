@@ -1,13 +1,3 @@
-public final class io/embrace/android/embracesdk/AppFramework : java/lang/Enum {
-	public static final field FLUTTER Lio/embrace/android/embracesdk/AppFramework;
-	public static final field NATIVE Lio/embrace/android/embracesdk/AppFramework;
-	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/AppFramework;
-	public static final field UNITY Lio/embrace/android/embracesdk/AppFramework;
-	public fun getValue ()I
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/AppFramework;
-	public static fun values ()[Lio/embrace/android/embracesdk/AppFramework;
-}
-
 public final class io/embrace/android/embracesdk/BuildConfig {
 	public static final field BUILD_TYPE Ljava/lang/String;
 	public static final field DEBUG Z
@@ -109,15 +99,6 @@ public final class io/embrace/android/embracesdk/EmbraceSamples {
 	public static final fun triggerLongAnr ()V
 }
 
-public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enum {
-	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
-	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
-	public static final field INVALID Lio/embrace/android/embracesdk/LastRunEndState;
-	public fun getValue ()I
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LastRunEndState;
-	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
-}
-
 public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
 }
 
@@ -135,40 +116,6 @@ public final class io/embrace/android/embracesdk/WebViewChromeClientSwazzledHook
 
 public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
 	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi {
-	public abstract fun endView (Ljava/lang/String;)Z
-	public abstract fun start (Landroid/content/Context;)V
-	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
-	public abstract fun start (Landroid/content/Context;Z)V
-	public abstract fun start (Landroid/content/Context;ZLio/embrace/android/embracesdk/AppFramework;)V
-	public abstract fun startView (Ljava/lang/String;)Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/MomentsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
-}
-
-public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
-	public static fun createSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)Z
-	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
-	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;)Z
-	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Z
-	public static fun recordCompletedSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;)Z
-	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static fun recordSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static fun startSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public static fun startSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {
-	public abstract fun getCurrentSessionId ()Ljava/lang/String;
-	public abstract fun getDeviceId ()Ljava/lang/String;
-	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
-	public abstract fun isStarted ()Z
-	public abstract fun setAppId (Ljava/lang/String;)Z
 }
 
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {

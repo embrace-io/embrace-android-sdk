@@ -19,11 +19,11 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
-import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.atomic.AtomicReference
 
 private const val START_TIME_MS = 10000000000L
 private const val INTERVAL_MS = 100L
@@ -47,7 +47,7 @@ internal class AnrFeatureTest {
             FakeWorkerThreadModule(initModule, Worker.Background.AnrWatchdogWorker).apply {
                 anrMonitorThread = AtomicReference(Thread.currentThread())
             }
-        anrMonitorExecutor = workerThreadModule.executor
+        anrMonitorExecutor = workerThreadModule.executor.apply { blockingMode = false }
         val anrModule = createAnrModule(
             initModule,
             FakeConfigService(),

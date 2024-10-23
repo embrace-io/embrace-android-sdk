@@ -78,15 +78,19 @@ class SchedulingServiceImpl(
         try {
             var deliveryQueue = createPayloadQueue()
             while (deliveryQueue.isNotEmpty() && readyToSend()) {
-                deliveryQueue.poll()?.let { payload ->
-                    if (payload.shouldSendPayload() && readyToSend()) {
-                        payload.envelopeType.endpoint.updateBlockedEndpoint()
-                        queueDelivery(payload)
+                runCatching {
+                    deliveryQueue.poll()?.let { payload ->
+                        if (payload.shouldSendPayload() && readyToSend()) {
+                            payload.envelopeType.endpoint.updateBlockedEndpoint()
+                            queueDelivery(payload)
+                        }
                     }
-                }
 
-                if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
-                    deliveryQueue = createPayloadQueue()
+                    if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
+                        deliveryQueue = createPayloadQueue()
+                    }
+                }.exceptionOrNull()?.let { error ->
+                    logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, error)
                 }
             }
         } catch (t: Throwable) {

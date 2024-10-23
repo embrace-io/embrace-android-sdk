@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.PayloadType.Companion.fromValue
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
@@ -23,16 +25,20 @@ internal class V2PayloadStore(
         envelope: Envelope<SessionPayload>,
         transitionType: TransitionType,
     ) {
-        intakeService.take(envelope, createMetadata(SupportedEnvelopeType.SESSION))
+        intakeService.take(envelope, createMetadata(SupportedEnvelopeType.SESSION, payloadType = PayloadType.SESSION))
     }
 
     override fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>) {
-        intakeService.take(envelope, createMetadata(SupportedEnvelopeType.SESSION, complete = false))
+        intakeService.take(
+            envelope,
+            createMetadata(SupportedEnvelopeType.SESSION, complete = false, payloadType = PayloadType.SESSION)
+        )
     }
 
     override fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean) {
         val type = findSupportedEnvelopeType(envelope.data.logs)
-        intakeService.take(envelope, createMetadata(type))
+        val payloadType = getPayloadType(envelope)
+        intakeService.take(envelope, createMetadata(type, payloadType = payloadType))
     }
 
     override fun handleCrash(crashId: String) {
@@ -56,7 +62,25 @@ internal class V2PayloadStore(
     /**
      * Constructs a [StoredTelemetryMetadata] object from the given [Envelope].
      */
-    private fun createMetadata(type: SupportedEnvelopeType, complete: Boolean = true): StoredTelemetryMetadata {
-        return StoredTelemetryMetadata(clock.now(), uuidProvider(), processIdProvider(), type, complete)
+    private fun createMetadata(
+        type: SupportedEnvelopeType,
+        complete: Boolean = true,
+        payloadType: PayloadType,
+    ): StoredTelemetryMetadata {
+        return StoredTelemetryMetadata(
+            clock.now(),
+            uuidProvider(),
+            processIdProvider(),
+            type,
+            complete,
+            payloadType = payloadType
+        )
     }
+
+    /**
+     * Returns the payload type for the given [Envelope], to be sent within the X-EM-TYPES header.
+     */
+    private fun getPayloadType(envelope: Envelope<LogPayload>) = fromValue(
+        envelope.data.logs?.firstOrNull()?.attributes?.findAttributeValue("emb.type")
+    )
 }

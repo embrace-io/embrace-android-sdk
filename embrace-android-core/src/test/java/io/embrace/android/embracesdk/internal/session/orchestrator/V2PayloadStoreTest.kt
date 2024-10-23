@@ -36,7 +36,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
-            "p3_1692201601000_fakeuuid_fakeProcessId_true_v1.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_v1.json"
         )
     }
 
@@ -47,7 +47,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(),
-            "p3_1692201601000_fakeuuid_fakeProcessId_true_v1.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_true_session_v1.json"
         )
     }
 
@@ -58,7 +58,7 @@ class V2PayloadStoreTest {
 
         val intake = intakeService.getIntakes<LogPayload>().single()
         assertSame(envelope, intake.envelope)
-        assertEquals("p5_1692201601000_fakeuuid_fakeProcessId_true_v1.json", intake.metadata.filename)
+        assertEquals("p5_1692201601000_fakeuuid_fakeProcessId_true_unknown_v1.json", intake.metadata.filename)
         assertEquals(0, intakeService.shutdownCount)
     }
 
@@ -75,7 +75,7 @@ class V2PayloadStoreTest {
         verifySessionIntake(
             envelope,
             intakeService.getIntakes(false),
-            "p3_1692201601000_fakeuuid_fakeProcessId_false_v1.json"
+            "p3_1692201601000_fakeuuid_fakeProcessId_false_session_v1.json"
         )
     }
 

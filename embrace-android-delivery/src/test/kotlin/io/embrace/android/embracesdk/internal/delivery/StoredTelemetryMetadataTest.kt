@@ -24,8 +24,15 @@ class StoredTelemetryMetadataTest {
         typeNameMap.entries.forEach { (type, priority) ->
             listOf(true, false).forEach { payloadComplete ->
                 assertEquals(
-                    "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json",
-                    StoredTelemetryMetadata(TIMESTAMP, UUID, PROCESS_ID, type, payloadComplete).filename
+                    "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_aei_v1.json",
+                    StoredTelemetryMetadata(
+                        TIMESTAMP,
+                        UUID,
+                        PROCESS_ID,
+                        type,
+                        payloadComplete,
+                        payloadType = PayloadType.AEI
+                    ).filename
                 )
             }
         }
@@ -53,13 +60,14 @@ class StoredTelemetryMetadataTest {
     fun `from valid filename`() {
         typeNameMap.entries.forEach { (type, priority) ->
             listOf(true, false).forEach { payloadComplete ->
-                val input = "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_v1.json"
+                val input = "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_native_v1.json"
                 with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
                     assertEquals(input, filename)
                     assertEquals(TIMESTAMP, timestamp)
                     assertEquals(UUID, uuid)
                     assertEquals(type, envelopeType)
                     assertEquals(payloadComplete, complete)
+                    assertEquals(PayloadType.NATIVE_CRASH, payloadType)
                 }
             }
         }

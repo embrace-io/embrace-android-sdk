@@ -99,25 +99,6 @@ public final class io/embrace/android/embracesdk/EmbraceSamples {
 	public static final fun triggerLongAnr ()V
 }
 
-public final class io/embrace/android/embracesdk/ViewSwazzledHooks {
-}
-
-public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnClickListener {
-	public static fun _preOnClick (Landroid/view/View$OnClickListener;Landroid/view/View;)V
-}
-
-public final class io/embrace/android/embracesdk/ViewSwazzledHooks$OnLongClickListener {
-	public static fun _preOnLongClick (Landroid/view/View$OnLongClickListener;Landroid/view/View;)V
-}
-
-public final class io/embrace/android/embracesdk/WebViewChromeClientSwazzledHooks {
-	public static fun _preOnConsoleMessage (Landroid/webkit/ConsoleMessage;)V
-}
-
-public final class io/embrace/android/embracesdk/WebViewClientSwazzledHooks {
-	public static fun _preOnPageStarted (Landroid/webkit/WebView;Ljava/lang/String;Landroid/graphics/Bitmap;)V
-}
-
 public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {
 	protected static final field PATH_OVERRIDE Ljava/lang/String;
 	public fun <init> ()V

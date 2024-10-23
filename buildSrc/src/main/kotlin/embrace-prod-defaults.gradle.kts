@@ -79,6 +79,7 @@ dependencies {
     testImplementation(findLibrary("androidx.test.junit"))
     testImplementation(findLibrary("robolectric"))
     testImplementation(findLibrary("mockwebserver"))
+    testImplementation(findLibrary("okhttp.tls"))
     testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-test-fakes"))
 

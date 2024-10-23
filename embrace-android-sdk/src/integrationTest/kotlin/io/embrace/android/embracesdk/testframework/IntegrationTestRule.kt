@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.testframework
 import android.content.Context
 import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.EmbraceImpl
+import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
@@ -23,8 +24,12 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInt
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import java.net.InetAddress
+import java.util.concurrent.TimeUnit
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.tls.HandshakeCertificates
+import okhttp3.tls.HeldCertificate
 import org.junit.rules.ExternalResource
 
 /**
@@ -135,11 +140,8 @@ internal class IntegrationTestRule(
 
         if (setup.useMockWebServer) {
             apiServer = FakeApiServer()
-            val server: MockWebServer = MockWebServer().apply {
-                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
-                dispatcher = apiServer
-                start()
-            }
+
+            val server = createMockWebServer(apiServer)
             val baseUrl = server.url("api").toString()
 
             setup.overriddenConfigService.sdkEndpointBehavior = FakeSdkEndpointBehavior(
@@ -154,6 +156,40 @@ internal class IntegrationTestRule(
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
         otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter)
+    }
+
+    private fun createMockWebServer(apiServer: FakeApiServer): MockWebServer {
+        val server: MockWebServer = MockWebServer().apply {
+            protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+            dispatcher = apiServer
+            start()
+        }
+
+        val cert = ResourceReader.readResourceAsText("integration-test.pem")
+        val localhostCertificate = HeldCertificate.decode(cert)
+
+        val serverCertificates = HandshakeCertificates.Builder()
+            .heldCertificate(localhostCertificate)
+            .build()
+        server.useHttps(
+            serverCertificates.sslSocketFactory(),
+            tunnelProxy = false,
+        )
+        return server
+    }
+
+    private fun createPemCert() {
+        val localhost = InetAddress.getByName("localhost").getCanonicalHostName()
+        val localhostCertificate = HeldCertificate.Builder()
+            .addSubjectAlternativeName(localhost)
+            .duration(10 * 365, TimeUnit.DAYS)
+            .build()
+        // Print public key
+        val pem = localhostCertificate.certificatePem()
+        println(pem)
+        // Print private key
+        val key = localhostCertificate.privateKeyPkcs8Pem()
+        println(key)
     }
 
     /**

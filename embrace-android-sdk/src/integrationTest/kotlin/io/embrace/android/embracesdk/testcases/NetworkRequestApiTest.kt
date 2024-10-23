@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
@@ -12,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.ExceptionAttributes
@@ -21,10 +20,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 internal class NetworkRequestApiTest {
 
     @Rule
@@ -286,7 +283,7 @@ internal class NetworkRequestApiTest {
 
     private fun assertSingleNetworkRequestInSession(
         expectedRequest: EmbraceNetworkRequest,
-        completed: Boolean = true
+        completed: Boolean = true,
     ) {
 
         testRule.runTest(

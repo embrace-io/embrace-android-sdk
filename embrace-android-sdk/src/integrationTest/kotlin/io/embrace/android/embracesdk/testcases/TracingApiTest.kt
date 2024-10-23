@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
@@ -31,11 +30,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@Config(sdk = [TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiTest {
     @Rule

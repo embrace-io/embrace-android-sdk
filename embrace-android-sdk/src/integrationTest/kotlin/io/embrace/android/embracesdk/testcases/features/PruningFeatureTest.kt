@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DataPersist
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import kotlin.math.log
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

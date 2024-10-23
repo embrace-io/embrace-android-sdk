@@ -22,7 +22,7 @@ class HttpUrlConnectionRequestExecutionService(
         envelopeType: SupportedEnvelopeType,
     ): ExecutionResult {
         val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint()
-        var headersProvider = { emptyMap<String, String>() }
+        var headersProvider: (() -> Map<String, String>)? = null
         var failureReason: Throwable? = null
         val responseCode = try {
             val httpUrlConnection = createUrlConnection(apiRequest)
@@ -42,7 +42,7 @@ class HttpUrlConnectionRequestExecutionService(
         return getResult(
             endpoint = envelopeType.endpoint,
             responseCode = responseCode,
-            headersProvider = headersProvider,
+            headersProvider = headersProvider ?: { emptyMap() },
             clientError = failureReason,
         )
     }

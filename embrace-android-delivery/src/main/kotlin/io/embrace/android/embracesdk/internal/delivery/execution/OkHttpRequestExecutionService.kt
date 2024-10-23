@@ -58,11 +58,7 @@ class OkHttpRequestExecutionService(
         return getResult(
             endpoint = envelopeType.endpoint,
             responseCode = httpCallResponse?.code,
-            headersProvider = {
-                httpCallResponse?.run {
-                    httpCallResponse.headers.toMap()
-                } ?: emptyMap()
-            },
+            headersProvider = { httpCallResponse?.headers?.toMap() ?: emptyMap() },
             clientError = failureReason,
         )
     }

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import java.io.InputStream
 
@@ -16,5 +15,5 @@ interface RequestExecutionService {
     fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType
-    ): ApiResponse
+    ): ExecutionResult
 }

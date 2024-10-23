@@ -20,12 +20,13 @@ class HttpUrlConnectionRequestExecutionService(
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType,
+        payloadType: String,
     ): ExecutionResult {
         val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint()
         var headersProvider: (() -> Map<String, String>)? = null
         var failureReason: Throwable? = null
         val responseCode = try {
-            val httpUrlConnection = createUrlConnection(apiRequest)
+            val httpUrlConnection = createUrlConnection(apiRequest, payloadType)
             httpUrlConnection.outputStream?.use { outputStream ->
                 payloadStream().use { inputStream ->
                     inputStream.copyTo(outputStream)
@@ -59,12 +60,14 @@ class HttpUrlConnectionRequestExecutionService(
         emptyMap()
     }
 
-    private fun createUrlConnection(apiRequest: ApiRequestV2): HttpURLConnection {
+    private fun createUrlConnection(apiRequest: ApiRequestV2, payloadType: String): HttpURLConnection {
         val connection = URL(apiRequest.url).openConnection() as HttpURLConnection
 
         apiRequest.getHeaders().forEach {
             connection.setRequestProperty(it.key, it.value)
         }
+        connection.setRequestProperty("X-EM-TYPES", payloadType)
+
         connection.requestMethod = "POST"
         connection.setDoOutput(true)
 

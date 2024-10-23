@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.mockwebserver.MockResponse
@@ -68,7 +69,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be incomplete
@@ -84,7 +86,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be successful
@@ -99,7 +102,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be not modified
@@ -114,7 +118,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be payload too large
@@ -133,7 +138,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be too many requests
@@ -149,7 +155,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be incomplete
@@ -169,7 +176,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         val response = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the response should be failure
@@ -185,7 +193,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         // when attempting to make a request
         requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the request should include the expected headers
@@ -197,5 +206,24 @@ class HttpUrlConnectionRequestExecutionServiceTest {
         assertEquals("gzip", request.getHeader("Content-Encoding"))
         assertEquals(testAppId, request.getHeader("X-EM-AID"))
         assertEquals(testDeviceId, request.getHeader("X-EM-DID"))
+        assertEquals(PayloadType.SESSION.value, request.getHeader("X-EM-TYPES"))
+    }
+
+    @Test
+    fun `payload type header is sent correctly`() {
+        // given a server that returns a 200 response
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        // when attempting to make a request
+        requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.LOG,
+            payloadType = PayloadType.AEI.value
+        )
+
+        // then the request should include the expected headers
+        val request = server.takeRequest()
+
+        assertEquals(PayloadType.AEI.value, request.getHeader("X-EM-TYPES"))
     }
 }

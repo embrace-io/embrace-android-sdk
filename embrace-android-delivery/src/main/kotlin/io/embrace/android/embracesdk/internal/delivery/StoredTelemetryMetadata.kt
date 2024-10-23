@@ -23,7 +23,6 @@ data class StoredTelemetryMetadata(
 ) {
 
     companion object {
-
         /**
          * Parses a filename and constructs a [StoredTelemetryMetadata] object. This returns a
          * [Result] because the filename may be invalid.

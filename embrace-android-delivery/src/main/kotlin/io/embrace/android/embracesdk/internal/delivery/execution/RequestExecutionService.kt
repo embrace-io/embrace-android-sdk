@@ -14,6 +14,7 @@ interface RequestExecutionService {
      */
     fun attemptHttpRequest(
         payloadStream: () -> InputStream,
-        envelopeType: SupportedEnvelopeType
+        envelopeType: SupportedEnvelopeType,
+        payloadType: String
     ): ExecutionResult
 }

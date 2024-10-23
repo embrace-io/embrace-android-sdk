@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery
 enum class PayloadType(
     val value: String,
 ) {
-    SESSION("session"),
+    SESSION("ux.session"),
     LOG("sys.log"),
     CRASH("sys.android.crash"),
     NATIVE_CRASH("sys.android.native_crash"),

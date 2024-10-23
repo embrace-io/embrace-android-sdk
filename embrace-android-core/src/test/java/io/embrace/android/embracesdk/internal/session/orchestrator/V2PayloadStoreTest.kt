@@ -90,6 +90,7 @@ class V2PayloadStoreTest {
         ).forEach { type ->
             storeLogWithType(type)
             assertEquals(SupportedEnvelopeType.CRASH, getLastLogMetadata().envelopeType)
+            assertEquals(type.value, getLastLogMetadata().payloadType.value)
         }
 
         // log
@@ -100,11 +101,13 @@ class V2PayloadStoreTest {
         ).forEach { type ->
             storeLogWithType(type)
             assertEquals(SupportedEnvelopeType.LOG, getLastLogMetadata().envelopeType)
+            assertEquals(type.value, getLastLogMetadata().payloadType.value)
         }
 
         // network
         storeLogWithType(System.NetworkCapturedRequest)
         assertEquals(SupportedEnvelopeType.BLOB, getLastLogMetadata().envelopeType)
+        assertEquals(System.NetworkCapturedRequest.value, getLastLogMetadata().payloadType.value)
     }
 
     private fun storeLogWithType(type: TelemetryType) {

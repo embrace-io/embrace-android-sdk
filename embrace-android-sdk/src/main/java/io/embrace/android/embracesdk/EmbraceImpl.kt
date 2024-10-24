@@ -285,10 +285,19 @@ internal class EmbraceImpl @JvmOverloads constructor(
                     )
                 }
             }
-            worker.submit {
+            worker.submit { // potentially trigger first delivery attempt by firing network status callback
+                registerDeliveryNetworkListener()
                 bootstrapper.deliveryModule.schedulingService?.onPayloadIntake()
             }
+        } else {
+            registerDeliveryNetworkListener()
         }
+    }
+
+    private fun registerDeliveryNetworkListener() {
+        bootstrapper.deliveryModule.schedulingService?.let(
+            bootstrapper.essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener
+        )
     }
 
     /**

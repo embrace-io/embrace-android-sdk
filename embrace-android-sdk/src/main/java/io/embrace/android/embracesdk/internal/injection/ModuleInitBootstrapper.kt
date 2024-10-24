@@ -319,11 +319,6 @@ internal class ModuleInitBootstrapper(
                             }
                         )
                     }
-                    postInit(DeliveryModule::class) {
-                        deliveryModule.schedulingService?.let(
-                            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener
-                        )
-                    }
 
                     postInit(AnrModule::class) {
                         serviceRegistry.registerServices(

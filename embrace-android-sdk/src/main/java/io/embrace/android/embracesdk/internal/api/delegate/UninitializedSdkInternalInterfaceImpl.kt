@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 @SuppressLint("EmbracePublicApiPackageRule")
@@ -86,4 +87,6 @@ internal class UninitializedSdkInternalInterfaceImpl(
     override fun logInternalError(error: Throwable) {}
 
     override fun stopSdk() {}
+
+    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {}
 }

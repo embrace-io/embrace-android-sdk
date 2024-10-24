@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
+import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.spans.ErrorCode
 
@@ -150,4 +151,6 @@ class FakeEmbraceInternalInterface(
     ): Boolean {
         return true
     }
+
+    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {}
 }

@@ -191,6 +191,10 @@ internal class EmbraceInternalInterfaceImpl(
         initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, error)
     }
 
+    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
+        embraceImpl.logTap(point, elementName, type)
+    }
+
     override fun stopSdk() {
         embraceImpl.stop()
     }

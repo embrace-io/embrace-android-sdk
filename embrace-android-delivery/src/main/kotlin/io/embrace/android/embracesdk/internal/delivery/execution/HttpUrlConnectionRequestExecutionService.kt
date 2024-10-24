@@ -24,9 +24,9 @@ class HttpUrlConnectionRequestExecutionService(
     ): ExecutionResult {
         val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint()
         var headersProvider: (() -> Map<String, String>)? = null
-        var failureReason: Throwable? = null
+        var executionError: Throwable? = null
+        val httpUrlConnection = createUrlConnection(apiRequest, payloadType)
         val responseCode = try {
-            val httpUrlConnection = createUrlConnection(apiRequest, payloadType)
             httpUrlConnection.outputStream?.use { outputStream ->
                 payloadStream().use { inputStream ->
                     inputStream.copyTo(outputStream)
@@ -34,9 +34,9 @@ class HttpUrlConnectionRequestExecutionService(
             }
             httpUrlConnection.connect()
             headersProvider = { readHttpResponseHeaders(httpUrlConnection) }
-            readResponseCode(httpUrlConnection)
+            httpUrlConnection.responseCode
         } catch (throwable: Throwable) {
-            failureReason = throwable
+            executionError = throwable
             null
         }
 
@@ -44,14 +44,8 @@ class HttpUrlConnectionRequestExecutionService(
             endpoint = envelopeType.endpoint,
             responseCode = responseCode,
             headersProvider = headersProvider ?: { emptyMap() },
-            clientError = failureReason,
+            executionError = executionError,
         )
-    }
-
-    private fun readResponseCode(httpUrlConnection: HttpURLConnection): Int? = try {
-        httpUrlConnection.responseCode
-    } catch (throwable: Throwable) {
-        null
     }
 
     private fun readHttpResponseHeaders(httpUrlConnection: HttpURLConnection): Map<String, String> = try {

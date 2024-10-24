@@ -293,21 +293,15 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
-    fun `unexpected exception during execution will be retried`() {
+    fun `unhandled exception during request sending will not be retried`() {
         logger.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         schedulingExecutor.blockingMode = true
         waitForOnPayloadIntakeTaskCompletion()
         deliveryExecutor.awaitExecutionCompletion()
         assertEquals(0, executionService.sendAttempts())
-        assertEquals(2, storageService.storedPayloadCount())
-        assertEquals(2, logger.internalErrorMessages.size)
-        executionService.exceptionOnExecution = null
-        clock.tick(INITIAL_DELAY_MS + 1)
-        waitForOnPayloadIntakeTaskCompletion()
-        deliveryExecutor.awaitExecutionCompletion()
-        assertEquals(2, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
+        assertEquals(2, logger.internalErrorMessages.size)
     }
 
     @Test(expected = RejectedExecutionException::class)

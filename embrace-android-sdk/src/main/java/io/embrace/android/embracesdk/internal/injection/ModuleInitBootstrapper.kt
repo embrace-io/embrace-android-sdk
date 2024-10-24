@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.execution.HttpUrlConnectionRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.OkHttpRequestExecutionService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -296,12 +297,23 @@ internal class ModuleInitBootstrapper(
                                     null
                                 } else {
                                     val appId = checkNotNull(configModule.configService.appId)
-                                    OkHttpRequestExecutionService(
-                                        configModule.configService.sdkEndpointBehavior.getData(appId),
-                                        lazy(androidServicesModule.preferencesService::deviceIdentifier),
-                                        appId,
-                                        BuildConfig.VERSION_NAME
-                                    )
+                                    val coreBaseUrl = configModule.configService.sdkEndpointBehavior.getData(appId)
+                                    val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
+                                    if (configModule.configService.autoDataCaptureBehavior.shouldUseOkHttp()) {
+                                        OkHttpRequestExecutionService(
+                                            coreBaseUrl,
+                                            lazyDeviceId,
+                                            appId,
+                                            BuildConfig.VERSION_NAME
+                                        )
+                                    } else {
+                                        HttpUrlConnectionRequestExecutionService(
+                                            coreBaseUrl,
+                                            lazyDeviceId,
+                                            appId,
+                                            BuildConfig.VERSION_NAME
+                                        )
+                                    }
                                 }
                             },
                             {

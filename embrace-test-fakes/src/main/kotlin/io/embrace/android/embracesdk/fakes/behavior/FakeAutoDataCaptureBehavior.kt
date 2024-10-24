@@ -13,7 +13,8 @@ class FakeAutoDataCaptureBehavior(
     private val sigHandlerDetectionEnabled: Boolean = true,
     private val ndkEnabled: Boolean = false,
     private val diskUsageReportingEnabled: Boolean = true,
-    private val v2StorageEnabled: Boolean = true
+    private val v2StorageEnabled: Boolean = true,
+    private val useOkhttp: Boolean = true
 ) : AutoDataCaptureBehavior {
 
     override fun isMemoryWarningCaptureEnabled(): Boolean = memoryServiceEnabled
@@ -27,4 +28,5 @@ class FakeAutoDataCaptureBehavior(
     override fun isNativeCrashCaptureEnabled(): Boolean = ndkEnabled
     override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageReportingEnabled
     override fun isV2StorageEnabled(): Boolean = v2StorageEnabled
+    override fun shouldUseOkHttp(): Boolean = useOkhttp
 }

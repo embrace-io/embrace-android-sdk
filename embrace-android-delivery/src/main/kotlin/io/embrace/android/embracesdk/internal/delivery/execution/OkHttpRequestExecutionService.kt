@@ -38,12 +38,18 @@ class OkHttpRequestExecutionService(
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType,
+        payloadType: String,
     ): ExecutionResult {
         val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint()
         val requestBody = generateRequestBody(payloadStream)
         val request = Request.Builder()
             .url(apiRequest.url)
-            .headers(apiRequest.getHeaders().toHeaders())
+            .headers(
+                apiRequest
+                    .getHeaders()
+                    .plus("X-EM-TYPES" to payloadType)
+                    .toHeaders()
+            )
             .post(requestBody)
             .build()
 

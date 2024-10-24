@@ -36,6 +36,7 @@ class FakeRequestExecutionService(
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType,
+        payloadType: String,
     ): ExecutionResult {
         exceptionOnExecution?.run { throw this }
         val bufferedStream = GZIPInputStream(payloadStream())

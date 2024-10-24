@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.Protocol
@@ -73,7 +74,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be incomplete
@@ -89,7 +91,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be successful
@@ -104,7 +107,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be other
@@ -119,7 +123,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be payload too large
@@ -138,7 +143,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be too many requests
@@ -154,7 +160,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be incomplete
@@ -174,7 +181,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the result should be failure
@@ -190,7 +198,8 @@ class OkHttpRequestExecutionServiceTest {
         // when attempting to make a request
         requestExecutionService.attemptHttpRequest(
             payloadStream = { testPostBody.byteInputStream() },
-            envelopeType = SupportedEnvelopeType.SESSION
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value
         )
 
         // then the request should include the expected headers
@@ -202,5 +211,24 @@ class OkHttpRequestExecutionServiceTest {
         assertEquals("gzip", request.getHeader("Content-Encoding"))
         assertEquals(testAppId, request.getHeader("X-EM-AID"))
         assertEquals(testDeviceId, request.getHeader("X-EM-DID"))
+        assertEquals(PayloadType.SESSION.value, request.getHeader("X-EM-TYPES"))
+    }
+
+    @Test
+    fun `payload type header is sent correctly`() {
+        // given a server that returns a 200 response
+        server.enqueue(MockResponse().setResponseCode(200))
+
+        // when attempting to make a request
+        requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.LOG,
+            payloadType = PayloadType.AEI.value
+        )
+
+        // then the request should include the expected headers
+        val request = server.takeRequest()
+
+        assertEquals(PayloadType.AEI.value, request.getHeader("X-EM-TYPES"))
     }
 }

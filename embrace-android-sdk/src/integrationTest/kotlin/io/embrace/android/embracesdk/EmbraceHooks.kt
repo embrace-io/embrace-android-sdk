@@ -6,11 +6,11 @@ package io.embrace.android.embracesdk
 internal object EmbraceHooks {
 
     internal fun setImpl(impl: EmbraceImpl) {
-        Embrace.setImpl(impl)
+        Embrace.getInstance().impl = impl
     }
 
     internal fun stop() {
-        Embrace.getImpl().stop()
+        Embrace.getInstance().impl.stop()
     }
 }
 

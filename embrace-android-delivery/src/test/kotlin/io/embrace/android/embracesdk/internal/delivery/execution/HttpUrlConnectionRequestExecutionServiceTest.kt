@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 class HttpUrlConnectionRequestExecutionServiceTest {
@@ -161,7 +162,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
 
         // then the response should be incomplete
         check(response is ExecutionResult.Incomplete)
-        assertTrue(response.exception is IllegalStateException)
+        assertTrue(response.exception is SocketTimeoutException)
     }
 
     @Test

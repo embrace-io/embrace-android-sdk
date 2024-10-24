@@ -42,11 +42,14 @@ sealed class ExecutionResult(
     /**
      * An execution that was interrupted by the given throwable. This result may be due to a failure before the request
      * was queued for execution, during execution of the request, or in the job after the response was fully loaded.
+     * Depending on the nature of the exception, we may or may not want to retry the send again. The code constructing
+     * this result will determine that.
      */
-    data class Incomplete(val exception: Throwable, val retry: Boolean = true) : ExecutionResult(retry)
+    data class Incomplete(val exception: Throwable, val retry: Boolean) : ExecutionResult(retry)
 
     /**
-     * An execution attempt was not made for expected reasons.
+     * An execution attempt was not made for expected reasons. Any internal error logging will be handled at the
+     * site where the error was found, and the caller can move on.
      */
     object NotAttempted : ExecutionResult(false)
 
@@ -63,10 +66,14 @@ sealed class ExecutionResult(
             endpoint: Endpoint,
             responseCode: Int?,
             headersProvider: () -> Map<String, String>,
-            clientError: Throwable? = null,
+            executionError: Throwable? = null,
         ): ExecutionResult {
             return when (responseCode) {
-                null -> Incomplete(clientError ?: IllegalStateException("Unknown execution error"))
+                null -> Incomplete(
+                    exception = executionError ?: IllegalStateException("Unknown execution error"),
+                    retry = true
+                )
+
                 HTTP_OK -> Success
                 HTTP_ENTITY_TOO_LARGE -> PayloadTooLarge
                 HTTP_TOO_MANY_REQUESTS -> TooManyRequests(

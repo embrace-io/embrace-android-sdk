@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import java.io.IOException
 import java.io.InputStream
 
 /**
@@ -12,6 +13,7 @@ interface RequestExecutionService {
     /**
      * Takes an [InputStream] of a payload and attempts an HTTP request to the Embrace backend.
      */
+    @Throws(IOException::class)
     fun attemptHttpRequest(
         payloadStream: () -> InputStream,
         envelopeType: SupportedEnvelopeType,

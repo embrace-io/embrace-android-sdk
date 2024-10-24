@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
@@ -35,9 +34,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
-@Config(sdk = [UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class ExternalTracerTest {
 
@@ -117,8 +114,11 @@ internal class ExternalTracerTest {
                     endTimeMs = clock.tick()
                     span.end()
                     embTracer.spanBuilder("another-parent-with-tracer").startSpan().end()
-                    embTracer.spanBuilder("set-parent-explicitly").setParent(Context.root().with(span)).startSpan().end()
-                    checkNotNull(parentContext).wrap(Runnable { wrappedSpan = embTracer.spanBuilder("wrapped").startSpan() }).run()
+                    embTracer.spanBuilder("set-parent-explicitly").setParent(Context.root().with(span)).startSpan()
+                        .end()
+                    checkNotNull(parentContext).wrap(Runnable {
+                        wrappedSpan = embTracer.spanBuilder("wrapped").startSpan()
+                    }).run()
                     checkNotNull(wrappedSpan).end()
                 }
             },
@@ -162,7 +162,10 @@ internal class ExternalTracerTest {
                                 Attribute("bad", "yes"),
                                 Attribute(ExceptionAttributes.EXCEPTION_MESSAGE.key, "bah"),
                                 Attribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key, stacktrace),
-                                Attribute(ExceptionAttributes.EXCEPTION_TYPE.key, checkNotNull(RuntimeException::class.java.canonicalName))
+                                Attribute(
+                                    ExceptionAttributes.EXCEPTION_TYPE.key,
+                                    checkNotNull(RuntimeException::class.java.canonicalName)
+                                )
                             )
                         )
                     ),

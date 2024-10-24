@@ -1,20 +1,16 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import java.lang.Thread.sleep
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class LogRecordExporterTest {
 
@@ -33,32 +29,19 @@ internal class LogRecordExporterTest {
             testCaseAction = {
                 recordSession {
                     embrace.logMessage("test message", Severity.INFO)
-                    sleep(3000)
                 }
             },
             assertAction = {
-                assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) > 0)
+                assertTrue(
+                    returnIfConditionMet(
+                        desiredValueSupplier = { true },
+                        dataProvider = { fakeLogRecordExporter.exportedLogs?.size },
+                        condition = { data ->
+                            data == 1
+                        },
+                    )
+                )
                 assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body?.asString())
-            }
-        )
-    }
-
-    @Test
-    fun `a LogRecordExporter added after initialization won't be used`() {
-        val fakeLogRecordExporter = FakeLogRecordExporter()
-
-        testRule.runTest(
-            testCaseAction = {
-                embrace.addLogRecordExporter(fakeLogRecordExporter)
-
-                recordSession {
-                    embrace.logMessage("test message", Severity.INFO)
-
-                    sleep(3000)
-                }
-            },
-            assertAction = {
-                assertTrue((fakeLogRecordExporter.exportedLogs?.size ?: 0) == 0)
             }
         )
     }

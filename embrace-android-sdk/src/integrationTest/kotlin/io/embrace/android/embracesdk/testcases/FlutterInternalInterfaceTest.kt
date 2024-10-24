@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases
 
-import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.LogExceptionType
@@ -21,12 +20,10 @@ import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 /**
  * Validation of the internal API
  */
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
 

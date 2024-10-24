@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
@@ -51,6 +52,7 @@ class OkHttpRequestExecutionServiceTest {
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
+            logger = FakeEmbLogger(),
             connectionTimeoutSeconds = 1L,
             readTimeoutSeconds = 1L,
         )
@@ -68,7 +70,8 @@ class OkHttpRequestExecutionServiceTest {
             coreBaseUrl = "https://nonexistenturl:1565",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
-            embraceVersionName = testEmbraceVersionName
+            embraceVersionName = testEmbraceVersionName,
+            logger = FakeEmbLogger(),
         )
 
         // when attempting to make a request

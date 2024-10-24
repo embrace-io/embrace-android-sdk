@@ -304,14 +304,16 @@ internal class ModuleInitBootstrapper(
                                             coreBaseUrl,
                                             lazyDeviceId,
                                             appId,
-                                            BuildConfig.VERSION_NAME
+                                            BuildConfig.VERSION_NAME,
+                                            logger,
                                         )
                                     } else {
                                         HttpUrlConnectionRequestExecutionService(
                                             coreBaseUrl,
                                             lazyDeviceId,
                                             appId,
-                                            BuildConfig.VERSION_NAME
+                                            BuildConfig.VERSION_NAME,
+                                            logger,
                                         )
                                     }
                                 }

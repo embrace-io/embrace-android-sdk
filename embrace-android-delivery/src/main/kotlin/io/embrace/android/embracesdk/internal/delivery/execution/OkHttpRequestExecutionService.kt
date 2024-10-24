@@ -16,9 +16,6 @@ import okio.source
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
-private const val DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10L
-private const val DEFAULT_READ_TIMEOUT_SECONDS = 60L
-
 class OkHttpRequestExecutionService(
     private val coreBaseUrl: String,
     private val lazyDeviceId: Lazy<String>,
@@ -41,7 +38,7 @@ class OkHttpRequestExecutionService(
         payloadType: String,
     ): ExecutionResult {
         val apiRequest = envelopeType.endpoint.getApiRequestFromEndpoint()
-        val requestBody = generateRequestBody(payloadStream)
+        val requestBody = ApiRequestBody(payloadStream)
         val request = Request.Builder()
             .url(apiRequest.url)
             .headers(
@@ -53,11 +50,11 @@ class OkHttpRequestExecutionService(
             .post(requestBody)
             .build()
 
-        var failureReason: Throwable? = null
+        var executionError: Throwable? = null
         val httpCallResponse = try {
             okHttpClient.newCall(request).execute()
         } catch (throwable: Throwable) {
-            failureReason = throwable
+            executionError = throwable
             null
         }
 
@@ -65,20 +62,8 @@ class OkHttpRequestExecutionService(
             endpoint = envelopeType.endpoint,
             responseCode = httpCallResponse?.code,
             headersProvider = { httpCallResponse?.headers?.toMap() ?: emptyMap() },
-            clientError = failureReason,
+            executionError = executionError,
         )
-    }
-
-    private val mediaType = "application/json".toMediaType()
-
-    private fun generateRequestBody(payloadStream: () -> InputStream) = object : RequestBody() {
-        override fun contentType() = mediaType
-
-        override fun writeTo(sink: BufferedSink) {
-            payloadStream().source().buffer().use { source ->
-                sink.writeAll(source)
-            }
-        }
     }
 
     private fun Endpoint.getApiRequestFromEndpoint(): ApiRequestV2 = ApiRequestV2(
@@ -88,4 +73,22 @@ class OkHttpRequestExecutionService(
         contentEncoding = "gzip",
         userAgent = "Embrace/a/$embraceVersionName"
     )
+
+    private companion object {
+        const val DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10L
+        const val DEFAULT_READ_TIMEOUT_SECONDS = 60L
+        private val mediaType = "application/json".toMediaType()
+
+        class ApiRequestBody(
+            private val payloadStream: () -> InputStream,
+        ) : RequestBody() {
+            override fun contentType() = mediaType
+
+            override fun writeTo(sink: BufferedSink) {
+                payloadStream().source().buffer().use { source ->
+                    sink.writeAll(source)
+                }
+            }
+        }
+    }
 }

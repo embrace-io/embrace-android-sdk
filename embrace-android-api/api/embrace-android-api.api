@@ -231,6 +231,19 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 	public abstract fun setUsername (Ljava/lang/String;)V
 }
 
+public class io/embrace/android/embracesdk/internal/network/http/EmbraceHttpPathOverride {
+	protected static final field PATH_OVERRIDE Ljava/lang/String;
+	public fun <init> ()V
+	public static fun getURLString (Lio/embrace/android/embracesdk/internal/network/http/HttpPathOverrideRequest;)Ljava/lang/String;
+	public static fun getURLString (Lio/embrace/android/embracesdk/internal/network/http/HttpPathOverrideRequest;Ljava/lang/String;)Ljava/lang/String;
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/network/http/HttpPathOverrideRequest {
+	public abstract fun getHeaderByName (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun getOverriddenURL (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun getURLString ()Ljava/lang/String;
+}
+
 public final class io/embrace/android/embracesdk/internal/network/http/NetworkCaptureData {
 	public fun <init> (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;)V
 	public synthetic fun <init> (Ljava/util/Map;Ljava/lang/String;[BLjava/util/Map;[BLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

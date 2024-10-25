@@ -3,7 +3,6 @@ public final class io/embrace/android/embracesdk/AppFramework : java/lang/Enum {
 	public static final field NATIVE Lio/embrace/android/embracesdk/AppFramework;
 	public static final field REACT_NATIVE Lio/embrace/android/embracesdk/AppFramework;
 	public static final field UNITY Lio/embrace/android/embracesdk/AppFramework;
-	public fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/AppFramework;
 	public static fun values ()[Lio/embrace/android/embracesdk/AppFramework;
 }
@@ -113,7 +112,6 @@ public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enu
 	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field INVALID Lio/embrace/android/embracesdk/LastRunEndState;
-	public fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LastRunEndState;
 	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
 }

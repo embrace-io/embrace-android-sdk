@@ -64,6 +64,7 @@ internal class EmbraceNetworkRequestTest {
             BYTES_RECEIVED,
             RESPONSE_CODE,
             TRACE_ID,
+            null,
             captureData
         )
         verifyDefaultCompletedRequest(request)
@@ -131,6 +132,7 @@ internal class EmbraceNetworkRequestTest {
             ERR_TYPE,
             ERR_MSG,
             TRACE_ID,
+            null,
             captureData
         )
         verifyDefaultIncompleteRequest(request)

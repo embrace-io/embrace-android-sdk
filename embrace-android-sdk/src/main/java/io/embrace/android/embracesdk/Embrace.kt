@@ -19,7 +19,6 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 /**
  * Entry point for the SDK. This class is part of the Embrace Public API.
  *
- *
  * Contains a singleton instance of itself, and is used for initializing the SDK.
  */
 @SuppressLint("EmbracePublicApiPackageRule")
@@ -43,17 +42,13 @@ public class Embrace private constructor(
         public fun getInstance(): Embrace = instance
     }
 
-    @Suppress("deprecation")
     override fun start(context: Context) {
-        start(context, AppFramework.NATIVE)
+        impl.start(context)
     }
 
     @Deprecated("Use {@link #start(Context)} instead.")
     override fun start(context: Context, appFramework: AppFramework) {
-        impl.start(
-            context,
-            appFramework
-        ) { _: io.embrace.android.embracesdk.internal.payload.AppFramework? -> null }
+        impl.start(context, appFramework)
     }
 
     override val isStarted: Boolean
@@ -207,12 +202,10 @@ public class Embrace private constructor(
         impl.logCustomStacktrace(stacktraceElements, severity, properties, message)
     }
 
-    @Synchronized
     override fun endSession() {
-        endSession(false)
+        impl.endSession()
     }
 
-    @Synchronized
     override fun endSession(clearUserInfo: Boolean) {
         impl.endSession(clearUserInfo)
     }
@@ -237,11 +230,11 @@ public class Embrace private constructor(
     }
 
     override fun startSpan(name: String): EmbraceSpan? {
-        return startSpan(name, null, null)
+        return impl.startSpan(name)
     }
 
     override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
-        return startSpan(name, parent, null)
+        return impl.startSpan(name, parent)
     }
 
     override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? {
@@ -249,11 +242,11 @@ public class Embrace private constructor(
     }
 
     override fun <T> recordSpan(name: String, code: Function0<T>): T {
-        return recordSpan(name, null, null, null, code)
+        return impl.recordSpan(name, code)
     }
 
     override fun <T> recordSpan(name: String, parent: EmbraceSpan?, code: Function0<T>): T {
-        return recordSpan(name, parent, null, null, code)
+        return impl.recordSpan(name, parent, code)
     }
 
     override fun <T> recordSpan(
@@ -262,7 +255,7 @@ public class Embrace private constructor(
         events: List<EmbraceSpanEvent>?,
         code: Function0<T>
     ): T {
-        return recordSpan(name, null, attributes, events, code)
+        return impl.recordSpan(name, attributes, events, code)
     }
 
     override fun <T> recordSpan(
@@ -296,7 +289,7 @@ public class Embrace private constructor(
     }
 
     override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long): Boolean {
-        return recordCompletedSpan(name, startTimeMs, endTimeMs, null, null, null, null)
+        return impl.recordCompletedSpan(name, startTimeMs, endTimeMs)
     }
 
     override fun recordCompletedSpan(
@@ -305,7 +298,7 @@ public class Embrace private constructor(
         endTimeMs: Long,
         errorCode: ErrorCode?
     ): Boolean {
-        return recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, null, null, null)
+        return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode)
     }
 
     override fun recordCompletedSpan(
@@ -314,7 +307,7 @@ public class Embrace private constructor(
         endTimeMs: Long,
         parent: EmbraceSpan?
     ): Boolean {
-        return recordCompletedSpan(name, startTimeMs, endTimeMs, null, parent, null, null)
+        return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, parent)
     }
 
     override fun recordCompletedSpan(
@@ -324,7 +317,7 @@ public class Embrace private constructor(
         errorCode: ErrorCode?,
         parent: EmbraceSpan?
     ): Boolean {
-        return recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, null, null)
+        return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent)
     }
 
     override fun recordCompletedSpan(
@@ -334,7 +327,7 @@ public class Embrace private constructor(
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?
     ): Boolean {
-        return recordCompletedSpan(name, startTimeMs, endTimeMs, null, null, attributes, events)
+        return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, attributes, events)
     }
 
     override fun getSpan(spanId: String): EmbraceSpan? {
@@ -386,9 +379,7 @@ public class Embrace private constructor(
     }
 
     override fun trackWebViewPerformance(tag: String, consoleMessage: ConsoleMessage) {
-        if (consoleMessage.message() != null) {
-            trackWebViewPerformance(tag, consoleMessage.message())
-        }
+        impl.trackWebViewPerformance(tag, consoleMessage)
     }
 
     override fun trackWebViewPerformance(tag: String, message: String) {

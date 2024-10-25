@@ -5,8 +5,6 @@ package io.embrace.android.embracesdk
 
 internal object EmbraceHooks {
 
-    internal fun getProcessStateService() = checkNotNull(Embrace.getImpl().processStateService)
-
     internal fun setImpl(impl: EmbraceImpl) {
         Embrace.setImpl(impl)
     }

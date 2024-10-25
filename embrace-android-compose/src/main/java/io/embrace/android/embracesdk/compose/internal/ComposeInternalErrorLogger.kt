@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.compose.internal
 
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 
 internal class ComposeInternalErrorLogger {
 
     fun logError(throwable: Throwable) {
-        Embrace.getInstance().internalInterface.logInternalError(
-            throwable
-        )
+        EmbraceInternalApi.getInstance().internalInterface.logInternalError(throwable)
     }
 }

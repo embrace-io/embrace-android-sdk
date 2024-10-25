@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.UnityInternalInterface
 
 internal class NoopUnityInternalInterface(
     private val delegate: EmbraceInternalInterface,

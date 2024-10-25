@@ -1,7 +1,6 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 /**
  * Provides an internal interface to Embrace that is intended for use by the Embrace Unity SDK as its
@@ -9,17 +8,18 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
  * @suppress
  */
 @InternalApi
-public interface UnityInternalInterface : EmbraceInternalInterface {
+interface UnityInternalInterface :
+    EmbraceInternalInterface {
 
     /**
      * @suppress
      */
-    public fun setUnityMetaData(unityVersion: String?, buildGuid: String?, unitySdkVersion: String?)
+    fun setUnityMetaData(unityVersion: String?, buildGuid: String?, unitySdkVersion: String?)
 
     /**
      * @suppress
      */
-    public fun logUnhandledUnityException(
+    fun logUnhandledUnityException(
         name: String,
         message: String,
         stacktrace: String?
@@ -28,7 +28,7 @@ public interface UnityInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
-    public fun logHandledUnityException(
+    fun logHandledUnityException(
         name: String,
         message: String,
         stacktrace: String?
@@ -37,7 +37,7 @@ public interface UnityInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
-    public fun recordIncompleteNetworkRequest(
+    fun recordIncompleteNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -50,7 +50,7 @@ public interface UnityInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
-    public fun recordCompletedNetworkRequest(
+    fun recordCompletedNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -64,5 +64,5 @@ public interface UnityInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
-    public fun installUnityThreadSampler()
+    fun installUnityThreadSampler()
 }

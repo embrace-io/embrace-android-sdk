@@ -4,13 +4,17 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.FlutterInternalInterface
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.Systrace.endSynchronous
 import io.embrace.android.embracesdk.internal.Systrace.startSynchronous
+import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.anr.ndk.isUnityMainThread
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
-import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
@@ -24,10 +28,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.InternalWebViewApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopFlutterInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopReactNativeInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInterface
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
@@ -86,20 +86,10 @@ internal class EmbraceImpl @JvmOverloads constructor(
     InternalWebViewApi by webviewApiDelegate,
     InternalInterfaceApi {
 
-    private val noopEmbraceInternalInterface by lazy<EmbraceInternalInterface> {
-        NoopEmbraceInternalInterface(bootstrapper.openTelemetryModule.internalTracer)
-    }
-
-    private val noopFlutterInternalInterface by lazy<FlutterInternalInterface> {
-        NoopFlutterInternalInterface(noopEmbraceInternalInterface)
-    }
-
-    private val noopReactNativeInternalInterface by lazy<ReactNativeInternalInterface> {
-        NoopReactNativeInternalInterface(noopEmbraceInternalInterface)
-    }
-
-    private val noopUnityInternalInterface by lazy<UnityInternalInterface> {
-        NoopUnityInternalInterface(noopEmbraceInternalInterface)
+    init {
+        EmbraceInternalApi.internalTracingApi = bootstrapper.openTelemetryModule.internalTracer
+        EmbraceInternalApi.internalInterfaceApi = this
+        EmbraceInternalApi.isStarted = sdkCallChecker.started::get
     }
 
     private val sdkClock by lazy { bootstrapper.initModule.clock }
@@ -337,37 +327,23 @@ internal class EmbraceImpl @JvmOverloads constructor(
      */
     override val internalInterface: EmbraceInternalInterface
         get() {
-            return resolveInternalInterface(noopEmbraceInternalInterface) { internalInterfaceModule?.embraceInternalInterface }
+            return checkNotNull(internalInterfaceModule?.embraceInternalInterface)
         }
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface
         get() {
-            return resolveInternalInterface(noopReactNativeInternalInterface) {
-                internalInterfaceModule?.reactNativeInternalInterface
-            }
+            return checkNotNull(internalInterfaceModule?.reactNativeInternalInterface)
         }
 
     override val unityInternalInterface: UnityInternalInterface
         get() {
-            return resolveInternalInterface(noopUnityInternalInterface) { internalInterfaceModule?.unityInternalInterface }
+            return checkNotNull(internalInterfaceModule?.unityInternalInterface)
         }
 
     override val flutterInternalInterface: FlutterInternalInterface
         get() {
-            return resolveInternalInterface(noopFlutterInternalInterface) { internalInterfaceModule?.flutterInternalInterface }
+            return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
         }
-
-    private inline fun <reified T> resolveInternalInterface(
-        defaultValue: T,
-        provider: () -> T?,
-    ): T {
-        val internalInterface = provider()
-        return if (isStarted) {
-            internalInterface ?: defaultValue
-        } else {
-            defaultValue
-        }
-    }
 
     fun installUnityThreadSampler() {
         if (sdkCallChecker.check("install_unity_thread_sampler")) {

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.content.Context
-import io.embrace.android.embracesdk.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 
 internal class NoopReactNativeInternalInterface(
     private val delegate: EmbraceInternalInterface,

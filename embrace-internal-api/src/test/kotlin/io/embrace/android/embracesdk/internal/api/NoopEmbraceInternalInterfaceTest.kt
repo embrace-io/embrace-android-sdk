@@ -1,15 +1,13 @@
+
 @file:Suppress("DEPRECATION")
 
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.LogType
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
+import io.mockk.mockk
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -19,18 +17,11 @@ import java.net.SocketException
 internal class NoopEmbraceInternalInterfaceTest {
 
     private lateinit var impl: NoopEmbraceInternalInterface
-    private lateinit var initModule: FakeInitModule
-    private lateinit var openTelemetryModule: OpenTelemetryModule
 
     @Before
     fun setUp() {
-        initModule = FakeInitModule(clock = FakeClock(currentTime = beforeObjectInitTime))
-        openTelemetryModule = initModule.openTelemetryModule
         impl = NoopEmbraceInternalInterface(
-            InternalTracer(
-                openTelemetryModule.spanRepository,
-                openTelemetryModule.embraceTracer
-            )
+            mockk(relaxed = true)
         )
     }
 

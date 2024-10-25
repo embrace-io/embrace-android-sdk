@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.content.Context
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
@@ -160,7 +161,7 @@ internal class ModuleInitBootstrapper(
                             configServiceProvider,
                         ) {
                             if (Embrace.getInstance().isStarted && isSdkDisabled()) {
-                                Embrace.getInstance().internalInterface.stopSdk()
+                                EmbraceInternalApi.getInstance().internalInterface.stopSdk()
                             }
                         }
                     }

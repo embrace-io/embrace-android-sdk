@@ -5,7 +5,6 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.ConsoleMessage
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -395,16 +394,4 @@ public class Embrace private constructor(
 
     override val lastRunEndState: LastRunEndState
         get() = impl.lastRunEndState
-
-    override val internalInterface: EmbraceInternalInterface
-        get() = impl.internalInterface
-
-    override val reactNativeInternalInterface: ReactNativeInternalInterface?
-        get() = impl.reactNativeInternalInterface
-
-    override val unityInternalInterface: UnityInternalInterface?
-        get() = impl.unityInternalInterface
-
-    override val flutterInternalInterface: FlutterInternalInterface?
-        get() = impl.flutterInternalInterface
 }

@@ -1,12 +1,3 @@
-public final class io/embrace/android/embracesdk/BuildConfig {
-	public static final field BUILD_TYPE Ljava/lang/String;
-	public static final field DEBUG Z
-	public static final field LIBRARY_PACKAGE_NAME Ljava/lang/String;
-	public static final field VERSION_CODE Ljava/lang/String;
-	public static final field VERSION_NAME Ljava/lang/String;
-	public fun <init> ()V
-}
-
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
@@ -89,13 +80,5 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun startView (Ljava/lang/String;)Z
 	public fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
 	public fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
-}
-
-public final class io/embrace/android/embracesdk/EmbraceSamples {
-	public static final field INSTANCE Lio/embrace/android/embracesdk/EmbraceSamples;
-	public static final fun causeNdkIllegalInstruction ()V
-	public static final fun throwJvmException ()V
-	public static final fun triggerAnr ()V
-	public static final fun triggerLongAnr ()V
 }
 

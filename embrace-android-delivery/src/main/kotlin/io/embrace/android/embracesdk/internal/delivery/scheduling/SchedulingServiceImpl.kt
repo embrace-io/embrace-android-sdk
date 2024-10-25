@@ -75,35 +75,54 @@ class SchedulingServiceImpl(
      * Loop through the payloads ready to be sent by priority and queue for delivery
      */
     private fun deliveryLoop() {
+        val failedPayloads = mutableSetOf<StoredTelemetryMetadata>()
         try {
             var deliveryQueue = createPayloadQueue()
             while (deliveryQueue.isNotEmpty() && readyToSend()) {
+                val payload = deliveryQueue.poll()
                 runCatching {
-                    deliveryQueue.poll()?.let { payload ->
-                        if (payload.shouldSendPayload() && readyToSend()) {
-                            payload.envelopeType.endpoint.updateBlockedEndpoint()
-                            queueDelivery(payload)
+                    payload?.run {
+                        if (shouldSendPayload() && readyToSend()) {
+                            envelopeType.endpoint.updateBlockedEndpoint()
+                            queueDelivery(this)
                         }
                     }
-
-                    if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
-                        deliveryQueue = createPayloadQueue()
-                    }
                 }.exceptionOrNull()?.let { error ->
-                    logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, error)
+                    // This block catches unhandled errors resulting a single payload failing to be queued for delivery.
+                    // Any payload failed to be queued will be bypassed in the current delivery loop cycle, as the
+                    // SDK encountered an error as it tried to determine whether the payload should be delivered.
+                    val fileName = payload?.run {
+                        // Keeping track of the payloads that failed to be queued prevents an infinite loop where a
+                        // payload that refused to be queued successfully keeps being retried in the same loop.
+                        // So even if it isn't possible now, this code prevents makes an attempt to prevent it from
+                        // happening in the future, if, say, checking the state of the SDK can throw indefinitely.
+                        failedPayloads.add(this)
+                        filename
+                    }
+                    logger.trackInternalError(
+                        type = InternalErrorType.DELIVERY_SCHEDULING_FAIL,
+                        throwable = IllegalStateException("Failed to queue payload with file name $fileName", error)
+                    )
+                }
+
+                if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
+                    deliveryQueue = createPayloadQueue(failedPayloads)
                 }
             }
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, t)
+            // This block catches unhandled errors resulting from the recreation of a queue of payloads to be delivered
+            // When this type of error encountered, we abort the delivery loop and wait for the next retry or intake
+            // to retry any pending payloads.
+            logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
         } finally {
             sendLoopActive.set(false)
-            scheduleNextDeliveryLoop()
+            scheduleDeliveryLoopForNextRetry()
         }
     }
 
-    private fun createPayloadQueue() = LinkedList(
+    private fun createPayloadQueue(exclude: Set<StoredTelemetryMetadata> = emptySet()) = LinkedList(
         storageService.getPayloadsByPriority()
-            .filter { it.shouldSendPayload() }
+            .filter { it.shouldSendPayload() && !exclude.contains(it) }
             .sortedWith(storedTelemetryComparator)
     )
 
@@ -112,6 +131,8 @@ class SchedulingServiceImpl(
         return deliveryWorker.submit<ExecutionResult> {
             val result: ExecutionResult =
                 try {
+                    // If fail to convert metadata to stream, we can't expect it will success later, so we won't retry.
+                    // The storage service will log an internal exception and we move on.
                     payload.toStream()?.run {
                         executionService.attemptHttpRequest(
                             payloadStream = { this },
@@ -120,8 +141,12 @@ class SchedulingServiceImpl(
                         )
                     } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {
-                    logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, t)
-                    ExecutionResult.Incomplete(t)
+                    // An unknown error occurred, not the expected exceptions during request executions
+                    // These types of errors happen before we execute the request, and results in us unable to
+                    // turn the stored bytes in to a request that can be executed.
+                    // For this, we log the error to ensure it's not a systemic problem and move on from the payload.
+                    logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
+                    ExecutionResult.Incomplete(exception = t, retry = false)
                 }
 
             with(result) {
@@ -156,7 +181,7 @@ class SchedulingServiceImpl(
         }
     }
 
-    private fun scheduleNextDeliveryLoop() {
+    private fun scheduleDeliveryLoopForNextRetry() {
         payloadsToRetry.map { it.value.nextRetryTimeMs }.minOrNull()?.let { timestampMs ->
             if (timestampMs <= clock.now()) {
                 startDeliveryLoop()

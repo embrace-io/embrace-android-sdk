@@ -82,11 +82,3 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
 }
 
-public final class io/embrace/android/embracesdk/EmbraceSamples {
-	public static final field INSTANCE Lio/embrace/android/embracesdk/EmbraceSamples;
-	public static final fun causeNdkIllegalInstruction ()V
-	public static final fun throwJvmException ()V
-	public static final fun triggerAnr ()V
-	public static final fun triggerLongAnr ()V
-}
-

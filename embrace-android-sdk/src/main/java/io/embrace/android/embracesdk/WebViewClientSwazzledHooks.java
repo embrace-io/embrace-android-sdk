@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi;
  * @hide
  */
 @InternalApi
-public final class WebViewClientSwazzledHooks {
+final class WebViewClientSwazzledHooks {
 
     private WebViewClientSwazzledHooks() {
     }

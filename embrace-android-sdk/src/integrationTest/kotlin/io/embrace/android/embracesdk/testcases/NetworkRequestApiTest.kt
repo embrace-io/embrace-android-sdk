@@ -89,6 +89,7 @@ internal class NetworkRequestApiTest {
                 BYTES_RECEIVED,
                 500,
                 TRACE_ID,
+                null,
                 NETWORK_CAPTURE_DATA
             )
         )
@@ -154,6 +155,7 @@ internal class NetworkRequestApiTest {
                 NullPointerException::class.toString(),
                 "Dang nothing there",
                 TRACE_ID,
+                null,
                 NETWORK_CAPTURE_DATA
             ),
             completed = false

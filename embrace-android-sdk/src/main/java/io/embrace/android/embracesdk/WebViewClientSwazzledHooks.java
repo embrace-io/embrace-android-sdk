@@ -15,7 +15,6 @@ final class WebViewClientSwazzledHooks {
     public static void _preOnPageStarted(android.webkit.WebView view,
                                          java.lang.String url,
                                          android.graphics.Bitmap favicon) {
-
-        Embrace.getImpl().logWebView(url);
+        Embrace.getInstance().logWebView(url);
     }
 }

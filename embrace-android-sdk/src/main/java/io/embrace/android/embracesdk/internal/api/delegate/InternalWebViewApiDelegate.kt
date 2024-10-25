@@ -29,7 +29,9 @@ internal class InternalWebViewApiDelegate(
     }
 
     override fun trackWebViewPerformance(tag: String, consoleMessage: ConsoleMessage) {
-        trackWebViewPerformance(tag, consoleMessage.message())
+        consoleMessage.message()?.let { message ->
+            trackWebViewPerformance(tag, message)
+        }
     }
 
     override fun trackWebViewPerformance(tag: String, message: String) {

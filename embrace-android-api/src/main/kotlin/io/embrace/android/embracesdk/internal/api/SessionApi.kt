@@ -35,14 +35,6 @@ public interface SessionApi {
     public fun removeSessionProperty(key: String): Boolean
 
     /**
-     * Retrieves a map of the current session properties.
-     *
-     * @return a new immutable map containing the current session properties, or null if the SDK has not been started or has been stopped.
-     */
-    @Deprecated("This method will be removed in a future release.")
-    public fun getSessionProperties(): Map<String, String>?
-
-    /**
      * Ends the current session and starts a new one.
      */
     public fun endSession()

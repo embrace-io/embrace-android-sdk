@@ -64,7 +64,7 @@ class FakeSpanData(
     override fun getTotalRecordedLinks(): Int = links.size
     override fun getTotalAttributeCount(): Int = attributes.size()
 
-    @Deprecated("Deprecated in Java")
+    @Suppress("OVERRIDE_DEPRECATION")
     override fun getInstrumentationLibraryInfo(): InstrumentationLibraryInfo = InstrumentationLibraryInfo.empty()
     override fun getResource(): Resource = resource
 

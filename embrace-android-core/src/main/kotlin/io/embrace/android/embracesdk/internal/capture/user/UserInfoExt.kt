@@ -20,8 +20,6 @@ internal fun PreferencesService.getStoredUserInfo(): UserInfo {
         val email = userEmailAddress
         val personas: MutableSet<String> = HashSet()
         userPersonas?.let(personas::addAll)
-        @Suppress("DEPRECATION") // still need to store it, event thought it's deprecated..
-        customPersonas?.let(personas::addAll)
 
         personas.remove(PERSONA_PAYER)
         if (userPayer) {

@@ -46,46 +46,6 @@ public interface EmbraceAndroidApi {
     )
 
     /**
-     * Starts instrumentation of the Android application using the Embrace SDK. This should be
-     * called during creation of the application, as early as possible.
-     *
-     * See [Embrace Docs](https://embrace.io/docs/android/) for
-     * integration instructions. For compatibility with other networking SDKs such as Akamai,
-     * the Embrace SDK must be initialized after any other SDK.
-     *
-     * @param context                  an instance of context
-     * @param isDevMode                if true, and the build type is debuggable, it
-     * sets the environment for all sessions to 'Development'.
-     */
-    @Deprecated("Use {@link #start(Context)} instead. The isDevMode parameter has no effect.")
-    public fun start(
-        context: Context,
-        isDevMode: Boolean
-    )
-
-    /**
-     * Starts instrumentation of the Android application using the Embrace SDK. This should be
-     * called during creation of the application, as early as possible.
-     *
-     * See [Embrace Docs](https://embrace.io/docs/android/) for
-     * integration instructions. For compatibility with other networking SDKs such as Akamai,
-     * the Embrace SDK must be initialized after any other SDK.
-     *
-     * @param context                  an instance of context
-     * @param isDevMode                if true, and the build type is debuggable, it
-     * sets the environment for all sessions to 'Development'.
-     * @param appFramework             the AppFramework of the application
-     *
-     */
-    @Suppress("DEPRECATION")
-    @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
-    public fun start(
-        context: Context,
-        isDevMode: Boolean,
-        appFramework: AppFramework
-    )
-
-    /**
      * Records that a view 'started'. You should call this when your app starts displaying an
      * activity, a fragment, a screen, or any custom UI element, and you want to capture a
      * breadcrumb that this happens.

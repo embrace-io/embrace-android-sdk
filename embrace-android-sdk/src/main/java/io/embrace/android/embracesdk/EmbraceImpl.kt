@@ -117,18 +117,8 @@ internal class EmbraceImpl @JvmOverloads constructor(
     override fun start(context: Context) = start(context, io.embrace.android.embracesdk.AppFramework.NATIVE) { null }
 
     @Suppress("DEPRECATION")
-    @Deprecated("Use {@link #start(Context)} instead.")
+    @Deprecated("Use {@link #start(Context)} instead.", ReplaceWith("start(context)"))
     override fun start(context: Context, appFramework: io.embrace.android.embracesdk.AppFramework) =
-        start(context, appFramework) { null }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Use {@link #start(Context)} instead. The isDevMode parameter has no effect.")
-    override fun start(context: Context, isDevMode: Boolean) =
-        start(context, io.embrace.android.embracesdk.AppFramework.NATIVE) { null }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Use {@link #start(Context, Embrace.AppFramework)} instead. The isDevMode parameter has no effect.")
-    override fun start(context: Context, isDevMode: Boolean, appFramework: io.embrace.android.embracesdk.AppFramework) =
         start(context, appFramework) { null }
 
     /**

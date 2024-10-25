@@ -141,11 +141,6 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
-    fun `test deprecated custom personas`() {
-        assertNull(service.customPersonas)
-    }
-
-    @Test
     fun `test username is saved`() {
         assertNull(service.username)
 

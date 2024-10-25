@@ -10,6 +10,17 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
 - Several public APIs are now implemented in Kotlin rather than Java. Generally this will not affect backwards compatibility but the following may have slight changes to their signatures:
   - `EmbraceNetworkRequest` Java overloads replaced with default parameters
 
+### Removed APIs
+
+The following deprecated APIs have been removed:
+
+| Old API                                                       | New API                                    |
+|---------------------------------------------------------------|--------------------------------------------|
+| `Embrace.getInstance().getSessionProperties()`                | N/A                                        |
+| `Embrace.getInstance().isTracingAvailable()`                  | `Embrace.getInstance().isStarted()`        |
+| `Embrace.getInstance().start(Context, boolean)`               | `Embrace.getInstance().start(Context)`     |
+| `Embrace.getInstance().start(Context, boolean, AppFramework)` | `Embrace.getInstance().isStarted(Context)` |
+
 # Upgrading from 5.x to 6.x
 
 Version 6 of the Embrace Android SDK renames some functions. This has been done to reduce

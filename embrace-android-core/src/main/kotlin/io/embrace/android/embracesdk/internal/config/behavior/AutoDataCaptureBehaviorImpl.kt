@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class AutoDataCaptureBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>
+    remoteSupplier: Provider<RemoteConfig?>,
 ) : AutoDataCaptureBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
@@ -19,6 +19,8 @@ class AutoDataCaptureBehaviorImpl(
 
     private companion object {
         const val THERMAL_STATUS_ENABLED_DEFAULT = true
+        const val V2_STORAGE_ENABLED_DEFAULT = true
+        const val USE_OKHTTP_DEFAULT = true
     }
 
     private val cfg = InstrumentedConfig.enabledFeatures
@@ -46,7 +48,11 @@ class AutoDataCaptureBehaviorImpl(
     override fun isNativeCrashCaptureEnabled(): Boolean = cfg.isNativeCrashCaptureEnabled()
     override fun isDiskUsageCaptureEnabled(): Boolean = cfg.isDiskUsageCaptureEnabled()
 
-    // this should remain immutable across the process lifecycle
-    private val v2StorageImpl by lazy { remote?.killSwitchConfig?.v2Storage ?: true }
-    override fun isV2StorageEnabled(): Boolean = v2StorageImpl
+    override fun isV2StorageEnabled(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.v2StoragePct)
+            ?: V2_STORAGE_ENABLED_DEFAULT
+
+    override fun shouldUseOkHttp(): Boolean =
+        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.useOkHttpPct)
+            ?: USE_OKHTTP_DEFAULT
 }

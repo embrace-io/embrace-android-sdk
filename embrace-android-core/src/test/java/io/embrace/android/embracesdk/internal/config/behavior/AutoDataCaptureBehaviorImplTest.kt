@@ -14,7 +14,8 @@ internal class AutoDataCaptureBehaviorImplTest {
         killSwitchConfig = KillSwitchRemoteConfig(
             sigHandlerDetection = false,
             jetpackCompose = false,
-            v2Storage = true
+            v2StoragePct = 100f,
+            useOkHttpPct = 100f
         ),
         dataConfig = DataRemoteConfig(pctThermalStatusEnabled = 0.0f)
     )

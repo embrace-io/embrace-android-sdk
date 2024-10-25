@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.delivery.scheduling
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
@@ -33,8 +33,7 @@ class SchedulingServiceImpl(
     private val sendLoopActive = AtomicBoolean(false)
     private val queryForPayloads = AtomicBoolean(true)
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
-    private val completedSendsSinceQueueDrain: MutableSet<StoredTelemetryMetadata> =
-        Collections.newSetFromMap(ConcurrentHashMap())
+    private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
 
     override fun onPayloadIntake() {
@@ -50,9 +49,15 @@ class SchedulingServiceImpl(
     }
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
-        val hasNetworkBefore = hasNetwork.getAndSet(status.isReachable)
-        if (!hasNetworkBefore && hasNetwork.get()) {
-            startDeliveryLoop()
+        val currentlyConnected = status.isReachable
+
+        // Set a new connection status if it differs from the current one
+        if (currentlyConnected != hasNetwork.get()) {
+            hasNetwork.set(currentlyConnected)
+            // trigger a new delivery loop we went from being offline to being connected
+            if (currentlyConnected) {
+                startDeliveryLoop()
+            }
         }
     }
 
@@ -73,16 +78,19 @@ class SchedulingServiceImpl(
         try {
             var deliveryQueue = createPayloadQueue()
             while (deliveryQueue.isNotEmpty() && readyToSend()) {
-                deliveryQueue.poll()?.let { payload ->
-                    if (payload.shouldSendPayload() && readyToSend()) {
-                        payload.envelopeType.endpoint.updateBlockedEndpoint()
-                        queueDelivery(payload)
+                runCatching {
+                    deliveryQueue.poll()?.let { payload ->
+                        if (payload.shouldSendPayload() && readyToSend()) {
+                            payload.envelopeType.endpoint.updateBlockedEndpoint()
+                            queueDelivery(payload)
+                        }
                     }
-                }
 
-                if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
-                    deliveryQueue = createPayloadQueue()
-                    completedSendsSinceQueueDrain.clear()
+                    if (queryForPayloads.compareAndSet(true, false) || deliveryQueue.isEmpty()) {
+                        deliveryQueue = createPayloadQueue()
+                    }
+                }.exceptionOrNull()?.let { error ->
+                    logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, error)
                 }
             }
         } catch (t: Throwable) {
@@ -99,36 +107,40 @@ class SchedulingServiceImpl(
             .sortedWith(storedTelemetryComparator)
     )
 
-    private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ApiResponse> {
+    private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ExecutionResult> {
         activeSends.add(payload)
-        return deliveryWorker.submit<ApiResponse> {
-            val response: ApiResponse =
+        return deliveryWorker.submit<ExecutionResult> {
+            val result: ExecutionResult =
                 try {
                     payload.toStream()?.run {
                         executionService.attemptHttpRequest(
                             payloadStream = { this },
-                            envelopeType = payload.envelopeType
+                            envelopeType = payload.envelopeType,
+                            payloadType = payload.payloadType.value
                         )
-                    } ?: ApiResponse.NoPayload
+                    } ?: ExecutionResult.NotAttempted
                 } catch (t: Throwable) {
                     logger.trackInternalError(InternalErrorType.UNKNOWN_DELIVERY_ERROR, t)
-                    ApiResponse.Incomplete(t)
+                    ExecutionResult.Incomplete(t)
                 }
 
-            with(response) {
+            with(result) {
                 if (!shouldRetry) {
                     // If the response is such that we should not ever retry the delivery of this payload,
                     // delete it from both the in memory retry payloads map and on disk
                     payloadsToRetry.remove(payload)
-                    storageService.delete(payload)
+                    deleteInProgress.add(payload)
+                    storageService.delete(payload) {
+                        deleteInProgress.remove(payload)
+                    }
                 } else {
                     // If delivery of this payload should be retried, add or replace the entry in the retry map
                     // with the new values for how many times it has failed, and when the next retry should happen
                     val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
-                    val nextRetryTimeMs = if (this is ApiResponse.TooManyRequests && retryAfter != null) {
+                    val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfter != null) {
                         val unblockedTimestampMs = clock.now() + retryAfter
                         blockedEndpoints[endpoint] = unblockedTimestampMs
-                        unblockedTimestampMs
+                        unblockedTimestampMs + 1L
                     } else {
                         calculateNextRetryTime(retryAttempts = retryAttempts)
                     }
@@ -139,9 +151,8 @@ class SchedulingServiceImpl(
                     )
                 }
             }
-            completedSendsSinceQueueDrain.add(payload)
             activeSends.remove(payload)
-            response
+            result
         }
     }
 
@@ -166,7 +177,7 @@ class SchedulingServiceImpl(
     private fun StoredTelemetryMetadata.shouldSendPayload(): Boolean {
         // determine if the given payload is eligible to be sent
         // i.e. not already being sent, endpoint not blocked by 429, and isn't waiting to be retried
-        return if (activeSends.contains(this) || completedSendsSinceQueueDrain.contains(this)) {
+        return if (activeSends.contains(this) || deleteInProgress.contains(this)) {
             false
         } else if (isEndpointBlocked()) {
             false
@@ -194,6 +205,11 @@ class SchedulingServiceImpl(
 
     private fun calculateDelay(nextRetryTimeMs: Long): Long = nextRetryTimeMs - clock.now()
 
+    /**
+     * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of
+     * doing this, and as much as it pains me to do this, it's isolated and tested, and the runtime penalty, however
+     * tiny, is not worth incurring if we can instead do this.
+     */
     private fun calculateNextRetryTime(
         retryAttempts: Int,
     ): Long = clock.now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))

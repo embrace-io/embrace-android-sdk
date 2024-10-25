@@ -15,5 +15,7 @@ data class KillSwitchRemoteConfig(
     val jetpackCompose: Boolean? = null,
 
     @Json(name = "v2_storage")
-    val v2Storage: Boolean? = null
+    val v2StoragePct: Float? = null,
+    @Json(name = "use_okhttp")
+    val useOkHttpPct: Float? = null
 )

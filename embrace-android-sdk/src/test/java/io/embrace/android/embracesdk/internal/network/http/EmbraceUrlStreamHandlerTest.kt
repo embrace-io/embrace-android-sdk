@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http
 
-import android.os.Build.VERSION_CODES.TIRAMISU
+import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalNetworkApi
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import java.net.URL
 
-@Config(sdk = [TIRAMISU])
+@Config(sdk = [UPSIDE_DOWN_CAKE])
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlStreamHandlerTest {
 

@@ -3,13 +3,14 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityListener
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+import java.util.concurrent.CopyOnWriteArrayList
 
 class FakeNetworkConnectivityService(
     initialNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN,
-    override var ipAddress: String = defaultIpAddress
+    override var ipAddress: String = defaultIpAddress,
 ) : NetworkConnectivityService {
 
-    private val networkConnectivityListeners = mutableListOf<NetworkConnectivityListener>()
+    private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
     var networkStatus: NetworkStatus = initialNetworkStatus
         set(value) {
             field = value

@@ -61,4 +61,9 @@ interface AutoDataCaptureBehavior {
      * Gates whether the SDK should use the v2 storage implementation or the legacy one.
      */
     fun isV2StorageEnabled(): Boolean
+
+    /**
+     * Gates whether the SDK should use OkHttp or fallback to UrlConnection.
+     */
+    fun shouldUseOkHttp(): Boolean
 }

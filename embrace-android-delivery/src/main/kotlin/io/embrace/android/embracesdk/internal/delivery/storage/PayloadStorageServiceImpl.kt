@@ -99,9 +99,10 @@ class PayloadStorageServiceImpl(
         }
     }
 
-    override fun delete(metadata: StoredTelemetryMetadata) {
+    override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
         worker.submit(metadata) {
             processDelete(metadata)
+            callback()
         }
     }
 

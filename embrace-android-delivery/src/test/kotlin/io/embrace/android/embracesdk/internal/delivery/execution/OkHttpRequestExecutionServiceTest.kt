@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
@@ -19,6 +20,7 @@ class OkHttpRequestExecutionServiceTest {
     private lateinit var requestExecutionService: OkHttpRequestExecutionService
     private lateinit var server: MockWebServer
     private lateinit var testServerUrl: String
+    private lateinit var logger: FakeEmbLogger
 
     private val testAppId = "test_app_id"
     private val testDeviceId = "test_device_id"
@@ -41,6 +43,7 @@ class OkHttpRequestExecutionServiceTest {
 
     @Before
     fun setUp() {
+        logger = FakeEmbLogger()
         server = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             start()
@@ -51,6 +54,7 @@ class OkHttpRequestExecutionServiceTest {
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
+            logger = logger,
             connectionTimeoutSeconds = 1L,
             readTimeoutSeconds = 1L,
         )
@@ -68,7 +72,8 @@ class OkHttpRequestExecutionServiceTest {
             coreBaseUrl = "https://nonexistenturl:1565",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
-            embraceVersionName = testEmbraceVersionName
+            embraceVersionName = testEmbraceVersionName,
+            logger = logger,
         )
 
         // when attempting to make a request
@@ -153,7 +158,7 @@ class OkHttpRequestExecutionServiceTest {
     }
 
     @Test
-    fun `return incomplete if the server times out`() {
+    fun `return incomplete with no internal error logged if the execution throws IOException`() {
         // given a server that times out
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
@@ -166,7 +171,9 @@ class OkHttpRequestExecutionServiceTest {
 
         // then the result should be incomplete
         check(result is ExecutionResult.Incomplete)
+        assertTrue(result.retry)
         assertTrue(result.exception is SocketTimeoutException)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     @Test

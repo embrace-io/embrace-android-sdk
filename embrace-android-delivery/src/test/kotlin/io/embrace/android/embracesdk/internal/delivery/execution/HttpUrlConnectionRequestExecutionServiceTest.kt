@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.delivery.execution
 
+import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
@@ -18,6 +19,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
     private lateinit var requestExecutionService: HttpUrlConnectionRequestExecutionService
     private lateinit var server: MockWebServer
     private lateinit var testServerUrl: String
+    private lateinit var logger: FakeEmbLogger
 
     private val testAppId = "test_app_id"
     private val testDeviceId = "test_device_id"
@@ -40,6 +42,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
 
     @Before
     fun setUp() {
+        logger = FakeEmbLogger()
         server = MockWebServer()
         server.start()
         testServerUrl = server.url("").toString().removeSuffix("/")
@@ -48,7 +51,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
-            connectionTimeoutMilliseconds = 2000
+            logger = logger,
+            connectionTimeoutMilliseconds = 2000,
         )
     }
 
@@ -64,7 +68,8 @@ class HttpUrlConnectionRequestExecutionServiceTest {
             coreBaseUrl = "http://nonexistenturl:1565",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
-            embraceVersionName = testEmbraceVersionName
+            embraceVersionName = testEmbraceVersionName,
+            logger = logger,
         )
 
         // when attempting to make a request
@@ -149,7 +154,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
     }
 
     @Test
-    fun `return incomplete if the server returns an unexpected response code`() {
+    fun `return incomplete with no internal error logged if the execution throws IOException`() {
         // given a server that disconnects before sending a response (thus causing a timeout)
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
@@ -162,7 +167,9 @@ class HttpUrlConnectionRequestExecutionServiceTest {
 
         // then the response should be incomplete
         check(response is ExecutionResult.Incomplete)
+        assertTrue(response.retry)
         assertTrue(response.exception is SocketTimeoutException)
+        assertEquals(0, logger.internalErrorMessages.size)
     }
 
     @Test

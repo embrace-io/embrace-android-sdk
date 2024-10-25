@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.InternalWebViewApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
-import io.embrace.android.embracesdk.internal.api.MomentsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
@@ -24,7 +23,6 @@ import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.InternalWebViewApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.MomentsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
@@ -41,7 +39,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
@@ -66,7 +63,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
         NetworkRequestApiDelegate(bootstrapper, sdkCallChecker),
     private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper, sdkCallChecker),
-    private val momentsApiDelegate: MomentsApiDelegate = MomentsApiDelegate(bootstrapper, sdkCallChecker),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
         ViewTrackingApiDelegate(bootstrapper, sdkCallChecker),
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper, sdkCallChecker),
@@ -76,7 +72,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         InternalWebViewApiDelegate(bootstrapper, sdkCallChecker),
 ) : SdkApi,
     LogsApi by logsApiDelegate,
-    MomentsApi by momentsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
     SessionApi by sessionApiDelegate,
     UserApi by userApiDelegate,
@@ -200,7 +195,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
             registerComposeActivityListener(coreModule.application)
         }
 
-        val momentsModule = bootstrapper.momentsModule
         val crashModule = bootstrapper.crashModule
 
         // Send any sessions that were cached and not yet sent.
@@ -234,7 +228,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 configModule,
                 bootstrapper.payloadSourceModule,
                 bootstrapper.logModule,
-                bootstrapper.momentsModule,
                 this,
                 crashModule
             )
@@ -257,14 +250,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         sdkCallChecker.started.set(true)
         endSynchronous()
         val inForeground = !bootstrapper.essentialServiceModule.processStateService.isInBackground
-
-        // Attempt to send the startup event if the app is already in the foreground. We registered to send this when
-        // we went to the foreground, but if an activity had already gone to the foreground, we may have missed
-        // sending this, so to ensure the startup message is sent, we force it to be sent here.
-        if (inForeground) {
-            momentsModule.eventService.sendStartupMoment()
-        }
-
         startSynchronous("startup-tracking")
         val dataCaptureServiceModule = bootstrapper.dataCaptureServiceModule
         dataCaptureServiceModule.startupService.setSdkStartupInfo(
@@ -310,7 +295,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     @JvmOverloads
     fun logMessage(
-        type: EventType,
+        severity: Severity,
         message: String,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
@@ -322,7 +307,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         exceptionMessage: String? = null,
     ) {
         logsApiDelegate.logMessage(
-            type,
+            severity,
             message,
             properties,
             stackTraceElements,

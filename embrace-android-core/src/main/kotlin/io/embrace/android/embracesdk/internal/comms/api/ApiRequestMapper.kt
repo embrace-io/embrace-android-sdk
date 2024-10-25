@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -47,42 +45,12 @@ internal class ApiRequestMapper(
 
     @Suppress("UNUSED_PARAMETER")
     fun sessionEnvelopeRequest(envelope: Envelope<SessionPayload>): ApiRequest {
-        val url = Endpoint.SESSIONS_V2.asEmbraceUrl()
+        val url = Endpoint.SESSIONS.asEmbraceUrl()
         return requestBuilder(url)
     }
 
     fun sessionRequest(): ApiRequest {
-        val url = Endpoint.SESSIONS_V2
+        val url = Endpoint.SESSIONS
         return requestBuilder(url.asEmbraceUrl())
-    }
-
-    fun eventMessageRequest(eventMessage: EventMessage): ApiRequest {
-        checkNotNull(eventMessage.event) { "event must be set" }
-        val event = eventMessage.event
-        checkNotNull(event.type) { "event type must be set" }
-        checkNotNull(event.eventId) { "event ID must be set" }
-        val url = Endpoint.EVENTS.asEmbraceUrl()
-        val abbreviation = event.type.abbreviation
-        val eventIdentifier: String = if (event.type == EventType.CRASH) {
-            createCrashActiveEventsHeader(abbreviation, event.activeEventIds)
-        } else {
-            abbreviation + ":" + event.eventId
-        }
-        return requestBuilder(url).copy(eventId = eventIdentifier)
-    }
-
-    /**
-     * Crashes are sent with a header containing the list of active stories.
-     *
-     * @param abbreviation the abbreviation for the event type
-     * @param eventIds     the list of story IDs
-     * @return the header
-     */
-    private fun createCrashActiveEventsHeader(
-        abbreviation: String,
-        eventIds: List<String>?
-    ): String {
-        val stories = eventIds?.joinToString(",") ?: ""
-        return "$abbreviation:$stories"
     }
 }

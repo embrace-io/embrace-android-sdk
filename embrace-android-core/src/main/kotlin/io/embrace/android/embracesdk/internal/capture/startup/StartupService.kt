@@ -16,9 +16,9 @@ interface StartupService {
     )
 
     /**
-     * Returns the SDK startup duration. This is called when the session ends.
+     * Returns the SDK startup duration.
      */
-    fun getSdkStartupDuration(coldStart: Boolean): Long?
+    fun getSdkStartupDuration(): Long?
 
     /**
      * The epoch time in milliseconds of when the SDK startup began

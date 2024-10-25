@@ -16,7 +16,6 @@ internal class InternalInterfaceModuleImpl(
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     logModule: LogModule,
-    momentsModule: MomentsModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
 ) : InternalInterfaceModule {
@@ -26,7 +25,6 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             initModule,
             logModule.networkCaptureService,
-            momentsModule.eventService,
             configModule.configService,
             openTelemetryModule.internalTracer
         )

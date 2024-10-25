@@ -14,9 +14,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.Event
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -146,23 +143,6 @@ internal class EmbraceApiServiceTest {
     @Test
     fun `getCacheConfig returns what the provider provides`() {
         assertEquals(apiService.getCachedConfig(), cachedConfig)
-    }
-
-    @Test
-    fun `send event request is as expected`() {
-        fakeApiClient.queueResponse(successfulPostResponse)
-        val event = EventMessage(
-            event = Event(
-                eventId = "event-id",
-                type = EventType.END
-            )
-        )
-        apiService.sendEvent(event)
-        verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v1/log/events",
-            expectedEventId = "e:event-id",
-            expectedPayload = getExpectedPayloadSerialized(event, EventMessage::class.java)
-        )
     }
 
     @Test
@@ -426,8 +406,6 @@ internal class EmbraceApiServiceTest {
     private fun verifyOnlyRequest(
         expectedUrl: String,
         expectedMethod: HttpMethod = HttpMethod.POST,
-        expectedEventId: String? = null,
-        expectedLogId: String? = null,
         expectedEtag: String? = null,
         expectedPayload: ByteArray? = null
     ) {
@@ -439,8 +417,6 @@ internal class EmbraceApiServiceTest {
             assertEquals("gzip", contentEncoding)
             assertEquals(fakeAppId, appId)
             assertEquals(fakeDeviceId, deviceId)
-            assertEquals(expectedEventId, eventId)
-            assertEquals(expectedLogId, logId)
             assertEquals(expectedUrl, url.url)
             assertEquals(expectedMethod, httpMethod)
             assertEquals(expectedEtag, eTag)

@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -25,8 +24,6 @@ class FakeApiService : ApiService {
     private val serializer = EmbraceSerializer()
     val sentLogPayloads: MutableList<LogPayload> = mutableListOf()
     val savedLogPayloads: MutableList<LogPayload> = mutableListOf()
-    val eventRequests: MutableList<EventMessage> = mutableListOf()
-    val crashRequests: MutableList<EventMessage> = mutableListOf()
     val sessionRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
     var futureGetCount: Int = 0
 
@@ -44,10 +41,6 @@ class FakeApiService : ApiService {
 
     override fun saveLogEnvelope(logEnvelope: Envelope<LogPayload>) {
         savedLogPayloads.add(logEnvelope.data)
-    }
-
-    override fun sendEvent(eventMessage: EventMessage) {
-        eventRequests.add(eventMessage)
     }
 
     override fun sendSession(action: SerializationAction, onFinish: ((response: ApiResponse) -> Unit)): Future<*> {

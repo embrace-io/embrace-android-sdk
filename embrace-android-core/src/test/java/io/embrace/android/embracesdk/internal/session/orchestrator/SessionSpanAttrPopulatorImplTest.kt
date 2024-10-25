@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionZygote
@@ -25,8 +25,7 @@ internal class SessionSpanAttrPopulatorImplTest {
         writer = FakeCurrentSessionSpan()
         populator = SessionSpanAttrPopulatorImpl(
             writer,
-            FakeEventService(),
-            { 0L },
+            FakeStartupService(),
             FakeLogService(),
             FakeMetadataService()
         )

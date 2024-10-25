@@ -24,8 +24,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.StartupBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
@@ -86,11 +84,6 @@ fun createLogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<LogRemoteConfig?> = { null }
 ): LogMessageBehavior = LogMessageBehaviorImpl(thresholdCheck, remoteCfg)
-
-/**
- * A [StartupBehaviorImpl] that returns default values.
- */
-fun createStartupBehavior(): StartupBehavior = StartupBehaviorImpl()
 
 /**
  * A [DataCaptureEventBehaviorImpl] that returns default values.

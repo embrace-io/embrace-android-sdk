@@ -10,9 +10,8 @@ import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
-import io.embrace.android.embracesdk.internal.payload.Event
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearMocks
 import io.mockk.every
@@ -246,30 +245,23 @@ internal class EmbracePendingApiCallsSenderTest {
     }
 
     @Test
-    fun `queue prioritises returning sessions over other api calls`() {
+    fun `queue prioritises sending sessions over other api calls`() {
         initPendingApiCallsSender(loadFailedRequest = false)
 
         // populate queue with logs up to max of 100 items
-        val mapper = ApiRequestMapper(
-            EmbraceApiUrlBuilder(
-                "https://data.emb-api.com",
-                "https://config.emb-api.com",
-                "appId",
+        repeat(15) {
+            val mapper = ApiRequestMapper(
+                EmbraceApiUrlBuilder(
+                    "https://data.emb-api.com/$it",
+                    "https://config.emb-api.com",
+                    "appId",
+                    lazy { "deviceId" },
+                    lazy { "appVersionName" }
+                ),
                 lazy { "deviceId" },
-                lazy { "appVersionName" }
-            ),
-            lazy { "deviceId" },
-            "appId"
-        )
-        repeat(105) { k ->
-            val request = mapper.eventMessageRequest(
-                EventMessage(
-                    Event(
-                        type = EventType.INFO_LOG,
-                        eventId = "message_id_$k"
-                    )
-                )
+                "appId"
             )
+            val request = mapper.logsEnvelopeRequest(Envelope(data = LogPayload()))
             pendingApiCallsSender.savePendingApiCall(request, {}, false)
             pendingApiCallsSender.scheduleRetry(
                 ApiResponse.Incomplete(
@@ -279,11 +271,29 @@ internal class EmbracePendingApiCallsSenderTest {
         }
 
         // verify logs were added to the queue, and oldest added requests are dropped
-        assertEquals("il:message_id_5", queue.pollNextPendingApiCall()?.apiRequest?.eventId)
-        assertEquals("il:message_id_6", queue.pollNextPendingApiCall()?.apiRequest?.eventId)
+        assertEquals(
+            "https://data.emb-api.com/5/v2/logs",
+            queue.pollNextPendingApiCall()?.apiRequest?.url?.url
+        )
+        assertEquals(
+            "https://data.emb-api.com/6/v2/logs",
+            queue.pollNextPendingApiCall()?.apiRequest?.url?.url
+        )
 
         // now add some sessions for retry and verify they are returned first
-        val sessionRequest = mapper.sessionRequest().copy(logId = "is:session_id_0")
+        val mapper = ApiRequestMapper(
+            EmbraceApiUrlBuilder(
+                "https://data.emb-api.com/session",
+                "https://config.emb-api.com",
+                "appId",
+                lazy { "deviceId" },
+                lazy { "appVersionName" }
+            ),
+            lazy { "deviceId" },
+            "appId"
+        )
+
+        val sessionRequest = mapper.sessionRequest()
         pendingApiCallsSender.savePendingApiCall(sessionRequest, {}, false)
         pendingApiCallsSender.scheduleRetry(ApiResponse.Incomplete(Throwable()))
         assertEquals(sessionRequest, queue.pollNextPendingApiCall()?.apiRequest)

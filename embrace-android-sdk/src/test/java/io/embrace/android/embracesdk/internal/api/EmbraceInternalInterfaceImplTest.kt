@@ -11,14 +11,12 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeEventService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.mockk.every
@@ -42,7 +40,6 @@ internal class EmbraceInternalInterfaceImplTest {
     private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var fakeNetworkCaptureService: FakeNetworkCaptureService
-    private lateinit var fakeEventService: FakeEventService
 
     @Before
     fun setUp() {
@@ -51,12 +48,10 @@ internal class EmbraceInternalInterfaceImplTest {
         initModule = FakeInitModule(clock = fakeClock, logger = FakeEmbLogger(false))
         fakeConfigService = FakeConfigService()
         fakeNetworkCaptureService = FakeNetworkCaptureService()
-        fakeEventService = FakeEventService()
         internalImpl = EmbraceInternalInterfaceImpl(
             embraceImpl,
             initModule,
             fakeNetworkCaptureService,
-            fakeEventService,
             fakeConfigService,
             initModule.openTelemetryModule.internalTracer
         )
@@ -93,7 +88,7 @@ internal class EmbraceInternalInterfaceImplTest {
         internalImpl.logHandledException(exception, LogType.ERROR, emptyMap(), null)
         verify(exactly = 1) {
             embraceImpl.logMessage(
-                EventType.ERROR_LOG,
+                Severity.ERROR,
                 "handled exception",
                 emptyMap<String, String>(),
                 exception.stackTrace,

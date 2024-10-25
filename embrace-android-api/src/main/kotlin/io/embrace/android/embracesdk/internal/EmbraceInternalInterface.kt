@@ -125,11 +125,6 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     public fun shouldCaptureNetworkBody(url: String, method: String): Boolean
 
     /**
-     * Mark that this application process was created in response to a notification
-     */
-    public fun setProcessStartedByNotification()
-
-    /**
      * Whether the Network Span Forwarding feature is enabled
      */
     public fun isNetworkSpanForwardingEnabled(): Boolean

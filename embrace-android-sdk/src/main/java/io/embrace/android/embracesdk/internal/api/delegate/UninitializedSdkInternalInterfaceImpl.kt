@@ -72,8 +72,6 @@ internal class UninitializedSdkInternalInterfaceImpl(
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false
 
-    override fun setProcessStartedByNotification() {}
-
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
 
     override fun getSdkCurrentTime(): Long = System.currentTimeMillis()

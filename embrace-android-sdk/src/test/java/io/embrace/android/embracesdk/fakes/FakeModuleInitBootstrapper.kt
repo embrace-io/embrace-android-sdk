@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
-import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.internal.injection.DeliveryModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.LogModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.MomentsModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.NativeCoreModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.PayloadSourceModuleSupplier
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleSupplier
@@ -52,9 +50,8 @@ internal fun fakeModuleInitBootstrapper(
     anrModuleSupplier: AnrModuleSupplier = { _, _, _ -> FakeAnrModule() },
     logModuleSupplier: LogModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeLogModule() },
     nativeCoreModuleSupplier: NativeCoreModuleSupplier = { _ -> FakeNativeCoreModule() },
-    momentsModuleSupplier: MomentsModuleSupplier = { _, _, _, _, _, _, _ -> FakeMomentsModule() },
     sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier =
-        { _, _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
+        { _, _, _, _, _, _, _, _, _, _ -> FakeSessionOrchestrationModule() },
     crashModuleSupplier: CrashModuleSupplier = { _, _, _, _, _, _ -> FakeCrashModule() },
     payloadSourceModuleSupplier: PayloadSourceModuleSupplier =
         { _, _, _, _, _, _, _, _, _, _, _, _ -> FakePayloadSourceModule() },
@@ -75,7 +72,6 @@ internal fun fakeModuleInitBootstrapper(
     anrModuleSupplier = anrModuleSupplier,
     logModuleSupplier = logModuleSupplier,
     nativeCoreModuleSupplier = nativeCoreModuleSupplier,
-    momentsModuleSupplier = momentsModuleSupplier,
     sessionOrchestrationModuleSupplier = sessionOrchestrationModuleSupplier,
     crashModuleSupplier = crashModuleSupplier,
     payloadSourceModuleSupplier = payloadSourceModuleSupplier,

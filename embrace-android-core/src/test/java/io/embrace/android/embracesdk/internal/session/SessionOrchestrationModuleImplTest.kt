@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
-import io.embrace.android.embracesdk.fakes.injection.FakeMomentsModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
@@ -42,8 +42,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeDeliveryModule(),
             dataSourceModule,
             FakePayloadSourceModule(),
-            { 0L },
-            FakeMomentsModule(),
+            FakeStartupService(),
             FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollator)
@@ -73,8 +72,7 @@ internal class SessionOrchestrationModuleImplTest {
             FakeDeliveryModule(),
             dataSourceModule,
             FakePayloadSourceModule(),
-            { 0L },
-            FakeMomentsModule(),
+            FakeStartupService(),
             FakeLogModule()
         )
         assertNotNull(module.payloadMessageCollator)

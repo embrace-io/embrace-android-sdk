@@ -131,7 +131,6 @@ internal class TracingApiTest {
                     unendingSpan.addAttribute("unending-key", "unending-value")
                     unendingSpan.addEvent("unending-event")
                     results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
-                    embrace.endAppStartup()
                 }
                 sessionEndTimeMs = clock.now()
             },

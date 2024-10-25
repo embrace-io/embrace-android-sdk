@@ -1,4 +1,5 @@
 public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/embracesdk/internal/api/SdkApi {
+	public static final field Companion Lio/embrace/android/embracesdk/Embrace$Companion;
 	public fun addBreadcrumb (Ljava/lang/String;)V
 	public fun addLogRecordExporter (Lio/opentelemetry/sdk/logs/export/LogRecordExporter;)V
 	public fun addSessionProperty (Ljava/lang/String;Ljava/lang/String;Z)Z
@@ -19,7 +20,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getCurrentSessionId ()Ljava/lang/String;
 	public fun getDeviceId ()Ljava/lang/String;
 	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
-	public static fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
+	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
@@ -68,5 +69,9 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun startView (Ljava/lang/String;)Z
 	public fun trackWebViewPerformance (Ljava/lang/String;Landroid/webkit/ConsoleMessage;)V
 	public fun trackWebViewPerformance (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/Embrace$Companion {
+	public final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 }
 

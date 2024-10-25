@@ -91,6 +91,7 @@ internal class IntegrationTestRule(
     lateinit var preSdkStart: EmbracePreSdkStartInterface
     private lateinit var otelAssertion: EmbraceOtelExportAssertionInterface
     private lateinit var spanExporter: FilteredSpanExporter
+    private lateinit var embraceImpl: EmbraceImpl
 
     lateinit var bootstrapper: ModuleInitBootstrapper
 
@@ -109,7 +110,7 @@ internal class IntegrationTestRule(
     ) {
         setupAction(setup)
         with(setup) {
-            val embraceImpl = EmbraceImpl(bootstrapper)
+            embraceImpl = EmbraceImpl(bootstrapper)
             EmbraceHooks.setImpl(embraceImpl)
             preSdkStartAction(preSdkStart)
             embraceImpl.addSpanExporter(spanExporter)
@@ -160,7 +161,7 @@ internal class IntegrationTestRule(
      * Teardown the Embrace SDK, closing any resources as required
      */
     override fun after() {
-        EmbraceHooks.stop()
+        embraceImpl.stop()
     }
 
     companion object {

@@ -11,6 +11,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.RejectedExecutionException
 import java.util.zip.GZIPOutputStream
 
 /**
@@ -100,9 +101,14 @@ class PayloadStorageServiceImpl(
     }
 
     override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
-        worker.submit(metadata) {
+        val action = {
             processDelete(metadata)
             callback()
+        }
+        try {
+            worker.submit(metadata, action)
+        } catch (exc: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
+            action()
         }
     }
 

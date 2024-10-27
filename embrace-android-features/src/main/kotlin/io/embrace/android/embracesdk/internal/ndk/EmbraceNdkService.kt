@@ -70,7 +70,7 @@ internal class EmbraceNdkService(
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {
-            if (startNativeCrashMonitoring()) {
+            if (startNativeCrashMonitoring { sessionIdTracker.getActiveSessionId() ?: "null" }) {
                 processStateService.addListener(this)
                 userService.addUserInfoListener(::onUserInfoUpdate)
                 sessionIdTracker.addListener { updateSessionId(it ?: "") }
@@ -109,11 +109,11 @@ internal class EmbraceNdkService(
         updateAppState(APPLICATION_STATE_FOREGROUND)
     }
 
-    private fun startNativeCrashMonitoring(): Boolean {
+    private fun startNativeCrashMonitoring(sessionIdProvider: () -> String): Boolean {
         return try {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 createCrashReportDirectory()
-                handler.postAtFrontOfQueue { installSignals() }
+                handler.postAtFrontOfQueue { installSignals(sessionIdProvider) }
                 handler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS.toLong()
@@ -163,7 +163,7 @@ internal class EmbraceNdkService(
         }
     }
 
-    private fun installSignals() {
+    private fun installSignals(sessionIdProvider: () -> String) {
         val reportBasePath = storageService.getNativeCrashDir().absolutePath
         val markerFilePath = storageService.getFileForWrite(
             CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
@@ -177,7 +177,7 @@ internal class EmbraceNdkService(
             delegate._installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
-                "null",
+                sessionIdProvider(),
                 processStateService.getAppState(),
                 nativeCrashId,
                 Build.VERSION.SDK_INT,

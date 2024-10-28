@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -17,11 +18,11 @@ class IntakeServiceImpl(
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
-    private val shutdownTimeoutMs: Long = 3000
+    private val shutdownTimeoutMs: Long = 3000,
 ) : IntakeService {
 
-    private var lastCacheAttempt: Future<*>? = null
-    private var lastCacheRef: StoredTelemetryMetadata? = null
+    private var lastSessionCacheAttempt: Future<*>? = null
+    private var lastCacheSessionRef: StoredTelemetryMetadata? = null
 
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
@@ -33,9 +34,9 @@ class IntakeServiceImpl(
         }
 
         // cancel any cache attempts that are already pending to avoid unnecessary I/O.
-        if (!metadata.complete) {
-            val prev = lastCacheAttempt
-            lastCacheAttempt = future
+        if (!metadata.complete && metadata.envelopeType == SupportedEnvelopeType.SESSION) {
+            val prev = lastSessionCacheAttempt
+            lastSessionCacheAttempt = future
             prev?.cancel(false)
         }
     }
@@ -52,17 +53,20 @@ class IntakeServiceImpl(
             service.store(metadata) { stream ->
                 serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
             }
-            val last = lastCacheRef
+            val lastCachedSession = lastCacheSessionRef
 
             if (metadata.complete) {
                 schedulingService.onPayloadIntake()
-            } else {
-                lastCacheRef = metadata
+            } else if (metadata.envelopeType == SupportedEnvelopeType.SESSION) {
+                lastCacheSessionRef = metadata
             }
 
-            // delete any old cache attempts
-            if (last != null) {
-                cacheStorageService.delete(last)
+            // If the intake was for a session payload, delete the last cached session if it exists.
+            // There should only ever be one cached session at one time.
+            // If more than one thing is being cached, consider refactoring this so the clean up is managed
+            // by the caching component.
+            if (metadata.envelopeType == SupportedEnvelopeType.SESSION && lastCachedSession != null) {
+                cacheStorageService.delete(lastCachedSession)
             }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.INTAKE_FAIL, exc)

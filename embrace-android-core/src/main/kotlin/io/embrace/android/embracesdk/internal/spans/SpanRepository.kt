@@ -14,6 +14,7 @@ class SpanRepository {
     private val activeSpans: MutableMap<String, PersistableEmbraceSpan> = ConcurrentHashMap()
     private val completedSpans: MutableMap<String, PersistableEmbraceSpan> = mutableMapOf()
     private val spanIdsInProcess: MutableMap<String, AtomicInteger> = ConcurrentHashMap()
+    private var spanUpdateNotifier: (() -> Unit)? = null
 
     /**
      * Track the [EmbraceSpan] if it has been started and it's not already tracked.
@@ -83,6 +84,20 @@ class SpanRepository {
         synchronized(spanIdsInProcess) {
             completedSpans.clear()
         }
+    }
+
+    /**
+     * Set a function to be invoked when a span has been updated
+     */
+    fun setSpanUpdateNotifier(notifier: () -> Unit) {
+        spanUpdateNotifier = notifier
+    }
+
+    /**
+     * Call to notify the repository that a span has been updated
+     */
+    fun notifySpanUpdate() {
+        spanUpdateNotifier?.invoke()
     }
 
     private fun notTracked(spanId: String): Boolean = activeSpans[spanId] == null && completedSpans[spanId] == null

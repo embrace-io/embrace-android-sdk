@@ -98,6 +98,7 @@ internal class EmbraceSpanImpl(
                 newSpan.updateName(newName)
             }
             spanStartTimeMs = attemptedStartTimeMs
+            spanRepository.notifySpanUpdate()
         }
 
         return true
@@ -152,6 +153,7 @@ internal class EmbraceSpanImpl(
                 if (successful) {
                     spanId?.let { spanRepository.trackedSpanStopped(it) }
                     spanEndTimeMs = attemptedEndTimeMs
+                    spanRepository.notifySpanUpdate()
                 }
             }
         }
@@ -207,6 +209,7 @@ internal class EmbraceSpanImpl(
                 if (event.hasFixedAttribute(type)) {
                     systemEvents.remove(event)
                     systemEventCount.decrementAndGet()
+                    spanRepository.notifySpanUpdate()
                     return true
                 }
             }
@@ -219,6 +222,7 @@ internal class EmbraceSpanImpl(
             synchronized(startedSpan) {
                 status = statusCode.toStatus()
                 sdkSpan.setStatus(statusCode, description)
+                spanRepository.notifySpanUpdate()
             }
         }
     }
@@ -228,6 +232,7 @@ internal class EmbraceSpanImpl(
             synchronized(customAttributes) {
                 if (customAttributes.size < MAX_CUSTOM_ATTRIBUTE_COUNT && isRecording) {
                     customAttributes[key] = value
+                    spanRepository.notifySpanUpdate()
                     return true
                 }
             }
@@ -242,6 +247,7 @@ internal class EmbraceSpanImpl(
                 if (!spanStarted() || isRecording) {
                     updatedName = newName
                     startedSpan.get()?.updateName(newName)
+                    spanRepository.notifySpanUpdate()
                     return true
                 }
             }
@@ -282,10 +288,12 @@ internal class EmbraceSpanImpl(
 
     override fun addSystemAttribute(key: String, value: String) {
         systemAttributes[key] = value
+        spanRepository.notifySpanUpdate()
     }
 
     override fun removeSystemAttribute(key: String) {
         systemAttributes.remove(key)
+        spanRepository.notifySpanUpdate()
     }
 
     private fun getAttributesPayload(): List<Attribute> =
@@ -297,7 +305,7 @@ internal class EmbraceSpanImpl(
         events: Queue<EmbraceSpanEvent>,
         count: AtomicInteger,
         max: Int,
-        eventSupplier: () -> EmbraceSpanEvent?
+        eventSupplier: () -> EmbraceSpanEvent?,
     ): Boolean {
         if (count.get() < max) {
             synchronized(count) {
@@ -305,6 +313,7 @@ internal class EmbraceSpanImpl(
                     eventSupplier()?.apply {
                         events.add(this)
                         count.incrementAndGet()
+                        spanRepository.notifySpanUpdate()
                         return true
                     }
                 }

@@ -70,7 +70,7 @@ internal class EmbraceConfigService(
     override var remoteConfigSource: RemoteConfigSource? = null
         set(value) {
             field = value
-            performInitialConfigLoad()
+            loadConfigFromCache()
             attemptConfigRefresh()
         }
 
@@ -186,14 +186,6 @@ internal class EmbraceConfigService(
                 " embrace.disableMappingFileUpload=true to gradle.properties."
         }
         return appId
-    }
-
-    /**
-     * Schedule an action that loads the config from the cache.
-     * This is deferred to lessen its impact upon startup.
-     */
-    private fun performInitialConfigLoad() {
-        backgroundWorker.submit(runnable = ::loadConfigFromCache)
     }
 
     /**

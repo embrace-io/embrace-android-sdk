@@ -9,6 +9,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.net.CacheResponse
 import java.net.URI
+import java.util.zip.GZIPInputStream
 
 /**
  * Caches HTTP requests made via HttpUrlConnection using [HttpResponseCache]. This is
@@ -59,7 +60,9 @@ class ApiResponseCache(
     fun retrieveCachedConfig(url: String, request: ApiRequest): CachedConfig {
         val cachedResponse = retrieveCacheResponse(url, request)
         val obj = cachedResponse?.runCatching {
-            serializer.fromJson(body, RemoteConfig::class.java)
+            GZIPInputStream(body).use {
+                serializer.fromJson(it, RemoteConfig::class.java)
+            }
         }?.getOrNull()
         val eTag = cachedResponse?.let { retrieveETag(cachedResponse) }
         return CachedConfig(obj, eTag)

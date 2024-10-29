@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 @SuppressLint("EmbracePublicApiPackageRule")
-internal class UninitializedSdkInternalInterfaceImpl(
+internal class NoopEmbraceInternalInterface(
     internalTracer: InternalTracingApi
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 

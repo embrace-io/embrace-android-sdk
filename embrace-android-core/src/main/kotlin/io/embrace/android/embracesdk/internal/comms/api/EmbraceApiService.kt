@@ -100,6 +100,7 @@ internal class EmbraceApiService(
         accept = "application/json",
         url = ApiRequestUrl(url),
         httpMethod = HttpMethod.GET,
+        acceptEncoding = "gzip",
     )
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {

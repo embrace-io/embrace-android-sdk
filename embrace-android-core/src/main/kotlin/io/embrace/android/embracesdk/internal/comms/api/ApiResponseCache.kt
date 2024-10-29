@@ -79,7 +79,7 @@ class ApiResponseCache(
             val uri = URI.create(url)
             val requestMethod = request.httpMethod.toString()
             val headerFields = request.getHeaders().mapValues { listOf(it.value) }
-            obj.get(uri, requestMethod, headerFields.plus("Accept-Encoding" to listOf("gzip")))
+            obj.get(uri, requestMethod, headerFields)
         } catch (exc: IOException) {
             null
         }

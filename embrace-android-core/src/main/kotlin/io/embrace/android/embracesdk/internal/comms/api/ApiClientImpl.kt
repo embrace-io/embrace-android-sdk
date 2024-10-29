@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import java.io.IOException
-import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
+import java.util.zip.GZIPInputStream
 
 /**
  * Client for calling the Embrace API. This service handles all calls to the Embrace API.
@@ -38,7 +38,7 @@ internal class ApiClientImpl : ApiClient {
 
     override fun executePost(
         request: ApiRequest,
-        action: SerializationAction
+        action: SerializationAction,
     ): ApiResponse {
         var connection: EmbraceConnection? = null
         return try {
@@ -71,10 +71,9 @@ internal class ApiClientImpl : ApiClient {
         return try {
             val responseCode = readHttpResponseCode(connection)
             val responseHeaders = readHttpResponseHeaders(connection)
-
             return when (responseCode) {
                 HttpURLConnection.HTTP_OK -> {
-                    val responseBody = readResponseBodyAsString(connection.inputStream)
+                    val responseBody = readResponseBodyAsString(connection)
                     ApiResponse.Success(responseBody, responseHeaders)
                 }
 
@@ -124,14 +123,17 @@ internal class ApiClientImpl : ApiClient {
     }
 
     /**
-     * Reads an [InputStream] into a String.
-     *
-     * @param inputStream the input stream to read
-     * @return the string representation
+     * Reads the [InputStream] of a [EmbraceConnection] into a String. It will look at the connection to
+     * see if it contains compressed data to determine whether it should be read into a gzip stream.
      */
-    private fun readResponseBodyAsString(inputStream: InputStream?): String {
+    private fun readResponseBodyAsString(connection: EmbraceConnection): String {
         return try {
-            InputStreamReader(inputStream).buffered().use {
+            val reader = if (connection.headerFields?.get("Content-Encoding")?.singleOrNull() == "gzip") {
+                GZIPInputStream(connection.inputStream).bufferedReader()
+            } else {
+                InputStreamReader(connection.inputStream).buffered()
+            }
+            reader.use {
                 it.readText()
             }
         } catch (ex: IOException) {

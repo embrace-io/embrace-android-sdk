@@ -380,7 +380,7 @@ internal class EmbraceNdkServiceTest {
     fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
         every { sharedObjectLoader.loadEmbraceNative() } returns false
         initializeService()
-        verify(exactly = 0) { embraceNdkService["installSignals"]() }
+        verify(exactly = 0) { embraceNdkService["installSignals"]({ "null" }) }
         verify(exactly = 0) { embraceNdkService["createCrashReportDirectory"]() }
     }
 

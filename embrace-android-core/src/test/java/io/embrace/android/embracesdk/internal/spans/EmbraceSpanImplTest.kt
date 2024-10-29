@@ -48,6 +48,7 @@ internal class EmbraceSpanImplTest {
     private lateinit var embraceSpan: EmbraceSpanImpl
     private lateinit var spanRepository: SpanRepository
     private lateinit var serializer: PlatformSerializer
+    private var updateNotified: Boolean = false
     private val tracer = OpenTelemetrySdk.builder()
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
@@ -59,7 +60,7 @@ internal class EmbraceSpanImplTest {
         fakeClock = FakeClock()
         val fakeInitModule = FakeInitModule(fakeClock)
         openTelemetryClock = fakeInitModule.openTelemetryModule.openTelemetryClock
-        spanRepository = SpanRepository()
+        spanRepository = SpanRepository().apply { setSpanUpdateNotifier { updateNotified = true } }
         serializer = fakeInitModule.jsonSerializer
         embraceSpan = createEmbraceSpanImpl(
             spanBuilder = tracer.embraceSpanBuilder(
@@ -106,6 +107,7 @@ internal class EmbraceSpanImplTest {
             )
             assertEquals(1, spanRepository.getActiveSpans().size)
             assertEquals(0, spanRepository.getCompletedSpans().size)
+            assertTrue(updateNotified)
         }
     }
 
@@ -173,6 +175,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(
                 addEvent(name = "future event", timestampMs = fakeClock.now() + 2L, mapOf(Pair("key", "value"), Pair("key2", "value1")))
             )
+            assertTrue(updateNotified)
         }
     }
 
@@ -190,6 +193,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(stop())
             assertFalse(embraceSpan.updateName("failed-to-update"))
             assertEquals("new-new-name", embraceSpan.snapshot()?.name)
+            assertTrue(updateNotified)
         }
     }
 
@@ -209,6 +213,7 @@ internal class EmbraceSpanImplTest {
             assertFalse(recordException(exception = RuntimeException(), attributes = tooBigEventAttributes))
             assertTrue(stop())
             assertFalse(recordException(exception = IllegalStateException()))
+            assertTrue(updateNotified)
         }
 
         with(checkNotNull(embraceSpan.snapshot())) {
@@ -303,6 +308,7 @@ internal class EmbraceSpanImplTest {
             assertEquals("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
             removeSystemAttribute("system-attribute")
             assertNull("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
+            assertTrue(updateNotified)
         }
     }
 
@@ -319,6 +325,7 @@ internal class EmbraceSpanImplTest {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))
+            assertTrue(updateNotified)
         }
     }
 
@@ -482,7 +489,7 @@ internal class EmbraceSpanImplTest {
         spanBuilder = spanBuilder,
         openTelemetryClock = clock,
         spanRepository = spanRepository,
-        sensitiveKeysBehavior = sensitiveKeysBehavior
+        sensitiveKeysBehavior = sensitiveKeysBehavior,
     )
 
     private fun EmbraceSpanImpl.assertSnapshot(
@@ -519,6 +526,7 @@ internal class EmbraceSpanImplTest {
         assertFalse(addAttribute("first", "value"))
         assertEquals(0, spanRepository.getActiveSpans().size)
         assertEquals(1, spanRepository.getCompletedSpans().size)
+        assertTrue(updateNotified)
     }
 
     companion object {

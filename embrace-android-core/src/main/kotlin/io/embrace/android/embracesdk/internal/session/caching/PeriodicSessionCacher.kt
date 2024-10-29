@@ -26,7 +26,7 @@ class PeriodicSessionCacher(
             onPeriodicCache(provider),
             0,
             intervalMs,
-            TimeUnit.SECONDS
+            TimeUnit.MILLISECONDS
         )
     }
 

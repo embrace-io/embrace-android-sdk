@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakePayloadCachingService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -20,24 +21,36 @@ internal class EmbraceSpanFactoryImplTest {
     private val clock = FakeClock()
     private lateinit var embraceSpanFactory: EmbraceSpanFactoryImpl
     private lateinit var spanRepository: SpanRepository
+    private lateinit var cachingService: FakePayloadCachingService
     private lateinit var tracer: FakeTracer
+    private var updateNotified: Boolean = false
 
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock)
-        spanRepository = initModule.openTelemetryModule.spanRepository
+        spanRepository = initModule.openTelemetryModule.spanRepository.apply {
+            setSpanUpdateNotifier {
+                updateNotified = true
+            }
+        }
         tracer = FakeTracer()
+        cachingService = FakePayloadCachingService()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             tracer = tracer,
             openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock,
             spanRepository = spanRepository,
-            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password"))
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password")),
         )
     }
 
     @Test
     fun `check public span creation`() {
-        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = false, private = false)
+        val span = embraceSpanFactory.create(
+            name = "test",
+            type = EmbType.Performance.Default,
+            internal = false,
+            private = false
+        )
         assertTrue(span.start(clock.now()))
         with(span) {
             assertTrue(hasFixedAttribute(EmbType.Performance.Default))
@@ -46,11 +59,17 @@ internal class EmbraceSpanFactoryImplTest {
             assertEquals("test", snapshot()?.name)
         }
         assertNotNull(spanRepository.getSpan(spanId = checkNotNull(span.spanId)))
+        assertTrue(updateNotified)
     }
 
     @Test
     fun `check internal span creation`() {
-        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = true, private = true)
+        val span = embraceSpanFactory.create(
+            name = "test",
+            type = EmbType.Performance.Default,
+            internal = true,
+            private = true
+        )
         assertTrue(span.start(clock.now()))
         with(span) {
             assertTrue(hasFixedAttribute(EmbType.Performance.Default))
@@ -62,7 +81,12 @@ internal class EmbraceSpanFactoryImplTest {
 
     @Test
     fun `check internal span can be public`() {
-        val span = embraceSpanFactory.create(name = "test", type = EmbType.Performance.Default, internal = true, private = false)
+        val span = embraceSpanFactory.create(
+            name = "test",
+            type = EmbType.Performance.Default,
+            internal = true,
+            private = false
+        )
         assertTrue(span.start(clock.now()))
         with(span) {
             assertTrue(hasFixedAttribute(EmbType.Performance.Default))
@@ -89,6 +113,7 @@ internal class EmbraceSpanFactoryImplTest {
             assertEquals(spanParent, parent)
             assertFalse(hasFixedAttribute(PrivateSpan))
             assertEquals("from-span-builder", snapshot()?.name)
+            assertTrue(updateNotified)
         }
     }
 }

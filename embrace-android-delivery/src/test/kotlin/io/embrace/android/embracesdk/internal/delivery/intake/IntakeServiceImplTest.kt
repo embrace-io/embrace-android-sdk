@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -249,5 +250,43 @@ class IntakeServiceImplTest {
         }
         val expected = listOf(CRASH, CRASH, SESSION, SESSION, LOG, LOG, BLOB, BLOB)
         assertEquals(expected, observedTypes)
+    }
+
+    @Test
+    fun `only cached session payloads cleaned up and only by another session payload intake`() {
+        executorService.blockingMode = false
+        val cache1 = StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, SESSION, complete = false).apply {
+            intakeService.take(
+                intake = sessionEnvelope,
+                metadata = this
+            )
+        }
+
+        intakeService.take(
+            intake = logEnvelope,
+            metadata = StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, LOG, complete = true)
+        )
+
+        assertTrue(cacheStorageService.storedFilenames().contains(cache1.filename))
+
+        val cache2 = StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, SESSION, complete = false).apply {
+            intakeService.take(
+                intake = sessionEnvelope,
+                metadata = this
+            )
+        }
+
+        assertFalse(cacheStorageService.storedFilenames().contains(cache1.filename))
+        assertTrue(cacheStorageService.storedFilenames().contains(cache2.filename))
+
+        val session = StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, SESSION, complete = true).apply {
+            intakeService.take(
+                intake = sessionEnvelope,
+                metadata = this
+            )
+        }
+
+        assertFalse(cacheStorageService.storedFilenames().contains(cache2.filename))
+        assertTrue(payloadStorageService.storedFilenames().contains(session.filename))
     }
 }

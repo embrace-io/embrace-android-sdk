@@ -109,6 +109,8 @@ internal class ModuleInitBootstrapper(
     /**
      * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
      */
+
+    @Suppress("CyclomaticComplexMethod", "ComplexMethod")
     @JvmOverloads
     fun init(
         context: Context,
@@ -298,14 +300,16 @@ internal class ModuleInitBootstrapper(
                                             coreBaseUrl,
                                             lazyDeviceId,
                                             appId,
-                                            BuildConfig.VERSION_NAME
+                                            BuildConfig.VERSION_NAME,
+                                            logger,
                                         )
                                     } else {
                                         HttpUrlConnectionRequestExecutionService(
                                             coreBaseUrl,
                                             lazyDeviceId,
                                             appId,
-                                            BuildConfig.VERSION_NAME
+                                            BuildConfig.VERSION_NAME,
+                                            logger,
                                         )
                                     }
                                 }
@@ -324,6 +328,12 @@ internal class ModuleInitBootstrapper(
                                 }
                             }
                         )
+                    }.apply {
+                        payloadCachingService?.run {
+                            openTelemetryModule.spanRepository.setSpanUpdateNotifier {
+                                reportBackgroundActivityStateChange()
+                            }
+                        }
                     }
 
                     postInit(AnrModule::class) {

@@ -90,11 +90,11 @@ internal class EmbraceConfigServiceTest {
     fun setup() {
         fakeClock.setCurrentTime(1000000000000)
         every { mockApiService.getConfig() } returns remoteConfig
-        fakePreferenceService =
-            FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
+        fakePreferenceService = FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
         every {
             mockCacheService.loadObject<RemoteConfig>("config.json", RemoteConfig::class.java)
         } returns fakeCachedConfig
+        every { mockApiService.getCachedConfig() } returns CachedConfig(fakeCachedConfig, null)
         worker = fakeBackgroundWorker()
         service = createService(worker = worker, action = {})
         assertFalse(service.isOnlyUsingOtelExporters())

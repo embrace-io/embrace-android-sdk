@@ -54,6 +54,7 @@ dependencies {
     implementation(project(":embrace-android-features"))
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-delivery"))
+    implementation(project(":embrace-internal-api"))
 
     implementation(platform(libs.opentelemetry.bom))
 

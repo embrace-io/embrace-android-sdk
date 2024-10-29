@@ -11,5 +11,6 @@ android {
 dependencies {
     compileOnly(libs.firebase.messaging)
     compileOnly(project(":embrace-android-sdk"))
+    compileOnly(project(":embrace-internal-api"))
     testImplementation(project(":embrace-android-sdk"))
 }

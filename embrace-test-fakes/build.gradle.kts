@@ -13,6 +13,7 @@ dependencies {
     compileOnly(project(":embrace-android-payload"))
     compileOnly(project(":embrace-android-features"))
     compileOnly(project(":embrace-android-delivery"))
+    compileOnly(project(":embrace-internal-api"))
 
     compileOnly(platform(libs.opentelemetry.bom))
     compileOnly(libs.opentelemetry.api)

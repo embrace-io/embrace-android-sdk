@@ -12,13 +12,11 @@ import okhttp3.Interceptor;
 /**
  * Callback hooks for the okhttp3.OkHttpClient class.
  */
-@InternalApi
 public final class OkHttpClient {
 
     private OkHttpClient() {
     }
 
-    @InternalApi
     public static final class Builder {
 
         private Builder() {

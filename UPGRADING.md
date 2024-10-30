@@ -9,6 +9,7 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
 - `Embrace.LastRunEndState` is now its own top level class, `LastRunEndState`
 - Several public APIs are now implemented in Kotlin rather than Java. Generally this will not affect backwards compatibility but the following may have slight changes to their signatures:
   - `EmbraceNetworkRequest` Java overloads replaced with default parameters
+- Several internally used classes and symbols have been hidden from the public API
 
 ### Removed APIs
 

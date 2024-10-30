@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
 import io.embrace.android.embracesdk.internal.opentelemetry.embSequenceId
 import io.opentelemetry.api.trace.Span
@@ -14,7 +13,6 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * [SpanProcessor] that adds custom attributes to a [Span] when it starts, and exports it to the given [SpanExporter] when it finishes
  */
-@InternalApi
 internal class EmbraceSpanProcessor(
     private val spanExporter: SpanExporter,
     private val processIdentifier: String

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
@@ -33,7 +32,6 @@ import kotlin.math.abs
  * - Observe the data just as it will be transmitted over the network.
  * - Access to the Connection that carries the request.
  */
-@InternalApi
 class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
     private val embrace: Embrace,
     private val embraceInternalApi: EmbraceInternalApi,

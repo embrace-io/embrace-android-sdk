@@ -163,7 +163,7 @@ internal class ModuleInitBootstrapper(
                             appFramework,
                             configServiceProvider,
                         ) {
-                            if (Embrace.getInstance().isStarted && isSdkDisabled()) {
+                            if (isSdkDisabled()) {
                                 Embrace.getInstance().internalInterface.stopSdk()
                             }
                         }

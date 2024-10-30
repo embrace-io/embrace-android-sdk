@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logging
 
 import android.util.Log
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val EMBRACE_TAG = "[Embrace]"
 
@@ -10,6 +11,7 @@ internal const val EMBRACE_TAG = "[Embrace]"
  */
 class EmbLoggerImpl : EmbLogger {
 
+    private val loggedSdkNotStarted = AtomicBoolean(false)
     var errorHandler: InternalErrorHandler? = null
 
     override fun logDebug(msg: String, throwable: Throwable?) {
@@ -29,8 +31,10 @@ class EmbLoggerImpl : EmbLogger {
     }
 
     override fun logSdkNotInitialized(action: String) {
-        val msg = "Embrace SDK is not initialized yet, cannot $action."
-        log(msg, EmbLogger.Severity.WARNING, Throwable(msg))
+        if (!loggedSdkNotStarted.getAndSet(true)) {
+            val msg = "Embrace SDK is not initialized yet, cannot $action."
+            log(msg, EmbLogger.Severity.WARNING, Throwable(msg))
+        }
     }
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
@@ -63,7 +67,7 @@ class EmbLoggerImpl : EmbLogger {
     private inline fun logcatImpl(
         throwable: Throwable?,
         severity: EmbLogger.Severity,
-        msg: String
+        msg: String,
     ) {
         when (severity) {
             EmbLogger.Severity.DEBUG -> Log.d(EMBRACE_TAG, msg, throwable)

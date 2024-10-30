@@ -25,9 +25,16 @@ internal class SessionPayloadSourceImpl(
     override fun getSessionPayload(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger, symbolMapProvider)
         val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
+        val includeSnapshots = endType != SessionSnapshotType.JVM_CRASH
+
+        // Snapshots should only be included if the process is expected to last beyond the current session
+        val snapshots: List<Span>? = if (includeSnapshots) {
+            retrieveSpanSnapshots(isCacheAttempt)
+        } else {
+            emptyList()
+        }
 
         // Ensure the span retrieving is last as that potentially ends the session span, which effectively ends the session
-        val snapshots: List<Span>? = retrieveSpanSnapshots(isCacheAttempt)
         val spans: List<Span>? = retrieveSpanData(isCacheAttempt, endType, startNewSession, crashId)
 
         return SessionPayload(

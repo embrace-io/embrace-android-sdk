@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanSinkImpl
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -55,14 +56,14 @@ internal class SessionPayloadSourceImplTest {
     @Test
     fun `session crash`() {
         val payload = impl.getSessionPayload(SessionSnapshotType.JVM_CRASH, false)
-        assertPayloadPopulated(payload = payload, hasSessionSnapshot = false)
+        assertPayloadPopulated(payload = payload, hasSessionSnapshot = false, hasNonSessionSnapshots = false)
         assertNotNull(payload.spans?.single())
     }
 
     @Test
     fun `session cache`() {
         val payload = impl.getSessionPayload(SessionSnapshotType.PERIODIC_CACHE, false)
-        assertPayloadPopulated(payload = payload, hasSessionSnapshot = true)
+        assertPayloadPopulated(payload = payload, hasSessionSnapshot = true, hasNonSessionSnapshots = true)
         val span = checkNotNull(payload.spans?.single())
         assertEquals("cache-span", span.name)
     }
@@ -70,13 +71,14 @@ internal class SessionPayloadSourceImplTest {
     @Test
     fun `session lifecycle change`() {
         val payload = impl.getSessionPayload(SessionSnapshotType.NORMAL_END, true)
-        assertPayloadPopulated(payload = payload, hasSessionSnapshot = false)
+        assertPayloadPopulated(payload = payload, hasSessionSnapshot = false, hasNonSessionSnapshots = true)
         assertNotNull(payload.spans?.single())
     }
 
     private fun assertPayloadPopulated(
         payload: SessionPayload,
-        hasSessionSnapshot: Boolean
+        hasSessionSnapshot: Boolean,
+        hasNonSessionSnapshots: Boolean
     ) {
         assertEquals(mapOf("armeabi-v7a" to "my-symbols"), payload.sharedLibSymbolMapping)
         val snapshots = checkNotNull(payload.spanSnapshots)
@@ -86,6 +88,10 @@ internal class SessionPayloadSourceImplTest {
             assertEquals(0, snapshots.filter { it.hasFixedAttribute(EmbType.Ux.Session) }.size)
         }
 
-        assertNotNull(snapshots.single { !it.hasFixedAttribute(EmbType.Ux.Session) })
+        if (hasNonSessionSnapshots) {
+            assertNotNull(snapshots.single { !it.hasFixedAttribute(EmbType.Ux.Session) })
+        } else {
+            assertNull(snapshots.singleOrNull { !it.hasFixedAttribute(EmbType.Ux.Session) })
+        }
     }
 }

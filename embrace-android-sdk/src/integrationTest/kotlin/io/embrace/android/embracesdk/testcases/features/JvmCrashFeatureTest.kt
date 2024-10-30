@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -20,6 +19,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogRecei
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -46,6 +46,7 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
+                assertEquals(0, session.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     state = "foreground",
                     crashId = session.getCrashedId()
@@ -62,6 +63,7 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 val ba = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
+                assertEquals(0, ba.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashId = ba.getCrashedId()
                 )

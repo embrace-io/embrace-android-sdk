@@ -33,4 +33,6 @@ class FakeProcessStateService(
         true -> "background"
         false -> "foreground"
     }
+
+    override fun isInitialized(): Boolean = true
 }

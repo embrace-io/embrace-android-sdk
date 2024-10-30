@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.HttpUrlConnecti
 import io.embrace.android.embracesdk.internal.delivery.execution.OkHttpRequestExecutionService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpUrlConnectionTracker.registerFactory
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
@@ -493,6 +494,14 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerMemoryCleanerListeners(sessionOrchestrationModule.memoryCleanerService)
                         serviceRegistry.registerActivityLifecycleListeners(essentialServiceModule.activityLifecycleTracker)
                         serviceRegistry.registerStartupListener(essentialServiceModule.activityLifecycleTracker)
+                    }
+
+                    // Verify that the ProcessStateService is fully initialized at this point, and log otherwise.
+                    if (!essentialServiceModule.processStateService.isInitialized()) {
+                        logger.trackInternalError(
+                            type = InternalErrorType.PROCESS_STATE_CALLBACK_FAIL,
+                            throwable = IllegalStateException("ProcessStateService not initialized"),
+                        )
                     }
                     true
                 } else {

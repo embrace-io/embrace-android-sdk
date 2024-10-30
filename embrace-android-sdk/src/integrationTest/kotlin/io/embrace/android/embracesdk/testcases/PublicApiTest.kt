@@ -62,6 +62,7 @@ internal class PublicApiTest {
     @Test
     fun `SDK disabled via config cannot start`() {
         testRule.runTest(
+            expectSdkToStart = false,
             setupAction = {
                 overriddenConfigService.sdkDisabled = true
             },

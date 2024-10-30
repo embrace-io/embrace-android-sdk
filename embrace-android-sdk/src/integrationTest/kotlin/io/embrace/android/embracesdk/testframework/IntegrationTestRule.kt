@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
+import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
 
 /**
@@ -101,6 +102,7 @@ internal class IntegrationTestRule(
      */
     inline fun runTest(
         startSdk: Boolean = true,
+        expectSdkToStart: Boolean = startSdk,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
@@ -118,6 +120,7 @@ internal class IntegrationTestRule(
                 embraceImpl.start(overriddenCoreModule.context, appFramework) {
                     overriddenConfigService.apply { appFramework = it }
                 }
+                assertEquals(expectSdkToStart, bootstrapper.essentialServiceModule.processStateService.isInitialized())
             }
         }
         testCaseAction(action)

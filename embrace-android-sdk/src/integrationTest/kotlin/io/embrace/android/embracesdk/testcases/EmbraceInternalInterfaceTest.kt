@@ -319,6 +319,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `SDK will not start if feature flag has it being disabled`() {
         testRule.runTest(
+            expectSdkToStart = false,
             setupAction = {
                 overriddenConfigService.sdkModeBehavior = FakeSdkModeBehavior(sdkDisabled = true)
             },

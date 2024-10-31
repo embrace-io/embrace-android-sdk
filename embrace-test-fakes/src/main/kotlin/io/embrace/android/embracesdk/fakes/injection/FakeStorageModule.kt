@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 class FakeStorageModule(
     override val cacheService: CacheService = FakeCacheService(),
     override val deliveryCacheManager: DeliveryCacheManager = FakeDeliveryCacheManager(),
-    override val storageService: StorageService = FakeStorageService()
+    override val storageService: StorageService = FakeStorageService(),
 ) : StorageModule {
 
     override val cache: ApiResponseCache

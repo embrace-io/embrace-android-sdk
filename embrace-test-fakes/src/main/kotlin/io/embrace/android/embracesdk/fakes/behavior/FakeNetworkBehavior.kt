@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 
 class FakeNetworkBehavior(
     private val captureLimit: Int = 1000,
-    private val domains: Map<String, Int> = emptyMap()
+    private val domains: Map<String, Int> = emptyMap(),
 ) : NetworkBehavior {
     override fun getTraceIdHeader(): String = NetworkCaptureConfig.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
     override fun isRequestContentLengthCaptureEnabled(): Boolean = false

@@ -11,7 +11,7 @@ internal class EmbraceSpanFactoryImpl(
     private val tracer: Tracer,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
+    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null,
 ) : EmbraceSpanFactory {
 
     override fun create(
@@ -19,7 +19,7 @@ internal class EmbraceSpanFactoryImpl(
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-        parent: EmbraceSpan?
+        parent: EmbraceSpan?,
     ): PersistableEmbraceSpan = create(
         embraceSpanBuilder = tracer.embraceSpanBuilder(
             name = name,

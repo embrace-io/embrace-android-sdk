@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 class HostedSdkVersionInfo(
     private val preferencesService: PreferencesService,
-    appFramework: AppFramework = AppFramework.NATIVE
+    appFramework: AppFramework = AppFramework.NATIVE,
 ) {
     private var hostedPlatformStrategy: HostedPlatformStrategy
 
@@ -17,6 +17,7 @@ class HostedSdkVersionInfo(
             else -> this.hostedPlatformStrategy = NativePlatformStrategy()
         }
     }
+
     var hostedSdkVersion: String? = null
         get() = field ?: hostedPlatformStrategy.getHostedSdkVersionFromPreferences(preferencesService)
         set(value) {

@@ -21,7 +21,7 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
     configService: ConfigService,
     workerThreadModule: WorkerThreadModule,
     versionChecker: VersionChecker = BuildVersionChecker,
-    featureModule: FeatureModule
+    featureModule: FeatureModule,
 ) : DataCaptureServiceModule {
 
     override val webviewService: WebViewService by singleton {

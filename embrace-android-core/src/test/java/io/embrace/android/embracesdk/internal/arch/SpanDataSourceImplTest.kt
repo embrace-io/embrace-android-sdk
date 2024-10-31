@@ -165,6 +165,6 @@ internal class SpanDataSourceImplTest {
 
     private class FakeDataSourceImpl(
         dst: FakeSpanService,
-        limitStrategy: LimitStrategy = NoopLimitStrategy
+        limitStrategy: LimitStrategy = NoopLimitStrategy,
     ) : SpanDataSourceImpl(dst, EmbLoggerImpl(), limitStrategy)
 }

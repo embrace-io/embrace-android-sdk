@@ -18,14 +18,14 @@ internal class ReactNativeInternalInterfaceImpl(
     private val crashService: CrashService,
     private val rnBundleIdTracker: RnBundleIdTracker,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : EmbraceInternalInterface by impl, ReactNativeInternalInterface {
 
     override fun logUnhandledJsException(
         name: String,
         message: String,
         type: String?,
-        stacktrace: String?
+        stacktrace: String?,
     ) {
         if (embrace.isStarted) {
             val exception = JsException(name, message, type, stacktrace)
@@ -39,7 +39,7 @@ internal class ReactNativeInternalInterfaceImpl(
         name: String,
         message: String,
         properties: Map<String, Any>,
-        stacktrace: String?
+        stacktrace: String?,
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
@@ -119,7 +119,7 @@ internal class ReactNativeInternalInterfaceImpl(
         endTime: Long,
         properties: Map<String?, Any?>,
         bytesSent: Int,
-        output: String
+        output: String,
     ) {
         embrace.logRnAction(name, startTime, endTime, properties, bytesSent, output)
     }

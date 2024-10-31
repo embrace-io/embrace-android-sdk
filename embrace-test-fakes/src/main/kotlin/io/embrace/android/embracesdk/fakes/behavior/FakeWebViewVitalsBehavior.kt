@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehav
 
 class FakeWebViewVitalsBehavior(
     private val maxWebViewVitals: Int = 100,
-    private val webViewVitalsEnabled: Boolean = true
+    private val webViewVitalsEnabled: Boolean = true,
 ) : WebViewVitalsBehavior {
 
     override fun getMaxWebViewVitals(): Int = maxWebViewVitals

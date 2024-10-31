@@ -6,5 +6,5 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 class AllowedNdkSampleMethod(
     @Json(name = "c") val clz: String? = null,
-    @Json(name = "m") val method: String? = null
+    @Json(name = "m") val method: String? = null,
 )

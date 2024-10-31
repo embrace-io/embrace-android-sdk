@@ -29,7 +29,7 @@ enum class LoadType {
  */
 inline fun <reified T> singleton(
     loadType: LoadType = LoadType.LAZY,
-    noinline provider: Provider<T>
+    noinline provider: Provider<T>,
 ): ReadOnlyProperty<Any?, T> = SingletonDelegate(loadType, provider)
 
 /**
@@ -37,7 +37,7 @@ inline fun <reified T> singleton(
  * new object will be created.
  */
 inline fun <reified T> factory(
-    noinline provider: Provider<T>
+    noinline provider: Provider<T>,
 ): ReadOnlyProperty<Any?, T> = FactoryDelegate(provider)
 
 class FactoryDelegate<T>(private inline val provider: Provider<T>) : ReadOnlyProperty<Any?, T> {
@@ -47,7 +47,7 @@ class FactoryDelegate<T>(private inline val provider: Provider<T>) : ReadOnlyPro
 
 class SingletonDelegate<T>(
     loadType: LoadType,
-    provider: Provider<T>
+    provider: Provider<T>,
 ) : ReadOnlyProperty<Any?, T> {
 
     // optimization: use atomic checks rather than synchronized in lazy.

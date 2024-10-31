@@ -60,7 +60,7 @@ sealed class SchemaType(
         body: String?,
         id: String,
         from: String?,
-        priority: Int
+        priority: Int,
     ) : SchemaType(
         telemetryType = EmbType.System.PushNotification,
         fixedObjectName = "push-notification"
@@ -84,7 +84,7 @@ sealed class SchemaType(
     class Tap(
         viewName: String?,
         type: String = "tap",
-        coords: String
+        coords: String,
     ) : SchemaType(
         telemetryType = EmbType.Ux.Tap,
         fixedObjectName = "ui-tap"
@@ -97,7 +97,7 @@ sealed class SchemaType(
     }
 
     class WebViewUrl(
-        url: String
+        url: String,
     ) : SchemaType(
         telemetryType = EmbType.Ux.WebView,
         fixedObjectName = "web-view"
@@ -196,7 +196,7 @@ sealed class SchemaType(
     }
 
     class NetworkStatus(
-        networkStatus: io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
+        networkStatus: io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus,
     ) : SchemaType(
         telemetryType = EmbType.System.NetworkStatus,
         fixedObjectName = "network-status"
@@ -209,7 +209,7 @@ sealed class SchemaType(
     class WebViewInfo(
         url: String,
         webVitals: String,
-        tag: String?
+        tag: String?,
     ) : SchemaType(
         telemetryType = EmbType.System.WebViewInfo,
         fixedObjectName = "webview-info"
@@ -244,7 +244,7 @@ sealed class SchemaType(
     }
 
     class ThermalState(
-        status: Int
+        status: Int,
     ) : SchemaType(
         telemetryType = EmbType.Performance.ThermalState,
         fixedObjectName = "thermal-state"

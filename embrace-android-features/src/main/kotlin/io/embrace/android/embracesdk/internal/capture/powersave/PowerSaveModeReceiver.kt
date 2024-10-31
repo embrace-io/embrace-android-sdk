@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 internal class PowerSaveModeReceiver(
     private val logger: EmbLogger,
     private val powerManagerProvider: Provider<PowerManager?>,
-    private val callback: (powerSaveMode: Boolean) -> Unit
+    private val callback: (powerSaveMode: Boolean) -> Unit,
 ) : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {

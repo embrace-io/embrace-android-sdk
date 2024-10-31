@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
  * the execution of a task
  */
 class SingleThreadTestScheduledExecutor(
-    threadFactory: ThreadFactory = defaultThreadFactory
+    threadFactory: ThreadFactory = defaultThreadFactory,
 ) : ScheduledThreadPoolExecutor(1, threadFactory) {
 
     val executing: AtomicBoolean = AtomicBoolean(false)

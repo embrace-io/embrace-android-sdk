@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 
 class NetworkSpanForwardingBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<NetworkSpanForwardingRemoteConfig?>
+    remoteSupplier: Provider<NetworkSpanForwardingRemoteConfig?>,
 ) : NetworkSpanForwardingBehavior, MergedConfigBehavior<UnimplementedConfig, NetworkSpanForwardingRemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

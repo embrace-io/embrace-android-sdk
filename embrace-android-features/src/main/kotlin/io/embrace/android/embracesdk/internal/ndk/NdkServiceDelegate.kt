@@ -10,7 +10,7 @@ internal class NdkServiceDelegate {
             report_id: String?,
             api_level: Int,
             is_32bit: Boolean,
-            dev_logging: Boolean
+            dev_logging: Boolean,
         )
 
         fun _updateMetaData(new_device_meta_data: String?)

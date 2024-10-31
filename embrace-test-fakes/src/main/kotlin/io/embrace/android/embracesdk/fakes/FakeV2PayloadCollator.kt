@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakeV2PayloadCollator(
-    val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan()
+    val currentSessionSpan: FakeCurrentSessionSpan = FakeCurrentSessionSpan(),
 ) : PayloadMessageCollator {
 
     val sessionCount: AtomicInteger = AtomicInteger(0)
@@ -22,9 +22,11 @@ class FakeV2PayloadCollator(
             ApplicationState.FOREGROUND -> {
                 sessionCount.incrementAndGet()
             }
+
             ApplicationState.BACKGROUND -> {
                 baCount.incrementAndGet()
             }
+
             else -> {
                 error("Unknown appState")
             }
@@ -44,7 +46,7 @@ class FakeV2PayloadCollator(
      * on disk).
      */
     override fun buildFinalEnvelope(
-        params: FinalEnvelopeParams
+        params: FinalEnvelopeParams,
     ): Envelope<SessionPayload> {
         if (params.endType != SessionSnapshotType.PERIODIC_CACHE) {
             currentSessionSpan.endSession(startNewSession = params.startNewSession)

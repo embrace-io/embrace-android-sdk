@@ -20,7 +20,7 @@ class LegacyExceptionInfo(
      */
     @Json(name = "m") val message: String?,
 
-    lines: List<String>
+    lines: List<String>,
 ) {
 
     /**

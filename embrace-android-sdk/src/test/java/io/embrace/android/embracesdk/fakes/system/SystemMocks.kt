@@ -24,6 +24,7 @@ public fun mockMessage(): Message = mockk(relaxed = true)
 public fun mockActivity(): Activity = mockk(relaxed = true) {
     every { localClassName } returns "MyMockActivity"
 }
+
 public fun mockIntent(): Intent = mockk(relaxed = true)
 public fun mockContext(): Context = mockk(relaxed = true)
 public fun mockApplication(): Application = mockk(relaxed = true) {

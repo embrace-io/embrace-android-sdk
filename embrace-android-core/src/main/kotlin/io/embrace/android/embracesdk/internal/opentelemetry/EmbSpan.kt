@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 
 class EmbSpan(
     private val embraceSpan: PersistableEmbraceSpan,
-    private val clock: Clock
+    private val clock: Clock,
 ) : Span {
 
     override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): Span {

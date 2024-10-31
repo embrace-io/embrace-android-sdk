@@ -14,7 +14,7 @@ internal fun Tracer.embraceSpanBuilder(
     type: TelemetryType,
     internal: Boolean,
     private: Boolean,
-    parent: EmbraceSpan? = null
+    parent: EmbraceSpan? = null,
 ): EmbraceSpanBuilder = EmbraceSpanBuilder(
     tracer = this,
     name = name,

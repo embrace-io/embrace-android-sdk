@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  * considered enough for client side operation timings at this time.
  */
 class OpenTelemetryClock(
-    private val embraceClock: Clock
+    private val embraceClock: Clock,
 ) : io.opentelemetry.sdk.common.Clock {
 
     override fun now(): Long = embraceClock.nowInNanos()

@@ -10,7 +10,7 @@ class NdkDelegateImpl : NdkServiceDelegate.NdkDelegate {
         report_id: String?,
         api_level: Int,
         is_32bit: Boolean,
-        dev_logging: Boolean
+        dev_logging: Boolean,
     )
 
     external override fun _updateMetaData(new_device_meta_data: String?)

@@ -8,5 +8,5 @@ class JsException(
     @Json(name = "n") var name: String?,
     @Json(name = "m") var message: String?,
     @Json(name = "t") var type: String?,
-    @Json(name = "st") var stacktrace: String?
+    @Json(name = "st") var stacktrace: String?,
 )

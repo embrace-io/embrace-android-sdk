@@ -9,7 +9,7 @@ internal class FakeInternalNetworkApi(
     var time: Long = 0,
     var started: Boolean = true,
     var traceHeader: String = NetworkCaptureConfig.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE,
-    var w3cTraceparent: String? = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
+    var w3cTraceparent: String? = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01",
 ) : InternalNetworkApi {
     override fun getSdkCurrentTime(): Long = time
     override fun isStarted(): Boolean = started
@@ -17,13 +17,15 @@ internal class FakeInternalNetworkApi(
     override fun generateW3cTraceparent(): String? = w3cTraceparent
     override fun isNetworkSpanForwardingEnabled(): Boolean = internalInterface.isNetworkSpanForwardingEnabled()
     override fun recordNetworkRequest(
-        embraceNetworkRequest: EmbraceNetworkRequest
+        embraceNetworkRequest: EmbraceNetworkRequest,
     ) = internalInterface.recordNetworkRequest(
         embraceNetworkRequest
     )
+
     override fun shouldCaptureNetworkBody(
         url: String,
-        method: String
+        method: String,
     ): Boolean = internalInterface.shouldCaptureNetworkBody(url, method)
+
     override fun logInternalError(error: Throwable) = internalInterface.logInternalError(error)
 }

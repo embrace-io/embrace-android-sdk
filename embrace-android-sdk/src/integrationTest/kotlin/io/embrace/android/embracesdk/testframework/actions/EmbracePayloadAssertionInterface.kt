@@ -16,12 +16,12 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
-import org.json.JSONObject
-import org.junit.Assert
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
+import org.json.JSONObject
+import org.junit.Assert
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -59,7 +59,7 @@ internal class EmbracePayloadAssertionInterface(
      * Returns a list of logs that were completed by the SDK & sent to a mock web server.
      */
     internal fun getLogEnvelopesFromMockServer(
-        expectedSize: Int
+        expectedSize: Int,
     ): List<Envelope<LogPayload>> {
         return retrievePayload(expectedSize) {
             checkNotNull(apiServer).getLogEnvelopes()
@@ -67,7 +67,7 @@ internal class EmbracePayloadAssertionInterface(
     }
 
     private fun retrieveLogEnvelopes(
-        expectedSize: Int
+        expectedSize: Int,
     ): List<Envelope<LogPayload>> {
         val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
         try {
@@ -80,8 +80,10 @@ internal class EmbracePayloadAssertionInterface(
                     "hashCodes" to envelope.data.logs?.map { it.hashCode() }?.joinToString { ", " }
                 )
             }
-            throw IllegalStateException("Expected $expectedSize envelopes, but got ${envelopes.size}. " +
-                "Envelopes: $envelopes", exc)
+            throw IllegalStateException(
+                "Expected $expectedSize envelopes, but got ${envelopes.size}. " +
+                    "Envelopes: $envelopes", exc
+            )
         }
     }
 
@@ -95,14 +97,14 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun getLogEnvelopesV1(
         expectedSize: Int,
-        sent: Boolean = true
+        sent: Boolean = true,
     ): List<Envelope<LogPayload>> {
         return retrieveLogEnvelopesV1(expectedSize, sent)
     }
 
     private fun retrieveLogEnvelopesV1(
         expectedSize: Int?,
-        sent: Boolean
+        sent: Boolean,
     ): List<Envelope<LogPayload>> {
         return retrievePayload(expectedSize) {
             if (sent) {
@@ -147,7 +149,7 @@ internal class EmbracePayloadAssertionInterface(
     ): Envelope<SessionPayload> = getSessionEnvelopes(1, state).single()
 
     private fun retrieveSessionEnvelopes(
-        expectedSize: Int, appState: ApplicationState, waitTimeMs: Int
+        expectedSize: Int, appState: ApplicationState, waitTimeMs: Int,
     ): List<Envelope<SessionPayload>> {
         val supplier = {
             checkNotNull(apiServer).getSessionEnvelopes()
@@ -192,13 +194,13 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun getSessionEnvelopesV1(
         expectedSize: Int,
-        state: ApplicationState = ApplicationState.FOREGROUND
+        state: ApplicationState = ApplicationState.FOREGROUND,
     ): List<Envelope<SessionPayload>> {
         return retrieveSessionEnvelopesV1(expectedSize, state)
     }
 
     private fun retrieveSessionEnvelopesV1(
-        expectedSize: Int, appState: ApplicationState
+        expectedSize: Int, appState: ApplicationState,
     ): List<Envelope<SessionPayload>> {
         return retrievePayload(expectedSize) {
             deliveryService.sentSessionEnvelopes.map { it.first }

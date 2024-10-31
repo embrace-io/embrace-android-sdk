@@ -204,7 +204,7 @@ internal class EmbraceSpanBuilderTest {
         expectedParentContext: Context = Context.root(),
         expectedSpanKind: SpanKind? = null,
         expectedStartTimeMs: Long,
-        expectedTraceId: String? = null
+        expectedTraceId: String? = null,
     ) {
         val fakeSpan = this as FakeSpan
         with(fakeSpan.fakeSpanBuilder) {

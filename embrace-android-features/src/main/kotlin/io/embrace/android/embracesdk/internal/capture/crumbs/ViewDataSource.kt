@@ -18,7 +18,7 @@ class ViewDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     spanService: SpanService,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : SpanDataSourceImpl(
     spanService,
     logger,

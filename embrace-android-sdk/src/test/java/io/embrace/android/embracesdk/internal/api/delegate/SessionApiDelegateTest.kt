@@ -29,7 +29,8 @@ internal class SessionApiDelegateTest {
         val moduleInitBootstrapper = fakeModuleInitBootstrapper()
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext(), AppFramework.NATIVE, 0)
         orchestrator = moduleInitBootstrapper.sessionOrchestrationModule.sessionOrchestrator as FakeSessionOrchestrator
-        sessionPropertiesService = moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
+        sessionPropertiesService =
+            moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
         logger = FakeEmbLogger()
         sdkCallChecker = SdkCallChecker(logger, FakeTelemetryService())
         sdkCallChecker.started.set(true)

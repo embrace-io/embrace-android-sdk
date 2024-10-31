@@ -33,7 +33,7 @@ class EmbraceTracer(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: () -> T
+        code: () -> T,
     ): T = spanService.recordSpan(
         name = name,
         parent = parent,
@@ -51,7 +51,7 @@ class EmbraceTracer(
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
+        events: List<EmbraceSpanEvent>?,
     ): Boolean = spanService.recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs.normalizeTimestampAsMillis(),

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -18,7 +17,6 @@ import io.embrace.android.embracesdk.internal.spans.getSessionProperty
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.PeriodicCacheWorker
-import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DataPersistenceWorker
 import io.embrace.android.embracesdk.testframework.FakeCacheStorageService
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface

@@ -13,7 +13,7 @@ import java.util.regex.Pattern
  */
 class AnrBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<AnrRemoteConfig?>
+    remoteSupplier: Provider<AnrRemoteConfig?>,
 ) : AnrBehavior, MergedConfigBehavior<UnimplementedConfig, AnrRemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

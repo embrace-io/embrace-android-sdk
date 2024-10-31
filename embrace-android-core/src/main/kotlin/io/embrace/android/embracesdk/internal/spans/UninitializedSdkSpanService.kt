@@ -25,7 +25,7 @@ internal class UninitializedSdkSpanService : SpanService {
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
-        private: Boolean
+        private: Boolean,
     ): PersistableEmbraceSpan? = null
 
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? = null
@@ -38,7 +38,7 @@ internal class UninitializedSdkSpanService : SpanService {
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-        code: () -> T
+        code: () -> T,
     ) = code()
 
     override fun recordCompletedSpan(
@@ -51,7 +51,7 @@ internal class UninitializedSdkSpanService : SpanService {
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?
+        errorCode: ErrorCode?,
     ): Boolean {
         return realSpanService.get()?.recordCompletedSpan(
             name = name,

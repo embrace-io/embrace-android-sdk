@@ -23,7 +23,7 @@ import java.util.zip.GZIPInputStream
 class ApiResponseCache(
     private val serializer: PlatformSerializer,
     private val storageService: StorageService,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : Closeable {
 
     private companion object {

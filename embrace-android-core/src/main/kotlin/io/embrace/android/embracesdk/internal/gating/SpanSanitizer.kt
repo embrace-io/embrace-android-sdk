@@ -10,7 +10,7 @@ import io.opentelemetry.api.trace.SpanId
 
 internal class SpanSanitizer(
     private val spans: List<Span>?,
-    private val enabledComponents: Set<String>
+    private val enabledComponents: Set<String>,
 ) : Sanitizable<List<Span>> {
 
     override fun sanitize(): List<Span>? {

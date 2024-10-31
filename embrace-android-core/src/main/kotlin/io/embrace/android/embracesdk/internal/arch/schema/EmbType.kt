@@ -50,7 +50,7 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
      */
     sealed class System(
         subtype: String,
-        override val sendMode: SendMode = SendMode.DEFAULT
+        override val sendMode: SendMode = SendMode.DEFAULT,
     ) : EmbType("sys", subtype) {
 
         object Breadcrumb : System("breadcrumb")

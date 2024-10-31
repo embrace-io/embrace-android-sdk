@@ -14,13 +14,13 @@ internal class UnityInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : EmbraceInternalInterface by impl, UnityInternalInterface {
 
     override fun setUnityMetaData(
         unityVersion: String?,
         buildGuid: String?,
-        unitySdkVersion: String?
+        unitySdkVersion: String?,
     ) {
         if (embrace.isStarted) {
             if (unityVersion == null || buildGuid == null) {
@@ -54,7 +54,7 @@ internal class UnityInternalInterfaceImpl(
         name: String?,
         message: String,
         stacktrace: String?,
-        exceptionType: LogExceptionType
+        exceptionType: LogExceptionType,
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
@@ -81,7 +81,7 @@ internal class UnityInternalInterfaceImpl(
         endTime: Long,
         errorType: String?,
         errorMessage: String?,
-        traceId: String?
+        traceId: String?,
     ) {
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromIncompleteRequest(
@@ -106,7 +106,7 @@ internal class UnityInternalInterfaceImpl(
         bytesSent: Long,
         bytesReceived: Long,
         statusCode: Int,
-        traceId: String?
+        traceId: String?,
     ) {
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(

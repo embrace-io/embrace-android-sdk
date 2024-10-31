@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 class WebViewUrlDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,

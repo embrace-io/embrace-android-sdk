@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 
 internal class NetworkCaptureDataSourceImpl(
     private val logWriter: LogWriter,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : NetworkCaptureDataSource,
     LogDataSourceImpl(
         destination = logWriter,

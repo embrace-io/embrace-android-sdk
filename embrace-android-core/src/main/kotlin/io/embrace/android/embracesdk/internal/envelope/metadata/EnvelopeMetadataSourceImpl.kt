@@ -7,7 +7,7 @@ import java.util.Locale
 import java.util.TimeZone
 
 internal class EnvelopeMetadataSourceImpl(
-    private val userInfoProvider: Provider<UserInfo>
+    private val userInfoProvider: Provider<UserInfo>,
 ) : EnvelopeMetadataSource {
 
     override fun getEnvelopeMetadata(): EnvelopeMetadata {

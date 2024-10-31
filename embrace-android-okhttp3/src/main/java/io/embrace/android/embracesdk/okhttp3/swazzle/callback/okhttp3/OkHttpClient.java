@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.okhttp3.swazzle.callback.okhttp3;
 import java.util.List;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi;
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor;
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor;

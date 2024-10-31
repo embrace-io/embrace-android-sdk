@@ -61,7 +61,7 @@ class FakeDeliveryCacheManager : DeliveryCacheManager {
 
     override fun transformSession(
         sessionId: String,
-        transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>
+        transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>,
     ) {
         TODO("Not yet implemented")
     }

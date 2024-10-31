@@ -9,7 +9,7 @@ import java.lang.reflect.Type
 
 class TestPlatformSerializer(
     private val realSerializer: PlatformSerializer = EmbraceSerializer(),
-    private val operationWrapper: ExecutionCoordinator.OperationWrapper = ExecutionCoordinator.OperationWrapper()
+    private val operationWrapper: ExecutionCoordinator.OperationWrapper = ExecutionCoordinator.OperationWrapper(),
 ) : PlatformSerializer, ExecutionCoordinator.ExecutionModifiers by operationWrapper {
 
     override fun <T> toJson(any: T, clazz: Class<T>, outputStream: OutputStream) {

@@ -28,7 +28,7 @@ internal class LivenessCheckScheduler(
     private val state: ThreadMonitoringState,
     private val targetThreadHandler: TargetThreadHandler,
     private val blockedThreadDetector: BlockedThreadDetector,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) {
 
     var configService: ConfigService
@@ -89,7 +89,8 @@ internal class LivenessCheckScheduler(
         }
         // There is no expected situation where this cancel should fail because monitorFuture should never be null or canceled when
         // we get here, and if this is running, the heartbeat task won't be. If for some reason it fails, log an error.
-        val message = "Scheduled heartbeat task could not be stopped." + if (monitorFuture == null) "Task is null." else ""
+        val message =
+            "Scheduled heartbeat task could not be stopped." + if (monitorFuture == null) "Task is null." else ""
         val exc = IllegalStateException(message)
         logger.logError(message, exc)
         logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_STOP_FAIL, exc)

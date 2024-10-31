@@ -8,5 +8,5 @@ import java.util.concurrent.RunnableFuture
  */
 class PriorityRunnableFuture<T>(
     val impl: RunnableFuture<T>,
-    val priorityInfo: Any
+    val priorityInfo: Any,
 ) : RunnableFuture<T> by impl

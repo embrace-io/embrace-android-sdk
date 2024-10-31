@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Component to load native binaries
  */
 class SharedObjectLoader(
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) {
     val loaded: AtomicBoolean = AtomicBoolean(false)
 

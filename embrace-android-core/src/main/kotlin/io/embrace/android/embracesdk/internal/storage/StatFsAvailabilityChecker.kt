@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.StatFs
 
 internal class StatFsAvailabilityChecker(
-    context: Context
+    context: Context,
 ) : StorageAvailabilityChecker {
     private val statFs: StatFs by lazy {
         StatFs(context.filesDir.path)

@@ -23,7 +23,7 @@ import java.io.IOException
  */
 class EmbraceOkHttp3ApplicationInterceptor(
     private val embrace: Embrace,
-    private val embraceInternalApi: EmbraceInternalApi
+    private val embraceInternalApi: EmbraceInternalApi,
 ) : Interceptor {
 
     @Throws(IOException::class)
@@ -35,7 +35,8 @@ class EmbraceOkHttp3ApplicationInterceptor(
             chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
             if (embrace.isStarted) {
-                val urlString = EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
+                val urlString =
+                    EmbraceHttpPathOverride.getURLString(EmbraceOkHttp3PathOverrideRequest(request), e.customPath)
                 embrace.recordNetworkRequest(
                     EmbraceNetworkRequest.fromIncompleteRequest(
                         urlString,

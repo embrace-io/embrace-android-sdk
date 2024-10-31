@@ -4,12 +4,12 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 class FakeEmbLogger(
-    var throwOnInternalError: Boolean = true
+    var throwOnInternalError: Boolean = true,
 ) : EmbLogger {
 
     data class LogMessage(
         val msg: String,
-        val throwable: Throwable?
+        val throwable: Throwable?,
     )
 
     var debugMessages: MutableList<LogMessage> = mutableListOf()

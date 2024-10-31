@@ -33,5 +33,5 @@ data class SessionPayload(
      * which don’t have UUIDs in them. Previous name: s.sb
      */
     @Json(name = "shared_lib_symbol_mapping")
-    val sharedLibSymbolMapping: Map<String, String>? = null
+    val sharedLibSymbolMapping: Map<String, String>? = null,
 )

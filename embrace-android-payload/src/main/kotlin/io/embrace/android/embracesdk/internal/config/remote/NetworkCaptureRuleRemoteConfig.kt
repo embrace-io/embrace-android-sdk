@@ -59,6 +59,6 @@ data class NetworkCaptureRuleRemoteConfig(
      * -1 for capturing fail network requests.
      */
     @Json(name = "status_codes")
-    val statusCodes: Set<Int> = setOf()
+    val statusCodes: Set<Int> = setOf(),
 
 )

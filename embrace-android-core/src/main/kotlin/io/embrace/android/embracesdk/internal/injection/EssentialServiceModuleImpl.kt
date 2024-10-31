@@ -38,7 +38,7 @@ class EssentialServiceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     storageModule: StorageModule,
     lifecycleOwnerProvider: Provider<LifecycleOwner?>,
-    networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>
+    networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
 ) : EssentialServiceModule {
 
     private val configService by lazy { configModule.configService }

@@ -19,5 +19,5 @@ data class UserInfo(
     val username: String? = null,
 
     @Json(name = "per")
-    val personas: Set<String>? = null
+    val personas: Set<String>? = null,
 )

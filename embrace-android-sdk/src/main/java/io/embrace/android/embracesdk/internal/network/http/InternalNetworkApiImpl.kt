@@ -10,7 +10,8 @@ internal class InternalNetworkApiImpl : InternalNetworkApi {
     private val embrace: Embrace
         get() = Embrace.getInstance()
 
-    private fun getInternalInterface(): EmbraceInternalInterface = checkNotNull(EmbraceInternalApi.getInstance().internalInterface)
+    private fun getInternalInterface(): EmbraceInternalInterface =
+        checkNotNull(EmbraceInternalApi.getInstance().internalInterface)
 
     override fun getSdkCurrentTime(): Long = getInternalInterface().getSdkCurrentTime()
 
@@ -22,14 +23,16 @@ internal class InternalNetworkApiImpl : InternalNetworkApi {
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = getInternalInterface().isNetworkSpanForwardingEnabled()
 
-    override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) = getInternalInterface().recordNetworkRequest(
-        embraceNetworkRequest
-    )
+    override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) =
+        getInternalInterface().recordNetworkRequest(
+            embraceNetworkRequest
+        )
 
-    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = getInternalInterface().shouldCaptureNetworkBody(
-        url,
-        method
-    )
+    override fun shouldCaptureNetworkBody(url: String, method: String): Boolean =
+        getInternalInterface().shouldCaptureNetworkBody(
+            url,
+            method
+        )
 
     override fun logInternalError(error: Throwable) = getInternalInterface().logInternalError(error)
 }

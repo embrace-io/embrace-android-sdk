@@ -15,7 +15,7 @@ internal class PayloadCachingServiceImpl(
     private val periodicSessionCacher: PeriodicSessionCacher,
     private val clock: Clock,
     private val sessionIdTracker: SessionIdTracker,
-    private val payloadStore: PayloadStore
+    private val payloadStore: PayloadStore,
 ) : PayloadCachingService {
 
     private var stateChanged: AtomicBoolean = AtomicBoolean(true)
@@ -49,7 +49,7 @@ internal class PayloadCachingServiceImpl(
     private fun onSessionCache(
         initial: SessionZygote,
         endProcessState: ProcessState,
-        supplier: SessionPayloadSupplier
+        supplier: SessionPayloadSupplier,
     ): Envelope<SessionPayload>? {
         Systrace.traceSynchronous("on-session-cache") {
             if (initial.sessionId != sessionIdTracker.getActiveSessionId()) {

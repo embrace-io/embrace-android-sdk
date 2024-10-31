@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 
 internal class ViewTrackingApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : ViewTrackingApi {
 
     private val logger = bootstrapper.initModule.logger
@@ -76,10 +76,17 @@ internal class ViewTrackingApiDelegate(
         endTime: Long,
         properties: Map<String?, Any?>,
         bytesSent: Int,
-        output: String
+        output: String,
     ) {
         if (sdkCallChecker.check("log_react_native_action")) {
-            featureModule?.rnActionDataSource?.dataSource?.logRnAction(name, startTime, endTime, properties, bytesSent, output)
+            featureModule?.rnActionDataSource?.dataSource?.logRnAction(
+                name,
+                startTime,
+                endTime,
+                properties,
+                bytesSent,
+                output
+            )
         }
     }
 

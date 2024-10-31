@@ -28,5 +28,5 @@ data class AppExitInfoData(
     val description: String?,
 
     // Error or Exception if the traces couldn't be collected
-    val traceStatus: String?
+    val traceStatus: String?,
 )

@@ -13,7 +13,7 @@ interface InternalTracingApi {
     fun startSpan(
         name: String,
         parentSpanId: String? = null,
-        startTimeMs: Long? = null
+        startTimeMs: Long? = null,
     ): String?
 
     /**
@@ -22,7 +22,7 @@ interface InternalTracingApi {
     fun stopSpan(
         spanId: String,
         errorCode: ErrorCode? = null,
-        endTimeMs: Long? = null
+        endTimeMs: Long? = null,
     ): Boolean
 
     /**
@@ -33,7 +33,7 @@ interface InternalTracingApi {
         spanId: String,
         name: String,
         timestampMs: Long? = null,
-        attributes: Map<String, String>? = null
+        attributes: Map<String, String>? = null,
     ): Boolean
 
     /**
@@ -42,7 +42,7 @@ interface InternalTracingApi {
     fun addSpanAttribute(
         spanId: String,
         key: String,
-        value: String
+        value: String,
     ): Boolean
 
     /**
@@ -66,7 +66,7 @@ interface InternalTracingApi {
         parentSpanId: String? = null,
         attributes: Map<String, String>? = null,
         events: List<Map<String, Any>>? = null,
-        code: () -> T
+        code: () -> T,
     ): T
 
     /**
@@ -79,6 +79,6 @@ interface InternalTracingApi {
         errorCode: ErrorCode? = null,
         parentSpanId: String? = null,
         attributes: Map<String, String>? = null,
-        events: List<Map<String, Any>>? = null
+        events: List<Map<String, Any>>? = null,
     ): Boolean
 }

@@ -20,5 +20,5 @@ class FakeAnrModule(
         ThreadMonitoringState(FakeClock()),
         Thread.currentThread(),
         FakeEmbLogger()
-    )
+    ),
 ) : AnrModule

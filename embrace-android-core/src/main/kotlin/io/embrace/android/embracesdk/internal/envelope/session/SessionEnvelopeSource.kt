@@ -8,6 +8,6 @@ interface SessionEnvelopeSource {
     fun getEnvelope(
         endType: SessionSnapshotType,
         startNewSession: Boolean,
-        crashId: String? = null
+        crashId: String? = null,
     ): Envelope<SessionPayload>
 }

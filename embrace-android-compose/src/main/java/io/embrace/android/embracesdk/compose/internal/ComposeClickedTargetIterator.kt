@@ -16,7 +16,7 @@ internal class ComposeClickedTargetIterator : EmbraceClickedTargetIterator {
         decorView: View,
         x: Float,
         y: Float,
-        onSingleTapUpBackgroundWorker: ScheduledExecutorService
+        onSingleTapUpBackgroundWorker: ScheduledExecutorService,
     ) {
         try {
             val queue: Queue<View> = LinkedList()

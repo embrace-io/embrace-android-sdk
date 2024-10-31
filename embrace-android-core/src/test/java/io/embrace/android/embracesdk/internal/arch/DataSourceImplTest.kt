@@ -65,7 +65,7 @@ internal class DataSourceImplTest {
 
     private class FakeDataSourceImpl(
         dst: FakeCurrentSessionSpan,
-        limitStrategy: LimitStrategy = NoopLimitStrategy
+        limitStrategy: LimitStrategy = NoopLimitStrategy,
     ) :
         DataSourceImpl<FakeCurrentSessionSpan>(dst, EmbLoggerImpl(), limitStrategy) {
 

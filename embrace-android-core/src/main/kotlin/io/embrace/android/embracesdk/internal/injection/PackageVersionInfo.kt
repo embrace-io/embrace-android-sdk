@@ -21,5 +21,5 @@ class PackageVersionInfo(
 
     val packageName: String = runCatching {
         packageInfo.packageName
-    }.getOrDefault(UNKNOWN_VALUE)
+    }.getOrDefault(UNKNOWN_VALUE),
 )

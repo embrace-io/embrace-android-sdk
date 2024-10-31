@@ -11,7 +11,7 @@ import java.io.IOException
  */
 internal class TestInspectionInterceptor(
     private val beforeRequestSent: (Request) -> Request,
-    private val afterResponseReceived: (Response) -> Response
+    private val afterResponseReceived: (Response) -> Response,
 ) : Interceptor {
 
     @TestOnly

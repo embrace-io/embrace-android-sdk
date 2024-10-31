@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
  * to expose as part of the internal API.
  */
 class PriorityWorker<T>(
-    private val impl: ExecutorService
+    private val impl: ExecutorService,
 ) {
 
     /**
@@ -20,7 +20,7 @@ class PriorityWorker<T>(
      */
     fun submit(
         priorityInfo: T,
-        runnable: Runnable
+        runnable: Runnable,
     ): Future<*> {
         return impl.submit(PriorityRunnable(priorityInfo as Any, runnable))
     }
@@ -30,7 +30,7 @@ class PriorityWorker<T>(
      */
     fun <R> submit(
         priorityInfo: T,
-        callable: Callable<R>
+        callable: Callable<R>,
     ): Future<R> {
         return impl.submit(PriorityCallable(priorityInfo as Any, callable))
     }

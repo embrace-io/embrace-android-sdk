@@ -30,7 +30,10 @@ internal class EmbraceNodeIterator {
         backgroundWorker.submit {
             findClickedElement(semanticsNodes, x, y)?.let {
                 val clickedView = ClickedView(it, x, y)
-                EmbraceInternalApi.getInstance().internalInterface.logComposeTap(Pair(clickedView.x, clickedView.y), clickedView.tag)
+                EmbraceInternalApi.getInstance().internalInterface.logComposeTap(
+                    Pair(clickedView.x, clickedView.y),
+                    clickedView.tag
+                )
             }
         }
     }
@@ -60,7 +63,8 @@ internal class EmbraceNodeIterator {
             }
 
             // If the OnClick configuration doesn't have an accessibilityActionLabel, check for the content description instead.
-            val contentDescriptionSemanticsConfiguration = semanticsConfiguration.getOrNull(SemanticsProperties.ContentDescription)
+            val contentDescriptionSemanticsConfiguration =
+                semanticsConfiguration.getOrNull(SemanticsProperties.ContentDescription)
             if (contentDescriptionSemanticsConfiguration != null) {
                 val contentDescription = contentDescriptionSemanticsConfiguration.getOrNull(0)
                 if (contentDescription != null) {

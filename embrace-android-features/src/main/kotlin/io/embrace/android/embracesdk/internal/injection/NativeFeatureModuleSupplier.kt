@@ -12,7 +12,7 @@ typealias NativeFeatureModuleSupplier = (
     payloadSourceModule: PayloadSourceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
-    nativeCoreModule: NativeCoreModule
+    nativeCoreModule: NativeCoreModule,
 ) -> NativeFeatureModule
 
 fun createNativeFeatureModule(
@@ -24,7 +24,7 @@ fun createNativeFeatureModule(
     payloadSourceModule: PayloadSourceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
-    nativeCoreModule: NativeCoreModule
+    nativeCoreModule: NativeCoreModule,
 ): NativeFeatureModule = NativeFeatureModuleImpl(
     initModule,
     coreModule,

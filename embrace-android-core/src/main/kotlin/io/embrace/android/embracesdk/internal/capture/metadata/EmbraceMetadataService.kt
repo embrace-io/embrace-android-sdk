@@ -34,7 +34,7 @@ internal class EmbraceMetadataService(
     private val preferencesService: PreferencesService,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val clock: Clock,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : MetadataService {
 
     private val res by lazy { resourceSource.value.getEnvelopeResource() }
@@ -93,7 +93,7 @@ internal class EmbraceMetadataService(
     private fun getDeviceDiskAppUsage(
         storageStatsManager: StorageStatsManager?,
         packageManager: PackageManager,
-        contextPackageName: String?
+        contextPackageName: String?,
     ): Long? {
         try {
             val packageInfo = packageManager.getPackageInfo(contextPackageName!!, 0)

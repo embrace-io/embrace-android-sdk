@@ -29,7 +29,7 @@ internal class EmbraceAnrService(
     livenessCheckScheduler: LivenessCheckScheduler,
     private val anrMonitorWorker: BackgroundWorker,
     state: ThreadMonitoringState,
-    val clock: Clock
+    val clock: Clock,
 ) : AnrService, MemoryCleanerListener, ProcessStateListener, BlockedThreadListener {
 
     private val state: ThreadMonitoringState

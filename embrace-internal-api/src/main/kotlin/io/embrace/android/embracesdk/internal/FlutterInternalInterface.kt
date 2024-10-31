@@ -28,7 +28,7 @@ interface FlutterInternalInterface : EmbraceInternalInterface {
         name: String?,
         message: String?,
         context: String?,
-        library: String?
+        library: String?,
     )
 
     /**
@@ -40,6 +40,6 @@ interface FlutterInternalInterface : EmbraceInternalInterface {
         name: String?,
         message: String?,
         context: String?,
-        library: String?
+        library: String?,
     )
 }

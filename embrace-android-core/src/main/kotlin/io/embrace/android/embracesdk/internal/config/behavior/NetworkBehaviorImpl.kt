@@ -14,7 +14,7 @@ import kotlin.math.min
 class NetworkBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?>,
-    private val disabledUrlPatterns: List<String>? = null
+    private val disabledUrlPatterns: List<String>? = null,
 ) : NetworkBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

@@ -15,7 +15,7 @@ typealias SessionOrchestrationModuleSupplier = (
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
     startupService: StartupService,
-    logModule: LogModule
+    logModule: LogModule,
 ) -> SessionOrchestrationModule
 
 fun createSessionOrchestrationModule(
@@ -28,7 +28,7 @@ fun createSessionOrchestrationModule(
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
     startupService: StartupService,
-    logModule: LogModule
+    logModule: LogModule,
 ): SessionOrchestrationModule = SessionOrchestrationModuleImpl(
     initModule,
     openTelemetryModule,

@@ -17,7 +17,7 @@ internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
     private val logger: EmbLogger,
-    private val connectivityManager: ConnectivityManager?
+    private val connectivityManager: ConnectivityManager?,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)

@@ -23,7 +23,7 @@ class ThermalStateDataSource(
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
-    powerManagerProvider: Provider<PowerManager?>
+    powerManagerProvider: Provider<PowerManager?>,
 ) : SpanDataSourceImpl(
     destination = spanService,
     logger = logger,

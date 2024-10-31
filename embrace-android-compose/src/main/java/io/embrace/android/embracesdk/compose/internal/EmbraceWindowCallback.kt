@@ -10,7 +10,7 @@ import android.view.Window
  */
 internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
-    private val gestureDetector: GestureDetector
+    private val gestureDetector: GestureDetector,
 ) :
     Window.Callback by delegate {
 

@@ -14,7 +14,7 @@ typealias ConfigModuleSupplier = (
     customAppId: String?,
     framework: AppFramework,
     configServiceProvider: (framework: AppFramework) -> ConfigService?,
-    foregroundAction: ConfigService.() -> Unit
+    foregroundAction: ConfigService.() -> Unit,
 ) -> ConfigModule
 
 fun createConfigModule(
@@ -25,7 +25,7 @@ fun createConfigModule(
     customAppId: String?,
     framework: AppFramework,
     configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
-    foregroundAction: ConfigService.() -> Unit
+    foregroundAction: ConfigService.() -> Unit,
 ): ConfigModule = ConfigModuleImpl(
     initModule,
     openTelemetryModule,

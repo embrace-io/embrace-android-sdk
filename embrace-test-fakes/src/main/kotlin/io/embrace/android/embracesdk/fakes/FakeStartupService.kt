@@ -12,7 +12,7 @@ class FakeStartupService : StartupService {
         startTimeMs: Long,
         endTimeMs: Long,
         endedInForeground: Boolean,
-        threadName: String
+        threadName: String,
     ) {
         sdkStartupDurationImpl = endTimeMs - startTimeMs
         this.endedInForeground = endedInForeground

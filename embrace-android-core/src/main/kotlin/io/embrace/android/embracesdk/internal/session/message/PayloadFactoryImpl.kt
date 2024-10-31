@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val configService: ConfigService,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : PayloadFactory {
 
     override fun startPayloadWithState(state: ProcessState, timestamp: Long, coldStart: Boolean): SessionZygote? =
@@ -22,7 +22,11 @@ internal class PayloadFactoryImpl(
             ProcessState.BACKGROUND -> startBackgroundActivityWithState(timestamp, coldStart)
         }
 
-    override fun endPayloadWithState(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>? =
+    override fun endPayloadWithState(
+        state: ProcessState,
+        timestamp: Long,
+        initial: SessionZygote,
+    ): Envelope<SessionPayload>? =
         when (state) {
             ProcessState.FOREGROUND -> endSessionWithState(initial)
             ProcessState.BACKGROUND -> endBackgroundActivityWithState(initial)
@@ -32,13 +36,17 @@ internal class PayloadFactoryImpl(
         state: ProcessState,
         timestamp: Long,
         initial: SessionZygote,
-        crashId: String
+        crashId: String,
     ): Envelope<SessionPayload>? = when (state) {
         ProcessState.FOREGROUND -> endSessionWithCrash(initial, crashId)
         ProcessState.BACKGROUND -> endBackgroundActivityWithCrash(initial, crashId)
     }
 
-    override fun snapshotPayload(state: ProcessState, timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>? =
+    override fun snapshotPayload(
+        state: ProcessState,
+        timestamp: Long,
+        initial: SessionZygote,
+    ): Envelope<SessionPayload>? =
         when (state) {
             ProcessState.FOREGROUND -> snapshotSession(initial)
             ProcessState.BACKGROUND -> snapshotBackgroundActivity(initial)
@@ -128,7 +136,7 @@ internal class PayloadFactoryImpl(
 
     private fun endSessionWithCrash(
         initial: SessionZygote,
-        crashId: String
+        crashId: String,
     ): Envelope<SessionPayload> {
         return payloadMessageCollator.buildFinalEnvelope(
             FinalEnvelopeParams(
@@ -143,7 +151,7 @@ internal class PayloadFactoryImpl(
 
     private fun endBackgroundActivityWithCrash(
         initial: SessionZygote,
-        crashId: String
+        crashId: String,
     ): Envelope<SessionPayload>? {
         if (!isBackgroundActivityEnabled()) {
             return null

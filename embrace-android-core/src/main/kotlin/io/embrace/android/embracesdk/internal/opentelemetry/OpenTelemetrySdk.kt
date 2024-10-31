@@ -18,7 +18,7 @@ import io.opentelemetry.sdk.trace.SpanLimits
  */
 internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
-    configuration: OpenTelemetryConfiguration
+    configuration: OpenTelemetryConfiguration,
 ) {
     init {
         // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode

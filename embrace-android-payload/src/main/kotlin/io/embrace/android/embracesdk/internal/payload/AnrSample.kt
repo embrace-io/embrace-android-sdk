@@ -23,7 +23,7 @@ data class AnrSample(
     /**
      * The status code of the ANR sample.
      */
-    val code: Int? = CODE_DEFAULT
+    val code: Int? = CODE_DEFAULT,
 ) {
 
     companion object {

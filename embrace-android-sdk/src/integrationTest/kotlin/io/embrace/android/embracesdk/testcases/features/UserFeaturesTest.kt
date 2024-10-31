@@ -53,7 +53,7 @@ internal class UserFeaturesTest {
     private fun Envelope<SessionPayload>.assertUserInfo(
         userId: String?,
         userName: String?,
-        email: String?
+        email: String?,
     ) {
         val ref = checkNotNull(metadata)
         assertEquals(userId, ref.userId)

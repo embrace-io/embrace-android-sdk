@@ -268,13 +268,19 @@ internal class EmbraceCacheServiceTest {
         assertEquals(2, rawFilenames.size)
         assertTrue(rawFilenames.contains(EMBRACE_PREFIX + sessionFileName))
         assertTrue(rawFilenames.contains(EMBRACE_PREFIX + sessionFileName + NEW_COPY_SUFFIX))
-        assertEquals(session.getSessionId(), service.loadObject<Envelope<SessionPayload>>(sessionFileName, type)?.getSessionId())
+        assertEquals(
+            session.getSessionId(),
+            service.loadObject<Envelope<SessionPayload>>(sessionFileName, type)?.getSessionId()
+        )
 
         val sessionFilenames = service.normalizeCacheAndGetSessionFileIds()
         assertEquals(1, storageManager.listFiles().size)
         assertEquals(1, sessionFilenames.size)
         assertTrue(sessionFilenames.contains(sessionFileName))
-        assertEquals(newSession.getSessionId(), service.loadObject<Envelope<SessionPayload>>(sessionFileName, type)?.getSessionId())
+        assertEquals(
+            newSession.getSessionId(),
+            service.loadObject<Envelope<SessionPayload>>(sessionFileName, type)?.getSessionId()
+        )
     }
 
     @Test
@@ -355,10 +361,16 @@ internal class EmbraceCacheServiceTest {
         val clz = Envelope.sessionEnvelopeType
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(1, files.size)
-        assertEquals(service.loadObject<Envelope<SessionPayload>>(filename, clz)?.getSessionId(), original.getSessionId())
+        assertEquals(
+            service.loadObject<Envelope<SessionPayload>>(filename, clz)?.getSessionId(),
+            original.getSessionId()
+        )
 
         service.transformSession(filename) { replacement }
-        assertEquals(service.loadObject<Envelope<SessionPayload>>(filename, clz)?.getSessionId(), replacement.getSessionId())
+        assertEquals(
+            service.loadObject<Envelope<SessionPayload>>(filename, clz)?.getSessionId(),
+            replacement.getSessionId()
+        )
 
         val filesAgain = storageManager.listFiles { _, _ -> true }
         assertEquals(1, filesAgain.size)

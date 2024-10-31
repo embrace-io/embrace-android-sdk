@@ -5,7 +5,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = false)
 enum class Endpoint(
     val path: String,
-    val version: String
+    val version: String,
 ) {
     LOGS("logs", "v2"),
     SESSIONS("spans", "v2"),

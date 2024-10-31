@@ -8,5 +8,5 @@ data class NativeCrashMetadata(
     @Json(name = "a") val appInfo: AppInfo,
     @Json(name = "d") val deviceInfo: DeviceInfo,
     @Json(name = "u") val userInfo: UserInfo,
-    @Json(name = "sp") val sessionProperties: Map<String, String>?
+    @Json(name = "sp") val sessionProperties: Map<String, String>?,
 )

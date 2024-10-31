@@ -330,7 +330,7 @@ internal class EmbraceConfigServiceTest {
             SpanSinkImpl(),
             LogSinkImpl(),
             SystemInfo()
-        )
+        ),
     ): EmbraceConfigService = EmbraceConfigService(
         appId,
         config,

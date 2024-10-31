@@ -6,7 +6,7 @@ class FakeLogMessageBehavior(
     private val logMessageMaximumAllowedLength: Int = 128,
     private val infoLogLimit: Int = 100,
     private val warnLogLimit: Int = 100,
-    private val errorLogLimit: Int = 100
+    private val errorLogLimit: Int = 100,
 ) : LogMessageBehavior {
 
     override fun getLogMessageMaximumAllowedLength(): Int = logMessageMaximumAllowedLength

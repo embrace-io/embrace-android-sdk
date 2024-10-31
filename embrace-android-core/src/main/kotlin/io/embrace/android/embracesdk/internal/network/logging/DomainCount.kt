@@ -8,5 +8,5 @@ data class DomainCount(
     /** The total count of network calls for the given domain. */
     val requestCount: Int,
     /** The configured request capture limit for the given domain. */
-    val captureLimit: Int
+    val captureLimit: Int,
 )

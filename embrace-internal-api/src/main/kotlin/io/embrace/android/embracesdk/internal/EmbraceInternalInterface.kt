@@ -17,7 +17,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
      */
     fun logInfo(
         message: String,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     )
 
     /**
@@ -26,7 +26,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
     fun logWarning(
         message: String,
         properties: Map<String, Any>?,
-        stacktrace: String?
+        stacktrace: String?,
     )
 
     /**
@@ -36,7 +36,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
         message: String,
         properties: Map<String, Any>?,
         stacktrace: String?,
-        isException: Boolean
+        isException: Boolean,
     )
 
     /**
@@ -46,7 +46,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?
+        customStackTrace: Array<StackTraceElement>?,
     )
 
     /**
@@ -61,7 +61,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
         bytesReceived: Long,
         statusCode: Int,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     )
 
     /**
@@ -74,7 +74,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
         endTime: Long,
         error: Throwable?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     )
 
     /**
@@ -88,7 +88,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
         errorType: String?,
         errorMessage: String?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     )
 
     /**
@@ -97,7 +97,7 @@ interface EmbraceInternalInterface : InternalTracingApi {
      * @param embraceNetworkRequest the request to be recorded
      */
     fun recordNetworkRequest(
-        embraceNetworkRequest: EmbraceNetworkRequest
+        embraceNetworkRequest: EmbraceNetworkRequest,
     )
 
     /**

@@ -27,13 +27,13 @@ abstract class DataSourceImpl<T>(
 
     override fun captureData(
         inputValidation: () -> Boolean,
-        captureAction: T.() -> Unit
+        captureAction: T.() -> Unit,
     ): Boolean = captureDataImpl(inputValidation, captureAction)
 
     protected fun captureDataImpl(
         inputValidation: () -> Boolean,
         captureAction: T.() -> Unit,
-        enforceLimits: Boolean = true
+        enforceLimits: Boolean = true,
     ): Boolean {
         try {
             if (enforceLimits && !limitStrategy.shouldCapture()) {

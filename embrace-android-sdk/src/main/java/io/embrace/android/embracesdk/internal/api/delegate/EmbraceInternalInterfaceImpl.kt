@@ -25,7 +25,7 @@ internal class EmbraceInternalInterfaceImpl(
     private val initModule: InitModule,
     private val networkCaptureService: NetworkCaptureService,
     private val configService: ConfigService,
-    internalTracer: InternalTracer
+    internalTracer: InternalTracer,
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {
@@ -35,7 +35,7 @@ internal class EmbraceInternalInterfaceImpl(
     override fun logWarning(
         message: String,
         properties: Map<String, Any>?,
-        stacktrace: String?
+        stacktrace: String?,
     ) {
         embraceImpl.logMessage(message, Severity.WARNING, properties)
     }
@@ -53,7 +53,7 @@ internal class EmbraceInternalInterfaceImpl(
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?
+        customStackTrace: Array<StackTraceElement>?,
     ) {
         val eventType = when (type) {
             LogType.ERROR -> Severity.ERROR
@@ -85,7 +85,7 @@ internal class EmbraceInternalInterfaceImpl(
         bytesReceived: Long,
         statusCode: Int,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
         embraceImpl.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
@@ -110,7 +110,7 @@ internal class EmbraceInternalInterfaceImpl(
         endTime: Long,
         error: Throwable?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
         embraceImpl.recordNetworkRequest(
             EmbraceNetworkRequest.fromIncompleteRequest(
@@ -135,7 +135,7 @@ internal class EmbraceInternalInterfaceImpl(
         errorType: String?,
         errorMessage: String?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
         embraceImpl.recordNetworkRequest(
             EmbraceNetworkRequest.fromIncompleteRequest(
@@ -160,7 +160,8 @@ internal class EmbraceInternalInterfaceImpl(
         return networkCaptureService.getNetworkCaptureRules(url, method).isNotEmpty()
     }
 
-    override fun isNetworkSpanForwardingEnabled(): Boolean = configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
+    override fun isNetworkSpanForwardingEnabled(): Boolean =
+        configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
 
     override fun getSdkCurrentTime(): Long = initModule.clock.now()
 
@@ -177,7 +178,10 @@ internal class EmbraceInternalInterfaceImpl(
         } else {
             message
         }
-        initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, RuntimeException(messageWithDetails))
+        initModule.logger.trackInternalError(
+            InternalErrorType.INTERNAL_INTERFACE_FAIL,
+            RuntimeException(messageWithDetails)
+        )
     }
 
     override fun logInternalError(error: Throwable) {

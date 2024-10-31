@@ -38,7 +38,7 @@ open class FakeDeliveryService : DeliveryService {
 
     override fun sendCachedSessions(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        sessionIdTracker: SessionIdTracker
+        sessionIdTracker: SessionIdTracker,
     ) {
         lastSentCachedSession = sessionIdTracker.getActiveSessionId()
     }
@@ -68,7 +68,7 @@ open class FakeDeliveryService : DeliveryService {
     }
 
     private fun Queue<Pair<Envelope<SessionPayload>, SessionSnapshotType>>.filterSessionEnvelopes(
-        appState: ApplicationState
+        appState: ApplicationState,
     ): List<Envelope<SessionPayload>> {
         return filter { it.first.findAppState() == appState }.map { it.first }
     }

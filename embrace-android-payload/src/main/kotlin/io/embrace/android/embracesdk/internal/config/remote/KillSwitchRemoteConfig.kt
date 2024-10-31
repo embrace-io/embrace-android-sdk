@@ -17,5 +17,5 @@ data class KillSwitchRemoteConfig(
     @Json(name = "v2_storage")
     val v2StoragePct: Float? = null,
     @Json(name = "use_okhttp")
-    val useOkHttpPct: Float? = null
+    val useOkHttpPct: Float? = null,
 )

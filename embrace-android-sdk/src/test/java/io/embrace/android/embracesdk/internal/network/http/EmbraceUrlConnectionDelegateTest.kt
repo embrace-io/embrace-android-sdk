@@ -311,7 +311,11 @@ internal class EmbraceUrlConnectionDelegateTest {
         every { mockConnection.contentLength } answers { throw TimeoutException() }
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
-        verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
+        verifyIncompleteRequestLogged(
+            mockConnection = mockConnection,
+            errorType = TIMEOUT_ERROR,
+            noResponseAccess = false
+        )
         assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
@@ -321,7 +325,11 @@ internal class EmbraceUrlConnectionDelegateTest {
         every { mockConnection.responseCode } answers { throw TimeoutException() }
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
-        verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
+        verifyIncompleteRequestLogged(
+            mockConnection = mockConnection,
+            errorType = TIMEOUT_ERROR,
+            noResponseAccess = false
+        )
         assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
@@ -331,7 +339,11 @@ internal class EmbraceUrlConnectionDelegateTest {
         every { mockConnection.headerFields } answers { throw TimeoutException() }
 
         executeRequest(connection = mockConnection, wrappedIoStream = true)
-        verifyIncompleteRequestLogged(mockConnection = mockConnection, errorType = TIMEOUT_ERROR, noResponseAccess = false)
+        verifyIncompleteRequestLogged(
+            mockConnection = mockConnection,
+            errorType = TIMEOUT_ERROR,
+            noResponseAccess = false
+        )
         assertEquals(1, internalApi.internalInterface.networkRequests.size)
     }
 
@@ -431,7 +443,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     private fun createMockGzipConnection(
         expectedResponseCode: Int = HTTP_OK,
-        extraRequestHeaders: Map<String, List<String>> = emptyMap()
+        extraRequestHeaders: Map<String, List<String>> = emptyMap(),
     ): HttpsURLConnection {
         return createMockConnection(
             inputStream = ByteArrayInputStream(gzippedResponseBodyBytes),
@@ -449,7 +461,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         extraRequestHeaders: Map<String, List<String>> = emptyMap(),
         expectedResponseSize: Int,
         expectedResponseCode: Int,
-        extraResponseHeaders: Map<String, List<String>> = emptyMap()
+        extraResponseHeaders: Map<String, List<String>> = emptyMap(),
     ): HttpsURLConnection {
         val mockConnection: HttpsURLConnection = mockk(relaxed = true)
         every { mockConnection.inputStream } answers { inputStream }
@@ -502,7 +514,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     private fun executeRequest(
         connection: HttpsURLConnection,
         wrappedIoStream: Boolean = false,
-        exceptionOnInputStream: Boolean = false
+        exceptionOnInputStream: Boolean = false,
     ) {
         val delegate = EmbraceUrlConnectionDelegate<HttpsURLConnection>(connection, wrappedIoStream, internalApi)
         with(delegate) {
@@ -538,7 +550,7 @@ internal class EmbraceUrlConnectionDelegateTest {
         traceId: String = defaultTraceId,
         w3cTraceparent: String? = null,
         networkDataCaptured: Boolean = false,
-        responseBody: String? = null
+        responseBody: String? = null,
     ) {
         val request = retrieveNetworkRequest()
         with(request) {
@@ -581,7 +593,7 @@ internal class EmbraceUrlConnectionDelegateTest {
     private fun verifyIncompleteRequestLogged(
         mockConnection: HttpsURLConnection,
         errorType: String = "UnknownState",
-        noResponseAccess: Boolean = true
+        noResponseAccess: Boolean = true,
     ) {
         if (noResponseAccess) {
             verify(exactly = 0) { mockConnection.responseCode }

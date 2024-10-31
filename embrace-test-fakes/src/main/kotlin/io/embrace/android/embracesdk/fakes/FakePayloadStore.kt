@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 import io.embrace.android.embracesdk.internal.session.orchestrator.TransitionType
 
 class FakePayloadStore(
-    private val deliveryService: FakeDeliveryService = FakeDeliveryService()
+    private val deliveryService: FakeDeliveryService = FakeDeliveryService(),
 ) : PayloadStore {
 
     val storedSessionPayloads = mutableListOf<Pair<Envelope<SessionPayload>, TransitionType>>()
@@ -18,7 +18,7 @@ class FakePayloadStore(
 
     override fun storeSessionPayload(
         envelope: Envelope<SessionPayload>,
-        transitionType: TransitionType
+        transitionType: TransitionType,
     ) {
         storedSessionPayloads.add(Pair(envelope, transitionType))
     }

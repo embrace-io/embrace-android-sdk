@@ -12,8 +12,9 @@ interface DeliveryService {
     fun sendSession(envelope: Envelope<SessionPayload>, snapshotType: SessionSnapshotType)
     fun sendCachedSessions(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        sessionIdTracker: SessionIdTracker
+        sessionIdTracker: SessionIdTracker,
     )
+
     fun sendLogs(logEnvelope: Envelope<LogPayload>)
     fun saveLogs(logEnvelope: Envelope<LogPayload>)
 }

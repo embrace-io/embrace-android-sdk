@@ -60,7 +60,7 @@ internal class RnBundleIdTrackerImpl(
 
     override fun setReactNativeBundleId(
         jsBundleUrl: String?,
-        forceUpdate: Boolean?
+        forceUpdate: Boolean?,
     ) {
         val currentUrl = preferencesService.javaScriptBundleURL
 
@@ -94,7 +94,7 @@ internal class RnBundleIdTrackerImpl(
         private fun getBundleAsset(
             context: Context,
             bundleUrl: String,
-            logger: EmbLogger
+            logger: EmbLogger,
         ): InputStream? {
             try {
                 return context.assets.open(getBundleAssetName(bundleUrl))
@@ -119,7 +119,7 @@ internal class RnBundleIdTrackerImpl(
             context: Context,
             bundleUrl: String?,
             defaultBundleId: String?,
-            logger: EmbLogger
+            logger: EmbLogger,
         ): String? {
             if (bundleUrl == null) {
                 // If JS bundle URL is null, we set React Native bundle ID to the defaultBundleId.

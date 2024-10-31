@@ -34,7 +34,7 @@ class BlockedThreadDetector(
     var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) {
 
     /**

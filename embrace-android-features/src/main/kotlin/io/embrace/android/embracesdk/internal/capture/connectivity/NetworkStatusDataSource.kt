@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 class NetworkStatusDataSource(
     private val clock: Clock,
     spanService: SpanService,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : NetworkConnectivityListener, SpanDataSourceImpl(
     destination = spanService,
     logger = logger,

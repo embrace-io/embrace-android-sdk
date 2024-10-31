@@ -435,7 +435,7 @@ internal class CurrentSessionSpanImplTests {
             type: TelemetryType,
             internal: Boolean,
             private: Boolean,
-            parent: EmbraceSpan?
+            parent: EmbraceSpan?,
         ): PersistableEmbraceSpan = stoppedSpan
 
         override fun create(embraceSpanBuilder: EmbraceSpanBuilder) = stoppedSpan

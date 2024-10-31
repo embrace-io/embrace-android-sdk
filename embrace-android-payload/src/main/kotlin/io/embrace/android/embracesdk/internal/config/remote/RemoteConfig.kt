@@ -108,5 +108,5 @@ data class RemoteConfig(
      * Web view vitals settings
      */
     @Json(name = "webview_vitals_beta")
-    val webViewVitals: WebViewVitals? = null
+    val webViewVitals: WebViewVitals? = null,
 )

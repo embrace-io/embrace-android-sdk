@@ -173,7 +173,11 @@ internal class EmbraceSpanImplTest {
             )
             assertTrue(addEvent(name = "past event", timestampMs = fakeClock.now() - 1L, attributes = null))
             assertTrue(
-                addEvent(name = "future event", timestampMs = fakeClock.now() + 2L, mapOf(Pair("key", "value"), Pair("key2", "value1")))
+                addEvent(
+                    name = "future event",
+                    timestampMs = fakeClock.now() + 2L,
+                    mapOf(Pair("key", "value"), Pair("key2", "value1"))
+                )
             )
             assertTrue(updateNotified)
         }
@@ -379,11 +383,13 @@ internal class EmbraceSpanImplTest {
             assertEquals(EXPECTED_EVENT_NAME, snapshotEvent.name)
             assertEquals(expectedEventTime.millisToNanos(), snapshotEvent.timestampNanos)
 
-            val eventAttributes = checkNotNull(snapshotEvent.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
+            val eventAttributes =
+                checkNotNull(snapshotEvent.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, eventAttributes.key)
             assertEquals(EXPECTED_ATTRIBUTE_VALUE, eventAttributes.data)
 
-            val snapshotAttributes = checkNotNull(snapshot.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
+            val snapshotAttributes =
+                checkNotNull(snapshot.attributes).single { !checkNotNull(it.key).startsWith("emb.") }
             assertEquals(EXPECTED_ATTRIBUTE_NAME, snapshotAttributes.key)
             assertEquals(EXPECTED_ATTRIBUTE_VALUE, snapshotAttributes.data)
         }
@@ -484,7 +490,7 @@ internal class EmbraceSpanImplTest {
 
     private fun createEmbraceSpanImpl(
         spanBuilder: EmbraceSpanBuilder,
-        clock: Clock = openTelemetryClock
+        clock: Clock = openTelemetryClock,
     ) = EmbraceSpanImpl(
         spanBuilder = spanBuilder,
         openTelemetryClock = clock,

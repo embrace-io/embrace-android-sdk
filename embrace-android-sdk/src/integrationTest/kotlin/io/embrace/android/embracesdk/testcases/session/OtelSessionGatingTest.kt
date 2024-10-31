@@ -1,23 +1,23 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.assertions.hasEventOfType
+import io.embrace.android.embracesdk.assertions.hasSpanOfType
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
-import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.assertions.hasEventOfType
-import io.embrace.android.embracesdk.assertions.hasSpanOfType
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -82,7 +82,7 @@ internal class OtelSessionGatingTest {
 
     private fun assertSessionGating(
         payload: Envelope<SessionPayload>,
-        gated: Boolean
+        gated: Boolean,
     ) {
         val sessionSpan = payload.findSessionSpan()
         assertNotNull(sessionSpan)

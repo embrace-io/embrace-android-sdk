@@ -20,7 +20,7 @@ interface CurrentSessionSpan : Initializable, SessionSpanWriter {
      */
     fun endSession(
         startNewSession: Boolean,
-        appTerminationCause: AppTerminationCause? = null
+        appTerminationCause: AppTerminationCause? = null,
     ): List<EmbraceSpanData>
 
     /**

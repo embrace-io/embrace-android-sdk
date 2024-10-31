@@ -26,5 +26,5 @@ data class SessionRemoteConfig(
      * exists)
      */
     @Json(name = "send_full_for")
-    val fullSessionEvents: Set<String>? = null
+    val fullSessionEvents: Set<String>? = null,
 )

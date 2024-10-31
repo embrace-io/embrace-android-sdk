@@ -10,7 +10,7 @@ import java.util.Locale
  * Attribute that stores the [ErrorCode] in an OpenTelemetry span
  */
 sealed class ErrorCodeAttribute(
-    errorCode: ErrorCode
+    errorCode: ErrorCode,
 ) : FixedAttribute {
     override val key: EmbraceAttributeKey = EmbraceAttributeKey(id = "error_code")
     override val value: String = errorCode.name.lowercase(Locale.ENGLISH)

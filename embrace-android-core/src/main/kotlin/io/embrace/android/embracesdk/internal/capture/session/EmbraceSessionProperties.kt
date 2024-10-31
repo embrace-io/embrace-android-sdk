@@ -13,7 +13,7 @@ internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
     private val configService: ConfigService,
     private val logger: EmbLogger,
-    private val writer: SessionSpanWriter
+    private val writer: SessionSpanWriter,
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
     private val permanentPropertiesReference = AtomicReference(NOT_LOADED)

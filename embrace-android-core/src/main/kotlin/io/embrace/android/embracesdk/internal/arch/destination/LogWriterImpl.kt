@@ -19,7 +19,7 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 class LogWriterImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
-    private val processStateService: ProcessStateService
+    private val processStateService: ProcessStateService,
 ) : LogWriter {
 
     override fun addLog(

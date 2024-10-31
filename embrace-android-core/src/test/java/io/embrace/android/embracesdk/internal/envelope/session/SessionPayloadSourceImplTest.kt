@@ -46,7 +46,7 @@ internal class SessionPayloadSourceImplTest {
             object : OtelPayloadMapper {
                 override fun getSessionPayload(
                     endType: SessionSnapshotType,
-                    crashId: String?
+                    crashId: String?,
                 ): List<Span> = emptyList()
             },
             EmbLoggerImpl()
@@ -78,7 +78,7 @@ internal class SessionPayloadSourceImplTest {
     private fun assertPayloadPopulated(
         payload: SessionPayload,
         hasSessionSnapshot: Boolean,
-        hasNonSessionSnapshots: Boolean
+        hasNonSessionSnapshots: Boolean,
     ) {
         assertEquals(mapOf("armeabi-v7a" to "my-symbols"), payload.sharedLibSymbolMapping)
         val snapshots = checkNotNull(payload.spanSnapshots)

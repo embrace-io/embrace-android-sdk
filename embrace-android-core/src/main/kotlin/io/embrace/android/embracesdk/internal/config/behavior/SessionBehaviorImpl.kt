@@ -12,7 +12,7 @@ import java.util.Locale
  */
 class SessionBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>
+    remoteSupplier: Provider<RemoteConfig?>,
 ) : SessionBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

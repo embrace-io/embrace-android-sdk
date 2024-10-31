@@ -82,5 +82,5 @@ data class AnrRemoteConfig(
     val nativeThreadAnrSamplingAllowlist: List<AllowedNdkSampleMethod>? = null,
 
     @Json(name = "monitor_thread_priority")
-    val monitorThreadPriority: Int? = null
+    val monitorThreadPriority: Int? = null,
 )

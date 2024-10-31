@@ -21,7 +21,7 @@ inline fun <T, R> returnIfConditionMet(
     checkIntervalMs: Int = 10,
     dataProvider: () -> R,
     condition: (R) -> Boolean,
-    errorMessageSupplier: () -> String = { "Timeout period elapsed before condition met." }
+    errorMessageSupplier: () -> String = { "Timeout period elapsed before condition met." },
 ): T {
     val tries: Int = waitTimeMs / checkIntervalMs
     val countDownLatch = CountDownLatch(1)

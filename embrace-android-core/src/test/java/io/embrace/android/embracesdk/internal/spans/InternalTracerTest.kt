@@ -49,7 +49,13 @@ internal class InternalTracerTest {
         val childStartTimeMs = clock.now()
         clock.tick(10L)
         val spanId =
-            checkNotNull(internalTracer.startSpan(name = "test-span", parentSpanId = parentSpanId, startTimeMs = childStartTimeMs))
+            checkNotNull(
+                internalTracer.startSpan(
+                    name = "test-span",
+                    parentSpanId = parentSpanId,
+                    startTimeMs = childStartTimeMs
+                )
+            )
         assertNotNull(spanId)
         assertTrue(internalTracer.addSpanAttribute(spanId = spanId, key = "keyz", value = "valuez"))
         val childEndTimeMs = clock.now() - 1L
@@ -64,7 +70,13 @@ internal class InternalTracerTest {
         val firstEventTime = clock.now()
         clock.tick(10L)
         val secondEventTime = clock.now()
-        assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, name = "first event", timestampMs = firstEventTime))
+        assertTrue(
+            internalTracer.addSpanEvent(
+                spanId = parentSpanId,
+                name = "first event",
+                timestampMs = firstEventTime
+            )
+        )
         assertTrue(internalTracer.addSpanEvent(spanId = parentSpanId, name = "second event"))
         assertTrue(internalTracer.stopSpan(parentSpanId))
         assertFalse(internalTracer.addSpanEvent(spanId = parentSpanId, "failed event"))
@@ -143,7 +155,11 @@ internal class InternalTracerTest {
         val expectedEndTimeMs = expectedStartTimeMs + 100L
         val eventsInput: List<Map<String, Any>> =
             listOf(
-                mapOf("name" to "correct event", "timestampMs" to expectedStartTimeMs, "attributes" to mapOf("key" to "value")),
+                mapOf(
+                    "name" to "correct event",
+                    "timestampMs" to expectedStartTimeMs,
+                    "attributes" to mapOf("key" to "value")
+                ),
                 mapOf("name" to "correct event 2"),
                 mapOf("name" to "correct fallback event", "timestampNanos" to expectedEndTimeMs.millisToNanos()),
                 mapOf("timestampMs" to 0L, "attributes" to mapOf("key" to "value")),
@@ -287,7 +303,11 @@ internal class InternalTracerTest {
         )
     }
 
-    private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {
+    private fun verifyPublicSpan(
+        name: String,
+        traceRoot: Boolean = true,
+        errorCode: ErrorCode? = null,
+    ): EmbraceSpanData {
         val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]

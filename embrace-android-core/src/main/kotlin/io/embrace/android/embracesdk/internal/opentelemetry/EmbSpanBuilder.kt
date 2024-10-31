@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 class EmbSpanBuilder(
     private val embraceSpanBuilder: EmbraceSpanBuilder,
     private val spanService: SpanService,
-    private val clock: Clock
+    private val clock: Clock,
 ) : SpanBuilder {
 
     override fun setParent(context: Context): SpanBuilder {
@@ -43,7 +43,8 @@ class EmbSpanBuilder(
 
     override fun setAttribute(key: String, value: Boolean): SpanBuilder = setAttribute(key, value.toString())
 
-    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): SpanBuilder = setAttribute(key.key, value.toString())
+    override fun <T : Any> setAttribute(key: AttributeKey<T>, value: T): SpanBuilder =
+        setAttribute(key.key, value.toString())
 
     override fun setSpanKind(spanKind: SpanKind): SpanBuilder {
         embraceSpanBuilder.setSpanKind(spanKind)

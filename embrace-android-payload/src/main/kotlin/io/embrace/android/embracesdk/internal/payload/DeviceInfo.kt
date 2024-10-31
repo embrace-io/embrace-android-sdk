@@ -46,5 +46,5 @@ class DeviceInfo(
     val cpuName: String? = null,
 
     @Json(name = "gp")
-    val egl: String? = null
+    val egl: String? = null,
 )

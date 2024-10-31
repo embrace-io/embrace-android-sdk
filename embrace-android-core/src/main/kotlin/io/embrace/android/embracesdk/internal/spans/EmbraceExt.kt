@@ -49,7 +49,8 @@ internal fun Span.setEmbraceAttribute(key: EmbraceAttributeKey, value: String): 
     return this
 }
 
-internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span = setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
+internal fun Span.setFixedAttribute(fixedAttribute: FixedAttribute): Span =
+    setEmbraceAttribute(fixedAttribute.key, fixedAttribute.value)
 
 internal fun SpanData.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     attributes.asMap()[fixedAttribute.key.attributeKey] == fixedAttribute.value

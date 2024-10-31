@@ -6,5 +6,5 @@ package io.embrace.android.embracesdk.internal.worker
  */
 class PriorityRunnable(
     val priorityInfo: Any,
-    impl: Runnable
+    impl: Runnable,
 ) : Runnable by impl

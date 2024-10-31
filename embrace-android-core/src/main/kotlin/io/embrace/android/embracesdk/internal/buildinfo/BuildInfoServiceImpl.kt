@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.ProjectConfig
 
 internal class BuildInfoServiceImpl(
     resources: AndroidResourcesService,
-    packageName: String
+    packageName: String,
 ) : BuildInfoService {
 
     private val info by lazy {
@@ -42,7 +42,7 @@ internal class BuildInfoServiceImpl(
         fun getBuildResource(
             resources: AndroidResourcesService,
             packageName: String,
-            buildProperty: String
+            buildProperty: String,
         ): String? {
             return try {
                 val resourceId =

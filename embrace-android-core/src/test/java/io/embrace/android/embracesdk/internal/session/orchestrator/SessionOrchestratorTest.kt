@@ -411,7 +411,7 @@ internal class SessionOrchestratorTest {
     private fun validateSession(
         sessionSpan: PersistableEmbraceSpan?,
         endTimeMs: Long,
-        endType: LifeEventType
+        endType: LifeEventType,
     ) {
         assertEquals(endType, endType)
         assertEquals(endTimeMs, checkNotNull(sessionSpan).snapshot()?.endTimeNanos?.nanosToMillis())

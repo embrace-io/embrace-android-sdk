@@ -8,5 +8,5 @@ typealias WorkerThreadModuleSupplier = (
 ) -> WorkerThreadModule
 
 fun createWorkerThreadModule(
-    initModule: InitModule
+    initModule: InitModule,
 ): WorkerThreadModule = WorkerThreadModuleImpl(initModule)

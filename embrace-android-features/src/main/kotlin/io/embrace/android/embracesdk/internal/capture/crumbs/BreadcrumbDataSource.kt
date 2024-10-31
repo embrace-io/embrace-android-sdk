@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 class BreadcrumbDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,

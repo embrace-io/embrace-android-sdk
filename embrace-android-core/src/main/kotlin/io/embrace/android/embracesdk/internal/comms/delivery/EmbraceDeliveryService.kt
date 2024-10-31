@@ -29,7 +29,7 @@ class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
     private val serializer: PlatformSerializer,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : DeliveryService {
 
     private companion object {
@@ -75,7 +75,7 @@ class EmbraceDeliveryService(
 
     override fun sendCachedSessions(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
-        sessionIdTracker: SessionIdTracker
+        sessionIdTracker: SessionIdTracker,
     ) {
         val nativeCrashData = nativeCrashServiceProvider()?.getAndSendNativeCrash()
         val allSessions = cacheManager.getAllCachedSessionIds().filter {
@@ -135,7 +135,8 @@ class EmbraceDeliveryService(
                 if (action != null) {
                     apiService.sendSession(action) { response ->
                         if (!response.shouldRetry) {
-                            val message = "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
+                            val message =
+                                "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
                             logger.logWarning(message, SessionPurgeException(message))
                         }
                         cacheManager.deleteSession(sessionId)

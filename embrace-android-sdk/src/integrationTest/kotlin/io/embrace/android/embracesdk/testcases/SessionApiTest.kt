@@ -25,7 +25,8 @@ internal class SessionApiTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         EmbraceSetupInterface().apply {
-            overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(diskUsageReportingEnabled = false)
+            overriddenConfigService.autoDataCaptureBehavior =
+                FakeAutoDataCaptureBehavior(diskUsageReportingEnabled = false)
         }
     }
 

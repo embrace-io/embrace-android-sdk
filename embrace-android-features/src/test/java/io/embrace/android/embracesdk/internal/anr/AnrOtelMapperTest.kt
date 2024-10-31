@@ -228,7 +228,10 @@ internal class AnrOtelMapperTest {
         assertEquals(thread.state.toString(), attrs.findAttribute(JvmAttributes.JVM_THREAD_STATE.key).data)
         assertEquals(thread.priority, attrs.findAttribute("thread_priority").data?.toInt())
         assertEquals(thread.frameCount, attrs.findAttribute("frame_count").data?.toInt())
-        assertEquals(thread.lines?.joinToString("\n"), attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key).data)
+        assertEquals(
+            thread.lines?.joinToString("\n"),
+            attrs.findAttribute(ExceptionAttributes.EXCEPTION_STACKTRACE.key).data
+        )
     }
 
     private fun List<Attribute>.findAttribute(key: String): Attribute {

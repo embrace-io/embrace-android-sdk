@@ -9,7 +9,7 @@ class CachedSession private constructor(
     val sessionId: String,
     val timestampMs: Long,
     val filename: String,
-    val v2Payload: Boolean
+    val v2Payload: Boolean,
 ) {
 
     companion object {
@@ -24,6 +24,7 @@ class CachedSession private constructor(
                     sessionId,
                     timestampMs
                 )
+
                 else -> getV1FileNameForSession(sessionId, timestampMs)
             }
             return CachedSession(
@@ -57,12 +58,12 @@ class CachedSession private constructor(
 
         private fun getV1FileNameForSession(
             sessionId: String,
-            timestampMs: Long
+            timestampMs: Long,
         ): String = "${EmbraceCacheService.SESSION_FILE_PREFIX}.$timestampMs.$sessionId.json"
 
         private fun getV2FileNameForSession(
             sessionId: String,
-            timestampMs: Long
+            timestampMs: Long,
         ): String = "${EmbraceCacheService.SESSION_FILE_PREFIX}.$timestampMs.$sessionId.$V2_PREFIX.json"
 
         private fun isV2Payload(filename: String): Boolean = filename.endsWith("$V2_PREFIX.json")

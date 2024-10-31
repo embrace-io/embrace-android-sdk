@@ -19,10 +19,14 @@ internal class SessionPayloadSourceImpl(
     private val currentSessionSpan: CurrentSessionSpan,
     private val spanRepository: SpanRepository,
     private val otelPayloadMapper: OtelPayloadMapper,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : SessionPayloadSource {
 
-    override fun getSessionPayload(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): SessionPayload {
+    override fun getSessionPayload(
+        endType: SessionSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+    ): SessionPayload {
         val sharedLibSymbolMapping = captureDataSafely(logger, symbolMapProvider)
         val isCacheAttempt = endType == SessionSnapshotType.PERIODIC_CACHE
         val includeSnapshots = endType != SessionSnapshotType.JVM_CRASH
@@ -48,7 +52,7 @@ internal class SessionPayloadSourceImpl(
         isCacheAttempt: Boolean,
         endType: SessionSnapshotType,
         startNewSession: Boolean,
-        crashId: String?
+        crashId: String?,
     ): List<Span>? {
         val spans: List<Span>? = captureDataSafely(logger) {
             val result = when {

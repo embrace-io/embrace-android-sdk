@@ -21,7 +21,7 @@ fun fakeSessionZygote(): SessionZygote = SessionZygote(
 fun fakeSessionEnvelope(
     sessionId: String = "fakeSessionId",
     startMs: Long = 160000000000L,
-    endMs: Long = 161000400000L
+    endMs: Long = 161000400000L,
 ): Envelope<SessionPayload> {
     val sessionSpan = FakePersistableEmbraceSpan.sessionSpan(
         sessionId = sessionId,

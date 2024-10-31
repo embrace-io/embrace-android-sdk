@@ -30,7 +30,7 @@ class FakePayloadSourceModule(
     override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
     override val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),
     sessionPayloadSource: SessionPayloadSource = FakeSessionPayloadSource(),
-    logPayloadSource: LogPayloadSource = FakeLogPayloadSource()
+    logPayloadSource: LogPayloadSource = FakeLogPayloadSource(),
 ) : PayloadSourceModule {
 
     override val sessionEnvelopeSource: SessionEnvelopeSource = FakeSessionEnvelopeSource(

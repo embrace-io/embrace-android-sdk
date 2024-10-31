@@ -41,7 +41,7 @@ class NativeThreadSamplerInstaller(
     fun monitorCurrentThread(
         sampler: NativeThreadSamplerService,
         configService: ConfigService,
-        anrService: AnrService
+        anrService: AnrService,
     ) {
         if (isMonitoringCurrentThread()) {
             return
@@ -75,7 +75,7 @@ class NativeThreadSamplerInstaller(
     private fun onConfigChange(
         configService: ConfigService,
         sampler: NativeThreadSamplerService,
-        anrService: AnrService
+        anrService: AnrService,
     ) {
         targetHandler?.post(
             Runnable {

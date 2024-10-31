@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class ActivityBreadcrumbTracker(
     private val configService: ConfigService,
-    private val viewDataSourceProvider: Provider<ViewDataSource?>
+    private val viewDataSourceProvider: Provider<ViewDataSource?>,
 ) : ActivityLifecycleListener {
 
     fun logView(screen: String?) {

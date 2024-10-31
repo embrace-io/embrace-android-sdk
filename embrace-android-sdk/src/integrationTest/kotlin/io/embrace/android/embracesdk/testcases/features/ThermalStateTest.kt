@@ -4,13 +4,12 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.assertions.findSpanSnapshotsOfType
 import io.embrace.android.embracesdk.assertions.findSpansOfType
+import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Rule

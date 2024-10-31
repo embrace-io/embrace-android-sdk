@@ -12,7 +12,7 @@ interface StartupService {
         startTimeMs: Long,
         endTimeMs: Long,
         endedInForeground: Boolean,
-        threadName: String
+        threadName: String,
     )
 
     /**

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.injection.DataCaptureServiceModule
 import io.mockk.mockk
 
 internal class FakeDataCaptureServiceModule(
-    override val webviewService: WebViewService = FakeWebViewService()
+    override val webviewService: WebViewService = FakeWebViewService(),
 ) : DataCaptureServiceModule {
 
     override val activityBreadcrumbTracker: ActivityBreadcrumbTracker =

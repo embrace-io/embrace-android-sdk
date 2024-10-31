@@ -23,7 +23,7 @@ internal class NativeFeatureModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     androidServicesModule: AndroidServicesModule,
     workerThreadModule: WorkerThreadModule,
-    nativeCoreModule: NativeCoreModule
+    nativeCoreModule: NativeCoreModule,
 ) : NativeFeatureModule {
 
     override val ndkService: NdkService by singleton {

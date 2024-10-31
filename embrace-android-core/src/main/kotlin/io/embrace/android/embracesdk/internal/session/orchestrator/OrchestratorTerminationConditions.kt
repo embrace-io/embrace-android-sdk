@@ -18,7 +18,7 @@ internal fun shouldEndManualSession(
     clock: Clock,
     activeSession: SessionZygote?,
     state: ProcessState,
-    logger: EmbLogger
+    logger: EmbLogger,
 ): Boolean {
     if (state == ProcessState.BACKGROUND) {
         logger.logWarning("Cannot manually end session while in background.")
@@ -44,7 +44,7 @@ internal fun shouldEndManualSession(
 
 internal fun shouldRunOnBackground(
     state: ProcessState,
-    logger: EmbLogger
+    logger: EmbLogger,
 ): Boolean {
     return if (state == ProcessState.BACKGROUND) {
         logger.logWarning("Detected unbalanced call to onBackground. Ignoring..")
@@ -56,7 +56,7 @@ internal fun shouldRunOnBackground(
 
 internal fun shouldRunOnForeground(
     state: ProcessState,
-    logger: EmbLogger
+    logger: EmbLogger,
 ): Boolean {
     return if (state == ProcessState.FOREGROUND) {
         logger.logWarning("Detected unbalanced call to onForeground. Ignoring..")

@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ndk.NativeTestSuite
 import java.io.File
-import java.nio.file.Files
 import org.junit.Test
 
 internal class FileWriterTestSuite : NativeTestSuite() {

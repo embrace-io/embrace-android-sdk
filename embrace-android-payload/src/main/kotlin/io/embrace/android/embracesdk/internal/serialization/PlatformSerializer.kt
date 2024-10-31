@@ -23,5 +23,5 @@ interface PlatformSerializer {
  * Return the first 200 elements of [elements] as a JSON-encoded string
  */
 fun PlatformSerializer.truncatedStacktrace(
-    elements: Array<StackTraceElement>
+    elements: Array<StackTraceElement>,
 ): String = toJson(elements.take(200).map(StackTraceElement::toString).toList(), List::class.java)

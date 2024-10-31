@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class NoopEmbraceInternalInterface(
-    internalTracer: InternalTracingApi
+    internalTracer: InternalTracingApi,
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
 
     override fun logInfo(message: String, properties: Map<String, Any>?) {}
@@ -26,7 +26,7 @@ internal class NoopEmbraceInternalInterface(
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?
+        customStackTrace: Array<StackTraceElement>?,
     ) {
     }
 
@@ -39,7 +39,7 @@ internal class NoopEmbraceInternalInterface(
         bytesReceived: Long,
         statusCode: Int,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
     }
 
@@ -50,7 +50,7 @@ internal class NoopEmbraceInternalInterface(
         endTime: Long,
         error: Throwable?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
     }
 
@@ -62,7 +62,7 @@ internal class NoopEmbraceInternalInterface(
         errorType: String?,
         errorMessage: String?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
     }
 

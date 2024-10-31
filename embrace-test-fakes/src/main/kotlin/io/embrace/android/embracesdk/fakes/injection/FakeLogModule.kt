@@ -26,7 +26,7 @@ class FakeLogModule(
         FakeSessionPropertiesService(),
         EmbLoggerImpl(),
         EmbraceSerializer()
-    )
+    ),
 ) : LogModule {
 
     override val networkCaptureService: NetworkCaptureService =

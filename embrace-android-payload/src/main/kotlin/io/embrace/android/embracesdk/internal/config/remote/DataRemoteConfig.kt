@@ -10,5 +10,5 @@ import com.squareup.moshi.JsonClass
 data class DataRemoteConfig(
 
     @Json(name = "pct_thermal_status_enabled")
-    val pctThermalStatusEnabled: Float? = null
+    val pctThermalStatusEnabled: Float? = null,
 )

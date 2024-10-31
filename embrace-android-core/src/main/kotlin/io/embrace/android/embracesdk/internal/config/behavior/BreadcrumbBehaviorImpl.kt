@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class BreadcrumbBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>
+    remoteSupplier: Provider<RemoteConfig?>,
 ) : BreadcrumbBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

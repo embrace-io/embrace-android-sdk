@@ -5,7 +5,7 @@ package io.embrace.android.embracesdk.internal.utils
  */
 inline fun <T> stream(
     collection: Collection<T>,
-    function: (T) -> Unit
+    function: (T) -> Unit,
 ): Unit = collection.toList().forEach(function)
 
 /**
@@ -13,7 +13,7 @@ inline fun <T> stream(
  */
 inline fun <T> filter(
     collection: Collection<T>,
-    function: (T) -> Boolean
+    function: (T) -> Boolean,
 ): List<T> = collection.toList().filter(function)
 
 /**
@@ -21,5 +21,5 @@ inline fun <T> filter(
  */
 inline fun <T, R> map(
     collection: Collection<T>,
-    function: (T) -> R
+    function: (T) -> R,
 ): List<R> = collection.toList().map(function)

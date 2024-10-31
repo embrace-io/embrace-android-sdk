@@ -57,7 +57,7 @@ data class ThreadInfo(
         fun ofThread(
             thread: Thread,
             stackTraceElements: Array<StackTraceElement>,
-            maxStacktraceSize: Int = Integer.MAX_VALUE
+            maxStacktraceSize: Int = Integer.MAX_VALUE,
         ): ThreadInfo {
             val name = thread.name
             val priority = thread.priority

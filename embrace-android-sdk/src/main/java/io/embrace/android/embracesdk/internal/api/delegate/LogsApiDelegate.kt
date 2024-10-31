@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 
 internal class LogsApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : LogsApi {
 
     private val logger = bootstrapper.initModule.logger
@@ -50,7 +50,7 @@ internal class LogsApiDelegate(
     override fun logException(
         throwable: Throwable,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
         logException(throwable, severity, properties, null)
     }
@@ -66,7 +66,7 @@ internal class LogsApiDelegate(
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
         logCustomStacktrace(stacktraceElements, severity, properties, null)
     }
@@ -74,7 +74,7 @@ internal class LogsApiDelegate(
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
         logMessage(
             severity,
@@ -92,7 +92,7 @@ internal class LogsApiDelegate(
         throwable: Throwable,
         severity: Severity,
         properties: Map<String, Any>?,
-        message: String?
+        message: String?,
     ) {
         val exceptionMessage = if (throwable.message != null) throwable.message else ""
         logMessage(
@@ -116,7 +116,7 @@ internal class LogsApiDelegate(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
         properties: Map<String, Any>?,
-        message: String?
+        message: String?,
     ) {
         logMessage(
             severity,
@@ -144,7 +144,7 @@ internal class LogsApiDelegate(
         context: String?,
         library: String?,
         exceptionName: String? = null,
-        exceptionMessage: String? = null
+        exceptionMessage: String? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
             try {
@@ -175,7 +175,7 @@ internal class LogsApiDelegate(
         notificationPriority: Int?,
         messageDeliveredPriority: Int?,
         isNotification: Boolean?,
-        hasData: Boolean?
+        hasData: Boolean?,
     ) {
         if (sdkCallChecker.check("log_push_notification")) {
             if (hasData == null || isNotification == null || messageDeliveredPriority == null) {

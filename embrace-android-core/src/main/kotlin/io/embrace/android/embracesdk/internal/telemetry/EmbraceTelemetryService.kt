@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Service for tracking usage of public APIs, and different internal metrics about the app.
  */
 internal class EmbraceTelemetryService(
-    private val systemInfo: SystemInfo
+    private val systemInfo: SystemInfo,
 ) : TelemetryService {
 
     private val okHttpReflectionFacade: OkHttpReflectionFacade = OkHttpReflectionFacade()

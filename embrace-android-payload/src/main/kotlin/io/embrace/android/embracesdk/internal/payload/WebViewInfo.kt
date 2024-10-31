@@ -18,5 +18,5 @@ data class WebViewInfo(
     val startTime: Long,
 
     @Transient
-    val webVitalMap: MutableMap<WebVitalType, WebVital> = hashMapOf()
+    val webVitalMap: MutableMap<WebVitalType, WebVital> = hashMapOf(),
 )

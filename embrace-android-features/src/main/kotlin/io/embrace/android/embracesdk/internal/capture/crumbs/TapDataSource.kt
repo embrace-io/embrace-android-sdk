@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 class TapDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     writer: SessionSpanWriter,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
@@ -26,7 +26,7 @@ class TapDataSource(
         point: Pair<Float?, Float?>,
         element: String,
         timestamp: Long,
-        type: TapBreadcrumb.TapBreadcrumbType
+        type: TapBreadcrumb.TapBreadcrumbType,
     ) {
         captureData(
             inputValidation = NoInputValidation,

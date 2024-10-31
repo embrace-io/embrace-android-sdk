@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledExecutorService
  */
 internal class EmbraceGestureListener(
     activity: Activity,
-    private val onSingleTapUpBackgroundWorker: ScheduledExecutorService
+    private val onSingleTapUpBackgroundWorker: ScheduledExecutorService,
 ) : GestureDetector.SimpleOnGestureListener() {
 
     private var singleTapUpError: ComposeInternalErrorLogger = ComposeInternalErrorLogger()

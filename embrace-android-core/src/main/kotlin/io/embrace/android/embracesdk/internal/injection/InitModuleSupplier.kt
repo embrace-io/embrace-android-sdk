@@ -13,11 +13,11 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
  */
 typealias InitModuleSupplier = (
     context: Context,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) -> InitModule
 
 fun createInitModule(
     clock: Clock = NormalizedIntervalClock(systemClock = SystemClock()),
     logger: EmbLogger = EmbLoggerImpl(),
-    systemInfo: SystemInfo = SystemInfo()
+    systemInfo: SystemInfo = SystemInfo(),
 ): InitModule = InitModuleImpl(clock, logger, systemInfo)

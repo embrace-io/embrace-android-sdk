@@ -18,7 +18,7 @@ internal class EnvelopeResourceSourceImpl(
     private val appFramework: AppFramework,
     private val deviceArchitecture: DeviceArchitecture,
     private val device: Device,
-    private val rnBundleIdTracker: RnBundleIdTracker
+    private val rnBundleIdTracker: RnBundleIdTracker,
 ) : EnvelopeResourceSource {
 
     @Suppress("DEPRECATION")

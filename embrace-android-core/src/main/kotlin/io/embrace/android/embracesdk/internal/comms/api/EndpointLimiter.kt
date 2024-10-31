@@ -34,7 +34,7 @@ internal class EndpointLimiter {
     fun scheduleRetry(
         worker: BackgroundWorker,
         retryAfter: Long?,
-        retryMethod: () -> Unit
+        retryMethod: () -> Unit,
     ) {
         val retryTask = Runnable {
             retryMethod()

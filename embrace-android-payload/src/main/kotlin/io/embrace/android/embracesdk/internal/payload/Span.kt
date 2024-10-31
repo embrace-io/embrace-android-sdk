@@ -52,7 +52,7 @@ data class Span(
     val events: List<SpanEvent>? = null,
 
     @Json(name = "attributes")
-    val attributes: List<Attribute>? = null
+    val attributes: List<Attribute>? = null,
 ) {
 
     /**

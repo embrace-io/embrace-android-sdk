@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 
 internal class SessionSanitizerFacade(
     private val envelope: Envelope<SessionPayload>,
-    private val components: Set<String>
+    private val components: Set<String>,
 ) {
 
     fun getSanitizedMessage(): Envelope<SessionPayload> {

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 internal class ApiRequestMapper(
     private val urlBuilder: ApiUrlBuilder,
     private val lazyDeviceId: Lazy<String>,
-    private val appId: String
+    private val appId: String,
 ) {
 
     private val apiUrlBuilders = Endpoint.values().associateWith {

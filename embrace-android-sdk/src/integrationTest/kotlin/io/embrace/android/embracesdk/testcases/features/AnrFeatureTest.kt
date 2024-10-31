@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
@@ -19,11 +18,11 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.atomic.AtomicReference
 
 private const val START_TIME_MS = 10000000000L
 private const val INTERVAL_MS = 100L
@@ -177,7 +176,7 @@ internal class AnrFeatureTest {
         startTime: Long,
         sampleCount: Int,
         expectedIntervalCode: String = "0",
-        endTime: Long = startTime + ANR_THRESHOLD_MS + (sampleCount * INTERVAL_MS)
+        endTime: Long = startTime + ANR_THRESHOLD_MS + (sampleCount * INTERVAL_MS),
     ) {
         // assert span start/end times
         assertEquals(startTime, span.startTimeNanos?.nanosToMillis())
@@ -198,7 +197,7 @@ internal class AnrFeatureTest {
             event.attributes?.assertMatches {
                 "emb.type" to "perf.thread_blockage_sample"
                 "sample_overhead" to 0
-                "sample_code" to  when {
+                "sample_code" to when {
                     index < MAX_SAMPLE_COUNT -> "0"
                     else -> "1"
                 }
@@ -217,7 +216,7 @@ internal class AnrFeatureTest {
     private fun EmbraceActionInterface.triggerAnr(
         sampleCount: Int,
         intervalMs: Long = INTERVAL_MS,
-        incomplete: Boolean = false
+        incomplete: Boolean = false,
     ) {
         with(anrMonitorExecutor) {
             blockingMode = true

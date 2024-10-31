@@ -15,7 +15,7 @@ class FakeLogService : LogService {
         val context: String?,
         val library: String?,
         val exceptionName: String?,
-        val exceptionMessage: String?
+        val exceptionMessage: String?,
     )
 
     val logs: MutableList<String> = mutableListOf()
@@ -32,7 +32,7 @@ class FakeLogService : LogService {
         context: String?,
         library: String?,
         exceptionName: String?,
-        exceptionMessage: String?
+        exceptionMessage: String?,
     ) {
         loggedMessages.add(
             LogData(

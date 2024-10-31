@@ -15,7 +15,7 @@ enum class TaskPriority(
      *
      * See [PriorityThreadPoolExecutor] for further detail.
      */
-    val delayThresholdMs: Long
+    val delayThresholdMs: Long,
 ) {
     CRITICAL(0),
     HIGH(5_000),

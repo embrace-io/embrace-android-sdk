@@ -88,7 +88,8 @@ internal class DeliveryConnectivityFeatureTest {
             setupAction = {
                 payloadStorageService.addPayload(
                     fakeSessionStoredTelemetryMetadata,
-                    fakeSessionEnvelope(sessionId = "1", startMs = startMs))
+                    fakeSessionEnvelope(sessionId = "1", startMs = startMs)
+                )
                 payloadStorageService.addPayload(
                     fakeSessionStoredTelemetryMetadata2,
                     fakeSessionEnvelope(sessionId = "2", startMs = startMs + 1000)

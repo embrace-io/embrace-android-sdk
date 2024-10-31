@@ -24,7 +24,7 @@ import io.opentelemetry.semconv.incubating.TelemetryIncubatingAttributes
 class OpenTelemetryConfiguration(
     spanSink: SpanSink,
     logSink: LogSink,
-    systemInfo: SystemInfo
+    systemInfo: SystemInfo,
 ) {
     val embraceSdkName: String = BuildConfig.LIBRARY_PACKAGE_NAME
     val embraceSdkVersion: String = BuildConfig.VERSION_NAME

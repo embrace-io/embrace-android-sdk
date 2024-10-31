@@ -11,7 +11,7 @@ import java.util.regex.Pattern
 
 internal class EmbraceUserService(
     private val preferencesService: PreferencesService,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : UserService {
     /**
      * Do not access this directly - use [userInfo] and [modifyUserInfo] to get and set this

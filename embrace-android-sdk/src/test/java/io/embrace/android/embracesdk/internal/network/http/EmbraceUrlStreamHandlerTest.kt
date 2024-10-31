@@ -160,7 +160,9 @@ internal class EmbraceUrlStreamHandlerTest {
 
     companion object {
         private const val TRACEPARENT = "00-3c72a77a7b51af6fb3778c06d4c165ce-4c1d710fffc88e35-01"
-        private val httpUrlStreamHandler = EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpHandler")
-        private val httpsUrlStreamHandler = EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpsHandler")
+        private val httpUrlStreamHandler =
+            EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpHandler")
+        private val httpsUrlStreamHandler =
+            EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpsHandler")
     }
 }

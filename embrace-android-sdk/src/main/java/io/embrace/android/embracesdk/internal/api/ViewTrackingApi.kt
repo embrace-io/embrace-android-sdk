@@ -55,7 +55,7 @@ internal interface ViewTrackingApi {
         endTime: Long,
         properties: Map<String?, Any?>,
         bytesSent: Int,
-        output: String
+        output: String,
     )
 
     /**

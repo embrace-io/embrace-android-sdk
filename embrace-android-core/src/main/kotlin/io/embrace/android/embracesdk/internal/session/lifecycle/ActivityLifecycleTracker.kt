@@ -15,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class ActivityLifecycleTracker(
     private val application: Application,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : ActivityTracker {
 
     init {

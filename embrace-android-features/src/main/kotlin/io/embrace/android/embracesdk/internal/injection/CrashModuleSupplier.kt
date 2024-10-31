@@ -9,7 +9,7 @@ typealias CrashModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
-    unityCrashIdProvider: () -> String?
+    unityCrashIdProvider: () -> String?,
 ) -> CrashModule
 
 fun createCrashModule(
@@ -18,7 +18,7 @@ fun createCrashModule(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
-    unityCrashIdProvider: () -> String?
+    unityCrashIdProvider: () -> String?,
 ): CrashModule {
     return CrashModuleImpl(
         initModule,

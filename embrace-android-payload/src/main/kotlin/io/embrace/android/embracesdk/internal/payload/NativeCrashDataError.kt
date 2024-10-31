@@ -6,5 +6,5 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 class NativeCrashDataError(
     @Json(name = "n") val number: Int?,
-    @Json(name = "c") val context: Int?
+    @Json(name = "c") val context: Int?,
 )

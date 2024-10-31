@@ -8,7 +8,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
-internal class FakeCacheStorageService: PayloadStorageService {
+internal class FakeCacheStorageService : PayloadStorageService {
 
     val storedPayloads = mutableMapOf<StoredTelemetryMetadata, SerializationAction>()
     val deletedPayloads = mutableListOf<StoredTelemetryMetadata>()

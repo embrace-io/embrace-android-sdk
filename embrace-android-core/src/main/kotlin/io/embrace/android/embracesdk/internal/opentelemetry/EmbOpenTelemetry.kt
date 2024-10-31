@@ -8,7 +8,7 @@ import io.opentelemetry.context.propagation.ContextPropagators
  * Embrace-specific implementation that can be used to obtain working Tracer implementations that will record spans for Embrace sessions
  */
 class EmbOpenTelemetry(
-    private val traceProviderSupplier: () -> TracerProvider
+    private val traceProviderSupplier: () -> TracerProvider,
 ) : OpenTelemetry {
 
     override fun getTracerProvider(): TracerProvider = traceProviderSupplier()

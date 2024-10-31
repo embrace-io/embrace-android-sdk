@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 internal class EmbraceCpuInfoDelegate(
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
-    private val cpuInfoNdkDelegate: CpuInfoNdkDelegate = EmbraceCpuInfoNdkDelegate()
+    private val cpuInfoNdkDelegate: CpuInfoNdkDelegate = EmbraceCpuInfoNdkDelegate(),
 ) : CpuInfoDelegate {
 
     override fun getCpuName(): String? {

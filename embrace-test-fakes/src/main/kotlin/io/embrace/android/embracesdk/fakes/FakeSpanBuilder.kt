@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 
 class FakeSpanBuilder(
     val spanName: String,
-    val tracerKey: TracerKey = TracerKey("fake-scope")
+    val tracerKey: TracerKey = TracerKey("fake-scope"),
 ) : SpanBuilder {
 
     var spanKind: SpanKind? = null

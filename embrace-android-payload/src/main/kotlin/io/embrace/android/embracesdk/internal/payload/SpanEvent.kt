@@ -22,5 +22,5 @@ data class SpanEvent(
     val timestampNanos: Long? = null,
 
     @Json(name = "attributes")
-    val attributes: List<Attribute>? = null
+    val attributes: List<Attribute>? = null,
 )

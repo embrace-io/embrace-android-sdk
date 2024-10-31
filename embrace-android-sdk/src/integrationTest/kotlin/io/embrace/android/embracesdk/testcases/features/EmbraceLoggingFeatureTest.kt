@@ -1,12 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
-import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -14,6 +10,10 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogReceived
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

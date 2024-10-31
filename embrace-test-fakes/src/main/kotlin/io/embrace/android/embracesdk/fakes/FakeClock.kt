@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 
 class FakeClock(
     @Volatile
-    private var currentTime: Long = DEFAULT_FAKE_CURRENT_TIME
+    private var currentTime: Long = DEFAULT_FAKE_CURRENT_TIME,
 ) : Clock {
 
     fun setCurrentTime(currentTime: Long) {

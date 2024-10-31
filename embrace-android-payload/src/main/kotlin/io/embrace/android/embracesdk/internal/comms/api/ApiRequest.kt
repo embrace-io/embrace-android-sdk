@@ -23,5 +23,5 @@ data class ApiRequest(
 
     val httpMethod: HttpMethod = HttpMethod.POST,
 
-    val eTag: String? = null
+    val eTag: String? = null,
 )

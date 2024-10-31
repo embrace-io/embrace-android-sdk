@@ -17,7 +17,7 @@ internal class FlutterPlatformStrategy : HostedPlatformStrategy {
 
     override fun setHostedPlatformVersionInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     ) {
         preferencesService.dartSdkVersion = value
     }

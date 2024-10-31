@@ -173,7 +173,7 @@ internal class StartupTrackerTest {
         createTime: Long,
         postCreateTime: Long? = null,
         startTime: Long,
-        resumeTime: Long
+        resumeTime: Long,
     ) {
         assertEquals(preCreateTime, dataCollector.startupActivityPreCreatedMs)
         assertEquals(createTime, dataCollector.startupActivityInitStartMs)
@@ -185,6 +185,6 @@ internal class StartupTrackerTest {
     private data class ActivityTiming(
         val createTime: Long,
         val startTime: Long,
-        val resumeTime: Long
+        val resumeTime: Long,
     )
 }

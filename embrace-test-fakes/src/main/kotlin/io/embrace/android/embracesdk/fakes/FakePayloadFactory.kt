@@ -23,7 +23,7 @@ class FakePayloadFactory : PayloadFactory {
     override fun startPayloadWithState(
         state: ProcessState,
         timestamp: Long,
-        coldStart: Boolean
+        coldStart: Boolean,
     ): SessionZygote {
         return when (state) {
             ProcessState.FOREGROUND -> startSessionWithState(timestamp)
@@ -34,7 +34,7 @@ class FakePayloadFactory : PayloadFactory {
     override fun endPayloadWithState(
         state: ProcessState,
         timestamp: Long,
-        initial: SessionZygote
+        initial: SessionZygote,
     ): Envelope<SessionPayload> {
         return when (state) {
             ProcessState.FOREGROUND -> endSessionWithState(timestamp)
@@ -46,7 +46,7 @@ class FakePayloadFactory : PayloadFactory {
         state: ProcessState,
         timestamp: Long,
         initial: SessionZygote,
-        crashId: String
+        crashId: String,
     ): Envelope<SessionPayload> {
         return when (state) {
             ProcessState.FOREGROUND -> endSessionWithCrash(crashId)
@@ -57,7 +57,7 @@ class FakePayloadFactory : PayloadFactory {
     override fun snapshotPayload(
         state: ProcessState,
         timestamp: Long,
-        initial: SessionZygote
+        initial: SessionZygote,
     ): Envelope<SessionPayload>? {
         return when (state) {
             ProcessState.FOREGROUND -> snapshotSession()
@@ -76,7 +76,7 @@ class FakePayloadFactory : PayloadFactory {
     }
 
     private fun endBackgroundActivityWithCrash(
-        crashId: String
+        crashId: String,
     ): Envelope<SessionPayload> {
         this.baCrashId = crashId
         return fakeSessionEnvelope()

@@ -78,7 +78,7 @@ public interface EmbraceSpan {
      * successful.
      */
     public fun addEvent(
-        name: String
+        name: String,
     ): Boolean = addEvent(name = name, timestampMs = null, attributes = null)
 
     /**
@@ -100,7 +100,7 @@ public interface EmbraceSpan {
     public fun addEvent(
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?
+        attributes: Map<String, String>?,
     ): Boolean
 
     /**

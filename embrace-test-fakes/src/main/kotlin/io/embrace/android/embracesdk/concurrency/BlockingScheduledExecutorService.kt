@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit
  */
 class BlockingScheduledExecutorService(
     private val fakeClock: FakeClock = FakeClock(),
-    blockingMode: Boolean = true
+    blockingMode: Boolean = true,
 ) : AbstractExecutorService(), ScheduledExecutorService {
     private val scheduledTasks = PriorityBlockingQueue(10, BlockedScheduledFutureTaskComparator())
     private val delegateExecutorService = BlockableExecutorService(blockingMode = blockingMode)
@@ -161,7 +161,12 @@ class BlockingScheduledExecutorService(
         return futureTask
     }
 
-    override fun scheduleAtFixedRate(command: Runnable?, initialDelay: Long, period: Long, unit: TimeUnit?): ScheduledFuture<Unit> {
+    override fun scheduleAtFixedRate(
+        command: Runnable?,
+        initialDelay: Long,
+        period: Long,
+        unit: TimeUnit?,
+    ): ScheduledFuture<Unit> {
         requireNotNull(command)
         requireNotNull(unit)
         require(initialDelay >= 0) { "The initialDelay parameter cannot be negative" }
@@ -182,7 +187,12 @@ class BlockingScheduledExecutorService(
         return futureTask
     }
 
-    override fun scheduleWithFixedDelay(command: Runnable?, initialDelay: Long, delay: Long, unit: TimeUnit?): ScheduledFuture<Unit> {
+    override fun scheduleWithFixedDelay(
+        command: Runnable?,
+        initialDelay: Long,
+        delay: Long,
+        unit: TimeUnit?,
+    ): ScheduledFuture<Unit> {
         requireNotNull(command)
         requireNotNull(unit)
         require(initialDelay >= 0) { "The initialDelay parameter cannot be negative" }
@@ -257,7 +267,7 @@ class BlockingScheduledExecutorService(
             runnable: Runnable,
             executionTimeMs: Long,
             periodMs: Long = 0L,
-            runFromLastExecution: Boolean = false
+            runFromLastExecution: Boolean = false,
         ) : super(runnable, null) {
             this.executionTimeMs = executionTimeMs
             this.periodMs = periodMs
@@ -266,7 +276,7 @@ class BlockingScheduledExecutorService(
 
         constructor(
             callable: Callable<V>,
-            executionTimeMs: Long
+            executionTimeMs: Long,
         ) : super(callable) {
             this.executionTimeMs = executionTimeMs
             this.periodMs = 0L

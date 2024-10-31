@@ -32,7 +32,7 @@ internal class SpanServiceImpl(
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
-        private: Boolean
+        private: Boolean,
     ): PersistableEmbraceSpan? {
         return if (inputsValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             embraceSpanFactory.create(
@@ -66,7 +66,7 @@ internal class SpanServiceImpl(
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-        code: () -> T
+        code: () -> T,
     ): T {
         val returnValue: T
         val span = createSpan(name = name, parent = parent, type = type, internal = internal, private = private)
@@ -104,14 +104,20 @@ internal class SpanServiceImpl(
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?
+        errorCode: ErrorCode?,
     ): Boolean {
         if (startTimeMs > endTimeMs) {
             return false
         }
 
         if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
-            val newSpan = embraceSpanFactory.create(name = name, type = type, internal = internal, private = private, parent = parent)
+            val newSpan = embraceSpanFactory.create(
+                name = name,
+                type = type,
+                internal = internal,
+                private = private,
+                parent = parent
+            )
             if (newSpan.start(startTimeMs)) {
                 attributes.forEach {
                     newSpan.addAttribute(it.key, it.value)
@@ -132,7 +138,7 @@ internal class SpanServiceImpl(
         name: String,
         internal: Boolean,
         events: List<EmbraceSpanEvent>? = null,
-        attributes: Map<String, String>? = null
+        attributes: Map<String, String>? = null,
     ): Boolean {
         return (name.isNameValid(internal)) &&
             ((events == null) || (events.size <= EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT)) &&

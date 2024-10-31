@@ -17,7 +17,7 @@ internal class AnrStacktraceSampler(
     private var configService: ConfigService,
     private val clock: Clock,
     targetThread: Thread,
-    private val anrMonitorWorker: BackgroundWorker
+    private val anrMonitorWorker: BackgroundWorker,
 ) : BlockedThreadListener, MemoryCleanerListener {
 
     val anrIntervals: CopyOnWriteArrayList<AnrInterval> = CopyOnWriteArrayList<AnrInterval>()
@@ -109,7 +109,7 @@ internal class AnrStacktraceSampler(
      */
     fun getAnrIntervals(
         state: ThreadMonitoringState,
-        clock: Clock
+        clock: Clock,
     ): List<AnrInterval> {
         synchronized(anrIntervals) {
             val results = anrIntervals.toMutableList()

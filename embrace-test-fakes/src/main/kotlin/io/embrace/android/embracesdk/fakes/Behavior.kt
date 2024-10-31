@@ -41,7 +41,7 @@ private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
  */
 fun createAnrBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<AnrRemoteConfig?> = { null }
+    remoteCfg: Provider<AnrRemoteConfig?> = { null },
 ): AnrBehavior = AnrBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -49,7 +49,7 @@ fun createAnrBehavior(
  */
 fun createSessionBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null }
+    remoteCfg: Provider<RemoteConfig?> = { null },
 ): SessionBehavior = SessionBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -58,7 +58,7 @@ fun createSessionBehavior(
 fun createNetworkBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<RemoteConfig?> = { null },
-    disabledUrlPatterns: List<String>? = null
+    disabledUrlPatterns: List<String>? = null,
 ): NetworkBehavior = NetworkBehaviorImpl(thresholdCheck, remoteCfg, disabledUrlPatterns)
 
 /**
@@ -66,7 +66,7 @@ fun createNetworkBehavior(
  */
 fun createBackgroundActivityBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<BackgroundActivityRemoteConfig?> = { null }
+    remoteCfg: Provider<BackgroundActivityRemoteConfig?> = { null },
 ): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -74,7 +74,7 @@ fun createBackgroundActivityBehavior(
  */
 fun createAutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null }
+    remoteCfg: Provider<RemoteConfig?> = { null },
 ): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -82,7 +82,7 @@ fun createAutoDataCaptureBehavior(
  */
 fun createLogMessageBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<LogRemoteConfig?> = { null }
+    remoteCfg: Provider<LogRemoteConfig?> = { null },
 ): LogMessageBehavior = LogMessageBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -90,7 +90,7 @@ fun createLogMessageBehavior(
  */
 fun createDataCaptureEventBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null }
+    remoteCfg: Provider<RemoteConfig?> = { null },
 ): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -98,14 +98,14 @@ fun createDataCaptureEventBehavior(
  */
 fun createSdkModeBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null }
+    remoteCfg: Provider<RemoteConfig?> = { null },
 ): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [SdkModeBehaviorImpl] that returns default values.
  */
 fun createSdkEndpointBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck
+    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
 ): SdkEndpointBehavior = SdkEndpointBehaviorImpl(thresholdCheck)
 
 /**
@@ -121,7 +121,7 @@ fun createAppExitInfoBehavior(
  */
 fun createNetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null }
+    remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null },
 ): NetworkSpanForwardingBehavior = NetworkSpanForwardingBehaviorImpl(thresholdCheck, remoteConfig)
 
 /**

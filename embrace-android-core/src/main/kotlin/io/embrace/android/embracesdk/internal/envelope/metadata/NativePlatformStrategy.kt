@@ -16,6 +16,6 @@ internal class NativePlatformStrategy : HostedPlatformStrategy {
 
     override fun setHostedPlatformVersionInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     ) = Unit
 }

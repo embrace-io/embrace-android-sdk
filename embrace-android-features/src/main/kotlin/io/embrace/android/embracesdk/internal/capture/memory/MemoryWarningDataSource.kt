@@ -18,7 +18,7 @@ internal class MemoryWarningDataSource(
     private val application: Application,
     private val clock: Clock,
     sessionSpanWriter: SessionSpanWriter,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : ComponentCallbacks2, DataSourceImpl<SessionSpanWriter>(
     destination = sessionSpanWriter,
     logger = logger,

@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.common.Clock
 class EmbTracer(
     private val sdkTracer: Tracer,
     private val spanService: SpanService,
-    private val clock: Clock
+    private val clock: Clock,
 ) : Tracer {
 
     override fun spanBuilder(spanName: String): SpanBuilder =

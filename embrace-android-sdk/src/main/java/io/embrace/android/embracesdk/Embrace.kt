@@ -22,7 +22,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 public class Embrace private constructor(
-    internal var impl: EmbraceImpl = Systrace.traceSynchronous("embrace-impl-init") { EmbraceImpl() }
+    internal var impl: EmbraceImpl = Systrace.traceSynchronous("embrace-impl-init") { EmbraceImpl() },
 ) : SdkApi {
 
     public companion object {
@@ -143,7 +143,7 @@ public class Embrace private constructor(
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
         impl.logMessage(message, severity, properties)
     }
@@ -159,7 +159,7 @@ public class Embrace private constructor(
     override fun logException(
         throwable: Throwable,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
         impl.logException(throwable, severity, properties)
     }
@@ -168,7 +168,7 @@ public class Embrace private constructor(
         throwable: Throwable,
         severity: Severity,
         properties: Map<String, Any>?,
-        message: String?
+        message: String?,
     ) {
         impl.logException(throwable, severity, properties, message)
     }
@@ -179,7 +179,7 @@ public class Embrace private constructor(
 
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
-        severity: Severity
+        severity: Severity,
     ) {
         impl.logCustomStacktrace(stacktraceElements, severity)
     }
@@ -187,7 +187,7 @@ public class Embrace private constructor(
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
-        properties: Map<String, Any>?
+        properties: Map<String, Any>?,
     ) {
         impl.logCustomStacktrace(stacktraceElements, severity, properties)
     }
@@ -196,7 +196,7 @@ public class Embrace private constructor(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
         properties: Map<String, Any>?,
-        message: String?
+        message: String?,
     ) {
         impl.logCustomStacktrace(stacktraceElements, severity, properties, message)
     }
@@ -252,7 +252,7 @@ public class Embrace private constructor(
         name: String,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: Function0<T>
+        code: Function0<T>,
     ): T {
         return impl.recordSpan(name, attributes, events, code)
     }
@@ -262,7 +262,7 @@ public class Embrace private constructor(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: Function0<T>
+        code: Function0<T>,
     ): T {
         return impl.recordSpan(name, parent, attributes, events, code)
     }
@@ -274,7 +274,7 @@ public class Embrace private constructor(
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
+        events: List<EmbraceSpanEvent>?,
     ): Boolean {
         return impl.recordCompletedSpan(
             name,
@@ -295,7 +295,7 @@ public class Embrace private constructor(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        errorCode: ErrorCode?
+        errorCode: ErrorCode?,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode)
     }
@@ -304,7 +304,7 @@ public class Embrace private constructor(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        parent: EmbraceSpan?
+        parent: EmbraceSpan?,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, parent)
     }
@@ -314,7 +314,7 @@ public class Embrace private constructor(
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCode?,
-        parent: EmbraceSpan?
+        parent: EmbraceSpan?,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent)
     }
@@ -324,7 +324,7 @@ public class Embrace private constructor(
         startTimeMs: Long,
         endTimeMs: Long,
         attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
+        events: List<EmbraceSpanEvent>?,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, attributes, events)
     }
@@ -363,7 +363,7 @@ public class Embrace private constructor(
         notificationPriority: Int?,
         messageDeliveredPriority: Int?,
         isNotification: Boolean?,
-        hasData: Boolean?
+        hasData: Boolean?,
     ) {
         impl.logPushNotification(
             title,

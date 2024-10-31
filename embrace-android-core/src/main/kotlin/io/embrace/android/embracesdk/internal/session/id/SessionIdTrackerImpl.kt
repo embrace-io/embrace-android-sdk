@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionIdTrackerImpl(
     private val activityManager: ActivityManager?,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : SessionIdTracker {
 
     private val listeners = CopyOnWriteArraySet<(String?) -> Unit>()

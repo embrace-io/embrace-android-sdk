@@ -9,5 +9,5 @@ data class WebViewVitals @JvmOverloads constructor(
     val pctEnabled: Float? = null,
 
     @Json(name = "max_vitals")
-    val maxVitals: Int? = null
+    val maxVitals: Int? = null,
 )

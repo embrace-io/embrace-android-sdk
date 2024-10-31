@@ -57,7 +57,7 @@ interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     fun addSystemEvent(
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?
+        attributes: Map<String, String>?,
     ): Boolean
 
     /**

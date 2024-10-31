@@ -207,7 +207,7 @@ internal class EmbraceNetworkCaptureServiceTest {
         maxSize: Long = 102400L,
         maxCount: Int = 5,
         statusCodes: Set<Int> = setOf(200, 404),
-        urlRegex: String = "embrace.io/*"
+        urlRegex: String = "embrace.io/*",
     ) =
         NetworkCaptureRuleRemoteConfig(
             id = id,

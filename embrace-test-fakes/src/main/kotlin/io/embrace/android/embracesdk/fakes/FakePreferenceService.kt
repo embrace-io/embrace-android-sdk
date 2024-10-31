@@ -34,7 +34,7 @@ class FakePreferenceService(
     override var cpuName: String? = null,
     override var egl: String? = null,
     val sessionNumber: () -> Int = { 0 },
-    val bgActivityNumber: () -> Int = { 5 }
+    val bgActivityNumber: () -> Int = { 5 },
 ) : PreferencesService {
 
     var networkCaptureRuleOver: Boolean = false

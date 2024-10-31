@@ -24,6 +24,6 @@ interface NetworkCaptureService {
         startTime: Long,
         endTime: Long,
         networkCaptureData: NetworkCaptureData?,
-        errorMessage: String? = null
+        errorMessage: String? = null,
     )
 }

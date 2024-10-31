@@ -17,7 +17,7 @@ interface ReactNativeInternalInterface :
         name: String,
         message: String,
         type: String?,
-        stacktrace: String?
+        stacktrace: String?,
     )
 
     /**
@@ -27,7 +27,7 @@ interface ReactNativeInternalInterface :
         name: String,
         message: String,
         properties: Map<String, Any>,
-        stacktrace: String?
+        stacktrace: String?,
     )
 
     /**
@@ -74,7 +74,7 @@ interface ReactNativeInternalInterface :
         endTime: Long,
         properties: Map<String?, Any?>,
         bytesSent: Int,
-        output: String
+        output: String,
     )
 
     /**

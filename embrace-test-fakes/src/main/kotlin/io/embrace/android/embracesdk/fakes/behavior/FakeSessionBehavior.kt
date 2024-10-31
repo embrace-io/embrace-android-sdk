@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 
 class FakeSessionBehavior(
     private val maxSessionProperties: Int = 100,
-    private val sessionControlEnabled: Boolean = false
+    private val sessionControlEnabled: Boolean = false,
 ) : SessionBehavior {
 
     override fun getFullSessionEvents(): Set<String> = emptySet()

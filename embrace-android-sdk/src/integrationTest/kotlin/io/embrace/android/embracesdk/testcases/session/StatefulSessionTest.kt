@@ -4,7 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.hasSpanSnapshotsOfType
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.opentelemetry.embErrorLogCount
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionEndType

@@ -14,7 +14,7 @@ internal class ConfigModuleImpl(
     customAppId: String?,
     framework: AppFramework,
     private val configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
-    private val foregroundAction: ConfigService.() -> Unit
+    private val foregroundAction: ConfigService.() -> Unit,
 ) : ConfigModule {
 
     override val configService: ConfigService by singleton {

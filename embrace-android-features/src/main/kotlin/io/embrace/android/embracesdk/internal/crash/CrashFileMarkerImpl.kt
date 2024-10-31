@@ -9,7 +9,7 @@ import java.io.File
  */
 class CrashFileMarkerImpl(
     private val markerFile: Lazy<File>,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : CrashFileMarker {
 
     private val lock = Any()

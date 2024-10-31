@@ -124,5 +124,5 @@ data class NetworkCapturedCall(
      * Encrypted data.
      */
     @Json(name = "ne")
-    val encryptedPayload: String? = null
+    val encryptedPayload: String? = null,
 )

@@ -477,12 +477,26 @@ internal class SpanServiceImplTest {
     @Test
     fun `check name length limit for non-internal spans`() {
         assertNull(spansService.createSpan(name = TOO_LONG_SPAN_NAME, internal = false))
-        assertFalse(spansService.recordCompletedSpan(name = TOO_LONG_SPAN_NAME, startTimeMs = 100L, endTimeMs = 200L, internal = false))
+        assertFalse(
+            spansService.recordCompletedSpan(
+                name = TOO_LONG_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = false
+            )
+        )
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME, internal = false) { 1 })
         assertEquals(0, spanSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_SPAN_NAME, internal = false))
         assertNotNull(spansService.recordSpan(name = MAX_LENGTH_SPAN_NAME, internal = false) { 2 })
-        assertTrue(spansService.recordCompletedSpan(name = MAX_LENGTH_SPAN_NAME, startTimeMs = 100L, endTimeMs = 200L, internal = false))
+        assertTrue(
+            spansService.recordCompletedSpan(
+                name = MAX_LENGTH_SPAN_NAME,
+                startTimeMs = 100L,
+                endTimeMs = 200L,
+                internal = false
+            )
+        )
         assertEquals(2, spanSink.completedSpans().size)
     }
 

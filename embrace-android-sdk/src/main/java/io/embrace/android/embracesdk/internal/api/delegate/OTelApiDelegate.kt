@@ -8,7 +8,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 
 internal class OTelApiDelegate(
     private val bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : OTelApi {
 
     private val logger = bootstrapper.logger

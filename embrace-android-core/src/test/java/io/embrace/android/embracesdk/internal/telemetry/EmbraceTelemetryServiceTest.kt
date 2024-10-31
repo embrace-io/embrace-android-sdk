@@ -75,7 +75,10 @@ internal class EmbraceTelemetryServiceTest {
         embraceTelemetryService.getAndClearTelemetryAttributes()
 
         // That method isn't in the map anymore
-        assertEquals(null, embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.storage.a_file", null))
+        assertEquals(
+            null,
+            embraceTelemetryService.getAndClearTelemetryAttributes().getOrDefault("emb.storage.a_file", null)
+        )
     }
 
     @Test

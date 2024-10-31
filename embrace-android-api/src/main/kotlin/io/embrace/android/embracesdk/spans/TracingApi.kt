@@ -12,7 +12,7 @@ public interface TracingApi {
      * Note: the [EmbraceSpan] created will not be started. For a method that creates and starts the span, use [startSpan]
      */
     public fun createSpan(
-        name: String
+        name: String,
     ): EmbraceSpan? = createSpan(name = name, parent = null)
 
     /**
@@ -24,7 +24,7 @@ public interface TracingApi {
      */
     public fun createSpan(
         name: String,
-        parent: EmbraceSpan?
+        parent: EmbraceSpan?,
     ): EmbraceSpan?
 
     /**
@@ -32,7 +32,7 @@ public interface TracingApi {
      * [EmbraceSpan] cannot be created or started.
      */
     public fun startSpan(
-        name: String
+        name: String,
     ): EmbraceSpan? = startSpan(name = name, parent = null)
 
     /**
@@ -41,7 +41,7 @@ public interface TracingApi {
      */
     public fun startSpan(
         name: String,
-        parent: EmbraceSpan?
+        parent: EmbraceSpan?,
     ): EmbraceSpan? = startSpan(
         name = name,
         parent = parent,
@@ -55,7 +55,7 @@ public interface TracingApi {
     public fun startSpan(
         name: String,
         parent: EmbraceSpan?,
-        startTimeMs: Long?
+        startTimeMs: Long?,
     ): EmbraceSpan?
 
     /**
@@ -65,7 +65,7 @@ public interface TracingApi {
      */
     public fun <T> recordSpan(
         name: String,
-        code: () -> T
+        code: () -> T,
     ): T = recordSpan(name = name, parent = null, attributes = null, events = null, code = code)
 
     /**
@@ -77,7 +77,7 @@ public interface TracingApi {
     public fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        code: () -> T
+        code: () -> T,
     ): T = recordSpan(name = name, parent = parent, attributes = null, events = null, code = code)
 
     /**
@@ -89,7 +89,7 @@ public interface TracingApi {
         name: String,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: () -> T
+        code: () -> T,
     ): T = recordSpan(name = name, parent = null, attributes = attributes, events = events, code = code)
 
     /**
@@ -104,7 +104,7 @@ public interface TracingApi {
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: () -> T
+        code: () -> T,
     ): T
 
     /**
@@ -114,7 +114,7 @@ public interface TracingApi {
     public fun recordCompletedSpan(
         name: String,
         startTimeMs: Long,
-        endTimeMs: Long
+        endTimeMs: Long,
     ): Boolean =
         recordCompletedSpan(
             name = name,
@@ -135,7 +135,7 @@ public interface TracingApi {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        errorCode: ErrorCode?
+        errorCode: ErrorCode?,
     ): Boolean =
         recordCompletedSpan(
             name = name,
@@ -155,7 +155,7 @@ public interface TracingApi {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        parent: EmbraceSpan?
+        parent: EmbraceSpan?,
     ): Boolean =
         recordCompletedSpan(
             name = name,
@@ -198,7 +198,7 @@ public interface TracingApi {
         startTimeMs: Long,
         endTimeMs: Long,
         attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
+        events: List<EmbraceSpanEvent>?,
     ): Boolean = recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs,
@@ -223,7 +223,7 @@ public interface TracingApi {
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
+        events: List<EmbraceSpanEvent>?,
     ): Boolean
 
     /**

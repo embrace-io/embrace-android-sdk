@@ -5,7 +5,7 @@
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _checkForOverwrittenHandlers(): String?</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _getCrashReport(path: String?): String?</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _getErrors(path: String?): String?</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _installSignalHandlers( report_path: String?, markerFilePath: String?, session_id: String?, app_state: String?, report_id: String?, api_level: Int, is_32bit: Boolean, dev_logging: Boolean )</ID>
+    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _installSignalHandlers( report_path: String?, markerFilePath: String?, session_id: String?, app_state: String?, report_id: String?, api_level: Int, is_32bit: Boolean, dev_logging: Boolean, )</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _reinstallSignalHandlers(): Boolean</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _testNativeCrash_C()</ID>
     <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _testNativeCrash_CPP()</ID>

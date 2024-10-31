@@ -14,7 +14,7 @@ class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 
     override fun captureData(
         inputValidation: () -> Boolean,
-        captureAction: LogWriter.() -> Unit
+        captureAction: LogWriter.() -> Unit,
     ): Boolean {
         TODO("Not yet implemented")
     }

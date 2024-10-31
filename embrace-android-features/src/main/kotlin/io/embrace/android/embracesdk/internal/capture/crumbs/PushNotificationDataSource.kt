@@ -17,7 +17,7 @@ class PushNotificationDataSource(
     private val breadcrumbBehavior: BreadcrumbBehavior,
     private val clock: Clock,
     writer: SessionSpanWriter,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
     logger = logger,
@@ -30,7 +30,7 @@ class PushNotificationDataSource(
         from: String?,
         id: String?,
         notificationPriority: Int?,
-        type: PushNotificationBreadcrumb.NotificationType
+        type: PushNotificationBreadcrumb.NotificationType,
     ) {
         captureData(
             inputValidation = NoInputValidation,

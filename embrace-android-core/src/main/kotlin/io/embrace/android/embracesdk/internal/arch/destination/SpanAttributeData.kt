@@ -5,5 +5,5 @@ package io.embrace.android.embracesdk.internal.arch.destination
  */
 data class SpanAttributeData(
     val key: String,
-    val value: String
+    val value: String,
 )

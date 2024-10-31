@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import com.google.firebase.messaging.RemoteMessage;
 
 import io.embrace.android.embracesdk.Embrace;
-import io.embrace.android.embracesdk.annotation.InternalApi;
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi;
 
 public final class FirebaseSwazzledHooks {
@@ -81,14 +80,14 @@ public final class FirebaseSwazzledHooks {
 
             try {
                 Embrace.getInstance().logPushNotification(
-                        title,
-                        body,
-                        topic,
-                        messageId,
-                        notificationPriority,
-                        messagePriority,
-                        hasNotification,
-                        hasData
+                    title,
+                    body,
+                    topic,
+                    messageId,
+                    notificationPriority,
+                    messagePriority,
+                    hasNotification,
+                    hasData
                 );
             } catch (Exception e) {
                 logError(e);

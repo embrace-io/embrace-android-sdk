@@ -11,7 +11,7 @@ class FakeAeiDataSource : AeiDataSource {
 
     override fun captureData(
         inputValidation: () -> Boolean,
-        captureAction: LogWriter.() -> Unit
+        captureAction: LogWriter.() -> Unit,
     ): Boolean {
         return false
     }

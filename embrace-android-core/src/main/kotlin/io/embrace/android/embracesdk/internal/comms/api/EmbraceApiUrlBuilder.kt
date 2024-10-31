@@ -7,7 +7,7 @@ internal class EmbraceApiUrlBuilder(
     private val configBaseUrl: String,
     private val appId: String,
     private val lazyDeviceId: Lazy<String>,
-    private val lazyAppVersionName: Lazy<String>
+    private val lazyAppVersionName: Lazy<String>,
 ) : ApiUrlBuilder {
     companion object {
         private const val CONFIG_API_VERSION = 2

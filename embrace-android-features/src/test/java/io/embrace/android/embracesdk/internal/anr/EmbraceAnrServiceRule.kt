@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
-    private val scheduledExecutorSupplier: Provider<T>
+    private val scheduledExecutorSupplier: Provider<T>,
 ) : ExternalResource() {
     val logger = EmbLoggerImpl()
 

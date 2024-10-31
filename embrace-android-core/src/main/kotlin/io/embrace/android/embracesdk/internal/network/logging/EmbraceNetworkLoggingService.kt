@@ -27,7 +27,7 @@ import io.opentelemetry.semconv.incubating.HttpIncubatingAttributes
 internal class EmbraceNetworkLoggingService(
     private val embraceDomainCountLimiter: DomainCountLimiter,
     private val networkCaptureService: NetworkCaptureService,
-    private val spanService: SpanService
+    private val spanService: SpanService,
 ) : NetworkLoggingService {
 
     override fun logNetworkRequest(networkRequest: EmbraceNetworkRequest) {

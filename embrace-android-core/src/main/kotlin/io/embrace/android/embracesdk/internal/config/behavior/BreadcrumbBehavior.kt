@@ -5,7 +5,6 @@ interface BreadcrumbBehavior {
     fun getCustomBreadcrumbLimit(): Int
     fun getFragmentBreadcrumbLimit(): Int
     fun getTapBreadcrumbLimit(): Int
-    fun getViewBreadcrumbLimit(): Int
     fun getWebViewBreadcrumbLimit(): Int
 
     /**

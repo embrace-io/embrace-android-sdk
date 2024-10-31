@@ -53,7 +53,6 @@ internal class AnrModuleImpl(
         TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = anrMonitorWorker,
-            configService = configService,
             clock = initModule.clock,
         )
     }

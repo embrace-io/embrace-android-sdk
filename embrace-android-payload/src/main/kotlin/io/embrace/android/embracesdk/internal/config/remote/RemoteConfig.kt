@@ -24,12 +24,6 @@ data class RemoteConfig(
     val offset: Int? = null,
 
     /**
-     * The time in milliseconds after which a particular event ID is considered 'late'.
-     */
-    @Json(name = "event_limits")
-    val eventLimits: Map<String, Long>? = null,
-
-    /**
      * List of regular expressions matching event names and log messages which should be disabled.
      */
     @Json(name = "disabled_event_and_log_patterns")
@@ -85,9 +79,6 @@ data class RemoteConfig(
      */
     @Json(name = "internal_exception_capture_enabled")
     val internalExceptionCaptureEnabled: Boolean? = null,
-
-    @Json(name = "pct_beta_features_enabled")
-    val pctBetaFeaturesEnabled: Float? = null,
 
     @Json(name = "app_exit_info")
     val appExitInfoConfig: AppExitInfoConfig? = null,

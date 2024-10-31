@@ -35,6 +35,4 @@ class DataCaptureEventBehaviorImpl(
             else -> !patternCache.doesStringMatchesPatternInSet(logMessage, disabledTypes)
         }
     }
-
-    override fun getEventLimits(): Map<String, Long> = remote?.eventLimits ?: emptyMap()
 }

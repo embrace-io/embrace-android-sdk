@@ -69,7 +69,7 @@ internal class EmbraceConfigServiceTest {
             configListenerTriggered = false
             mockConfigListener = { configListenerTriggered = true }
             fakeCachedConfig = RemoteConfig( // alter config to trigger listener
-                anrConfig = AnrRemoteConfig(pctIdleHandlerEnabled = 59f)
+                anrConfig = AnrRemoteConfig()
             )
         }
 
@@ -171,35 +171,35 @@ internal class EmbraceConfigServiceTest {
 
     @Test
     fun `test config exists in cache and is loaded correctly`() {
-        assertTrue(service.anrBehavior.shouldCaptureMainThreadOnly())
+        assertTrue(service.anrBehavior.isAnrCaptureEnabled())
 
-        val obj = RemoteConfig(anrConfig = AnrRemoteConfig(mainThreadOnly = false))
+        val obj = RemoteConfig(anrConfig = AnrRemoteConfig(pctEnabled = 0))
         every { mockApiService.getCachedConfig() } returns CachedConfig(obj, null)
         service.loadConfigFromCache()
 
         // config was updated
-        assertFalse(service.anrBehavior.shouldCaptureMainThreadOnly())
+        assertFalse(service.anrBehavior.isAnrCaptureEnabled())
     }
 
     @Test
     fun `test config does not exist in cache, so it's not loaded`() {
-        assertTrue(service.anrBehavior.shouldCaptureMainThreadOnly())
+        assertTrue(service.anrBehavior.isAnrCaptureEnabled())
         every { mockApiService.getCachedConfig() } returns CachedConfig(null, null)
         service.loadConfigFromCache()
 
         // config was not updated
-        assertTrue(service.anrBehavior.shouldCaptureMainThreadOnly())
+        assertTrue(service.anrBehavior.isAnrCaptureEnabled())
     }
 
     @Test
     fun `test service constructor reads cached config`() {
-        val obj = RemoteConfig(anrConfig = AnrRemoteConfig(mainThreadOnly = false))
+        val obj = RemoteConfig(anrConfig = AnrRemoteConfig(pctEnabled = 0))
         every { mockApiService.getConfig() } returns null
         every { mockApiService.getCachedConfig() } returns CachedConfig(obj, null)
         service = createService(worker)
 
         // config was updated
-        assertFalse(service.anrBehavior.shouldCaptureMainThreadOnly())
+        assertFalse(service.anrBehavior.isAnrCaptureEnabled())
     }
 
     /**
@@ -214,13 +214,13 @@ internal class EmbraceConfigServiceTest {
         fakeClock.tick(1000000000000)
 
         // return a different object from default so listener triggers
-        val newConfig = RemoteConfig(anrConfig = AnrRemoteConfig(pctBgEnabled = 59))
+        val newConfig = RemoteConfig(anrConfig = AnrRemoteConfig(sampleIntervalMs = 200))
         every { mockApiService.getConfig() } returns newConfig
         fakePreferenceService.sdkDisabled = false
         service.addListener(mockConfigListener)
 
         // call an arbitrary function to trigger a config refresh
-        service.anrBehavior.shouldCaptureMainThreadOnly()
+        service.anrBehavior.isAnrCaptureEnabled()
         assertTrue(configListenerTriggered)
     }
 
@@ -282,7 +282,7 @@ internal class EmbraceConfigServiceTest {
         assertFalse(configService.hasValidRemoteConfig())
 
         // call arbitrary function to trigger config refresh
-        configService.anrBehavior.shouldCaptureMainThreadOnly()
+        configService.anrBehavior.isAnrCaptureEnabled()
 
         // Only run the task from the executor that loads the cached config to the ConfigService so the call to fetch
         // a new config from the server isn't run

@@ -11,6 +11,7 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
   - `EmbraceNetworkRequest` Java overloads replaced with default parameters
 - View taps do not capture coordinates by default. Set `sdk_config.taps.capture_coordinates` to `true` in your `embrace-config.json` to enable this feature
 - Several internally used classes and symbols have been hidden from the public API
+- Removed several obsolete remote config + local config properties
 
 ### Removed APIs
 

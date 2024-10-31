@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
-import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
@@ -19,9 +18,7 @@ internal class DataCaptureServiceModuleImplTest {
         val module = DataCaptureServiceModuleImpl(
             initModule,
             openTelemetryModule,
-            FakeConfigService(
-                anrBehavior = FakeAnrBehavior(strictModeListenerEnabled = true)
-            ),
+            FakeConfigService(),
             FakeWorkerThreadModule(),
             FakeVersionChecker(false),
             FakeFeatureModule()

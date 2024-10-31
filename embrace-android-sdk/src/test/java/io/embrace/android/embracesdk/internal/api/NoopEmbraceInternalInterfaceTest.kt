@@ -5,7 +5,7 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.api.delegate.UninitializedSdkInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -16,9 +16,9 @@ import org.junit.Before
 import org.junit.Test
 import java.net.SocketException
 
-internal class UninitializedSdkInternalInterfaceImplTest {
+internal class NoopEmbraceInternalInterfaceTest {
 
-    private lateinit var impl: UninitializedSdkInternalInterfaceImpl
+    private lateinit var impl: NoopEmbraceInternalInterface
     private lateinit var initModule: FakeInitModule
     private lateinit var openTelemetryModule: OpenTelemetryModule
 
@@ -26,7 +26,7 @@ internal class UninitializedSdkInternalInterfaceImplTest {
     fun setUp() {
         initModule = FakeInitModule(clock = FakeClock(currentTime = beforeObjectInitTime))
         openTelemetryModule = initModule.openTelemetryModule
-        impl = UninitializedSdkInternalInterfaceImpl(
+        impl = NoopEmbraceInternalInterface(
             InternalTracer(
                 openTelemetryModule.spanRepository,
                 openTelemetryModule.embraceTracer

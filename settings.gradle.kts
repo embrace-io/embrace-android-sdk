@@ -1,5 +1,6 @@
 include(
     ":embrace-android-api",
+    ":embrace-internal-api",
     ":embrace-android-sdk",
     ":embrace-android-core",
     ":embrace-android-infra",

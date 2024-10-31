@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -12,7 +11,6 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * An implementation of [SpanService] used when the SDK has not been started.
  */
-@InternalApi
 internal class UninitializedSdkSpanService : SpanService {
     private val bufferedCalls = ConcurrentLinkedQueue<BufferedRecordCompletedSpan>()
     private val bufferedCallsCount = AtomicInteger(0)

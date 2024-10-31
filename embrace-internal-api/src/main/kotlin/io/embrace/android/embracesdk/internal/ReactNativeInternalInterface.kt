@@ -1,14 +1,12 @@
 package io.embrace.android.embracesdk.internal
 
 import android.content.Context
-import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Provides an internal interface to Embrace that is intended for use by the React Native SDK as its
  * sole source of communication with the Android SDK.
  * @suppress
  */
-@InternalApi
 interface ReactNativeInternalInterface :
     EmbraceInternalInterface {
 

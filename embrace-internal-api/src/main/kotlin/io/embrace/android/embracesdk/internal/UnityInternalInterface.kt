@@ -1,13 +1,10 @@
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
 /**
  * Provides an internal interface to Embrace that is intended for use by the Embrace Unity SDK as its
  * sole source of communication with the Android SDK.
  * @suppress
  */
-@InternalApi
 interface UnityInternalInterface :
     EmbraceInternalInterface {
 

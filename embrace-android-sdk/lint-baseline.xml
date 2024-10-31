@@ -8,7 +8,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="13"
+            line="14"
             column="13"/>
     </issue>
 
@@ -19,7 +19,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="49"
+            line="50"
             column="31"/>
     </issue>
 
@@ -30,19 +30,8 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="60"
+            line="61"
             column="31"/>
-    </issue>
-
-    <issue
-        id="EmbracePublicApiPackageRule"
-        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
-        errorLine1="final class WebViewChromeClientSwazzledHooks {"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/io/embrace/android/embracesdk/WebViewChromeClientSwazzledHooks.java"
-            line="13"
-            column="13"/>
     </issue>
 
     <issue
@@ -63,7 +52,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="54"
+            line="55"
             column="80"/>
     </issue>
 
@@ -74,7 +63,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="65"
+            line="66"
             column="88"/>
     </issue>
 
@@ -85,7 +74,7 @@
         errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="54"
+            line="55"
             column="40"/>
     </issue>
 
@@ -96,7 +85,7 @@
         errorLine2="                                                                               ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="54"
+            line="55"
             column="80"/>
     </issue>
 
@@ -107,7 +96,7 @@
         errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="65"
+            line="66"
             column="44"/>
     </issue>
 
@@ -118,7 +107,7 @@
         errorLine2="                                                                                       ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/io/embrace/android/embracesdk/ViewSwazzledHooks.java"
-            line="65"
+            line="66"
             column="88"/>
     </issue>
 

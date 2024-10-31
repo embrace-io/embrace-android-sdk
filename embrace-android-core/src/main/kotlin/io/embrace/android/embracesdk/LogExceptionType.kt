@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
 /**
  * Enum representing the type of exception that occurred.
  * NONE is for a native android log, whether have or not an exception.
@@ -9,8 +7,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  *
  * @suppress
  */
-@InternalApi
-public enum class LogExceptionType(public val value: String) {
+enum class LogExceptionType(val value: String) {
     NONE("none"),
     HANDLED("handled"),
     UNHANDLED("unhandled")

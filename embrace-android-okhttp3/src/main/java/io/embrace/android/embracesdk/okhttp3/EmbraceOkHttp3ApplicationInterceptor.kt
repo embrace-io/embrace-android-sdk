@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -22,7 +21,6 @@ import java.io.IOException
  * We used the [EmbraceCustomPathException] to capture the custom path added in the interceptor
  * chain process for client errors on requests to a generic URL like a GraphQL endpoint.
  */
-@InternalApi
 class EmbraceOkHttp3ApplicationInterceptor(
     private val embrace: Embrace,
     private val embraceInternalApi: EmbraceInternalApi

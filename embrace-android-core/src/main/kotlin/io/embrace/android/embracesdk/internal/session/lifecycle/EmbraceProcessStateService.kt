@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class EmbraceProcessStateService(
     private val clock: Clock,
     private val logger: EmbLogger,
-    private val lifecycleOwner: LifecycleOwner
+    private val lifecycleOwner: LifecycleOwner,
 ) : ProcessStateService, LifecycleEventObserver {
 
     /**
@@ -44,12 +44,9 @@ internal class EmbraceProcessStateService(
     init {
         // add lifecycle observer on main thread to avoid IllegalStateExceptions with
         // androidx.lifecycle
-        ThreadUtils.runOnMainThread(
-            logger,
-            Runnable {
-                lifecycleOwner.lifecycle.addObserver(this)
-            }
-        )
+        ThreadUtils.runOnMainThread(logger) {
+            lifecycleOwner.lifecycle.addObserver(this)
+        }
     }
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
@@ -127,6 +124,10 @@ internal class EmbraceProcessStateService(
     override fun getAppState(): String = when {
         isInBackground -> BACKGROUND_STATE
         else -> FOREGROUND_STATE
+    }
+
+    override fun isInitialized(): Boolean {
+        return sessionOrchestrator != null
     }
 
     companion object {

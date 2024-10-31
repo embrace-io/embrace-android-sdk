@@ -19,15 +19,11 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun generateW3cTraceparent ()Ljava/lang/String;
 	public fun getCurrentSessionId ()Ljava/lang/String;
 	public fun getDeviceId ()Ljava/lang/String;
-	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
 	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
-	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
-	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun getTraceIdHeader ()Ljava/lang/String;
-	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 	public fun isStarted ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V

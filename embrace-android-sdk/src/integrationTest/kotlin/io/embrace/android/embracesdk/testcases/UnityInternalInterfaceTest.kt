@@ -4,6 +4,7 @@ package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.AppFramework.UNITY
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -46,7 +47,7 @@ internal class UnityInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
                 }
             },
             assertAction = {
@@ -65,7 +66,7 @@ internal class UnityInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
                 }
                 recordSession()
             },
@@ -85,11 +86,11 @@ internal class UnityInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.unityInternalInterface?.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
+                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData("28.9.1", "unity build id", "1.2.3")
                 }
 
                 recordSession {
-                    embrace.unityInternalInterface?.setUnityMetaData("28.9.2", "new unity build id", "1.2.4")
+                    EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData("28.9.2", "new unity build id", "1.2.4")
                 }
             },
             assertAction = {

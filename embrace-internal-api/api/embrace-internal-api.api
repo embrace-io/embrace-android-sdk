@@ -1,0 +1,72 @@
+public final class io/embrace/android/embracesdk/internal/EmbraceInternalApi : io/embrace/android/embracesdk/internal/InternalInterfaceApi {
+	public static final field Companion Lio/embrace/android/embracesdk/internal/EmbraceInternalApi$Companion;
+	public static field internalInterfaceApi Lio/embrace/android/embracesdk/internal/InternalInterfaceApi;
+	public fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/internal/FlutterInternalInterface;
+	public static final fun getInstance ()Lio/embrace/android/embracesdk/internal/EmbraceInternalApi;
+	public fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
+	public fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/internal/ReactNativeInternalInterface;
+	public fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/internal/UnityInternalInterface;
+}
+
+public final class io/embrace/android/embracesdk/internal/EmbraceInternalApi$Companion {
+	public final fun getInstance ()Lio/embrace/android/embracesdk/internal/EmbraceInternalApi;
+	public final fun getInternalInterfaceApi ()Lio/embrace/android/embracesdk/internal/InternalInterfaceApi;
+	public final fun setInternalInterfaceApi (Lio/embrace/android/embracesdk/internal/InternalInterfaceApi;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface : io/embrace/android/embracesdk/internal/InternalTracingApi {
+	public abstract fun getSdkCurrentTime ()J
+	public abstract fun isAnrCaptureEnabled ()Z
+	public abstract fun isNdkEnabled ()Z
+	public abstract fun isNetworkSpanForwardingEnabled ()Z
+	public abstract fun logComposeTap (Lkotlin/Pair;Ljava/lang/String;)V
+	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
+	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
+	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
+	public abstract fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logInternalError (Ljava/lang/Throwable;)V
+	public abstract fun logTap (Lkotlin/Pair;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType;)V
+	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
+	public abstract fun stopSdk ()V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/FlutterInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logUnhandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setDartVersion (Ljava/lang/String;)V
+	public abstract fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/InternalInterfaceApi {
+	public abstract fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/internal/FlutterInternalInterface;
+	public abstract fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
+	public abstract fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/internal/ReactNativeInternalInterface;
+	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/internal/UnityInternalInterface;
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/ReactNativeInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun logHandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
+	public abstract fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
+	public abstract fun logRnView (Ljava/lang/String;)V
+	public abstract fun logUnhandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setCacheableJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;Z)V
+	public abstract fun setJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;)V
+	public abstract fun setJavaScriptPatchNumber (Ljava/lang/String;)V
+	public abstract fun setReactNativeSdkVersion (Ljava/lang/String;)V
+	public abstract fun setReactNativeVersionNumber (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/internal/UnityInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
+	public abstract fun installUnityThreadSampler ()V
+	public abstract fun logHandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun logUnhandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;)V
+	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public abstract fun setUnityMetaData (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+}
+

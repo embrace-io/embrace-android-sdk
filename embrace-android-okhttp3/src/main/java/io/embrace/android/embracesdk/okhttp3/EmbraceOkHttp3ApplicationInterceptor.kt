@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.annotation.InternalApi
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -21,16 +21,14 @@ import java.io.IOException
  * We used the [EmbraceCustomPathException] to capture the custom path added in the interceptor
  * chain process for client errors on requests to a generic URL like a GraphQL endpoint.
  */
-@InternalApi
-class EmbraceOkHttp3ApplicationInterceptor internal constructor(
-    private val embrace: Embrace
+class EmbraceOkHttp3ApplicationInterceptor(
+    private val embrace: Embrace,
+    private val embraceInternalApi: EmbraceInternalApi
 ) : Interceptor {
-
-    constructor() : this(Embrace.getInstance())
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
-        val startTime = embrace.internalInterface.getSdkCurrentTime()
+        val startTime = embraceInternalApi.internalInterface.getSdkCurrentTime()
         val request: Request = chain.request()
         return try {
             // we are not interested in response, just proceed
@@ -43,11 +41,17 @@ class EmbraceOkHttp3ApplicationInterceptor internal constructor(
                         urlString,
                         HttpMethod.fromString(request.method),
                         startTime,
-                        embrace.internalInterface.getSdkCurrentTime(),
+                        embraceInternalApi.internalInterface.getSdkCurrentTime(),
                         causeName(e, UNKNOWN_EXCEPTION),
                         causeMessage(e, UNKNOWN_MESSAGE),
                         request.header(embrace.traceIdHeader),
-                        if (embrace.internalInterface.isNetworkSpanForwardingEnabled()) request.header(TRACEPARENT_HEADER_NAME) else null,
+                        if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
+                            request.header(
+                                TRACEPARENT_HEADER_NAME
+                            )
+                        } else {
+                            null
+                        },
                         null
                     )
                 )
@@ -64,11 +68,17 @@ class EmbraceOkHttp3ApplicationInterceptor internal constructor(
                         urlString,
                         HttpMethod.fromString(request.method),
                         startTime,
-                        embrace.internalInterface.getSdkCurrentTime(),
+                        embraceInternalApi.internalInterface.getSdkCurrentTime(),
                         errorType ?: UNKNOWN_EXCEPTION,
                         errorMessage ?: UNKNOWN_MESSAGE,
                         request.header(embrace.traceIdHeader),
-                        if (embrace.internalInterface.isNetworkSpanForwardingEnabled()) request.header(TRACEPARENT_HEADER_NAME) else null,
+                        if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
+                            request.header(
+                                TRACEPARENT_HEADER_NAME
+                            )
+                        } else {
+                            null
+                        },
                         null
                     )
                 )

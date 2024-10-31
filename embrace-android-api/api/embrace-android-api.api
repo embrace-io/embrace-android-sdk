@@ -7,13 +7,6 @@ public final class io/embrace/android/embracesdk/AppFramework : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/AppFramework;
 }
 
-public abstract interface class io/embrace/android/embracesdk/FlutterInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
-	public abstract fun logHandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun logUnhandledDartException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun setDartVersion (Ljava/lang/String;)V
-	public abstract fun setEmbraceFlutterSdkVersion (Ljava/lang/String;)V
-}
-
 public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enum {
 	public static final field CLEAN_EXIT Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
@@ -21,35 +14,6 @@ public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enu
 	public final fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LastRunEndState;
 	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
-}
-
-public final class io/embrace/android/embracesdk/LogExceptionType : java/lang/Enum {
-	public static final field HANDLED Lio/embrace/android/embracesdk/LogExceptionType;
-	public static final field NONE Lio/embrace/android/embracesdk/LogExceptionType;
-	public static final field UNHANDLED Lio/embrace/android/embracesdk/LogExceptionType;
-	public final fun getValue ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogExceptionType;
-	public static fun values ()[Lio/embrace/android/embracesdk/LogExceptionType;
-}
-
-public final class io/embrace/android/embracesdk/LogType : java/lang/Enum {
-	public static final field ERROR Lio/embrace/android/embracesdk/LogType;
-	public static final field INFO Lio/embrace/android/embracesdk/LogType;
-	public static final field WARNING Lio/embrace/android/embracesdk/LogType;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LogType;
-	public static fun values ()[Lio/embrace/android/embracesdk/LogType;
-}
-
-public abstract interface class io/embrace/android/embracesdk/ReactNativeInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
-	public abstract fun logHandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
-	public abstract fun logRnAction (Ljava/lang/String;JJLjava/util/Map;ILjava/lang/String;)V
-	public abstract fun logRnView (Ljava/lang/String;)V
-	public abstract fun logUnhandledJsException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun setCacheableJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;Z)V
-	public abstract fun setJavaScriptBundleUrl (Landroid/content/Context;Ljava/lang/String;)V
-	public abstract fun setJavaScriptPatchNumber (Ljava/lang/String;)V
-	public abstract fun setReactNativeSdkVersion (Ljava/lang/String;)V
-	public abstract fun setReactNativeVersionNumber (Ljava/lang/String;)V
 }
 
 public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
@@ -60,60 +24,10 @@ public final class io/embrace/android/embracesdk/Severity : java/lang/Enum {
 	public static fun values ()[Lio/embrace/android/embracesdk/Severity;
 }
 
-public abstract interface class io/embrace/android/embracesdk/UnityInternalInterface : io/embrace/android/embracesdk/internal/EmbraceInternalInterface {
-	public abstract fun installUnityThreadSampler ()V
-	public abstract fun logHandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun logUnhandledUnityException (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;)V
-	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun setUnityMetaData (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
-}
-
-public abstract interface annotation class io/embrace/android/embracesdk/annotation/BetaApi : java/lang/annotation/Annotation {
-}
-
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/InternalApi : java/lang/annotation/Annotation {
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/StartupActivity : java/lang/annotation/Annotation {
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/EmbraceInternalInterface : io/embrace/android/embracesdk/internal/InternalTracingApi {
-	public abstract fun getSdkCurrentTime ()J
-	public abstract fun isAnrCaptureEnabled ()Z
-	public abstract fun isNdkEnabled ()Z
-	public abstract fun isNetworkSpanForwardingEnabled ()Z
-	public abstract fun logComposeTap (Lkotlin/Pair;Ljava/lang/String;)V
-	public abstract fun logError (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;Z)V
-	public abstract fun logHandledException (Ljava/lang/Throwable;Lio/embrace/android/embracesdk/LogType;Ljava/util/Map;[Ljava/lang/StackTraceElement;)V
-	public abstract fun logInfo (Ljava/lang/String;Ljava/util/Map;)V
-	public abstract fun logInternalError (Ljava/lang/String;Ljava/lang/String;)V
-	public abstract fun logInternalError (Ljava/lang/Throwable;)V
-	public abstract fun logTap (Lkotlin/Pair;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType;)V
-	public abstract fun logWarning (Ljava/lang/String;Ljava/util/Map;Ljava/lang/String;)V
-	public abstract fun recordCompletedNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJJJILjava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
-	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
-	public abstract fun recordIncompleteNetworkRequest (Ljava/lang/String;Ljava/lang/String;JJLjava/lang/Throwable;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
-	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
-	public abstract fun shouldCaptureNetworkBody (Ljava/lang/String;Ljava/lang/String;)Z
-	public abstract fun stopSdk ()V
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/InternalTracingApi {
-	public abstract fun addSpanAttribute (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Z
-	public abstract fun addSpanEvent (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
-	public abstract fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;)Z
-	public abstract fun recordSpan (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public abstract fun startSpan (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Ljava/lang/String;
-	public abstract fun stopSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;)Z
-}
-
-public final class io/embrace/android/embracesdk/internal/InternalTracingApi$DefaultImpls {
-	public static synthetic fun addSpanEvent$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;ILjava/lang/Object;)Z
-	public static synthetic fun recordCompletedSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;ILjava/lang/Object;)Z
-	public static synthetic fun recordSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/Object;
-	public static synthetic fun startSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Ljava/lang/String;
-	public static synthetic fun stopSpan$default (Lio/embrace/android/embracesdk/internal/InternalTracingApi;Ljava/lang/String;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/BreadcrumbApi {
@@ -125,13 +39,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Embra
 	public abstract fun start (Landroid/content/Context;)V
 	public abstract fun start (Landroid/content/Context;Lio/embrace/android/embracesdk/AppFramework;)V
 	public abstract fun startView (Ljava/lang/String;)Z
-}
-
-public abstract interface class io/embrace/android/embracesdk/internal/api/InternalInterfaceApi {
-	public abstract fun getFlutterInternalInterface ()Lio/embrace/android/embracesdk/FlutterInternalInterface;
-	public abstract fun getInternalInterface ()Lio/embrace/android/embracesdk/internal/EmbraceInternalInterface;
-	public abstract fun getReactNativeInternalInterface ()Lio/embrace/android/embracesdk/ReactNativeInternalInterface;
-	public abstract fun getUnityInternalInterface ()Lio/embrace/android/embracesdk/UnityInternalInterface;
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/InternalWebViewApi {
@@ -169,7 +76,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/OTelA
 	public abstract fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 }
 
-public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalInterfaceApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
+public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/InternalWebViewApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/SessionApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/spans/TracingApi {
 }
 
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
@@ -250,18 +157,6 @@ public final class io/embrace/android/embracesdk/internal/network/http/NetworkCa
 	public final fun getResponseHeaders ()Ljava/util/Map;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/embrace/android/embracesdk/internal/payload/TapBreadcrumb {
-	public fun <init> ()V
-}
-
-public final class io/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType : java/lang/Enum {
-	public static final field LONG_PRESS Lio/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType;
-	public static final field TAP Lio/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType;
-	public final fun getValue ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType;
-	public static fun values ()[Lio/embrace/android/embracesdk/internal/payload/TapBreadcrumb$TapBreadcrumbType;
 }
 
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {

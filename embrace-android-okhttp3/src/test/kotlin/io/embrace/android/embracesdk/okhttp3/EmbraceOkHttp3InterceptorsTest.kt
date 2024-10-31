@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -72,6 +73,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private lateinit var postNetworkInterceptorTestInterceptor: Interceptor
     private lateinit var okHttpClient: OkHttpClient
     private lateinit var mockEmbrace: Embrace
+    private lateinit var mockEmbraceInternalApi: EmbraceInternalApi
     private lateinit var mockInternalInterface: EmbraceInternalInterface
     private lateinit var getRequestBuilder: Request.Builder
     private lateinit var postRequestBuilder: Request.Builder
@@ -88,19 +90,20 @@ internal class EmbraceOkHttp3InterceptorsTest {
     fun setup() {
         server = MockWebServer()
         mockEmbrace = mockk(relaxed = true)
+        mockEmbraceInternalApi = mockk(relaxed = true)
         mockInternalInterface = mockk(relaxed = true)
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "POST") } answers { true }
         every { mockInternalInterface.shouldCaptureNetworkBody(any(), "GET") } answers { false }
         every { mockInternalInterface.isNetworkSpanForwardingEnabled() } answers { isNetworkSpanForwardingEnabled }
         every { mockInternalInterface.getSdkCurrentTime() } answers { FAKE_SDK_TIME }
-        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace)
+        applicationInterceptor = EmbraceOkHttp3ApplicationInterceptor(mockEmbrace, mockEmbraceInternalApi)
         preNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> preNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> preNetworkInterceptorAfterResponseSupplier.invoke(response) }
         )
         mockSystemClock = mockk(relaxed = true)
         every { mockSystemClock.now() } answers { FAKE_SYSTEM_TIME }
-        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockSystemClock)
+        networkInterceptor = EmbraceOkHttp3NetworkInterceptor(mockEmbrace, mockEmbraceInternalApi, mockSystemClock)
         postNetworkInterceptorTestInterceptor = TestInspectionInterceptor(
             beforeRequestSent = { request -> postNetworkInterceptorBeforeRequestSupplier.invoke(request) },
             afterResponseReceived = { response -> postNetworkInterceptorAfterResponseSupplier.invoke(response) }
@@ -123,7 +126,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         every { mockEmbrace.isStarted } answers { isSDKStarted }
         every { mockEmbrace.recordNetworkRequest(capture(capturedEmbraceNetworkRequest)) } answers { }
         every { mockEmbrace.generateW3cTraceparent() } answers { GENERATED_TRACEPARENT }
-        every { mockEmbrace.internalInterface } answers { mockInternalInterface }
+        every { mockEmbraceInternalApi.internalInterface } answers { mockInternalInterface }
         isSDKStarted = true
         isNetworkSpanForwardingEnabled = false
     }

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansByName
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -52,9 +53,9 @@ internal class ReactNativeInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
-                    embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
-                    embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.1")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeSdkVersion("1.2.3")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setJavaScriptPatchNumber("666")
                 }
             },
             assertAction = {
@@ -73,9 +74,9 @@ internal class ReactNativeInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
-                    embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
-                    embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.1")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeSdkVersion("1.2.3")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setJavaScriptPatchNumber("666")
                 }
 
                 recordSession()
@@ -96,15 +97,15 @@ internal class ReactNativeInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.1")
-                    embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.3")
-                    embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("666")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.1")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeSdkVersion("1.2.3")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setJavaScriptPatchNumber("666")
                 }
 
                 recordSession {
-                    embrace.reactNativeInternalInterface?.setReactNativeVersionNumber("28.9.2")
-                    embrace.reactNativeInternalInterface?.setReactNativeSdkVersion("1.2.4")
-                    embrace.reactNativeInternalInterface?.setJavaScriptPatchNumber("999")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.2")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeSdkVersion("1.2.4")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.setJavaScriptPatchNumber("999")
                 }
             },
             assertAction = {
@@ -124,7 +125,7 @@ internal class ReactNativeInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.logRnAction(
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnAction(
                         "MyAction",
                         1000,
                         5000,
@@ -164,9 +165,9 @@ internal class ReactNativeInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnView("HomeScreen")
                     clock.tick(1000)
-                    embrace.reactNativeInternalInterface?.logRnView("DetailsScreen")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnView("DetailsScreen")
                 }
             },
             assertAction = {
@@ -198,9 +199,9 @@ internal class ReactNativeInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnView("HomeScreen")
                     clock.tick(1000)
-                    embrace.reactNativeInternalInterface?.logRnView("HomeScreen")
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnView("HomeScreen")
                 }
             },
             assertAction = {

@@ -3,7 +3,6 @@
 package io.embrace.android.embracesdk.internal
 
 import io.embrace.android.embracesdk.LogType
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -12,12 +11,11 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
  * Provides an internal interface to Embrace that is intended for use by hosted SDKs as their sole source of communication
  * with the Android SDK. This is not publicly supported and methods can change at any time.
  */
-@InternalApi
-public interface EmbraceInternalInterface : InternalTracingApi {
+interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.logInfo]
      */
-    public fun logInfo(
+    fun logInfo(
         message: String,
         properties: Map<String, Any>?
     )
@@ -25,7 +23,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.logWarning]
      */
-    public fun logWarning(
+    fun logWarning(
         message: String,
         properties: Map<String, Any>?,
         stacktrace: String?
@@ -34,7 +32,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.logError]
      */
-    public fun logError(
+    fun logError(
         message: String,
         properties: Map<String, Any>?,
         stacktrace: String?,
@@ -44,7 +42,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * Backwards compatible way for hosted SDKs to log a handled exception with different log levels
      */
-    public fun logHandledException(
+    fun logHandledException(
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
@@ -54,7 +52,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.recordNetworkRequest]
      */
-    public fun recordCompletedNetworkRequest(
+    fun recordCompletedNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -69,7 +67,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.recordNetworkRequest]
      */
-    public fun recordIncompleteNetworkRequest(
+    fun recordIncompleteNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -82,7 +80,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
     /**
      * See [Embrace.recordNetworkRequest]
      */
-    public fun recordIncompleteNetworkRequest(
+    fun recordIncompleteNetworkRequest(
         url: String,
         httpMethod: String,
         startTime: Long,
@@ -98,7 +96,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
      *
      * @param embraceNetworkRequest the request to be recorded
      */
-    public fun recordNetworkRequest(
+    fun recordNetworkRequest(
         embraceNetworkRequest: EmbraceNetworkRequest
     )
 
@@ -109,7 +107,7 @@ public interface EmbraceInternalInterface : InternalTracingApi {
      * @param elementName the name of the element which was tapped
      * @param type        the type of tap that occurred
      */
-    public fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType)
+    fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType)
 
     /**
      * Logs a tap on a Compose screen element.
@@ -117,46 +115,46 @@ public interface EmbraceInternalInterface : InternalTracingApi {
      * @param point       the coordinates of the screen tap
      * @param elementName the name of the element which was tapped
      */
-    public fun logComposeTap(point: Pair<Float, Float>, elementName: String)
+    fun logComposeTap(point: Pair<Float, Float>, elementName: String)
 
     /**
      * For the given URL and method, whether the response body should be captured for network request logging
      */
-    public fun shouldCaptureNetworkBody(url: String, method: String): Boolean
+    fun shouldCaptureNetworkBody(url: String, method: String): Boolean
 
     /**
      * Whether the Network Span Forwarding feature is enabled
      */
-    public fun isNetworkSpanForwardingEnabled(): Boolean
+    fun isNetworkSpanForwardingEnabled(): Boolean
 
     /**
      * Return internal time the SDK is using in milliseconds. It is equivalent to [System.currentTimeMillis] assuming the system clock did
      * not change after the SDK has started.
      */
-    public fun getSdkCurrentTime(): Long
+    fun getSdkCurrentTime(): Long
 
     /**
      * Whether the ANR capture service is enabled
      */
-    public fun isAnrCaptureEnabled(): Boolean
+    fun isAnrCaptureEnabled(): Boolean
 
     /**
      * Whether the native crash capture is enabled
      */
-    public fun isNdkEnabled(): Boolean
+    fun isNdkEnabled(): Boolean
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
-    public fun logInternalError(message: String?, details: String?)
+    fun logInternalError(message: String?, details: String?)
 
     /**
      * Logs an internal error to the Embrace SDK - this is not intended for public use.
      */
-    public fun logInternalError(error: Throwable)
+    fun logInternalError(error: Throwable)
 
     /**
      * Stop the Embrace SDK and disable its functionality
      */
-    public fun stopSdk()
+    fun stopSdk()
 }

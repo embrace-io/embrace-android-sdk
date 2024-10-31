@@ -16,6 +16,5 @@ public interface SdkApi :
     EmbraceAndroidApi,
     SdkStateApi,
     OTelApi,
-    InternalInterfaceApi,
     BreadcrumbApi,
     InternalWebViewApi

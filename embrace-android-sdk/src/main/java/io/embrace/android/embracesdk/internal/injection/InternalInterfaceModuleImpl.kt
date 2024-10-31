@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.FlutterInternalInterface
-import io.embrace.android.embracesdk.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.FlutterInternalInterface
+import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
+import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl

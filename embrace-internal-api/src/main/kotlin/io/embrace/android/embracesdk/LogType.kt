@@ -7,7 +7,7 @@ package io.embrace.android.embracesdk
  * Will flag the message as one of info, warning, or error for filtering on the dashboard
  */
 @Deprecated("")
-public enum class LogType {
+enum class LogType {
     INFO,
     WARNING,
     ERROR

@@ -1,21 +1,19 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal
 
 import android.content.Context
-import io.embrace.android.embracesdk.annotation.InternalApi
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 
 /**
  * Provides an internal interface to Embrace that is intended for use by the React Native SDK as its
  * sole source of communication with the Android SDK.
  * @suppress
  */
-@InternalApi
-public interface ReactNativeInternalInterface : EmbraceInternalInterface {
+interface ReactNativeInternalInterface :
+    EmbraceInternalInterface {
 
     /**
      * @suppress
      */
-    public fun logUnhandledJsException(
+    fun logUnhandledJsException(
         name: String,
         message: String,
         type: String?,
@@ -25,7 +23,7 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
-    public fun logHandledJsException(
+    fun logHandledJsException(
         name: String,
         message: String,
         properties: Map<String, Any>,
@@ -35,17 +33,17 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
-    public fun setJavaScriptPatchNumber(number: String?)
+    fun setJavaScriptPatchNumber(number: String?)
 
     /**
      * @suppress
      */
-    public fun setReactNativeSdkVersion(version: String?)
+    fun setReactNativeSdkVersion(version: String?)
 
     /**
      * @suppress
      */
-    public fun setReactNativeVersionNumber(version: String?)
+    fun setReactNativeVersionNumber(version: String?)
 
     /**
      * Sets the React Native Bundle URL.
@@ -53,7 +51,7 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
      * @param url the JavaScript bundle URL
      * @suppress
      */
-    public fun setJavaScriptBundleUrl(context: Context, url: String)
+    fun setJavaScriptBundleUrl(context: Context, url: String)
 
     /**
      * Sets the React Native Bundle URL, indicating if the bundle was updated or not.
@@ -64,13 +62,13 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
      * @param didUpdate if the bundle was updated
      * @suppress
      */
-    public fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean)
+    fun setCacheableJavaScriptBundleUrl(context: Context, url: String, didUpdate: Boolean)
 
     /**
      * Logs a React Native Redux Action - this is not intended for public use.
      * @suppress
      */
-    public fun logRnAction(
+    fun logRnAction(
         name: String,
         startTime: Long,
         endTime: Long,
@@ -88,5 +86,5 @@ public interface ReactNativeInternalInterface : EmbraceInternalInterface {
      * @param screen the name of the view to log
      * @suppress
      */
-    public fun logRnView(screen: String)
+    fun logRnView(screen: String)
 }

@@ -6,15 +6,14 @@ import com.google.firebase.messaging.RemoteMessage;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi;
 
-@InternalApi
 public final class FirebaseSwazzledHooks {
 
     private FirebaseSwazzledHooks() {
     }
 
     @SuppressWarnings("MethodNameCheck")
-    @InternalApi
     public static void _onMessageReceived(@NonNull RemoteMessage message) {
         if (!Embrace.getInstance().isStarted()) {
             return;
@@ -100,6 +99,6 @@ public final class FirebaseSwazzledHooks {
     }
 
     private static void logError(@NonNull Exception e) {
-        Embrace.getInstance().getInternalInterface().logInternalError(e);
+        EmbraceInternalApi.getInstance().getInternalInterface().logInternalError(e);
     }
 }

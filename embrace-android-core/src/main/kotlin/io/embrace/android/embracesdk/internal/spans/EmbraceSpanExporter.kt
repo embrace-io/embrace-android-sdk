@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.sdk.common.CompletableResultCode
@@ -10,7 +9,6 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
 /**
  * Exports the given completed [Span] to the given [SpanSink] as well as any configured external [SpanExporter]
  */
-@InternalApi
 internal class EmbraceSpanExporter(
     private val spanSink: SpanSink,
     private val externalSpanExporter: SpanExporter

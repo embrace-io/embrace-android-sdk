@@ -4,12 +4,14 @@ public final class io/embrace/android/embracesdk/okhttp3/EmbraceCustomPathExcept
 }
 
 public final class io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3ApplicationInterceptor : okhttp3/Interceptor {
-	public fun <init> ()V
+	public fun <init> (Lio/embrace/android/embracesdk/Embrace;Lio/embrace/android/embracesdk/internal/EmbraceInternalApi;)V
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 }
 
 public final class io/embrace/android/embracesdk/okhttp3/EmbraceOkHttp3NetworkInterceptor : okhttp3/Interceptor {
-	public fun <init> ()V
+	public fun <init> (Lio/embrace/android/embracesdk/Embrace;Lio/embrace/android/embracesdk/internal/EmbraceInternalApi;)V
+	public fun <init> (Lio/embrace/android/embracesdk/Embrace;Lio/embrace/android/embracesdk/internal/EmbraceInternalApi;Lio/embrace/android/embracesdk/internal/clock/Clock;)V
+	public synthetic fun <init> (Lio/embrace/android/embracesdk/Embrace;Lio/embrace/android/embracesdk/internal/EmbraceInternalApi;Lio/embrace/android/embracesdk/internal/clock/Clock;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun intercept (Lokhttp3/Interceptor$Chain;)Lokhttp3/Response;
 }
 

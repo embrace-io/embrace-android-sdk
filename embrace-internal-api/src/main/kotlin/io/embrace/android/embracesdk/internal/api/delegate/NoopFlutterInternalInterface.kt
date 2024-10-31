@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import io.embrace.android.embracesdk.FlutterInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.FlutterInternalInterface
 
 internal class NoopFlutterInternalInterface(
     private val delegate: EmbraceInternalInterface,

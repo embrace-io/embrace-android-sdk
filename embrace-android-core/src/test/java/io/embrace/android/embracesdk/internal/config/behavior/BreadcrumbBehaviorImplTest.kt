@@ -30,7 +30,7 @@ internal class BreadcrumbBehaviorImplTest {
             assertEquals(100, getViewBreadcrumbLimit())
             assertEquals(100, getWebViewBreadcrumbLimit())
             assertEquals(100, getFragmentBreadcrumbLimit())
-            assertTrue(isViewClickCoordinateCaptureEnabled())
+            assertFalse(isViewClickCoordinateCaptureEnabled())
             assertTrue(isActivityBreadcrumbCaptureEnabled())
             assertTrue(isWebViewBreadcrumbCaptureEnabled())
             assertTrue(isWebViewBreadcrumbQueryParamCaptureEnabled())

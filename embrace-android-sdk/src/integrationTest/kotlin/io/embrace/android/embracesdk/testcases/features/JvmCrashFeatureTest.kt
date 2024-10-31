@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertOtelLogRecei
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -47,6 +48,7 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
+                assertEquals(0, session.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     state = "foreground",
                     crashId = session.getCrashedId()
@@ -63,6 +65,7 @@ internal class JvmCrashFeatureTest {
             },
             assertAction = {
                 val ba = getSingleSessionEnvelope(ApplicationState.BACKGROUND)
+                assertEquals(0, ba.data.spanSnapshots?.size)
                 getSingleLogEnvelope().getLastLog().assertCrash(
                     crashId = ba.getCrashedId()
                 )

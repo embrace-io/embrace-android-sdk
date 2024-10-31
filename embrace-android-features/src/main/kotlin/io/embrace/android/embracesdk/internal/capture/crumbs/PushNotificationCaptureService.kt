@@ -43,7 +43,7 @@ class PushNotificationCaptureService(
             }
 
         fun extractDeveloperDefinedPayload(bundle: Bundle): Map<String, String> {
-            val keySet = bundle.keySet() ?: return emptyMap()
+            val keySet = bundle.keySet()?.toSet() ?: return emptyMap()
             return keySet.filter {
                 // let's filter all google reserved words, leaving us with user defined keys
                 !it.startsWith(RESERVED_PREFIX_PAYLOAD_KEYS) &&

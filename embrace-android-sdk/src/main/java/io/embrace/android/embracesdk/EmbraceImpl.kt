@@ -45,6 +45,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.TaskPriority
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -96,6 +97,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     private val logger by lazy { bootstrapper.initModule.logger }
     private val customAppId: String?
         get() = sdkStateApiDelegate.customAppId
+    private val sdkShuttingDown = AtomicBoolean(false)
 
     /**
      * The application being instrumented by the SDK.
@@ -282,14 +284,16 @@ internal class EmbraceImpl @JvmOverloads constructor(
      * Shuts down the Embrace SDK.
      */
     fun stop() {
-        if (sdkCallChecker.started.compareAndSet(true, false)) {
-            logger.logInfo("Shutting down Embrace SDK")
-            runCatching {
-                application?.let {
-                    unregisterComposeActivityListener(it)
+        synchronized(sdkCallChecker) {
+            if (sdkShuttingDown.compareAndSet(false, true)) {
+                logger.logInfo("Shutting down Embrace SDK")
+                runCatching {
+                    application?.let {
+                        unregisterComposeActivityListener(it)
+                    }
+                    application = null
+                    bootstrapper.stopServices()
                 }
-                application = null
-                bootstrapper.stopServices()
             }
         }
     }

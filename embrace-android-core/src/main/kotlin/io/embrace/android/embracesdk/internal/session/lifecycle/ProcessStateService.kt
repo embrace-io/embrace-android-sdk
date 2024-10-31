@@ -41,4 +41,9 @@ interface ProcessStateService : LifecycleEventObserver, Closeable {
      * @return the current state of the app
      */
     fun getAppState(): String
+
+    /**
+     * Returns true if this is fully initialized
+     */
+    fun isInitialized(): Boolean
 }

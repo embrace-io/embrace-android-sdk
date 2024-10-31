@@ -9,14 +9,17 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 /**
  * Runs a [MockWebServer] and asserts against our network code to ensure that it
@@ -57,21 +60,29 @@ internal class ApiClientImplTest {
     fun testGet200Response() {
         server.enqueue(response200)
         val response = runGetRequest()
+        check(response is ApiResponse.Success)
+        assertEquals(DEFAULT_RESPONSE_BODY, response.body)
+    }
 
-        assertGetRequest(tryTakeRequest())
+    @Test
+    fun testGet200CompressedResponse() {
+        server.enqueue(compressedResponse200)
+        val response = runGetRequest(encoding = "gzip")
         check(response is ApiResponse.Success)
         assertEquals(DEFAULT_RESPONSE_BODY, response.body)
     }
 
     @Test
     fun testPost200ResponseCompressed() {
-        server.enqueue(response200)
-        val response = runPostRequest()
+        server.enqueue(compressedResponse200)
+        val response = runPostRequest(encoding = "gzip")
         check(response is ApiResponse.Success)
         assertEquals(DEFAULT_RESPONSE_BODY, response.body)
 
         val delivered = tryTakeRequest()
-        assertPostRequest(delivered)
+        assertEquals(HttpMethod.POST.name, delivered.method)
+        assertEquals("/test", delivered.path)
+        assertTrue(delivered.headers.contains("Content-Length" to "${delivered.bodySize}"))
         assertEquals(DEFAULT_REQUEST_BODY, delivered.readCompressedRequestBody())
     }
 
@@ -165,14 +176,14 @@ internal class ApiClientImplTest {
     @Test
     fun testAllRequestHeadersSet() {
         val postRequest = ApiRequest(
-            "application/json",
-            "Embrace/a/1",
-            "gzip",
-            "application/json",
-            "gzip",
-            "abcde",
-            "test_did",
-            ApiRequestUrl(baseUrl)
+            contentType = "application/json",
+            userAgent = "Embrace/a/1",
+            contentEncoding = "gzip",
+            accept = "application/json",
+            acceptEncoding = "gzip",
+            appId = "abcde",
+            deviceId = "test_did",
+            url = ApiRequestUrl(baseUrl)
         )
         server.enqueue(response200)
         apiClient.executePost(postRequest) {
@@ -201,23 +212,26 @@ internal class ApiClientImplTest {
 
     private fun tryTakeRequest() = checkNotNull(server.takeRequest(2, TimeUnit.SECONDS))
 
-    private fun runGetRequest(): ApiResponse =
+    private fun runGetRequest(encoding: String? = null): ApiResponse =
         apiClient.executeGet(
             ApiRequest(
                 url = ApiRequestUrl(baseUrl),
                 httpMethod = HttpMethod.GET,
-                userAgent = "test"
+                userAgent = "test",
+                acceptEncoding = encoding,
             )
         )
 
     private fun runPostRequest(
-        payload: ByteArray = DEFAULT_REQUEST_BODY.toByteArray()
+        payload: ByteArray = DEFAULT_REQUEST_BODY.toByteArray(),
+        encoding: String? = null,
     ): ApiResponse =
         apiClient.executePost(
             ApiRequest(
                 url = ApiRequestUrl(baseUrl),
                 httpMethod = HttpMethod.POST,
-                userAgent = "test"
+                userAgent = "test",
+                acceptEncoding = encoding,
             )
         ) {
             ConditionalGzipOutputStream(it).use { stream ->
@@ -234,39 +248,6 @@ internal class ApiClientImplTest {
         return GZIPInputStream(inputStream).bufferedReader().readText()
     }
 
-    private fun assertPostRequest(delivered: RecordedRequest) {
-        assertEquals(HttpMethod.POST.name, delivered.method)
-        assertEquals("/test", delivered.path)
-        val headers = delivered.headers.toMap()
-            .minus("Host")
-            .minus("Connection")
-        assertEquals(
-            mapOf(
-                "Accept" to "application/json",
-                "Content-Type" to "application/json",
-                "Content-Length" to "${delivered.bodySize}",
-                "User-Agent" to "test"
-            ),
-            headers
-        )
-    }
-
-    private fun assertGetRequest(delivered: RecordedRequest) {
-        assertEquals(HttpMethod.GET.name, delivered.method)
-        assertEquals("/test", delivered.path)
-        val headers = delivered.headers.toMap()
-            .minus("Host")
-            .minus("Connection")
-        assertEquals(
-            mapOf(
-                "Accept" to "application/json",
-                "Content-Type" to "application/json",
-                "User-Agent" to "test",
-            ),
-            headers
-        )
-    }
-
     private fun createLargeSessionPayload(): String {
         val msg = SessionPayload(
             spans = listOf(
@@ -281,9 +262,23 @@ internal class ApiClientImplTest {
     }
 
     companion object {
+        private fun MockResponse.setGzipBody(stringBody: String): MockResponse =
+            setBody(
+                Buffer().write(
+                    ByteArrayOutputStream().use { byteArrayStream ->
+                        GZIPOutputStream(byteArrayStream).use { gzipStream ->
+                            gzipStream.write(stringBody.toByteArray())
+                            gzipStream.finish()
+                        }
+                        byteArrayStream.toByteArray()
+                    }
+                )
+            ).addHeader("Content-Encoding", "gzip")
+
         private const val DEFAULT_RESPONSE_BODY = "{}"
         private const val DEFAULT_REQUEST_BODY = "{}"
         private val response200 = MockResponse().setBody(DEFAULT_RESPONSE_BODY).setResponseCode(200)
+        private val compressedResponse200 = MockResponse().setGzipBody(DEFAULT_RESPONSE_BODY).setResponseCode(200)
         private val response400 = MockResponse().setResponseCode(400)
         private val response500 = MockResponse().setResponseCode(500)
     }

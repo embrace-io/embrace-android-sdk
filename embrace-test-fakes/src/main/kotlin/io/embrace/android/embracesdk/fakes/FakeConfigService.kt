@@ -53,7 +53,7 @@ class FakeConfigService(
         listeners.add(configListener)
     }
 
-    override fun isSdkDisabled(): Boolean = sdkDisabled
+    override fun isSdkDisabled(): Boolean = sdkDisabled || sdkModeBehavior.isSdkDisabled()
 
     override fun isBackgroundActivityCaptureEnabled(): Boolean = backgroundActivityCaptureEnabled
 

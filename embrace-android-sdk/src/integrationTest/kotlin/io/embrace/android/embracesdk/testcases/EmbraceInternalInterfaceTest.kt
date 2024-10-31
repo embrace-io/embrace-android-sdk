@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansByName
+import io.embrace.android.embracesdk.fakes.behavior.FakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -293,6 +294,19 @@ internal class EmbraceInternalInterfaceTest {
                     assertEquals(spans["tz-parent-span"]?.spanId, parentSpanId)
                 }
                 assertNotNull(spans["tz-old-span"])
+            }
+        )
+    }
+
+    @Test
+    fun `SDK will not start if feature flag has it being disabled`() {
+        testRule.runTest(
+            expectSdkToStart = false,
+            setupAction = {
+                overriddenConfigService.sdkModeBehavior = FakeSdkModeBehavior(sdkDisabled = true)
+            },
+            testCaseAction = {
+                assertFalse(embrace.isStarted)
             }
         )
     }

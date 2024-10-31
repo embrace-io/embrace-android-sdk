@@ -48,11 +48,15 @@ class AutoDataCaptureBehaviorImpl(
     override fun isNativeCrashCaptureEnabled(): Boolean = cfg.isNativeCrashCaptureEnabled()
     override fun isDiskUsageCaptureEnabled(): Boolean = cfg.isDiskUsageCaptureEnabled()
 
-    override fun isV2StorageEnabled(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.v2StoragePct)
-            ?: V2_STORAGE_ENABLED_DEFAULT
+    private val v2StorageImpl by lazy {
+        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.v2StoragePct) ?: V2_STORAGE_ENABLED_DEFAULT
+    }
 
-    override fun shouldUseOkHttp(): Boolean =
-        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.useOkHttpPct)
-            ?: USE_OKHTTP_DEFAULT
+    override fun isV2StorageEnabled(): Boolean = v2StorageImpl
+
+    private val shouldUseOkHttpImpl by lazy {
+        thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.useOkHttpPct) ?: USE_OKHTTP_DEFAULT
+    }
+
+    override fun shouldUseOkHttp(): Boolean = shouldUseOkHttpImpl
 }

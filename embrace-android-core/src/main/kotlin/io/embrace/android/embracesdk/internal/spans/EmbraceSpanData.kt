@@ -25,7 +25,7 @@ data class EmbraceSpanData(
 
     val events: List<EmbraceSpanEvent> = emptyList(),
 
-    val attributes: Map<String, String> = emptyMap()
+    val attributes: Map<String, String> = emptyMap(),
 ) {
 
     companion object {

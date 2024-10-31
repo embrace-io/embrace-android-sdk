@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 class RnActionDataSource(
     breadcrumbBehavior: BreadcrumbBehavior,
     spanService: SpanService,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : SpanDataSourceImpl(
     spanService,
     logger,
@@ -22,7 +22,7 @@ class RnActionDataSource(
         endTime: Long,
         properties: Map<String?, Any?>,
         bytesSent: Int,
-        output: String?
+        output: String?,
     ): Boolean = captureSpanData(
         countsTowardsLimits = true,
         inputValidation = { !name.isNullOrEmpty() },

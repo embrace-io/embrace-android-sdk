@@ -123,7 +123,7 @@ internal class PayloadFactorySessionTest {
     }
 
     private fun initializeSessionService(
-        isActivityInBackground: Boolean = true
+        isActivityInBackground: Boolean = true,
     ) {
         processStateService.isInBackground = isActivityInBackground
 

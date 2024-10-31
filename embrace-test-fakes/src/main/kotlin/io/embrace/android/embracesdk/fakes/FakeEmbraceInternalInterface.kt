@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 
 class FakeEmbraceInternalInterface(
     var networkSpanForwardingEnabled: Boolean = false,
-    var captureNetworkBody: Boolean = false
+    var captureNetworkBody: Boolean = false,
 ) : EmbraceInternalInterface {
 
     var networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
@@ -30,7 +30,7 @@ class FakeEmbraceInternalInterface(
         message: String,
         properties: Map<String, Any>?,
         stacktrace: String?,
-        isException: Boolean
+        isException: Boolean,
     ) {
     }
 
@@ -38,7 +38,7 @@ class FakeEmbraceInternalInterface(
         throwable: Throwable,
         type: LogType,
         properties: Map<String, Any>?,
-        customStackTrace: Array<StackTraceElement>?
+        customStackTrace: Array<StackTraceElement>?,
     ) {
     }
 
@@ -51,7 +51,7 @@ class FakeEmbraceInternalInterface(
         bytesReceived: Long,
         statusCode: Int,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
     }
 
@@ -62,7 +62,7 @@ class FakeEmbraceInternalInterface(
         endTime: Long,
         error: Throwable?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
     }
 
@@ -74,7 +74,7 @@ class FakeEmbraceInternalInterface(
         errorType: String?,
         errorMessage: String?,
         traceId: String?,
-        networkCaptureData: NetworkCaptureData?
+        networkCaptureData: NetworkCaptureData?,
     ) {
     }
 
@@ -118,7 +118,7 @@ class FakeEmbraceInternalInterface(
         spanId: String,
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>?
+        attributes: Map<String, String>?,
     ): Boolean {
         return true
     }
@@ -132,7 +132,7 @@ class FakeEmbraceInternalInterface(
         parentSpanId: String?,
         attributes: Map<String, String>?,
         events: List<Map<String, Any>>?,
-        code: () -> T
+        code: () -> T,
     ): T {
         return code()
     }
@@ -144,7 +144,7 @@ class FakeEmbraceInternalInterface(
         errorCode: ErrorCode?,
         parentSpanId: String?,
         attributes: Map<String, String>?,
-        events: List<Map<String, Any>>?
+        events: List<Map<String, Any>>?,
     ): Boolean {
         return true
     }

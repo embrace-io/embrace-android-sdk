@@ -25,7 +25,7 @@ internal class SessionOrchestrationModuleImpl(
     dataSourceModule: DataSourceModule,
     payloadSourceModule: PayloadSourceModule,
     startupService: StartupService,
-    logModule: LogModule
+    logModule: LogModule,
 ) : SessionOrchestrationModule {
 
     override val gatingService: GatingService by singleton {

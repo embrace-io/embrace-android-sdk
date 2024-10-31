@@ -13,5 +13,5 @@ data class DiskUsage(
     /**
      * Amount of disk space free on the device in bytes.
      */
-    val deviceDiskFree: Long?
+    val deviceDiskFree: Long?,
 )

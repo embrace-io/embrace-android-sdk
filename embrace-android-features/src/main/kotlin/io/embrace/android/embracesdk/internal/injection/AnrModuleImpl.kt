@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 internal class AnrModuleImpl(
     initModule: InitModule,
     configService: ConfigService,
-    workerModule: WorkerThreadModule
+    workerModule: WorkerThreadModule,
 ) : AnrModule {
 
     private val anrMonitorWorker = workerModule.backgroundWorker(Worker.Background.AnrWatchdogWorker)

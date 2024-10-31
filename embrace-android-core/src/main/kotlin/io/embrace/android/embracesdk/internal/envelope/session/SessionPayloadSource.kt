@@ -10,6 +10,6 @@ interface SessionPayloadSource {
     fun getSessionPayload(
         endType: SessionSnapshotType,
         startNewSession: Boolean,
-        crashId: String? = null
+        crashId: String? = null,
     ): SessionPayload
 }

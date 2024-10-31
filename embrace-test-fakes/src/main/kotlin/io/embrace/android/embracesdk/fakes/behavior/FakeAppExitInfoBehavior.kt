@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavio
 class FakeAppExitInfoBehavior(
     private val traceMaxLimit: Int = 20000000,
     private val enabled: Boolean = true,
-    private val appExitInfoMaxNum: Int = 0
+    private val appExitInfoMaxNum: Int = 0,
 ) : AppExitInfoBehavior {
 
     override fun getTraceMaxLimit(): Int = traceMaxLimit

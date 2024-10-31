@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * to remember to set callbacks & close resources when creating a new service.
  */
 class ServiceRegistry(
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : Closeable {
 
     private val registry = mutableListOf<Lazy<Any?>>()

@@ -18,7 +18,7 @@ import io.opentelemetry.semconv.JvmAttributes
  */
 class AnrOtelMapper(
     private val anrService: AnrService,
-    private val clock: Clock
+    private val clock: Clock,
 ) : DataCaptureServiceOtelConverter {
 
     override fun snapshot(isFinalPayload: Boolean): List<Span> {

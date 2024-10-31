@@ -12,7 +12,7 @@ internal class CrashModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
     androidServicesModule: AndroidServicesModule,
-    private val unityCrashIdProvider: () -> String?
+    private val unityCrashIdProvider: () -> String?,
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {

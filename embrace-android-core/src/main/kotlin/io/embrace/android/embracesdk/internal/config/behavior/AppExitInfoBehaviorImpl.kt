@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class AppExitInfoBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>
+    remoteSupplier: Provider<RemoteConfig?>,
 ) : AppExitInfoBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class LogMessageBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<LogRemoteConfig?>
+    remoteSupplier: Provider<LogRemoteConfig?>,
 ) : LogMessageBehavior, MergedConfigBehavior<UnimplementedConfig, LogRemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

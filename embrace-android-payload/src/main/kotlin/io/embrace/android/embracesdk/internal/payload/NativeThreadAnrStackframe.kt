@@ -26,5 +26,5 @@ data class NativeThreadAnrStackframe(
     /**
      * The result for unwinding this particular stackframe. Non-zero values indicate an error.
      */
-    val result: Int?
+    val result: Int?,
 )

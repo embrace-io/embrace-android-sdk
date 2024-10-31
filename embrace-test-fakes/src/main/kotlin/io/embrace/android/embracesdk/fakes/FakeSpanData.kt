@@ -47,7 +47,7 @@ class FakeSpanData(
     private var links: MutableList<LinkData> = mutableListOf(),
     private var resource: Resource = Resource.empty(),
     var spanStatus: StatusData = StatusData.unset(),
-    var endTimeNanos: Long = 0L
+    var endTimeNanos: Long = 0L,
 ) : SpanData {
     override fun getName(): String = name
     override fun getKind(): SpanKind = kind

@@ -290,7 +290,13 @@ internal class EmbraceTracerTest {
         val eventTimeNanos = clock.nowInNanos()
         clock.tick(10L)
         assertTrue(span.addEvent(name = "first event", timestampMs = eventTimeNanos, attributes = null))
-        assertTrue(span.addEvent(name = "second event", timestampMs = eventTimeNanos, attributes = mapOf("key" to "value")))
+        assertTrue(
+            span.addEvent(
+                name = "second event",
+                timestampMs = eventTimeNanos,
+                attributes = mapOf("key" to "value")
+            )
+        )
         assertTrue(span.stop())
         with(verifyPublicSpan("my-span")) {
             assertEquals(2, events.size)
@@ -339,7 +345,11 @@ internal class EmbraceTracerTest {
         }
     }
 
-    private fun verifyPublicSpan(name: String, traceRoot: Boolean = true, errorCode: ErrorCode? = null): EmbraceSpanData {
+    private fun verifyPublicSpan(
+        name: String,
+        traceRoot: Boolean = true,
+        errorCode: ErrorCode? = null,
+    ): EmbraceSpanData {
         val currentSpans = spanSink.completedSpans()
         assertEquals(1, currentSpans.size)
         val currentSpan = currentSpans[0]

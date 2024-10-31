@@ -14,7 +14,7 @@ import java.io.FilenameFilter
 internal class EmbraceStorageService(
     private val context: Context,
     private val telemetryService: TelemetryService,
-    private val storageAvailabilityChecker: StorageAvailabilityChecker
+    private val storageAvailabilityChecker: StorageAvailabilityChecker,
 ) : StorageService {
 
     private val cacheDirectory: File by lazy {

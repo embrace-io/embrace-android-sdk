@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 class BackgroundActivityBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<BackgroundActivityRemoteConfig?>
+    remoteSupplier: Provider<BackgroundActivityRemoteConfig?>,
 ) : BackgroundActivityBehavior,
     MergedConfigBehavior<UnimplementedConfig, BackgroundActivityRemoteConfig>(
         thresholdCheck = thresholdCheck,

@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.GZIPOutputStream
 
 class FakePayloadStorageService(
-    var currentProcessId: String = "pid"
+    var currentProcessId: String = "pid",
 ) : PayloadStorageService {
     private val serializer = TestPlatformSerializer()
     private val cachedPayloads = LinkedHashMap<StoredTelemetryMetadata, ByteArray>()

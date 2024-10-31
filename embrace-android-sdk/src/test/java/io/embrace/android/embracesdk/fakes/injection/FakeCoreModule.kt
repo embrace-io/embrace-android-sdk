@@ -31,7 +31,7 @@ public class FakeCoreModule(
     override val resources: FakeAndroidResourcesService = FakeAndroidResourcesService(),
     override val isDebug: Boolean = if (isMockKMock(context)) false else AppEnvironment(context.applicationInfo).isDebug,
     override val buildInfoService: BuildInfoService = FakeBuildInfoService(),
-    override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo
+    override val packageVersionInfo: PackageVersionInfo = fakePackageVersionInfo,
 ) : CoreModule {
 
     public companion object {
@@ -49,7 +49,9 @@ public class FakeCoreModule(
         public fun getMockedContext(): Context {
             val mockContext = mockk<Context>(relaxed = true)
             every { mockContext.packageName }.returns(fakePackageVersionInfo.packageName)
-            every { mockContext.packageManager.getPackageInfo(fakePackageVersionInfo.packageName, 0) }.returns(fakePackageInfo)
+            every { mockContext.packageManager.getPackageInfo(fakePackageVersionInfo.packageName, 0) }.returns(
+                fakePackageInfo
+            )
             return mockContext
         }
     }

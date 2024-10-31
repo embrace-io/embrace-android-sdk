@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 
 class FakeCpuInfoDelegate(
     private val cpuName: String? = "fake_cpu",
-    private val egl: String = "fake_egl"
+    private val egl: String = "fake_egl",
 ) : CpuInfoDelegate {
     override fun getCpuName(): String? = cpuName
 

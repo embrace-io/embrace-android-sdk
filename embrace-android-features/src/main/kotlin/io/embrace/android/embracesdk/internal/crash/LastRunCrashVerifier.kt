@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
  */
 class LastRunCrashVerifier(
     private val crashFileMarker: CrashFileMarker,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) {
 
     private var didLastRunCrashFuture: Future<Boolean>? = null

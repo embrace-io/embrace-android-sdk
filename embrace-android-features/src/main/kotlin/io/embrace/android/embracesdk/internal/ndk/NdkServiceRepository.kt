@@ -30,6 +30,6 @@ interface NdkServiceRepository {
         crashFile: File,
         errorFile: File?,
         mapFile: File?,
-        nativeCrash: NativeCrashData?
+        nativeCrash: NativeCrashData?,
     )
 }

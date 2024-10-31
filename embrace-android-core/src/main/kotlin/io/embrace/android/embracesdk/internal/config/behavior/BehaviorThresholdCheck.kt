@@ -7,7 +7,7 @@ import kotlin.math.pow
  * Checks whether a percent-based config value is over a threshold where it should be enabled.
  */
 class BehaviorThresholdCheck(
-    private val deviceIdProvider: Provider<String>
+    private val deviceIdProvider: Provider<String>,
 ) {
 
     /**

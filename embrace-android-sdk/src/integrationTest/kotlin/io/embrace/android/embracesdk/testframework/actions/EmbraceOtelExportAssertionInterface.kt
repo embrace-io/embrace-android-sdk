@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.trace.data.SpanData
  */
 internal class EmbraceOtelExportAssertionInterface(
     private val spanExporter: FilteredSpanExporter,
-    private val validator: ExportedSpanValidator = ExportedSpanValidator()
+    private val validator: ExportedSpanValidator = ExportedSpanValidator(),
 ) {
 
     /**

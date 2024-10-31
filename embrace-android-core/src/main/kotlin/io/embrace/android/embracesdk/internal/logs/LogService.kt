@@ -34,7 +34,7 @@ interface LogService : MemoryCleanerListener {
         context: String? = null,
         library: String? = null,
         exceptionName: String? = null,
-        exceptionMessage: String? = null
+        exceptionMessage: String? = null,
     )
 
     /**

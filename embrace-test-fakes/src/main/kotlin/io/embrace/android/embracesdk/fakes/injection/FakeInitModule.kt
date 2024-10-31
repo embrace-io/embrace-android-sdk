@@ -22,7 +22,7 @@ class FakeInitModule(
         clock = clock,
         logger = logger,
         systemInfo = systemInfo
-    )
+    ),
 ) : InitModule by initModule {
 
     val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule) }

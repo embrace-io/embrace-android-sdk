@@ -22,5 +22,5 @@ data class NetworkRemoteConfig(
      * Map of domain suffix to maximum number of requests.
      */
     @Json(name = "domains")
-    val domainLimits: Map<String, Int>? = null
+    val domainLimits: Map<String, Int>? = null,
 )

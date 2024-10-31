@@ -8,13 +8,13 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 typealias DataSourceModuleSupplier = (
     initModule: InitModule,
     configService: ConfigService,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
 ) -> DataSourceModule
 
 fun createDataSourceModule(
     initModule: InitModule,
     configService: ConfigService,
-    workerThreadModule: WorkerThreadModule
+    workerThreadModule: WorkerThreadModule,
 ): DataSourceModule = DataSourceModuleImpl(
     initModule,
     configService,

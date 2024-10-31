@@ -11,5 +11,5 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 data class PendingApiCall(
     @Json(name = "apiRequest") val apiRequest: ApiRequest,
     @Json(name = "cachedPayload") val cachedPayloadFilename: String,
-    @Json(name = "queueTime") val queueTime: Long? = null
+    @Json(name = "queueTime") val queueTime: Long? = null,
 )

@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
  */
 internal class EmbraceLogRecordExporter(
     private val logSink: LogSink,
-    private val externalLogRecordExporter: LogRecordExporter
+    private val externalLogRecordExporter: LogRecordExporter,
 ) : LogRecordExporter {
     override fun export(logs: Collection<LogRecordData>): CompletableResultCode {
         val result = logSink.storeLogs(logs.toList())

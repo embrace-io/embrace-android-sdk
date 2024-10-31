@@ -25,5 +25,5 @@ data class WebVital(
     val properties: Map<String, Any>? = null,
 
     @Json(name = "s")
-    val score: Double? = null
+    val score: Double? = null,
 )

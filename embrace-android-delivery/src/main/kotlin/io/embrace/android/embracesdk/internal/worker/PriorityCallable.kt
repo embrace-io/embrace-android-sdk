@@ -8,5 +8,5 @@ import java.util.concurrent.Callable
  */
 class PriorityCallable<T>(
     val priorityInfo: Any,
-    impl: Callable<T>
+    impl: Callable<T>,
 ) : Callable<T> by impl

@@ -97,7 +97,7 @@ internal class PriorityThreadPoolExecutorTest {
      */
     private fun <T> createFuture(
         value: T,
-        taskPriority: TaskPriority
+        taskPriority: TaskPriority,
     ) = PriorityRunnableFuture(FutureTask { value }, taskPriority)
 
     /**

@@ -12,7 +12,7 @@ class FakeSessionSpanAttrPopulator : SessionSpanAttrPopulator {
     override fun populateSessionSpanEndAttrs(
         endType: LifeEventType?,
         crashId: String?,
-        coldStart: Boolean
+        coldStart: Boolean,
     ) {
     }
 }

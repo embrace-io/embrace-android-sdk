@@ -14,7 +14,7 @@ class FakeGatingService(private val impl: GatingService? = null) : GatingService
 
     override fun gateSessionEnvelope(
         hasCrash: Boolean,
-        envelope: Envelope<SessionPayload>
+        envelope: Envelope<SessionPayload>,
     ): Envelope<SessionPayload> {
         val filteredMessage = impl?.gateSessionEnvelope(hasCrash, envelope) ?: envelope
         envelopesFiltered.add(filteredMessage)

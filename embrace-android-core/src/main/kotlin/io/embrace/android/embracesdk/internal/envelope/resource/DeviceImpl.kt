@@ -21,7 +21,7 @@ internal class DeviceImpl(
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
     private val cpuInfoDelegate: Provider<CpuInfoDelegate?>,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : Device {
     override var isJailbroken: Boolean? = null
     override var screenResolution: String = ""

@@ -15,7 +15,7 @@ import org.junit.Assert.assertEquals
 fun Resource.assertExpectedAttributes(
     expectedServiceName: String,
     expectedServiceVersion: String,
-    systemInfo: SystemInfo
+    systemInfo: SystemInfo,
 ) {
     assertEquals(expectedServiceName, getAttribute(ServiceAttributes.SERVICE_NAME))
     assertEquals(expectedServiceVersion, getAttribute(ServiceAttributes.SERVICE_VERSION))

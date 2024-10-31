@@ -48,7 +48,7 @@ internal object JsonComparator {
         expectedValue: Any,
         observedValue: Any?,
         mismatches: MutableList<String>,
-        currentPath: String
+        currentPath: String,
     ) {
         if (expectedValue is JSONObject && observedValue is JSONObject) {
             mismatches.addAll(compare(expectedValue, observedValue, currentPath))
@@ -76,7 +76,7 @@ internal object JsonComparator {
     private fun findMissingExpectedKeys(
         observed: JSONObject,
         expected: JSONObject,
-        mismatches: MutableList<String>
+        mismatches: MutableList<String>,
     ) {
         observed.keys().forEach { observedKey ->
             val expectedValue = expected.opt(observedKey)

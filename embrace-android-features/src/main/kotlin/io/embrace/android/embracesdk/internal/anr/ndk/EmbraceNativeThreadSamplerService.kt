@@ -26,7 +26,7 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
     private val worker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
-    private val sharedObjectLoader: SharedObjectLoader
+    private val sharedObjectLoader: SharedObjectLoader,
 ) : NativeThreadSamplerService {
 
     private companion object {
@@ -190,7 +190,7 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
 
     fun containsAllowedStackframes(
         anrBehavior: AnrBehavior,
-        stacktrace: Array<StackTraceElement>
+        stacktrace: Array<StackTraceElement>,
     ): Boolean {
         if (anrBehavior.isNativeThreadAnrSamplingAllowlistIgnored()) {
             return true

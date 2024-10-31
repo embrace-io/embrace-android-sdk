@@ -6,5 +6,5 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class NetworkSpanForwardingRemoteConfig(
     @Json(name = "pct_enabled")
-    val pctEnabled: Float? = null
+    val pctEnabled: Float? = null,
 )

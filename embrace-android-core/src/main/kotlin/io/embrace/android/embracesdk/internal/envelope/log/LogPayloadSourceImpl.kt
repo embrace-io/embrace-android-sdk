@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.logs.LogSink
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
 internal class LogPayloadSourceImpl(
-    private val logSink: LogSink
+    private val logSink: LogSink,
 ) : LogPayloadSource {
 
     override fun getBatchedLogPayload(): LogPayload {

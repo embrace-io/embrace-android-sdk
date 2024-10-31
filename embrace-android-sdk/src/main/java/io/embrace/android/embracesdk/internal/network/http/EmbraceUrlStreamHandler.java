@@ -119,6 +119,7 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
 
     /**
      * If sdk is not started we won't wrap url connection. Instead, we return the original connection.
+     *
      * @param connection
      * @return
      */

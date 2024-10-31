@@ -11,7 +11,7 @@ import kotlin.math.min
  */
 class SdkModeBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>
+    remoteSupplier: Provider<RemoteConfig?>,
 ) : SdkModeBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

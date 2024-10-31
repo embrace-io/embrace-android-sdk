@@ -17,7 +17,7 @@ internal class InternalInterfaceModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     logModule: LogModule,
     embrace: EmbraceImpl,
-    crashModule: CrashModule
+    crashModule: CrashModule,
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by singleton {

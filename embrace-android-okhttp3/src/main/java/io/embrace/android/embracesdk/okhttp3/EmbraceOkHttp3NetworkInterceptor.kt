@@ -36,7 +36,7 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
     private val embrace: Embrace,
     private val embraceInternalApi: EmbraceInternalApi,
     // A clock that mirrors the one used by OkHttp to get timestamps
-    private val systemClock: Clock = Clock { System.currentTimeMillis() }
+    private val systemClock: Clock = Clock { System.currentTimeMillis() },
 ) : Interceptor {
 
     @Throws(IOException::class)
@@ -53,7 +53,12 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
             traceparent = embrace.generateW3cTraceparent()
         }
         val request =
-            if (traceparent == null) originalRequest else originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, traceparent).build()
+            if (traceparent == null) {
+                originalRequest
+            } else {
+                originalRequest.newBuilder()
+                    .header(TRACEPARENT_HEADER_NAME, traceparent).build()
+            }
 
         // Take a snapshot of the difference in the system and SDK clocks and send the request along the chain
         val offset = sdkClockOffset()
@@ -64,7 +69,8 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
 
         if (contentLength == null) {
             // If we get the body for a server-sent events stream, then we will wait forever
-            contentLength = getContentLengthFromBody(networkResponse, networkResponse.header(CONTENT_TYPE_HEADER_NAME, null))
+            contentLength =
+                getContentLengthFromBody(networkResponse, networkResponse.header(CONTENT_TYPE_HEADER_NAME, null))
         }
 
         if (contentLength == null) {
@@ -74,7 +80,8 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
 
         var response: Response = networkResponse
         var networkCaptureData: NetworkCaptureData? = null
-        val shouldCaptureNetworkData = embraceInternalApi.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
+        val shouldCaptureNetworkData =
+            embraceInternalApi.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
 
         // If we need to capture the network response body,
         if (shouldCaptureNetworkData) {
@@ -188,7 +195,8 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
                 }
                 i++
             }
-            dataCaptureErrorMessage = "There were errors in capturing the following part(s) of the network call: %s$errors"
+            dataCaptureErrorMessage =
+                "There were errors in capturing the following part(s) of the network call: %s$errors"
             embraceInternalApi.internalInterface.logInternalError(
                 RuntimeException("Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage", e)
             )
@@ -225,7 +233,10 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
                 return buffer.readByteArray()
             }
         } catch (e: IOException) {
-            embraceInternalApi.internalInterface.logInternalError("Failed to capture okhttp request body.", e.javaClass.toString())
+            embraceInternalApi.internalInterface.logInternalError(
+                "Failed to capture okhttp request body.",
+                e.javaClass.toString()
+            )
         }
         return null
     }

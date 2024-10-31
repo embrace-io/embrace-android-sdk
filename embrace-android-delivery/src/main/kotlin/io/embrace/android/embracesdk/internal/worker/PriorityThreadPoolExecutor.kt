@@ -23,7 +23,7 @@ class PriorityThreadPoolExecutor(
     handler: RejectedExecutionHandler,
     corePoolSize: Int,
     maximumPoolSize: Int,
-    comparator: Comparator<Runnable>
+    comparator: Comparator<Runnable>,
 ) : ThreadPoolExecutor(
     corePoolSize,
     maximumPoolSize,
@@ -44,7 +44,7 @@ class PriorityThreadPoolExecutor(
 
     override fun <T : Any?> newTaskFor(
         runnable: Runnable,
-        value: T
+        value: T,
     ): RunnableFuture<T> {
         require(runnable is PriorityRunnable) {
             "Runnable must be PriorityCallable"

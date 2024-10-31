@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
  */
 class FakeOpenTelemetryClock(
     embraceClock: Clock,
-    private val startingElapsedTimeNanos: Long = 0L
+    private val startingElapsedTimeNanos: Long = 0L,
 ) : io.opentelemetry.sdk.common.Clock {
 
     private val realOpenTelemetryClock = OpenTelemetryClock(embraceClock = embraceClock)

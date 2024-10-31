@@ -39,6 +39,7 @@ internal fun AnrInterval.deepCopy(): AnrInterval {
 }
 
 @CheckResult
-internal fun AnrInterval.clearSamples(): AnrInterval = copy(anrSampleList = null, code = AnrInterval.CODE_SAMPLES_CLEARED)
+internal fun AnrInterval.clearSamples(): AnrInterval =
+    copy(anrSampleList = null, code = AnrInterval.CODE_SAMPLES_CLEARED)
 
 internal fun AnrInterval.hasSamples(): Boolean = code != AnrInterval.CODE_SAMPLES_CLEARED

@@ -24,7 +24,7 @@ class FakeSpanService : SpanService {
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
-        private: Boolean
+        private: Boolean,
     ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
         name = name,
         parentContext = parent?.run { Context.root().with(parent as PersistableEmbraceSpan) } ?: Context.root(),
@@ -36,7 +36,7 @@ class FakeSpanService : SpanService {
     }
 
     override fun createSpan(
-        embraceSpanBuilder: EmbraceSpanBuilder
+        embraceSpanBuilder: EmbraceSpanBuilder,
     ): PersistableEmbraceSpan = FakePersistableEmbraceSpan(
         name = embraceSpanBuilder.spanName,
         parentContext = embraceSpanBuilder.parentContext,
@@ -55,7 +55,7 @@ class FakeSpanService : SpanService {
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-        code: () -> T
+        code: () -> T,
     ): T {
         return code()
     }
@@ -70,7 +70,7 @@ class FakeSpanService : SpanService {
         private: Boolean,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-        errorCode: ErrorCode?
+        errorCode: ErrorCode?,
     ): Boolean {
         createdSpans.add(
             FakePersistableEmbraceSpan(

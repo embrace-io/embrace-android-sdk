@@ -24,7 +24,7 @@ internal class SessionSpanAttrPopulatorImpl(
     private val sessionSpanWriter: SessionSpanWriter,
     private val startupService: StartupService,
     private val logService: LogService,
-    private val metadataService: MetadataService
+    private val metadataService: MetadataService,
 ) : SessionSpanAttrPopulator {
 
     override fun populateSessionSpanStartAttrs(session: SessionZygote) {

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.UserInfo
 
 internal class UserInfoSanitizer(
     private val userInfo: UserInfo?,
-    private val enabledComponents: Set<String>
+    private val enabledComponents: Set<String>,
 ) : Sanitizable<UserInfo> {
 
     override fun sanitize(): UserInfo {

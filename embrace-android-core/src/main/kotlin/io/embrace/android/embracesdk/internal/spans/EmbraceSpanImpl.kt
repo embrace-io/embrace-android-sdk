@@ -41,7 +41,7 @@ internal class EmbraceSpanImpl(
     private val spanBuilder: EmbraceSpanBuilder,
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
-    private val sensitiveKeysBehavior: SensitiveKeysBehavior?
+    private val sensitiveKeysBehavior: SensitiveKeysBehavior?,
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
@@ -82,8 +82,9 @@ internal class EmbraceSpanImpl(
             return false
         }
 
-        val attemptedStartTimeMs = (startTimeMs?.normalizeTimestampAsMillis() ?: spanBuilder.startTimeMs)?.takeIf { it > 0 }
-            ?: openTelemetryClock.now().nanosToMillis()
+        val attemptedStartTimeMs =
+            (startTimeMs?.normalizeTimestampAsMillis() ?: spanBuilder.startTimeMs)?.takeIf { it > 0 }
+                ?: openTelemetryClock.now().nanosToMillis()
 
         synchronized(startedSpan) {
             val newSpan = spanBuilder.startSpan(attemptedStartTimeMs)

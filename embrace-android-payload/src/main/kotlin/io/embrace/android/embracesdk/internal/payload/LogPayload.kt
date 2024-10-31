@@ -12,5 +12,5 @@ import com.squareup.moshi.JsonClass
 data class LogPayload(
 
     @Json(name = "logs")
-    val logs: List<Log>? = null
+    val logs: List<Log>? = null,
 )

@@ -15,6 +15,6 @@ interface GatingService {
      */
     fun gateSessionEnvelope(
         hasCrash: Boolean,
-        envelope: Envelope<SessionPayload>
+        envelope: Envelope<SessionPayload>,
     ): Envelope<SessionPayload>
 }

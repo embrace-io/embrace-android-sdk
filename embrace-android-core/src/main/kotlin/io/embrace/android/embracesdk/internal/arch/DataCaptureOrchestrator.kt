@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 class DataCaptureOrchestrator(
     configService: ConfigService,
     private val worker: BackgroundWorker,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : EmbraceFeatureRegistry {
 
     init {

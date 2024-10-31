@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class BreadcrumbApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : BreadcrumbApi {
 
     private val sdkClock = bootstrapper.initModule.clock

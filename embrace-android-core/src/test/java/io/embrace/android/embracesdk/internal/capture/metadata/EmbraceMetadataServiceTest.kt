@@ -111,7 +111,7 @@ internal class EmbraceMetadataServiceTest {
     @Suppress("DEPRECATION")
     private fun getMetadataService(
         framework: AppFramework = AppFramework.NATIVE,
-        precompute: Boolean = true
+        precompute: Boolean = true,
     ): EmbraceMetadataService {
         configService.appFramework = framework
         ref = EmbraceMetadataService(

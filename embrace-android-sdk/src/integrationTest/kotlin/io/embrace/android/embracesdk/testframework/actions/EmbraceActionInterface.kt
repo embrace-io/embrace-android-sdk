@@ -15,7 +15,7 @@ import org.robolectric.Robolectric
  */
 internal class EmbraceActionInterface(
     private val setup: EmbraceSetupInterface,
-    private val bootstrapper: ModuleInitBootstrapper
+    private val bootstrapper: ModuleInitBootstrapper,
 ) {
 
     /**

@@ -21,7 +21,7 @@ internal class EmbracePendingApiCallsSender(
     private val worker: BackgroundWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : PendingApiCallsSender {
 
     private val pendingApiCallQueue: PendingApiCallQueue by lazy {
@@ -51,6 +51,7 @@ internal class EmbracePendingApiCallsSender(
             is ApiResponse.Incomplete -> {
                 scheduleApiCallsDelivery(RETRY_PERIOD)
             }
+
             is ApiResponse.TooManyRequests -> {
                 with(response.endpoint.limiter) {
                     updateRateLimitStatus()
@@ -61,6 +62,7 @@ internal class EmbracePendingApiCallsSender(
                     )
                 }
             }
+
             else -> {
                 // Not expected, shouldRetry() should be called before scheduleForRetry().
             }

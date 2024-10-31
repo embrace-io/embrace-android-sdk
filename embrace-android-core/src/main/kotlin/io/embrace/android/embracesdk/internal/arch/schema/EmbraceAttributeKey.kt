@@ -9,7 +9,7 @@ class EmbraceAttributeKey(
     override val id: String,
     otelAttributeKey: AttributeKey<String>? = null,
     useIdAsAttributeName: Boolean = false,
-    isPrivate: Boolean = false
+    isPrivate: Boolean = false,
 ) : EmbraceAttribute {
     override val name: String = if (!useIdAsAttributeName && otelAttributeKey?.key != null) {
         otelAttributeKey.key

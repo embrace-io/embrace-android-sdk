@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.spans.SpanService
 abstract class SpanDataSourceImpl(
     destination: SpanService,
     logger: EmbLogger,
-    limitStrategy: LimitStrategy
+    limitStrategy: LimitStrategy,
 ) : SpanDataSource, DataSourceImpl<SpanService>(
     destination = destination,
     logger = logger,
@@ -20,6 +20,6 @@ abstract class SpanDataSourceImpl(
     override fun captureSpanData(
         countsTowardsLimits: Boolean,
         inputValidation: () -> Boolean,
-        captureAction: SpanService.() -> Unit
+        captureAction: SpanService.() -> Unit,
     ): Boolean = captureDataImpl(inputValidation, captureAction, countsTowardsLimits)
 }

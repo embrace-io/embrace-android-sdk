@@ -394,7 +394,7 @@ internal class EmbraceApiServiceTest {
 
     private inline fun <reified T> getGenericsExpectedPayloadSerialized(
         payload: T,
-        parameterizedType: ParameterizedType
+        parameterizedType: ParameterizedType,
     ): ByteArray {
         val os = ByteArrayOutputStream()
         ConditionalGzipOutputStream(os).use {
@@ -407,7 +407,7 @@ internal class EmbraceApiServiceTest {
         expectedUrl: String,
         expectedMethod: HttpMethod = HttpMethod.POST,
         expectedEtag: String? = null,
-        expectedPayload: ByteArray? = null
+        expectedPayload: ByteArray? = null,
     ) {
         assertEquals(1, fakeApiClient.sentRequests.size)
         with(fakeApiClient.sentRequests[0].first) {

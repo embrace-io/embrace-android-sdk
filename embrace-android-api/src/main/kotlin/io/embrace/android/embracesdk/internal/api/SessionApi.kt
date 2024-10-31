@@ -24,7 +24,7 @@ public interface SessionApi {
     public fun addSessionProperty(
         key: String,
         value: String,
-        permanent: Boolean
+        permanent: Boolean,
     ): Boolean
 
     /**

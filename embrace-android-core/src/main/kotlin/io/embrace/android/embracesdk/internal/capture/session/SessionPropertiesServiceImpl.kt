@@ -10,7 +10,7 @@ internal class SessionPropertiesServiceImpl(
     preferencesService: PreferencesService,
     private val configService: ConfigService,
     logger: EmbLogger,
-    writer: SessionSpanWriter
+    writer: SessionSpanWriter,
 ) : SessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null

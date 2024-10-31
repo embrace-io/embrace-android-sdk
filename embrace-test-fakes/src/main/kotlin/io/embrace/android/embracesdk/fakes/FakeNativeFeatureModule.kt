@@ -13,5 +13,5 @@ class FakeNativeFeatureModule(
     override val nativeThreadSamplerInstaller: NativeThreadSamplerInstaller? = null,
     override val ndkService: NdkService = FakeNdkService(),
     override val nativeAnrOtelMapper: NativeAnrOtelMapper = NativeAnrOtelMapper(null, EmbraceSerializer(), FakeClock()),
-    override val nativeCrashService: NativeCrashService = FakeNativeCrashService()
+    override val nativeCrashService: NativeCrashService = FakeNativeCrashService(),
 ) : NativeFeatureModule

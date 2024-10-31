@@ -61,7 +61,8 @@ internal class PersonaFeaturesTest {
 
     private fun Envelope<SessionPayload>.assertPersonaExists(persona: String) = assertPersona(true, this, persona)
 
-    private fun Envelope<SessionPayload>.assertPersonaDoesNotExist(persona: String) = assertPersona(false, this, persona)
+    private fun Envelope<SessionPayload>.assertPersonaDoesNotExist(persona: String) =
+        assertPersona(false, this, persona)
 
     private fun assertPersona(exists: Boolean, session: Envelope<SessionPayload>, persona: String) {
         val personas = checkNotNull(session.metadata).personas

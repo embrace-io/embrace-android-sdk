@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 
 class DataCaptureEventBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?> = { null }
+    remoteSupplier: Provider<RemoteConfig?> = { null },
 ) : DataCaptureEventBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier

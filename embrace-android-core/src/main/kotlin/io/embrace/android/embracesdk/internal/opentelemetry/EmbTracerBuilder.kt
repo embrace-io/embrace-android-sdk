@@ -5,7 +5,7 @@ import io.opentelemetry.api.trace.TracerBuilder
 
 internal class EmbTracerBuilder(
     instrumentationScopeName: String,
-    private val tracerSupplier: (tracerKey: TracerKey) -> Tracer
+    private val tracerSupplier: (tracerKey: TracerKey) -> Tracer,
 ) : TracerBuilder {
 
     private val tracerKey: TracerKey = TracerKey(instrumentationScopeName = instrumentationScopeName)

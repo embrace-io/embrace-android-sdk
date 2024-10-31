@@ -31,7 +31,7 @@ open class MergedConfigBehavior<L, R>(
     /**
      * Supplier for remote config, from the config endpoint.
      */
-    private val remoteSupplier: Provider<R?> = { null }
+    private val remoteSupplier: Provider<R?> = { null },
 ) {
 
     /**

@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 internal class OrchestratorBoundaryDelegate(
     private val memoryCleanerService: MemoryCleanerService,
     private val userService: UserService,
-    private val sessionPropertiesService: SessionPropertiesService
+    private val sessionPropertiesService: SessionPropertiesService,
 ) {
 
     /**

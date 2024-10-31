@@ -12,7 +12,7 @@ public data class NetworkCaptureData(
     val capturedRequestBody: ByteArray?,
     val responseHeaders: Map<String, String>?,
     val capturedResponseBody: ByteArray?,
-    val dataCaptureErrorMessage: String? = null
+    val dataCaptureErrorMessage: String? = null,
 ) {
     val requestBodySize: Int
         get() = capturedRequestBody?.size ?: 0

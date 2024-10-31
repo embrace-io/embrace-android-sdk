@@ -43,6 +43,8 @@ class FakeAnrBehavior(
     override fun isStrictModeListenerEnabled(): Boolean = strictModeListenerEnabled
     override fun getStrictModeViolationLimit(): Int = 10
     override fun isNativeThreadAnrSamplingAllowlistIgnored(): Boolean = nativeThreadAnrSamplingAllowlistIgnored
-    override fun getNativeThreadAnrSamplingAllowlist(): List<AllowedNdkSampleMethod> = nativeThreadAnrSamplingAllowlistImpl
+    override fun getNativeThreadAnrSamplingAllowlist(): List<AllowedNdkSampleMethod> =
+        nativeThreadAnrSamplingAllowlistImpl
+
     override fun getNativeThreadAnrSamplingIntervalMs(): Long = 1000
 }

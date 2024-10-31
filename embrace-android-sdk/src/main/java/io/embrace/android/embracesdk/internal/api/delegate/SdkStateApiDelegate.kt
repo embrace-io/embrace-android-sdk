@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 
 internal class SdkStateApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : SdkStateApi {
 
     private val logger = bootstrapper.initModule.logger

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.comms.api.limiter
 import java.util.concurrent.ConcurrentHashMap
 
 class PendingApiCallQueue(
-    private val pendingApiCalls: PendingApiCalls
+    private val pendingApiCalls: PendingApiCalls,
 ) {
 
     private val pendingApiCallsMap =

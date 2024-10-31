@@ -9,7 +9,8 @@ const val REDACTED_LABEL: String = "<redacted>"
 
 class SensitiveKeysBehaviorImpl(denyList: List<String>? = null) : SensitiveKeysBehavior {
 
-    private val denyList = (denyList ?: InstrumentedConfig.redaction.getSensitiveKeysDenylist())?.take(SENSITIVE_KEYS_LIST_MAX_SIZE)
+    private val denyList =
+        (denyList ?: InstrumentedConfig.redaction.getSensitiveKeysDenylist())?.take(SENSITIVE_KEYS_LIST_MAX_SIZE)
 
     override fun isSensitiveKey(key: String): Boolean {
         return denyList?.any { it.take(SENSITIVE_KEY_MAX_LENGTH) == key } ?: false

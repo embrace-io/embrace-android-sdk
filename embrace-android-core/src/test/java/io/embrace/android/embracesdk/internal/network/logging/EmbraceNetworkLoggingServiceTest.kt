@@ -166,7 +166,7 @@ internal class EmbraceNetworkLoggingServiceTest {
         startTime: Long = 100,
         endTime: Long = 200,
         statusCode: Int = 200,
-        networkCaptureData: NetworkCaptureData? = null
+        networkCaptureData: NetworkCaptureData? = null,
     ) {
         networkLoggingService.logNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
@@ -192,7 +192,7 @@ internal class EmbraceNetworkLoggingServiceTest {
     private fun Span.assertNetworkRequest(
         expectedStartTimeMs: Long,
         expectedEndTimeMs: Long,
-        expectedStatus: Span.Status = Span.Status.UNSET
+        expectedStatus: Span.Status = Span.Status.UNSET,
     ) {
         assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
         assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())

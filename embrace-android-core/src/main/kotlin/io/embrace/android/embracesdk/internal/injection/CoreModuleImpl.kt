@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 class CoreModuleImpl(
     ctx: Context,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) : CoreModule {
 
     override val context: Context by singleton {

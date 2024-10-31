@@ -7,17 +7,19 @@ internal interface HostedPlatformStrategy {
     fun getHostedSdkVersionFromPreferences(preferencesService: PreferencesService): String?
     fun setHostedSdkVersionInPreferences(
         version: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     )
+
     fun getHostedPlatformVersionFromPreferences(preferencesService: PreferencesService): String?
     fun setHostedPlatformVersionInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     )
 
     fun getUnityBuildIdNumber(preferencesService: PreferencesService): String? {
         return null
     }
+
     fun setUnityBuildIdNumberInPreferences(value: String?, preferencesService: PreferencesService) = Unit
     fun getJavaScriptPatchNumber(preferencesService: PreferencesService): String? {
         return null
@@ -25,6 +27,6 @@ internal interface HostedPlatformStrategy {
 
     fun setJavaScriptPatchNumberInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     ) = Unit
 }

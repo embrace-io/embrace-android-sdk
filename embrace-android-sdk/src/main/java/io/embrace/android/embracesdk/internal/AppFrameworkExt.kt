@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework.UNITY
 
 @Suppress("DEPRECATION")
 internal fun fromFramework(
-    appFramework: io.embrace.android.embracesdk.AppFramework
+    appFramework: io.embrace.android.embracesdk.AppFramework,
 ): AppFramework = when (appFramework) {
     io.embrace.android.embracesdk.AppFramework.NATIVE -> NATIVE
     io.embrace.android.embracesdk.AppFramework.REACT_NATIVE -> REACT_NATIVE

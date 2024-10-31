@@ -36,7 +36,7 @@ data class AnrInterval @JvmOverloads constructor(
     /**
      * The status code of the ANR interval.
      */
-    val code: Int? = CODE_DEFAULT
+    val code: Int? = CODE_DEFAULT,
 ) {
 
     /**

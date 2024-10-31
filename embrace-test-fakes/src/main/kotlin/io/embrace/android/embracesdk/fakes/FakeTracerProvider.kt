@@ -9,5 +9,6 @@ class FakeTracerProvider : TracerProvider {
     override fun get(instrumentationScopeName: String, instrumentationScopeVersion: String): Tracer =
         tracerBuilder(instrumentationScopeName).setInstrumentationVersion(instrumentationScopeVersion).build()
 
-    override fun tracerBuilder(instrumentationScopeName: String): FakeTracerBuilder = FakeTracerBuilder(instrumentationScopeName)
+    override fun tracerBuilder(instrumentationScopeName: String): FakeTracerBuilder =
+        FakeTracerBuilder(instrumentationScopeName)
 }

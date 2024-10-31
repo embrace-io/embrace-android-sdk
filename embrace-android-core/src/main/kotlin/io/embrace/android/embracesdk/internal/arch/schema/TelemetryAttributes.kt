@@ -10,7 +10,7 @@ import io.opentelemetry.api.common.AttributeKey
 class TelemetryAttributes(
     private val configService: ConfigService,
     private val sessionPropertiesProvider: () -> Map<String, String>? = { null },
-    private val customAttributes: Map<String, String>? = null
+    private val customAttributes: Map<String, String>? = null,
 ) {
     private val map: MutableMap<AttributeKey<String>, String> = mutableMapOf()
 

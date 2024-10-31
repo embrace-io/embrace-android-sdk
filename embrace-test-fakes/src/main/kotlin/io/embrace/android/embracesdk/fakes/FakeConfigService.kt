@@ -43,7 +43,7 @@ class FakeConfigService(
     override var webViewVitalsBehavior: WebViewVitalsBehavior = createWebViewVitalsBehavior(),
     override var appExitInfoBehavior: AppExitInfoBehavior = createAppExitInfoBehavior(),
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = createNetworkSpanForwardingBehavior(),
-    override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior()
+    override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
 ) : ConfigService {
 
     override var remoteConfigSource: RemoteConfigSource? = null

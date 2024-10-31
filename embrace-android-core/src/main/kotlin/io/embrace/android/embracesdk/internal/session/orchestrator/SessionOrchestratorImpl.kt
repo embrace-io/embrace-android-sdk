@@ -33,7 +33,7 @@ internal class SessionOrchestratorImpl(
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : SessionOrchestrator {
 
     private val lock = Any()
@@ -158,7 +158,7 @@ internal class SessionOrchestratorImpl(
         newSessionAction: (Provider<SessionZygote?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
         clearUserInfo: Boolean = false,
-        crashId: String? = null
+        crashId: String? = null,
     ) {
         // supplied business logic says that we can't perform a transition yet.
         // exit early & retain the current state instead.
@@ -179,7 +179,11 @@ internal class SessionOrchestratorImpl(
             Systrace.startSynchronous("end-current-session")
             val initial = activeSession
             if (initial != null) {
-                sessionSpanAttrPopulator.populateSessionSpanEndAttrs(transitionType.lifeEventType(state), crashId, initial.isColdStart)
+                sessionSpanAttrPopulator.populateSessionSpanEndAttrs(
+                    transitionType.lifeEventType(state),
+                    crashId,
+                    initial.isColdStart
+                )
                 val endMessage = oldSessionAction?.invoke(initial)
                 processEndMessage(endMessage, transitionType)
             }
@@ -266,7 +270,7 @@ internal class SessionOrchestratorImpl(
         timestamp: Long,
         inBackground: Boolean,
         stateChange: String,
-        logger: EmbLogger
+        logger: EmbLogger,
     ) {
         val type = when {
             inBackground -> "background"

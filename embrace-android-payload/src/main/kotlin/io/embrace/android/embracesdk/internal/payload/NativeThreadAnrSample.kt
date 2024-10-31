@@ -28,5 +28,5 @@ class NativeThreadAnrSample(
     /**
      * All the stackframes which have been captured during the current sample.
      */
-    val stackframes: List<NativeThreadAnrStackframe>?
+    val stackframes: List<NativeThreadAnrStackframe>?,
 )

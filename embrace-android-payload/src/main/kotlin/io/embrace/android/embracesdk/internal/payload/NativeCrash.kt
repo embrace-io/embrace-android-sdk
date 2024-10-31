@@ -11,5 +11,5 @@ class NativeCrash(
     @Json(name = "er") val errors: List<NativeCrashDataError?>?,
     @Json(name = "ue") val unwindError: Int?,
     @Json(name = "ma") val map: String?,
-    @Json(name = "crash_number") val crashNumber: Int? = null
+    @Json(name = "crash_number") val crashNumber: Int? = null,
 )

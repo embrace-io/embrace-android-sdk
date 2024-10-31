@@ -124,7 +124,7 @@ internal class BackgroundWorkerTest {
     private class ShutdownAndWaitExecutorService(
         private val postShutdownAction: () -> Unit = {},
         private val postAwaitTerminationAction: () -> Unit = {},
-        private val impl: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+        private val impl: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor(),
     ) : ScheduledExecutorService by impl {
 
         override fun shutdown() {

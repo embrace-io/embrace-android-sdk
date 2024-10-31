@@ -14,7 +14,11 @@ internal class FakeSessionEnvelopeSource(
     private val sessionPayloadSource: SessionPayloadSource,
 ) : SessionEnvelopeSource {
 
-    override fun getEnvelope(endType: SessionSnapshotType, startNewSession: Boolean, crashId: String?): Envelope<SessionPayload> {
+    override fun getEnvelope(
+        endType: SessionSnapshotType,
+        startNewSession: Boolean,
+        crashId: String?,
+    ): Envelope<SessionPayload> {
         return Envelope(
             resourceSource.getEnvelopeResource(),
             metadataSource.getEnvelopeMetadata(),

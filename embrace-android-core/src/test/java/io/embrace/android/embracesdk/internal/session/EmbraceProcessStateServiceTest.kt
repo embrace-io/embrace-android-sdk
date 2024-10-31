@@ -255,7 +255,7 @@ internal class EmbraceProcessStateServiceTest {
     }
 
     private class DecoratedListener(
-        private val invocations: MutableList<String>
+        private val invocations: MutableList<String>,
     ) : ProcessStateListener {
 
         override fun onBackground(timestamp: Long) {
@@ -269,7 +269,7 @@ internal class EmbraceProcessStateServiceTest {
 
     private class DecoratedSessionOrchestrator(
         private val invocations: MutableList<String>,
-        private val orchestrator: SessionOrchestrator = FakeSessionOrchestrator()
+        private val orchestrator: SessionOrchestrator = FakeSessionOrchestrator(),
     ) : SessionOrchestrator by orchestrator {
 
         override fun onBackground(timestamp: Long) {

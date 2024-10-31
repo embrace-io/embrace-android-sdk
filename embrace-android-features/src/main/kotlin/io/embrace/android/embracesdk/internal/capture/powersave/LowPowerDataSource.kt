@@ -20,7 +20,7 @@ class LowPowerDataSource(
     logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     private val clock: Clock,
-    provider: Provider<PowerManager?>
+    provider: Provider<PowerManager?>,
 ) : SpanDataSourceImpl(
     destination = spanService,
     logger = logger,

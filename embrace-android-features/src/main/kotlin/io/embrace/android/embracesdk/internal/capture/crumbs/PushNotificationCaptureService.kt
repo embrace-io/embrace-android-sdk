@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
  * In charge of handling all notifications related functionality.
  */
 class PushNotificationCaptureService(
-    private val pushNotificationDataSource: PushNotificationDataSource?
+    private val pushNotificationDataSource: PushNotificationDataSource?,
 ) : ActivityLifecycleListener {
 
     companion object Utils {
@@ -72,7 +72,7 @@ class PushNotificationCaptureService(
         topic: String?,
         id: String?,
         notificationPriority: Int?,
-        type: PushNotificationBreadcrumb.NotificationType
+        type: PushNotificationBreadcrumb.NotificationType,
     ) {
         pushNotificationDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
     }

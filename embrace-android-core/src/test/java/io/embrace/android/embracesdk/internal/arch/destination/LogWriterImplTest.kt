@@ -110,7 +110,10 @@ internal class LogWriterImplTest {
         )
 
         with(logger.builders.last()) {
-            assertEquals("foreground-session", attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            assertEquals(
+                "foreground-session",
+                attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key)
+            )
             assertEquals("foreground", attributes.findAttributeValue(embState.attributeKey.key))
         }
     }

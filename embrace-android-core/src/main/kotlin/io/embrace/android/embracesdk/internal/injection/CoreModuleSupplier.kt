@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
  */
 typealias CoreModuleSupplier = (
     context: Context,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) -> CoreModule
 
 fun createCoreModule(
     context: Context,
-    logger: EmbLogger
+    logger: EmbLogger,
 ): CoreModule = CoreModuleImpl(context, logger)

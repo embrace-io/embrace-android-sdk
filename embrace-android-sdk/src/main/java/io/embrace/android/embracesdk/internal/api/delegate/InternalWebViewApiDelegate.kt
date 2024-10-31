@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class InternalWebViewApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : InternalWebViewApi {
 
     private val sdkClock = bootstrapper.initModule.clock

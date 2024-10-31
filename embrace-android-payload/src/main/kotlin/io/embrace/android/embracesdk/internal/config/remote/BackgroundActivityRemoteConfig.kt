@@ -9,5 +9,5 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class BackgroundActivityRemoteConfig(
     @Json(name = "threshold")
-    val threshold: Float? = null
+    val threshold: Float? = null,
 )

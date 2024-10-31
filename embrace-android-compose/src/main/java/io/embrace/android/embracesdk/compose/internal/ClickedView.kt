@@ -6,5 +6,5 @@ package io.embrace.android.embracesdk.compose.internal
 internal data class ClickedView(
     val tag: String,
     val x: Float,
-    val y: Float
+    val y: Float,
 )

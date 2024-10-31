@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
@@ -132,7 +131,7 @@ internal class JvmCrashFeatureTest {
 
     private fun Log.assertCrash(
         crashId: String,
-        state: String = "background"
+        state: String = "background",
     ) {
         assertOtelLogReceived(
             logReceived = this,

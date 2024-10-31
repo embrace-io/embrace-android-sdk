@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import java.util.concurrent.atomic.AtomicInteger
 
 class FakeCurrentSessionSpan(
-    private val clock: FakeClock = FakeClock()
+    private val clock: FakeClock = FakeClock(),
 ) : CurrentSessionSpan {
     var initializedCallCount: Int = 0
     var addedEvents: MutableList<SpanEventData> = mutableListOf()
@@ -52,7 +52,10 @@ class FakeCurrentSessionSpan(
         return true
     }
 
-    override fun endSession(startNewSession: Boolean, appTerminationCause: AppTerminationCause?): List<EmbraceSpanData> {
+    override fun endSession(
+        startNewSession: Boolean,
+        appTerminationCause: AppTerminationCause?,
+    ): List<EmbraceSpanData> {
         val endingSessionSpan = checkNotNull(sessionSpan)
         val errorCode = if (appTerminationCause != null) {
             ErrorCode.FAILURE

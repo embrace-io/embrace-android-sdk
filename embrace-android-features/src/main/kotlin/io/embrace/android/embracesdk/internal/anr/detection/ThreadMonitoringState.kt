@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * time of the target/main threads.
  */
 class ThreadMonitoringState(
-    private val clock: Clock
+    private val clock: Clock,
 ) {
 
     /**

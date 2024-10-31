@@ -23,7 +23,7 @@ class FakeTracingApi : TracingApi {
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: () -> T
+        code: () -> T,
     ): T {
         TODO("Not yet implemented")
     }
@@ -35,7 +35,7 @@ class FakeTracingApi : TracingApi {
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
-        events: List<EmbraceSpanEvent>?
+        events: List<EmbraceSpanEvent>?,
     ): Boolean {
         TODO("Not yet implemented")
     }

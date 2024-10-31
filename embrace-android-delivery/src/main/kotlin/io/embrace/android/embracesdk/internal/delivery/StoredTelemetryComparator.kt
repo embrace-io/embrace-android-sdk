@@ -28,7 +28,7 @@ val storedTelemetryComparator: java.util.Comparator<StoredTelemetryMetadata> =
 
 inline fun <reified T> extractPriorityFromRunnable(
     lhs: Runnable,
-    rhs: Runnable
+    rhs: Runnable,
 ): Pair<T, T> {
     require(lhs is PriorityRunnableFuture<*> && rhs is PriorityRunnableFuture<*>) {
         "Runnables must be PriorityRunnableFuture"

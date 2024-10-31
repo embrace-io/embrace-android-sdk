@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 
 internal class EnvelopeMetadataSanitizer(
     private val metadata: EnvelopeMetadata,
-    private val enabledComponents: Set<String>
+    private val enabledComponents: Set<String>,
 ) : Sanitizable<EnvelopeMetadata> {
 
     override fun sanitize(): EnvelopeMetadata {

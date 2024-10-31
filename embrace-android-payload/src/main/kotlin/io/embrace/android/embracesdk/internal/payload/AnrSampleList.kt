@@ -8,5 +8,5 @@ data class AnrSampleList(
     /**
      * List of samples.
      */
-    val samples: List<AnrSample>
+    val samples: List<AnrSample>,
 )

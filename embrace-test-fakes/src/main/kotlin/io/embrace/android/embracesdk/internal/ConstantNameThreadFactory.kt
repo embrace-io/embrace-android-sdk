@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadFactory
  */
 class ConstantNameThreadFactory(
     namePrefix: String = "thread",
-    uniquePerInstance: Boolean = false
+    uniquePerInstance: Boolean = false,
 ) : ThreadFactory {
     private val defaultFactory: ThreadFactory = Executors.defaultThreadFactory()
     private val threadName = "emb-$namePrefix${if (uniquePerInstance) "-${hashCode()}" else ""}"

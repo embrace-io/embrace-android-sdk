@@ -15,5 +15,5 @@ import io.opentelemetry.api.logs.Severity
 class LogEventData(
     val schemaType: SchemaType,
     val severity: Severity,
-    val message: String
+    val message: String,
 )

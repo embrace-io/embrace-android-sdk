@@ -12,7 +12,7 @@ class FakeSessionPayloadSource : SessionPayloadSource {
     override fun getSessionPayload(
         endType: SessionSnapshotType,
         startNewSession: Boolean,
-        crashId: String?
+        crashId: String?,
     ): SessionPayload {
         lastStartNewSession = startNewSession
         return SessionPayload()

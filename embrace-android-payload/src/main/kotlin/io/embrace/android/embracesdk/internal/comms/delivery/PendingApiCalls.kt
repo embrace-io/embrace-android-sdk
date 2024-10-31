@@ -9,5 +9,5 @@ import io.embrace.android.embracesdk.internal.comms.api.Endpoint
  */
 @JsonClass(generateAdapter = true)
 class PendingApiCalls(
-    @Json(name = "pendingApiCallsMap") val pendingApiCallsMap: Map<Endpoint, MutableList<PendingApiCall>> = emptyMap()
+    @Json(name = "pendingApiCallsMap") val pendingApiCallsMap: Map<Endpoint, MutableList<PendingApiCall>> = emptyMap(),
 )

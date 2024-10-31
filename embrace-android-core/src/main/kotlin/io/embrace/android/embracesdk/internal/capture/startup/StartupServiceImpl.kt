@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.startup
 import io.embrace.android.embracesdk.internal.spans.SpanService
 
 class StartupServiceImpl(
-    private val spanService: SpanService
+    private val spanService: SpanService,
 ) : StartupService {
 
     @Volatile
@@ -28,7 +28,7 @@ class StartupServiceImpl(
         startTimeMs: Long,
         endTimeMs: Long,
         endedInForeground: Boolean,
-        threadName: String
+        threadName: String,
     ) {
         if (sdkStartupDurationMs == null) {
             spanService.recordCompletedSpan(

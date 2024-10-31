@@ -21,7 +21,7 @@ interface PayloadFactory {
     fun endPayloadWithState(
         state: ProcessState,
         timestamp: Long,
-        initial: SessionZygote
+        initial: SessionZygote,
     ): Envelope<SessionPayload>?
 
     /**
@@ -31,7 +31,7 @@ interface PayloadFactory {
         state: ProcessState,
         timestamp: Long,
         initial: SessionZygote,
-        crashId: String
+        crashId: String,
     ): Envelope<SessionPayload>?
 
     /**

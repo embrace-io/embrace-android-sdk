@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  */
 typealias SystemServiceModuleSupplier = (
     coreModule: CoreModule,
-    versionChecker: VersionChecker
+    versionChecker: VersionChecker,
 ) -> SystemServiceModule
 
 fun createSystemServiceModule(
     coreModule: CoreModule,
-    versionChecker: VersionChecker
+    versionChecker: VersionChecker,
 ): SystemServiceModule = SystemServiceModuleImpl(coreModule, versionChecker)

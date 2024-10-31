@@ -17,7 +17,7 @@ internal class UnityPlatformStrategy : HostedPlatformStrategy {
 
     override fun setHostedPlatformVersionInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     ) {
         preferencesService.unityVersionNumber = value
     }

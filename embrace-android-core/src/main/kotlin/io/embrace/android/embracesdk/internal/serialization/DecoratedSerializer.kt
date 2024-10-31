@@ -7,7 +7,7 @@ import java.lang.reflect.Type
 
 internal class DecoratedSerializer(
     private val impl: PlatformSerializer,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : PlatformSerializer {
 
     override fun <T> toJson(src: T): String {

@@ -19,7 +19,7 @@ interface UnityInternalInterface :
     fun logUnhandledUnityException(
         name: String,
         message: String,
-        stacktrace: String?
+        stacktrace: String?,
     )
 
     /**
@@ -28,7 +28,7 @@ interface UnityInternalInterface :
     fun logHandledUnityException(
         name: String,
         message: String,
-        stacktrace: String?
+        stacktrace: String?,
     )
 
     /**
@@ -41,7 +41,7 @@ interface UnityInternalInterface :
         endTime: Long,
         errorType: String?,
         errorMessage: String?,
-        traceId: String?
+        traceId: String?,
     )
 
     /**
@@ -55,7 +55,7 @@ interface UnityInternalInterface :
         bytesSent: Long,
         bytesReceived: Long,
         statusCode: Int,
-        traceId: String?
+        traceId: String?,
     )
 
     /**

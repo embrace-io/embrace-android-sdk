@@ -12,5 +12,5 @@ class FakeSystemServiceModule(
     override val powerManager: PowerManager? = null,
     override val connectivityManager: ConnectivityManager? = null,
     override val storageManager: StorageStatsManager? = null,
-    override val windowManager: WindowManager? = null
+    override val windowManager: WindowManager? = null,
 ) : SystemServiceModule

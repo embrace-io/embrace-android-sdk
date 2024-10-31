@@ -134,7 +134,7 @@ internal class EmbraceSessionPropertiesTest {
         private val startSignal: CountDownLatch,
         private val doneSignal: CountDownLatch,
         private val properties: EmbraceSessionProperties,
-        private val property: String
+        private val property: String,
     ) : Runnable {
         override fun run() {
             try {

@@ -14,7 +14,7 @@ class FakeWorkerThreadModule(
     private val testWorkerName: Worker? = null,
     private val anotherTestWorkerName: Worker? = null,
     private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule),
-    private val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*>? = { null }
+    private val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*>? = { null },
 ) : WorkerThreadModule by base {
 
     val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()

@@ -16,7 +16,7 @@ internal class CacheableValue<T>(
      * won't change if new objects are added, so you need to be wary of accidentally
      * returning stale values.
      */
-    private val input: Provider<Any>
+    private val input: Provider<Any>,
 ) {
 
     private var initialized = false

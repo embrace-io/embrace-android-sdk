@@ -19,7 +19,7 @@ import io.opentelemetry.semconv.incubating.ThreadIncubatingAttributes
 class NativeAnrOtelMapper(
     private val nativeThreadSamplerService: NativeThreadSamplerService?,
     private val serializer: PlatformSerializer,
-    private val clock: Clock
+    private val clock: Clock,
 ) : DataCaptureServiceOtelConverter {
 
     override fun snapshot(isFinalPayload: Boolean): List<Span> {

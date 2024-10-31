@@ -15,7 +15,7 @@ internal class PayloadMessageCollatorImpl(
     private val gatingService: GatingService,
     private val sessionEnvelopeSource: SessionEnvelopeSource,
     private val preferencesService: PreferencesService,
-    private val currentSessionSpan: CurrentSessionSpan
+    private val currentSessionSpan: CurrentSessionSpan,
 ) : PayloadMessageCollator {
 
     override fun buildInitialSession(params: InitialEnvelopeParams): SessionZygote = with(params) {

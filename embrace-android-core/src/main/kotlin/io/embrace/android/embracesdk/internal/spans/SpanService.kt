@@ -39,7 +39,7 @@ interface SpanService : Initializable {
         startTimeMs: Long? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
-        private: Boolean = false
+        private: Boolean = false,
     ): PersistableEmbraceSpan? {
         createSpan(
             name = name,
@@ -68,7 +68,7 @@ interface SpanService : Initializable {
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
-        code: () -> T
+        code: () -> T,
     ): T
 
     /**
@@ -85,7 +85,7 @@ interface SpanService : Initializable {
         private: Boolean = false,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
-        errorCode: ErrorCode? = null
+        errorCode: ErrorCode? = null,
     ): Boolean
 
     /**

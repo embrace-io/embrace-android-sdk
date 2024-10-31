@@ -177,7 +177,7 @@ class FakePersistableEmbraceSpan(
         fun started(
             parent: PersistableEmbraceSpan? = null,
             parentContext: Context = parent?.run { parent.asNewContext() } ?: Context.root(),
-            clock: FakeClock = FakeClock()
+            clock: FakeClock = FakeClock(),
         ): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
                 name = "started",
@@ -197,7 +197,7 @@ class FakePersistableEmbraceSpan(
             sessionId: String,
             startTimeMs: Long,
             lastHeartbeatTimeMs: Long?,
-            endTimeMs: Long? = null
+            endTimeMs: Long? = null,
         ): FakePersistableEmbraceSpan =
             FakePersistableEmbraceSpan(
                 name = "emb-session",

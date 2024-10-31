@@ -14,7 +14,7 @@ class FakeAutoDataCaptureBehavior(
     private val ndkEnabled: Boolean = false,
     private val diskUsageReportingEnabled: Boolean = true,
     private val v2StorageEnabled: Boolean = true,
-    private val useOkhttp: Boolean = true
+    private val useOkhttp: Boolean = true,
 ) : AutoDataCaptureBehavior {
 
     override fun isMemoryWarningCaptureEnabled(): Boolean = memoryServiceEnabled

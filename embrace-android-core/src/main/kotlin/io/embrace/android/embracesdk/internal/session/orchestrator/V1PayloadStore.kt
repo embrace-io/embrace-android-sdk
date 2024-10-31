@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 class V1PayloadStore(
     private val worker: BackgroundWorker,
-    private val deliveryService: DeliveryService
+    private val deliveryService: DeliveryService,
 ) : PayloadStore {
 
     override fun storeSessionPayload(envelope: Envelope<SessionPayload>, transitionType: TransitionType) {

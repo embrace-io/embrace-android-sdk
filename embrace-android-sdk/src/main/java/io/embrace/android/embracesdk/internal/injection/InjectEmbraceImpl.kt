@@ -13,17 +13,17 @@ import kotlin.reflect.KProperty
  * This is convenient syntax to avoid a large number of lateinit vars in [EmbraceImpl].
  */
 internal inline fun <reified T> EmbraceImpl.embraceImplInject(
-    noinline provider: Provider<T>
+    noinline provider: Provider<T>,
 ): ReadOnlyProperty<Any?, T?> = EmbraceImplFieldDelegate({ this.isStarted }, provider)
 
 internal inline fun <reified T> embraceImplInject(
     checker: SdkCallChecker,
-    noinline provider: Provider<T>
+    noinline provider: Provider<T>,
 ): ReadOnlyProperty<Any?, T?> = EmbraceImplFieldDelegate({ checker.started.get() }, provider)
 
 internal class EmbraceImplFieldDelegate<T>(
     private val startedCheck: () -> Boolean,
-    provider: Provider<T>
+    provider: Provider<T>,
 ) : ReadOnlyProperty<Any?, T?> {
 
     // optimization: use atomic checks rather than synchronized in lazy.

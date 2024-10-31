@@ -54,7 +54,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
         private const val requestBodyString = "hey body"
         private const val requestBodySize = 8
         private const val responseHeaderName = "responseHeader"
-        private const val responseBody = "{\"bodyString\" = \"stringstringstringstringstringstringstringstringstringstringstringstring\"}"
+        private const val responseBody =
+            "{\"bodyString\" = \"stringstringstringstringstringstringstringstringstringstringstringstring\"}"
         private const val responseBodySize = 91
         private const val responseBodyGzippedSize = 43
         private const val responseHeaderValue = "responseHeaderVal"
@@ -292,7 +293,10 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `streaming requests recorded properly`() {
         postNetworkInterceptorAfterResponseSupplier = ::removeContentLengthFromResponse
-        server.enqueue(createBaseMockResponse().addHeader(CONTENT_TYPE_HEADER_NAME, CONTENT_TYPE_EVENT_STREAM).setBody(responseBody))
+        server.enqueue(
+            createBaseMockResponse().addHeader(CONTENT_TYPE_HEADER_NAME, CONTENT_TYPE_EVENT_STREAM)
+                .setBody(responseBody)
+        )
         runAndValidatePostRequest(0)
     }
 
@@ -333,7 +337,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
     @Test
     fun `EmbraceCustomPathException with anonymous cause records request with custom path and empty error type and message`() {
         postRequestBuilder.header("x-emb-path", customPath)
-        preNetworkInterceptorBeforeRequestSupplier = { throw EmbraceCustomPathException(customPath, object : Exception() {}) }
+        preNetworkInterceptorBeforeRequestSupplier =
+            { throw EmbraceCustomPathException(customPath, object : Exception() {}) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         with(capturedEmbraceNetworkRequest.captured) {
             assertEquals(UNKNOWN_EXCEPTION, errorType)
@@ -382,7 +387,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
     fun `check traceparent not injected and forwarded for requests that don't complete because of EmbraceCustomPathException`() {
         isNetworkSpanForwardingEnabled = true
         postRequestBuilder.header("x-emb-path", customPath)
-        preNetworkInterceptorBeforeRequestSupplier = { throw EmbraceCustomPathException(customPath, IllegalStateException()) }
+        preNetworkInterceptorBeforeRequestSupplier =
+            { throw EmbraceCustomPathException(customPath, IllegalStateException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertNull(capturedEmbraceNetworkRequest.captured.w3cTraceparent)
@@ -401,7 +407,8 @@ internal class EmbraceOkHttp3InterceptorsTest {
     fun `check existing traceparent forwarded for requests that don't complete because of EmbraceCustomPathException`() {
         isNetworkSpanForwardingEnabled = true
         postRequestBuilder.header("x-emb-path", customPath).header(TRACEPARENT_HEADER, CUSTOM_TRACEPARENT)
-        preNetworkInterceptorBeforeRequestSupplier = { throw EmbraceCustomPathException(customPath, IllegalStateException()) }
+        preNetworkInterceptorBeforeRequestSupplier =
+            { throw EmbraceCustomPathException(customPath, IllegalStateException()) }
         assertThrows(EmbraceCustomPathException::class.java) { runPostRequest() }
         assertNull(capturedEmbraceNetworkRequest.captured.responseCode)
         assertEquals(CUSTOM_TRACEPARENT, capturedEmbraceNetworkRequest.captured.w3cTraceparent)
@@ -520,7 +527,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private fun runAndValidatePostRequest(
         expectedResponseBodySize: Int,
         expectedPath: String = defaultPath,
-        expectedHttpStatus: Int = 200
+        expectedHttpStatus: Int = 200,
     ) {
         val realSystemClockStartTime = System.currentTimeMillis()
         runPostRequest()
@@ -538,7 +545,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     }
 
     private fun runAndValidateGetRequest(
-        expectedResponseBodySize: Int
+        expectedResponseBodySize: Int,
     ) {
         val realSystemClockStartTime = System.currentTimeMillis()
         runGetRequest()
@@ -558,7 +565,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
     private fun runAndValidateTimestamps(
         clockDrift: Long,
         extraDrift: Long = 0L,
-        expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L
+        expectedOffset: Long = ((clockDrift * 2) + extraDrift) / 2L,
     ) {
         val realDrift = AtomicLong(clockDrift)
         every { mockSystemClock.now() } answers { FAKE_SDK_TIME + realDrift.getAndAdd(extraDrift) }
@@ -603,7 +610,7 @@ internal class EmbraceOkHttp3InterceptorsTest {
         w3cTraceparent: String? = null,
         responseBody: String?,
         realSystemClockStartTime: Long,
-        realSystemClockEndTime: Long
+        realSystemClockEndTime: Long,
     ) {
         with(capturedEmbraceNetworkRequest) {
             assertTrue(captured.url.endsWith("$path?$defaultQueryString"))

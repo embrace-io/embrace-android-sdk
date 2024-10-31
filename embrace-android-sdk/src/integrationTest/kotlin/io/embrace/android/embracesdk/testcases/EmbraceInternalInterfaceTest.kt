@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.opentelemetry.semconv.HttpAttributes
+import java.net.SocketException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -29,7 +30,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.net.SocketException
 
 /**
  * Validation of the internal API
@@ -186,7 +186,10 @@ internal class EmbraceInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.getInstance().internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
+                    EmbraceInternalApi.getInstance().internalInterface.logComposeTap(
+                        Pair(expectedX, expectedY),
+                        expectedElementName
+                    )
                 }
             },
             assertAction = {
@@ -223,8 +226,18 @@ internal class EmbraceInternalInterfaceTest {
             },
             testCaseAction = {
                 recordSession {
-                    assertTrue(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
-                    assertFalse(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
+                    assertTrue(
+                        EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(
+                            "capture.me",
+                            "GET"
+                        )
+                    )
+                    assertFalse(
+                        EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(
+                            "capture.me",
+                            "POST"
+                        )
+                    )
                     assertFalse(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(URL, "GET"))
                     assertTrue(EmbraceInternalApi.getInstance().internalInterface.isNetworkSpanForwardingEnabled())
                 }

@@ -12,7 +12,7 @@ internal class FlutterInternalInterfaceImpl(
     private val embrace: EmbraceImpl,
     private val impl: EmbraceInternalInterface,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : EmbraceInternalInterface by impl, FlutterInternalInterface {
 
     override fun setEmbraceFlutterSdkVersion(version: String?) {
@@ -40,7 +40,7 @@ internal class FlutterInternalInterfaceImpl(
         name: String?,
         message: String?,
         context: String?,
-        library: String?
+        library: String?,
     ) {
         logDartException(stack, name, message, context, library, LogExceptionType.HANDLED)
     }
@@ -50,7 +50,7 @@ internal class FlutterInternalInterfaceImpl(
         name: String?,
         message: String?,
         context: String?,
-        library: String?
+        library: String?,
     ) {
         logDartException(stack, name, message, context, library, LogExceptionType.UNHANDLED)
     }
@@ -61,7 +61,7 @@ internal class FlutterInternalInterfaceImpl(
         message: String?,
         context: String?,
         library: String?,
-        exceptionType: LogExceptionType
+        exceptionType: LogExceptionType,
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(

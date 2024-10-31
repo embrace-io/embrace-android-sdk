@@ -42,7 +42,7 @@ public interface EmbraceAndroidApi {
     @Deprecated("Use {@link #start(Context)} instead.")
     public fun start(
         context: Context,
-        appFramework: AppFramework
+        appFramework: AppFramework,
     )
 
     /**

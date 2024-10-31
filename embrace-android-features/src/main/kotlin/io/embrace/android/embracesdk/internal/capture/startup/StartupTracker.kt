@@ -63,7 +63,8 @@ class StartupTracker(
                             decorView.onNextDraw {
                                 if (!isFirstDraw) {
                                     isFirstDraw = true
-                                    val callback = { appStartupDataCollector.firstFrameRendered(activityName = activityName) }
+                                    val callback =
+                                        { appStartupDataCollector.firstFrameRendered(activityName = activityName) }
                                     decorView.viewTreeObserver.registerFrameCommitCallback(callback)
                                 }
                             }
@@ -134,7 +135,7 @@ class StartupTracker(
     private companion object {
         private class PyNextDrawListener(
             val view: View,
-            val onDrawCallback: () -> Unit
+            val onDrawCallback: () -> Unit,
         ) : ViewTreeObserver.OnDrawListener {
             val handler = Handler(Looper.getMainLooper())
             var invoked = false
@@ -153,7 +154,7 @@ class StartupTracker(
         }
 
         private class PyWindowDelegateCallback(
-            private val delegate: Window.Callback
+            private val delegate: Window.Callback,
         ) : Window.Callback by delegate {
 
             val onContentChangedCallbacks = mutableListOf<() -> Boolean>()

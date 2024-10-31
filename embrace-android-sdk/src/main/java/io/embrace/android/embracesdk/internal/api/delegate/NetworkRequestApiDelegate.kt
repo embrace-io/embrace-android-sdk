@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 internal class NetworkRequestApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : NetworkRequestApi {
 
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configModule.configService }

@@ -36,7 +36,7 @@ class DataSourceState<T : DataSource<*>>(
      * If you enable this behavior please ensure your implementation is thread safe (e.g.
      * it can handle unbalanced calls to [enableDataCapture] and others).
      */
-    val asyncInit: Boolean = false
+    val asyncInit: Boolean = false,
 ) {
 
     /**

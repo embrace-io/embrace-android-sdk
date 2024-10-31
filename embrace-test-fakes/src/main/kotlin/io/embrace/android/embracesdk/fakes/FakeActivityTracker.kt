@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.StartupListener
 
 class FakeActivityTracker(
-    override var foregroundActivity: Activity? = null
+    override var foregroundActivity: Activity? = null,
 ) : ActivityTracker {
 
     val listeners: MutableList<ActivityLifecycleListener> = mutableListOf()

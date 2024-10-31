@@ -16,7 +16,7 @@ typealias FeatureModuleSupplier = (
     systemServiceModule: SystemServiceModule,
     androidServicesModule: AndroidServicesModule,
     logWriter: LogWriter,
-    configService: ConfigService
+    configService: ConfigService,
 ) -> FeatureModule
 
 fun createFeatureModule(

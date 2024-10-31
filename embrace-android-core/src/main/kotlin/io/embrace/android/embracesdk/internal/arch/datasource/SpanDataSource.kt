@@ -30,7 +30,7 @@ interface SpanDataSource : DataSource<SpanService> {
     fun captureSpanData(
         countsTowardsLimits: Boolean,
         inputValidation: () -> Boolean,
-        captureAction: SpanService.() -> Unit
+        captureAction: SpanService.() -> Unit,
     ): Boolean
 }
 

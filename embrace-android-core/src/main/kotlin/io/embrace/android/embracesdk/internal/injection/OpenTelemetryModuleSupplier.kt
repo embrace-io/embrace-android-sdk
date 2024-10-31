@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
  */
 typealias OpenTelemetryModuleSupplier = (
     context: Context,
-    logger: EmbLogger
+    logger: EmbLogger,
 ) -> OpenTelemetryModule
 
 fun createOpenTelemetryModule(initModule: InitModule): OpenTelemetryModule =

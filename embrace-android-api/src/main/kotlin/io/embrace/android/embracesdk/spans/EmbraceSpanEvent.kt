@@ -19,7 +19,7 @@ public data class EmbraceSpanEvent internal constructor(
     /**
      * The attributes of this event
      */
-    val attributes: Map<String, String>
+    val attributes: Map<String, String>,
 ) {
 
     /**

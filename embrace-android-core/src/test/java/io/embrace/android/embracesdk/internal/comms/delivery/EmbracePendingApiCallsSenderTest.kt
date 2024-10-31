@@ -335,7 +335,7 @@ internal class EmbracePendingApiCallsSenderTest {
     private fun initPendingApiCallsSender(
         loadFailedRequest: Boolean = true,
         runRetryJobAfterScheduling: Boolean = false,
-        sendMethod: SendMethod? = mockRetryMethod
+        sendMethod: SendMethod? = mockRetryMethod,
     ) {
         pendingApiCalls = PendingApiCalls()
         every { mockCacheManager.loadPendingApiCallQueue() } returns queue

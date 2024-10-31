@@ -21,6 +21,8 @@ import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.context.Context
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -31,8 +33,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiTest {
@@ -62,7 +62,11 @@ internal class TracingApiTest {
                 embrace.addSpanExporter(spanExporter)
             },
             testCaseAction = {
-                results.add("\nSpans exported before session starts: ${spanExporter.exportedSpans.toList().map { it.name }}")
+                results.add(
+                    "\nSpans exported before session starts: ${
+                        spanExporter.exportedSpans.toList().map { it.name }
+                    }"
+                )
                 recordSession {
                     val parentSpan = checkNotNull(embrace.createSpan(name = "test-trace-root"))
                     assertTrue(parentSpan.start(startTimeMs = clock.now() - 1L))
@@ -128,23 +132,36 @@ internal class TracingApiTest {
                     clock.tick(100L)
                     unendingSpan.addAttribute("unending-key", "unending-value")
                     unendingSpan.addEvent("unending-event")
-                    results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
+                    results.add(
+                        "\nSpans exported before ending startup: ${
+                            spanExporter.exportedSpans.toList().map { it.name }
+                        }"
+                    )
                 }
                 sessionEndTimeMs = clock.now()
             },
             assertAction = {
                 val session = getSingleSessionEnvelope()
-                results.add("\nSpans exported after session ends: ${spanExporter.exportedSpans.toList().map { it.name }}")
+                results.add(
+                    "\nSpans exported after session ends: ${
+                        spanExporter.exportedSpans.toList().map { it.name }
+                    }"
+                )
                 val allSpans = getSdkInitSpanFromBackgroundActivity() +
                     checkNotNull(session.data.spans) +
-                    testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans().map(EmbraceSpanData::toNewPayload)
+                    testRule.setup.overriddenOpenTelemetryModule.spanSink.completedSpans()
+                        .map(EmbraceSpanData::toNewPayload)
 
                 val spansMap = allSpans.associateBy { it.name }
                 val sessionSpan = checkNotNull(spansMap["emb-session"])
                 val traceRootSpan = checkNotNull(spansMap["test-trace-root"])
 
                 results.add("\nAll spans to validate: ${allSpans.map { it.name }}")
-                results.add("\nSpans exported before validation: ${spanExporter.exportedSpans.toList().map { it.name }}")
+                results.add(
+                    "\nSpans exported before validation: ${
+                        spanExporter.exportedSpans.toList().map { it.name }
+                    }"
+                )
                 val expectedSpanName = listOf(
                     "emb-sdk-init",
                     "test-trace-root",

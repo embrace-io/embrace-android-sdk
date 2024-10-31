@@ -11,5 +11,5 @@ class NativeAnrSampleFrame(
 
     @Json(name = "so_name") val soName: String? = null,
 
-    @Json(name = "result") val result: Int? = null
+    @Json(name = "result") val result: Int? = null,
 )

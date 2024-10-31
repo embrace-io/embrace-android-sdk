@@ -36,5 +36,5 @@ data class SessionZygote(
     /**
      * The type of start event that triggered this session.
      */
-    val startType: LifeEventType
+    val startType: LifeEventType,
 )

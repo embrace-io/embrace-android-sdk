@@ -104,7 +104,13 @@ internal class EmbraceSpanServiceTest {
         val child = checkNotNull(spanService.createSpan(name = "child-span", parent = parent))
         assertTrue(child.start(startTimeMs = clock.now() - 10))
         val grandchild =
-            checkNotNull(spanService.startSpan(name = "grand-child-span", parent = child, startTimeMs = clock.now() + 1L))
+            checkNotNull(
+                spanService.startSpan(
+                    name = "grand-child-span",
+                    parent = child,
+                    startTimeMs = clock.now() + 1L
+                )
+            )
         assertTrue(grandchild.stop())
         assertTrue(child.stop())
         assertTrue(parent.stop(endTimeMs = clock.now() + 50))

@@ -31,7 +31,7 @@ class EmbraceLogService(
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
     private val logger: EmbLogger,
-    private val serializer: PlatformSerializer
+    private val serializer: PlatformSerializer,
 ) : LogService {
 
     private val logCounters = mapOf(
@@ -56,7 +56,7 @@ class EmbraceLogService(
         context: String?,
         library: String?,
         exceptionName: String?,
-        exceptionMessage: String?
+        exceptionMessage: String?,
     ) {
         val redactedProperties = redactSensitiveProperties(properties)
         if (logExceptionType == LogExceptionType.NONE) {
@@ -207,7 +207,7 @@ class EmbraceLogService(
         message: String,
         severity: Severity,
         attributes: TelemetryAttributes,
-        schemaProvider: (TelemetryAttributes) -> SchemaType
+        schemaProvider: (TelemetryAttributes) -> SchemaType,
     ) {
         if (shouldLogBeGated(severity)) {
             return

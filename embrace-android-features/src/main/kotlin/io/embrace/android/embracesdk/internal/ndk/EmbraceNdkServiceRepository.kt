@@ -16,7 +16,7 @@ import java.io.FilenameFilter
  */
 internal class EmbraceNdkServiceRepository(
     private val storageService: StorageService,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : NdkServiceRepository {
 
     override fun sortNativeCrashes(byOldest: Boolean): List<File> {
@@ -92,7 +92,7 @@ internal class EmbraceNdkServiceRepository(
         crashFile: File,
         errorFile: File?,
         mapFile: File?,
-        nativeCrash: NativeCrashData?
+        nativeCrash: NativeCrashData?,
     ) {
         if (!crashFile.delete()) {
             val msg: String = if (nativeCrash != null) {

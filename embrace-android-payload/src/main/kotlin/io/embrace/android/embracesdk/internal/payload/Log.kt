@@ -52,5 +52,5 @@ data class Log(
     /* The span ID of the log. Can be set for logs that are part of a particular processing span.
      If span_id is present, trace_id SHOULD be also present. */
     @Json(name = "span_id")
-    val spanId: String? = null
+    val spanId: String? = null,
 )

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal class SdkCallChecker(
     private val logger: EmbLogger,
-    private val telemetryService: TelemetryService?
+    private val telemetryService: TelemetryService?,
 ) {
 
     /**

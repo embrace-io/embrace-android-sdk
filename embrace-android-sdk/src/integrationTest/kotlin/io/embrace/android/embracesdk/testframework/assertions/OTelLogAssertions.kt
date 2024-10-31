@@ -1,12 +1,12 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.opentelemetry.semconv.ExceptionAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 import org.junit.Assert.assertEquals
@@ -25,7 +25,7 @@ internal fun assertOtelLogReceived(
     expectedStacktrace: List<StackTraceElement>? = null,
     expectedProperties: Map<String, Any>? = null,
     expectedEmbType: String = "sys.log",
-    expectedState: String = "background"
+    expectedState: String = "background",
 ) {
     assertNotNull(logReceived)
     logReceived?.let { log ->

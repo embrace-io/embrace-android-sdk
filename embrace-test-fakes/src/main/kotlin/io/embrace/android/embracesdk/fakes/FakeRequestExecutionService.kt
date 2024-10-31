@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.zip.GZIPInputStream
 
 class FakeRequestExecutionService(
-    private var strictMode: Boolean = true
+    private var strictMode: Boolean = true,
 ) : RequestExecutionService {
 
     private val serializer = TestPlatformSerializer()
@@ -59,7 +59,8 @@ class FakeRequestExecutionService(
                 val log = envelope as Envelope<LogPayload>
                 val logs = log.data.logs ?: error("Log payload missing logs")
                 val lidList: List<String> = logs.map {
-                    it.attributes?.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key) ?: error("Log missing log id")
+                    it.attributes?.findAttributeValue(LogIncubatingAttributes.LOG_RECORD_UID.key)
+                        ?: error("Log missing log id")
                 }
                 lidList.forEach { lid ->
                     if (logIds.contains(lid)) {

@@ -14,7 +14,7 @@ internal class EmbracePreferencesService(
     private val backgroundWorker: BackgroundWorker,
     private val lazyPrefs: Lazy<SharedPreferences>,
     private val clock: Clock,
-    private val serializer: PlatformSerializer
+    private val serializer: PlatformSerializer,
 ) : PreferencesService {
 
     // We get SharedPreferences on a background thread because it loads data from disk
@@ -85,14 +85,14 @@ internal class EmbracePreferencesService(
 
     private fun SharedPreferences.getBooleanPreference(
         key: String,
-        defaultValue: Boolean
+        defaultValue: Boolean,
     ): Boolean {
         return getBoolean(key, defaultValue)
     }
 
     private fun SharedPreferences.setBooleanPreference(
         key: String,
-        value: Boolean?
+        value: Boolean?,
     ) {
         if (value != null) {
             val editor = edit()
@@ -103,7 +103,7 @@ internal class EmbracePreferencesService(
 
     private fun SharedPreferences.setArrayPreference(
         key: String,
-        value: Set<String>?
+        value: Set<String>?,
     ) {
         val editor = edit()
         editor.putStringSet(key, value)
@@ -116,7 +116,7 @@ internal class EmbracePreferencesService(
 
     private fun SharedPreferences.setMapPreference(
         key: String,
-        value: Map<String, String>?
+        value: Map<String, String>?,
     ) {
         val editor = edit()
         val mapString = when (value) {
@@ -129,7 +129,7 @@ internal class EmbracePreferencesService(
 
     @Suppress("UNCHECKED_CAST")
     private fun SharedPreferences.getMapPreference(
-        key: String
+        key: String,
     ): Map<String, String>? {
         val mapString = getString(key, null) ?: return null
         return serializer.fromJson(mapString, Map::class.java) as Map<String, String>

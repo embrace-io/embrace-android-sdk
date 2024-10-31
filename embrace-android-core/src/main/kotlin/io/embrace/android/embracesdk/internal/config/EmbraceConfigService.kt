@@ -57,7 +57,7 @@ internal class EmbraceConfigService(
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
     val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck { preferencesService.deviceIdentifier }
+        BehaviorThresholdCheck { preferencesService.deviceIdentifier },
 ) : ConfigService, ProcessStateListener {
 
     /**
@@ -172,7 +172,7 @@ internal class EmbraceConfigService(
      */
     fun resolveAppId(
         customAppId: String?,
-        openTelemetryCfg: OpenTelemetryConfiguration
+        openTelemetryCfg: OpenTelemetryConfiguration,
     ): String? {
         val appId = customAppId ?: InstrumentedConfig.project.getAppId()
 

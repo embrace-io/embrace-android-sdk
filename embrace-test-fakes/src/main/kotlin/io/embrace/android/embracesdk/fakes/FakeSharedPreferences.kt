@@ -15,11 +15,12 @@ class FakeSharedPreferences(private val throwExceptionOnGet: Boolean = false) : 
         "testString"
     }
 
-    override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String> = if (throwExceptionOnGet) {
-        throw Exception("test exception")
-    } else {
-        mutableSetOf("testString")
-    }
+    override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String> =
+        if (throwExceptionOnGet) {
+            throw Exception("test exception")
+        } else {
+            mutableSetOf("testString")
+        }
 
     override fun getInt(key: String?, defValue: Int): Int = if (throwExceptionOnGet) {
         throw Exception("test exception")
@@ -54,7 +55,7 @@ class FakeSharedPreferences(private val throwExceptionOnGet: Boolean = false) : 
     }
 
     override fun unregisterOnSharedPreferenceChangeListener(
-        listener: SharedPreferences.OnSharedPreferenceChangeListener?
+        listener: SharedPreferences.OnSharedPreferenceChangeListener?,
     ) {
         // no-op
     }

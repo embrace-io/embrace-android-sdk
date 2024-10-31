@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 internal class SystemServiceModuleImpl @JvmOverloads constructor(
     coreModule: CoreModule,
-    versionChecker: VersionChecker = BuildVersionChecker
+    versionChecker: VersionChecker = BuildVersionChecker,
 ) : SystemServiceModule {
 
     private val ctx = coreModule.context

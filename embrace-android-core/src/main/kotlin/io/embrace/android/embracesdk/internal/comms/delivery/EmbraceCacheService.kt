@@ -25,7 +25,7 @@ import kotlin.concurrent.write
 internal class EmbraceCacheService(
     private val storageService: StorageService,
     private val serializer: PlatformSerializer,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : CacheService {
 
     /**

@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class SessionApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
-    private val sdkCallChecker: SdkCallChecker
+    private val sdkCallChecker: SdkCallChecker,
 ) : SessionApi {
 
     private val sessionPropertiesService by embraceImplInject(sdkCallChecker) {

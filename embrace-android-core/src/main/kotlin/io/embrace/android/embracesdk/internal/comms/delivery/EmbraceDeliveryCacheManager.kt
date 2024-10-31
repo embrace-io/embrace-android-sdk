@@ -17,7 +17,7 @@ import java.io.Closeable
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
     private val priorityWorker: PriorityWorker<TaskPriority>,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
@@ -36,7 +36,7 @@ internal class EmbraceDeliveryCacheManager(
 
     override fun saveSession(
         envelope: Envelope<SessionPayload>,
-        snapshotType: SessionSnapshotType
+        snapshotType: SessionSnapshotType,
     ) {
         try {
             if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
@@ -160,7 +160,7 @@ internal class EmbraceDeliveryCacheManager(
      */
     override fun transformSession(
         sessionId: String,
-        transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>
+        transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>,
     ) {
         val filename = cachedSessions[sessionId]?.filename ?: return
         cacheService.transformSession(filename, transformer)
@@ -203,7 +203,7 @@ internal class EmbraceDeliveryCacheManager(
         sessionStartTimeMs: Long,
         writeSync: Boolean = false,
         snapshot: Boolean = false,
-        saveAction: (filename: String) -> Unit
+        saveAction: (filename: String) -> Unit,
     ) {
         if (writeSync) {
             saveSessionBytesImpl(sessionId, sessionStartTimeMs, saveAction)
@@ -223,7 +223,7 @@ internal class EmbraceDeliveryCacheManager(
     private fun saveSessionBytesImpl(
         sessionId: String,
         sessionStartTimeMs: Long,
-        saveAction: (filename: String) -> Unit
+        saveAction: (filename: String) -> Unit,
     ) {
         try {
             synchronized(cachedSessions) {

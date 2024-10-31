@@ -9,7 +9,7 @@ import io.opentelemetry.sdk.logs.export.LogRecordExporter
  * [LogRecordProcessor] that exports log records it to the given [LogRecordExporter]
  */
 internal class EmbraceLogRecordProcessor(
-    private val logRecordExporter: LogRecordExporter
+    private val logRecordExporter: LogRecordExporter,
 ) : LogRecordProcessor {
 
     override fun onEmit(context: Context, logRecord: ReadWriteLogRecord) {

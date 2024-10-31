@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
+import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule

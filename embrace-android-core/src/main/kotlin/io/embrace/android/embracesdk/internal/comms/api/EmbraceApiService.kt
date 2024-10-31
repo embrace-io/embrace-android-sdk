@@ -26,7 +26,7 @@ internal class EmbraceApiService(
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
     appId: String,
-    urlBuilder: ApiUrlBuilder
+    urlBuilder: ApiUrlBuilder,
 ) : ApiService {
 
     private val mapper by lazy {
@@ -130,7 +130,7 @@ internal class EmbraceApiService(
         payload: T,
         mapper: (T) -> ApiRequest,
         type: ParameterizedType? = null,
-        noinline onComplete: ((response: ApiResponse) -> Unit) = {}
+        noinline onComplete: ((response: ApiResponse) -> Unit) = {},
     ): Future<*> {
         val request: ApiRequest = mapper(payload)
         val action: SerializationAction = { stream ->

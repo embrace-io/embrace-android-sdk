@@ -5,7 +5,7 @@ import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerBuilder
 
 class FakeTracerBuilder(
-    val instrumentationScopeName: String
+    val instrumentationScopeName: String,
 ) : TracerBuilder {
 
     var scopeVersion: String? = null

@@ -16,12 +16,12 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
  */
 internal class EmbraceGatingService(
     private val configService: ConfigService,
-    private val logService: LogService
+    private val logService: LogService,
 ) : GatingService {
 
     override fun gateSessionEnvelope(
         hasCrash: Boolean,
-        envelope: Envelope<SessionPayload>
+        envelope: Envelope<SessionPayload>,
     ): Envelope<SessionPayload> {
         val components = configService.sessionBehavior.getSessionComponents()
         if (components != null && configService.sessionBehavior.isGatingFeatureEnabled()) {

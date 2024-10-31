@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 class NativeSymbols(
     @Json(name = "symbols")
-    internal val symbols: Map<String, Map<String, String>>
+    internal val symbols: Map<String, Map<String, String>>,
 ) {
 
     fun getSymbolByArchitecture(arch: String?): Map<String, String> {

@@ -31,5 +31,5 @@ data class LogRemoteConfig(
      * Limit of error logs that user is able to send.
      */
     @Json(name = "error_limit")
-    val logErrorLimit: Int? = null
+    val logErrorLimit: Int? = null,
 )

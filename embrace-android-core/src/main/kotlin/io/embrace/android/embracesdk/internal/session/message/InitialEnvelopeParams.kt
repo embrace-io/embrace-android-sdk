@@ -11,7 +11,7 @@ class InitialEnvelopeParams(
     val coldStart: Boolean,
     val startType: LifeEventType,
     val startTime: Long,
-    val appState: ApplicationState
+    val appState: ApplicationState,
 ) {
 
     fun getSessionNumber(service: PreferencesService): Int = when (appState) {

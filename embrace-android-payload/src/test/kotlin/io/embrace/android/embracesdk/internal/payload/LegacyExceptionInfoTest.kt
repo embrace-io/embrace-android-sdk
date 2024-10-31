@@ -13,7 +13,10 @@ internal class LegacyExceptionInfoTest {
         val info = LegacyExceptionInfo.ofThrowable(throwable)
         assertNotNull(info)
         assertEquals("UhOh.", info.message)
-        assertEquals("io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfoTest\$testOfThrowable\$throwable\$1", info.name)
+        assertEquals(
+            "io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfoTest\$testOfThrowable\$throwable\$1",
+            info.name
+        )
         assertEquals(
             "io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfoTest.testOfThrowable(LegacyExceptionInfoTest.kt:12)",
             info.lines.first()

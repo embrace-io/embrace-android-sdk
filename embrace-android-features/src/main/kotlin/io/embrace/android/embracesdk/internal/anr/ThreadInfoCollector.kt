@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import java.util.regex.Pattern
 
 internal class ThreadInfoCollector(
-    private val targetThread: Thread
+    private val targetThread: Thread,
 ) {
 
     private val currentStacktraceStates: MutableMap<Long, ThreadInfo> = HashMap()
@@ -80,7 +80,7 @@ internal class ThreadInfoCollector(
     private fun isAllowedByLists(
         allowList: List<Pattern>?,
         blockList: List<Pattern>?,
-        name: String
+        name: String,
     ): Boolean {
         return matchesList(allowList, name) || !matchesList(blockList, name)
     }

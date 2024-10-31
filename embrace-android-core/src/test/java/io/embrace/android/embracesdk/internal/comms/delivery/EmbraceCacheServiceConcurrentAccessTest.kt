@@ -118,7 +118,11 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
             firstBlocksSecond = true
         )
 
-        assertEquals(executionCoordinator.getErrorMessage(), testSessionEnvelope.getSessionId(), readSession?.getSessionId())
+        assertEquals(
+            executionCoordinator.getErrorMessage(),
+            testSessionEnvelope.getSessionId(),
+            readSession?.getSessionId()
+        )
     }
 
     @Ignore("Failing in CI after switching to different image")

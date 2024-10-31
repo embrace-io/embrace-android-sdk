@@ -148,7 +148,7 @@ internal class AeiDataSourceImpl(
     private fun buildSessionAppExitInfoData(
         appExitInfo: ApplicationExitInfo,
         trace: String?,
-        traceStatus: String?
+        traceStatus: String?,
     ): AppExitInfoData {
         val sessionId = String(appExitInfo.processStateSummary ?: ByteArray(0))
 

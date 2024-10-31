@@ -18,7 +18,7 @@ internal class EmbraceUncaughtExceptionHandler(
      * The crash service which will submit the exception to the API as a crash
      */
     private val crashService: CrashService,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : Thread.UncaughtExceptionHandler {
 
     init {

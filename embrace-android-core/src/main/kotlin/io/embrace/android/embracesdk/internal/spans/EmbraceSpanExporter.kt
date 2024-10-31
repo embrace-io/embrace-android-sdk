@@ -11,7 +11,7 @@ import io.opentelemetry.sdk.trace.export.SpanExporter
  */
 internal class EmbraceSpanExporter(
     private val spanSink: SpanSink,
-    private val externalSpanExporter: SpanExporter
+    private val externalSpanExporter: SpanExporter,
 ) : SpanExporter {
     @Synchronized
     override fun export(spans: MutableCollection<SpanData>): CompletableResultCode {

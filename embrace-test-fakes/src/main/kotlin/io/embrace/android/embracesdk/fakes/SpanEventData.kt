@@ -11,5 +11,5 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
  */
 class SpanEventData(
     val schemaType: SchemaType,
-    val spanStartTimeMs: Long
+    val spanStartTimeMs: Long,
 )

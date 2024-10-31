@@ -14,7 +14,7 @@ internal interface EmbraceSpanFactory {
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
-        parent: EmbraceSpan? = null
+        parent: EmbraceSpan? = null,
     ): PersistableEmbraceSpan
 
     fun create(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan

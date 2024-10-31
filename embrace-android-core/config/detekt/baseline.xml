@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>LongParameterList:DeliveryModuleSupplier.kt$( configModule: ConfigModule, initModule: InitModule, otelModule: OpenTelemetryModule, workerThreadModule: WorkerThreadModule, coreModule: CoreModule, storageModule: StorageModule, essentialServiceModule: EssentialServiceModule, payloadStorageServiceProvider: Provider&lt;PayloadStorageService?&gt;, cacheStorageServiceProvider: Provider&lt;PayloadStorageService?&gt;, requestExecutionServiceProvider: Provider&lt;RequestExecutionService?&gt;, deliveryServiceProvider: Provider&lt;DeliveryService?&gt; )</ID>
-    <ID>LongParameterList:SessionOrchestrationModuleSupplier.kt$( initModule: InitModule, openTelemetryModule: OpenTelemetryModule, androidServicesModule: AndroidServicesModule, essentialServiceModule: EssentialServiceModule, configModule: ConfigModule, deliveryModule: DeliveryModule, dataSourceModule: DataSourceModule, payloadSourceModule: PayloadSourceModule, startupDurationProvider: (coldStart: Boolean) -&gt; Long?, momentsModule: MomentsModule, logModule: LogModule )</ID>
+    <ID>LongParameterList:DeliveryModuleSupplier.kt$( configModule: ConfigModule, initModule: InitModule, otelModule: OpenTelemetryModule, workerThreadModule: WorkerThreadModule, coreModule: CoreModule, storageModule: StorageModule, essentialServiceModule: EssentialServiceModule, payloadStorageServiceProvider: Provider&lt;PayloadStorageService?&gt;, cacheStorageServiceProvider: Provider&lt;PayloadStorageService?&gt;, requestExecutionServiceProvider: Provider&lt;RequestExecutionService?&gt;, deliveryServiceProvider: Provider&lt;DeliveryService?&gt;, )</ID>
   </CurrentIssues>
 </SmellBaseline>

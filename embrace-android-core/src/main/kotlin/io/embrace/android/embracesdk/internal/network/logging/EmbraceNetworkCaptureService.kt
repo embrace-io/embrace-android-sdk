@@ -20,7 +20,7 @@ internal class EmbraceNetworkCaptureService(
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val configService: ConfigService,
     private val serializer: PlatformSerializer,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
 ) : NetworkCaptureService {
 
     companion object {
@@ -76,7 +76,7 @@ internal class EmbraceNetworkCaptureService(
         startTime: Long,
         endTime: Long,
         networkCaptureData: NetworkCaptureData?,
-        errorMessage: String?
+        errorMessage: String?,
     ) {
         val duration = max(endTime - startTime, 0)
 
@@ -85,7 +85,10 @@ internal class EmbraceNetworkCaptureService(
             if (shouldApplyRule(rule, duration, statusCode)) {
                 val requestBody = parseBody(networkCaptureData?.capturedRequestBody, rule.maxSize)
                 val responseBody =
-                    networkCaptureData?.dataCaptureErrorMessage ?: parseBody(networkCaptureData?.capturedResponseBody, rule.maxSize)
+                    networkCaptureData?.dataCaptureErrorMessage ?: parseBody(
+                        networkCaptureData?.capturedResponseBody,
+                        rule.maxSize
+                    )
                 preferencesService.decreaseNetworkCaptureRuleRemainingCount(rule.id, rule.maxCount)
 
                 val capturedNetworkCall = NetworkCapturedCall(

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
  * to expose as part of the internal API.
  */
 class BackgroundWorker(
-    private val impl: ScheduledExecutorService
+    private val impl: ScheduledExecutorService,
 ) {
 
     /**
@@ -37,7 +37,7 @@ class BackgroundWorker(
     fun <T> schedule(
         command: Runnable?,
         delay: Long,
-        unit: TimeUnit?
+        unit: TimeUnit?,
     ): ScheduledFuture<T> {
         return impl.schedule(command, delay, unit) as ScheduledFuture<T>
     }
@@ -49,7 +49,7 @@ class BackgroundWorker(
         command: Runnable?,
         initialDelay: Long,
         delay: Long,
-        unit: TimeUnit?
+        unit: TimeUnit?,
     ): ScheduledFuture<*>? {
         return impl.scheduleWithFixedDelay(command, initialDelay, delay, unit)
     }
@@ -58,7 +58,7 @@ class BackgroundWorker(
         runnable: Runnable,
         initialDelay: Long,
         intervalMs: Long,
-        unit: TimeUnit
+        unit: TimeUnit,
     ): ScheduledFuture<*> = impl.scheduleAtFixedRate(runnable, initialDelay, intervalMs, unit)
 
     /**

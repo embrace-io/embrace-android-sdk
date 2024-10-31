@@ -35,7 +35,7 @@ class NativeThreadAnrInterval(
     val samples: MutableList<NativeThreadAnrSample>?,
 
     threadState: ThreadState? = null,
-    unwinderType: Unwinder? = null
+    unwinderType: Unwinder? = null,
 ) {
 
     /**

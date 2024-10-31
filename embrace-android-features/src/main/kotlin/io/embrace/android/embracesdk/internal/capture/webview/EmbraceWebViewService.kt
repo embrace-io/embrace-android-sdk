@@ -46,7 +46,8 @@ internal class EmbraceWebViewService(
                 )
             }
 
-            webViewInfoMap[it.url + it.startTime] = processVitalList(it, checkNotNull(webViewInfoMap[it.url + it.startTime]))
+            webViewInfoMap[it.url + it.startTime] =
+                processVitalList(it, checkNotNull(webViewInfoMap[it.url + it.startTime]))
         }
         webViewDataSourceProvider()?.loadDataIntoSession(webViewInfoMap.values.toList())
     }
@@ -70,11 +71,13 @@ internal class EmbraceWebViewService(
                                 storedMessage.webVitalMap[it.type] = newVital
                             }
                         }
+
                         WebVitalType.LCP -> {
                             if (newVital.startTime > it.startTime) { // most recent capture st time
                                 storedMessage.webVitalMap[it.type] = newVital
                             }
                         }
+
                         else -> {
                             // do nothing
                         }

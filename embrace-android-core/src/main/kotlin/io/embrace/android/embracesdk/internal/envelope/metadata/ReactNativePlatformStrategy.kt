@@ -17,7 +17,7 @@ internal class ReactNativePlatformStrategy : HostedPlatformStrategy {
 
     override fun setHostedPlatformVersionInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     ) {
         preferencesService.reactNativeVersionNumber = value
     }
@@ -28,7 +28,7 @@ internal class ReactNativePlatformStrategy : HostedPlatformStrategy {
 
     override fun setJavaScriptPatchNumberInPreferences(
         value: String?,
-        preferencesService: PreferencesService
+        preferencesService: PreferencesService,
     ) {
         preferencesService.javaScriptPatchNumber = value
     }

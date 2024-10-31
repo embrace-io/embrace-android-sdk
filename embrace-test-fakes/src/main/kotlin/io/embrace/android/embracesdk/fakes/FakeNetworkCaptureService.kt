@@ -10,7 +10,7 @@ class FakeNetworkCaptureService : NetworkCaptureService {
 
     override fun getNetworkCaptureRules(
         url: String,
-        method: String
+        method: String,
     ): Set<NetworkCaptureRuleRemoteConfig> {
         return emptySet()
     }
@@ -22,7 +22,7 @@ class FakeNetworkCaptureService : NetworkCaptureService {
         startTime: Long,
         endTime: Long,
         networkCaptureData: NetworkCaptureData?,
-        errorMessage: String?
+        errorMessage: String?,
     ) {
         urls.add(url)
     }

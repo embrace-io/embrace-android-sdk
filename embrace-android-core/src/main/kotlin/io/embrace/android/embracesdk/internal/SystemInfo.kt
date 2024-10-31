@@ -39,7 +39,7 @@ data class SystemInfo(
     /**
      * Name of the model of the device.
      */
-    val deviceModel: String = getDeviceModel()
+    val deviceModel: String = getDeviceModel(),
 )
 
 internal fun getOsBuild(): String {

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong
  */
 internal class EmbraceSpanProcessor(
     private val spanExporter: SpanExporter,
-    private val processIdentifier: String
+    private val processIdentifier: String,
 ) : SpanProcessor {
 
     private val counter = AtomicLong(1)

@@ -18,5 +18,5 @@ data class Attribute(
 
     /* The value of the attribute */
     @Json(name = "value")
-    val data: String? = null
+    val data: String? = null,
 )

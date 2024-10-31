@@ -100,12 +100,12 @@ fun Span.assertSuccessful() {
  * Assert [SpanEventData] is of type [telemetryType]
  */
 fun SpanEventData.assertIsType(
-    telemetryType: TelemetryType
+    telemetryType: TelemetryType,
 ): Unit = assertEquals(telemetryType, schemaType.telemetryType)
 
 /**
  * Assert [LogEventData] is of type [telemetryType]
  */
 fun LogEventData.assertIsType(
-    telemetryType: TelemetryType
+    telemetryType: TelemetryType,
 ): Unit = assertEquals(telemetryType, schemaType.telemetryType)

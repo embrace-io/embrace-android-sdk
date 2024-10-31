@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class ExecutionCoordinator(
     private val executionModifiers: ExecutionModifiers,
-    private val errorLogsProvider: Provider<List<Throwable>>?
+    private val errorLogsProvider: Provider<List<Throwable>>?,
 ) {
     private val thread1 = SingleThreadTestScheduledExecutor()
     private val thread2 = SingleThreadTestScheduledExecutor()
@@ -29,7 +29,7 @@ class ExecutionCoordinator(
         first: () -> Unit,
         second: () -> Unit,
         firstBlocksSecond: Boolean,
-        firstOperationFails: Boolean = false
+        firstOperationFails: Boolean = false,
     ) {
         val completionSteps = if (firstBlocksSecond) 3 else 2
         var blockId: Int? = null

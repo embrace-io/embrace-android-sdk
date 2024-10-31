@@ -16,8 +16,6 @@ internal class ApiRequestTest {
         "application/json",
         "abcde",
         "test_did",
-        "test_eid",
-        "test_lid",
         ApiRequestUrl("https://google.com"),
         HttpMethod.GET,
         "d800f828fec4409dcabc7f5252e7ce71"
@@ -34,8 +32,6 @@ internal class ApiRequestTest {
                 "Accept-Encoding" to "application/json",
                 "X-EM-AID" to "abcde",
                 "X-EM-DID" to "test_did",
-                "X-EM-SID" to "test_eid",
-                "X-EM-LID" to "test_lid",
                 "If-None-Match" to "d800f828fec4409dcabc7f5252e7ce71"
             ),
             request.getHeaders()

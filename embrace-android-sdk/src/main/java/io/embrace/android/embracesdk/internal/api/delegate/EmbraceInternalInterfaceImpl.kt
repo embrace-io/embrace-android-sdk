@@ -10,12 +10,10 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.InternalTracingApi
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.event.EventService
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.network.logging.NetworkCaptureService
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb
 import io.embrace.android.embracesdk.internal.spans.InternalTracer
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -26,7 +24,6 @@ internal class EmbraceInternalInterfaceImpl(
     private val embraceImpl: EmbraceImpl,
     private val initModule: InitModule,
     private val networkCaptureService: NetworkCaptureService,
-    private val eventService: EventService,
     private val configService: ConfigService,
     internalTracer: InternalTracer
 ) : EmbraceInternalInterface, InternalTracingApi by internalTracer {
@@ -59,9 +56,9 @@ internal class EmbraceInternalInterfaceImpl(
         customStackTrace: Array<StackTraceElement>?
     ) {
         val eventType = when (type) {
-            LogType.ERROR -> EventType.ERROR_LOG
-            LogType.WARNING -> EventType.WARNING_LOG
-            else -> EventType.INFO_LOG
+            LogType.ERROR -> Severity.ERROR
+            LogType.WARNING -> Severity.WARNING
+            else -> Severity.INFO
         }
         embraceImpl.logMessage(
             eventType,
@@ -163,10 +160,6 @@ internal class EmbraceInternalInterfaceImpl(
         return networkCaptureService.getNetworkCaptureRules(url, method).isNotEmpty()
     }
 
-    override fun setProcessStartedByNotification() {
-        eventService.setProcessStartedByNotification()
-    }
-
     override fun isNetworkSpanForwardingEnabled(): Boolean = configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
 
     override fun getSdkCurrentTime(): Long = initModule.clock.now()
@@ -189,6 +182,10 @@ internal class EmbraceInternalInterfaceImpl(
 
     override fun logInternalError(error: Throwable) {
         initModule.logger.trackInternalError(InternalErrorType.INTERNAL_INTERFACE_FAIL, error)
+    }
+
+    override fun logTap(point: Pair<Float?, Float?>, elementName: String, type: TapBreadcrumb.TapBreadcrumbType) {
+        embraceImpl.logTap(point, elementName, type)
     }
 
     override fun stopSdk() {

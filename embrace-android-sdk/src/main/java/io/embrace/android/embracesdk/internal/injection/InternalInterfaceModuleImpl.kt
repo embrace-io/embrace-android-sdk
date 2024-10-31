@@ -1,10 +1,10 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.EmbraceImpl
-import io.embrace.android.embracesdk.FlutterInternalInterface
-import io.embrace.android.embracesdk.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.FlutterInternalInterface
+import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
+import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
@@ -16,7 +16,6 @@ internal class InternalInterfaceModuleImpl(
     configModule: ConfigModule,
     payloadSourceModule: PayloadSourceModule,
     logModule: LogModule,
-    momentsModule: MomentsModule,
     embrace: EmbraceImpl,
     crashModule: CrashModule
 ) : InternalInterfaceModule {
@@ -26,7 +25,6 @@ internal class InternalInterfaceModuleImpl(
             embrace,
             initModule,
             logModule.networkCaptureService,
-            momentsModule.eventService,
             configModule.configService,
             openTelemetryModule.internalTracer
         )

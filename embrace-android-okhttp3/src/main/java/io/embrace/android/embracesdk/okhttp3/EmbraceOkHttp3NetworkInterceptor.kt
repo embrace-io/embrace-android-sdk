@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.annotation.InternalApi
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -32,14 +32,12 @@ import kotlin.math.abs
  * - Observe the data just as it will be transmitted over the network.
  * - Access to the Connection that carries the request.
  */
-@InternalApi
-class EmbraceOkHttp3NetworkInterceptor internal constructor(
+class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
     private val embrace: Embrace,
-
+    private val embraceInternalApi: EmbraceInternalApi,
     // A clock that mirrors the one used by OkHttp to get timestamps
-    private val systemClock: Clock
+    private val systemClock: Clock = Clock { System.currentTimeMillis() }
 ) : Interceptor {
-    constructor() : this(Embrace.getInstance(), Clock { System.currentTimeMillis() })
 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -49,7 +47,7 @@ class EmbraceOkHttp3NetworkInterceptor internal constructor(
             return chain.proceed(originalRequest)
         }
 
-        val networkSpanForwardingEnabled = embrace.internalInterface.isNetworkSpanForwardingEnabled()
+        val networkSpanForwardingEnabled = embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()
         var traceparent: String? = null
         if (networkSpanForwardingEnabled && originalRequest.header(TRACEPARENT_HEADER_NAME) == null) {
             traceparent = embrace.generateW3cTraceparent()
@@ -76,7 +74,7 @@ class EmbraceOkHttp3NetworkInterceptor internal constructor(
 
         var response: Response = networkResponse
         var networkCaptureData: NetworkCaptureData? = null
-        val shouldCaptureNetworkData = embrace.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
+        val shouldCaptureNetworkData = embraceInternalApi.internalInterface.shouldCaptureNetworkBody(request.url.toString(), request.method)
 
         // If we need to capture the network response body,
         if (shouldCaptureNetworkData) {
@@ -191,7 +189,7 @@ class EmbraceOkHttp3NetworkInterceptor internal constructor(
                 i++
             }
             dataCaptureErrorMessage = "There were errors in capturing the following part(s) of the network call: %s$errors"
-            embrace.internalInterface.logInternalError(
+            embraceInternalApi.internalInterface.logInternalError(
                 RuntimeException("Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage", e)
             )
         }
@@ -227,7 +225,7 @@ class EmbraceOkHttp3NetworkInterceptor internal constructor(
                 return buffer.readByteArray()
             }
         } catch (e: IOException) {
-            embrace.internalInterface.logInternalError("Failed to capture okhttp request body.", e.javaClass.toString())
+            embraceInternalApi.internalInterface.logInternalError("Failed to capture okhttp request body.", e.javaClass.toString())
         }
         return null
     }
@@ -244,9 +242,9 @@ class EmbraceOkHttp3NetworkInterceptor internal constructor(
         // Any difference that is greater than 1 ms is likely the result of a change to the system clock during this process, or some
         // scheduling quirk that makes the result not trustworthy. In that case, we simply don't return an offset.
 
-        val sdkTime1 = embrace.internalInterface.getSdkCurrentTime()
+        val sdkTime1 = embraceInternalApi.internalInterface.getSdkCurrentTime()
         val systemTime1 = systemClock.now()
-        val sdkTime2 = embrace.internalInterface.getSdkCurrentTime()
+        val sdkTime2 = embraceInternalApi.internalInterface.getSdkCurrentTime()
         val systemTime2 = systemClock.now()
 
         val diff1 = sdkTime1 - systemTime1

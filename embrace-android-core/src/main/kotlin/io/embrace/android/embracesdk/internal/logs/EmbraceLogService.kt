@@ -16,10 +16,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.payload.EventType
-import io.embrace.android.embracesdk.internal.payload.EventType.ERROR_LOG
-import io.embrace.android.embracesdk.internal.payload.EventType.INFO_LOG
-import io.embrace.android.embracesdk.internal.payload.EventType.WARNING_LOG
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
@@ -52,7 +48,7 @@ class EmbraceLogService(
 
     override fun log(
         message: String,
-        type: EventType,
+        severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>?,
         stackTraceElements: Array<StackTraceElement>?,
@@ -62,14 +58,6 @@ class EmbraceLogService(
         exceptionName: String?,
         exceptionMessage: String?
     ) {
-        // Currently, any call to this log method can only have an event type of INFO_LOG,
-        // WARNING_LOG, or ERROR_LOG, since it is taken from the fromSeverity() method
-        // in EventType.
-        val severity = type.getSeverity()
-        if (severity == null) {
-            logger.logError("Invalid event type for log: $type")
-            return
-        }
         val redactedProperties = redactSensitiveProperties(properties)
         if (logExceptionType == LogExceptionType.NONE) {
             log(
@@ -106,15 +94,6 @@ class EmbraceLogService(
                     exceptionMessage = exceptionMessage
                 )
             }
-        }
-    }
-
-    private fun EventType.getSeverity(): Severity? {
-        return when (this) {
-            INFO_LOG -> Severity.INFO
-            WARNING_LOG -> Severity.WARNING
-            ERROR_LOG -> Severity.ERROR
-            else -> null
         }
     }
 

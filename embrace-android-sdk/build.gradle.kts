@@ -8,21 +8,12 @@ plugins {
 
 description = "Embrace Android SDK: Core"
 
-val version: String by project
-
-
 android {
     ndkVersion = Versions.NDK
 
     defaultConfig {
         namespace = "io.embrace.android.embracesdk"
         consumerProguardFiles("embrace-proguard.cfg")
-
-        // For library projects only, the BuildConfig.VERSION_NAME and BuildConfig.VERSION_CODE properties have been removed from the generated BuildConfig class
-        //
-        // https://developer.android.com/studio/releases/gradle-plugin#version_properties_removed_from_buildconfig_class_in_library_projects
-        buildConfigField("String", "VERSION_NAME", "\"${version}\"")
-        buildConfigField("String", "VERSION_CODE", "\"${53}\"")
     }
 
     externalNativeBuild {
@@ -32,9 +23,6 @@ android {
     }
     packaging {
         jniLibs.pickFirsts.add("**/*.so")
-    }
-    buildFeatures {
-        buildConfig = true
     }
 }
 
@@ -66,10 +54,15 @@ dependencies {
     implementation(project(":embrace-android-features"))
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-delivery"))
+    implementation(project(":embrace-internal-api"))
 
     implementation(platform(libs.opentelemetry.bom))
-    implementation(libs.lifecycle.common.java8)
+
+    // lifecycle
+    implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
+    ksp(libs.lifecycle.compiler)
+    testImplementation(libs.lifecycle.testing)
 
     // json
     implementation(libs.moshi)
@@ -89,7 +82,6 @@ dependencies {
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
     testImplementation(libs.kotlin.reflect)
-    testImplementation(libs.lifecycle.testing)
 
     androidTestImplementation(project(":embrace-test-fakes"))
 }

@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.spans
 
-import io.embrace.android.embracesdk.annotation.BetaApi
 import java.util.concurrent.TimeUnit
 
 /**
  * Represents an Event in an [EmbraceSpan]
  */
-@BetaApi
 public data class EmbraceSpanEvent internal constructor(
     /**
      * The name of the event

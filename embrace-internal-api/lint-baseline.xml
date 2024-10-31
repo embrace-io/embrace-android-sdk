@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.7.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.7.1)" variant="all" version="8.7.1">
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="enum class LogType {"
+        errorLine2="           ~~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/LogType.kt"
+            line="10"
+            column="12"/>
+    </issue>
+
+</issues>

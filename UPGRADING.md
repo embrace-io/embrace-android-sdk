@@ -1,8 +1,30 @@
 # Upgrade guide
 
+# Upgrading from 6.x to 7.x
+
+Version 7 of the Embrace Android SDK contains the following breaking changes:
+
+- The `startMoment/endMoment` API has been removed. Use `startSpan/recordSpan` instead.
+- `Embrace.AppFramework` is now its own top level class, `AppFramework`
+- `Embrace.LastRunEndState` is now its own top level class, `LastRunEndState`
+- Several public APIs are now implemented in Kotlin rather than Java. Generally this will not affect backwards compatibility but the following may have slight changes to their signatures:
+  - `EmbraceNetworkRequest` Java overloads replaced with default parameters
+- Several internally used classes and symbols have been hidden from the public API
+
+### Removed APIs
+
+The following deprecated APIs have been removed:
+
+| Old API                                                       | New API                                    |
+|---------------------------------------------------------------|--------------------------------------------|
+| `Embrace.getInstance().getSessionProperties()`                | N/A                                        |
+| `Embrace.getInstance().isTracingAvailable()`                  | `Embrace.getInstance().isStarted()`        |
+| `Embrace.getInstance().start(Context, boolean)`               | `Embrace.getInstance().start(Context)`     |
+| `Embrace.getInstance().start(Context, boolean, AppFramework)` | `Embrace.getInstance().isStarted(Context)` |
+
 # Upgrading from 5.x to 6.x
 
-Version X of the Embrace <platform> SDK renames some functions. This has been done to reduce
+Version 6 of the Embrace Android SDK renames some functions. This has been done to reduce
 confusion & increase consistency across our SDKs.
 
 Functions that have been marked as deprecated will still work as before, but will be removed in

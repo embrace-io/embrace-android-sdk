@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-delivery"))
     implementation(project(":embrace-android-infra"))
+    implementation(project(":embrace-internal-api"))
     compileOnly(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-payload"))
     testImplementation(project(":embrace-android-api"))
@@ -34,7 +35,7 @@ dependencies {
     compileOnly(libs.opentelemetry.sdk)
     compileOnly(libs.opentelemetry.semconv)
     compileOnly(libs.opentelemetry.semconv.incubating)
-    compileOnly(libs.lifecycle.common.java8)
+    implementation(libs.lifecycle.runtime)
     implementation(libs.lifecycle.process)
 
     testImplementation(platform(libs.opentelemetry.bom))
@@ -42,7 +43,8 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.opentelemetry.semconv)
     testImplementation(libs.opentelemetry.semconv.incubating)
-    testImplementation(libs.lifecycle.common.java8)
+    testImplementation(libs.lifecycle.runtime)
+    testImplementation(libs.lifecycle.process)
     testImplementation(libs.lifecycle.testing)
     testImplementation(libs.kotlin.reflect)
 }

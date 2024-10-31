@@ -15,7 +15,6 @@ class FakePreferenceService(
     override var userPersonas: Set<String>? = null,
     override var username: String? = null,
     override var permanentSessionProperties: Map<String, String>? = null,
-    @Deprecated("") override var customPersonas: Set<String>? = null,
     override var lastConfigFetchDate: Long? = null,
     override var userMessageNeedsRetry: Boolean = false,
     override var reactNativeVersionNumber: String? = null,

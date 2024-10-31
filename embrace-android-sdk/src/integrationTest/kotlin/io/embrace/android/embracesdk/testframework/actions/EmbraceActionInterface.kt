@@ -1,19 +1,13 @@
 package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
-import android.content.Context
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.Embrace
-import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.robolectric.Robolectric
 
 /**

@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.embrace.android.embracesdk.Embrace;
 import io.embrace.android.embracesdk.annotation.InternalApi;
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi;
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3ApplicationInterceptor;
 import io.embrace.android.embracesdk.okhttp3.EmbraceOkHttp3NetworkInterceptor;
 import okhttp3.Interceptor;
@@ -11,13 +12,11 @@ import okhttp3.Interceptor;
 /**
  * Callback hooks for the okhttp3.OkHttpClient class.
  */
-@InternalApi
 public final class OkHttpClient {
 
     private OkHttpClient() {
     }
 
-    @InternalApi
     public static final class Builder {
 
         private Builder() {
@@ -49,8 +48,8 @@ public final class OkHttpClient {
          */
         private static void addEmbraceInterceptors(okhttp3.OkHttpClient.Builder thiz) {
             try {
-                addInterceptor(thiz.interceptors(), new EmbraceOkHttp3ApplicationInterceptor());
-                addInterceptor(thiz.networkInterceptors(), new EmbraceOkHttp3NetworkInterceptor());
+                addInterceptor(thiz.interceptors(), new EmbraceOkHttp3ApplicationInterceptor(Embrace.getInstance(), EmbraceInternalApi.getInstance()));
+                addInterceptor(thiz.networkInterceptors(), new EmbraceOkHttp3NetworkInterceptor(Embrace.getInstance(), EmbraceInternalApi.getInstance()));
             } catch (NoSuchMethodError exception) {
                 // The customer may be overwriting OkHttpClient with their own implementation, and some of the
                 // methods we use are missing.
@@ -92,7 +91,7 @@ public final class OkHttpClient {
         }
 
         private static void logInternalError(Throwable throwable) {
-            Embrace.getInstance().getInternalInterface().logInternalError(throwable);
+            EmbraceInternalApi.getInstance().getInternalInterface().logInternalError(throwable);
         }
     }
 }

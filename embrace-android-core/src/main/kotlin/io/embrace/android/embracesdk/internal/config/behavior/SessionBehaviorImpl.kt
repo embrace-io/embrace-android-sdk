@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.internal.payload.EventMessage
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.Locale
 
@@ -38,19 +36,9 @@ class SessionBehaviorImpl(
 
     override fun getMaxSessionProperties(): Int = remote?.maxSessionProperties ?: SESSION_PROPERTY_LIMIT
 
-    override fun shouldGateMoment(): Boolean = shouldGateFeature(SessionGatingKeys.SESSION_MOMENTS)
-
     override fun shouldGateInfoLog(): Boolean = shouldGateFeature(SessionGatingKeys.LOGS_INFO)
 
     override fun shouldGateWarnLog(): Boolean = shouldGateFeature(SessionGatingKeys.LOGS_WARN)
-
-    override fun shouldGateStartupMoment(): Boolean = shouldGateFeature(SessionGatingKeys.STARTUP_MOMENT)
-
-    fun shouldSendFullMessage(eventMessage: EventMessage): Boolean {
-        val type = eventMessage.event.type
-        return (type == EventType.ERROR_LOG && shouldSendFullForErrorLog()) ||
-            (type == EventType.CRASH && shouldSendFullForCrash())
-    }
 
     override fun shouldSendFullForCrash(): Boolean =
         getFullSessionEvents().contains(SessionGatingKeys.FULL_SESSION_CRASHES)

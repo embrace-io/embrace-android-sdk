@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -80,7 +82,7 @@ internal class JvmCrashFeatureTest {
             },
             testCaseAction = {
                 recordSession {
-                    embrace.reactNativeInternalInterface?.logUnhandledJsException(
+                    EmbraceInternalApi.getInstance().reactNativeInternalInterface.logUnhandledJsException(
                         "name",
                         "message",
                         "type",

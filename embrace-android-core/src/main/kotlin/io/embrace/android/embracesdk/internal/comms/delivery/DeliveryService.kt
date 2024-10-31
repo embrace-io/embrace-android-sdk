@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.EventMessage
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -17,5 +16,4 @@ interface DeliveryService {
     )
     fun sendLogs(logEnvelope: Envelope<LogPayload>)
     fun saveLogs(logEnvelope: Envelope<LogPayload>)
-    fun sendMoment(eventMessage: EventMessage)
 }

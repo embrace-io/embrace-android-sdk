@@ -183,8 +183,6 @@ internal class ApiClientImplTest {
             acceptEncoding = "gzip",
             appId = "abcde",
             deviceId = "test_did",
-            eventId = "test_eid",
-            logId = "test_lid",
             url = ApiRequestUrl(baseUrl)
         )
         server.enqueue(response200)
@@ -206,8 +204,6 @@ internal class ApiClientImplTest {
                 "Accept-Encoding" to "gzip",
                 "X-EM-AID" to "abcde",
                 "X-EM-DID" to "test_did",
-                "X-EM-SID" to "test_eid",
-                "X-EM-LID" to "test_lid",
                 "Content-Length" to "${delivered.bodySize}",
             ),
             headers

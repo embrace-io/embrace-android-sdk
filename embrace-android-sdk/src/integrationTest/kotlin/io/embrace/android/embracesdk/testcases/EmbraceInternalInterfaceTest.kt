@@ -9,10 +9,10 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.fakes.behavior.FakeSdkModeBehavior
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -47,7 +47,7 @@ internal class EmbraceInternalInterfaceTest {
             startSdk = false,
             testCaseAction = {
                 assertFalse(embrace.isStarted)
-                with(embrace.internalInterface) {
+                with(EmbraceInternalApi.getInstance().internalInterface) {
                     logInfo("", null)
                     logWarning("", null, null)
                     logError("", null, null, false)
@@ -100,7 +100,6 @@ internal class EmbraceInternalInterfaceTest {
 
                     logComposeTap(Pair(0.0f, 0.0f), "")
                     assertFalse(shouldCaptureNetworkBody("", ""))
-                    setProcessStartedByNotification()
                     assertFalse(isNetworkSpanForwardingEnabled())
                     getSdkCurrentTime()
                 }
@@ -117,7 +116,7 @@ internal class EmbraceInternalInterfaceTest {
                     clock.tick()
                     configService.updateListeners()
                     clock.tick()
-                    embrace.internalInterface.recordCompletedNetworkRequest(
+                    EmbraceInternalApi.getInstance().internalInterface.recordCompletedNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
                         startTime = START_TIME,
@@ -129,7 +128,7 @@ internal class EmbraceInternalInterfaceTest {
                         networkCaptureData = null
                     )
 
-                    embrace.internalInterface.recordIncompleteNetworkRequest(
+                    EmbraceInternalApi.getInstance().internalInterface.recordIncompleteNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
                         startTime = START_TIME,
@@ -139,7 +138,7 @@ internal class EmbraceInternalInterfaceTest {
                         networkCaptureData = null
                     )
 
-                    embrace.internalInterface.recordIncompleteNetworkRequest(
+                    EmbraceInternalApi.getInstance().internalInterface.recordIncompleteNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
                         startTime = START_TIME,
@@ -150,7 +149,7 @@ internal class EmbraceInternalInterfaceTest {
                         networkCaptureData = null
                     )
 
-                    embrace.internalInterface.recordNetworkRequest(
+                    EmbraceInternalApi.getInstance().internalInterface.recordNetworkRequest(
                         embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
                             HttpMethod.POST,
@@ -187,7 +186,7 @@ internal class EmbraceInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
+                    EmbraceInternalApi.getInstance().internalInterface.logComposeTap(Pair(expectedX, expectedY), expectedElementName)
                 }
             },
             assertAction = {
@@ -224,28 +223,11 @@ internal class EmbraceInternalInterfaceTest {
             },
             testCaseAction = {
                 recordSession {
-                    assertTrue(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
-                    assertFalse(embrace.internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
-                    assertFalse(embrace.internalInterface.shouldCaptureNetworkBody(URL, "GET"))
-                    assertTrue(embrace.internalInterface.isNetworkSpanForwardingEnabled())
+                    assertTrue(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody("capture.me", "GET"))
+                    assertFalse(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody("capture.me", "POST"))
+                    assertFalse(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(URL, "GET"))
+                    assertTrue(EmbraceInternalApi.getInstance().internalInterface.isNetworkSpanForwardingEnabled())
                 }
-            }
-        )
-    }
-
-    @Test
-    fun `set process as started by notification works as expected`() {
-        testRule.runTest(
-            setupAction = {
-                useMockWebServer = false
-            },
-            testCaseAction = {
-                embrace.internalInterface.setProcessStartedByNotification()
-                recordSession()
-            },
-            assertAction = {
-                val moment = getSentMoments(1).single()
-                assertEquals(EventType.START, moment.event.type)
             }
         )
     }
@@ -254,9 +236,9 @@ internal class EmbraceInternalInterfaceTest {
     fun `test sdk time`() {
         testRule.runTest(
             testCaseAction = {
-                assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
+                assertEquals(clock.now(), EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime())
                 clock.tick()
-                assertEquals(clock.now(), embrace.internalInterface.getSdkCurrentTime())
+                assertEquals(clock.now(), EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime())
             }
         )
     }
@@ -266,7 +248,7 @@ internal class EmbraceInternalInterfaceTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    with(embrace.internalInterface) {
+                    with(EmbraceInternalApi.getInstance().internalInterface) {
                         val parentSpanId = checkNotNull(startSpan(name = "tz-parent-span"))
                         clock.tick(10)
                         val childSpanId =
@@ -281,7 +263,7 @@ internal class EmbraceInternalInterfaceTest {
                         recordCompletedSpan(
                             name = "tz-old-span",
                             startTimeMs = clock.now() - 1L,
-                            endTimeMs = embrace.internalInterface.getSdkCurrentTime(),
+                            endTimeMs = EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime(),
                         )
                         stopSpan(spanId = childSpanId, errorCode = ErrorCode.USER_ABANDON)
                         stopSpan(parentSpanId)
@@ -333,7 +315,7 @@ internal class EmbraceInternalInterfaceTest {
     fun `span logging across sessions`() {
         testRule.runTest(
             testCaseAction = {
-                val internalInterface = checkNotNull(embrace.internalInterface)
+                val internalInterface = checkNotNull(EmbraceInternalApi.getInstance().internalInterface)
                 var stoppedParentId = ""
                 var activeParentId = ""
                 recordSession {

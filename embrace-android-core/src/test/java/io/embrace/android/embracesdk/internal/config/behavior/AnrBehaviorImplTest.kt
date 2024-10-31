@@ -42,14 +42,12 @@ internal class AnrBehaviorImplTest {
                 "bar"
             )
         ),
-        googlePctEnabled = 0,
         monitorThreadPriority = 3
     )
 
     @Test
     fun testDefaults() {
         with(createAnrBehavior()) {
-            assertFalse(isSigquitCaptureEnabled())
             assertEquals(100L, getSamplingIntervalMs())
             assertTrue(shouldCaptureMainThreadOnly())
             assertEquals(25, getStrictModeViolationLimit())
@@ -86,7 +84,6 @@ internal class AnrBehaviorImplTest {
     @Test
     fun testRemoteAndLocal() {
         with(createAnrBehavior(remoteCfg = { remote })) {
-            assertFalse(isSigquitCaptureEnabled())
             assertEquals(200L, getSamplingIntervalMs())
             assertFalse(shouldCaptureMainThreadOnly())
             assertEquals(209, getStrictModeViolationLimit())

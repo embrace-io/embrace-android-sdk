@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.annotation.InternalApi;
  * @hide
  */
 @InternalApi
-public final class WebViewClientSwazzledHooks {
+final class WebViewClientSwazzledHooks {
 
     private WebViewClientSwazzledHooks() {
     }
@@ -15,7 +15,6 @@ public final class WebViewClientSwazzledHooks {
     public static void _preOnPageStarted(android.webkit.WebView view,
                                          java.lang.String url,
                                          android.graphics.Bitmap favicon) {
-
-        Embrace.getImpl().logWebView(url);
+        Embrace.getInstance().logWebView(url);
     }
 }

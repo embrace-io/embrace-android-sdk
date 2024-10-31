@@ -2,11 +2,11 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.UnityInternalInterface
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
+import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.payload.EventType
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
@@ -58,7 +58,7 @@ internal class UnityInternalInterfaceImpl(
     ) {
         if (embrace.isStarted) {
             embrace.logMessage(
-                EventType.ERROR_LOG,
+                Severity.ERROR,
                 "Unity exception",
                 null,
                 null,

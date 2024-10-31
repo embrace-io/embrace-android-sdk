@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class DeviceInfo(
+class DeviceInfo(
 
     @Json(name = "dm")
     val manufacturer: String? = null,

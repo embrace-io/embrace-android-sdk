@@ -160,7 +160,7 @@ internal class SchedulingServiceImplTest {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         executionService.constantResponse = ExecutionResult.TooManyRequests(
-            endpoint = Endpoint.SESSIONS_V2,
+            endpoint = Endpoint.SESSIONS,
             retryAfter = longBlockedDuration
         )
         waitForOnPayloadIntakeTaskCompletion()
@@ -181,7 +181,7 @@ internal class SchedulingServiceImplTest {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         executionService.constantResponse = ExecutionResult.TooManyRequests(
-            endpoint = Endpoint.SESSIONS_V2,
+            endpoint = Endpoint.SESSIONS,
             retryAfter = SHORT_BLOCKED_DURATION
         )
         waitForOnPayloadIntakeTaskCompletion()
@@ -198,7 +198,7 @@ internal class SchedulingServiceImplTest {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         executionService.constantResponse = ExecutionResult.TooManyRequests(
-            endpoint = Endpoint.SESSIONS_V2,
+            endpoint = Endpoint.SESSIONS,
             retryAfter = SHORT_BLOCKED_DURATION
         )
         waitForOnPayloadIntakeTaskCompletion()
@@ -218,7 +218,7 @@ internal class SchedulingServiceImplTest {
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         executionService.constantResponse = ExecutionResult.TooManyRequests(
-            endpoint = Endpoint.SESSIONS_V2,
+            endpoint = Endpoint.SESSIONS,
             retryAfter = SHORT_BLOCKED_DURATION
         )
         waitForOnPayloadIntakeTaskCompletion()
@@ -234,7 +234,7 @@ internal class SchedulingServiceImplTest {
         storageService.clearStorage()
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
         executionService.constantResponse = ExecutionResult.TooManyRequests(
-            endpoint = Endpoint.SESSIONS_V2,
+            endpoint = Endpoint.SESSIONS,
             retryAfter = SHORT_BLOCKED_DURATION
         )
         waitForOnPayloadIntakeTaskCompletion()

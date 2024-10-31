@@ -18,6 +18,7 @@ internal class LogRecordExporterTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
+    @Suppress("deprecation")
     @Test
     fun `SDK can receive a LogRecordExporter`() {
         val fakeLogRecordExporter = FakeLogRecordExporter()

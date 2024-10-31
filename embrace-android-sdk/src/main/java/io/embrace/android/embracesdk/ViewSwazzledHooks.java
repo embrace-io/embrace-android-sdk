@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk;
 import androidx.annotation.NonNull;
 
 import io.embrace.android.embracesdk.annotation.InternalApi;
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi;
 import io.embrace.android.embracesdk.internal.payload.TapBreadcrumb.TapBreadcrumbType;
 import kotlin.Pair;
 
@@ -10,7 +11,7 @@ import kotlin.Pair;
  * @hide
  */
 @InternalApi
-public final class ViewSwazzledHooks {
+final class ViewSwazzledHooks {
 
     private static final String UNKNOWN_ELEMENT_NAME = "Unknown element";
 
@@ -31,7 +32,7 @@ public final class ViewSwazzledHooks {
             } catch (Exception e) {
                 point = new Pair<>(0.0F, 0.0F);
             }
-            Embrace.getImpl().logTap(point, viewName, breadcrumbType);
+            EmbraceInternalApi.getInstance().getInternalInterface().logTap(point, viewName, breadcrumbType);
         } catch (NoSuchMethodError error) {
             // The customer may be overwriting View with their own implementation, and some of the
             // methods we use are missing.
@@ -42,7 +43,7 @@ public final class ViewSwazzledHooks {
     }
 
     private static void logError(@NonNull Throwable throwable) {
-        Embrace.getInstance().getInternalInterface().logInternalError(throwable);
+        EmbraceInternalApi.getInstance().getInternalInterface().logInternalError(throwable);
     }
 
     @InternalApi

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.BuildConfig
-import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
@@ -46,7 +46,6 @@ internal class ModuleInitBootstrapper(
     private val logModuleSupplier: LogModuleSupplier = ::createLogModule,
     private val nativeCoreModuleSupplier: NativeCoreModuleSupplier = ::createNativeCoreModule,
     private val nativeFeatureModuleSupplier: NativeFeatureModuleSupplier = ::createNativeFeatureModule,
-    private val momentsModuleSupplier: MomentsModuleSupplier = ::createMomentsModule,
     private val sessionOrchestrationModuleSupplier: SessionOrchestrationModuleSupplier = ::createSessionOrchestrationModule,
     private val crashModuleSupplier: CrashModuleSupplier = ::createCrashModule,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier = ::createPayloadSourceModule,
@@ -88,9 +87,6 @@ internal class ModuleInitBootstrapper(
         private set
 
     lateinit var nativeFeatureModule: NativeFeatureModule
-        private set
-
-    lateinit var momentsModule: MomentsModule
         private set
 
     lateinit var dataSourceModule: DataSourceModule
@@ -165,7 +161,7 @@ internal class ModuleInitBootstrapper(
                             configServiceProvider,
                         ) {
                             if (isSdkDisabled()) {
-                                Embrace.getInstance().internalInterface.stopSdk()
+                                EmbraceInternalApi.getInstance().internalInterface.stopSdk()
                             }
                         }
                     }
@@ -225,8 +221,7 @@ internal class ModuleInitBootstrapper(
                         anrModuleSupplier(
                             initModule,
                             configModule.configService,
-                            workerThreadModule,
-                            openTelemetryModule
+                            workerThreadModule
                         )
                     }
 
@@ -247,7 +242,6 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             systemServiceModule,
                             androidServicesModule,
-                            anrModule,
                             essentialServiceModule.logWriter,
                             configModule.configService,
                         )
@@ -425,24 +419,6 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
-                    momentsModule = init(MomentsModule::class) {
-                        momentsModuleSupplier(
-                            initModule,
-                            workerThreadModule,
-                            essentialServiceModule,
-                            configModule,
-                            payloadSourceModule,
-                            deliveryModule,
-                            sdkStartTimeMs
-                        )
-                    }
-
-                    postInit(NativeCoreModule::class) {
-                        serviceRegistry.registerService(
-                            lazy { momentsModule.eventService },
-                        )
-                    }
-
                     sessionOrchestrationModule = init(SessionOrchestrationModule::class) {
                         sessionOrchestrationModuleSupplier(
                             initModule,
@@ -453,8 +429,7 @@ internal class ModuleInitBootstrapper(
                             deliveryModule,
                             dataSourceModule,
                             payloadSourceModule,
-                            dataCaptureServiceModule.startupService::getSdkStartupDuration,
-                            momentsModule,
+                            dataCaptureServiceModule.startupService,
                             logModule
                         )
                     }

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.spans.SpanSink
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -33,7 +32,7 @@ internal class StartupServiceImplTest {
         spanSink = initModule.openTelemetryModule.spanSink
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
-        startupService = StartupServiceImpl(spanService, backgroundWorker)
+        startupService = StartupServiceImpl(spanService)
     }
 
     @Test
@@ -98,7 +97,6 @@ internal class StartupServiceImplTest {
         startupService.setSdkStartupInfo(1111L, 3222L, false, "main")
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
-        assertEquals(2111L, startupService.getSdkStartupDuration(true))
-        assertNull(startupService.getSdkStartupDuration(false))
+        assertEquals(2111L, startupService.getSdkStartupDuration())
     }
 }

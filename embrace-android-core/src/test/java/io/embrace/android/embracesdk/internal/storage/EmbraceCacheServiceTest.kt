@@ -184,8 +184,6 @@ internal class EmbraceCacheServiceTest {
         assertEquals(apiRequest.acceptEncoding, cachedApiRequest?.acceptEncoding)
         assertEquals(apiRequest.appId, cachedApiRequest?.appId)
         assertEquals(apiRequest.deviceId, cachedApiRequest?.deviceId)
-        assertEquals(apiRequest.eventId, cachedApiRequest?.eventId)
-        assertEquals(apiRequest.logId, cachedApiRequest?.logId)
         assertEquals(apiRequest.url.toString(), cachedApiRequest?.url.toString())
         assertEquals(apiRequest.httpMethod, cachedApiRequest?.httpMethod)
     }

@@ -51,8 +51,7 @@ internal class AnrFeatureTest {
         val anrModule = createAnrModule(
             initModule,
             FakeConfigService(),
-            workerThreadModule,
-            FakeOpenTelemetryModule()
+            workerThreadModule
         )
         blockedThreadDetector = anrModule.blockedThreadDetector
 

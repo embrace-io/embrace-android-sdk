@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavio
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.StartupBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
@@ -60,11 +59,6 @@ interface ConfigService {
      * How network call capture should behave.
      */
     val networkBehavior: NetworkBehavior
-
-    /**
-     * How the startup moment should behave
-     */
-    val startupBehavior: StartupBehavior
 
     /**
      * How the SDK should handle events where data can be captured. This could be a moment, etc...

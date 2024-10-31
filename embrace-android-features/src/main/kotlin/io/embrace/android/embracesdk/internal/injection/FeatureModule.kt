@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.anr.sigquit.SigquitDataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.aei.AeiDataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkStatusDataSource
@@ -29,7 +28,6 @@ interface FeatureModule {
     val applicationExitInfoDataSource: DataSourceState<AeiDataSource>
     val internalErrorDataSource: DataSourceState<InternalErrorDataSource>
     val networkStatusDataSource: DataSourceState<NetworkStatusDataSource>
-    val sigquitDataSource: DataSourceState<SigquitDataSource>
 
     /**
      * Called by the embrace-android-core module. The implementation of this should add any features

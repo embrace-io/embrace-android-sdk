@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecut
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -77,10 +78,10 @@ internal class TracingApiTest {
                         )
                         true
                     })
-                    val failedOpStartTimeMs = embrace.internalInterface.getSdkCurrentTime()
+                    val failedOpStartTimeMs = EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime()
                     clock.tick(200L)
                     parentSpan.addEvent(name = "delayed event", timestampMs = clock.now() - 50L, null)
-                    val failedOpEndTimeMs = embrace.internalInterface.getSdkCurrentTime()
+                    val failedOpEndTimeMs = EmbraceInternalApi.getInstance().internalInterface.getSdkCurrentTime()
 
                     assertTrue(parentSpan.stop())
 
@@ -128,7 +129,6 @@ internal class TracingApiTest {
                     unendingSpan.addAttribute("unending-key", "unending-value")
                     unendingSpan.addEvent("unending-event")
                     results.add("\nSpans exported before ending startup: ${spanExporter.exportedSpans.toList().map { it.name }}")
-                    embrace.endAppStartup()
                 }
                 sessionEndTimeMs = clock.now()
             },

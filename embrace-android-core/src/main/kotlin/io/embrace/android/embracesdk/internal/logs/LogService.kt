@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.LogExceptionType
-import io.embrace.android.embracesdk.internal.payload.EventType
+import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 
 /**
@@ -26,7 +26,7 @@ interface LogService : MemoryCleanerListener {
     @Suppress("LongParameterList")
     fun log(
         message: String,
-        type: EventType,
+        severity: Severity,
         logExceptionType: LogExceptionType,
         properties: Map<String, Any>? = null,
         stackTraceElements: Array<StackTraceElement>? = null,

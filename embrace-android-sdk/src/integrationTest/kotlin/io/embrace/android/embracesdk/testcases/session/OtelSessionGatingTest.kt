@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.hasEventOfType
 import io.embrace.android.embracesdk.assertions.hasSpanOfType
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
@@ -103,7 +104,7 @@ internal class OtelSessionGatingTest {
         recordSession {
             embrace.addBreadcrumb("Hello, world!")
             embrace.startView("MyActivity")
-            embrace.internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
+            EmbraceInternalApi.getInstance().internalInterface.logComposeTap(Pair(10f, 20f), "MyButton")
             embrace.endView("MyActivity")
             embrace.logWebView("https://example.com")
 

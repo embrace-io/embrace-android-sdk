@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.registry
 
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
@@ -16,9 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * An object that holds all of the services that are registered with the SDK. This makes it simpler
  * to remember to set callbacks & close resources when creating a new service.
  */
-class ServiceRegistry(
-    private val logger: EmbLogger,
-) : Closeable {
+class ServiceRegistry : Closeable {
 
     private val registry = mutableListOf<Lazy<Any?>>()
     private val finalRegistry: List<Any?> by lazy { registry.map(Lazy<Any?>::value) }
@@ -57,38 +54,32 @@ class ServiceRegistry(
 
     fun registerActivityListeners(processStateService: ProcessStateService): Unit =
         processStateListeners.forEachSafe(
-            "Failed to register activity listener",
             processStateService::addListener
         )
 
     fun registerActivityLifecycleListeners(activityLifecycleTracker: ActivityTracker): Unit =
         activityLifecycleListeners.forEachSafe(
-            "Failed to register activity lifecycle listener",
             activityLifecycleTracker::addListener
         )
 
     fun registerMemoryCleanerListeners(memoryCleanerService: MemoryCleanerService): Unit =
         memoryCleanerListeners.forEachSafe(
-            "Failed to register memory cleaner listener",
             memoryCleanerService::addListener
         )
 
     fun registerStartupListener(activityLifecycleTracker: ActivityTracker): Unit =
         startupListener.forEachSafe(
-            "Failed to register application lifecycle listener",
             activityLifecycleTracker::addStartupListener
         )
 
     // close all of the services in one go. this prevents someone creating a Closeable service
     // but forgetting to close it.
-    override fun close(): Unit = closeables.forEachSafe("Failed to close service", Closeable::close)
+    override fun close(): Unit = closeables.forEachSafe(Closeable::close)
 
-    private fun <T> List<T>.forEachSafe(msg: String, action: (t: T) -> Unit) {
+    private fun <T> List<T>.forEachSafe(action: (t: T) -> Unit) {
         this.forEach {
-            try {
+            runCatching {
                 action(it)
-            } catch (exc: Throwable) {
-                logger.logError(msg, exc)
             }
         }
     }

@@ -31,8 +31,7 @@ internal class EmbraceCacheServiceConcurrentAccessTest {
         logger = FakeEmbLogger()
         embraceCacheService = EmbraceCacheService(
             storageService,
-            serializer,
-            logger
+            serializer
         )
         executionCoordinator = ExecutionCoordinator(
             executionModifiers = serializer,

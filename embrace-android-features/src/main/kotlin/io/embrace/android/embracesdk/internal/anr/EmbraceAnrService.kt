@@ -82,7 +82,6 @@ internal class EmbraceAnrService(
             }
             anrMonitorWorker.submit(callable).get(MAX_DATA_WAIT_MS, TimeUnit.MILLISECONDS)
         } catch (exc: Exception) {
-            logger.logWarning("Failed to getAnrIntervals()", exc)
             logger.trackInternalError(InternalErrorType.ANR_DATA_FETCH, exc)
             emptyList()
         }

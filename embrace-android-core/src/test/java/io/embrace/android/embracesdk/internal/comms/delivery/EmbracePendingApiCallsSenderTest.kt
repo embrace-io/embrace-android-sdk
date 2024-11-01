@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -343,8 +342,7 @@ internal class EmbracePendingApiCallsSenderTest {
         pendingApiCallsSender = EmbracePendingApiCallsSender(
             worker = worker,
             cacheManager = mockCacheManager,
-            clock = FakeClock(),
-            logger = EmbLoggerImpl()
+            clock = FakeClock()
         )
 
         if (sendMethod != null) {

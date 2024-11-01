@@ -5,12 +5,10 @@ import android.os.Looper
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 class NativeThreadSamplerInstaller(
     private val sharedObjectLoader: SharedObjectLoader,
-    private val logger: EmbLogger,
 ) {
     private val isMonitoring = AtomicBoolean(false)
     private var targetHandler: Handler? = null
@@ -31,9 +29,6 @@ class NativeThreadSamplerInstaller(
             else -> null
         }
         if (targetHandler == null) {
-            logger.logError(
-                "Native thread sampler init failed: Failed to create Handler for target native thread"
-            )
             return
         }
     }

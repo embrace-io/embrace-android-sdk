@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.os.Parcelable
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.Serializable
 
 /**
@@ -22,25 +21,20 @@ object PropertyUtils {
      * @return a normalized Map of the provided properties.
      */
     @JvmStatic
-    fun sanitizeProperties(properties: Map<String, Any?>?, logger: EmbLogger): Map<String, Any> {
+    fun sanitizeProperties(properties: Map<String, Any?>?): Map<String, Any> {
         properties ?: return emptyMap()
 
-        if (properties.size > MAX_PROPERTY_SIZE) {
-            logger.logWarning("The maximum number of properties is $MAX_PROPERTY_SIZE, the rest will be ignored.")
-        }
         return properties.entries
             .take(MAX_PROPERTY_SIZE)
-            .associate { Pair(it.key, checkIfSerializable(it.key, it.value, logger)) }
+            .associate { Pair(it.key, checkIfSerializable(it.value)) }
     }
 
     @JvmStatic
-    fun normalizeProperties(properties: Map<String, Any>?, logger: EmbLogger): Map<String, Any>? {
+    fun normalizeProperties(properties: Map<String, Any>?): Map<String, Any>? {
         var normalizedProperties: Map<String, Any> = HashMap()
         if (properties != null) {
-            try {
-                normalizedProperties = sanitizeProperties(properties, logger)
-            } catch (e: Exception) {
-                logger.logError("Exception occurred while normalizing the properties.", e)
+            runCatching {
+                normalizedProperties = sanitizeProperties(properties)
             }
             return normalizedProperties
         } else {
@@ -48,13 +42,11 @@ object PropertyUtils {
         }
     }
 
-    private fun checkIfSerializable(key: String, value: Any?, logger: EmbLogger): Any {
+    private fun checkIfSerializable(value: Any?): Any {
         if (value == null) {
             return "null"
         }
         if (!(value is Parcelable || value is Serializable)) {
-            val msg = "The property with key $key has an entry that cannot be serialized. It will be ignored."
-            logger.logWarning(msg)
             return "not serializable"
         }
         return value

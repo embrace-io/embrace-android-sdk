@@ -68,7 +68,6 @@ class ActivityLifecycleTracker(
             try {
                 listener.onActivityCreated(activity, bundle)
             } catch (ex: Exception) {
-                logger.logWarning(ERROR_FAILED_TO_NOTIFY)
                 logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
@@ -80,7 +79,6 @@ class ActivityLifecycleTracker(
             try {
                 listener.onActivityStarted(activity)
             } catch (ex: Exception) {
-                logger.logWarning(ERROR_FAILED_TO_NOTIFY)
                 logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
@@ -94,7 +92,6 @@ class ActivityLifecycleTracker(
                 try {
                     listener.applicationStartupComplete()
                 } catch (ex: Exception) {
-                    logger.logWarning(ERROR_FAILED_TO_NOTIFY)
                     logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
                 }
             }
@@ -107,7 +104,6 @@ class ActivityLifecycleTracker(
             try {
                 listener.onActivityStopped(activity)
             } catch (ex: Exception) {
-                logger.logWarning(ERROR_FAILED_TO_NOTIFY)
                 logger.trackInternalError(InternalErrorType.ACTIVITY_LISTENER_FAIL, ex)
             }
         }
@@ -130,17 +126,10 @@ class ActivityLifecycleTracker(
     }
 
     override fun close() {
-        try {
-            logger.logDebug("Shutting down ActivityLifecycleTracker")
+        runCatching {
             application.unregisterActivityLifecycleCallbacks(this)
             activityListeners.clear()
             startupListeners.clear()
-        } catch (ex: Exception) {
-            logger.logWarning("Error when closing ActivityLifecycleTracker", ex)
         }
-    }
-
-    private companion object {
-        private const val ERROR_FAILED_TO_NOTIFY = "Failed to notify ActivityLifecycleTracker listener"
     }
 }

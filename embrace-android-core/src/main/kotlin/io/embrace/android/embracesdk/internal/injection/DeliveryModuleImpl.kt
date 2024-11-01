@@ -39,8 +39,7 @@ internal class DeliveryModuleImpl(
             EmbraceDeliveryService(
                 storageModule.deliveryCacheManager,
                 apiService,
-                initModule.jsonSerializer,
-                initModule.logger
+                initModule.jsonSerializer
             )
         }
     },

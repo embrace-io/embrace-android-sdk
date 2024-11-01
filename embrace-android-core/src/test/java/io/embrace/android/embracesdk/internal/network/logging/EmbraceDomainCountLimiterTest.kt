@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import org.junit.Before
@@ -11,19 +9,17 @@ import org.junit.Test
 
 internal class EmbraceDomainCountLimiterTest {
 
-    private lateinit var logger: EmbLogger
     private lateinit var configService: FakeConfigService
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
 
     @Before
     fun setUp() {
-        logger = EmbLoggerImpl()
         configService = FakeConfigService(networkBehavior = FakeNetworkBehavior())
         createDomainCountLimiter()
     }
 
     private fun createDomainCountLimiter() {
-        domainCountLimiter = EmbraceDomainCountLimiter(configService, logger)
+        domainCountLimiter = EmbraceDomainCountLimiter(configService)
     }
 
     @Test

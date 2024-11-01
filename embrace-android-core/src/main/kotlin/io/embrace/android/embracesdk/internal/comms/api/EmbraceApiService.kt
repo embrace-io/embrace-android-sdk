@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSend
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -21,7 +20,6 @@ internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: PlatformSerializer,
     private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
-    private val logger: EmbLogger,
     private val priorityWorker: PriorityWorker<ApiRequest>,
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
@@ -77,7 +75,6 @@ internal class EmbraceApiService(
             }
 
             is ApiResponse.Incomplete -> {
-                logger.logWarning("Failed to fetch config.", response.exception)
                 throw response.exception
             }
 
@@ -156,14 +153,10 @@ internal class EmbraceApiService(
         onComplete: ((response: ApiResponse) -> Unit),
     ): Future<*> {
         return priorityWorker.submit(request) {
-            var response: ApiResponse = ApiResponse.None
-            try {
-                response = handleApiRequest(request, action)
-            } catch (e: Exception) {
-                logger.logWarning("API call failed.", e)
-            } finally {
-                onComplete(response)
-            }
+            val response = runCatching {
+                handleApiRequest(request, action)
+            }.getOrNull() ?: ApiResponse.None
+            onComplete(response)
         }
     }
 

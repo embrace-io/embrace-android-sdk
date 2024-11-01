@@ -22,11 +22,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-internal class WorkerThreadModuleImpl(
-    initModule: InitModule,
-) : WorkerThreadModule, RejectedExecutionHandler {
+internal class WorkerThreadModuleImpl : WorkerThreadModule, RejectedExecutionHandler {
 
-    private val logger = initModule.logger
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
     private val priorityWorkers: MutableMap<Worker, PriorityWorker<*>> = ConcurrentHashMap()
     private val backgroundWorkers: MutableMap<Worker, BackgroundWorker> = ConcurrentHashMap()
@@ -73,7 +70,7 @@ internal class WorkerThreadModuleImpl(
     }
 
     /**
-     * Handles a rejected task by logging a warning and ignoring the task. Generally speaking
+     * Handles a rejected task ignoring the task. Generally speaking
      * the executor will either have been shutdown directly (which should not happen outside of)
      * [WorkerThreadModuleImpl] or the process is terminating.
      *
@@ -82,9 +79,6 @@ internal class WorkerThreadModuleImpl(
      * never return a value.
      */
     override fun rejectedExecution(runnable: Runnable, executor: ThreadPoolExecutor) {
-        logger.logWarning(
-            "Rejected execution of $runnable on $executor. Ignoring - the process is likely terminating."
-        )
     }
 
     private fun createThreadFactory(name: Worker): ThreadFactory {

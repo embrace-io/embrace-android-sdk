@@ -4,7 +4,6 @@ import android.os.Debug
 import io.embrace.android.embracesdk.internal.anr.BlockedThreadListener
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 /**
  * The number of milliseconds which the monitor thread is allowed to timeout before we
@@ -34,7 +33,6 @@ class BlockedThreadDetector(
     var listener: BlockedThreadListener? = null,
     private val state: ThreadMonitoringState,
     private val targetThread: Thread,
-    private val logger: EmbLogger,
 ) {
 
     /**
@@ -53,8 +51,6 @@ class BlockedThreadDetector(
 
         if (state.anrInProgress) {
             // Application was not responding, but recovered
-            logger.logDebug("Main thread recovered from not responding for > 1s")
-
             // Invoke callbacks
             state.anrInProgress = false
             listener?.onThreadUnblocked(targetThread, timestamp)
@@ -74,7 +70,6 @@ class BlockedThreadDetector(
         }
 
         if (!state.anrInProgress && isAnrDurationThresholdExceeded(timestamp)) {
-            logger.logDebug("Main thread not responding for > 1s")
             state.anrInProgress = true
             listener?.onThreadBlocked(targetThread, state.lastTargetThreadResponseMs)
         }

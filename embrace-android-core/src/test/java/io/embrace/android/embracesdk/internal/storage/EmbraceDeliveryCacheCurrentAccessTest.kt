@@ -39,14 +39,12 @@ internal class EmbraceDeliveryCacheCurrentAccessTest {
         cacheService = spyk(
             EmbraceCacheService(
                 storageService = storageService,
-                serializer = serializer,
-                logger = logger
+                serializer = serializer
             )
         )
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            worker,
-            logger
+            worker
         )
     }
 

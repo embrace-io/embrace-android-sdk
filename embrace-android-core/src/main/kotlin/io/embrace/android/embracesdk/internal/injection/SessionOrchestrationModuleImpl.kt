@@ -85,8 +85,7 @@ internal class SessionOrchestrationModuleImpl(
             deliveryModule.payloadCachingService,
             dataSourceModule.dataCaptureOrchestrator,
             openTelemetryModule.currentSessionSpan,
-            sessionSpanAttrPopulator,
-            initModule.logger
+            sessionSpanAttrPopulator
         )
     }
 }

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureService
 import io.embrace.android.embracesdk.fakes.FakeNetworkLoggingService
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.internal.injection.LogModule
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.EmbraceLogService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
@@ -24,7 +23,6 @@ class FakeLogModule(
         FakeLogWriter(),
         FakeConfigService(),
         FakeSessionPropertiesService(),
-        EmbLoggerImpl(),
         EmbraceSerializer()
     ),
 ) : LogModule {

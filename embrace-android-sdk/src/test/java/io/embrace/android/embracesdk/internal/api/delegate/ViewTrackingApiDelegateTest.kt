@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.spans.SpanSink
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,7 +20,6 @@ internal class ViewTrackingApiDelegateTest {
     private lateinit var orchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var spanSink: SpanSink
-    private lateinit var logger: FakeEmbLogger
 
     @Before
     fun setUp() {
@@ -31,7 +29,6 @@ internal class ViewTrackingApiDelegateTest {
         sessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.sessionPropertiesService as FakeSessionPropertiesService
         spanSink = moduleInitBootstrapper.openTelemetryModule.spanSink
-        logger = moduleInitBootstrapper.logger as FakeEmbLogger
 
         val sdkCallChecker = SdkCallChecker(FakeEmbLogger(), FakeTelemetryService())
         sdkCallChecker.started.set(true)
@@ -41,12 +38,10 @@ internal class ViewTrackingApiDelegateTest {
     @Test
     fun registerComposeActivityListener() {
         delegate.registerComposeActivityListener(ApplicationProvider.getApplicationContext())
-        assertEquals(1, logger.errorMessages.size)
     }
 
     @Test
     fun logRnView() {
         delegate.logRnView("test")
-        assertEquals(1, logger.warningMessages.size)
     }
 }

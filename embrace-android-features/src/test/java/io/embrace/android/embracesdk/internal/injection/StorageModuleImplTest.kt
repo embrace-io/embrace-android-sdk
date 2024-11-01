@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
@@ -15,7 +14,7 @@ internal class StorageModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
-        val coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger())
+        val coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication())
         val module = createStorageModuleSupplier(
             initModule = initModule,
             coreModule = coreModule,

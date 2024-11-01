@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.internal.utils.toUTF8String
 class WebViewDataSource(
     private val webViewVitalsBehavior: WebViewVitalsBehavior,
     private val writer: SessionSpanWriter,
-    private val logger: EmbLogger,
+    logger: EmbLogger,
     private val serializer: PlatformSerializer,
 ) : DataSourceImpl<SessionSpanWriter>(
     destination = writer,
@@ -27,7 +27,7 @@ class WebViewDataSource(
 ) {
 
     fun loadDataIntoSession(webViewInfoList: List<WebViewInfo>) {
-        try {
+        runCatching {
             writer.removeEvents(EmbType.System.WebViewInfo)
             webViewInfoList.forEach { webViewInfo ->
                 captureData(
@@ -49,8 +49,6 @@ class WebViewDataSource(
                     },
                 )
             }
-        } catch (ex: Exception) {
-            logger.logError("Failed to capture WebViewInfo", ex)
         }
     }
 }

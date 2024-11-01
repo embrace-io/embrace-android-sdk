@@ -24,7 +24,6 @@ internal class EmbraceUserService(
         return try {
             preferencesService.getStoredUserInfo()
         } catch (ex: Exception) {
-            logger.logError("Failed to load user info from persistent storage.", ex)
             logger.trackInternalError(InternalErrorType.USER_LOAD_FAIL, ex)
             null
         }
@@ -84,13 +83,11 @@ internal class EmbraceUserService(
             return
         }
         if (!VALID_PERSONA.matcher(persona).matches()) {
-            logger.logWarning("Ignoring persona " + persona + " as it does not match " + VALID_PERSONA.pattern())
             return
         }
         val currentPersonas = userInfo().personas
         if (currentPersonas != null) {
             if (currentPersonas.size >= PERSONA_LIMIT) {
-                logger.logWarning("Cannot set persona as the limit of " + PERSONA_LIMIT + " has been reached")
                 return
             }
             if (currentPersonas.contains(persona)) {
@@ -109,7 +106,6 @@ internal class EmbraceUserService(
         }
         val currentPersonas = userInfo().personas
         if (currentPersonas != null && !currentPersonas.contains(persona)) {
-            logger.logWarning("Persona '$persona' is not set")
             return
         }
 

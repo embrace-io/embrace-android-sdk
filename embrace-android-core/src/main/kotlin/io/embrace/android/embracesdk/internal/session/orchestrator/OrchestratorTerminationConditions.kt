@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 
@@ -18,50 +17,24 @@ internal fun shouldEndManualSession(
     clock: Clock,
     activeSession: SessionZygote?,
     state: ProcessState,
-    logger: EmbLogger,
 ): Boolean {
-    if (state == ProcessState.BACKGROUND) {
-        logger.logWarning("Cannot manually end session while in background.")
-        return true
-    }
-    if (configService.sessionBehavior.isSessionControlEnabled()) {
-        logger.logWarning("Cannot manually end session while session control is enabled.")
+    if (state == ProcessState.BACKGROUND || configService.sessionBehavior.isSessionControlEnabled()) {
         return true
     }
     val initial = activeSession ?: return true
     val startTime = initial.startTime
     val delta = clock.now() - startTime
-    if (delta < MIN_SESSION_MS) {
-        logger.logWarning(
-            "Cannot manually end session while session is <5s long." +
-                "This protects against instrumentation unintentionally creating too" +
-                "many sessions"
-        )
-        return true
-    }
-    return false
+    return delta < MIN_SESSION_MS
 }
 
 internal fun shouldRunOnBackground(
     state: ProcessState,
-    logger: EmbLogger,
 ): Boolean {
-    return if (state == ProcessState.BACKGROUND) {
-        logger.logWarning("Detected unbalanced call to onBackground. Ignoring..")
-        true
-    } else {
-        false
-    }
+    return state == ProcessState.BACKGROUND
 }
 
 internal fun shouldRunOnForeground(
     state: ProcessState,
-    logger: EmbLogger,
 ): Boolean {
-    return if (state == ProcessState.FOREGROUND) {
-        logger.logWarning("Detected unbalanced call to onForeground. Ignoring..")
-        true
-    } else {
-        false
-    }
+    return state == ProcessState.FOREGROUND
 }

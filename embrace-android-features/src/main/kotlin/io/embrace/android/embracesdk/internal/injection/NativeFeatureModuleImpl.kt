@@ -53,7 +53,6 @@ internal class NativeFeatureModuleImpl(
                 EmbraceNativeThreadSamplerService(
                     configService = configModule.configService,
                     symbols = lazy { ndkService.symbolsForCurrentArch },
-                    logger = initModule.logger,
                     worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
@@ -72,8 +71,7 @@ internal class NativeFeatureModuleImpl(
         Systrace.traceSynchronous("native-thread-sampler-installer-init") {
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 NativeThreadSamplerInstaller(
-                    sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
-                    logger = initModule.logger
+                    sharedObjectLoader = nativeCoreModule.sharedObjectLoader
                 )
             } else {
                 null
@@ -102,8 +100,7 @@ internal class NativeFeatureModuleImpl(
 
     private val embraceNdkServiceRepository by singleton {
         EmbraceNdkServiceRepository(
-            storageModule.storageService,
-            initModule.logger
+            storageModule.storageService
         )
     }
 }

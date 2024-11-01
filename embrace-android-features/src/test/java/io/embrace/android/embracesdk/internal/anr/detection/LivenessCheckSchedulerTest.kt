@@ -57,8 +57,7 @@ internal class LivenessCheckSchedulerTest {
             configService = configService,
             clock = fakeClock,
             state = state,
-            targetThread = Thread.currentThread(),
-            logger = EmbLoggerImpl()
+            targetThread = Thread.currentThread()
         )
         fakeTargetThreadHandler = mockk(relaxUnitFun = true) {
             every { action = any() } returns Unit

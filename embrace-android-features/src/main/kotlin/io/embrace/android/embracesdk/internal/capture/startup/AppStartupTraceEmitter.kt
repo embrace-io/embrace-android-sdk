@@ -4,6 +4,7 @@ import android.os.Build.VERSION_CODES
 import android.os.Process
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -159,7 +160,10 @@ internal class AppStartupTraceEmitter(
                     backgroundWorker.submit {
                         recordStartup()
                         if (!startupRecorded.get()) {
-                            logger.logWarning("App startup trace recording attempted but did not succeed")
+                            logger.trackInternalError(
+                                type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
+                                throwable = IllegalStateException("App startup trace recording attempted but did not succeed")
+                            )
                         }
                     }
                 }
@@ -194,7 +198,6 @@ internal class AppStartupTraceEmitter(
             val gap = applicationActivityCreationGap(sdkInitEndMs)
             if (gap != null) {
                 val startupTrace: EmbraceSpan? = if (!spanService.initialized()) {
-                    logger.logWarning("Startup trace not recorded because the spans service is not initialized")
                     null
                 } else if (gap <= SDK_AND_ACTIVITY_INIT_GAP) {
                     recordColdTtid(

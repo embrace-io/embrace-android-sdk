@@ -14,16 +14,8 @@ class EmbLoggerImpl : EmbLogger {
     private val loggedSdkNotStarted = AtomicBoolean(false)
     var errorHandler: InternalErrorHandler? = null
 
-    override fun logDebug(msg: String, throwable: Throwable?) {
-        log(msg, EmbLogger.Severity.DEBUG, throwable)
-    }
-
     override fun logInfo(msg: String, throwable: Throwable?) {
         log(msg, EmbLogger.Severity.INFO, throwable)
-    }
-
-    override fun logWarning(msg: String, throwable: Throwable?) {
-        log(msg, EmbLogger.Severity.WARNING, throwable)
     }
 
     override fun logError(msg: String, throwable: Throwable?) {

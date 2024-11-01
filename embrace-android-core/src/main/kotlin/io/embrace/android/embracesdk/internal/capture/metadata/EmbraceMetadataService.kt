@@ -105,9 +105,8 @@ internal class EmbraceMetadataService(
                 )
                 return stats.appBytes + stats.dataBytes + stats.cacheBytes
             }
-        } catch (ex: java.lang.Exception) {
+        } catch (ex: Exception) {
             // The package name and storage volume should always exist
-            logger.logError("Error retrieving device disk usage", ex)
             logger.trackInternalError(InternalErrorType.DISK_STAT_CAPTURE_FAIL, ex)
         }
         return null

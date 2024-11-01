@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -28,7 +27,6 @@ internal class SessionPropertiesServiceImplTest {
         service = SessionPropertiesServiceImpl(
             FakePreferenceService(),
             fakeConfigService,
-            FakeEmbLogger(),
             fakeCurrentSessionSpan
         )
         propState = emptyMap()

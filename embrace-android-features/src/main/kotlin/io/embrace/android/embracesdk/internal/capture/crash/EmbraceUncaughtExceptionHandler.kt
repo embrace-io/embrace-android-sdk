@@ -21,18 +21,12 @@ internal class EmbraceUncaughtExceptionHandler(
     private val logger: EmbLogger,
 ) : Thread.UncaughtExceptionHandler {
 
-    init {
-        logger.logDebug("Registered EmbraceUncaughtExceptionHandler")
-    }
-
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         try {
             crashService.handleCrash(exception)
         } catch (ex: Exception) {
-            logger.logError("Error occurred in the uncaught exception handler", ex)
             logger.trackInternalError(InternalErrorType.UNCAUGHT_EXC_HANDLER, ex)
         } finally {
-            logger.logDebug("Finished handling exception. Delegating to default handler.")
             defaultHandler?.uncaughtException(thread, exception)
         }
     }

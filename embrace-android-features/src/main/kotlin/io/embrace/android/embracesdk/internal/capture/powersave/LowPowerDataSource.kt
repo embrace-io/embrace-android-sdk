@@ -31,7 +31,7 @@ class LowPowerDataSource(
         private const val MAX_CAPTURED_POWER_MODE_INTERVALS = 100
     }
 
-    private val receiver = PowerSaveModeReceiver(logger, provider, ::onPowerSaveModeChanged)
+    private val receiver = PowerSaveModeReceiver(provider, ::onPowerSaveModeChanged)
     private var span: EmbraceSpan? = null
 
     override fun enableDataCapture(): Unit = receiver.register(context, backgroundWorker)

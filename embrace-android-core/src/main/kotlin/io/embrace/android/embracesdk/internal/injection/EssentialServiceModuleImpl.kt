@@ -100,8 +100,7 @@ class EssentialServiceModuleImpl(
             EmbracePendingApiCallsSender(
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 storageModule.deliveryCacheManager,
-                initModule.clock,
-                initModule.logger
+                initModule.clock
             )
         }
     }
@@ -117,7 +116,6 @@ class EssentialServiceModuleImpl(
                         storageModule.cache.retrieveCachedConfig(url, request)
                     }
                 },
-                logger = initModule.logger,
                 priorityWorker = workerThreadModule.priorityWorker(Worker.Priority.NetworkRequestWorker),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
@@ -140,7 +138,6 @@ class EssentialServiceModuleImpl(
             SessionPropertiesServiceImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 configService = configService,
-                logger = initModule.logger,
                 writer = openTelemetryModule.currentSessionSpan
             )
         }

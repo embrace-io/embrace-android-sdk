@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionId
@@ -12,7 +11,6 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
-import java.io.FileNotFoundException
 import java.lang.reflect.Type
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -25,7 +23,6 @@ import kotlin.concurrent.write
 internal class EmbraceCacheService(
     private val storageService: StorageService,
     private val serializer: PlatformSerializer,
-    private val logger: EmbLogger,
 ) : CacheService {
 
     /**
@@ -54,16 +51,12 @@ internal class EmbraceCacheService(
         return { stream ->
             findLock(name).read {
                 val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-                try {
+                runCatching {
                     ConditionalGzipOutputStream(stream).use {
                         file.inputStream().buffered().use { input ->
                             input.copyTo(it)
                         }
                     }
-                } catch (ex: FileNotFoundException) {
-                    logger.logWarning("Cache file cannot be found " + file.path)
-                } catch (ex: Exception) {
-                    logger.logWarning("Failed to read cache object " + file.path, ex)
                 }
             }
         }
@@ -87,11 +80,9 @@ internal class EmbraceCacheService(
 
     override fun deleteFile(name: String): Boolean {
         val success = findLock(name).write {
-            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-            try {
+            runCatching {
+                val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
                 file.delete()
-            } catch (ex: Exception) {
-                logger.logInfo("Failed to delete cache object " + file.path)
             }
             false
         }
@@ -117,9 +108,7 @@ internal class EmbraceCacheService(
         val properSessionFileIds = mutableSetOf<String>()
         sessionFileNames.forEach { filename ->
             if (filename.endsWith(OLD_COPY_SUFFIX) || filename.endsWith(TEMP_COPY_SUFFIX)) {
-                if (!deleteFile(filename)) {
-                    logger.logWarning("Temporary session file for $filename not deleted on startup")
-                }
+                !deleteFile(filename)
             } else if (filename == OLD_VERSION_FILE_NAME) {
                 val previousSdkSession = loadObject<Envelope<SessionPayload>>(
                     filename,
@@ -154,15 +143,11 @@ internal class EmbraceCacheService(
 
     override fun loadOldPendingApiCalls(name: String): List<PendingApiCall>? {
         findLock(name).read {
-            val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
-            try {
+            runCatching {
+                val file = storageService.getFileForRead(EMBRACE_PREFIX + name)
                 val type = TypeUtils.typedList(PendingApiCall::class)
                 return serializer.fromJson(file.inputStream(), type) as List<PendingApiCall>?
                     ?: emptyList()
-            } catch (ex: FileNotFoundException) {
-                logger.logDebug("Cache file cannot be found " + file.path)
-            } catch (ex: Exception) {
-                logger.logDebug("Failed to read cache object " + file.path, ex)
             }
             return null
         }
@@ -174,15 +159,13 @@ internal class EmbraceCacheService(
 
     override fun transformSession(name: String, transformer: (Envelope<SessionPayload>) -> Envelope<SessionPayload>) {
         findLock(name).write {
-            try {
+            runCatching {
                 val envelope = loadObject<Envelope<SessionPayload>>(
                     name,
                     Envelope.sessionEnvelopeType
                 ) ?: return@write
                 val newMessage = transformer(envelope)
                 writeSession(name, newMessage)
-            } catch (ex: Exception) {
-                logger.logError("Failed to transform session object ", ex)
             }
         }
     }
@@ -194,7 +177,6 @@ internal class EmbraceCacheService(
      */
     private fun safeFileWrite(name: String, writeAction: (tempFile: File) -> Unit) {
         findLock(name).write {
-            var isOverwrite = false
             var tempFile: File? = null
             try {
                 // First write session to a temp file, then renaming it to the proper session file if it didn't exist before.
@@ -202,7 +184,7 @@ internal class EmbraceCacheService(
                 // That way, if we see a file suffix with "-tmp", we'll know the operation terminated before completing,
                 // and thus is likely an incomplete file.
                 val file = storageService.getFileForWrite(EMBRACE_PREFIX + name)
-                isOverwrite = file.exists()
+                val isOverwrite = file.exists()
                 tempFile = storageService.getFileForWrite(file.name + TEMP_COPY_SUFFIX)
 
                 // Write new file to a temporary location
@@ -218,12 +200,6 @@ internal class EmbraceCacheService(
                 replaceFile(name, name + suffix)
             } catch (ex: Exception) {
                 tempFile?.delete()
-                val action = if (isOverwrite) {
-                    "overwrite"
-                } else {
-                    "write new"
-                }
-                logger.logError("Failed to $action session object ", ex)
             }
         }
     }
@@ -240,7 +216,6 @@ internal class EmbraceCacheService(
             val newVersion = storageService.getFileForWrite(EMBRACE_PREFIX + filenameOfReplacement)
             newVersion.renameTo(file)
         } catch (e: Exception) {
-            logger.logError("Failed to replace session file ", e)
             return false
         }
 

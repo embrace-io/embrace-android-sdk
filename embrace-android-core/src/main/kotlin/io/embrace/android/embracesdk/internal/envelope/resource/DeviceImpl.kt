@@ -71,7 +71,6 @@ internal class DeviceImpl(
                 displayMetrics.heightPixels
             )
         } catch (ex: Exception) {
-            logger.logWarning("Could not determine screen resolution", ex)
             logger.trackInternalError(InternalErrorType.SCREEN_RES_CAPTURE_FAIL, ex)
             ""
         }

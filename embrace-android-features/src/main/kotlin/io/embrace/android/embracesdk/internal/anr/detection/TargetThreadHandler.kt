@@ -6,7 +6,6 @@ import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ExecutorService
 
@@ -27,7 +26,6 @@ internal class TargetThreadHandler(
     private val anrMonitorWorker: BackgroundWorker,
     private val configService: ConfigService,
     private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
-    private val logger: EmbLogger,
     private val clock: Clock,
 ) : Handler(looper) {
 
@@ -53,7 +51,7 @@ internal class TargetThreadHandler(
     }
 
     override fun handleMessage(msg: Message) {
-        try {
+        runCatching {
             if (msg.what == HEARTBEAT_REQUEST) {
                 // We couldn't obtain the target thread message queue. This should not happen,
                 // but if it does then we just log an internal error & consider the ANR ended at
@@ -62,8 +60,6 @@ internal class TargetThreadHandler(
                     onMainThreadUnblocked()
                 }
             }
-        } catch (ex: Exception) {
-            logger.logError("ANR healthcheck failed in main (monitored) thread", ex)
         }
     }
 

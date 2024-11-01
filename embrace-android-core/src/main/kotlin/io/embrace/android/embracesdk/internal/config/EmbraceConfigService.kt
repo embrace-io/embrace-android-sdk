@@ -233,10 +233,6 @@ internal class EmbraceConfigService(
                             MAX_ALLOWED_RETRY_WAIT_TIME.toDouble(),
                             configRetrySafeWindow * 2
                         )
-                    logger.logWarning(
-                        "Failed to load SDK config from the server. " +
-                            "Trying again in " + configRetrySafeWindow + " seconds."
-                    )
                 }
             }
         }
@@ -290,7 +286,6 @@ internal class EmbraceConfigService(
             try {
                 listener()
             } catch (ex: Exception) {
-                logger.logWarning("Failed to notify configListener", ex)
                 logger.trackInternalError(InternalErrorType.CONFIG_LISTENER_FAIL, ex)
             }
         }

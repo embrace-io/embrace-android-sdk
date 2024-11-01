@@ -25,6 +25,6 @@ internal class InitModuleImpl(
     }
 
     override val jsonSerializer: PlatformSerializer by singleton {
-        DecoratedSerializer(EmbraceSerializer(), logger)
+        DecoratedSerializer(EmbraceSerializer())
     }
 }

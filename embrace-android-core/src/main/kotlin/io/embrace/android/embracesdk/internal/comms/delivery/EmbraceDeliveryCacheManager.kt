@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.getSessionId
@@ -17,7 +16,6 @@ import java.io.Closeable
 internal class EmbraceDeliveryCacheManager(
     private val cacheService: CacheService,
     private val priorityWorker: PriorityWorker<TaskPriority>,
-    private val logger: EmbLogger,
 ) : Closeable, DeliveryCacheManager {
 
     companion object {
@@ -38,29 +36,24 @@ internal class EmbraceDeliveryCacheManager(
         envelope: Envelope<SessionPayload>,
         snapshotType: SessionSnapshotType,
     ) {
-        try {
-            if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
-                deleteOldestSessions()
-            }
-            val span = envelope.getSessionSpan()
-            val sessionId = envelope.getSessionId() ?: return
-            val sessionStartTimeMs = span?.startTimeNanos?.nanosToMillis() ?: return
-            val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
-            val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
+        if (cachedSessions.size >= MAX_SESSIONS_CACHED) {
+            deleteOldestSessions()
+        }
+        val span = envelope.getSessionSpan()
+        val sessionId = envelope.getSessionId() ?: return
+        val sessionStartTimeMs = span?.startTimeNanos?.nanosToMillis() ?: return
+        val writeSync = snapshotType == SessionSnapshotType.JVM_CRASH
+        val snapshot = snapshotType == SessionSnapshotType.PERIODIC_CACHE
 
-            saveSessionBytes(
-                sessionId,
-                sessionStartTimeMs,
-                writeSync,
-                snapshot
-            ) { filename: String ->
-                Systrace.traceSynchronous("serialize-session") {
-                    cacheService.writeSession(filename, envelope)
-                }
+        saveSessionBytes(
+            sessionId,
+            sessionStartTimeMs,
+            writeSync,
+            snapshot
+        ) { filename: String ->
+            Systrace.traceSynchronous("serialize-session") {
+                cacheService.writeSession(filename, envelope)
             }
-        } catch (exc: Throwable) {
-            logger.logError("Save session failed", exc)
-            throw exc
         }
     }
 
@@ -68,7 +61,6 @@ internal class EmbraceDeliveryCacheManager(
         cachedSessions[sessionId]?.let { cachedSession ->
             return loadPayloadAsAction(cachedSession.filename)
         }
-        logger.logError("Session $sessionId is not in cache")
         return null
     }
 
@@ -91,7 +83,7 @@ internal class EmbraceDeliveryCacheManager(
         sessionFileIds.forEach { filename ->
             CachedSession.fromFilename(filename)?.let { cachedSession ->
                 cachedSessions[cachedSession.sessionId] = cachedSession
-            } ?: logger.logError("Unrecognized cached file: $filename")
+            }
         }
 
         return cachedSessions.values.toList()
@@ -191,8 +183,6 @@ internal class EmbraceDeliveryCacheManager(
             .take(cachedSessions.size - MAX_SESSIONS_CACHED + 1)
         if (sessionsToPurge.isNotEmpty()) {
             sessionsToPurge.forEach {
-                val message = "Too many cached sessions. Purging session with file name ${it.filename}"
-                logger.logWarning(message, SessionPurgeException(message))
                 deleteSession(it.sessionId)
             }
         }
@@ -225,7 +215,7 @@ internal class EmbraceDeliveryCacheManager(
         sessionStartTimeMs: Long,
         saveAction: (filename: String) -> Unit,
     ) {
-        try {
+        runCatching {
             synchronized(cachedSessions) {
                 val cachedSession = cachedSessions.getOrElse(sessionId) {
                     CachedSession.create(sessionId, sessionStartTimeMs)
@@ -235,8 +225,6 @@ internal class EmbraceDeliveryCacheManager(
                     cachedSessions[cachedSession.sessionId] = cachedSession
                 }
             }
-        } catch (ex: Throwable) {
-            logger.logError("Failed to cache current active session", ex)
         }
     }
 }

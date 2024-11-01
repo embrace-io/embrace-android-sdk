@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeBlockedThreadListener
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,8 +34,7 @@ internal class BlockedThreadDetectorTest {
             clock,
             listener,
             state,
-            Thread.currentThread(),
-            logger = EmbLoggerImpl()
+            Thread.currentThread()
         )
     }
 

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import java.util.concurrent.ConcurrentHashMap
@@ -9,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class EmbraceDomainCountLimiter(
     private val configService: ConfigService,
-    private val logger: EmbLogger,
 ) : MemoryCleanerListener, DomainCountLimiter {
 
     private val domainSetting = ConcurrentHashMap<String, DomainSettings>()
@@ -60,7 +58,7 @@ internal class EmbraceDomainCountLimiter(
     }
 
     private fun createLimitForDomain(domain: String) {
-        try {
+        runCatching {
             for ((key, value) in domainSuffixCallLimits) {
                 if (domain.endsWith(key)) {
                     domainSetting[domain] = DomainSettings(value, key)
@@ -70,8 +68,6 @@ internal class EmbraceDomainCountLimiter(
             if (!domainSetting.containsKey(domain)) {
                 domainSetting[domain] = DomainSettings(defaultPerDomainSuffixCallLimit, domain)
             }
-        } catch (ex: Exception) {
-            logger.logDebug("Failed to determine limits for domain: $domain", ex)
         }
     }
 

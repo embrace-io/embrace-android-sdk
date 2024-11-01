@@ -25,14 +25,11 @@ internal class EmbraceWebViewService(
     override fun collectWebData(tag: String, message: String) {
         if (message.contains(MESSAGE_KEY_FOR_METRICS)) {
             collectWebVital(message, tag)
-        } else {
-            logger.logDebug("WebView console message ignored.")
         }
     }
 
     private fun collectWebVital(message: String, tag: String) {
         if (webViewInfoMap.size >= configService.webViewVitalsBehavior.getMaxWebViewVitals()) {
-            logger.logDebug("Max webview vitals per session exceeded")
             return
         }
         val collectedWebVitals = parseWebVital(message)
@@ -93,11 +90,8 @@ internal class EmbraceWebViewService(
         try {
             if (message.length < SCRIPT_MESSAGE_MAXIMUM_ALLOWED_LENGTH) {
                 return serializer.fromJson(message, WebViewInfo::class.java)
-            } else {
-                logger.logWarning("Web Vital info is too large to parse")
             }
         } catch (e: Exception) {
-            logger.logError("Cannot parse Web Vital", e)
             logger.trackInternalError(InternalErrorType.WEB_VITAL_PARSE_FAIL, e)
         }
         return null

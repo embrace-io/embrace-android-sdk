@@ -11,8 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.prefs.EmbracePreferencesService
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -40,7 +38,6 @@ internal class EmbraceSessionPropertiesTest {
     private lateinit var preferencesService: PreferencesService
     private lateinit var sessionProperties: EmbraceSessionProperties
     private lateinit var context: Context
-    private lateinit var logger: EmbLogger
     private lateinit var configService: FakeConfigService
     private lateinit var writer: FakeCurrentSessionSpan
 
@@ -48,7 +45,6 @@ internal class EmbraceSessionPropertiesTest {
     fun setUp() {
         val worker = fakeBackgroundWorker()
         context = ApplicationProvider.getApplicationContext()
-        logger = EmbLoggerImpl()
         val prefs = lazy { PreferenceManager.getDefaultSharedPreferences(context) }
         preferencesService =
             EmbracePreferencesService(worker, prefs, fakeClock, EmbraceSerializer())
@@ -60,7 +56,6 @@ internal class EmbraceSessionPropertiesTest {
         sessionProperties = EmbraceSessionProperties(
             preferencesService,
             configService,
-            logger,
             writer
         )
     }
@@ -78,7 +73,7 @@ internal class EmbraceSessionPropertiesTest {
         assertEquals(VALUE_VALID, sessionProperties.get()[KEY_VALID])
 
         // temporary property should not have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(preferencesService, configService, logger, writer)
+        val sessionProperties2 = EmbraceSessionProperties(preferencesService, configService, writer)
         assertTrue(sessionProperties2.get().isEmpty())
     }
 
@@ -94,7 +89,7 @@ internal class EmbraceSessionPropertiesTest {
         assertEquals(VALUE_VALID, sessionProperties.get()[KEY_VALID])
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(preferencesService, configService, logger, writer)
+        val sessionProperties2 = EmbraceSessionProperties(preferencesService, configService, writer)
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertEquals(VALUE_VALID, sessionProperties2.get()[KEY_VALID])
 
@@ -102,7 +97,7 @@ internal class EmbraceSessionPropertiesTest {
         assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, false))
 
         // permanent property should no longer have been persisted
-        val sessionProperties3 = EmbraceSessionProperties(preferencesService, configService, logger, writer)
+        val sessionProperties3 = EmbraceSessionProperties(preferencesService, configService, writer)
         assertTrue(sessionProperties3.get().isEmpty())
     }
 
@@ -218,13 +213,13 @@ internal class EmbraceSessionPropertiesTest {
         assertTrue(sessionProperties.add(KEY_VALID, VALUE_VALID, true))
 
         // permanent property should have been persisted
-        val sessionProperties2 = EmbraceSessionProperties(preferencesService, configService, logger, writer)
+        val sessionProperties2 = EmbraceSessionProperties(preferencesService, configService, writer)
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertTrue(sessionProperties.remove(KEY_VALID))
         assertTrue(sessionProperties.get().isEmpty())
 
         // permanent property should have been removed
-        val sessionProperties3 = EmbraceSessionProperties(preferencesService, configService, logger, writer)
+        val sessionProperties3 = EmbraceSessionProperties(preferencesService, configService, writer)
         assertTrue(sessionProperties3.get().isEmpty())
     }
 

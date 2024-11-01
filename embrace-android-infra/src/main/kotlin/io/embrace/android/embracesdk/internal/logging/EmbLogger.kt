@@ -10,19 +10,9 @@ interface EmbLogger : InternalErrorHandler {
     }
 
     /**
-     * Logs a debug message with an optional throwable.
-     */
-    fun logDebug(msg: String, throwable: Throwable? = null)
-
-    /**
      * Logs an informational message.
      */
     fun logInfo(msg: String, throwable: Throwable? = null)
-
-    /**
-     * Logs a warning message with an optional throwable.
-     */
-    fun logWarning(msg: String, throwable: Throwable? = null)
 
     /**
      * Logs a warning message with an optional error.

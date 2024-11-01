@@ -12,23 +12,13 @@ class FakeEmbLogger(
         val throwable: Throwable?,
     )
 
-    var debugMessages: MutableList<LogMessage> = mutableListOf()
     var infoMessages: MutableList<LogMessage> = mutableListOf()
-    var warningMessages: MutableList<LogMessage> = mutableListOf()
     var errorMessages: MutableList<LogMessage> = mutableListOf()
     var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
     var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
 
-    override fun logDebug(msg: String, throwable: Throwable?) {
-        debugMessages.add(LogMessage(msg, throwable))
-    }
-
     override fun logInfo(msg: String, throwable: Throwable?) {
         infoMessages.add(LogMessage(msg, throwable))
-    }
-
-    override fun logWarning(msg: String, throwable: Throwable?) {
-        warningMessages.add(LogMessage(msg, throwable))
     }
 
     override fun logError(msg: String, throwable: Throwable?) {

@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import io.mockk.verify
@@ -44,8 +43,7 @@ internal class TargetThreadHandlerTest {
             mockk(relaxed = true),
             BackgroundWorker(executorService),
             configService,
-            messageQueue,
-            logger = EmbLoggerImpl()
+            messageQueue
         ) { FAKE_TIME_MS }.apply {
             action = {}
         }

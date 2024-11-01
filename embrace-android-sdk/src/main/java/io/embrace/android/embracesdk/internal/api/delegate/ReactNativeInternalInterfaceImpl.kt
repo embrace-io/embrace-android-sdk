@@ -59,12 +59,7 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setJavaScriptPatchNumber(number: String?) {
         if (embrace.isStarted) {
-            if (number == null) {
-                logger.logError("JavaScript patch number must not be null")
-                return
-            }
-            if (number.isEmpty()) {
-                logger.logError("JavaScript patch number must have non-zero length")
+            if (number.isNullOrEmpty()) {
                 return
             }
             hostedSdkVersionInfo.javaScriptPatchNumber = number
@@ -83,12 +78,7 @@ internal class ReactNativeInternalInterfaceImpl(
 
     override fun setReactNativeVersionNumber(version: String?) {
         if (embrace.isStarted) {
-            if (version == null) {
-                logger.logError("ReactNative version must not be null")
-                return
-            }
-            if (version.isEmpty()) {
-                logger.logError("ReactNative version must have non-zero length")
+            if (version.isNullOrEmpty()) {
                 return
             }
             hostedSdkVersionInfo.hostedPlatformVersion = version

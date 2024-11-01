@@ -14,7 +14,6 @@ internal class LogsApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : LogsApi {
 
-    private val logger = bootstrapper.initModule.logger
     private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.logModule.logService }
     private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
         bootstrapper.sessionOrchestrationModule.sessionOrchestrator
@@ -147,12 +146,12 @@ internal class LogsApiDelegate(
         exceptionMessage: String? = null,
     ) {
         if (sdkCallChecker.check("log_message")) {
-            try {
+            runCatching {
                 logService?.log(
                     message,
                     severity,
                     logExceptionType,
-                    normalizeProperties(properties, logger),
+                    normalizeProperties(properties),
                     stackTraceElements,
                     customStackTrace,
                     context,
@@ -161,8 +160,6 @@ internal class LogsApiDelegate(
                     exceptionMessage
                 )
                 sessionOrchestrator?.reportBackgroundActivityStateChange()
-            } catch (ex: Exception) {
-                logger.logDebug("Failed to log message using Embrace SDK.", ex)
             }
         }
     }

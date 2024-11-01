@@ -13,10 +13,6 @@ internal inline fun <R> captureDataSafely(logger: EmbLogger, result: Provider<R>
     return try {
         result()
     } catch (exc: Throwable) {
-        logger.logError(
-            "Exception thrown capturing data",
-            exc
-        )
         logger.trackInternalError(InternalErrorType.SAFE_DATA_CAPTURE_FAIL, exc)
         null
     }

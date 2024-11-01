@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.registry
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.session.MemoryCleanerListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
@@ -18,7 +17,7 @@ internal class ServiceRegistryTest {
 
     @Test
     fun testServiceRegistration() {
-        val registry = ServiceRegistry(EmbLoggerImpl())
+        val registry = ServiceRegistry()
         val service = FakeService()
         val obj = lazy { "test_obj" }
         registry.registerServices(lazy { service }, obj, lazy { null })
@@ -33,7 +32,7 @@ internal class ServiceRegistryTest {
 
     @Test
     fun testListeners() {
-        val registry = ServiceRegistry(EmbLoggerImpl())
+        val registry = ServiceRegistry()
         val service = FakeService()
         registry.registerService(lazy { service })
         val expected = listOf(service)
@@ -59,7 +58,7 @@ internal class ServiceRegistryTest {
 
     @Test(expected = IllegalStateException::class)
     fun testClosedRegistration() {
-        val registry = ServiceRegistry(EmbLoggerImpl())
+        val registry = ServiceRegistry()
         registry.closeRegistration()
         registry.registerService(lazy { FakeService() })
     }

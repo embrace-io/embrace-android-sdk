@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeFeatureRegistry
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
@@ -21,7 +20,7 @@ internal class FeatureModuleImplTest {
         val registry = FakeFeatureRegistry()
         val module = FeatureModuleImpl(
             featureRegistry = registry,
-            coreModule = createCoreModule(mockk(relaxed = true), FakeEmbLogger()),
+            coreModule = createCoreModule(mockk(relaxed = true)),
             initModule = FakeInitModule(),
             otelModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(),

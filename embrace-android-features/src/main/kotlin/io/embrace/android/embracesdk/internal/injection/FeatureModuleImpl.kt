@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.RnActionDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.TapDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.ViewDataSource
 import io.embrace.android.embracesdk.internal.capture.crumbs.WebViewUrlDataSource
-import io.embrace.android.embracesdk.internal.capture.memory.MemoryWarningDataSource
 import io.embrace.android.embracesdk.internal.capture.powersave.LowPowerDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSource
 import io.embrace.android.embracesdk.internal.capture.telemetry.InternalErrorDataSourceImpl
@@ -37,20 +36,6 @@ internal class FeatureModuleImpl(
     logWriter: LogWriter,
     configService: ConfigService,
 ) : FeatureModule {
-
-    private val memoryWarningDataSource: DataSourceState<MemoryWarningDataSource> by singleton {
-        DataSourceState(
-            factory = {
-                MemoryWarningDataSource(
-                    application = coreModule.application,
-                    clock = initModule.clock,
-                    sessionSpanWriter = otelModule.currentSessionSpan,
-                    logger = initModule.logger,
-                )
-            },
-            configGate = { configService.autoDataCaptureBehavior.isMemoryWarningCaptureEnabled() },
-        )
-    }
 
     override val breadcrumbDataSource: DataSourceState<BreadcrumbDataSource> by dataSourceState {
         DataSourceState(
@@ -230,7 +215,6 @@ internal class FeatureModuleImpl(
     }
 
     override fun registerFeatures() {
-        featureRegistry.add(memoryWarningDataSource)
     }
 
     /**

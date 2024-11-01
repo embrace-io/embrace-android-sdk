@@ -43,6 +43,6 @@ internal class FeatureModuleImplTest {
         val expectedFeatures = 12
         assertEquals(expectedFeatures, registry.states.size)
         module.registerFeatures()
-        assertEquals(expectedFeatures + 1, registry.states.size)
+        assertEquals(expectedFeatures, registry.states.size)
     }
 }

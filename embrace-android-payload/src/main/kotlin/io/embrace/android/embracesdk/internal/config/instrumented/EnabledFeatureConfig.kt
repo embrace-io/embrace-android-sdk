@@ -8,13 +8,6 @@ package io.embrace.android.embracesdk.internal.config.instrumented
 object EnabledFeatureConfig {
 
     /**
-     * Gates sigquit capture.
-     *
-     * sdk_config.anr.capture_google
-     */
-    fun isSigquitCaptureEnabled(): Boolean = false
-
-    /**
      * Gates Unity ANR capture.
      *
      * sdk_config.anr.capture_unity_thread
@@ -126,13 +119,6 @@ object EnabledFeatureConfig {
      * sdk_config.webview.capture_query_params
      */
     fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = true
-
-    /**
-     * Gates whether the startup moment should automatically end
-     *
-     * sdk_config.startup_moment.automatically_end
-     */
-    fun isStartupMomentAutoEndEnabled(): Boolean = true
 
     /**
      * Gates whether the FCM feature should capture PII data

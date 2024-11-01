@@ -40,7 +40,7 @@ object EnabledFeatureConfig {
      *
      * sdk_config.taps.capture_coordinates
      */
-    fun isViewClickCoordinateCaptureEnabled(): Boolean = true
+    fun isViewClickCoordinateCaptureEnabled(): Boolean = false
 
     /**
      * Gates memory warning capture

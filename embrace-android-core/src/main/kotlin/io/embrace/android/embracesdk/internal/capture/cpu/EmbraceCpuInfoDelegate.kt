@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.cpu
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 /**
  * This class is responsible for getting the CPU name and EGL name from the native library.
@@ -18,7 +19,7 @@ internal class EmbraceCpuInfoDelegate(
             try {
                 cpuInfoNdkDelegate.getNativeCpuName()
             } catch (exception: LinkageError) {
-                logger.logWarning("Could not get the CPU name.", exception)
+                logger.trackInternalError(InternalErrorType.NATIVE_READ_FAIL, exception)
                 null
             }
         } else {
@@ -31,7 +32,7 @@ internal class EmbraceCpuInfoDelegate(
             try {
                 cpuInfoNdkDelegate.getNativeEgl()
             } catch (exception: LinkageError) {
-                logger.logWarning("Could not get the EGL name.", exception)
+                logger.trackInternalError(InternalErrorType.NATIVE_READ_FAIL, exception)
                 null
             }
         } else {

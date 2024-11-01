@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk.internal.serialization
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.InputStream
 import java.io.OutputStream
 import java.lang.reflect.Type
 
 internal class DecoratedSerializer(
     private val impl: PlatformSerializer,
-    private val logger: EmbLogger,
 ) : PlatformSerializer {
 
     override fun <T> toJson(src: T): String {
@@ -47,11 +45,6 @@ internal class DecoratedSerializer(
     }
 
     private fun <T> serializerAction(action: () -> T): T {
-        try {
-            return action()
-        } catch (exc: Exception) {
-            logger.logError("JSON serializer failed", exc)
-            throw exc
-        }
+        return action()
     }
 }

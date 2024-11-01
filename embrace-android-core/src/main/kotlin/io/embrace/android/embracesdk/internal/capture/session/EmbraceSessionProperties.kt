@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.arch.destination.SpanAttributeData
 import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.atomic.AtomicReference
@@ -12,7 +11,6 @@ import java.util.concurrent.atomic.AtomicReference
 internal class EmbraceSessionProperties(
     private val preferencesService: PreferencesService,
     private val configService: ConfigService,
-    private val logger: EmbLogger,
     private val writer: SessionSpanWriter,
 ) {
     private val temporary: MutableMap<String, String> = HashMap()
@@ -41,7 +39,6 @@ internal class EmbraceSessionProperties(
         synchronized(permanentPropertiesReference) {
             val maxSessionProperties = configService.sessionBehavior.getMaxSessionProperties()
             if (size() > maxSessionProperties || size() == maxSessionProperties && !haveKey(sanitizedKey)) {
-                logger.logError("Session property count is at its limit. Rejecting.")
                 return false
             }
 

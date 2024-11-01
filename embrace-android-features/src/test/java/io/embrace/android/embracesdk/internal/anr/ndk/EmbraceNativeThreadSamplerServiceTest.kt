@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.anr.ndk
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.mapThreadState
@@ -11,7 +12,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrStackframe
@@ -48,9 +48,8 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         cfg = AnrRemoteConfig(pctNativeThreadAnrSamplingEnabled = 100f)
         anrBehavior = createAnrBehavior { cfg }
         configService = FakeConfigService(anrBehavior = anrBehavior)
-        sharedObjectLoader = mockk(relaxed = true)
+        sharedObjectLoader = FakeSharedObjectLoader()
         delegate = mockk(relaxed = true)
-        val logger = EmbLoggerImpl()
         random = mockk(relaxed = true)
         executorService = BlockingScheduledExecutorService()
         sampler =
@@ -58,14 +57,12 @@ internal class EmbraceNativeThreadSamplerServiceTest {
                 configService,
                 lazy { emptyMap() },
                 random,
-                logger,
                 delegate,
                 BackgroundWorker(executorService),
                 FakeDeviceArchitecture(),
                 sharedObjectLoader
             )
         every { random.nextInt(any()) } returns 0
-        every { sharedObjectLoader.loadEmbraceNative() } returns true
     }
 
     @Test

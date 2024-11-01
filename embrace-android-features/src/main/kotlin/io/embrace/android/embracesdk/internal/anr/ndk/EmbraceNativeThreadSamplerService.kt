@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.mapThreadState
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -22,7 +21,6 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     private val configService: ConfigService,
     private val symbols: Lazy<Map<String, String>?>,
     private val random: Random = Random(),
-    private val logger: EmbLogger,
     private val delegate: NdkDelegate = NativeThreadSamplerNdkDelegate(),
     private val worker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
@@ -59,7 +57,6 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
         return if (sharedObjectLoader.loadEmbraceNative()) {
             delegate.setupNativeThreadSampler(deviceArchitecture.is32BitDevice)
         } else {
-            logger.logWarning("Embrace native binary load failed. Native thread sampler setup aborted.")
             false
         }
     }
@@ -101,7 +98,6 @@ class EmbraceNativeThreadSamplerService @JvmOverloads constructor(
     override fun onThreadBlockedInterval(thread: Thread, timestamp: Long) {
         val limit = configService.anrBehavior.getMaxStacktracesPerInterval()
         if (count >= limit) {
-            logger.logDebug("ANR stacktrace not captured. Maximum allowed ticks per ANR interval reached.")
             return
         }
 

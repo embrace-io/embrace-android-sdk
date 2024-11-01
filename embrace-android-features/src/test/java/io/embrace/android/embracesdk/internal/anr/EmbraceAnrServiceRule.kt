@@ -52,15 +52,13 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
             looper = looper,
             anrMonitorWorker = worker,
             configService = fakeConfigService,
-            logger = logger,
             clock = clock
         )
         blockedThreadDetector = BlockedThreadDetector(
             configService = fakeConfigService,
             clock = clock,
             state = state,
-            targetThread = Thread.currentThread(),
-            logger = logger
+            targetThread = Thread.currentThread()
         )
         livenessCheckScheduler = LivenessCheckScheduler(
             configService = fakeConfigService,

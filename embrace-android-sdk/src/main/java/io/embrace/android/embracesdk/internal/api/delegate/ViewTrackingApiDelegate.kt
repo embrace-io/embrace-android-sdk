@@ -12,7 +12,6 @@ internal class ViewTrackingApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : ViewTrackingApi {
 
-    private val logger = bootstrapper.initModule.logger
     private val sdkClock = bootstrapper.initModule.clock
     private val featureModule by embraceImplInject(sdkCallChecker) {
         bootstrapper.featureModule
@@ -30,22 +29,18 @@ internal class ViewTrackingApiDelegate(
     private var composeActivityListenerInstance: Any? = null
 
     override fun registerComposeActivityListener(app: Application) {
-        try {
+        runCatching {
             val composeActivityListener = Class.forName("io.embrace.android.embracesdk.compose.ComposeActivityListener")
             composeActivityListenerInstance = composeActivityListener.getDeclaredConstructor().newInstance()
             app.registerActivityLifecycleCallbacks(composeActivityListenerInstance as Application.ActivityLifecycleCallbacks?)
-        } catch (e: Throwable) {
-            logger.logError("registerComposeActivityListener error", e)
         }
     }
 
     override fun unregisterComposeActivityListener(app: Application) {
-        try {
+        runCatching {
             composeActivityListenerInstance?.let {
                 app.unregisterActivityLifecycleCallbacks(it as Application.ActivityLifecycleCallbacks?)
             }
-        } catch (e: Throwable) {
-            logger.logError("Instantiation error for ComposeActivityListener", e)
         }
     }
 
@@ -92,7 +87,6 @@ internal class ViewTrackingApiDelegate(
 
     override fun logRnView(screen: String) {
         if (appFramework != AppFramework.REACT_NATIVE) {
-            logger.logWarning("[Embrace] logRnView is only available on React Native", null)
             return
         }
 

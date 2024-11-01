@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.storage
 
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.getStartTime
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
@@ -40,17 +39,14 @@ internal class EmbraceCacheServiceTest {
 
     private lateinit var service: CacheService
     private lateinit var storageManager: FakeStorageService
-    private lateinit var logger: FakeEmbLogger
     private val serializer = TestPlatformSerializer()
 
     @Before
     fun setUp() {
         storageManager = FakeStorageService()
-        logger = FakeEmbLogger()
         service = EmbraceCacheService(
             storageManager,
-            serializer,
-            logger
+            serializer
         )
 
         // always assert that nothing is in the dir
@@ -375,9 +371,6 @@ internal class EmbraceCacheServiceTest {
         val filesAgain = storageManager.listFiles { _, _ -> true }
         assertEquals(1, filesAgain.size)
         assertEquals(files[0], filesAgain[0])
-
-        val errors = logger.errorMessages
-        assertEquals("The following errors were logged: $errors", 0, logger.errorMessages.size)
     }
 
     @Test

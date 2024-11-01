@@ -54,7 +54,6 @@ internal class AnrModuleImpl(
             looper = looper,
             anrMonitorWorker = anrMonitorWorker,
             configService = configService,
-            logger = initModule.logger,
             clock = initModule.clock,
         )
     }
@@ -65,7 +64,6 @@ internal class AnrModuleImpl(
             clock = initModule.clock,
             state = state,
             targetThread = looper.thread,
-            logger = initModule.logger,
         )
     }
 

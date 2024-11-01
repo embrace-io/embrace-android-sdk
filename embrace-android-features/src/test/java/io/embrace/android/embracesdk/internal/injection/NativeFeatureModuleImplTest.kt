@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -23,7 +22,7 @@ internal class NativeFeatureModuleImplTest {
     fun testDefaultImplementations() {
         val module = NativeFeatureModuleImpl(
             FakeInitModule(),
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
+            CoreModuleImpl(RuntimeEnvironment.getApplication()),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),

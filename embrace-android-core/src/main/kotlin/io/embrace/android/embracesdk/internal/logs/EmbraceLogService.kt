@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -30,7 +29,6 @@ class EmbraceLogService(
     private val logWriter: LogWriter,
     private val configService: ConfigService,
     private val sessionPropertiesService: SessionPropertiesService,
-    private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
 ) : LogService {
 
@@ -244,7 +242,6 @@ class EmbraceLogService(
         }
 
         if (message.length > maxLength) {
-            logger.logWarning("Truncating message of ${message.length} characters to $maxLength characters")
             val endChars = "..."
 
             if (maxLength <= endChars.length) {

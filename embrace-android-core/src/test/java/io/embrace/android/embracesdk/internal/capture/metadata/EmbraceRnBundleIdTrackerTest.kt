@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.AssetManager
 import android.view.WindowManager
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
@@ -58,8 +57,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         context,
         configService,
         preferencesService,
-        fakeBackgroundWorker(),
-        FakeEmbLogger()
+        fakeBackgroundWorker()
     )
 
     @Test

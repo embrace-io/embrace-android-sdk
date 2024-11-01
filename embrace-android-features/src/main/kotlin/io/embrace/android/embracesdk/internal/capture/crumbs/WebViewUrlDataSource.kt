@@ -25,7 +25,7 @@ class WebViewUrlDataSource(
     }
 
     fun logWebView(url: String?, startTime: Long) {
-        try {
+        runCatching {
             captureData(
                 inputValidation = {
                     url != null
@@ -42,8 +42,6 @@ class WebViewUrlDataSource(
                     addEvent(SchemaType.WebViewUrl(parsedUrl), startTime)
                 }
             )
-        } catch (ex: Exception) {
-            logger.logError("Failed to log WebView breadcrumb for url $url")
         }
     }
 }

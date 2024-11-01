@@ -92,7 +92,6 @@ internal class LivenessCheckScheduler(
         val message =
             "Scheduled heartbeat task could not be stopped." + if (monitorFuture == null) "Task is null." else ""
         val exc = IllegalStateException(message)
-        logger.logError(message, exc)
         logger.trackInternalError(InternalErrorType.ANR_HEARTBEAT_STOP_FAIL, exc)
         return false
     }

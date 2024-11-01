@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -19,14 +18,14 @@ internal class SystemServiceModuleImplTest {
 
     @Before
     fun setUp() {
-        coreModule = createCoreModule(RuntimeEnvironment.getApplication(), FakeEmbLogger())
+        coreModule = createCoreModule(RuntimeEnvironment.getApplication())
     }
 
     @Config(sdk = [Build.VERSION_CODES.O])
     @Test
     fun testVersionChecksNew() {
         val new = SystemServiceModuleImpl(
-            createCoreModule(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
+            createCoreModule(RuntimeEnvironment.getApplication()),
             FakeVersionChecker(true)
         )
         assertNotNull(new.storageManager)

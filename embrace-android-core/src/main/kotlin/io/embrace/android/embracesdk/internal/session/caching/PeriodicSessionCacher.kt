@@ -35,7 +35,6 @@ class PeriodicSessionCacher(
             try {
                 provider()
             } catch (ex: Exception) {
-                logger.logWarning("Error while caching active session", ex)
                 logger.trackInternalError(InternalErrorType.FG_SESSION_CACHE_FAIL, ex)
             }
         }

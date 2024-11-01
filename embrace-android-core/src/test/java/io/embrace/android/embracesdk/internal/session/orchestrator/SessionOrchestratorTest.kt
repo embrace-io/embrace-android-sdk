@@ -401,8 +401,7 @@ internal class SessionOrchestratorTest {
                 FakeStartupService(),
                 FakeLogService(),
                 FakeMetadataService()
-            ),
-            logger
+            )
         )
         orchestratorStartTimeMs = clock.now()
         sessionPropertiesService.addProperty("key", "value", false)

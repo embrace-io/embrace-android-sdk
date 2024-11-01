@@ -44,8 +44,7 @@ internal class LogModuleImpl(
 
     private val embraceDomainCountLimiter: EmbraceDomainCountLimiter by singleton {
         EmbraceDomainCountLimiter(
-            configModule.configService,
-            initModule.logger
+            configModule.configService
         )
     }
 
@@ -62,7 +61,6 @@ internal class LogModuleImpl(
             essentialServiceModule.logWriter,
             configModule.configService,
             essentialServiceModule.sessionPropertiesService,
-            initModule.logger,
             initModule.jsonSerializer
         )
     }

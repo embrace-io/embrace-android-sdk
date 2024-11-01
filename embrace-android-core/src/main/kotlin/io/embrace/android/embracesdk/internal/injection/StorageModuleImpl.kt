@@ -28,24 +28,21 @@ internal class StorageModuleImpl(
     override val cache by singleton {
         ApiResponseCache(
             initModule.jsonSerializer,
-            storageService,
-            initModule.logger
+            storageService
         )
     }
 
     override val cacheService: CacheService by singleton {
         EmbraceCacheService(
             storageService,
-            initModule.jsonSerializer,
-            initModule.logger
+            initModule.jsonSerializer
         )
     }
 
     override val deliveryCacheManager: DeliveryCacheManager by singleton {
         EmbraceDeliveryCacheManager(
             cacheService,
-            workerThreadModule.priorityWorker(Worker.Priority.DeliveryCacheWorker),
-            initModule.logger
+            workerThreadModule.priorityWorker(Worker.Priority.DeliveryCacheWorker)
         )
     }
 

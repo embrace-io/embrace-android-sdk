@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -31,7 +30,7 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
+            CoreModuleImpl(RuntimeEnvironment.getApplication()),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
@@ -55,7 +54,7 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), FakeEmbLogger()),
+            CoreModuleImpl(RuntimeEnvironment.getApplication()),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),

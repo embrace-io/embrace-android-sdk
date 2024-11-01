@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.arch.assertIsType
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
@@ -33,7 +32,6 @@ internal class EmbraceLogServiceTest {
     private lateinit var fakeSessionPropertiesService: FakeSessionPropertiesService
     private lateinit var fakeConfigService: FakeConfigService
 
-    private val fakeEmbLogger = FakeEmbLogger()
     private val embraceSerializer = EmbraceSerializer()
 
     @Before
@@ -51,7 +49,6 @@ internal class EmbraceLogServiceTest {
         logWriter = fakeLogWriter,
         configService = fakeConfigService,
         sessionPropertiesService = fakeSessionPropertiesService,
-        logger = fakeEmbLogger,
         serializer = embraceSerializer,
     )
 

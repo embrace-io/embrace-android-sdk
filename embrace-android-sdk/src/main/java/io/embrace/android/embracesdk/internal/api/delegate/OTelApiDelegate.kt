@@ -11,11 +11,8 @@ internal class OTelApiDelegate(
     private val sdkCallChecker: SdkCallChecker,
 ) : OTelApi {
 
-    private val logger = bootstrapper.logger
-
     override fun addSpanExporter(spanExporter: SpanExporter) {
         if (sdkCallChecker.started.get()) {
-            logger.logError("A SpanExporter can only be added before the SDK is started.", null)
             return
         }
         bootstrapper.openTelemetryModule.openTelemetryConfiguration.addSpanExporter(spanExporter)
@@ -31,7 +28,6 @@ internal class OTelApiDelegate(
 
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
         if (sdkCallChecker.started.get()) {
-            logger.logError("A LogRecordExporter can only be added before the SDK is started.", null)
             return
         }
         bootstrapper.openTelemetryModule.openTelemetryConfiguration.addLogExporter(logRecordExporter)

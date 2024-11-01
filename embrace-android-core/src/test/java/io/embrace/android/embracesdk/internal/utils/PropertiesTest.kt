@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.utils
 
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -16,7 +15,7 @@ internal class PropertiesTest {
         for (i in 1..9) {
             sourceMap["Key$i"] = "Value$i"
         }
-        val resultMap = PropertyUtils.sanitizeProperties(sourceMap, EmbLoggerImpl())
+        val resultMap = PropertyUtils.sanitizeProperties(sourceMap)
         assertTrue(
             "Unexpected normalized map size.",
             resultMap.size <= PropertyUtils.MAX_PROPERTY_SIZE

@@ -45,7 +45,6 @@ class DataCaptureOrchestrator(
                     state.onConfigChange()
                 }
             } catch (exc: Throwable) {
-                logger.logError("Exception thrown starting data capture", exc)
                 logger.trackInternalError(InternalErrorType.CFG_CHANGE_DATA_CAPTURE_FAIL, exc)
             }
         }
@@ -62,7 +61,6 @@ class DataCaptureOrchestrator(
                     state.currentSessionType = currentSessionType
                 }
             } catch (exc: Throwable) {
-                logger.logError("Exception thrown starting data capture", exc)
                 logger.trackInternalError(InternalErrorType.SESSION_CHANGE_DATA_CAPTURE_FAIL, exc)
             }
         }

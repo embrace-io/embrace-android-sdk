@@ -2,19 +2,16 @@ package io.embrace.android.embracesdk.internal.utils
 
 import android.os.Handler
 import android.os.Looper
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 
 object ThreadUtils {
 
     private val mainLooper = Looper.getMainLooper()
     private val mainThread = mainLooper.thread
 
-    fun runOnMainThread(logger: EmbLogger, runnable: Runnable) {
+    fun runOnMainThread(runnable: Runnable) {
         val wrappedRunnable = Runnable {
-            try {
+            runCatching {
                 runnable.run()
-            } catch (ex: Exception) {
-                logger.logError("Failed to run wrapped runnable on Main thread.", ex)
             }
         }
         if (Thread.currentThread() !== mainThread) {

@@ -17,10 +17,12 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBeh
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.NativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
@@ -40,23 +42,20 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     val overriddenClock: FakeClock = FakeClock(currentTime = currentTimeMs),
     val overriddenInitModule: FakeInitModule = FakeInitModule(clock = overriddenClock, logger = FakeEmbLogger()),
     val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
-    val overriddenCoreModule: FakeCoreModule = FakeCoreModule(
-        logger = overriddenInitModule.logger
-    ),
+    val overriddenCoreModule: FakeCoreModule = FakeCoreModule(),
     val overriddenConfigService: FakeConfigService = FakeConfigService(
         backgroundActivityCaptureEnabled = true,
         networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true),
         autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = false)
     ),
-    val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(
-        overriddenInitModule
-    ),
+    val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(),
     val overriddenAndroidServicesModule: AndroidServicesModule = createAndroidServicesModule(
         initModule = overriddenInitModule,
         coreModule = overriddenCoreModule,
         workerThreadModule = overriddenWorkerThreadModule
     ),
     val fakeAnrModule: AnrModule = FakeAnrModule(),
+    val fakeNativeCoreModule: NativeCoreModule = FakeNativeCoreModule(),
     val fakeNativeFeatureModule: FakeNativeFeatureModule = FakeNativeFeatureModule(),
     var cacheStorageServiceProvider: Provider<PayloadStorageService?> = { null },
     var payloadStorageServiceProvider: Provider<PayloadStorageService?> = { null },
@@ -66,8 +65,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     fun createBootstrapper(): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule,
         openTelemetryModule = overriddenInitModule.openTelemetryModule,
-        coreModuleSupplier = { _, _ -> overriddenCoreModule },
-        workerThreadModuleSupplier = { _ -> overriddenWorkerThreadModule },
+        coreModuleSupplier = { _ -> overriddenCoreModule },
+        workerThreadModuleSupplier = { overriddenWorkerThreadModule },
         androidServicesModuleSupplier = { _, _, _ -> overriddenAndroidServicesModule },
         essentialServiceModuleSupplier = { initModule, configModule, openTelemetryModule, coreModule, workerThreadModule, systemServiceModule, androidServicesModule, storageModule, _, _ ->
             createEssentialServiceModule(
@@ -107,6 +106,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 })
         },
         anrModuleSupplier = { _, _, _ -> fakeAnrModule },
+        nativeCoreModuleSupplier = { fakeNativeCoreModule },
         nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> fakeNativeFeatureModule }
     )
 }

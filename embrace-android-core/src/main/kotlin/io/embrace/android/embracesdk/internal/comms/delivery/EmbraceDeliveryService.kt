@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
@@ -29,7 +28,6 @@ class EmbraceDeliveryService(
     private val cacheManager: DeliveryCacheManager,
     private val apiService: ApiService,
     private val serializer: PlatformSerializer,
-    private val logger: EmbLogger,
 ) : DeliveryService {
 
     private companion object {
@@ -129,23 +127,14 @@ class EmbraceDeliveryService(
 
     private fun sendCachedSessions(cachedSessions: List<CachedSession>) {
         cachedSessions.forEach { cachedSession ->
-            try {
+            runCatching {
                 val sessionId = cachedSession.sessionId
                 val action = cacheManager.loadSessionAsAction(sessionId)
                 if (action != null) {
-                    apiService.sendSession(action) { response ->
-                        if (!response.shouldRetry) {
-                            val message =
-                                "Cached session deleted without request being sent. File name: ${cachedSession.filename}"
-                            logger.logWarning(message, SessionPurgeException(message))
-                        }
+                    apiService.sendSession(action) {
                         cacheManager.deleteSession(sessionId)
                     }
-                } else {
-                    logger.logError("Session $sessionId not found")
                 }
-            } catch (ex: Throwable) {
-                logger.logError("Could not send cached session", ex)
             }
         }
     }

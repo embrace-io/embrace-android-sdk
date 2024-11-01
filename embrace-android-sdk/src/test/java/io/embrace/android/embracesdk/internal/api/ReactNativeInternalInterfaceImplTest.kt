@@ -68,9 +68,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         preferencesService.javaScriptPatchNumber = "123"
         impl.setJavaScriptPatchNumber(null)
         assertEquals("123", preferencesService.javaScriptPatchNumber)
-        verify(exactly = 1) {
-            logger.logError(any())
-        }
     }
 
     @Test
@@ -79,9 +76,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         preferencesService.javaScriptPatchNumber = "123"
         impl.setJavaScriptPatchNumber("")
         assertEquals("123", preferencesService.javaScriptPatchNumber)
-        verify(exactly = 1) {
-            logger.logError(any())
-        }
     }
 
     @Test
@@ -99,9 +93,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         preferencesService.reactNativeVersionNumber = "0.1"
         impl.setReactNativeVersionNumber(null)
         assertEquals("0.1", preferencesService.reactNativeVersionNumber)
-        verify(exactly = 1) {
-            logger.logError(any())
-        }
     }
 
     @Test
@@ -110,9 +101,6 @@ internal class ReactNativeInternalInterfaceImplTest {
         preferencesService.reactNativeVersionNumber = "0.1"
         impl.setReactNativeVersionNumber("")
         assertEquals("0.1", preferencesService.reactNativeVersionNumber)
-        verify(exactly = 1) {
-            logger.logError(any())
-        }
     }
 
     @Test

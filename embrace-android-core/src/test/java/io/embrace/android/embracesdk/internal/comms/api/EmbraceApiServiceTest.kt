@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManage
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -432,7 +431,6 @@ internal class EmbraceApiServiceTest {
             apiClient = fakeApiClient,
             serializer = serializer,
             cachedConfigProvider = { _, _ -> cachedConfig },
-            logger = EmbLoggerImpl(),
             priorityWorker = PriorityWorker(testScheduledExecutor),
             pendingApiCallsSender = fakePendingApiCallsSender,
             lazyDeviceId = lazy { fakeDeviceId },

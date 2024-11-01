@@ -13,7 +13,7 @@ class FakeWorkerThreadModule(
     fakeInitModule: FakeInitModule = FakeInitModule(),
     private val testWorkerName: Worker? = null,
     private val anotherTestWorkerName: Worker? = null,
-    private val base: WorkerThreadModule = createWorkerThreadModule(fakeInitModule),
+    private val base: WorkerThreadModule = createWorkerThreadModule(),
     private val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*>? = { null },
 ) : WorkerThreadModule by base {
 

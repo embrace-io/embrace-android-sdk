@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.storage
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.fakePriorityWorker
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
@@ -51,7 +50,6 @@ internal class EmbraceDeliveryCacheManagerTest {
     private lateinit var deliveryCacheManager: EmbraceDeliveryCacheManager
     private lateinit var storageService: StorageService
     private lateinit var cacheService: EmbraceCacheService
-    private lateinit var logger: FakeEmbLogger
     private lateinit var fakeClock: FakeClock
 
     companion object {
@@ -61,19 +59,16 @@ internal class EmbraceDeliveryCacheManagerTest {
     @Before
     fun before() {
         fakeClock = FakeClock(clockInit)
-        logger = FakeEmbLogger()
         storageService = FakeStorageService()
         cacheService = spyk(
             EmbraceCacheService(
                 storageService = storageService,
-                serializer = serializer,
-                logger = logger
+                serializer = serializer
             )
         )
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            worker,
-            logger
+            worker
         )
     }
 
@@ -230,11 +225,6 @@ internal class EmbraceDeliveryCacheManagerTest {
         for (i in (100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED)..99) {
             assertTrue(cachedSessions.contains("test$i"))
         }
-
-        assertEquals(
-            100 - EmbraceDeliveryCacheManager.MAX_SESSIONS_CACHED,
-            logger.warningMessages.size
-        )
     }
 
     @Test
@@ -337,8 +327,7 @@ internal class EmbraceDeliveryCacheManagerTest {
     fun `save payload sync`() {
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            PriorityWorker(BlockableExecutorService(blockingMode = true)),
-            logger
+            PriorityWorker(BlockableExecutorService(blockingMode = true))
         )
         val expected = "test".toByteArray()
         val id = deliveryCacheManager.savePayload({ it.write(expected) }, true)
@@ -360,8 +349,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val executorService = BlockableExecutorService(blockingMode = true)
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            PriorityWorker(executorService),
-            logger
+            PriorityWorker(executorService)
         )
         val expected = "test".toByteArray()
         val id = deliveryCacheManager.savePayload({ it.write(expected) }, false)
@@ -391,8 +379,7 @@ internal class EmbraceDeliveryCacheManagerTest {
         val spyWorker = spyk(worker)
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService,
-            spyWorker,
-            logger
+            spyWorker
         )
 
         val pendingApiCalls = PendingApiCalls()

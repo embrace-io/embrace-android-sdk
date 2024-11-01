@@ -60,8 +60,7 @@ internal class EmbraceNetworkConnectivityService(
                 // Network is not reachable
                 networkStatus = NetworkStatus.NOT_REACHABLE
             }
-        } catch (e: java.lang.Exception) {
-            logger.logError("Error while trying to get connectivity status.", e)
+        } catch (e: Exception) {
             logger.trackInternalError(InternalErrorType.NETWORK_STATUS_CAPTURE_FAIL, e)
             networkStatus = NetworkStatus.UNKNOWN
         }
@@ -105,7 +104,7 @@ internal class EmbraceNetworkConnectivityService(
     }
 
     private fun calculateIpAddress(): String? {
-        try {
+        runCatching {
             val en = NetworkInterface.getNetworkInterfaces()
             while (en.hasMoreElements()) {
                 val intf = en.nextElement()
@@ -117,8 +116,6 @@ internal class EmbraceNetworkConnectivityService(
                     }
                 }
             }
-        } catch (ex: Exception) {
-            logger.logDebug("Cannot get IP Address")
         }
         return null
     }

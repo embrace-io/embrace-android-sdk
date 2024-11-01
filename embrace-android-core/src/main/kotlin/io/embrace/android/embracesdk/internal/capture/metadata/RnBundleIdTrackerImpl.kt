@@ -3,13 +3,11 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 import android.content.Context
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
-import java.io.FileNotFoundException
 import java.io.InputStream
 import java.security.MessageDigest
 import java.util.Locale
@@ -21,7 +19,6 @@ internal class RnBundleIdTrackerImpl(
     private val configService: ConfigService,
     private val preferencesService: PreferencesService,
     private val metadataBackgroundWorker: BackgroundWorker,
-    private val logger: EmbLogger,
 ) : RnBundleIdTracker {
 
     private var reactNativeBundleId: Future<String?> =
@@ -39,7 +36,6 @@ internal class RnBundleIdTrackerImpl(
                         context,
                         lastKnownJsBundleUrl,
                         buildInfo.rnBundleId,
-                        logger
                     )
                 }
             }
@@ -74,7 +70,6 @@ internal class RnBundleIdTrackerImpl(
                     context,
                     jsBundleUrl,
                     buildInfo.rnBundleId,
-                    logger
                 )
                 if (forceUpdate != null) {
                     // if we have a value for forceUpdate, it means the bundleId is cacheable and we should store it.
@@ -94,23 +89,16 @@ internal class RnBundleIdTrackerImpl(
         private fun getBundleAsset(
             context: Context,
             bundleUrl: String,
-            logger: EmbLogger,
         ): InputStream? {
-            try {
+            runCatching {
                 return context.assets.open(getBundleAssetName(bundleUrl))
-            } catch (e: Exception) {
-                logger.logError("Failed to retrieve RN bundle file from assets.", e)
             }
             return null
         }
 
-        private fun getCustomBundleStream(bundleUrl: String, logger: EmbLogger): InputStream? {
-            try {
+        private fun getCustomBundleStream(bundleUrl: String): InputStream? {
+            runCatching {
                 return FileInputStream(bundleUrl)
-            } catch (e: NullPointerException) {
-                logger.logError("Failed to retrieve the custom RN bundle file.", e)
-            } catch (e: FileNotFoundException) {
-                logger.logError("Failed to retrieve the custom RN bundle file.", e)
             }
             return null
         }
@@ -119,7 +107,6 @@ internal class RnBundleIdTrackerImpl(
             context: Context,
             bundleUrl: String?,
             defaultBundleId: String?,
-            logger: EmbLogger,
         ): String? {
             if (bundleUrl == null) {
                 // If JS bundle URL is null, we set React Native bundle ID to the defaultBundleId.
@@ -131,15 +118,15 @@ internal class RnBundleIdTrackerImpl(
             // checks if the bundle url is an asset
             if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets
-                bundleStream = getBundleAsset(context, bundleUrl, logger)
+                bundleStream = getBundleAsset(context, bundleUrl)
             } else {
                 // looks for the bundle file from the custom path
-                bundleStream = getCustomBundleStream(bundleUrl, logger)
+                bundleStream = getCustomBundleStream(bundleUrl)
             }
             if (bundleStream == null) {
                 return defaultBundleId
             }
-            try {
+            runCatching {
                 bundleStream.use { inputStream ->
                     ByteArrayOutputStream().use { buffer ->
                         var read: Int
@@ -151,8 +138,6 @@ internal class RnBundleIdTrackerImpl(
                         return hashBundleToMd5(buffer.toByteArray())
                     }
                 }
-            } catch (e: Exception) {
-                logger.logError("Failed to compute the RN bundle file.", e)
             }
             // if the hashing of the JS bundle URL fails, returns the default bundle ID
             return defaultBundleId

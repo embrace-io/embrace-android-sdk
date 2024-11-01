@@ -56,10 +56,6 @@ internal class AeiDataSourceImpl(
             try {
                 processApplicationExitInfo()
             } catch (exc: Throwable) {
-                logger.logWarning(
-                    "AEI - Failed to process AEIs due to unexpected error",
-                    exc
-                )
                 logger.trackInternalError(InternalErrorType.ENABLE_DATA_CAPTURE, exc)
             }
         }
@@ -70,10 +66,6 @@ internal class AeiDataSourceImpl(
             backgroundExecution?.cancel(true)
             backgroundExecution = null
         } catch (t: Throwable) {
-            logger.logWarning(
-                "AEI - Failed to disable EmbraceApplicationExitInfoService work",
-                t
-            )
             logger.trackInternalError(InternalErrorType.DISABLE_DATA_CAPTURE, t)
         }
     }
@@ -195,12 +187,7 @@ internal class AeiDataSourceImpl(
 
     private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {
         try {
-            val trace = readTraceAsString(appExitInfo)
-
-            if (trace == null) {
-                logger.logDebug("AEI - No info trace collected")
-                return null
-            }
+            val trace = readTraceAsString(appExitInfo) ?: return null
 
             val traceMaxLimit = appExitInfoBehavior.getTraceMaxLimit()
             if (trace.length > traceMaxLimit) {
@@ -209,25 +196,17 @@ internal class AeiDataSourceImpl(
 
             return AppExitInfoBehavior.CollectTracesResult.Success(trace)
         } catch (e: IOException) {
-            logger.logWarning("AEI - IOException", e)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("ioexception: ${e.message}"))
         } catch (e: OutOfMemoryError) {
-            logger.logWarning("AEI - Out of Memory", e)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("oom: ${e.message}"))
         } catch (tr: Throwable) {
-            logger.logWarning("AEI - An error occurred", tr)
             return AppExitInfoBehavior.CollectTracesResult.TraceException(("error: ${tr.message}"))
         }
     }
 
     private fun readTraceAsString(appExitInfo: ApplicationExitInfo): String? {
         if (appExitInfo.isNdkProtobufFile()) {
-            val bytes = appExitInfo.traceInputStream?.readBytes()
-
-            if (bytes == null) {
-                logger.logDebug("AEI - No info trace collected")
-                return null
-            }
+            val bytes = appExitInfo.traceInputStream?.readBytes() ?: return null
             return bytes.toUTF8String()
         } else {
             return appExitInfo.traceInputStream?.bufferedReader()?.readText()

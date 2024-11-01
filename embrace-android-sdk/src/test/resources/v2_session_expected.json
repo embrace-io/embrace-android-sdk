@@ -32,7 +32,9 @@
     "os_version": "__EMBRACE_TEST_IGNORE__",
     "os_code": "__EMBRACE_TEST_IGNORE__",
     "screen_resolution": "__EMBRACE_TEST_IGNORE__",
-    "num_cores": "__EMBRACE_TEST_IGNORE__"
+    "num_cores": "__EMBRACE_TEST_IGNORE__",
+    "cpu_name": "fake_cpu",
+    "egl_info": "fake_egl"
   },
   "type": "spans",
   "version": "0.1.0"

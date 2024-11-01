@@ -11,6 +11,7 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import io.embrace.android.embracesdk.annotation.StartupActivity
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
@@ -70,7 +71,12 @@ class StartupTracker(
                             }
                         }
                     } else if (!nullWindowCallbackErrorLogged) {
-                        logger.logError("Fail to attach frame rendering callback because the callback on Window was null")
+                        logger.trackInternalError(
+                            type = InternalErrorType.APP_LAUNCH_TRACE_FAIL,
+                            throwable = IllegalStateException(
+                                "Fail to attach frame rendering callback because the callback on Window was null"
+                            )
+                        )
                         nullWindowCallbackErrorLogged = true
                     }
                 }

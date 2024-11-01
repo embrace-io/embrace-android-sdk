@@ -37,14 +37,12 @@ internal class EmbraceNetworkCaptureService(
     override fun getNetworkCaptureRules(url: String, method: String): Set<NetworkCaptureRuleRemoteConfig> {
         val networkCaptureRules = configService.networkBehavior.getNetworkCaptureRules().toMutableSet()
         if (networkCaptureRules.isEmpty()) {
-            logger.logDebug("No network capture rules")
             return emptySet()
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
         val appId = configService.appId
         if (url.contentEquals(configService.sdkEndpointBehavior.getData(appId))) {
-            logger.logDebug("Cannot intercept Embrace endpoints")
             return emptySet()
         }
 
@@ -62,7 +60,6 @@ internal class EmbraceNetworkCaptureService(
         networkCaptureRules.removeAll(rulesToRemove)
         applicableRules.removeAll(rulesToRemove)
 
-        logger.logDebug("Capture rule is: $applicableRules")
         return applicableRules
     }
 
@@ -121,8 +118,6 @@ internal class EmbraceNetworkCaptureService(
 
                 // if the network captured match at least one rule criteria, we logged that body and finish the foreach.
                 return
-            } else {
-                logger.logDebug("The captured data doesn't match the rule criteria")
             }
         }
     }

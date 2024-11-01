@@ -44,7 +44,7 @@ internal class EmbraceProcessStateService(
     init {
         // add lifecycle observer on main thread to avoid IllegalStateExceptions with
         // androidx.lifecycle
-        ThreadUtils.runOnMainThread(logger) {
+        ThreadUtils.runOnMainThread {
             lifecycleOwner.lifecycle.addObserver(this)
         }
     }
@@ -64,7 +64,6 @@ internal class EmbraceProcessStateService(
      * ON START.
      */
     override fun onForeground() {
-        logger.logDebug("AppState: App entered foreground.")
         isInBackground = false
         val timestamp = clock.now()
 
@@ -83,7 +82,6 @@ internal class EmbraceProcessStateService(
      * ON STOP.
      */
     override fun onBackground() {
-        logger.logDebug("AppState: App entered background")
         isInBackground = true
         val timestamp = clock.now()
         invokeCallbackSafely { sessionOrchestrator?.onBackground(timestamp) }
@@ -99,7 +97,6 @@ internal class EmbraceProcessStateService(
         try {
             action()
         } catch (ex: Exception) {
-            logger.logWarning(ERROR_FAILED_TO_NOTIFY)
             logger.trackInternalError(InternalErrorType.PROCESS_STATE_CALLBACK_FAIL, ex)
         }
     }
@@ -112,12 +109,9 @@ internal class EmbraceProcessStateService(
     }
 
     override fun close() {
-        try {
-            logger.logDebug("Shutting down EmbraceProcessStateService")
+        runCatching {
             listeners.clear()
             sessionOrchestrator = null
-        } catch (ex: Exception) {
-            logger.logWarning("Error when closing EmbraceProcessStateService", ex)
         }
     }
 
@@ -133,7 +127,5 @@ internal class EmbraceProcessStateService(
     companion object {
         const val FOREGROUND_STATE: String = "foreground"
         const val BACKGROUND_STATE: String = "background"
-        private const val ERROR_FAILED_TO_NOTIFY =
-            "Failed to notify EmbraceProcessStateService listener"
     }
 }

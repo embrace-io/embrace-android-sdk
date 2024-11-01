@@ -38,7 +38,6 @@ import java.io.FilenameFilter
 import java.io.IOException
 import java.io.InputStreamReader
 import java.util.LinkedList
-import java.util.Locale
 
 internal class EmbraceNdkService(
     private val context: Context,
@@ -123,7 +122,6 @@ internal class EmbraceNdkService(
                 false
             }
         } catch (ex: Exception) {
-            logger.logError("Failed to start native crash monitoring", ex)
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
             false
         }
@@ -158,9 +156,7 @@ internal class EmbraceNdkService(
         if (directoryFile.exists()) {
             return
         }
-        if (!directoryFile.mkdirs()) {
-            logger.logError("Failed to create crash report directory {crashDirPath=" + directoryFile.absolutePath + "}")
-        }
+        directoryFile.mkdirs()
     }
 
     private fun installSignals(sessionIdProvider: () -> String) {
@@ -193,22 +189,14 @@ internal class EmbraceNdkService(
      *
      * @return List of NativeCrashData error
      */
-    private fun getNativeCrashErrors(
-        nativeCrash: NativeCrashData,
-        errorFile: File?,
-    ): List<NativeCrashDataError?>? {
+    private fun getNativeCrashErrors(errorFile: File?): List<NativeCrashDataError?>? {
         if (errorFile != null) {
             val absolutePath = errorFile.absolutePath
             val errorsRaw = delegate._getErrors(absolutePath)
             if (errorsRaw != null) {
-                try {
+                runCatching {
                     val type = TypeUtils.typedList(NativeCrashDataError::class)
                     return serializer.fromJson(errorsRaw, type)
-                } catch (e: Exception) {
-                    logger.logError(
-                        "Failed to parse native crash error file {crashId=" + nativeCrash.nativeCrashId +
-                            ", errorFilePath=" + absolutePath + "}"
-                    )
                 }
             }
         }
@@ -248,7 +236,7 @@ internal class EmbraceNdkService(
                     delegate._getCrashReport(path)?.let { crashRaw ->
                         val nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
                         val errorFile = repository.errorFileForCrash(crashFile)?.apply {
-                            getNativeCrashErrors(nativeCrash, this).let { errors ->
+                            getNativeCrashErrors(this).let { errors ->
                                 nativeCrash.errors = errors
                             }
                         }
@@ -292,24 +280,8 @@ internal class EmbraceNdkService(
                 ).decodeToString()
                 return serializer.fromJson(encodedSymbols, NativeSymbols::class.java)
             } catch (ex: Exception) {
-                logger.logError(
-                    String.format(
-                        Locale.ENGLISH,
-                        "Failed to decode symbols from resources {resourceId=%d}.",
-                        resourceId
-                    ),
-                    ex
-                )
                 logger.trackInternalError(InternalErrorType.INVALID_NATIVE_SYMBOLS, ex)
             }
-        } else {
-            logger.logError(
-                String.format(
-                    Locale.ENGLISH,
-                    "Failed to find symbols in resources {resourceId=%d}.",
-                    resourceId
-                )
-            )
         }
         return null
     }
@@ -367,15 +339,10 @@ internal class EmbraceNdkService(
             val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
             if (deleteCount > 0) {
                 val files = LinkedList(sortedFiles)
-                try {
-                    for (i in 0 until deleteCount) {
-                        val removed = files[i]
-                        if (files[i].delete()) {
-                            logger.logDebug("Native crash file " + removed.name + " removed from cache")
-                        }
+                for (i in 0 until deleteCount) {
+                    runCatching {
+                        files[i].delete()
                     }
-                } catch (ex: Exception) {
-                    logger.logError("Failed to delete native crash from cache.", ex)
                 }
             }
 
@@ -424,7 +391,6 @@ internal class EmbraceNdkService(
             val src = captureMetaData(true)
             var json = serializeMetadata(src)
             if (json.length >= EMB_DEVICE_META_DATA_SIZE) {
-                logger.logDebug("Removing session properties from metadata to avoid exceeding size limitation for NDK metadata.")
                 json = serializeMetadata(src.copy(sessionProperties = null))
             }
             delegate._updateMetaData(json)

@@ -152,10 +152,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         } catch (t: Throwable) {
             runCatching {
                 logger.trackInternalError(InternalErrorType.SDK_START_FAIL, t)
-                logger.logError(
-                    "Error occurred while initializing the Embrace SDK. Instrumentation may be disabled.",
-                    t
-                )
             }
         }
     }
@@ -167,8 +163,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
         configServiceProvider: (framework: AppFramework) -> ConfigService?,
     ) {
         if (application != null) {
-            // We don't hard fail if the SDK has been already initialized.
-            logger.logWarning("Embrace SDK has already been initialized", null)
             return
         }
 
@@ -286,7 +280,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
     fun stop() {
         synchronized(sdkCallChecker) {
             if (sdkShuttingDown.compareAndSet(false, true)) {
-                logger.logInfo("Shutting down Embrace SDK")
                 runCatching {
                     application?.let {
                         unregisterComposeActivityListener(it)
@@ -370,12 +363,11 @@ internal class EmbraceImpl @JvmOverloads constructor(
                 try {
                     installer.monitorCurrentThread(sampler, cfgService, service)
                 } catch (t: Throwable) {
-                    logger.logError("Failed to sample current thread during ANRs", t)
                     logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, t)
                 }
             }
         } catch (exc: Exception) {
-            logger.logError("Failed to sample current thread during ANRs", exc)
+            logger.trackInternalError(InternalErrorType.NATIVE_THREAD_SAMPLE_FAIL, exc)
         }
     }
 

@@ -75,19 +75,16 @@ internal class EmbraceDeliveryServiceTest {
         testPlatformSerializer = TestPlatformSerializer()
         cacheService = EmbraceCacheService(
             storageService = fakeStorageService,
-            serializer = testPlatformSerializer,
-            logger = logger
+            serializer = testPlatformSerializer
         )
         deliveryCacheManager = EmbraceDeliveryCacheManager(
             cacheService = cacheService,
             priorityWorker = worker,
-            logger = logger,
         )
         deliveryService = EmbraceDeliveryService(
             deliveryCacheManager,
             apiService,
-            testPlatformSerializer,
-            logger
+            testPlatformSerializer
         )
     }
 

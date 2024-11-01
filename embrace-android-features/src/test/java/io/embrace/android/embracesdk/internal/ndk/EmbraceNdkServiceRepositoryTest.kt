@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.fakes.FakeStorageService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.mockk.every
@@ -22,15 +21,13 @@ internal class EmbraceNdkServiceRepositoryTest {
     companion object {
         private lateinit var repository: EmbraceNdkServiceRepository
         private lateinit var storageManager: FakeStorageService
-        private lateinit var logger: EmbLogger
 
         @BeforeClass
         @JvmStatic
         fun beforeClass() {
             mockkStatic(EmbLoggerImpl::class)
             storageManager = FakeStorageService()
-            logger = mockk(relaxed = true)
-            repository = EmbraceNdkServiceRepository(storageManager, logger)
+            repository = EmbraceNdkServiceRepository(storageManager)
         }
 
         @AfterClass
@@ -77,7 +74,6 @@ internal class EmbraceNdkServiceRepositoryTest {
         every { file1.lastModified() } returns 1
         every { mockedRepository["getNativeCrashFiles"]() } returns arrayOf(file1, file2)
         val result = mockedRepository.sortNativeCrashes(true)
-        verify { logger.logError("Failed sorting native crashes.", any()) }
         assertEquals(result[0], file1)
         assertEquals(result[1], null)
     }
@@ -150,7 +146,6 @@ internal class EmbraceNdkServiceRepositoryTest {
 
         verify { errorFile.delete() }
         verify { mapFile.delete() }
-        verify { logger.logWarning("Failed to delete native crash file {crashFilePath=path}") }
     }
 
     @Test
@@ -168,12 +163,8 @@ internal class EmbraceNdkServiceRepositoryTest {
         every { nativeCrash.nativeCrashId } returns "10"
         repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash)
 
-        val msg = "Failed to delete native crash file {sessionId=" + nativeCrash.sessionId +
-            ", crashId=" + nativeCrash.nativeCrashId +
-            ", crashFilePath=" + crashFile.absolutePath + "}"
         verify { errorFile.delete() }
         verify { mapFile.delete() }
-        verify { logger.logWarning(msg) }
     }
 
     @Test
@@ -191,6 +182,5 @@ internal class EmbraceNdkServiceRepositoryTest {
         verify { crashFile.delete() }
         verify { errorFile.delete() }
         verify { mapFile.delete() }
-        verify { logger.logDebug(any() as String) }
     }
 }

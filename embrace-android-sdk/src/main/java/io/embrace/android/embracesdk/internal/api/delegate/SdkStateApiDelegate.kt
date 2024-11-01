@@ -42,22 +42,9 @@ internal class SdkStateApiDelegate(
      * @return true if the app ID could be set, false otherwise.
      */
     override fun setAppId(appId: String): Boolean {
-        if (isStarted) {
-            logger.logError("You must set the custom app ID before the SDK is started.", null)
+        if (isStarted || appId.isEmpty() || !appIdPattern.matcher(appId).find()) {
             return false
         }
-        if (appId.isEmpty()) {
-            logger.logError("App ID cannot be null or empty.", null)
-            return false
-        }
-        if (!appIdPattern.matcher(appId).find()) {
-            logger.logError(
-                "Invalid app ID. Must be a 5-character string with characters from the set [A-Za-z0-9], but it was \"$appId\".",
-                null
-            )
-            return false
-        }
-
         customAppId = appId
         return true
     }

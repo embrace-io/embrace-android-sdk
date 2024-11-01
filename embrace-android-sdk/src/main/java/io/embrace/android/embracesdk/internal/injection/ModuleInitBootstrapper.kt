@@ -129,11 +129,11 @@ internal class ModuleInitBootstrapper(
 
             synchronized(initialized) {
                 val result = if (!isInitialized()) {
-                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, logger) }
+                    coreModule = init(CoreModule::class) { coreModuleSupplier(context) }
 
                     val serviceRegistry = coreModule.serviceRegistry
                     workerThreadModule = init(WorkerThreadModule::class) {
-                        workerThreadModuleSupplier(initModule)
+                        workerThreadModuleSupplier()
                     }
 
                     postInit(OpenTelemetryModule::class) {
@@ -323,8 +323,7 @@ internal class ModuleInitBootstrapper(
                                     EmbraceDeliveryService(
                                         storageModule.deliveryCacheManager,
                                         apiService,
-                                        initModule.jsonSerializer,
-                                        initModule.logger
+                                        initModule.jsonSerializer
                                     )
                                 }
                             }

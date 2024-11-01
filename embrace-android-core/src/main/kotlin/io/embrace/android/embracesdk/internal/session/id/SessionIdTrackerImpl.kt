@@ -47,7 +47,6 @@ internal class SessionIdTrackerImpl(
                 try {
                     activityManager?.setProcessStateSummary(sessionId.toByteArray())
                 } catch (e: Throwable) {
-                    logger.logError("Couldn't set Process State Summary", e)
                     logger.trackInternalError(InternalErrorType.PROCESS_STATE_SUMMARY_FAIL, e)
                 }
             }

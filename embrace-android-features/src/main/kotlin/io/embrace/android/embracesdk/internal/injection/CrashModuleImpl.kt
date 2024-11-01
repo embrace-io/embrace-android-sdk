@@ -19,7 +19,7 @@ internal class CrashModuleImpl(
         val markerFile = lazy {
             storageModule.storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME)
         }
-        CrashFileMarkerImpl(markerFile, initModule.logger)
+        CrashFileMarkerImpl(markerFile)
     }
 
     override val crashDataSource: CrashDataSource by singleton {
@@ -37,6 +37,6 @@ internal class CrashModuleImpl(
     }
 
     override val lastRunCrashVerifier: LastRunCrashVerifier by singleton {
-        LastRunCrashVerifier(crashMarker, initModule.logger)
+        LastRunCrashVerifier(crashMarker)
     }
 }

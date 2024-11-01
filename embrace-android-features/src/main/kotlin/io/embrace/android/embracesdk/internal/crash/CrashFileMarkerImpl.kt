@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.crash
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import java.io.File
 
 /**
@@ -9,7 +8,6 @@ import java.io.File
  */
 class CrashFileMarkerImpl(
     private val markerFile: Lazy<File>,
-    private val logger: EmbLogger,
 ) : CrashFileMarker {
 
     private val lock = Any()
@@ -57,32 +55,22 @@ class CrashFileMarkerImpl(
             markerFile.value.writeText(CRASH_MARKER_SOURCE_JVM)
             true
         } catch (e: Exception) {
-            logger.logError("Error creating the marker file: ${markerFile.value.path}", e)
             false
         }
     }
 
     private fun deleteMarkerFile(): Boolean {
         return try {
-            val deleted = markerFile.value.delete()
-            if (!deleted) {
-                logger.logError(
-                    "Error deleting the marker file: ${markerFile.value.path}.",
-                    Throwable("File not deleted")
-                )
-            }
-            deleted
+            markerFile.value.delete()
         } catch (e: SecurityException) {
-            logger.logError("Error deleting the marker file: ${markerFile.value.path}.", e)
             false
         }
     }
 
     private fun markerFileExists(): Boolean? {
         return try {
-            return markerFile.value.exists()
+            markerFile.value.exists()
         } catch (e: SecurityException) {
-            logger.logError("Error checking the marker file: ${markerFile.value.path}", e)
             null
         }
     }

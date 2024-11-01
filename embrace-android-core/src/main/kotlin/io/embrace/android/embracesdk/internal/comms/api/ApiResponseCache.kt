@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.comms.api
 
 import android.net.http.HttpResponseCache
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.Closeable
@@ -23,7 +22,6 @@ import java.util.zip.GZIPInputStream
 class ApiResponseCache(
     private val serializer: PlatformSerializer,
     private val storageService: StorageService,
-    private val logger: EmbLogger,
 ) : Closeable {
 
     private companion object {
@@ -39,15 +37,12 @@ class ApiResponseCache(
         if (cache == null) {
             synchronized(lock) {
                 if (cache == null) {
-                    cache = try {
+                    cache = runCatching {
                         HttpResponseCache.install(
                             storageService.getConfigCacheDir(),
                             MAX_CACHE_SIZE_BYTES
                         )
-                    } catch (exc: IOException) {
-                        logger.logWarning("Failed to initialize HTTP cache.", exc)
-                        null
-                    }
+                    }.getOrNull()
                 }
             }
         }
@@ -89,13 +84,11 @@ class ApiResponseCache(
      * Searches the cache to see whether a request has a cached response, and if so returns its etag.
      */
     private fun retrieveETag(cacheResponse: CacheResponse): String? {
-        try {
+        runCatching {
             val eTag = cacheResponse.headers[ETAG_HEADER]
             if (!eTag.isNullOrEmpty()) {
                 return eTag[0]
             }
-        } catch (exc: IOException) {
-            logger.logWarning("Failed to find ETag", exc)
         }
         return null
     }

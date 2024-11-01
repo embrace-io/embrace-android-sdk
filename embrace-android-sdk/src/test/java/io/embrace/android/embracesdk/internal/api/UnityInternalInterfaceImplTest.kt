@@ -52,9 +52,6 @@ internal class UnityInternalInterfaceImplTest {
         assertNull(preferencesService.unityVersionNumber)
         assertNull(preferencesService.unityBuildIdNumber)
         assertNull(preferencesService.unitySdkVersionNumber)
-        verify(exactly = 1) {
-            logger.logError(any())
-        }
     }
 
     @Test

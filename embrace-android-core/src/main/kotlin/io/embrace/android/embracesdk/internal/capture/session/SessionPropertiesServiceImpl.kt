@@ -3,18 +3,16 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.internal.arch.destination.SessionSpanWriter
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 
 internal class SessionPropertiesServiceImpl(
     preferencesService: PreferencesService,
     private val configService: ConfigService,
-    logger: EmbLogger,
     writer: SessionSpanWriter,
 ) : SessionPropertiesService {
 
     private var listener: ((Map<String, String>) -> Unit)? = null
-    private val props = EmbraceSessionProperties(preferencesService, configService, logger, writer)
+    private val props = EmbraceSessionProperties(preferencesService, configService, writer)
 
     override fun addProperty(originalKey: String, originalValue: String, permanent: Boolean): Boolean {
         if (!isValidKey(originalKey)) {

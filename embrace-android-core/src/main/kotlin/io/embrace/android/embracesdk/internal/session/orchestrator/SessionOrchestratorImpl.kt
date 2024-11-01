@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.opentelemetry.embTerminated
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -33,7 +32,6 @@ internal class SessionOrchestratorImpl(
     private val dataCaptureOrchestrator: DataCaptureOrchestrator,
     private val sessionSpanWriter: SessionSpanWriter,
     private val sessionSpanAttrPopulator: SessionSpanAttrPopulator,
-    private val logger: EmbLogger,
 ) : SessionOrchestrator {
 
     private val lock = Any()
@@ -56,7 +54,6 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.INITIAL,
-            timestamp = timestamp,
             newSessionAction = {
                 payloadFactory.startPayloadWithState(state, timestamp, true)
             }
@@ -66,7 +63,6 @@ internal class SessionOrchestratorImpl(
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         transitionState(
             transitionType = TransitionType.ON_FOREGROUND,
-            timestamp = timestamp,
             oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithState(ProcessState.BACKGROUND, timestamp, initial)
             },
@@ -74,7 +70,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.startPayloadWithState(ProcessState.FOREGROUND, timestamp, coldStart)
             },
             earlyTerminationCondition = {
-                return@transitionState shouldRunOnForeground(state, logger)
+                return@transitionState shouldRunOnForeground(state)
             }
         )
     }
@@ -82,7 +78,6 @@ internal class SessionOrchestratorImpl(
     override fun onBackground(timestamp: Long) {
         transitionState(
             transitionType = TransitionType.ON_BACKGROUND,
-            timestamp = timestamp,
             oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithState(ProcessState.FOREGROUND, timestamp, initial)
             },
@@ -90,7 +85,7 @@ internal class SessionOrchestratorImpl(
                 payloadFactory.startPayloadWithState(ProcessState.BACKGROUND, timestamp, false)
             },
             earlyTerminationCondition = {
-                return@transitionState shouldRunOnBackground(state, logger)
+                return@transitionState shouldRunOnBackground(state)
             }
         )
     }
@@ -99,7 +94,6 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.END_MANUAL,
-            timestamp = timestamp,
             clearUserInfo = clearUserInfo,
             oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endSessionWithManual(timestamp, initial)
@@ -112,8 +106,7 @@ internal class SessionOrchestratorImpl(
                     configService,
                     clock,
                     activeSession,
-                    state,
-                    logger
+                    state
                 )
             }
         )
@@ -123,7 +116,6 @@ internal class SessionOrchestratorImpl(
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.CRASH,
-            timestamp = timestamp,
             oldSessionAction = { initial: SessionZygote ->
                 payloadFactory.endPayloadWithCrash(state, timestamp, initial, crashId)
             },
@@ -153,7 +145,6 @@ internal class SessionOrchestratorImpl(
      */
     private fun transitionState(
         transitionType: TransitionType,
-        timestamp: Long,
         oldSessionAction: ((initial: SessionZygote) -> Envelope<SessionPayload>?)? = null,
         newSessionAction: (Provider<SessionZygote?>)? = null,
         earlyTerminationCondition: () -> Boolean = { false },
@@ -236,17 +227,6 @@ internal class SessionOrchestratorImpl(
             dataCaptureOrchestrator.currentSessionType = sessionType
             Systrace.endSynchronous()
 
-            // log the state change
-            Systrace.startSynchronous("log-session-state")
-            logSessionStateChange(
-                sessionId,
-                timestamp,
-                !inForeground,
-                transitionType.name,
-                logger
-            )
-            Systrace.endSynchronous()
-
             // et voila! a new session is born
             Systrace.endSynchronous()
         }
@@ -263,19 +243,5 @@ internal class SessionOrchestratorImpl(
         val attr = SpanAttributeData(embHeartbeatTimeUnixNano.name, now.toString())
         sessionSpanWriter.addSystemAttribute(attr)
         sessionSpanWriter.addSystemAttribute(SpanAttributeData(embTerminated.name, true.toString()))
-    }
-
-    private fun logSessionStateChange(
-        sessionId: String?,
-        timestamp: Long,
-        inBackground: Boolean,
-        stateChange: String,
-        logger: EmbLogger,
-    ) {
-        val type = when {
-            inBackground -> "background"
-            else -> "session"
-        }
-        logger.logDebug("New session created: ID=$sessionId, timestamp=$timestamp, type=$type, state_change=$stateChange")
     }
 }

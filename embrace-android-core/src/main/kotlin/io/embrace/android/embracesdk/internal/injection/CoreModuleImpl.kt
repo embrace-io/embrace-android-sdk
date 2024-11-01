@@ -7,12 +7,10 @@ import io.embrace.android.embracesdk.internal.EmbraceAndroidResourcesService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoService
 import io.embrace.android.embracesdk.internal.buildinfo.BuildInfoServiceImpl
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 class CoreModuleImpl(
     ctx: Context,
-    logger: EmbLogger,
 ) : CoreModule {
 
     override val context: Context by singleton {
@@ -29,7 +27,7 @@ class CoreModuleImpl(
     override val application: Application by singleton { context as Application }
 
     override val serviceRegistry: ServiceRegistry by singleton {
-        ServiceRegistry(logger)
+        ServiceRegistry()
     }
 
     override val resources: AndroidResourcesService by singleton {

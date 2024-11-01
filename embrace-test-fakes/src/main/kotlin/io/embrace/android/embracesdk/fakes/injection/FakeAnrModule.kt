@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.fakes.FakeAnrService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.anr.AnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.AnrService
 import io.embrace.android.embracesdk.internal.anr.detection.BlockedThreadDetector
@@ -18,7 +17,6 @@ class FakeAnrModule(
         FakeClock(),
         null,
         ThreadMonitoringState(FakeClock()),
-        Thread.currentThread(),
-        FakeEmbLogger()
+        Thread.currentThread()
     ),
 ) : AnrModule

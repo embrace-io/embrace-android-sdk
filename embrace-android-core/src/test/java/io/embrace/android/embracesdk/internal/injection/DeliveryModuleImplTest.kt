@@ -5,7 +5,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
@@ -35,7 +34,7 @@ class DeliveryModuleImplTest {
             FakeInitModule(),
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
-            CoreModuleImpl(ApplicationProvider.getApplicationContext(), FakeEmbLogger()),
+            CoreModuleImpl(ApplicationProvider.getApplicationContext()),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             ::FakeRequestExecutionService,

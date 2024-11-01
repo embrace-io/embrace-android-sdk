@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.comms.api.EmbraceUrl
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.api.limiter
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -21,7 +20,6 @@ internal class EmbracePendingApiCallsSender(
     private val worker: BackgroundWorker,
     private val cacheManager: DeliveryCacheManager,
     private val clock: Clock,
-    private val logger: EmbLogger,
 ) : PendingApiCallsSender {
 
     private val pendingApiCallQueue: PendingApiCallQueue by lazy {
@@ -80,10 +78,7 @@ internal class EmbracePendingApiCallsSender(
             synchronized(this) {
                 lastDeliveryTask?.let { task ->
                     if (task.cancel(false)) {
-                        logger.logDebug("Api Calls Delivery Action was stopped because there is no connection. ")
                         lastDeliveryTask = null
-                    } else {
-                        logger.logError("Api Calls Delivery Action could not be stopped.")
                     }
                 }
             }

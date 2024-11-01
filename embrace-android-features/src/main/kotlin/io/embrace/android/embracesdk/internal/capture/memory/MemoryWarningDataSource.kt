@@ -30,13 +30,8 @@ internal class MemoryWarningDataSource(
     }
 
     override fun disableDataCapture() {
-        try {
+        runCatching {
             application.applicationContext.unregisterComponentCallbacks(this)
-        } catch (ex: Exception) {
-            logger.logWarning(
-                "Error when closing MemoryWarningDataSource",
-                ex
-            )
         }
     }
 
@@ -58,13 +53,8 @@ internal class MemoryWarningDataSource(
     override fun onTrimMemory(trimLevel: Int) {
         @Suppress("DEPRECATION")
         if (trimLevel == ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
-            try {
+            runCatching {
                 onMemoryWarning(clock.now())
-            } catch (ex: Exception) {
-                logger.logWarning(
-                    "Failed to handle onTrimMemory (low memory) event",
-                    ex
-                )
             }
         }
     }

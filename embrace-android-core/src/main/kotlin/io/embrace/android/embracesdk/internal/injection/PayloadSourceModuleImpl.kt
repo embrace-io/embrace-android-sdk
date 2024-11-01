@@ -45,8 +45,7 @@ internal class PayloadSourceModuleImpl(
             coreModule.context,
             configModule.configService,
             androidServicesModule.preferencesService,
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-            initModule.logger
+            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
         )
     }
 

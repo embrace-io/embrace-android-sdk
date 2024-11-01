@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_ERROR_FILE_SUFFIX
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_FILE_PREFIX
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService.Companion.NATIVE_CRASH_FILE_SUFFIX
@@ -16,7 +15,6 @@ import java.io.FilenameFilter
  */
 internal class EmbraceNdkServiceRepository(
     private val storageService: StorageService,
-    private val logger: EmbLogger,
 ) : NdkServiceRepository {
 
     override fun sortNativeCrashes(byOldest: Boolean): List<File> {
@@ -25,7 +23,7 @@ internal class EmbraceNdkServiceRepository(
 
         nativeCrashList.addAll(nativeCrashFiles)
         val sorted: MutableMap<File, Long> = HashMap()
-        try {
+        runCatching {
             for (f in nativeCrashList) {
                 sorted[f] = f.lastModified()
             }
@@ -40,8 +38,6 @@ internal class EmbraceNdkServiceRepository(
                 }
             }
             return nativeCrashList.sortedWith(comparator)
-        } catch (ex: Exception) {
-            logger.logError("Failed sorting native crashes.", ex)
         }
 
         return nativeCrashList
@@ -94,18 +90,7 @@ internal class EmbraceNdkServiceRepository(
         mapFile: File?,
         nativeCrash: NativeCrashData?,
     ) {
-        if (!crashFile.delete()) {
-            val msg: String = if (nativeCrash != null) {
-                "Failed to delete native crash file {sessionId=" + nativeCrash.sessionId +
-                    ", crashId=" + nativeCrash.nativeCrashId +
-                    ", crashFilePath=" + crashFile.absolutePath + "}"
-            } else {
-                "Failed to delete native crash file {crashFilePath=" + crashFile.absolutePath + "}"
-            }
-            logger.logWarning(msg)
-        } else {
-            logger.logDebug("Deleted processed crash file at " + crashFile.absolutePath)
-        }
+        crashFile.delete()
         errorFile?.delete()
         mapFile?.delete()
     }

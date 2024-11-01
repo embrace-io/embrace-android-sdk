@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.anr.ndk
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
+import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.anr.mapThreadState
@@ -47,7 +48,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         cfg = AnrRemoteConfig(pctNativeThreadAnrSamplingEnabled = 100f)
         anrBehavior = createAnrBehavior { cfg }
         configService = FakeConfigService(anrBehavior = anrBehavior)
-        sharedObjectLoader = mockk(relaxed = true)
+        sharedObjectLoader = FakeSharedObjectLoader()
         delegate = mockk(relaxed = true)
         random = mockk(relaxed = true)
         executorService = BlockingScheduledExecutorService()
@@ -62,7 +63,6 @@ internal class EmbraceNativeThreadSamplerServiceTest {
                 sharedObjectLoader
             )
         every { random.nextInt(any()) } returns 0
-        every { sharedObjectLoader.loadEmbraceNative() } returns true
     }
 
     @Test

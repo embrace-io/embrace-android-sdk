@@ -16,11 +16,11 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -77,7 +77,7 @@ internal class EmbraceNdkServiceTest {
     private lateinit var userService: FakeUserService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
-    private lateinit var sharedObjectLoader: SharedObjectLoader
+    private lateinit var sharedObjectLoader: FakeSharedObjectLoader
     private lateinit var logger: EmbLogger
     private lateinit var delegate: NdkServiceDelegate.NdkDelegate
     private lateinit var repository: FakeNdkServiceRepository
@@ -105,7 +105,7 @@ internal class EmbraceNdkServiceTest {
         userService = FakeUserService()
         preferencesService = FakePreferenceService()
         sessionPropertiesService = FakeSessionPropertiesService()
-        sharedObjectLoader = mockk()
+        sharedObjectLoader = FakeSharedObjectLoader()
         logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
         repository = FakeNdkServiceRepository()
@@ -113,8 +113,6 @@ internal class EmbraceNdkServiceTest {
         blockableExecutorService = BlockableExecutorService()
         sessionIdTracker = FakeSessionIdTracker()
         mockNativeSymbols()
-        every { sharedObjectLoader.loadEmbraceNative() } returns true
-        every { sharedObjectLoader.loaded.get() } returns true
     }
 
     @After
@@ -158,7 +156,6 @@ internal class EmbraceNdkServiceTest {
 
     @Test
     fun `successful initialization attaches appropriate listeners`() {
-        every { sharedObjectLoader.loadEmbraceNative() } returns true
         initializeService()
         assertEquals(1, userService.listeners.size)
         assertEquals(1, sessionIdTracker.listeners.size)
@@ -168,7 +165,7 @@ internal class EmbraceNdkServiceTest {
 
     @Test
     fun `failed native library loading attaches no listeners`() {
-        every { sharedObjectLoader.loadEmbraceNative() } returns false
+        sharedObjectLoader.failLoad = true
         initializeService()
         assertEquals(0, userService.listeners.size)
         assertEquals(0, sessionIdTracker.listeners.size)
@@ -378,7 +375,7 @@ internal class EmbraceNdkServiceTest {
 
     @Test
     fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
-        every { sharedObjectLoader.loadEmbraceNative() } returns false
+        sharedObjectLoader.failLoad = true
         initializeService()
         verify(exactly = 0) { embraceNdkService["installSignals"]({ "null" }) }
         verify(exactly = 0) { embraceNdkService["createCrashReportDirectory"]() }

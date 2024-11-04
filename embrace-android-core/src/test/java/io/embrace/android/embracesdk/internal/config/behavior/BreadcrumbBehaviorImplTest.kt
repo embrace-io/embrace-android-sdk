@@ -15,8 +15,7 @@ internal class BreadcrumbBehaviorImplTest {
             99,
             98,
             97,
-            96,
-            95
+            96
         )
     )
 
@@ -27,7 +26,6 @@ internal class BreadcrumbBehaviorImplTest {
         with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck) { null }) {
             assertEquals(100, getCustomBreadcrumbLimit())
             assertEquals(100, getTapBreadcrumbLimit())
-            assertEquals(100, getViewBreadcrumbLimit())
             assertEquals(100, getWebViewBreadcrumbLimit())
             assertEquals(100, getFragmentBreadcrumbLimit())
             assertFalse(isViewClickCoordinateCaptureEnabled())
@@ -45,9 +43,8 @@ internal class BreadcrumbBehaviorImplTest {
         ) {
             assertEquals(99, getCustomBreadcrumbLimit())
             assertEquals(98, getTapBreadcrumbLimit())
-            assertEquals(97, getViewBreadcrumbLimit())
-            assertEquals(96, getWebViewBreadcrumbLimit())
-            assertEquals(95, getFragmentBreadcrumbLimit())
+            assertEquals(97, getWebViewBreadcrumbLimit())
+            assertEquals(96, getFragmentBreadcrumbLimit())
         }
     }
 }

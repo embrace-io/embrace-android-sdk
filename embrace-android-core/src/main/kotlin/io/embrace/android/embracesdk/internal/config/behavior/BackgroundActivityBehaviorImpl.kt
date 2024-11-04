@@ -17,14 +17,12 @@ class BackgroundActivityBehaviorImpl(
         remoteSupplier = remoteSupplier
     ) {
 
-    private val cfg = InstrumentedConfig.backgroundActivity
-
     override fun isBackgroundActivityCaptureEnabled(): Boolean {
         return remote?.threshold?.let(thresholdCheck::isBehaviorEnabled)
             ?: InstrumentedConfig.enabledFeatures.isBackgroundActivityCaptureEnabled()
     }
 
-    override fun getManualBackgroundActivityLimit(): Int = cfg.getManualBackgroundActivityLimit()
-    override fun getMinBackgroundActivityDuration(): Long = cfg.getMinBackgroundActivityDuration()
-    override fun getMaxCachedActivities(): Int = cfg.getMaxCachedActivities()
+    override fun getManualBackgroundActivityLimit(): Int = 100
+    override fun getMinBackgroundActivityDuration(): Long = 5000L
+    override fun getMaxCachedActivities(): Int = 30
 }

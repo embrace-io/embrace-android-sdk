@@ -51,7 +51,6 @@ internal class EmbraceAnrServiceRule<T : ScheduledExecutorService>(
         targetThreadHandler = TargetThreadHandler(
             looper = looper,
             anrMonitorWorker = worker,
-            configService = fakeConfigService,
             clock = clock
         )
         blockedThreadDetector = BlockedThreadDetector(

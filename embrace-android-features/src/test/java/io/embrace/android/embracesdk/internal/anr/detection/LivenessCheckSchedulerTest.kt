@@ -12,8 +12,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,8 +19,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
-
-private const val CUSTOM_THREAD_PRIORITY = android.os.Process.THREAD_PRIORITY_BACKGROUND
 
 internal class LivenessCheckSchedulerTest {
 
@@ -42,9 +38,7 @@ internal class LivenessCheckSchedulerTest {
     @Before
     fun setUp() {
         anrMonitorThread = AtomicReference(Thread.currentThread())
-        cfg = AnrRemoteConfig(
-            monitorThreadPriority = CUSTOM_THREAD_PRIORITY,
-        )
+        cfg = AnrRemoteConfig()
         fakeClock = FakeClock(160982340900)
         configService = FakeConfigService(anrBehavior = createAnrBehavior { cfg })
         anrExecutorService = BlockingScheduledExecutorService(fakeClock)
@@ -130,7 +124,6 @@ internal class LivenessCheckSchedulerTest {
 
     @Test
     fun testExecuteHealthCheckSameInterval() {
-        mockkStatic(android.os.Process::class)
         every { fakeTargetThreadHandler.hasMessages(any()) } returns false
         scheduler.checkHeartbeat()
 
@@ -139,15 +132,10 @@ internal class LivenessCheckSchedulerTest {
 
         // verify heartbeat check
         assertEquals(160982340900, state.lastMonitorThreadResponseMs)
-        // verify thread priority property set
-        verify(exactly = 1) { android.os.Process.setThreadPriority(CUSTOM_THREAD_PRIORITY) }
-
-        unmockkStatic(android.os.Process::class)
     }
 
     @Test
     fun testExecuteHealthCheckPendingMessage() {
-        mockkStatic(android.os.Process::class)
         every { fakeTargetThreadHandler.hasMessages(any()) } returns true
         scheduler.checkHeartbeat()
 
@@ -156,10 +144,6 @@ internal class LivenessCheckSchedulerTest {
 
         // verify heartbeat check
         assertEquals(160982340900, state.lastMonitorThreadResponseMs)
-        // verify thread priority property set
-        verify(exactly = 1) { android.os.Process.setThreadPriority(CUSTOM_THREAD_PRIORITY) }
-
-        unmockkStatic(android.os.Process::class)
     }
 
     @Test

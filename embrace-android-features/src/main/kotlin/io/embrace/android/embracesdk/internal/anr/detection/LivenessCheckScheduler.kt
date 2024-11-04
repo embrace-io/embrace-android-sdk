@@ -48,7 +48,6 @@ internal class LivenessCheckScheduler(
 
     init {
         targetThreadHandler.action = blockedThreadDetector::onTargetThreadResponse
-        targetThreadHandler.start()
     }
 
     /**
@@ -102,10 +101,6 @@ internal class LivenessCheckScheduler(
      */
     fun checkHeartbeat() {
         try {
-            with(configService.anrBehavior.getMonitorThreadPriority()) {
-                android.os.Process.setThreadPriority(this)
-            }
-
             if (intervalMs != configService.anrBehavior.getSamplingIntervalMs()) {
                 // Different interval detected, scheduling a heartbeat restart
                 anrMonitorWorker.submit {

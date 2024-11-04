@@ -34,7 +34,6 @@ class BreadcrumbBehaviorImpl(
         remote?.uiConfig?.fragments ?: DEFAULT_BREADCRUMB_LIMIT
 
     override fun getTapBreadcrumbLimit(): Int = remote?.uiConfig?.taps ?: DEFAULT_BREADCRUMB_LIMIT
-    override fun getViewBreadcrumbLimit(): Int = remote?.uiConfig?.views ?: DEFAULT_BREADCRUMB_LIMIT
     override fun getWebViewBreadcrumbLimit(): Int =
         remote?.uiConfig?.webViews ?: DEFAULT_BREADCRUMB_LIMIT
 

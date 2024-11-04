@@ -14,7 +14,6 @@ data class UiRemoteConfig(
      */
     val breadcrumbs: Int? = null,
     val taps: Int? = null,
-    val views: Int? = null,
     @Json(name = "web_views")
     val webViews: Int? = null,
     val fragments: Int? = null,

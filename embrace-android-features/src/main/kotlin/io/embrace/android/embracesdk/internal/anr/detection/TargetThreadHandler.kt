@@ -5,7 +5,6 @@ import android.os.Looper
 import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ExecutorService
 
@@ -24,7 +23,6 @@ import java.util.concurrent.ExecutorService
 internal class TargetThreadHandler(
     looper: Looper,
     private val anrMonitorWorker: BackgroundWorker,
-    private val configService: ConfigService,
     private val messageQueue: MessageQueue? = LooperCompat.getMessageQueue(looper),
     private val clock: Clock,
 ) : Handler(looper) {
@@ -33,17 +31,6 @@ internal class TargetThreadHandler(
 
     @Volatile
     var installed: Boolean = false
-
-    fun start() {
-        // set an IdleHandler that automatically gets invoked when the Handler
-        // has processed all pending messages. We retain the callback to avoid
-        // unnecessary allocations.
-
-        if (configService.anrBehavior.isIdleHandlerEnabled()) {
-            messageQueue?.addIdleHandler(::onIdleThread)
-            installed = true
-        }
-    }
 
     fun onIdleThread(): Boolean {
         onMainThreadUnblocked()

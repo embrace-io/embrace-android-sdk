@@ -4,7 +4,6 @@ import android.os.Message
 import android.os.MessageQueue
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.behavior.FakeAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
@@ -42,7 +41,6 @@ internal class TargetThreadHandlerTest {
         return TargetThreadHandler(
             mockk(relaxed = true),
             BackgroundWorker(executorService),
-            configService,
             messageQueue
         ) { FAKE_TIME_MS }.apply {
             action = {}
@@ -109,27 +107,5 @@ internal class TargetThreadHandlerTest {
         // RejectedExecutionException ignored as ScheduledExecutorService will be shutting down.
         handler.handleMessage(mockk(relaxed = true))
         Assert.assertEquals(0L, state.lastTargetThreadResponseMs)
-    }
-
-    @Test
-    fun testStartIdleHandlerEnabled() {
-        val messageQueue = mockk<MessageQueue>(relaxed = true)
-        configService = FakeConfigService(
-            anrBehavior = FakeAnrBehavior(idleHandlerEnabled = true)
-        )
-        handler = createHandler(messageQueue)
-        handler.start()
-        verify(exactly = 1) { messageQueue.addIdleHandler(any()) }
-    }
-
-    @Test
-    fun testStartIdleHandlerDisabled() {
-        val messageQueue = mockk<MessageQueue>(relaxed = true)
-        configService = FakeConfigService(
-            anrBehavior = FakeAnrBehavior(idleHandlerEnabled = false)
-        )
-        handler = createHandler(messageQueue)
-        handler.start()
-        verify(exactly = 0) { messageQueue.addIdleHandler(any()) }
     }
 }

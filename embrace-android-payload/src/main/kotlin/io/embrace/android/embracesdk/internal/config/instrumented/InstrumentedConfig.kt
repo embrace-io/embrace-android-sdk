@@ -13,7 +13,6 @@ package io.embrace.android.embracesdk.internal.config.instrumented
 @Swazzled
 object InstrumentedConfig {
     val baseUrls: BaseUrlConfig = BaseUrlConfig
-    val backgroundActivity: BackgroundActivityConfig = BackgroundActivityConfig
     val enabledFeatures: EnabledFeatureConfig = EnabledFeatureConfig
     val networkCapture: NetworkCaptureConfig = NetworkCaptureConfig
     val project: ProjectConfig = ProjectConfig

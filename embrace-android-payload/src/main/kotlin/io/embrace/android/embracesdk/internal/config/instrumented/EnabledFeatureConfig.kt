@@ -140,4 +140,11 @@ object EnabledFeatureConfig {
      * sdk_config.networking.enable_native_monitoring
      */
     fun isHttpUrlConnectionCaptureEnabled(): Boolean = true
+
+    /**
+     * Gates whether network span forwarding should be enabled
+     *
+     * sdk_config.networking.enable_network_span_forwarding
+     */
+    fun isNetworkSpanForwardingEnabled(): Boolean = false
 }

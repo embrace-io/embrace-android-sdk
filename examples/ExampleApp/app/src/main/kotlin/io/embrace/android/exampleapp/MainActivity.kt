@@ -16,15 +16,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val examples = CodeExample.entries
         enableEdgeToEdge()
         setContent {
             ExampleAppTheme {
                 val navController = rememberNavController()
                 NavHost(navController = navController, startDestination = "main") {
                     composable("main") {
-                        CodeExampleListScreen(navController, CodeExample.entries)
+                        CodeExampleListScreen(navController, examples)
                     }
-                    CodeExample.entries.forEach { example ->
+                    examples.forEach { example ->
                         composable(example.route) {
                             CodeExampleDetailScreen(navController, example)
                         }

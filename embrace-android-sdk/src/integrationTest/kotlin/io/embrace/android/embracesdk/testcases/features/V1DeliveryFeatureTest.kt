@@ -32,6 +32,7 @@ internal class V1DeliveryFeatureTest {
 
     private val behavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = false)
 
+    @Suppress("DEPRECATION")
     @Test
     fun `v1 session delivery`() {
         testRule.runTest(
@@ -51,6 +52,7 @@ internal class V1DeliveryFeatureTest {
         )
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun `v1 background activity delivery`() {
         testRule.runTest(

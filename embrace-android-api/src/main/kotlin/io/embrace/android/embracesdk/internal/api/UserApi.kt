@@ -10,16 +10,18 @@ public interface UserApi {
 
     /**
      * Sets the user ID. This would typically be some form of unique identifier such as a UUID or database key for the user.
-     * This ID will persist across app launches until it is explicitly removed using [.clearUserIdentifier]
+     * This ID will persist across app launches until it is explicitly removed using [clearUserIdentifier]
      * or otherwise cleared.
      *
      * @param userId the unique identifier for the user
      */
+    @Deprecated("Discourage storing personal identifying information in telemetry")
     public fun setUserIdentifier(userId: String?)
 
     /**
      * Clears the currently set user ID. For example, if the user logs out.
      */
+    @Deprecated("Discourage storing personal identifying information in telemetry")
     public fun clearUserIdentifier()
 
     /**
@@ -27,11 +29,13 @@ public interface UserApi {
      *
      * @param email the email address of the current user
      */
+    @Deprecated("Discourage storing personal identifying information in telemetry")
     public fun setUserEmail(email: String?)
 
     /**
      * Clears the currently set user's email address.
      */
+    @Deprecated("Discourage storing personal identifying information in telemetry")
     public fun clearUserEmail()
 
     /**
@@ -59,10 +63,12 @@ public interface UserApi {
      *
      * @param username the username to set
      */
+    @Deprecated("Discourage storing personal identifying information in telemetry")
     public fun setUsername(username: String?)
 
     /**
      * Clears the username of the currently logged in user, for example if the user has logged out.
      */
+    @Deprecated("Discourage storing personal identifying information in telemetry")
     public fun clearUsername()
 }

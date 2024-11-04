@@ -41,7 +41,7 @@ fun CodeExampleListScreen(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(8.dp)
+                                .padding(4.dp)
                         ) {
                             Text(text = item.desc)
                         }

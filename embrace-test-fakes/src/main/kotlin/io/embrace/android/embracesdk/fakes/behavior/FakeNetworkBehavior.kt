@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
-import io.embrace.android.embracesdk.internal.config.instrumented.NetworkCaptureConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 
 class FakeNetworkBehavior(
@@ -9,7 +8,6 @@ class FakeNetworkBehavior(
     private val domains: Map<String, Int> = emptyMap(),
     private val captureHttpUrlConnectionRequests: Boolean = true,
 ) : NetworkBehavior {
-    override fun getTraceIdHeader(): String = NetworkCaptureConfig.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
     override fun isRequestContentLengthCaptureEnabled(): Boolean = false
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean = captureHttpUrlConnectionRequests
     override fun getLimitsByDomain(): Map<String, Int> = domains

@@ -9,6 +9,5 @@ internal interface InternalNetworkApi {
     fun logInternalError(error: Throwable)
     fun getSdkCurrentTime(): Long
     fun isStarted(): Boolean
-    fun getTraceIdHeader(): String
     fun generateW3cTraceparent(): String?
 }

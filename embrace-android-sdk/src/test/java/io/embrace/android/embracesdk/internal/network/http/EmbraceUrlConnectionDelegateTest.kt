@@ -412,8 +412,6 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     @Test
     fun `check traceIds are logged if a custom header name is specified`() {
-        traceIdHeaderName = "my-trace-id-header"
-        internalApi.traceHeader = traceIdHeaderName
         executeRequest(
             connection = createMockGzipConnection(
                 extraRequestHeaders = mapOf(Pair(traceIdHeaderName, listOf(customTraceId)))

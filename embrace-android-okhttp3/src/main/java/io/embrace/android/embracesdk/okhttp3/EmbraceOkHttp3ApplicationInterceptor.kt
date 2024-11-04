@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi.Companion.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
@@ -45,7 +46,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
                         embraceInternalApi.internalInterface.getSdkCurrentTime(),
                         causeName(e, UNKNOWN_EXCEPTION),
                         causeMessage(e, UNKNOWN_MESSAGE),
-                        request.header(embrace.traceIdHeader),
+                        request.header(CUSTOM_TRACE_ID_HEADER_NAME),
                         if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
                             request.header(
                                 TRACEPARENT_HEADER_NAME
@@ -72,7 +73,7 @@ class EmbraceOkHttp3ApplicationInterceptor(
                         embraceInternalApi.internalInterface.getSdkCurrentTime(),
                         errorType ?: UNKNOWN_EXCEPTION,
                         errorMessage ?: UNKNOWN_MESSAGE,
-                        request.header(embrace.traceIdHeader),
+                        request.header(CUSTOM_TRACE_ID_HEADER_NAME),
                         if (embraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled()) {
                             request.header(
                                 TRACEPARENT_HEADER_NAME

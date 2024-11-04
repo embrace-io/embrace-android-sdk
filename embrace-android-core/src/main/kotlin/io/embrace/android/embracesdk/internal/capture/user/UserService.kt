@@ -51,16 +51,6 @@ interface UserService {
     fun clearUserEmail()
 
     /**
-     * Sets the user as a paying user, attaching the paying persona to the user.
-     */
-    fun setUserAsPayer()
-
-    /**
-     * Unsets the user as a paying user, removing the paying persona from the user.
-     */
-    fun clearUserAsPayer()
-
-    /**
      * Attaches the specified persona to the user. This can be used for user segmentation.
      *
      * @param persona the persona to attach to the user

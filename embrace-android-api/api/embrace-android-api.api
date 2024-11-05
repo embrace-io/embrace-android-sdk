@@ -97,7 +97,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkSt
 	public abstract fun getDeviceId ()Ljava/lang/String;
 	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public abstract fun isStarted ()Z
-	public abstract fun setAppId (Ljava/lang/String;)Z
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SessionApi {

@@ -17,6 +17,7 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
   `x-emb-trace-id` header will still be recorded and displayed on the dashboard.
 - Methods to add and remove the `payer` Persona has been removed. 
   - Use the generic Persona API methods with the name `payer` to get the equivalent functionality.
+- The `setAppId` API has been removed. Changing the `appId` at runtime is no longer supported.
 - Removed several obsolete remote config + local config properties. If you specify the below in your
   `embrace-config.json` they will be ignored:
     - `sdk_config.beta_features_enabled`
@@ -38,6 +39,7 @@ The following deprecated APIs have been removed:
 | `Embrace.getInstance().getSessionProperties()`                | N/A                                               |
 | `Embrace.getInstance().getTraceIdHeader()`                    | N/A                                               |
 | `Embrace.getInstance().isTracingAvailable()`                  | `Embrace.getInstance().isStarted()`               |
+| `Embrace.getInstance().setAppId()`                            | N/A                                               |
 | `Embrace.getInstance().setUserAsPayer()`                      | `Embrace.getInstance().addUserPersona("payer")`   |
 | `Embrace.getInstance().start(Context, boolean)`               | `Embrace.getInstance().start(Context)`            |
 | `Embrace.getInstance().start(Context, boolean, AppFramework)` | `Embrace.getInstance().isStarted(Context)`        |

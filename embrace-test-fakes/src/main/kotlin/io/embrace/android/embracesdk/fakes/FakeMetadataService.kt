@@ -73,10 +73,6 @@ class FakeMetadataService(sessionId: String? = null) : MetadataService {
         appState = APP_STATE_FOREGROUND
     }
 
-    fun setAppId(id: String) {
-        fakeAppId = id
-    }
-
     fun setAppBackground() {
         appState = APP_STATE_BACKGROUND
     }

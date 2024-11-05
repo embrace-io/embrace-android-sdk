@@ -47,13 +47,6 @@ internal class SdkStateApiDelegateTest {
     }
 
     @Test
-    fun getCustomAppId() {
-        sdkCallChecker.started.set(false)
-        delegate.setAppId("abcde")
-        assertEquals("abcde", delegate.customAppId)
-    }
-
-    @Test
     fun isStarted() {
         assertTrue(delegate.isStarted)
     }

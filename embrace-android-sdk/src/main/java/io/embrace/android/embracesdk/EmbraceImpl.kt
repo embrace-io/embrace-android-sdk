@@ -95,8 +95,6 @@ internal class EmbraceImpl @JvmOverloads constructor(
 
     private val sdkClock by lazy { bootstrapper.initModule.clock }
     private val logger by lazy { bootstrapper.initModule.logger }
-    private val customAppId: String?
-        get() = sdkStateApiDelegate.customAppId
     private val sdkShuttingDown = AtomicBoolean(false)
 
     /**
@@ -169,7 +167,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val startTimeMs = sdkClock.now()
 
         val appFramework = fromFramework(framework)
-        bootstrapper.init(context, appFramework, startTimeMs, customAppId, configServiceProvider)
+        bootstrapper.init(context, appFramework, startTimeMs, configServiceProvider)
         startSynchronous("post-services-setup")
 
         val coreModule = bootstrapper.coreModule

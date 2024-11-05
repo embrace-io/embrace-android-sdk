@@ -297,7 +297,7 @@ internal class EmbraceConfigServiceTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun testEmptyAppId() {
-        createService(worker = worker, appId = "")
+        createService(worker = worker, appId = null)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -313,7 +313,7 @@ internal class EmbraceConfigServiceTest {
             SystemInfo()
         )
         cfg.addLogExporter(FakeLogRecordExporter())
-        val service = createService(worker = worker, appId = "", config = cfg)
+        val service = createService(worker = worker, config = cfg, appId = null)
         assertNotNull(service)
         assertTrue(service.isOnlyUsingOtelExporters())
     }
@@ -325,21 +325,21 @@ internal class EmbraceConfigServiceTest {
     private fun createService(
         worker: BackgroundWorker,
         action: ConfigService.() -> Unit = {},
-        appId: String? = "abcde",
         config: OpenTelemetryConfiguration = OpenTelemetryConfiguration(
             SpanSinkImpl(),
             LogSinkImpl(),
             SystemInfo()
         ),
+        appId: String? = "AbCdE",
     ): EmbraceConfigService = EmbraceConfigService(
-        appId,
-        config,
-        fakePreferenceService,
-        fakeClock,
-        logger,
-        worker,
-        AppFramework.NATIVE,
-        action
+        openTelemetryCfg = config,
+        preferencesService = fakePreferenceService,
+        clock = fakeClock,
+        logger = logger,
+        backgroundWorker = worker,
+        suppliedFramework = AppFramework.NATIVE,
+        foregroundAction = action,
+        appIdFromConfig = appId
     ).apply {
         remoteConfigSource = mockApiService
     }

@@ -1,0 +1,36 @@
+name: Build Example App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  release:
+    types: [ released ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gradle-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Build the entire project, run the tests, and run all static analysis
+      - name: Gradle Build
+        working-directory: examples/ExampleApp
+        run: ./gradlew bundleRelease

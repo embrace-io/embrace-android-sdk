@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http;
 
+import static io.embrace.android.embracesdk.internal.EmbraceInternalApi.CUSTOM_TRACE_ID_HEADER_NAME;
 import static io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
 
 import android.annotation.TargetApi;
@@ -659,8 +660,7 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     private void identifyTraceId() {
         if (isSDKStarted && traceId == null) {
             try {
-                String traceIdHeader = internalNetworkApi.getTraceIdHeader();
-                traceId = getRequestProperty(traceIdHeader);
+                traceId = getRequestProperty(CUSTOM_TRACE_ID_HEADER_NAME);
             } catch (Exception e) {
                 // don't do anything
             }

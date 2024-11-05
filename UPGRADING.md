@@ -11,6 +11,7 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
   - `EmbraceNetworkRequest` Java overloads replaced with default parameters
 - View taps do not capture coordinates by default. Set `sdk_config.taps.capture_coordinates` to `true` in your `embrace-config.json` to enable this feature
 - Several internally used classes and symbols have been hidden from the public API
+- Recording a custom trace ID for an HTTP request from a custom request header is no longer supported. IDs in the `x-emb-trace-id` header will still be recorded and displayed on the dashboard.
 - Removed several obsolete remote config + local config properties. If you specify the below in your `embrace-config.json` they will be ignored:
   - `sdk_config.beta_features_enabled`
   - `sdk_config.anr.capture_google`
@@ -18,6 +19,7 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
   - `sdk_config.background_activity.min_background_activity_duration`
   - `sdk_config.background_activity.max_cached_activities`
   - `sdk_config.base_urls.images`
+  - `sdk_config.networking.trace_id_header`
   - `sdk_config.startup_moment.automatically_end`
 
 ### Removed APIs
@@ -27,6 +29,7 @@ The following deprecated APIs have been removed:
 | Old API                                                       | New API                                    |
 |---------------------------------------------------------------|--------------------------------------------|
 | `Embrace.getInstance().getSessionProperties()`                | N/A                                        |
+| `Embrace.getInstance().getTraceIdHeader()`                    | N/A                                        |
 | `Embrace.getInstance().isTracingAvailable()`                  | `Embrace.getInstance().isStarted()`        |
 | `Embrace.getInstance().start(Context, boolean)`               | `Embrace.getInstance().start(Context)`     |
 | `Embrace.getInstance().start(Context, boolean, AppFramework)` | `Embrace.getInstance().isStarted(Context)` |

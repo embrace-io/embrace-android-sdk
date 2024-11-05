@@ -5,11 +5,6 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 interface NetworkBehavior {
 
     /**
-     * The Trace ID Header that can be used to trace a particular request.
-     */
-    fun getTraceIdHeader(): String
-
-    /**
      * Control whether request size for native Android requests is captured.
      */
     fun isRequestContentLengthCaptureEnabled(): Boolean

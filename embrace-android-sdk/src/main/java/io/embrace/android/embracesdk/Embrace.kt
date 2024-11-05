@@ -109,9 +109,6 @@ public class Embrace private constructor(
         impl.clearUsername()
     }
 
-    override val traceIdHeader: String
-        get() = impl.traceIdHeader
-
     override fun generateW3cTraceparent(): String? {
         return impl.generateW3cTraceparent()
     }

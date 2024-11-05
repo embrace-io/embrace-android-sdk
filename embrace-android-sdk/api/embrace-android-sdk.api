@@ -23,7 +23,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public fun getTraceIdHeader ()Ljava/lang/String;
 	public fun isStarted ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V

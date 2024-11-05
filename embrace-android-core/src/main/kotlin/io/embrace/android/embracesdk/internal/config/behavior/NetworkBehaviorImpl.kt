@@ -36,7 +36,6 @@ class NetworkBehaviorImpl(
 
     private val cfg = InstrumentedConfig.networkCapture
 
-    override fun getTraceIdHeader(): String = cfg.getTraceIdHeader()
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
         InstrumentedConfig.enabledFeatures.isRequestContentLengthCaptureEnabled()
 

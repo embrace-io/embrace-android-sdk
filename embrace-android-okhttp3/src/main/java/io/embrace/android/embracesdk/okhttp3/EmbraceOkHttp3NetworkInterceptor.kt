@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.okhttp3
 
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi.Companion.CUSTOM_TRACE_ID_HEADER_NAME
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
@@ -118,7 +119,7 @@ class EmbraceOkHttp3NetworkInterceptor @JvmOverloads constructor(
                 request.body?.contentLength() ?: 0,
                 contentLength,
                 response.code,
-                request.header(embrace.traceIdHeader),
+                request.header(CUSTOM_TRACE_ID_HEADER_NAME),
                 if (networkSpanForwardingEnabled) request.header(TRACEPARENT_HEADER_NAME) else null,
                 networkCaptureData
             )

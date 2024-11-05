@@ -11,28 +11,26 @@ internal class UserApiDelegate(
 
     private val userService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.userService }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry")
     override fun setUserIdentifier(userId: String?) {
         if (sdkCallChecker.check("set_user_identifier")) {
             userService?.setUserIdentifier(userId)
         }
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry")
     override fun clearUserIdentifier() {
         if (sdkCallChecker.check("clear_user_identifier")) {
             userService?.clearUserIdentifier()
         }
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry")
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUserEmail(email: String?) {
         if (sdkCallChecker.check("set_user_email")) {
             userService?.setUserEmail(email)
         }
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry")
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUserEmail() {
         if (sdkCallChecker.check("clear_user_email")) {
             userService?.clearUserEmail()
@@ -65,14 +63,14 @@ internal class UserApiDelegate(
         }
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry")
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUsername(username: String?) {
         if (sdkCallChecker.check("set_username")) {
             userService?.setUsername(username)
         }
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry")
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUsername() {
         if (sdkCallChecker.check("clear_username")) {
             userService?.clearUsername()

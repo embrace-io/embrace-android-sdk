@@ -57,22 +57,20 @@ public class Embrace private constructor(
         return impl.setAppId(appId)
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry", ReplaceWith(""))
     override fun setUserIdentifier(userId: String?) {
         impl.setUserIdentifier(userId)
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry", ReplaceWith(""))
     override fun clearUserIdentifier() {
         impl.clearUserIdentifier()
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry", ReplaceWith(""))
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun setUserEmail(email: String?) {
         impl.setUserEmail(email)
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry", ReplaceWith(""))
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun clearUserEmail() {
         impl.clearUserEmail()
     }
@@ -97,12 +95,12 @@ public class Embrace private constructor(
         return impl.removeSessionProperty(key)
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry", ReplaceWith(""))
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun setUsername(username: String?) {
         impl.setUsername(username)
     }
 
-    @Deprecated("Discourage storing personal identifying information in telemetry", ReplaceWith(""))
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun clearUsername() {
         impl.clearUsername()
     }

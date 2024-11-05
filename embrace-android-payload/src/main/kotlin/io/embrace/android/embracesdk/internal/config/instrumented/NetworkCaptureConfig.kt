@@ -8,11 +8,6 @@ package io.embrace.android.embracesdk.internal.config.instrumented
 object NetworkCaptureConfig {
 
     /**
-     * Sets the default name of the HTTP request header to extract trace ID from.
-     */
-    const val CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE: String = "x-emb-trace-id"
-
-    /**
      * The network request capture limit per domain
      *
      * sdk_config.networking.default_capture_limit

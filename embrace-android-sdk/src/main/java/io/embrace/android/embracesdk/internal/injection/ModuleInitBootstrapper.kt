@@ -117,7 +117,6 @@ internal class ModuleInitBootstrapper(
         context: Context,
         appFramework: AppFramework,
         sdkStartTimeMs: Long,
-        customAppId: String? = null,
         configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
@@ -156,7 +155,6 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,
-                            customAppId,
                             appFramework,
                             configServiceProvider,
                         ) {

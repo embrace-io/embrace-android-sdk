@@ -18,14 +18,14 @@ internal class ConfigModuleImplTest {
     @Test
     fun `test defaults`() {
         val module = ConfigModuleImpl(
-            FakeInitModule(),
-            FakeOpenTelemetryModule(),
-            FakeWorkerThreadModule(),
-            FakeAndroidServicesModule(),
-            "abcde",
-            AppFramework.NATIVE,
-            { null },
-            {}
+            initModule = FakeInitModule(),
+            openTelemetryModule = FakeOpenTelemetryModule(),
+            workerThreadModule = FakeWorkerThreadModule(),
+            androidServicesModule = FakeAndroidServicesModule(),
+            framework = AppFramework.NATIVE,
+            configServiceProvider = { null },
+            foregroundAction = {},
+            appIdFromConfig = "AbCeD",
         )
         assertNotNull(module.configService)
     }
@@ -34,15 +34,30 @@ internal class ConfigModuleImplTest {
     fun testConfigServiceProvider() {
         val fakeConfigService = FakeConfigService()
         val module = ConfigModuleImpl(
-            FakeInitModule(),
-            FakeOpenTelemetryModule(),
-            FakeWorkerThreadModule(),
-            FakeAndroidServicesModule(),
-            "abcde",
-            AppFramework.NATIVE,
-            { fakeConfigService },
-            {}
+            initModule = FakeInitModule(),
+            openTelemetryModule = FakeOpenTelemetryModule(),
+            workerThreadModule = FakeWorkerThreadModule(),
+            androidServicesModule = FakeAndroidServicesModule(),
+            framework = AppFramework.NATIVE,
+            configServiceProvider = { fakeConfigService },
+            foregroundAction = {},
+            appIdFromConfig = "AbCeD",
         )
         assertSame(fakeConfigService, module.configService)
+    }
+
+    @Test
+    fun `validate appId in appIdProvider is used`() {
+        val module = ConfigModuleImpl(
+            initModule = FakeInitModule(),
+            openTelemetryModule = FakeOpenTelemetryModule(),
+            workerThreadModule = FakeWorkerThreadModule(),
+            androidServicesModule = FakeAndroidServicesModule(),
+            framework = AppFramework.NATIVE,
+            configServiceProvider = { null },
+            foregroundAction = {},
+            appIdFromConfig = "AbCeD",
+        )
+        assertSame("AbCeD", module.configService.appId)
     }
 }

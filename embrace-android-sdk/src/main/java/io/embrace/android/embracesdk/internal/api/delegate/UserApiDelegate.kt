@@ -53,25 +53,6 @@ internal class UserApiDelegate(
     }
 
     /**
-     * Sets this user as a paying user. This adds a persona to the user's identity.
-     */
-    override fun setUserAsPayer() {
-        if (sdkCallChecker.check("set_user_as_payer")) {
-            userService?.setUserAsPayer()
-        }
-    }
-
-    /**
-     * Clears this user as a paying user. This would typically be called if a user is no longer
-     * paying for the service and has reverted back to a basic user.
-     */
-    override fun clearUserAsPayer() {
-        if (sdkCallChecker.check("clear_user_as_payer")) {
-            userService?.clearUserAsPayer()
-        }
-    }
-
-    /**
      * Sets a custom user persona. A persona is a trait associated with a given user.
      *
      * @param persona the persona to set

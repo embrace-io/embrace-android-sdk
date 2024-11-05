@@ -102,9 +102,9 @@ internal class EmbraceUserServiceTest {
 
         with(service) {
             assertTrue(checkNotNull(getUserInfo().personas).contains("payer"))
-            clearUserAsPayer()
+            clearUserPersona("payer")
             assertFalse(checkNotNull(getUserInfo().personas).contains("payer"))
-            setUserAsPayer()
+            addUserPersona("payer")
             assertTrue(checkNotNull(getUserInfo().personas).contains("payer"))
         }
     }

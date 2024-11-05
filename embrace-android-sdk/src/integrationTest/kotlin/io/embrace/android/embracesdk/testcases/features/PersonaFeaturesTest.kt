@@ -22,7 +22,7 @@ internal class PersonaFeaturesTest {
                 overriddenAndroidServicesModule.preferencesService.userPersonas = setOf("preloaded")
             },
             testCaseAction = {
-                embrace.setUserAsPayer()
+                embrace.addUserPersona("payer")
                 recordSession {
                     embrace.addUserPersona("test")
                 }

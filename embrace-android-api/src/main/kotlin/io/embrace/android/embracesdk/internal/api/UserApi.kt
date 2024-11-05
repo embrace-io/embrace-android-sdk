@@ -35,17 +35,6 @@ public interface UserApi {
     public fun clearUserEmail()
 
     /**
-     * Sets this user as a paying user. This adds a persona to the user's identity.
-     */
-    public fun setUserAsPayer()
-
-    /**
-     * Clears this user as a paying user. This would typically be called if a user is no longer
-     * paying for the service and has reverted back to a basic user.
-     */
-    public fun clearUserAsPayer()
-
-    /**
      * Adds a custom user persona. A persona is a trait associated with a given user. A maximum
      * of 10 personas can be set.
      *

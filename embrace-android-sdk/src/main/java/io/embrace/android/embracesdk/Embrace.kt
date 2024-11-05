@@ -73,14 +73,6 @@ public class Embrace private constructor(
         impl.clearUserEmail()
     }
 
-    override fun setUserAsPayer() {
-        impl.setUserAsPayer()
-    }
-
-    override fun clearUserAsPayer() {
-        impl.clearUserAsPayer()
-    }
-
     override fun addUserPersona(persona: String) {
         impl.addUserPersona(persona)
     }

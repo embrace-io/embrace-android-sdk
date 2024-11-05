@@ -9,7 +9,6 @@ class FakeUserService : UserService {
     var id: String? = null
     var email: String? = null
     var name: String? = null
-    var payer: Boolean? = null
     var personas: MutableList<String> = mutableListOf()
     var clearedCount: Int = 0
     var listeners: MutableList<() -> Unit> = mutableListOf()
@@ -38,14 +37,6 @@ class FakeUserService : UserService {
 
     override fun clearUserEmail() {
         email = null
-    }
-
-    override fun setUserAsPayer() {
-        payer = true
-    }
-
-    override fun clearUserAsPayer() {
-        payer = null
     }
 
     override fun addUserPersona(persona: String?) {

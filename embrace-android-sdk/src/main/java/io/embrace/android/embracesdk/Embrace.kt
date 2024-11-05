@@ -53,10 +53,6 @@ public class Embrace private constructor(
     override val isStarted: Boolean
         get() = impl.isStarted
 
-    override fun setAppId(appId: String): Boolean {
-        return impl.setAppId(appId)
-    }
-
     override fun setUserIdentifier(userId: String?) {
         impl.setUserIdentifier(userId)
     }

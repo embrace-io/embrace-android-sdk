@@ -34,21 +34,6 @@ internal class SdkStateApiDelegate(
     override val isStarted: Boolean
         get() = sdkCallChecker.started.get()
 
-    /**
-     * Sets a custom app ID that overrides the one specified at build time. Must be called before
-     * the SDK is started.
-     *
-     * @param appId custom app ID
-     * @return true if the app ID could be set, false otherwise.
-     */
-    override fun setAppId(appId: String): Boolean {
-        if (isStarted || appId.isEmpty() || !appIdPattern.matcher(appId).find()) {
-            return false
-        }
-        customAppId = appId
-        return true
-    }
-
     override val deviceId: String
         get() {
             return if (sdkCallChecker.check("get_device_id")) {

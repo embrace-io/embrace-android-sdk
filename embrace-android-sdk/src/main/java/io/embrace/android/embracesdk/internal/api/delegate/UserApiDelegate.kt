@@ -11,52 +11,32 @@ internal class UserApiDelegate(
 
     private val userService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.userService }
 
-    /**
-     * Sets the user ID. This would typically be some form of unique identifier such as a UUID or
-     * database key for the user.
-     *
-     * @param userId the unique identifier for the user
-     */
     override fun setUserIdentifier(userId: String?) {
         if (sdkCallChecker.check("set_user_identifier")) {
             userService?.setUserIdentifier(userId)
         }
     }
 
-    /**
-     * Clears the currently set user ID. For example, if the user logs out.
-     */
     override fun clearUserIdentifier() {
         if (sdkCallChecker.check("clear_user_identifier")) {
             userService?.clearUserIdentifier()
         }
     }
 
-    /**
-     * Sets the current user's email address.
-     *
-     * @param email the email address of the current user
-     */
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUserEmail(email: String?) {
         if (sdkCallChecker.check("set_user_email")) {
             userService?.setUserEmail(email)
         }
     }
 
-    /**
-     * Clears the currently set user's email address.
-     */
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUserEmail() {
         if (sdkCallChecker.check("clear_user_email")) {
             userService?.clearUserEmail()
         }
     }
 
-    /**
-     * Sets a custom user persona. A persona is a trait associated with a given user.
-     *
-     * @param persona the persona to set
-     */
     override fun addUserPersona(persona: String) {
         if (sdkCallChecker.check("add_user_persona")) {
             userService?.addUserPersona(persona)
@@ -83,20 +63,14 @@ internal class UserApiDelegate(
         }
     }
 
-    /**
-     * Sets the username of the currently logged in user.
-     *
-     * @param username the username to set
-     */
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUsername(username: String?) {
         if (sdkCallChecker.check("set_username")) {
             userService?.setUsername(username)
         }
     }
 
-    /**
-     * Clears the username of the currently logged in user, for example if the user has logged out.
-     */
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUsername() {
         if (sdkCallChecker.check("clear_username")) {
             userService?.clearUsername()

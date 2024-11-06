@@ -9,11 +9,14 @@ import io.embrace.android.embracesdk.fakes.fakeModuleInitBootstrapper
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@Suppress("DEPRECATION")
 @RunWith(AndroidJUnit4::class)
 internal class UserApiDelegateTest {
 
@@ -65,10 +68,10 @@ internal class UserApiDelegateTest {
 
     @Test
     fun `user payer`() {
-        delegate.setUserAsPayer()
-        assertEquals(true, fakeUserService.payer)
-        delegate.clearUserAsPayer()
-        assertNull(fakeUserService.payer)
+        delegate.addUserPersona("payer")
+        assertTrue(fakeUserService.personas.contains("payer"))
+        delegate.clearUserPersona("payer")
+        assertFalse(fakeUserService.personas.contains("test"))
     }
 
     @Test

@@ -70,14 +70,6 @@ internal class EmbraceUserService(
         setUserEmail(null)
     }
 
-    override fun setUserAsPayer() {
-        addUserPersona(PERSONA_PAYER)
-    }
-
-    override fun clearUserAsPayer() {
-        clearUserPersona(PERSONA_PAYER)
-    }
-
     override fun addUserPersona(persona: String?) {
         if (persona == null) {
             return

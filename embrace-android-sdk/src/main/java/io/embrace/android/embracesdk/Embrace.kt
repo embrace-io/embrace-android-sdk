@@ -53,10 +53,6 @@ public class Embrace private constructor(
     override val isStarted: Boolean
         get() = impl.isStarted
 
-    override fun setAppId(appId: String): Boolean {
-        return impl.setAppId(appId)
-    }
-
     override fun setUserIdentifier(userId: String?) {
         impl.setUserIdentifier(userId)
     }
@@ -65,20 +61,14 @@ public class Embrace private constructor(
         impl.clearUserIdentifier()
     }
 
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun setUserEmail(email: String?) {
         impl.setUserEmail(email)
     }
 
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun clearUserEmail() {
         impl.clearUserEmail()
-    }
-
-    override fun setUserAsPayer() {
-        impl.setUserAsPayer()
-    }
-
-    override fun clearUserAsPayer() {
-        impl.clearUserAsPayer()
     }
 
     override fun addUserPersona(persona: String) {
@@ -101,16 +91,15 @@ public class Embrace private constructor(
         return impl.removeSessionProperty(key)
     }
 
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun setUsername(username: String?) {
         impl.setUsername(username)
     }
 
+    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.", ReplaceWith(""))
     override fun clearUsername() {
         impl.clearUsername()
     }
-
-    override val traceIdHeader: String
-        get() = impl.traceIdHeader
 
     override fun generateW3cTraceparent(): String? {
         return impl.generateW3cTraceparent()

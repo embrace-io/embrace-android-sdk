@@ -6,7 +6,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addSpanExporter (Lio/opentelemetry/sdk/trace/export/SpanExporter;)V
 	public fun addUserPersona (Ljava/lang/String;)V
 	public fun clearAllUserPersonas ()V
-	public fun clearUserAsPayer ()V
 	public fun clearUserEmail ()V
 	public fun clearUserIdentifier ()V
 	public fun clearUserPersona (Ljava/lang/String;)V
@@ -23,7 +22,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetry ()Lio/opentelemetry/api/OpenTelemetry;
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public fun getTraceIdHeader ()Ljava/lang/String;
 	public fun isStarted ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;)V
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;)V
@@ -52,8 +50,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun recordSpan (Ljava/lang/String;Ljava/util/Map;Ljava/util/List;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun recordSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeSessionProperty (Ljava/lang/String;)Z
-	public fun setAppId (Ljava/lang/String;)Z
-	public fun setUserAsPayer ()V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V

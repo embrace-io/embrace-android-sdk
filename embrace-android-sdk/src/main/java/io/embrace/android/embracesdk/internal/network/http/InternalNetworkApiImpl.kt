@@ -17,8 +17,6 @@ internal class InternalNetworkApiImpl : InternalNetworkApi {
 
     override fun isStarted(): Boolean = embrace.isStarted
 
-    override fun getTraceIdHeader(): String = embrace.traceIdHeader
-
     override fun generateW3cTraceparent(): String? = embrace.generateW3cTraceparent()
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = getInternalInterface().isNetworkSpanForwardingEnabled()

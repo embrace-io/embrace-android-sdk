@@ -11,7 +11,6 @@ typealias ConfigModuleSupplier = (
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
-    customAppId: String?,
     framework: AppFramework,
     configServiceProvider: (framework: AppFramework) -> ConfigService?,
     foregroundAction: ConfigService.() -> Unit,
@@ -22,7 +21,6 @@ fun createConfigModule(
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
-    customAppId: String?,
     framework: AppFramework,
     configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
     foregroundAction: ConfigService.() -> Unit,
@@ -31,7 +29,6 @@ fun createConfigModule(
     openTelemetryModule,
     workerThreadModule,
     androidServicesModule,
-    customAppId,
     framework,
     configServiceProvider,
     foregroundAction

@@ -48,7 +48,6 @@ import kotlin.math.min
  * Loads configuration for the app from the Embrace API.
  */
 internal class EmbraceConfigService(
-    customAppId: String?,
     openTelemetryCfg: OpenTelemetryConfiguration,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
@@ -56,6 +55,7 @@ internal class EmbraceConfigService(
     private val backgroundWorker: BackgroundWorker,
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
+    appIdFromConfig: String?,
     val thresholdCheck: BehaviorThresholdCheck =
         BehaviorThresholdCheck { preferencesService.deviceIdentifier },
 ) : ConfigService, ProcessStateListener {
@@ -160,7 +160,7 @@ internal class EmbraceConfigService(
             remoteSupplier = remoteSupplier
         )
 
-    override val appId: String? = resolveAppId(customAppId, openTelemetryCfg)
+    override val appId: String? = resolveAppId(appIdFromConfig, openTelemetryCfg)
 
     override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
 
@@ -170,18 +170,13 @@ internal class EmbraceConfigService(
      *
      * @return the local configuration
      */
-    fun resolveAppId(
-        customAppId: String?,
-        openTelemetryCfg: OpenTelemetryConfiguration,
-    ): String? {
-        val appId = customAppId ?: InstrumentedConfig.project.getAppId()
-
-        require(!appId.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
+    fun resolveAppId(id: String?, openTelemetryCfg: OpenTelemetryConfiguration): String? {
+        require(!id.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
             "No appId supplied in embrace-config.json. This is required if you want to " +
                 "send data to Embrace, unless you configure an OTel exporter and add" +
                 " embrace.disableMappingFileUpload=true to gradle.properties."
         }
-        return appId
+        return id
     }
 
     /**

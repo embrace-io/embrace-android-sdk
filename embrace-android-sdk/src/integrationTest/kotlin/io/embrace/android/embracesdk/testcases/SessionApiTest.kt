@@ -33,6 +33,7 @@ internal class SessionApiTest {
     /**
      * Verifies that a session end message is sent.
      */
+    @Suppress("DEPRECATION")
     @Test
     fun sessionEndMessageTest() {
         var startTime: Long = -1

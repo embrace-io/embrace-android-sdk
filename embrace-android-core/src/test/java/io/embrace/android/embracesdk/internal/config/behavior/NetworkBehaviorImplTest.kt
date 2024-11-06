@@ -33,7 +33,6 @@ internal class NetworkBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createNetworkBehavior(remoteCfg = { null })) {
-            assertEquals("x-emb-trace-id", getTraceIdHeader())
             assertFalse(isRequestContentLengthCaptureEnabled())
             assertTrue(isHttpUrlConnectionCaptureEnabled())
             assertEquals(1000, getRequestLimitPerDomain())

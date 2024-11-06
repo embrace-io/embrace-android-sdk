@@ -4,14 +4,12 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
-import java.util.regex.Pattern
 
 internal class SdkStateApiDelegate(
     bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker,
 ) : SdkStateApi {
 
-    private val logger = bootstrapper.initModule.logger
     private val sessionIdTracker by embraceImplInject(sdkCallChecker) {
         bootstrapper.essentialServiceModule.sessionIdTracker
     }
@@ -20,34 +18,8 @@ internal class SdkStateApiDelegate(
     }
     private val crashVerifier by embraceImplInject(sdkCallChecker) { bootstrapper.crashModule.lastRunCrashVerifier }
 
-    /**
-     * Custom app ID that overrides the one specified at build time
-     */
-    @Volatile
-    var customAppId: String? = null
-
-    /**
-     * Whether or not the SDK has been started.
-     *
-     * @return true if the SDK is started, false otherwise
-     */
     override val isStarted: Boolean
         get() = sdkCallChecker.started.get()
-
-    /**
-     * Sets a custom app ID that overrides the one specified at build time. Must be called before
-     * the SDK is started.
-     *
-     * @param appId custom app ID
-     * @return true if the app ID could be set, false otherwise.
-     */
-    override fun setAppId(appId: String): Boolean {
-        if (isStarted || appId.isEmpty() || !appIdPattern.matcher(appId).find()) {
-            return false
-        }
-        customAppId = appId
-        return true
-    }
 
     override val deviceId: String
         get() {
@@ -82,8 +54,4 @@ internal class SdkStateApiDelegate(
                 LastRunEndState.INVALID
             }
         }
-
-    private companion object {
-        val appIdPattern: Pattern by lazy { Pattern.compile("^[A-Za-z0-9]{5}$") }
-    }
 }

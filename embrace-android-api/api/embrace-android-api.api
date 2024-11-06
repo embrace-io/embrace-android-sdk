@@ -66,7 +66,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/LogsA
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
 	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
-	public abstract fun getTraceIdHeader ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 }
 
@@ -98,7 +97,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkSt
 	public abstract fun getDeviceId ()Ljava/lang/String;
 	public abstract fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public abstract fun isStarted ()Z
-	public abstract fun setAppId (Ljava/lang/String;)Z
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SessionApi {
@@ -111,12 +109,10 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Sessi
 public abstract interface class io/embrace/android/embracesdk/internal/api/UserApi {
 	public abstract fun addUserPersona (Ljava/lang/String;)V
 	public abstract fun clearAllUserPersonas ()V
-	public abstract fun clearUserAsPayer ()V
 	public abstract fun clearUserEmail ()V
 	public abstract fun clearUserIdentifier ()V
 	public abstract fun clearUserPersona (Ljava/lang/String;)V
 	public abstract fun clearUsername ()V
-	public abstract fun setUserAsPayer ()V
 	public abstract fun setUserEmail (Ljava/lang/String;)V
 	public abstract fun setUserIdentifier (Ljava/lang/String;)V
 	public abstract fun setUsername (Ljava/lang/String;)V

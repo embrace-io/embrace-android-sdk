@@ -27,7 +27,7 @@ internal class EmbraceUrlStreamHandlerTest {
     }
 
     @Test
-    fun `check traceheader is not injected into http request by default`() {
+    fun `check traceparent is not injected into http request by default`() {
         val url = URL(
             "http",
             "embrace.io",
@@ -43,7 +43,7 @@ internal class EmbraceUrlStreamHandlerTest {
     }
 
     @Test
-    fun `check traceheader is not injected into https request by default`() {
+    fun `check traceparent is not injected into https request by default`() {
         val url = URL(
             "https",
             "embrace.io",
@@ -59,7 +59,7 @@ internal class EmbraceUrlStreamHandlerTest {
     }
 
     @Test
-    fun `check traceheader is injected into http request if feature flag is on`() {
+    fun `check traceparent is injected into http request if feature flag is on`() {
         internalApi.internalInterface.networkSpanForwardingEnabled = true
         val url = URL(
             "http",
@@ -76,7 +76,7 @@ internal class EmbraceUrlStreamHandlerTest {
     }
 
     @Test
-    fun `check traceheader is injected into https request if feature flag is on`() {
+    fun `check traceparent is injected into https request if feature flag is on`() {
         internalApi.internalInterface.networkSpanForwardingEnabled = true
         val url = URL(
             "https",

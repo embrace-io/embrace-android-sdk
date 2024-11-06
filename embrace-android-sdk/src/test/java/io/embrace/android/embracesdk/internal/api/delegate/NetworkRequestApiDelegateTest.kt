@@ -57,11 +57,6 @@ internal class NetworkRequestApiDelegateTest {
     }
 
     @Test
-    fun `test trace id header`() {
-        assertEquals("x-emb-trace-id", delegate.traceIdHeader)
-    }
-
-    @Test
     fun testGenerateW3cTraceparentEnabled() {
         configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true)
         assertNotNull(delegate.generateW3cTraceparent())

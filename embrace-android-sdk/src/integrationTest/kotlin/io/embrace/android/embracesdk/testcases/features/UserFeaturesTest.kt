@@ -16,6 +16,7 @@ internal class UserFeaturesTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
+    @Suppress("DEPRECATION")
     @Test
     fun `user info setting and clearing`() {
         testRule.runTest(

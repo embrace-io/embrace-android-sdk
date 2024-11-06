@@ -73,29 +73,6 @@ internal class PublicApiTest {
     }
 
     @Test
-    fun `custom appId must be valid`() {
-        testRule.runTest(
-            startSdk = false,
-            testCaseAction = {
-                assertFalse(embrace.setAppId(""))
-                assertFalse(embrace.setAppId("abcd"))
-                assertFalse(embrace.setAppId("abcdef"))
-                assertTrue(embrace.setAppId("abcde"))
-            }
-        )
-    }
-
-    @Test
-    fun `custom appId cannot be set after start`() {
-        testRule.runTest(
-            testCaseAction = {
-                assertTrue(embrace.isStarted)
-                assertFalse(embrace.setAppId("xyz12"))
-            }
-        )
-    }
-
-    @Test
     fun `getCurrentSessionId returns null when SDK is not started`() {
         testRule.runTest(
             startSdk = false,

@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.fakes.FakeInternalNetworkApi
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
-import io.embrace.android.embracesdk.internal.config.instrumented.NetworkCaptureConfig
 import io.embrace.android.embracesdk.internal.network.http.EmbraceHttpPathOverride.PATH_OVERRIDE
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_ENCODING
 import io.embrace.android.embracesdk.internal.network.http.EmbraceUrlConnectionDelegate.CONTENT_LENGTH
@@ -27,7 +26,7 @@ import javax.net.ssl.HttpsURLConnection
 
 internal class EmbraceUrlConnectionDelegateTest {
 
-    private var traceIdHeaderName = NetworkCaptureConfig.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE
+    private var traceIdHeaderName = "x-emb-trace-id"
 
     private lateinit var internalApi: FakeInternalNetworkApi
 
@@ -412,8 +411,6 @@ internal class EmbraceUrlConnectionDelegateTest {
 
     @Test
     fun `check traceIds are logged if a custom header name is specified`() {
-        traceIdHeaderName = "my-trace-id-header"
-        internalApi.traceHeader = traceIdHeaderName
         executeRequest(
             connection = createMockGzipConnection(
                 extraRequestHeaders = mapOf(Pair(traceIdHeaderName, listOf(customTraceId)))
@@ -473,7 +470,7 @@ internal class EmbraceUrlConnectionDelegateTest {
 
         val requestHeaders = mutableMapOf(
             Pair(requestHeaderName, listOf(requestHeaderValue)),
-            Pair(NetworkCaptureConfig.CONFIG_TRACE_ID_HEADER_DEFAULT_VALUE, listOf(defaultTraceId))
+            Pair(traceIdHeaderName, listOf(defaultTraceId))
         )
 
         if (extraRequestHeaders.isNotEmpty()) {

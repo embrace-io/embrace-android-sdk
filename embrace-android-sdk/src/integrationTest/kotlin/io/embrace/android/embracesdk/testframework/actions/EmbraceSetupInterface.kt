@@ -14,10 +14,12 @@ import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
 import io.embrace.android.embracesdk.internal.injection.AnrModule
@@ -44,9 +46,9 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
     val overriddenOpenTelemetryModule: OpenTelemetryModule = overriddenInitModule.openTelemetryModule,
     val overriddenCoreModule: FakeCoreModule = FakeCoreModule(),
     val overriddenConfigService: FakeConfigService = FakeConfigService(
-        backgroundActivityCaptureEnabled = true,
         networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(true),
-        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = false)
+        autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = false),
+        backgroundActivityBehavior = createBackgroundActivityBehavior { BackgroundActivityRemoteConfig(threshold = 100f) }
     ),
     val overriddenWorkerThreadModule: WorkerThreadModule = createWorkerThreadModule(),
     val overriddenAndroidServicesModule: AndroidServicesModule = createAndroidServicesModule(

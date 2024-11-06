@@ -228,24 +228,7 @@ internal class EmbraceConfigService(
         val b = newConfig != previousConfig
         if (b) {
             configProp = newConfig
-            persistConfig()
         }
-    }
-
-    private fun persistConfig() {
-        // TODO: future get rid of these prefs from PrefService entirely?
-        preferencesService.sdkDisabled = sdkModeBehavior.isSdkDisabled()
-        preferencesService.backgroundActivityEnabled =
-            backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
-    }
-
-    // TODO: future extract these out to SdkBehavior interface
-    override fun isSdkDisabled(): Boolean {
-        return preferencesService.sdkDisabled
-    }
-
-    override fun isBackgroundActivityCaptureEnabled(): Boolean {
-        return preferencesService.backgroundActivityEnabled
     }
 
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
@@ -275,11 +258,6 @@ internal class EmbraceConfigService(
      */
     private fun configRetryIsSafe(): Boolean {
         return clock.now() > lastRefreshConfigAttempt + configRetrySafeWindow * 1000
-    }
-
-    override fun hasValidRemoteConfig(): Boolean = !configRequiresRefresh()
-    override fun isAppExitInfoCaptureEnabled(): Boolean {
-        return appExitInfoBehavior.isAeiCaptureEnabled()
     }
 
     private companion object {

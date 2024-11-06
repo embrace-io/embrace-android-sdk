@@ -23,11 +23,6 @@ interface PreferencesService {
     var deviceIdentifier: String
 
     /**
-     * If the sdk is disabled
-     */
-    var sdkDisabled: Boolean
-
-    /**
      * If the user is payer
      */
     var userPayer: Boolean
@@ -61,11 +56,6 @@ interface PreferencesService {
      * The last time config was fetched from the server
      */
     var lastConfigFetchDate: Long?
-
-    /**
-     * If the user message needs to retry send
-     */
-    var userMessageNeedsRetry: Boolean
 
     /**
      * Increments and returns the session number ordinal. This is an integer that increments
@@ -164,11 +154,6 @@ interface PreferencesService {
      * The device's egl.
      */
     var egl: String?
-
-    /**
-     * If background activity capture is enabled
-     */
-    var backgroundActivityEnabled: Boolean
 
     /**
      * Set of hashcodes derived from ApplicationExitInfo objects

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
@@ -204,7 +203,7 @@ internal class EmbraceConfigServiceTest {
     }
 
     /**
-     * Test that calling getConfig() refreshes the config and notify the listener
+     * Test that calling getConfig() refreshes the config
      * As we are using a DirectExecutor this method will run synchronously and
      * return the updated config.
      * In a real situation, the async refresh would be triggered and the config returned would be the previous one.
@@ -215,56 +214,9 @@ internal class EmbraceConfigServiceTest {
         fakeClock.tick(1000000000000)
         val newConfig = RemoteConfig(anrConfig = AnrRemoteConfig())
         every { mockApiService.getConfig() } returns newConfig
-        fakePreferenceService.sdkDisabled = false
 
         service.onForeground(true, 1100L)
         verify(exactly = 2) { mockApiService.getConfig() }
-    }
-
-    @Test
-    fun `test onForeground() with sdk started and config sdkDisabled=true stops the SDK`() {
-        var stopped = false
-        service = createService(worker, action = {
-            stopped = true
-        })
-        fakePreferenceService.sdkDisabled = true
-        service.onForeground(true, 1100L)
-        assertTrue(stopped)
-    }
-
-    @Test
-    fun `test isSdkDisabled returns true`() {
-        fakePreferenceService.sdkDisabled = true
-        assertTrue(service.isSdkDisabled())
-    }
-
-    @Test
-    fun `test isSdkDisabled returns false`() {
-        fakePreferenceService.sdkDisabled = false
-        assertFalse(service.isSdkDisabled())
-    }
-
-    @Test
-    fun `Update listeners when cached config is loaded`() {
-        // Use ExecutorService that requires tasks to be explicitly run. This allows us to simulate the case
-        // when the loading from the cache doesn't run before the config is read.
-
-        val executorService = BlockingScheduledExecutorService(blockingMode = true)
-
-        every { mockApiService.getCachedConfig() } returns CachedConfig(null, null)
-
-        // Create a new instance of the ConfigService where the value of the config is what it is when the config
-        // variable is initialized, before the cached version is loaded.
-        val configService = createService(BackgroundWorker(executorService))
-        assertFalse(configService.hasValidRemoteConfig())
-
-        // call arbitrary function to trigger config refresh
-        configService.anrBehavior.isAnrCaptureEnabled()
-
-        // Only run the task from the executor that loads the cached config to the ConfigService so the call to fetch
-        // a new config from the server isn't run
-        executorService.runCurrentlyBlocked()
-        assertTrue(configService.hasValidRemoteConfig())
     }
 
     @Test

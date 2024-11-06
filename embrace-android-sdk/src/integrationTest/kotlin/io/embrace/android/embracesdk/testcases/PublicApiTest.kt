@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
+import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -43,7 +45,7 @@ internal class PublicApiTest {
             },
             testCaseAction = {
                 assertEquals(AppFramework.NATIVE, configService.appFramework)
-                assertFalse(configService.isSdkDisabled())
+                assertFalse(configService.sdkModeBehavior.isSdkDisabled())
                 assertTrue(embrace.isStarted)
             }
         )
@@ -64,7 +66,7 @@ internal class PublicApiTest {
         testRule.runTest(
             expectSdkToStart = false,
             setupAction = {
-                overriddenConfigService.sdkDisabled = true
+                overriddenConfigService.sdkModeBehavior = createSdkModeBehavior { RemoteConfig(0) }
             },
             testCaseAction = {
                 assertFalse(embrace.isStarted)

@@ -67,13 +67,6 @@ class DataSourceState<T : DataSource<*>>(
         }
     }
 
-    /**
-     * Callback that is invoked when the config layer experiences a change.
-     */
-    fun onConfigChange() {
-        updateDataSource()
-    }
-
     private fun updateDataSource() {
         val enabled =
             currentSessionType != null && currentSessionType != disabledSessionType && configGate()

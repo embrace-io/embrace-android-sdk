@@ -226,7 +226,6 @@ internal class ModuleInitBootstrapper(
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
-                            configModule.configService,
                             workerThreadModule
                         )
                     }

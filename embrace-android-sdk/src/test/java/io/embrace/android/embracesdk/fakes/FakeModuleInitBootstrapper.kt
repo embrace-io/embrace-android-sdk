@@ -44,7 +44,7 @@ internal fun fakeModuleInitBootstrapper(
     storageModuleSupplier: StorageModuleSupplier = { _, _, _ -> FakeStorageModule() },
     essentialServiceModuleSupplier: EssentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _, _ -> FakeEssentialServiceModule() },
     configModuleSupplier: ConfigModuleSupplier = { _, _, _, _, _, _, _ -> FakeConfigModule() },
-    dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _, _ -> FakeDataSourceModule() },
+    dataSourceModuleSupplier: DataSourceModuleSupplier = { _, _ -> FakeDataSourceModule() },
     dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier = { _, _, _, _, _, _ -> FakeDataCaptureServiceModule() },
     deliveryModuleSupplier: DeliveryModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _ -> FakeDeliveryModule() },
     anrModuleSupplier: AnrModuleSupplier = { _, _, _ -> FakeAnrModule() },

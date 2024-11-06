@@ -25,7 +25,6 @@ internal class ConfigModuleImpl(
                     openTelemetryCfg = openTelemetryModule.openTelemetryConfiguration,
                     preferencesService = androidServicesModule.preferencesService,
                     clock = initModule.clock,
-                    logger = initModule.logger,
                     backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                     suppliedFramework = framework,
                     foregroundAction = foregroundAction,

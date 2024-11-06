@@ -70,7 +70,6 @@ internal class PayloadFactoryBaTest {
         configService = FakeConfigService(
             backgroundActivityCaptureEnabled = true
         )
-        configService.updateListeners()
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 

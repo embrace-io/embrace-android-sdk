@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 interface RemoteConfigSource {
@@ -14,6 +13,4 @@ interface RemoteConfigSource {
      * @return a future containing the configuration.
      */
     fun getConfig(): RemoteConfig?
-
-    fun getCachedConfig(): CachedConfig
 }

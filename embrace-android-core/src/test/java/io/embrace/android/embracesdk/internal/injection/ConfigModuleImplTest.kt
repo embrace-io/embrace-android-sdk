@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -23,27 +22,10 @@ internal class ConfigModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             framework = AppFramework.NATIVE,
-            configServiceProvider = { null },
             foregroundAction = {},
             appIdFromConfig = "AbCeD",
         )
         assertNotNull(module.configService)
-    }
-
-    @Test
-    fun testConfigServiceProvider() {
-        val fakeConfigService = FakeConfigService()
-        val module = ConfigModuleImpl(
-            initModule = FakeInitModule(),
-            openTelemetryModule = FakeOpenTelemetryModule(),
-            workerThreadModule = FakeWorkerThreadModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
-            framework = AppFramework.NATIVE,
-            configServiceProvider = { fakeConfigService },
-            foregroundAction = {},
-            appIdFromConfig = "AbCeD",
-        )
-        assertSame(fakeConfigService, module.configService)
     }
 
     @Test
@@ -54,7 +36,6 @@ internal class ConfigModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             framework = AppFramework.NATIVE,
-            configServiceProvider = { null },
             foregroundAction = {},
             appIdFromConfig = "AbCeD",
         )

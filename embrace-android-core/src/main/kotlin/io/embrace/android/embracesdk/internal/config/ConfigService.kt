@@ -23,8 +23,6 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  */
 interface ConfigService {
 
-    var remoteConfigSource: RemoteConfigSource?
-
     /**
      * How background activity functionality should behave.
      */

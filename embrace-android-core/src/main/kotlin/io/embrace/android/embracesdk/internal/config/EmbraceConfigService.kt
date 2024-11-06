@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.config
 
-import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
@@ -35,64 +34,36 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import kotlin.math.min
 
 /**
  * Loads configuration for the app from the Embrace API.
  */
 internal class EmbraceConfigService(
     openTelemetryCfg: OpenTelemetryConfiguration,
-    private val preferencesService: PreferencesService,
-    private val clock: Clock,
-    private val backgroundWorker: BackgroundWorker,
+    preferencesService: PreferencesService,
     suppliedFramework: AppFramework,
-    private val foregroundAction: ConfigService.() -> Unit,
     appIdFromConfig: String?,
-    val thresholdCheck: BehaviorThresholdCheck =
-        BehaviorThresholdCheck { preferencesService.deviceIdentifier },
-) : ConfigService, ProcessStateListener {
-
-    private val lock = Any()
-    override var remoteConfigSource: RemoteConfigSource? = null
-        set(value) {
-            field = value
-            loadConfigFromCache()
-            attemptConfigRefresh()
-        }
-
-    @Volatile
-    private var configProp = RemoteConfig()
-
-    @Volatile
-    var lastUpdated: Long = 0
-
-    @Volatile
-    private var lastRefreshConfigAttempt: Long = 0
-
-    @Volatile
-    private var configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
-
-    private val remoteSupplier: Provider<RemoteConfig?> = { getConfig() }
+    configProvider: Provider<RemoteConfig?>,
+    thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck { preferencesService.deviceIdentifier },
+) : ConfigService {
 
     override val backgroundActivityBehavior: BackgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = { getConfig().backgroundActivityConfig }
+            remoteSupplier = { configProvider()?.backgroundActivityConfig }
         )
 
     override val autoDataCaptureBehavior: AutoDataCaptureBehavior =
         AutoDataCaptureBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = remoteSupplier
+            remoteSupplier = configProvider
         )
 
     override val breadcrumbBehavior: BreadcrumbBehavior =
         BreadcrumbBehaviorImpl(
             thresholdCheck,
-            remoteSupplier = remoteSupplier
+            remoteSupplier = configProvider
         )
 
     override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl()
@@ -100,34 +71,34 @@ internal class EmbraceConfigService(
     override val logMessageBehavior: LogMessageBehavior =
         LogMessageBehaviorImpl(
             thresholdCheck,
-            remoteSupplier = { getConfig().logConfig }
+            remoteSupplier = { configProvider()?.logConfig }
         )
 
     override val anrBehavior: AnrBehavior =
         AnrBehaviorImpl(
             thresholdCheck,
-            remoteSupplier = { getConfig().anrConfig }
+            remoteSupplier = { configProvider()?.anrConfig }
         )
 
     override val sessionBehavior: SessionBehavior = SessionBehaviorImpl(
         thresholdCheck,
-        remoteSupplier = { getConfig() }
+        remoteSupplier = configProvider
     )
 
     override val networkBehavior: NetworkBehavior =
         NetworkBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = remoteSupplier
+            remoteSupplier = configProvider
         )
 
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(
         thresholdCheck = thresholdCheck,
-        remoteSupplier = remoteSupplier
+        remoteSupplier = configProvider
     )
 
     override val sdkModeBehavior: SdkModeBehavior = SdkModeBehaviorImpl(
         thresholdCheck = thresholdCheck,
-        remoteSupplier = remoteSupplier
+        remoteSupplier = configProvider
     )
 
     override val sdkEndpointBehavior: SdkEndpointBehavior = SdkEndpointBehaviorImpl(
@@ -136,19 +107,19 @@ internal class EmbraceConfigService(
 
     override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehaviorImpl(
         thresholdCheck = thresholdCheck,
-        remoteSupplier = remoteSupplier
+        remoteSupplier = configProvider
     )
 
     override val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = { getConfig().networkSpanForwardingRemoteConfig }
+            remoteSupplier = { configProvider()?.networkSpanForwardingRemoteConfig }
         )
 
     override val webViewVitalsBehavior: WebViewVitalsBehavior =
         WebViewVitalsBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = remoteSupplier
+            remoteSupplier = configProvider
         )
 
     override val appId: String? = resolveAppId(appIdFromConfig, openTelemetryCfg)
@@ -170,111 +141,7 @@ internal class EmbraceConfigService(
         return id
     }
 
-    /**
-     * Load Config from cache if present.
-     */
-    fun loadConfigFromCache() {
-        val cachedConfig = remoteConfigSource?.getCachedConfig()
-        val obj = cachedConfig?.remoteConfig
-
-        if (obj != null) {
-            val oldConfig = configProp
-            updateConfig(oldConfig, obj)
-        }
-    }
-
-    private fun getConfig(): RemoteConfig {
-        attemptConfigRefresh()
-        return configProp
-    }
-
-    private fun attemptConfigRefresh() {
-        if (configRequiresRefresh() && configRetryIsSafe()) {
-            synchronized(lock) {
-                if (configRequiresRefresh() && configRetryIsSafe()) {
-                    lastRefreshConfigAttempt = clock.now()
-                    // Attempt to asynchronously update the config if it is out of date
-                    refreshConfig()
-                }
-            }
-        }
-    }
-
-    private fun refreshConfig() {
-        val previousConfig = configProp
-        backgroundWorker.submit {
-            // Ensure that another thread didn't refresh it already in the meantime
-            if (configRequiresRefresh()) {
-                try {
-                    lastRefreshConfigAttempt = clock.now()
-                    val newConfig = remoteConfigSource?.getConfig()
-                    if (newConfig != null) {
-                        updateConfig(previousConfig, newConfig)
-                        lastUpdated = clock.now()
-                    }
-                    configRetrySafeWindow = DEFAULT_RETRY_WAIT_TIME.toDouble()
-                } catch (ex: Exception) {
-                    configRetrySafeWindow =
-                        min(
-                            MAX_ALLOWED_RETRY_WAIT_TIME.toDouble(),
-                            configRetrySafeWindow * 2
-                        )
-                }
-            }
-        }
-    }
-
-    private fun updateConfig(previousConfig: RemoteConfig, newConfig: RemoteConfig) {
-        val b = newConfig != previousConfig
-        if (b) {
-            configProp = newConfig
-        }
-    }
-
-    override fun onForeground(coldStart: Boolean, timestamp: Long) {
-        // Refresh the config on resume if it has expired
-        getConfig()
-        foregroundAction()
-    }
-
     override val appFramework: AppFramework = InstrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
     } ?: suppliedFramework
-
-    /**
-     * Checks if the time diff since the last fetch exceeds the
-     * [EmbraceConfigService.CONFIG_TTL] millis.
-     *
-     * @return if the config requires to be fetched from the remote server again or not.
-     */
-    private fun configRequiresRefresh(): Boolean {
-        return clock.now() - lastUpdated > CONFIG_TTL
-    }
-
-    /**
-     * Checks if the time diff since the last attempt is enough to try again.
-     *
-     * @return if the config can be fetched from the remote server again or not.
-     */
-    private fun configRetryIsSafe(): Boolean {
-        return clock.now() > lastRefreshConfigAttempt + configRetrySafeWindow * 1000
-    }
-
-    private companion object {
-
-        /**
-         * Config lives for 1 hour before attempting to retrieve again.
-         */
-        private const val CONFIG_TTL = 60 * 60 * 1000L
-
-        /**
-         * Config refresh default retry period.
-         */
-        private const val DEFAULT_RETRY_WAIT_TIME: Long = 20 // 20 seconds
-
-        /**
-         * Config max allowed refresh retry period.
-         */
-        private const val MAX_ALLOWED_RETRY_WAIT_TIME: Long = 300 // 5 minutes
-    }
 }

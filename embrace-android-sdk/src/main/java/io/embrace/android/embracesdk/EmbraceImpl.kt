@@ -118,34 +118,14 @@ internal class EmbraceImpl @JvmOverloads constructor(
     }
 
     @Suppress("DEPRECATION")
-    override fun start(context: Context) = start(context, io.embrace.android.embracesdk.AppFramework.NATIVE) { null }
+    override fun start(context: Context) = start(context, io.embrace.android.embracesdk.AppFramework.NATIVE)
 
     @Suppress("DEPRECATION")
     @Deprecated("Use {@link #start(Context)} instead.", ReplaceWith("start(context)"))
-    override fun start(context: Context, appFramework: io.embrace.android.embracesdk.AppFramework) =
-        start(context, appFramework) { null }
-
-    /**
-     * Starts instrumentation of the Android application using the Embrace SDK. This should be
-     * called during creation of the application, as early as possible.
-     *
-     * See [Embrace Docs](https://embrace.io/docs/android/) for
-     * integration instructions. For compatibility with other networking SDKs such as Akamai,
-     * the Embrace SDK must be initialized after any other SDK.
-     *
-     * @param context                  an instance of context
-     * @param appFramework             the AppFramework of the application
-     * @param configServiceProvider    provider for the config service
-     */
-    @Suppress("DEPRECATION")
-    fun start(
-        context: Context,
-        appFramework: io.embrace.android.embracesdk.AppFramework,
-        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
-    ) {
+    override fun start(context: Context, appFramework: io.embrace.android.embracesdk.AppFramework) {
         try {
             startSynchronous("sdk-start")
-            startImpl(context, appFramework, configServiceProvider)
+            startImpl(context, appFramework)
             endSynchronous()
         } catch (t: Throwable) {
             runCatching {
@@ -157,8 +137,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
     @Suppress("DEPRECATION", "CyclomaticComplexMethod", "ComplexMethod")
     private fun startImpl(
         context: Context,
-        framework: io.embrace.android.embracesdk.AppFramework,
-        configServiceProvider: (framework: AppFramework) -> ConfigService?,
+        framework: io.embrace.android.embracesdk.AppFramework
     ) {
         if (application != null) {
             return
@@ -167,7 +146,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val startTimeMs = sdkClock.now()
 
         val appFramework = fromFramework(framework)
-        bootstrapper.init(context, appFramework, startTimeMs, configServiceProvider)
+        bootstrapper.init(context, appFramework, startTimeMs)
         startSynchronous("post-services-setup")
 
         val coreModule = bootstrapper.coreModule

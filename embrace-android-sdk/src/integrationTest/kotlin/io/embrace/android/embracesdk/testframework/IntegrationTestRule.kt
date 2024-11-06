@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -118,9 +119,8 @@ internal class IntegrationTestRule(
             embraceImpl.addSpanExporter(spanExporter)
 
             if (startSdk) {
-                embraceImpl.start(overriddenCoreModule.context, appFramework) {
-                    overriddenConfigService.apply { appFramework = it }
-                }
+                overriddenConfigService.appFramework = findAppFramework()
+                embraceImpl.start(overriddenCoreModule.context)
                 assertEquals(expectSdkToStart, bootstrapper.essentialServiceModule.processStateService.isInitialized())
             }
         }
@@ -129,6 +129,15 @@ internal class IntegrationTestRule(
         spanExporter.failOnDuplicate()
         otelExportAssertion(otelAssertion)
     }
+
+    @Suppress("DEPRECATION")
+    fun EmbraceSetupInterface.findAppFramework() =
+        when (appFramework) {
+            io.embrace.android.embracesdk.AppFramework.NATIVE -> AppFramework.NATIVE
+            io.embrace.android.embracesdk.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
+            io.embrace.android.embracesdk.AppFramework.UNITY -> AppFramework.UNITY
+            io.embrace.android.embracesdk.AppFramework.FLUTTER -> AppFramework.FLUTTER
+        }
 
     /**
      * Setup the Embrace SDK so it's ready for testing.

@@ -18,10 +18,11 @@ internal class FeatureModuleImplTest {
     @Test
     fun testFeatureModule() {
         val registry = FakeFeatureRegistry()
+        val initModule = FakeInitModule()
         val module = FeatureModuleImpl(
             featureRegistry = registry,
-            coreModule = createCoreModule(mockk(relaxed = true)),
-            initModule = FakeInitModule(),
+            coreModule = createCoreModule(mockk(relaxed = true), initModule),
+            initModule = initModule,
             otelModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(),
             systemServiceModule = FakeSystemServiceModule(),

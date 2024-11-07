@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -23,7 +24,13 @@ internal class BreadcrumbBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck) { null }) {
+        with(
+            BreadcrumbBehaviorImpl(
+                thresholdCheck = behaviorThresholdCheck,
+                { null },
+                InstrumentedConfigImpl
+            )
+        ) {
             assertEquals(100, getCustomBreadcrumbLimit())
             assertEquals(100, getTapBreadcrumbLimit())
             assertEquals(100, getWebViewBreadcrumbLimit())
@@ -39,7 +46,11 @@ internal class BreadcrumbBehaviorImplTest {
     @Test
     fun testRemoteAndLocal() {
         with(
-            BreadcrumbBehaviorImpl(thresholdCheck = behaviorThresholdCheck) { remote }
+            BreadcrumbBehaviorImpl(
+                thresholdCheck = behaviorThresholdCheck,
+                { remote },
+                InstrumentedConfigImpl
+            )
         ) {
             assertEquals(99, getCustomBreadcrumbLimit())
             assertEquals(98, getTapBreadcrumbLimit())

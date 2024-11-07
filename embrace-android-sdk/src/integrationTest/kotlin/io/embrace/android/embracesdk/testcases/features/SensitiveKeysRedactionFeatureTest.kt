@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Rule
@@ -17,7 +18,8 @@ internal class SensitiveKeysRedactionFeatureTest {
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
     private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-        listOf("password")
+        listOf("password"),
+ InstrumentedConfigImpl
     )
 
     @Test

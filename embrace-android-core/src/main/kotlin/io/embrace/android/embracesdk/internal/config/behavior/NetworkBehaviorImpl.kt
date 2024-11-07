@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -15,6 +15,7 @@ class NetworkBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?>,
     private val disabledUrlPatterns: List<String>? = null,
+    private val instrumentedConfig: InstrumentedConfig,
 ) : NetworkBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
@@ -34,13 +35,13 @@ class NetworkBehaviorImpl(
         )
     }
 
-    private val cfg = InstrumentedConfig.networkCapture
+    private val cfg = instrumentedConfig.networkCapture
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
-        InstrumentedConfig.enabledFeatures.isRequestContentLengthCaptureEnabled()
+        instrumentedConfig.enabledFeatures.isRequestContentLengthCaptureEnabled()
 
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
-        InstrumentedConfig.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
+        instrumentedConfig.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
 
     override fun getLimitsByDomain(): Map<String, Int> {
         val limits = remote?.networkConfig?.domainLimits ?: cfg.getLimitsByDomain()

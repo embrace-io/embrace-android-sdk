@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
@@ -33,4 +34,6 @@ interface InitModule {
      * Returns the serializer used to serialize data to JSON
      */
     val jsonSerializer: PlatformSerializer
+
+    val instrumentedConfig: InstrumentedConfig
 }

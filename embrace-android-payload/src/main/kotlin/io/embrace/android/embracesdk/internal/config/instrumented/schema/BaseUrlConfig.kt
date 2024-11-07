@@ -1,11 +1,9 @@
-package io.embrace.android.embracesdk.internal.config.instrumented
+package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Declares the base URLs the SDK should use in HTTP requests
  */
-@Suppress("FunctionOnlyReturningConstant")
-@Swazzled
-object BaseUrlConfig {
+interface BaseUrlConfig {
 
     /**
      * Config base URL

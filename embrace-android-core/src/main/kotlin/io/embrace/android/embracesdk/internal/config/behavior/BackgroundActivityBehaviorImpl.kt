@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 class BackgroundActivityBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<BackgroundActivityRemoteConfig?>,
+    private val instrumentedConfig: InstrumentedConfig,
 ) : BackgroundActivityBehavior,
     MergedConfigBehavior<UnimplementedConfig, BackgroundActivityRemoteConfig>(
         thresholdCheck = thresholdCheck,
@@ -19,7 +20,7 @@ class BackgroundActivityBehaviorImpl(
 
     override fun isBackgroundActivityCaptureEnabled(): Boolean {
         return remote?.threshold?.let(thresholdCheck::isBehaviorEnabled)
-            ?: InstrumentedConfig.enabledFeatures.isBackgroundActivityCaptureEnabled()
+            ?: instrumentedConfig.enabledFeatures.isBackgroundActivityCaptureEnabled()
     }
 
     override fun getManualBackgroundActivityLimit(): Int = 100

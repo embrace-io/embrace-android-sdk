@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 class BreadcrumbBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?>,
+    instrumentedConfig: InstrumentedConfig,
 ) : BreadcrumbBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
@@ -25,7 +26,7 @@ class BreadcrumbBehaviorImpl(
         const val DEFAULT_BREADCRUMB_LIMIT = 100
     }
 
-    private val cfg = InstrumentedConfig.enabledFeatures
+    private val cfg = instrumentedConfig.enabledFeatures
 
     override fun getCustomBreadcrumbLimit(): Int =
         remote?.uiConfig?.breadcrumbs ?: DEFAULT_BREADCRUMB_LIMIT

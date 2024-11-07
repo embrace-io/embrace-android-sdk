@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
@@ -243,7 +245,7 @@ internal class EmbraceConfigServiceTest {
             openTelemetryCfg = config,
             preferencesService = fakePreferenceService,
             suppliedFramework = AppFramework.NATIVE,
-            appIdFromConfig = appId,
+            instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
             thresholdCheck = thresholdCheck,
             configProvider = remoteConfigSource::getConfig,
         )

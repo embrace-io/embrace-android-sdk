@@ -1,13 +1,14 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 class NetworkSpanForwardingBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<NetworkSpanForwardingRemoteConfig?>,
+    private val instrumentedConfig: InstrumentedConfig,
 ) : NetworkSpanForwardingBehavior, MergedConfigBehavior<UnimplementedConfig, NetworkSpanForwardingRemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
@@ -21,6 +22,6 @@ class NetworkSpanForwardingBehaviorImpl(
 
     override fun isNetworkSpanForwardingEnabled(): Boolean {
         return remote?.pctEnabled?.let { thresholdCheck.isBehaviorEnabled(it) }
-            ?: InstrumentedConfig.enabledFeatures.isNetworkSpanForwardingEnabled()
+            ?: instrumentedConfig.enabledFeatures.isNetworkSpanForwardingEnabled()
     }
 }

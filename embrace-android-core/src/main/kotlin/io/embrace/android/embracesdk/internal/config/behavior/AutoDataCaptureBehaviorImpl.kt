@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 class AutoDataCaptureBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<RemoteConfig?>,
+    instrumentedConfig: InstrumentedConfig,
 ) : AutoDataCaptureBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
@@ -23,7 +24,7 @@ class AutoDataCaptureBehaviorImpl(
         const val USE_OKHTTP_DEFAULT = true
     }
 
-    private val cfg = InstrumentedConfig.enabledFeatures
+    private val cfg = instrumentedConfig.enabledFeatures
 
     @Suppress("DEPRECATION")
     override fun isMemoryWarningCaptureEnabled(): Boolean = cfg.isMemoryWarningCaptureEnabled()

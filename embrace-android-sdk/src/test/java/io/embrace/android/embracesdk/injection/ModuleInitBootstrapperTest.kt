@@ -33,7 +33,7 @@ internal class ModuleInitBootstrapperTest {
         coreModule = FakeCoreModule()
         moduleInitBootstrapper = ModuleInitBootstrapper(
             configModuleSupplier = { _, _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
-            coreModuleSupplier = { _ -> coreModule },
+            coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = logger
         )

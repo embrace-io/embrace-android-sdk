@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
@@ -37,7 +38,10 @@ internal class EmbraceLogServiceTest {
     @Before
     fun setUp() {
         fakeConfigService = FakeConfigService(
-            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password"))
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                listOf("password"),
+                InstrumentedConfigImpl
+            )
         )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         fakeLogWriter = FakeLogWriter()

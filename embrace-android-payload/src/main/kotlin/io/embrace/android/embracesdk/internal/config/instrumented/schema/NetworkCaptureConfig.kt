@@ -1,11 +1,10 @@
-package io.embrace.android.embracesdk.internal.config.instrumented
+package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Declares how the SDK should capture network requests
  */
 @Suppress("FunctionOnlyReturningConstant")
-@Swazzled
-object NetworkCaptureConfig {
+interface NetworkCaptureConfig {
 
     /**
      * The network request capture limit per domain

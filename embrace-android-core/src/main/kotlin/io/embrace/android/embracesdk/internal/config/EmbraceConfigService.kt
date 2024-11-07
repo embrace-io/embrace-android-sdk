@@ -29,7 +29,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -43,30 +43,34 @@ internal class EmbraceConfigService(
     openTelemetryCfg: OpenTelemetryConfiguration,
     preferencesService: PreferencesService,
     suppliedFramework: AppFramework,
-    appIdFromConfig: String?,
     configProvider: Provider<RemoteConfig?>,
     thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck { preferencesService.deviceIdentifier },
+    instrumentedConfig: InstrumentedConfig,
 ) : ConfigService {
 
     override val backgroundActivityBehavior: BackgroundActivityBehavior =
         BackgroundActivityBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = { configProvider()?.backgroundActivityConfig }
+            remoteSupplier = { configProvider()?.backgroundActivityConfig },
+            instrumentedConfig = instrumentedConfig
         )
 
     override val autoDataCaptureBehavior: AutoDataCaptureBehavior =
         AutoDataCaptureBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = configProvider
+            remoteSupplier = configProvider,
+            instrumentedConfig = instrumentedConfig
         )
 
     override val breadcrumbBehavior: BreadcrumbBehavior =
         BreadcrumbBehaviorImpl(
             thresholdCheck,
-            remoteSupplier = configProvider
+            remoteSupplier = configProvider,
+            instrumentedConfig = instrumentedConfig
         )
 
-    override val sensitiveKeysBehavior: SensitiveKeysBehavior = SensitiveKeysBehaviorImpl()
+    override val sensitiveKeysBehavior: SensitiveKeysBehavior =
+        SensitiveKeysBehaviorImpl(instrumentedConfig = instrumentedConfig)
 
     override val logMessageBehavior: LogMessageBehavior =
         LogMessageBehaviorImpl(
@@ -77,18 +81,21 @@ internal class EmbraceConfigService(
     override val anrBehavior: AnrBehavior =
         AnrBehaviorImpl(
             thresholdCheck,
-            remoteSupplier = { configProvider()?.anrConfig }
+            remoteSupplier = { configProvider()?.anrConfig },
+            instrumentedConfig = instrumentedConfig
         )
 
     override val sessionBehavior: SessionBehavior = SessionBehaviorImpl(
         thresholdCheck,
-        remoteSupplier = configProvider
+        remoteSupplier = configProvider,
+        instrumentedConfig = instrumentedConfig
     )
 
     override val networkBehavior: NetworkBehavior =
         NetworkBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = configProvider
+            remoteSupplier = configProvider,
+            instrumentedConfig = instrumentedConfig
         )
 
     override val dataCaptureEventBehavior: DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(
@@ -102,18 +109,21 @@ internal class EmbraceConfigService(
     )
 
     override val sdkEndpointBehavior: SdkEndpointBehavior = SdkEndpointBehaviorImpl(
-        thresholdCheck = thresholdCheck
+        thresholdCheck = thresholdCheck,
+        instrumentedConfig = instrumentedConfig
     )
 
     override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehaviorImpl(
         thresholdCheck = thresholdCheck,
-        remoteSupplier = configProvider
+        remoteSupplier = configProvider,
+        instrumentedConfig = instrumentedConfig
     )
 
     override val networkSpanForwardingBehavior: NetworkSpanForwardingBehavior =
         NetworkSpanForwardingBehaviorImpl(
             thresholdCheck = thresholdCheck,
-            remoteSupplier = { configProvider()?.networkSpanForwardingRemoteConfig }
+            remoteSupplier = { configProvider()?.networkSpanForwardingRemoteConfig },
+            instrumentedConfig = instrumentedConfig
         )
 
     override val webViewVitalsBehavior: WebViewVitalsBehavior =
@@ -122,7 +132,7 @@ internal class EmbraceConfigService(
             remoteSupplier = configProvider
         )
 
-    override val appId: String? = resolveAppId(appIdFromConfig, openTelemetryCfg)
+    override val appId: String? = resolveAppId(instrumentedConfig.project.getAppId(), openTelemetryCfg)
 
     override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
 
@@ -141,7 +151,7 @@ internal class EmbraceConfigService(
         return id
     }
 
-    override val appFramework: AppFramework = InstrumentedConfig.project.getAppFramework()?.let {
+    override val appFramework: AppFramework = instrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
     } ?: suppliedFramework
 }

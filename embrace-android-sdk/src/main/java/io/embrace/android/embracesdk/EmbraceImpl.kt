@@ -174,7 +174,7 @@ internal class EmbraceImpl @JvmOverloads constructor(
         application = coreModule.application
 
         val configModule = bootstrapper.configModule
-        if (configModule.configService.isSdkDisabled()) {
+        if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
             stop()
             return
         }

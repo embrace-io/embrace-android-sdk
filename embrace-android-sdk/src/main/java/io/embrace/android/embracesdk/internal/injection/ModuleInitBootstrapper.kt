@@ -158,7 +158,7 @@ internal class ModuleInitBootstrapper(
                             appFramework,
                             configServiceProvider,
                         ) {
-                            if (isSdkDisabled()) {
+                            if (sdkModeBehavior.isSdkDisabled()) {
                                 EmbraceInternalApi.getInstance().internalInterface.stopSdk()
                             }
                         }

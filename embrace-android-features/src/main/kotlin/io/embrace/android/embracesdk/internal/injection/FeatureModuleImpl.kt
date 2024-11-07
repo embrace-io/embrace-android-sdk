@@ -198,7 +198,7 @@ internal class FeatureModuleImpl(
     override val applicationExitInfoDataSource: DataSourceState<AeiDataSource> by dataSourceState {
         DataSourceState(
             factory = { aeiService },
-            configGate = { configService.isAppExitInfoCaptureEnabled() }
+            configGate = { configService.appExitInfoBehavior.isAeiCaptureEnabled() }
         )
     }
 

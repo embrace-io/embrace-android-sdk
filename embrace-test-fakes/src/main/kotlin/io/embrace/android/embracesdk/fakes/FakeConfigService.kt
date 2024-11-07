@@ -26,10 +26,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 class FakeConfigService(
     override var appFramework: AppFramework = AppFramework.NATIVE,
     override var appId: String = "abcde",
-    var sdkDisabled: Boolean = false,
-    var backgroundActivityCaptureEnabled: Boolean = false,
     var onlyUsingOtelExporters: Boolean = false,
-    private var hasValidRemoteConfig: Boolean = false,
     override var backgroundActivityBehavior: BackgroundActivityBehavior = createBackgroundActivityBehavior(),
     override var autoDataCaptureBehavior: AutoDataCaptureBehavior = createAutoDataCaptureBehavior(),
     override var breadcrumbBehavior: BreadcrumbBehavior = FakeBreadcrumbBehavior(),
@@ -46,9 +43,5 @@ class FakeConfigService(
     override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
 ) : ConfigService {
     override var remoteConfigSource: RemoteConfigSource? = null
-    override fun isSdkDisabled(): Boolean = sdkDisabled || sdkModeBehavior.isSdkDisabled()
-    override fun isBackgroundActivityCaptureEnabled(): Boolean = backgroundActivityCaptureEnabled
-    override fun hasValidRemoteConfig(): Boolean = hasValidRemoteConfig
-    override fun isAppExitInfoCaptureEnabled(): Boolean = appExitInfoBehavior.isAeiCaptureEnabled()
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
 }

@@ -85,13 +85,6 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
-    fun `test sdk disabled is saved`() {
-        assertFalse(service.sdkDisabled)
-        service.sdkDisabled = true
-        assertTrue(service.sdkDisabled)
-    }
-
-    @Test
     fun `test user payer is saved`() {
         assertFalse(service.userPayer)
         service.userPayer = true
@@ -154,13 +147,6 @@ internal class EmbracePreferencesServiceTest {
         assertNull(service.lastConfigFetchDate)
         service.lastConfigFetchDate = 1234L
         assertEquals(1234L, service.lastConfigFetchDate)
-    }
-
-    @Test
-    fun `test user message needs retry is saved`() {
-        assertFalse(service.userMessageNeedsRetry)
-        service.userMessageNeedsRetry = true
-        assertTrue(service.userMessageNeedsRetry)
     }
 
     @Test
@@ -315,15 +301,6 @@ internal class EmbracePreferencesServiceTest {
         val version = "3.1.2"
         service.embraceFlutterSdkVersion = version
         assertEquals(version, service.embraceFlutterSdkVersion)
-    }
-
-    @Test
-    fun `test background activity enabled is saved`() {
-        assertFalse(service.backgroundActivityEnabled)
-
-        val expected = true
-        service.backgroundActivityEnabled = true
-        assertEquals(expected, service.backgroundActivityEnabled)
     }
 
     @Test

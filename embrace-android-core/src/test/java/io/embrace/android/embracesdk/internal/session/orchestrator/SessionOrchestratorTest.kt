@@ -17,11 +17,13 @@ import io.embrace.android.embracesdk.fakes.FakeStartupService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -65,7 +67,11 @@ internal class SessionOrchestratorTest {
     fun setUp() {
         clock = FakeClock()
         logger = EmbLoggerImpl()
-        configService = FakeConfigService(backgroundActivityCaptureEnabled = true)
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior {
+                BackgroundActivityRemoteConfig(threshold = 100f)
+            }
+        )
     }
 
     @Test
@@ -254,7 +260,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end with crash in background`() {
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true,
+            backgroundActivityBehavior = createBackgroundActivityBehavior {
+                BackgroundActivityRemoteConfig(threshold = 100f)
+            }
         )
         createOrchestrator(true)
         orchestrator.handleCrash("crashId")
@@ -264,7 +272,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end with crash in foreground`() {
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true,
+            backgroundActivityBehavior = createBackgroundActivityBehavior {
+                BackgroundActivityRemoteConfig(threshold = 100f)
+            }
         )
         createOrchestrator(false)
         orchestrator.handleCrash("crashId")

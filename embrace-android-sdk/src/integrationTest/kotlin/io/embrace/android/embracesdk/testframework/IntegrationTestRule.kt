@@ -6,16 +6,17 @@ import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.behavior.FakeSdkEndpointBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
@@ -94,6 +95,7 @@ internal class IntegrationTestRule(
     private lateinit var otelAssertion: EmbraceOtelExportAssertionInterface
     private lateinit var spanExporter: FilteredSpanExporter
     private lateinit var embraceImpl: EmbraceImpl
+    private lateinit var baseUrl: String
 
     lateinit var bootstrapper: ModuleInitBootstrapper
 
@@ -104,6 +106,8 @@ internal class IntegrationTestRule(
      */
     inline fun runTest(
         startSdk: Boolean = true,
+        instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
+        remoteConfig: RemoteConfig = RemoteConfig(),
         expectSdkToStart: Boolean = startSdk,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
@@ -111,6 +115,26 @@ internal class IntegrationTestRule(
         assertAction: EmbracePayloadAssertionInterface.() -> Unit = {},
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
     ) {
+        setup = embraceSetupInterfaceSupplier()
+        var apiServer: FakeApiServer? = null
+
+        if (setup.useMockWebServer) {
+            apiServer = FakeApiServer(remoteConfig)
+            val server: MockWebServer = MockWebServer().apply {
+                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
+                dispatcher = apiServer
+                start()
+            }
+            baseUrl = server.url("api").toString()
+        }
+
+        preSdkStart = EmbracePreSdkStartInterface(setup)
+        bootstrapper = setup.createBootstrapper(prepareConfig(instrumentedConfig), remoteConfig)
+        action = EmbraceActionInterface(setup, bootstrapper)
+        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
+        spanExporter = FilteredSpanExporter()
+        otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter)
+
         setupAction(setup)
         with(setup) {
             embraceImpl = EmbraceImpl(bootstrapper)
@@ -119,7 +143,6 @@ internal class IntegrationTestRule(
             embraceImpl.addSpanExporter(spanExporter)
 
             if (startSdk) {
-                overriddenConfigService.appFramework = findAppFramework()
                 embraceImpl.start(overriddenCoreModule.context)
                 assertEquals(expectSdkToStart, bootstrapper.essentialServiceModule.processStateService.isInitialized())
             }
@@ -130,43 +153,24 @@ internal class IntegrationTestRule(
         otelExportAssertion(otelAssertion)
     }
 
-    @Suppress("DEPRECATION")
-    fun EmbraceSetupInterface.findAppFramework() =
-        when (appFramework) {
-            io.embrace.android.embracesdk.AppFramework.NATIVE -> AppFramework.NATIVE
-            io.embrace.android.embracesdk.AppFramework.REACT_NATIVE -> AppFramework.REACT_NATIVE
-            io.embrace.android.embracesdk.AppFramework.UNITY -> AppFramework.UNITY
-            io.embrace.android.embracesdk.AppFramework.FLUTTER -> AppFramework.FLUTTER
+    fun prepareConfig(instrumentedConfig: FakeInstrumentedConfig) =
+        when {
+            setup.useMockWebServer -> {
+                instrumentedConfig.copy(
+                    baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
+                )
+            }
+
+            else -> {
+                instrumentedConfig
+            }
         }
 
     /**
      * Setup the Embrace SDK so it's ready for testing.
      */
     override fun before() {
-        setup = embraceSetupInterfaceSupplier.invoke()
-        var apiServer: FakeApiServer? = null
 
-        if (setup.useMockWebServer) {
-            apiServer = FakeApiServer()
-            val server: MockWebServer = MockWebServer().apply {
-                protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
-                dispatcher = apiServer
-                start()
-            }
-            val baseUrl = server.url("api").toString()
-
-            setup.overriddenConfigService.sdkEndpointBehavior = FakeSdkEndpointBehavior(
-                baseUrl,
-                baseUrl
-            )
-        }
-
-        preSdkStart = EmbracePreSdkStartInterface(setup)
-        bootstrapper = setup.createBootstrapper()
-        action = EmbraceActionInterface(setup, bootstrapper)
-        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
-        spanExporter = FilteredSpanExporter()
-        otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter)
     }
 
     /**

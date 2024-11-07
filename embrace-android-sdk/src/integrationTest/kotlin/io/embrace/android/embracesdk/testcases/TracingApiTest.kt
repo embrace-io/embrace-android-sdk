@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
@@ -58,6 +60,7 @@ internal class TracingApiTest {
         val spanExporter = FakeSpanExporter()
 
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             preSdkStartAction = {
                 testStartTimeMs = clock.now()
                 clock.tick(100L)
@@ -322,9 +325,6 @@ internal class TracingApiTest {
     @Test
     fun `can only create span if there is a valid session`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.backgroundActivityBehavior = createBackgroundActivityBehavior { BackgroundActivityRemoteConfig(threshold = 0f) }
-            },
             preSdkStartAction = {
                 assertNull(embrace.startSpan("test"))
             },

@@ -25,7 +25,7 @@ class FakeInitModule(
         logger = logger,
         systemInfo = systemInfo
     ),
-    override val instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig()
+    override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig()
 ) : InitModule by initModule {
 
     val openTelemetryModule: OpenTelemetryModule by lazy { createOpenTelemetryModule(initModule) }

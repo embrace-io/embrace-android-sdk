@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -84,11 +85,9 @@ internal class PushNotificationApiTest {
     @Test
     fun `log push notification with pii`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
-                    captureFcmPiiDataEnabled = true
-                )
-            },
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(fcmPiiCapture = true),
+            ),
             testCaseAction = {
                 recordSession {
                     embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)

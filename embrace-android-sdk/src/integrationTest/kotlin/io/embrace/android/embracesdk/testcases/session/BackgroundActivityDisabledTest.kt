@@ -5,12 +5,10 @@ import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embColdStart
 import io.embrace.android.embracesdk.internal.opentelemetry.embProcessIdentifier
@@ -58,9 +56,7 @@ internal class BackgroundActivityDisabledTest {
             overriddenClock = clock,
             overriddenInitModule = initModule,
             overriddenWorkerThreadModule = workerThreadModule,
-        ).apply {
-            overriddenConfigService.backgroundActivityBehavior = createBackgroundActivityBehavior { BackgroundActivityRemoteConfig(threshold = 0f) }
-        }
+        )
     }
 
     @Test

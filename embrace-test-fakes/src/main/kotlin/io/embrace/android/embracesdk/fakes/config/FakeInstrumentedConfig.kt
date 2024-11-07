@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Session
 /**
  * A fake [InstrumentedConfig] implementation that defaults to the real implementation unless an override is supplied.
  */
-class FakeInstrumentedConfig(
+data class FakeInstrumentedConfig(
     private val base: InstrumentedConfig = InstrumentedConfigImpl,
     override val baseUrls: FakeBaseUrlConfig = FakeBaseUrlConfig(base.baseUrls),
     override val enabledFeatures: FakeEnabledFeatureConfig = FakeEnabledFeatureConfig(base.enabledFeatures),

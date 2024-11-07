@@ -7,7 +7,11 @@ import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
@@ -30,15 +34,17 @@ internal class V1DeliveryFeatureTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
-    private val behavior = FakeAutoDataCaptureBehavior(v2StorageEnabled = false)
+    private val remoteConfig = RemoteConfig(
+        killSwitchConfig = KillSwitchRemoteConfig(v2StoragePct = 0f),
+        backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
+    )
 
-    @Suppress("DEPRECATION")
     @Test
     fun `v1 session delivery`() {
         testRule.runTest(
+            remoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
-                overriddenConfigService.autoDataCaptureBehavior = behavior
             },
             testCaseAction = {
                 recordSession {
@@ -52,13 +58,12 @@ internal class V1DeliveryFeatureTest {
         )
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `v1 background activity delivery`() {
         testRule.runTest(
+            remoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
-                overriddenConfigService.autoDataCaptureBehavior = behavior
             },
             testCaseAction = {
                 embrace.setUserIdentifier("foo")
@@ -74,9 +79,9 @@ internal class V1DeliveryFeatureTest {
     @Test
     fun `v1 crash delivery`() {
         testRule.runTest(
+            remoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
-                overriddenConfigService.autoDataCaptureBehavior = behavior
             },
             testCaseAction = {
                 recordSession {
@@ -93,9 +98,9 @@ internal class V1DeliveryFeatureTest {
     @Test
     fun `v1 log delivery`() {
         testRule.runTest(
+            remoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
-                overriddenConfigService.autoDataCaptureBehavior = behavior
                 setupFakeAeiData()
             },
             testCaseAction = {

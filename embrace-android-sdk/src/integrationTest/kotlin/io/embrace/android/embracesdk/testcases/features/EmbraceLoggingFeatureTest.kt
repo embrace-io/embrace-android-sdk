@@ -4,6 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -20,6 +22,8 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class EmbraceLoggingFeatureTest {
+
+    private val instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true))
 
     @Rule
     @JvmField
@@ -39,6 +43,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log info message sent in foreground`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     embrace.logInfo("test message")
@@ -61,6 +66,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log warning message sent in background`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logWarning("test message")
                 flushLogs()
@@ -80,6 +86,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log error message sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logError("test message")
                 flushLogs()
@@ -99,6 +106,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log messages with different severities sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
@@ -125,6 +133,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log messages with different severities and properties sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
@@ -151,6 +160,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log exception message sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logException(testException)
                 flushLogs()
@@ -175,6 +185,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log exception with different severities sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logException(testException, Severity.INFO)
                 flushLogs()
@@ -199,6 +210,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log exception with different severities and properties sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     embrace.logException(
@@ -232,6 +244,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log exception with different severities, properties, and custom message sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"
@@ -264,6 +277,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log custom stacktrace message sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 embrace.logCustomStacktrace(stacktrace)
                 flushLogs()
@@ -286,6 +300,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log custom stacktrace with different severities sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     embrace.logCustomStacktrace(stacktrace, severity)
@@ -313,6 +328,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log custom stacktrace with different severities and properties sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     embrace.logCustomStacktrace(stacktrace, severity, customProperties)
@@ -341,6 +357,7 @@ internal class EmbraceLoggingFeatureTest {
     @Test
     fun `log custom stacktrace with different severities, properties, and custom message sent`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 Severity.values().forEach { severity ->
                     val expectedMessage = "test message ${severity.name}"

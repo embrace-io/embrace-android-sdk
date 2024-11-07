@@ -4,11 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
-import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.worker.Worker.Priority.DataPersistenceWorker
@@ -42,9 +40,6 @@ internal class PruningFeatureTest {
     @Test
     fun `stored payloads are pruned appropriately`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.backgroundActivityBehavior = createBackgroundActivityBehavior { BackgroundActivityRemoteConfig(threshold = 0f) }
-            },
             testCaseAction = {
                 simulateNetworkChange(NetworkStatus.NOT_REACHABLE)
                 repeat(STORAGE_LIMIT + OVERAGE) { k ->

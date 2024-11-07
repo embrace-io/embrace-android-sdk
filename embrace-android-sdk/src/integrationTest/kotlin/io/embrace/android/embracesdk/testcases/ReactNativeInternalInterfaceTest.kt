@@ -1,12 +1,11 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.AppFramework.REACT_NATIVE
 import io.embrace.android.embracesdk.assertions.findSpanOfType
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansByName
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -26,15 +25,19 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceTest {
 
+    private val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(
+        appId = "abcde",
+        appFramework = "react_native"
+    ))
+
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(appFramework = REACT_NATIVE)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `react native without values should return defaults`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession()
             },
@@ -51,6 +54,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native methods work in current session`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.1")
@@ -72,6 +76,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native metadata already present from previous session`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.1")
@@ -95,6 +100,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native values from current session override previous values`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.setReactNativeVersionNumber("28.9.1")
@@ -123,6 +129,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native action`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnAction(
@@ -163,6 +170,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native log RN view`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnView("HomeScreen")
@@ -197,6 +205,7 @@ internal class ReactNativeInternalInterfaceTest {
     @Test
     fun `react native log RN view same name`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.logRnView("HomeScreen")

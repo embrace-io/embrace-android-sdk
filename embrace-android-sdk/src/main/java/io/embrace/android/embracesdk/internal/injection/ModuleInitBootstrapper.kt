@@ -154,12 +154,14 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,
-                            appFramework
-                        ) {
-                            if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                                EmbraceInternalApi.getInstance().internalInterface.stopSdk()
-                            }
-                        }
+                            appFramework,
+                            {
+                                if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
+                                    EmbraceInternalApi.getInstance().internalInterface.stopSdk()
+                                }
+                            },
+                            { null }
+                        )
                     }
                     postInit(ConfigModule::class) {
                         serviceRegistry.registerService(lazy { configModule.configService })
@@ -188,7 +190,8 @@ internal class ModuleInitBootstrapper(
                     postInit(EssentialServiceModule::class) {
                         // Allow config service to start making HTTP requests
                         with(essentialServiceModule) {
-                            (configModule.remoteConfigSource as? RemoteConfigSourceImpl)?.remoteConfigSource = apiService
+                            (configModule.remoteConfigSource as? RemoteConfigSourceImpl)?.remoteConfigSource =
+                                apiService
 
                             serviceRegistry.registerServices(
                                 lazy { essentialServiceModule.processStateService },

@@ -1,13 +1,11 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.AppFramework.UNITY
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -20,15 +18,19 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class UnityInternalInterfaceTest {
 
+    private val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(
+        appId = "abcde",
+        appFramework = "unity"
+    ))
+
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(appFramework = UNITY)
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `unity without values should return defaults`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession()
             },
@@ -45,6 +47,7 @@ internal class UnityInternalInterfaceTest {
     @Test
     fun `unity methods work in current session`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(
@@ -68,6 +71,7 @@ internal class UnityInternalInterfaceTest {
     @Test
     fun `unity metadata already present from previous session`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(
@@ -92,6 +96,7 @@ internal class UnityInternalInterfaceTest {
     @Test
     fun `unity values from current session override previous values`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().unityInternalInterface.setUnityMetaData(

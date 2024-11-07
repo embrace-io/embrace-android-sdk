@@ -5,7 +5,6 @@ import com.squareup.moshi.Types
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.fakes.behavior.FakeWebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.payload.WebVital
 import io.embrace.android.embracesdk.internal.payload.WebVitalType
@@ -33,9 +32,6 @@ internal class WebviewFeatureTest {
     @Test
     fun `webview info feature`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.webViewVitalsBehavior = FakeWebViewVitalsBehavior(50, true)
-            },
             testCaseAction = {
                 recordSession {
                     embrace.trackWebViewPerformance("myWebView", expectedCompleteData)

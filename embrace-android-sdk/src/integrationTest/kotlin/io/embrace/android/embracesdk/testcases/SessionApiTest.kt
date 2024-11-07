@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.testcases
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.opentelemetry.embFreeDiskBytes
@@ -23,12 +25,7 @@ internal class SessionApiTest {
 
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface().apply {
-            overriddenConfigService.autoDataCaptureBehavior =
-                FakeAutoDataCaptureBehavior(diskUsageReportingEnabled = false)
-        }
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     /**
      * Verifies that a session end message is sent.
@@ -39,6 +36,7 @@ internal class SessionApiTest {
         var startTime: Long = -1
 
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(diskUsageCapture = false, bgActivityCapture = true)),
             testCaseAction = {
                 startTime = clock.now()
                 recordSession {

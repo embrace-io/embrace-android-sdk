@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -180,23 +179,18 @@ internal class NetworkRequestApiTest {
     @Test
     fun `disabled URLs not recorded`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.networkBehavior =
-                    createNetworkBehavior(remoteCfg = {
-                        RemoteConfig(
-                            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
-                            networkCaptureRules = setOf(
-                                NetworkCaptureRuleRemoteConfig(
-                                    id = "test",
-                                    duration = 10000,
-                                    method = "GET",
-                                    urlRegex = "capture.me",
-                                    expiresIn = 10000
-                                )
-                            )
-                        )
-                    })
-            },
+            remoteConfig = RemoteConfig(
+                disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+                networkCaptureRules = setOf(
+                    NetworkCaptureRuleRemoteConfig(
+                        id = "test",
+                        duration = 10000,
+                        method = "GET",
+                        urlRegex = "capture.me",
+                        expiresIn = 10000
+                    )
+                )
+            ),
             testCaseAction = {
                 recordSession {
                     clock.tick(5)

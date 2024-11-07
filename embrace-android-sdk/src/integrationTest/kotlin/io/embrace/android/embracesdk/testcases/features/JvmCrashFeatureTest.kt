@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -59,6 +62,7 @@ internal class JvmCrashFeatureTest {
     @Test
     fun `app crash in the background generates a crash log`() {
         testRule.runTest(
+            remoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             testCaseAction = {
                 simulateJvmUncaughtException(testException)
             },
@@ -72,13 +76,15 @@ internal class JvmCrashFeatureTest {
         )
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `React Native crash generates an OTel Log and matches the crashId in the session`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.appFramework = AppFramework.REACT_NATIVE
-            },
+            instrumentedConfig = FakeInstrumentedConfig(
+                project = FakeProjectConfig(
+                    appId = "abcde",
+                    appFramework = "react_native"
+                )
+            ),
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().reactNativeInternalInterface.logUnhandledJsException(

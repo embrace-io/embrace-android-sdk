@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Function that returns an instance of [ConfigModule]. Matches the signature of the constructor for [ConfigModuleImpl]
@@ -12,6 +14,7 @@ typealias ConfigModuleSupplier = (
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
     foregroundAction: () -> Unit,
+    remoteConfigSourceProvider: Provider<RemoteConfigSource?>,
 ) -> ConfigModule
 
 fun createConfigModule(
@@ -21,11 +24,13 @@ fun createConfigModule(
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
     foregroundAction: () -> Unit,
+    remoteConfigSourceProvider: Provider<RemoteConfigSource?>,
 ): ConfigModule = ConfigModuleImpl(
     initModule,
     openTelemetryModule,
     workerThreadModule,
     androidServicesModule,
     framework,
-    foregroundAction
+    foregroundAction,
+    remoteConfigSourceProvider
 )

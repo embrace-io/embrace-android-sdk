@@ -16,7 +16,8 @@
       "minLength": 32
     },
     "ndk_enabled": {
-      "description": "Enables NDK crash capture. Defaults to false.",
+      "description": "Enables NDK crash capture",
+      "default": false,
       "type": "boolean"
     },
     "sdk_config": {
@@ -26,19 +27,23 @@
           "type": "object",
           "properties": {
             "memory_info": {
-              "description": "Enables memory warning capture. Defaults to true.",
+              "description": "Enables memory warning capture",
+              "default": true,
               "type": "boolean"
             },
             "power_save_mode_info": {
-              "description": "Enables power save mode capture. Defaults to true.",
+              "description": "Enables power save mode capture.",
+              "default": true,
               "type": "boolean"
             },
             "network_connectivity_info": {
-              "description": "Enables network connectivity capture. Defaults to true.",
+              "description": "Enables network connectivity capture.",
+              "default": true,
               "type": "boolean"
             },
             "anr_info": {
-              "description": "Enables ANR capture. Defaults to true.",
+              "description": "Enables ANR capture.",
+              "default": true,
               "type": "boolean"
             }
           },
@@ -48,7 +53,8 @@
           "type": "object",
           "properties": {
             "capture_coordinates": {
-              "description": "Set to false to disable capturing tap coordinates. Defaults to true.",
+              "description": "Set to false to disable capturing tap coordinates.",
+              "default": true,
               "type": "boolean"
             }
           },
@@ -58,7 +64,8 @@
           "type": "object",
           "properties": {
             "enable_automatic_activity_capture": {
-              "description": "Enables capturing activity lifecycle changes in breadcrumbs. Defaults to true.",
+              "description": "Enables capturing activity lifecycle changes in breadcrumbs.",
+              "default": true,
               "type": "boolean"
             }
           },
@@ -68,11 +75,13 @@
           "type": "object",
           "properties": {
             "capture_query_params": {
-              "description": "Set to false to disable capturing of web view query parameters. Defaults to true. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
+              "description": "Set to false to disable capturing of web view query parameters. If webview:enable is set to false, this setting has no effect since all capture of web view information is disabled.",
+              "default": true,
               "type": "boolean"
             },
             "enable": {
-              "description": "Set to false to disable capturing of web views. Defaults to true.",
+              "description": "Set to false to disable capturing of web views.",
+              "default": true,
               "type": "boolean"
             }
           },
@@ -82,7 +91,8 @@
           "type": "object",
           "properties": {
             "enabled": {
-              "description": "Set to false to prevent the SDK from connecting to the uncaught exception handler. Defaults to true.",
+              "description": "Set to false to prevent the SDK from connecting to the uncaught exception handler.",
+              "default": true,
               "type": "boolean"
             }
           },
@@ -92,21 +102,24 @@
           "type": "object",
           "properties": {
             "capture_compose_onclick": {
-              "description": "Enables capture of Jetpack Compose click events. Defaults to false.",
+              "description": "Enables capture of Jetpack Compose click events.",
+              "default": false,
               "type": "boolean"
             }
           },
           "minProperties": 1
         },
         "capture_fcm_pii_data": {
-          "type": "boolean",
-          "description": "Enables PII data within FCM capture. Defaults to false."
+          "description": "Enables PII data within FCM capture.",
+          "default": false,
+          "type": "boolean"
         },
         "networking": {
           "type": "object",
           "properties": {
             "default_capture_limit": {
-              "description": "Default capture limit for specified domains. Defaults to 1000.",
+              "description": "Default capture limit for specified domains.",
+              "default": 1000,
               "type": "integer"
             },
             "domains": {
@@ -130,7 +143,8 @@
               "uniqueItems": true
             },
             "capture_request_content_length": {
-              "description": "Disable capture of network length which can interfere with certain streaming network requests. Defaults to true.",
+              "description": "Disable capture of network length which can interfere with certain streaming network requests.",
+              "default": true,
               "type": "boolean"
             },
             "disabled_url_patterns": {
@@ -143,11 +157,13 @@
               "uniqueItems": true
             },
             "enable_native_monitoring": {
-              "description": "Enable capture of network requests made using the native Java network API. Defaults to true.",
+              "description": "Enable capture of network requests made using the native Java network API.",
+              "default": true,
               "type": "boolean"
             },
             "enable_network_span_forwarding": {
-              "description": "Enables network span forwarding. Defaults to false.",
+              "description": "Enables network span forwarding.",
+              "default": false,
               "type": "boolean"
             }
           },
@@ -170,7 +186,8 @@
           "type": "object",
           "properties": {
             "capture_unity_thread": {
-              "description": "Enables Unity ANR capture. Defaults to false.",
+              "description": "Enables Unity ANR capture.",
+              "default": false,
               "type": "boolean"
             }
           },
@@ -180,7 +197,8 @@
           "type": "object",
           "properties": {
             "report_disk_usage": {
-              "description": "The SDK collects the disk usage for the app. You can disable this if your app has a large number of local files to prevent excessive resource usage, especially on lower-end devices. Defaults to true.",
+              "description": "The SDK collects the disk usage for the app. You can disable this if your app has a large number of local files to prevent excessive resource usage, especially on lower-end devices.",
+              "default": true,
               "type": "boolean"
             }
           },
@@ -190,7 +208,8 @@
           "type": "object",
           "properties": {
             "capture_enabled": {
-              "description": "Enables background activity capture. Defaults to false.",
+              "description": "Enables background activity capture.",
+              "default": false,
               "type": "boolean"
             }
           },
@@ -234,8 +253,9 @@
           "minProperties": 1
         },
         "sig_handler_detection": {
-          "type": "boolean",
-          "description": "Enables 3rd party signal handler detection. Defaults to true."
+          "description": "Enables 3rd party signal handler detection.",
+          "default": true,
+          "type": "boolean"
         },
         "app_exit_info": {
           "type": "object",
@@ -245,7 +265,8 @@
               "type": "boolean"
             },
             "aei_enabled": {
-              "description": "Enables Application Exit Info capture. Defaults to true.",
+              "description": "Enables Application Exit Info capture.",
+              "default": true,
               "type": "boolean"
             }
           },

@@ -14,7 +14,7 @@ internal class StorageModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
-        val coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication())
+        val coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
         val module = createStorageModuleSupplier(
             initModule = initModule,
             coreModule = coreModule,

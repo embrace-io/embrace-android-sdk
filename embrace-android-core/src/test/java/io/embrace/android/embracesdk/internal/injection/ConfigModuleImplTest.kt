@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertSame
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -23,22 +22,7 @@ internal class ConfigModuleImplTest {
             androidServicesModule = FakeAndroidServicesModule(),
             framework = AppFramework.NATIVE,
             foregroundAction = {},
-            appIdFromConfig = "AbCeD",
         )
         assertNotNull(module.configService)
-    }
-
-    @Test
-    fun `validate appId in appIdProvider is used`() {
-        val module = ConfigModuleImpl(
-            initModule = FakeInitModule(),
-            openTelemetryModule = FakeOpenTelemetryModule(),
-            workerThreadModule = FakeWorkerThreadModule(),
-            androidServicesModule = FakeAndroidServicesModule(),
-            framework = AppFramework.NATIVE,
-            foregroundAction = {},
-            appIdFromConfig = "AbCeD",
-        )
-        assertSame("AbCeD", module.configService.appId)
     }
 }

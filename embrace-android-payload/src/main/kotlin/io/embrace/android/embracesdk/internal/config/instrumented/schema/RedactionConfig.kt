@@ -1,11 +1,9 @@
-package io.embrace.android.embracesdk.internal.config.instrumented
+package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Declares how the SDK should redact sensitive data
  */
-@Suppress("FunctionOnlyReturningConstant")
-@Swazzled
-object RedactionConfig {
+interface RedactionConfig {
 
     /**
      * Provides a list of sensitive keys whose values should be redacted on capture.

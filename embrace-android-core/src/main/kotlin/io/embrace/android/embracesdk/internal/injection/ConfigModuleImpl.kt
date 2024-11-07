@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
 import io.embrace.android.embracesdk.internal.config.RemoteConfigSourceImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -15,7 +14,6 @@ internal class ConfigModuleImpl(
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
     foregroundAction: () -> Unit,
-    private val appIdFromConfig: String? = InstrumentedConfig.project.getAppId(),
 ) : ConfigModule {
 
     override val configService: ConfigService by singleton {
@@ -24,8 +22,8 @@ internal class ConfigModuleImpl(
                 openTelemetryCfg = openTelemetryModule.openTelemetryConfiguration,
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,
-                appIdFromConfig = appIdFromConfig,
-                configProvider = remoteConfigSource::getConfig
+                instrumentedConfig = initModule.instrumentedConfig,
+                configProvider = remoteConfigSource::getConfig,
             )
         }
     }

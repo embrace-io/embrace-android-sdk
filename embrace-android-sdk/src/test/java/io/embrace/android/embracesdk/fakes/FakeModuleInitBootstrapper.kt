@@ -37,7 +37,7 @@ internal fun fakeModuleInitBootstrapper(
     fakeEmbLogger: FakeEmbLogger = FakeEmbLogger(),
     fakeInitModule: FakeInitModule = FakeInitModule(logger = fakeEmbLogger),
     fakeOpenTelemetryModule: FakeOpenTelemetryModule = FakeOpenTelemetryModule(),
-    coreModuleSupplier: CoreModuleSupplier = { _ -> FakeCoreModule() },
+    coreModuleSupplier: CoreModuleSupplier = { _, _ -> FakeCoreModule() },
     systemServiceModuleSupplier: SystemServiceModuleSupplier = { _, _ -> FakeSystemServiceModule() },
     androidServicesModuleSupplier: AndroidServicesModuleSupplier = { _, _, _ -> FakeAndroidServicesModule() },
     workerThreadModuleSupplier: WorkerThreadModuleSupplier = { FakeWorkerThreadModule() },

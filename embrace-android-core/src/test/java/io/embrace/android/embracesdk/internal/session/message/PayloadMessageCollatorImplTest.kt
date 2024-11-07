@@ -37,7 +37,7 @@ internal class PayloadMessageCollatorImplTest {
     @Before
     fun setUp() {
         initModule = FakeInitModule()
-        coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication())
+        coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
         gatingService = FakeGatingService()
         val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),

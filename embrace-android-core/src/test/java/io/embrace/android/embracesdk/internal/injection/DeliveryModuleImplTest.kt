@@ -29,12 +29,13 @@ class DeliveryModuleImplTest {
     @Before
     fun setUp() {
         configService = FakeConfigService()
+        val initModule = FakeInitModule()
         module = DeliveryModuleImpl(
             FakeConfigModule(configService),
-            FakeInitModule(),
+            initModule,
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
-            CoreModuleImpl(ApplicationProvider.getApplicationContext()),
+            CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             ::FakeRequestExecutionService,

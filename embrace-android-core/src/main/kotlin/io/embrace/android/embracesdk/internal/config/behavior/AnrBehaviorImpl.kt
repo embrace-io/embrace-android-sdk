@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 class AnrBehaviorImpl(
     thresholdCheck: BehaviorThresholdCheck,
     remoteSupplier: Provider<AnrRemoteConfig?>,
+    private val instrumentedConfig: InstrumentedConfig,
 ) : AnrBehavior, MergedConfigBehavior<UnimplementedConfig, AnrRemoteConfig>(
     thresholdCheck = thresholdCheck,
     remoteSupplier = remoteSupplier
@@ -64,7 +65,7 @@ class AnrBehaviorImpl(
 
     override fun isUnityAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
-            ?: InstrumentedConfig.enabledFeatures.isUnityAnrCaptureEnabled()
+            ?: instrumentedConfig.enabledFeatures.isUnityAnrCaptureEnabled()
     }
 
     override fun isNativeThreadAnrSamplingOffsetEnabled(): Boolean =

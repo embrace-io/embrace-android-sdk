@@ -27,11 +27,6 @@ internal class ActivityFeatureTest {
         var startTimeMs: Long = 0
 
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.breadcrumbBehavior = FakeBreadcrumbBehavior(
-                    automaticActivityCaptureEnabled = true
-                )
-            },
             testCaseAction = {
                 recordSession {
                     startTimeMs = clock.now()

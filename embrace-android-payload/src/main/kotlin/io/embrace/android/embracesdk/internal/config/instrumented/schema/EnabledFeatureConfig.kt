@@ -1,11 +1,9 @@
-package io.embrace.android.embracesdk.internal.config.instrumented
+package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Declares what features are enabled/disabled across the entire SDK.
  */
-@Suppress("FunctionOnlyReturningConstant")
-@Swazzled
-object EnabledFeatureConfig {
+interface EnabledFeatureConfig {
 
     /**
      * Gates Unity ANR capture.

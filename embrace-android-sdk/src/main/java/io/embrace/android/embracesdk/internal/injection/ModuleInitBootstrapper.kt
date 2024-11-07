@@ -127,7 +127,7 @@ internal class ModuleInitBootstrapper(
 
             synchronized(initialized) {
                 val result = if (!isInitialized()) {
-                    coreModule = init(CoreModule::class) { coreModuleSupplier(context) }
+                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, initModule) }
 
                     val serviceRegistry = coreModule.serviceRegistry
                     workerThreadModule = init(WorkerThreadModule::class) {

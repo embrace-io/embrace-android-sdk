@@ -1,13 +1,9 @@
-package io.embrace.android.embracesdk.internal.config.instrumented
-
-import com.squareup.moshi.Json
+package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Declares metadata about the app project
  */
-@Suppress("FunctionOnlyReturningConstant")
-@Swazzled
-object SessionConfig {
+interface SessionConfig {
 
     /**
      * A whitelist of session components (i.e. Breadcrumbs, Session properties, etc) that should be
@@ -16,7 +12,6 @@ object SessionConfig {
      *
      * sdk_config.session.components
      */
-    @Json(name = "components")
     fun getSessionComponents(): List<String>? = null
 
     /**
@@ -25,6 +20,5 @@ object SessionConfig {
      *
      * sdk_config.session.send_full_for
      */
-    @Json(name = "send_full_for")
     fun getFullSessionEvents(): List<String> = emptyList()
 }

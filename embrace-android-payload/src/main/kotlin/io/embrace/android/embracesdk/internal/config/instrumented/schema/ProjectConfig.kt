@@ -1,11 +1,9 @@
-package io.embrace.android.embracesdk.internal.config.instrumented
+package io.embrace.android.embracesdk.internal.config.instrumented.schema
 
 /**
  * Declares metadata about the app project
  */
-@Suppress("FunctionOnlyReturningConstant")
-@Swazzled
-object ProjectConfig {
+interface ProjectConfig {
 
     /**
      * The project's appId

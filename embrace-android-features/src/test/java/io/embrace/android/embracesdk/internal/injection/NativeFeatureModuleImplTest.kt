@@ -20,9 +20,10 @@ internal class NativeFeatureModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
+        val initModule = FakeInitModule()
         val module = NativeFeatureModuleImpl(
-            FakeInitModule(),
-            CoreModuleImpl(RuntimeEnvironment.getApplication()),
+            initModule,
+            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
             FakeConfigModule(),

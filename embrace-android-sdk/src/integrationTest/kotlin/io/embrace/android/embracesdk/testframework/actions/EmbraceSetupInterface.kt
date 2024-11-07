@@ -6,6 +6,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.AppFramework
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
@@ -28,6 +29,7 @@ import io.embrace.android.embracesdk.internal.injection.NativeCoreModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
+import io.embrace.android.embracesdk.internal.injection.createConfigModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
@@ -106,6 +108,11 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                         else -> FakeDeliveryService()
                     }
                 })
+        },
+        configModuleSupplier = { _, _, _, _, _, _ ->
+            FakeConfigModule(
+                configService = overriddenConfigService
+            )
         },
         anrModuleSupplier = { _, _, _ -> fakeAnrModule },
         nativeCoreModuleSupplier = { fakeNativeCoreModule },

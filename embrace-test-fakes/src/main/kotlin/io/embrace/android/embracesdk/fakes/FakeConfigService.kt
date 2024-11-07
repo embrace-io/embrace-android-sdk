@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.AutoDataCaptureBehavior
@@ -42,6 +41,5 @@ class FakeConfigService(
     override var networkSpanForwardingBehavior: NetworkSpanForwardingBehavior = createNetworkSpanForwardingBehavior(),
     override var sensitiveKeysBehavior: SensitiveKeysBehavior = createSensitiveKeysBehavior(),
 ) : ConfigService {
-    override var remoteConfigSource: RemoteConfigSource? = null
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
 }

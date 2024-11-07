@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.injection.ConfigModule
 
 class FakeConfigModule(
@@ -10,4 +11,5 @@ class FakeConfigModule(
             captureHttpUrlConnectionRequests = false
         )
     ),
+    override val remoteConfigSource: RemoteConfigSource = FakeRemoteConfigSource()
 ) : ConfigModule

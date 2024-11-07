@@ -92,7 +92,6 @@ internal class PayloadFactorySessionTest {
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
-        configService.updateListeners()
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 

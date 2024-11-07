@@ -199,7 +199,6 @@ internal class NetworkRequestApiTest {
             },
             testCaseAction = {
                 recordSession {
-                    configService.updateListeners()
                     clock.tick(5)
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
@@ -253,7 +252,6 @@ internal class NetworkRequestApiTest {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    configService.updateListeners()
                     clock.tick(5)
 
                     val request = EmbraceNetworkRequest.fromCompletedRequest(
@@ -292,7 +290,6 @@ internal class NetworkRequestApiTest {
             testCaseAction = {
                 recordSession {
                     clock.tick(2L)
-                    configService.updateListeners()
                     clock.tick(5L)
                     embrace.recordNetworkRequest(expectedRequest)
                 }

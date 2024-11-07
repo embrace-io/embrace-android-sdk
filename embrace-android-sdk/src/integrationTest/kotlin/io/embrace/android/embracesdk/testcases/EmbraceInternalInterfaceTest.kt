@@ -114,8 +114,6 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 recordSession {
                     clock.tick()
-                    configService.updateListeners()
-                    clock.tick()
                     EmbraceInternalApi.getInstance().internalInterface.recordCompletedNetworkRequest(
                         url = URL,
                         httpMethod = "GET",

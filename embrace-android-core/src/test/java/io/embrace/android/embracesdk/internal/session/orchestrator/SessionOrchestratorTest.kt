@@ -369,7 +369,6 @@ internal class SessionOrchestratorTest {
         )
         fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
         dataCaptureOrchestrator = DataCaptureOrchestrator(
-            configService,
             fakeBackgroundWorker(),
             logger
         ).apply {

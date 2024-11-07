@@ -32,16 +32,12 @@ import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehav
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.opentelemetry.OpenTelemetryConfiguration
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.embrace.android.embracesdk.internal.utils.stream
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.math.min
 
 /**
@@ -51,7 +47,6 @@ internal class EmbraceConfigService(
     openTelemetryCfg: OpenTelemetryConfiguration,
     private val preferencesService: PreferencesService,
     private val clock: Clock,
-    private val logger: EmbLogger,
     private val backgroundWorker: BackgroundWorker,
     suppliedFramework: AppFramework,
     private val foregroundAction: ConfigService.() -> Unit,
@@ -60,10 +55,6 @@ internal class EmbraceConfigService(
         BehaviorThresholdCheck { preferencesService.deviceIdentifier },
 ) : ConfigService, ProcessStateListener {
 
-    /**
-     * The listeners subscribed to configuration changes.
-     */
-    private val listeners: MutableSet<() -> Unit> = CopyOnWriteArraySet()
     private val lock = Any()
     override var remoteConfigSource: RemoteConfigSource? = null
         set(value) {
@@ -238,8 +229,6 @@ internal class EmbraceConfigService(
         if (b) {
             configProp = newConfig
             persistConfig()
-            // Only notify listeners if the config has actually changed value
-            notifyListeners()
         }
     }
 
@@ -259,10 +248,6 @@ internal class EmbraceConfigService(
         return preferencesService.backgroundActivityEnabled
     }
 
-    override fun addListener(configListener: () -> Unit) {
-        listeners.add(configListener)
-    }
-
     override fun onForeground(coldStart: Boolean, timestamp: Long) {
         // Refresh the config on resume if it has expired
         getConfig()
@@ -272,19 +257,6 @@ internal class EmbraceConfigService(
     override val appFramework: AppFramework = InstrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)
     } ?: suppliedFramework
-
-    /**
-     * Notifies the listeners that a new config was fetched from the server.
-     */
-    private fun notifyListeners() {
-        stream(listeners) { listener ->
-            try {
-                listener()
-            } catch (ex: Exception) {
-                logger.trackInternalError(InternalErrorType.CONFIG_LISTENER_FAIL, ex)
-            }
-        }
-    }
 
     /**
      * Checks if the time diff since the last fetch exceeds the

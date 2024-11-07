@@ -39,22 +39,9 @@ internal class DataCaptureOrchestratorTest {
         configService = FakeConfigService()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
         orchestrator = DataCaptureOrchestrator(
-            configService,
             BackgroundWorker(executorService),
             EmbLoggerImpl(),
         )
-    }
-
-    @Test
-    fun `config changes are propagated`() {
-        orchestrator.add(syncDataSource)
-        assertEquals(0, dataSource.enableDataCaptureCount)
-        orchestrator.currentSessionType = SessionType.FOREGROUND
-        assertEquals(1, dataSource.enableDataCaptureCount)
-
-        enabled = false
-        configService.updateListeners()
-        assertEquals(1, dataSource.disableDataCaptureCount)
     }
 
     @Test
@@ -63,23 +50,6 @@ internal class DataCaptureOrchestratorTest {
         assertEquals(0, dataSource.enableDataCaptureCount)
         orchestrator.currentSessionType = SessionType.FOREGROUND
         assertEquals(1, dataSource.enableDataCaptureCount)
-    }
-
-    @Test
-    fun `async config change`() {
-        orchestrator.add(asyncDataSource)
-        executorService.blockingMode = true
-
-        orchestrator.currentSessionType = SessionType.FOREGROUND
-        assertEquals(0, dataSource.enableDataCaptureCount)
-        executorService.runCurrentlyBlocked()
-        assertEquals(1, dataSource.enableDataCaptureCount)
-
-        enabled = false
-        configService.updateListeners()
-        assertEquals(0, dataSource.disableDataCaptureCount)
-        executorService.runCurrentlyBlocked()
-        assertEquals(1, dataSource.disableDataCaptureCount)
     }
 
     @Test

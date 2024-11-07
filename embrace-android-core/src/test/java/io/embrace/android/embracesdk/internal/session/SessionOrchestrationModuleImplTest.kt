@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModu
 import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionOrchestrationModuleImplTest {
@@ -30,7 +29,6 @@ internal class SessionOrchestrationModuleImplTest {
     fun testDefaultImplementations() {
         val dataSourceModule = createDataSourceModule(
             initModule,
-            configService,
             workerThreadModule
         )
         val module = SessionOrchestrationModuleImpl(
@@ -48,10 +46,6 @@ internal class SessionOrchestrationModuleImplTest {
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
-        assertTrue(
-            configService.listeners.single().javaClass.toString()
-                .contains("DataCaptureOrchestrator")
-        )
     }
 
     @Test
@@ -59,7 +53,6 @@ internal class SessionOrchestrationModuleImplTest {
         val configModule = createEnabledBehavior()
         val dataSourceModule = createDataSourceModule(
             initModule,
-            configService,
             workerThreadModule
         )
 

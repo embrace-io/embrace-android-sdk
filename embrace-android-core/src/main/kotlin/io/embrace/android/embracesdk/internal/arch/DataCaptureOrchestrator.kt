@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -12,16 +11,9 @@ import java.util.concurrent.CopyOnWriteArrayList
  * place to coordinate everything in one place.
  */
 class DataCaptureOrchestrator(
-    configService: ConfigService,
     private val worker: BackgroundWorker,
     private val logger: EmbLogger,
 ) : EmbraceFeatureRegistry {
-
-    init {
-        configService.addListener {
-            onConfigChange()
-        }
-    }
 
     private val dataSourceStates = CopyOnWriteArrayList<DataSourceState<*>>()
 
@@ -35,18 +27,6 @@ class DataCaptureOrchestrator(
         dataSourceStates.add(state)
         state.dispatchStateChange {
             state.currentSessionType = currentSessionType
-        }
-    }
-
-    private fun onConfigChange() {
-        dataSourceStates.forEach { state ->
-            try {
-                state.dispatchStateChange {
-                    state.onConfigChange()
-                }
-            } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.CFG_CHANGE_DATA_CAPTURE_FAIL, exc)
-            }
         }
     }
 

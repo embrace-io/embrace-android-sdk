@@ -113,14 +113,6 @@ interface ConfigService {
     fun isOnlyUsingOtelExporters(): Boolean
 
     /**
-     * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the
-     * [ConfigService] refreshes its configuration.
-     *
-     * @param configListener the listener to add
-     */
-    fun addListener(configListener: () -> Unit)
-
-    /**
      * Checks if the SDK is enabled.
      *
      * The SDK can be configured to disable a percentage of devices based on the normalization of

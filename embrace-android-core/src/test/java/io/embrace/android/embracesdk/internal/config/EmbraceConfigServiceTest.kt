@@ -26,6 +26,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -203,28 +204,6 @@ internal class EmbraceConfigServiceTest {
     }
 
     /**
-     * Test that calling getConfig() notifies the listener.
-     * As we are using a DirectExecutor this method will run synchronously and
-     * return the updated config.
-     * In a real situation, the async refresh would be triggered and the config returned would be the previous one.
-     */
-    @Test
-    fun `test getConfig() notifies a listener`() {
-        // advance the clock so it's safe to retry config refresh
-        fakeClock.tick(1000000000000)
-
-        // return a different object from default so listener triggers
-        val newConfig = RemoteConfig(anrConfig = AnrRemoteConfig(sampleIntervalMs = 200))
-        every { mockApiService.getConfig() } returns newConfig
-        fakePreferenceService.sdkDisabled = false
-        service.addListener(mockConfigListener)
-
-        // call an arbitrary function to trigger a config refresh
-        service.anrBehavior.isAnrCaptureEnabled()
-        assertTrue(configListenerTriggered)
-    }
-
-    /**
      * Test that calling getConfig() refreshes the config and notify the listener
      * As we are using a DirectExecutor this method will run synchronously and
      * return the updated config.
@@ -237,11 +216,9 @@ internal class EmbraceConfigServiceTest {
         val newConfig = RemoteConfig(anrConfig = AnrRemoteConfig())
         every { mockApiService.getConfig() } returns newConfig
         fakePreferenceService.sdkDisabled = false
-        service.addListener(mockConfigListener)
 
         service.onForeground(true, 1100L)
-
-        assertTrue(configListenerTriggered)
+        verify(exactly = 2) { mockApiService.getConfig() }
     }
 
     @Test
@@ -335,7 +312,6 @@ internal class EmbraceConfigServiceTest {
         openTelemetryCfg = config,
         preferencesService = fakePreferenceService,
         clock = fakeClock,
-        logger = logger,
         backgroundWorker = worker,
         suppliedFramework = AppFramework.NATIVE,
         foregroundAction = action,

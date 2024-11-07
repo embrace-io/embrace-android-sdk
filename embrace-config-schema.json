@@ -224,7 +224,7 @@
             },
             "data": {
               "description": "Base data URL for the SDK.",
-              "type": "integer"
+              "type": "string"
             }
           },
           "minProperties": 1

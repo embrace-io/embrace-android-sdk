@@ -69,7 +69,7 @@ class EssentialServiceModuleImpl(
                 coreBaseUrl = coreBaseUrl,
                 configBaseUrl = configBaseUrl,
                 appId = appId,
-                lazyDeviceId = lazyDeviceId,
+                deviceIdImpl = lazyDeviceId,
                 lazyAppVersionName = lazy { coreModule.packageVersionInfo.versionName }
             )
         }

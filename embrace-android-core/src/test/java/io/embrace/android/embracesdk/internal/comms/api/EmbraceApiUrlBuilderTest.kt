@@ -22,7 +22,7 @@ internal class EmbraceApiUrlBuilderTest {
             coreBaseUrl = baseUrlLocalConfig.getData(APP_ID),
             configBaseUrl = baseUrlLocalConfig.getConfig(APP_ID),
             appId = APP_ID,
-            lazyDeviceId = lazy { DEVICE_ID },
+            deviceIdImpl = lazy { DEVICE_ID },
             lazyAppVersionName = lazy { APP_VERSION_NAME },
         )
     }

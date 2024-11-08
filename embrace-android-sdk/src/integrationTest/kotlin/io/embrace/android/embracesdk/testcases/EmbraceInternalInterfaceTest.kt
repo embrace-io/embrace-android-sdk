@@ -112,41 +112,48 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 recordSession {
                     clock.tick()
-                    EmbraceInternalApi.getInstance().internalInterface.recordCompletedNetworkRequest(
-                        url = URL,
-                        httpMethod = "GET",
-                        startTime = START_TIME,
-                        endTime = END_TIME,
-                        bytesSent = 0L,
-                        bytesReceived = 0L,
-                        statusCode = 500,
-                        traceId = null,
-                        networkCaptureData = null
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
+                            url = URL,
+                            httpMethod = HttpMethod.GET,
+                            startTime = START_TIME,
+                            endTime = END_TIME,
+                            bytesSent = 0L,
+                            bytesReceived = 0L,
+                            statusCode = 500,
+                            traceId = null,
+                            networkCaptureData = null
+                        )
                     )
 
-                    EmbraceInternalApi.getInstance().internalInterface.recordIncompleteNetworkRequest(
-                        url = URL,
-                        httpMethod = "GET",
-                        startTime = START_TIME,
-                        endTime = END_TIME,
-                        error = NullPointerException(),
-                        traceId = null,
-                        networkCaptureData = null
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromIncompleteRequest(
+                            url = URL,
+                            httpMethod = HttpMethod.GET,
+                            startTime = START_TIME,
+                            endTime = END_TIME,
+                            errorType = NullPointerException::class.java.name,
+                            errorMessage = "",
+                            traceId = null,
+                            networkCaptureData = null
+                        )
                     )
 
-                    EmbraceInternalApi.getInstance().internalInterface.recordIncompleteNetworkRequest(
-                        url = URL,
-                        httpMethod = "GET",
-                        startTime = START_TIME,
-                        endTime = END_TIME,
-                        errorType = SocketException::class.java.canonicalName,
-                        errorMessage = "",
-                        traceId = null,
-                        networkCaptureData = null
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromIncompleteRequest(
+                            url = URL,
+                            httpMethod = HttpMethod.GET,
+                            startTime = START_TIME,
+                            endTime = END_TIME,
+                            errorType = SocketException::class.java.name,
+                            errorMessage = "",
+                            traceId = null,
+                            networkCaptureData = null
+                        )
                     )
 
-                    EmbraceInternalApi.getInstance().internalInterface.recordNetworkRequest(
-                        embraceNetworkRequest = EmbraceNetworkRequest.fromCompletedRequest(
+                    embrace.recordNetworkRequest(
+                        EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
                             HttpMethod.POST,
                             START_TIME,

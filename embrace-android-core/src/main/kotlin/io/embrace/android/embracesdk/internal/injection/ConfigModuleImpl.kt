@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.EmbraceConfigService
+import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.RemoteConfigSourceImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -21,7 +21,7 @@ internal class ConfigModuleImpl(
 
     override val configService: ConfigService by singleton {
         Systrace.traceSynchronous("config-service-init") {
-            EmbraceConfigService(
+            ConfigServiceImpl(
                 openTelemetryCfg = openTelemetryModule.openTelemetryConfiguration,
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,

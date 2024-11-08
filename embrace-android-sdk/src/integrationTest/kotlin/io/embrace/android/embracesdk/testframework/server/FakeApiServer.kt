@@ -29,6 +29,7 @@ internal class FakeApiServer(private val remoteConfig: RemoteConfig) : Dispatche
     private val serializer by threadLocal { TestPlatformSerializer() }
     private val sessionRequests = ConcurrentLinkedQueue<Envelope<SessionPayload>>()
     private val logRequests = ConcurrentLinkedQueue<Envelope<LogPayload>>()
+    private val configRequests = ConcurrentLinkedQueue<String>()
     private val configResponse by lazy {
         serializer.toJson(remoteConfig)
     }
@@ -43,10 +44,18 @@ internal class FakeApiServer(private val remoteConfig: RemoteConfig) : Dispatche
      */
     fun getLogEnvelopes(): List<Envelope<LogPayload>> = logRequests.toList()
 
+    /**
+     * Returns a list of config requests in the order in which the server received them.
+     * The returned value is the query parameter.
+     */
+    fun getConfigRequests(): List<String> = configRequests.toList()
+
     override fun dispatch(request: RecordedRequest): MockResponse {
         return when (val endpoint = request.asEndpoint()) {
             Endpoint.LOGS, Endpoint.SESSIONS -> handleEnvelopeRequest(request, endpoint)
-            Endpoint.CONFIG -> handleConfigRequest() // IMPORTANT NOTE: this response is not used until the SDK next starts!
+
+            // IMPORTANT NOTE: this response is not used until the SDK next starts!
+            Endpoint.CONFIG -> handleConfigRequest(request)
         }
     }
 
@@ -58,16 +67,18 @@ internal class FakeApiServer(private val remoteConfig: RemoteConfig) : Dispatche
         val envelope = deserializeEnvelope(request, endpoint)
         validateHeaders(request.headers.toMultimap().mapValues { it.value.joinToString() })
 
-        val response = MockResponse().setResponseCode(200)
         when (endpoint) {
             Endpoint.SESSIONS -> sessionRequests.add(envelope as Envelope<SessionPayload>)
             Endpoint.LOGS -> logRequests.add(envelope as Envelope<LogPayload>)
-            Endpoint.CONFIG -> response.setBody(configResponse)
+            else -> error("Unsupported endpoint $endpoint")
         }
-        return response
+        return MockResponse().setResponseCode(200)
     }
 
-    private fun handleConfigRequest() = MockResponse().setBody(configResponse).setResponseCode(200)
+    private fun handleConfigRequest(request: RecordedRequest): MockResponse {
+        configRequests.add(request.requestUrl?.toUrl()?.query)
+        return MockResponse().setBody(configResponse).setResponseCode(200)
+    }
 
     private fun validateHeaders(headers: Map<String, String>) {
         with(headers) {

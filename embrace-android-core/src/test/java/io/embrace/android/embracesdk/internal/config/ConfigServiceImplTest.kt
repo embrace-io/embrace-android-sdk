@@ -34,10 +34,10 @@ import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
 
-internal class EmbraceConfigServiceTest {
+internal class ConfigServiceImplTest {
 
     private lateinit var fakePreferenceService: PreferencesService
-    private lateinit var service: EmbraceConfigService
+    private lateinit var service: ConfigServiceImpl
     private lateinit var worker: BackgroundWorker
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var thresholdCheck: BehaviorThresholdCheck
@@ -222,7 +222,7 @@ internal class EmbraceConfigServiceTest {
     }
 
     /**
-     * Create a new instance of the [EmbraceConfigService] using the passed in [worker] to run
+     * Create a new instance of the [ConfigServiceImpl] using the passed in [worker] to run
      * tasks for its internal [BackgroundWorker]
      */
     private fun createService(
@@ -234,14 +234,14 @@ internal class EmbraceConfigServiceTest {
             SystemInfo()
         ),
         appId: String? = "AbCdE",
-    ): EmbraceConfigService {
+    ): ConfigServiceImpl {
         thresholdCheck = BehaviorThresholdCheck { fakePreferenceService.deviceIdentifier }
         remoteConfigSource = RemoteConfigSourceImpl(
             clock = fakeClock,
             backgroundWorker = worker,
             foregroundAction = action,
         )
-        return EmbraceConfigService(
+        return ConfigServiceImpl(
             openTelemetryCfg = config,
             preferencesService = fakePreferenceService,
             suppliedFramework = AppFramework.NATIVE,

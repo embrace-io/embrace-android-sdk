@@ -52,7 +52,7 @@ internal class EmbraceApiServiceTest {
             coreBaseUrl = "https://a-$fakeAppId.data.emb-api.com",
             configBaseUrl = "https://a-$fakeAppId.config.emb-api.com",
             appId = fakeAppId,
-            lazyDeviceId = lazy { fakeDeviceId },
+            deviceIdImpl = lazy { fakeDeviceId },
             lazyAppVersionName = lazy { fakeAppVersionName }
         )
         fakeApiClient = FakeApiClient()

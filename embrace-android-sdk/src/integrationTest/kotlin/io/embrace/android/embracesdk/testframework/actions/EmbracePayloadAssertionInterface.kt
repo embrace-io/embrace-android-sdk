@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
-import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
@@ -32,8 +31,11 @@ internal class EmbracePayloadAssertionInterface(
     private val apiServer: FakeApiServer?,
 ) {
 
+    companion object {
+        private const val WAIT_TIME_MS = 10000
+    }
+
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
-    private val requestExecutionService by lazy { bootstrapper.deliveryModule.requestExecutionService as FakeRequestExecutionService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
     private val nativeCrashService by lazy {
         bootstrapper.nativeFeatureModule.nativeCrashService as FakeNativeCrashService
@@ -53,17 +55,6 @@ internal class EmbracePayloadAssertionInterface(
 
     internal fun getSingleLogEnvelope(): Envelope<LogPayload> {
         return getLogEnvelopes(1).single()
-    }
-
-    /**
-     * Returns a list of logs that were completed by the SDK & sent to a mock web server.
-     */
-    internal fun getLogEnvelopesFromMockServer(
-        expectedSize: Int,
-    ): List<Envelope<LogPayload>> {
-        return retrievePayload(expectedSize) {
-            checkNotNull(apiServer).getLogEnvelopes()
-        }
     }
 
     private fun retrieveLogEnvelopes(
@@ -136,7 +127,7 @@ internal class EmbracePayloadAssertionInterface(
     internal fun getSessionEnvelopes(
         expectedSize: Int,
         state: ApplicationState = ApplicationState.FOREGROUND,
-        waitTimeMs: Int = 1000,
+        waitTimeMs: Int = WAIT_TIME_MS,
     ): List<Envelope<SessionPayload>> {
         return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
     }
@@ -179,6 +170,24 @@ internal class EmbracePayloadAssertionInterface(
         }
         val value = state.uppercase(Locale.ENGLISH)
         return ApplicationState.valueOf(value)
+    }
+
+
+    /*** Config ***/
+
+
+    internal fun assertConfigRequested(expectedRequests: Int) {
+        val supplier = {
+            checkNotNull(apiServer).getConfigRequests()
+        }
+        try {
+            retrievePayload(expectedRequests, supplier)
+        } catch (exc: TimeoutException) {
+            throw IllegalStateException(
+                "Expected $expectedRequests config requests, but got ${supplier().size}.",
+                exc
+            )
+        }
     }
 
     /*** Native ***/
@@ -247,14 +256,14 @@ internal class EmbracePayloadAssertionInterface(
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
         supplier: () -> List<T>,
-    ): List<T> = retrievePayload(expectedSize, 1000, supplier)
+    ): List<T> = retrievePayload(expectedSize, WAIT_TIME_MS, supplier)
 
     /**
      * Retrieves a payload that was stored in the delivery service.
      */
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
-        waitTimeMs: Int = 1000,
+        waitTimeMs: Int = WAIT_TIME_MS,
         supplier: () -> List<T>,
     ): List<T> {
         return when (expectedSize) {

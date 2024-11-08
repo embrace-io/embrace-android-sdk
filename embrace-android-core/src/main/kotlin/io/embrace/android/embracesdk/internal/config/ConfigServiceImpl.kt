@@ -39,7 +39,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 /**
  * Loads configuration for the app from the Embrace API.
  */
-internal class EmbraceConfigService(
+internal class ConfigServiceImpl(
     openTelemetryCfg: OpenTelemetryConfiguration,
     preferencesService: PreferencesService,
     suppliedFramework: AppFramework,

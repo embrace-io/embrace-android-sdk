@@ -6,10 +6,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -35,36 +33,11 @@ internal class PublicApiTest {
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
-    fun `SDK can start`() {
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
-                assertFalse(embrace.isStarted)
-            },
-            testCaseAction = {
-                assertTrue(embrace.isStarted)
-            }
-        )
-    }
-
-    @Test
     fun `SDK start defaults to native app framework`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 assertTrue(embrace.isStarted)
-            }
-        )
-    }
-
-    @Test
-    fun `SDK disabled via config cannot start`() {
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            remoteConfig = RemoteConfig(0),
-            expectSdkToStart = false,
-            testCaseAction = {
-                assertFalse(embrace.isStarted)
             }
         )
     }

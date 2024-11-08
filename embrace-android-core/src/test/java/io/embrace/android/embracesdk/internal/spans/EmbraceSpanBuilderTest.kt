@@ -156,7 +156,7 @@ internal class EmbraceSpanBuilderTest {
     }
 
     @Test
-    fun `perf and activity_open spans are key spans if parent is null`() {
+    fun `perf and ui_load spans are key spans if parent is null`() {
         val perfSpanBuilder = EmbraceSpanBuilder(
             tracer = tracer,
             name = "test",
@@ -171,7 +171,7 @@ internal class EmbraceSpanBuilderTest {
         val activityOpenSpanBuilder = EmbraceSpanBuilder(
             tracer = tracer,
             name = "test",
-            telemetryType = EmbType.Performance.ActivityOpen,
+            telemetryType = EmbType.Performance.UiLoad,
             internal = false,
             private = false,
             parentSpan = null,

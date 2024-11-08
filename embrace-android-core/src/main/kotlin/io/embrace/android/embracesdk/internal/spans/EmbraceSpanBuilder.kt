@@ -85,7 +85,7 @@ class EmbraceSpanBuilder(
     }
 
     private fun updateKeySpan() {
-        if (fixedAttributes.contains(EmbType.Performance.Default) || fixedAttributes.contains(EmbType.Performance.ActivityOpen)) {
+        if (fixedAttributes.contains(EmbType.Performance.Default) || fixedAttributes.contains(EmbType.Performance.UiLoad)) {
             if (getParentSpan() == null) {
                 fixedAttributes.add(KeySpan)
             } else {

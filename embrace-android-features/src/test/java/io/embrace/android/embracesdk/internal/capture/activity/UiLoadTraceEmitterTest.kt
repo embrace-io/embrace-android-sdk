@@ -20,11 +20,11 @@ import kotlin.math.max
 import kotlin.math.min
 
 @RunWith(AndroidJUnit4::class)
-internal class OpenTraceEmitterTest {
+internal class UiLoadTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
-    private lateinit var traceEmitter: OpenTraceEmitter
+    private lateinit var traceEmitter: UiLoadTraceEmitter
 
     @Before
     fun setUp() {
@@ -34,7 +34,7 @@ internal class OpenTraceEmitterTest {
         spanService = initModule.openTelemetryModule.spanService
         spanService.initializeService(clock.now())
         clock.tick(100L)
-        traceEmitter = OpenTraceEmitter(
+        traceEmitter = UiLoadTraceEmitter(
             spanService = spanService,
             versionChecker = BuildVersionChecker,
         )
@@ -45,7 +45,7 @@ internal class OpenTraceEmitterTest {
     fun `verify cold open trace from another activity in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
-            openType = OpenType.COLD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -57,7 +57,7 @@ internal class OpenTraceEmitterTest {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_ACTIVITY,
-            openType = OpenType.COLD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -68,8 +68,8 @@ internal class OpenTraceEmitterTest {
     @Test
     fun `verify cold open trace from an interrupted opening of another activity in U`() {
         verifyOpen(
-            previousState = PreviousState.FROM_INTERRUPTED_ACTIVITY_OPEN,
-            openType = OpenType.COLD,
+            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -81,8 +81,8 @@ internal class OpenTraceEmitterTest {
     fun `verify cold open trace from an interrupted opening of the same activity in U`() {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
-            previousState = PreviousState.FROM_INTERRUPTED_ACTIVITY_OPEN,
-            openType = OpenType.COLD,
+            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -93,7 +93,7 @@ internal class OpenTraceEmitterTest {
     fun `verify cold open trace from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
-            openType = OpenType.COLD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -104,7 +104,7 @@ internal class OpenTraceEmitterTest {
     fun `verify hot open trace in from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
-            openType = OpenType.HOT,
+            uiLoadType = UiLoadType.HOT,
             firePreAndPost = true,
             hasRenderEvent = true,
         )
@@ -115,7 +115,7 @@ internal class OpenTraceEmitterTest {
     fun `verify cold open trace in from another activity L`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
-            openType = OpenType.COLD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = false,
             hasRenderEvent = false,
         )
@@ -126,7 +126,7 @@ internal class OpenTraceEmitterTest {
     fun `verify cold open trace from background in L`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
-            openType = OpenType.COLD,
+            uiLoadType = UiLoadType.COLD,
             firePreAndPost = false,
             hasRenderEvent = false,
         )
@@ -137,7 +137,7 @@ internal class OpenTraceEmitterTest {
     fun `verify hot open trace in L from background`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
-            openType = OpenType.HOT,
+            uiLoadType = UiLoadType.HOT,
             firePreAndPost = false,
             hasRenderEvent = false,
         )
@@ -149,7 +149,7 @@ internal class OpenTraceEmitterTest {
         lastActivityName: String = LAST_ACTIVITY_NAME,
         lastInstanceId: Int = LAST_ACTIVITY_INSTANCE_ID,
         previousState: PreviousState,
-        openType: OpenType,
+        uiLoadType: UiLoadType,
         firePreAndPost: Boolean,
         hasRenderEvent: Boolean,
     ) {
@@ -159,12 +159,12 @@ internal class OpenTraceEmitterTest {
             lastActivityName = lastActivityName,
             lastInstanceId = lastInstanceId,
             previousState = previousState,
-            openType = openType,
+            uiLoadType = uiLoadType,
             firePreAndPost = firePreAndPost,
             hasRenderEvent = hasRenderEvent
         ).let { timestamps ->
             val spanMap = spanSink.completedSpans().associateBy { it.name }
-            val trace = checkNotNull(spanMap["emb-$activityName-${openType.typeName}-open"])
+            val trace = checkNotNull(spanMap["emb-$activityName-${uiLoadType.typeName}-time-to-initial-display"])
 
             assertEmbraceSpanData(
                 span = trace.toNewPayload(),
@@ -175,8 +175,8 @@ internal class OpenTraceEmitterTest {
             )
 
             val events = timestamps.third
-            if (openType == OpenType.COLD) {
-                checkNotNull(events[OpenTraceEmitter.LifecycleEvent.CREATE]).run {
+            if (uiLoadType == UiLoadType.COLD) {
+                checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.CREATE]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-create"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
@@ -188,7 +188,7 @@ internal class OpenTraceEmitterTest {
                 assertNull(spanMap["emb-$activityName-create"])
             }
 
-            checkNotNull(events[OpenTraceEmitter.LifecycleEvent.START]).run {
+            checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.START]).run {
                 assertEmbraceSpanData(
                     span = checkNotNull(spanMap["emb-$activityName-start"]).toNewPayload(),
                     expectedStartTimeMs = startMs(),
@@ -198,7 +198,7 @@ internal class OpenTraceEmitterTest {
             }
 
             if (hasRenderEvent) {
-                checkNotNull(events[OpenTraceEmitter.LifecycleEvent.RESUME]).run {
+                checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.RESUME]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-resume"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
@@ -206,7 +206,7 @@ internal class OpenTraceEmitterTest {
                         expectedParentId = trace.spanId
                     )
                 }
-                checkNotNull(events[OpenTraceEmitter.LifecycleEvent.RENDER]).run {
+                checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.RENDER]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-render"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
@@ -228,25 +228,25 @@ internal class OpenTraceEmitterTest {
         lastActivityName: String,
         lastInstanceId: Int,
         previousState: PreviousState,
-        openType: OpenType,
+        uiLoadType: UiLoadType,
         firePreAndPost: Boolean,
         hasRenderEvent: Boolean,
-    ): Triple<Long, Long, Map<OpenTraceEmitter.LifecycleEvent, LifecycleEvents>> {
-        val events = mutableMapOf<OpenTraceEmitter.LifecycleEvent, LifecycleEvents>()
+    ): Triple<Long, Long, Map<UiLoadTraceEmitter.LifecycleEvent, LifecycleEvents>> {
+        val events = mutableMapOf<UiLoadTraceEmitter.LifecycleEvent, LifecycleEvents>()
         val lastActivityExitMs = clock.now()
         clock.tick(100L)
 
         when (previousState) {
             PreviousState.FROM_ACTIVITY -> {
-                traceEmitter.resetTrace(lastInstanceId, lastActivityName, lastActivityExitMs)
+                traceEmitter.abandon(lastInstanceId, lastActivityName, lastActivityExitMs)
             }
 
             PreviousState.FROM_BACKGROUND -> {
-                traceEmitter.resetTrace(lastInstanceId, lastActivityName, lastActivityExitMs)
-                traceEmitter.hibernate(lastInstanceId, lastActivityName, clock.now())
+                traceEmitter.abandon(lastInstanceId, lastActivityName, lastActivityExitMs)
+                traceEmitter.reset(lastInstanceId)
             }
 
-            PreviousState.FROM_INTERRUPTED_ACTIVITY_OPEN -> {
+            PreviousState.FROM_INTERRUPTED_LOAD -> {
                 activityCreate(
                     activityName = lastActivityName,
                     instanceId = lastInstanceId,
@@ -260,7 +260,7 @@ internal class OpenTraceEmitterTest {
             }
         }
 
-        val createEvents = if (openType == OpenType.COLD) {
+        val createEvents = if (uiLoadType == UiLoadType.COLD) {
             activityCreate(
                 activityName = activityName,
                 instanceId = instanceId,
@@ -269,7 +269,7 @@ internal class OpenTraceEmitterTest {
         } else {
             null
         }?.apply {
-            events[OpenTraceEmitter.LifecycleEvent.CREATE] = this
+            events[UiLoadTraceEmitter.LifecycleEvent.CREATE] = this
         }
 
         val startEvents = activityStart(
@@ -277,7 +277,7 @@ internal class OpenTraceEmitterTest {
             instanceId = instanceId,
             firePreAndPost = firePreAndPost
         ).apply {
-            events[OpenTraceEmitter.LifecycleEvent.START] = this
+            events[UiLoadTraceEmitter.LifecycleEvent.START] = this
         }
 
         val resumeEvents = activityResume(
@@ -285,7 +285,7 @@ internal class OpenTraceEmitterTest {
             instanceId = instanceId,
             firePreAndPost = firePreAndPost
         ).apply {
-            events[OpenTraceEmitter.LifecycleEvent.RESUME] = this
+            events[UiLoadTraceEmitter.LifecycleEvent.RESUME] = this
         }
 
         val renderEvents = if (hasRenderEvent) {
@@ -297,7 +297,7 @@ internal class OpenTraceEmitterTest {
         } else {
             null
         }?.apply {
-            events[OpenTraceEmitter.LifecycleEvent.RENDER] = this
+            events[UiLoadTraceEmitter.LifecycleEvent.RENDER] = this
         }
 
         val traceStartMs = if (previousState != PreviousState.FROM_BACKGROUND) {
@@ -415,7 +415,7 @@ internal class OpenTraceEmitterTest {
     private enum class PreviousState {
         FROM_ACTIVITY,
         FROM_BACKGROUND,
-        FROM_INTERRUPTED_ACTIVITY_OPEN
+        FROM_INTERRUPTED_LOAD
     }
 
     companion object {

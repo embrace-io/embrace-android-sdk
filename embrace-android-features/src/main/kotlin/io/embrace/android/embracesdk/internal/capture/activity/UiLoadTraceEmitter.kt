@@ -11,13 +11,17 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Observes Activity lifecycle and rendering events to create traces that model the workflow for showing an Activity on screen after
- * app startup has completed. This creates traces for both types of Activity opening specified in [OpenType].
+ * Observes [UiLoadEvents] to create traces that model the workflow for displaying UI on screen.
+ * This will record traces for all [UiLoadType] but will ignore any UI load that is part of the app startup workflow.
  *
  * Depending on the version of Android and the state of the app, the start, end, and intermediate stages of the workflow will use
- * timestamps from different events, which affects the precision of the measurement.
+ * timestamps from different events, which affects the precision of the measurements as well as the child spans contained in the trace.
  *
- * The start for [OpenType.COLD]:
+ * An assumption that there can only be one activity going through its the activity lifecycle at a time. If we see events
+ * that come from a different Activity instance than the last one processed, we assume that last one's loading has been
+ * interrupted so any load traces associated with it can be abandoned.
+ *
+ * The start for [UiLoadType.COLD]:
  *
  * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPostPaused] is fired, denoting that the previous activity has completed
  *   its [ActivityLifecycleCallbacks.onActivityPaused] callbacks and a new Activity is ready to be created.
@@ -26,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference
  *   process of exiting. This will possibly result in some cleanup work of exiting the previous activity being included in the duration
  *   of the next trace that is logged.
  *
- *  The start for [OpenType.HOT]
+ *  The start for [UiLoadType.HOT]
  *
  * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPreStarted] is fired, denoting that an existing Activity instance is ready
  *   to be started
@@ -35,29 +39,29 @@ import java.util.concurrent.atomic.AtomicReference
  *   process of starting. This will possibly result in some of the work to start the activity already having happened depending on the
  *   other callbacks that have been registered.
  *
- * The end for both [OpenType.COLD] and [OpenType.HOT]:
+ * The end for both [UiLoadType.COLD] and [UiLoadType.HOT]:
  *
  * - Android 10+, when the Activity's first UI frame finishes rendering and is delivered to the screen
  *
  * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
  */
-class OpenTraceEmitter(
+class UiLoadTraceEmitter(
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
-) : OpenEvents {
+) : UiLoadEvents {
 
-    private val activeTraces: MutableMap<Int, ActivityOpenTrace> = ConcurrentHashMap()
-    private val traceZygoteHolder: AtomicReference<OpenTraceZygote> = AtomicReference(INITIAL)
+    private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
+    private val traceZygoteHolder: AtomicReference<UiLoadTraceZygote> = AtomicReference(INITIAL)
     private var currentTracedInstanceId: Int? = null
 
-    override fun resetTrace(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
         currentTracedInstanceId?.let { currentlyTracedInstanceId ->
             if (instanceId != currentlyTracedInstanceId) {
                 endTrace(instanceId = currentlyTracedInstanceId, timestampMs = timestampMs, errorCode = ErrorCode.USER_ABANDON)
             }
         }
         traceZygoteHolder.set(
-            OpenTraceZygote(
+            UiLoadTraceZygote(
                 lastActivityName = activityName,
                 lastActivityInstanceId = instanceId,
                 lastActivityPausedTimeMs = timestampMs
@@ -65,7 +69,7 @@ class OpenTraceEmitter(
         )
     }
 
-    override fun hibernate(instanceId: Int, activityName: String, timestampMs: Long) {
+    override fun reset(instanceId: Int) {
         if (traceZygoteHolder.get().lastActivityInstanceId == instanceId) {
             traceZygoteHolder.set(BACKGROUNDED)
         }
@@ -73,7 +77,7 @@ class OpenTraceEmitter(
 
     override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
         startTrace(
-            openType = OpenType.COLD,
+            uiLoadType = UiLoadType.COLD,
             instanceId = instanceId,
             activityName = activityName,
             timestampMs = timestampMs
@@ -95,7 +99,7 @@ class OpenTraceEmitter(
 
     override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
         startTrace(
-            openType = OpenType.HOT,
+            uiLoadType = UiLoadType.HOT,
             instanceId = instanceId,
             activityName = activityName,
             timestampMs = timestampMs
@@ -160,7 +164,7 @@ class OpenTraceEmitter(
     }
 
     private fun startTrace(
-        openType: OpenType,
+        uiLoadType: UiLoadType,
         instanceId: Int,
         activityName: String,
         timestampMs: Long
@@ -178,14 +182,14 @@ class OpenTraceEmitter(
             }
 
             spanService.startSpan(
-                name = traceName(activityName, openType),
-                type = EmbType.Performance.ActivityOpen,
+                name = traceName(activityName, uiLoadType),
+                type = EmbType.Performance.UiLoad,
                 startTimeMs = startTimeMs,
             )?.let { root ->
                 if (zygote.lastActivityInstanceId != -1) {
                     root.addSystemAttribute("last_activity", zygote.lastActivityName)
                 }
-                activeTraces[instanceId] = ActivityOpenTrace(root = root, activityName = activityName)
+                activeTraces[instanceId] = UiLoadTrace(root = root, activityName = activityName)
             }
         }
     }
@@ -228,8 +232,8 @@ class OpenTraceEmitter(
 
     private fun traceName(
         activityName: String,
-        openType: OpenType
-    ): String = "$activityName-${openType.typeName}-open"
+        uiLoadType: UiLoadType
+    ): String = "$activityName-${uiLoadType.typeName}-time-to-initial-display"
 
     enum class LifecycleEvent(private val typeName: String) {
         CREATE("create"),
@@ -240,13 +244,13 @@ class OpenTraceEmitter(
         fun spanName(activityName: String): String = "$activityName-$typeName"
     }
 
-    private data class ActivityOpenTrace(
+    private data class UiLoadTrace(
         val activityName: String,
         val root: PersistableEmbraceSpan,
         val children: Map<LifecycleEvent, PersistableEmbraceSpan> = ConcurrentHashMap(),
     )
 
-    private data class OpenTraceZygote(
+    private data class UiLoadTraceZygote(
         val lastActivityName: String,
         val lastActivityInstanceId: Int,
         val lastActivityPausedTimeMs: Long,
@@ -256,19 +260,19 @@ class OpenTraceEmitter(
         const val INVALID_INSTANCE: Int = -1
         const val INVALID_TIME: Long = -1L
 
-        val INITIAL = OpenTraceZygote(
+        val INITIAL = UiLoadTraceZygote(
             lastActivityName = "NEW_APP_LAUNCH",
             lastActivityInstanceId = INVALID_INSTANCE,
             lastActivityPausedTimeMs = INVALID_TIME
         )
 
-        val READY = OpenTraceZygote(
+        val READY = UiLoadTraceZygote(
             lastActivityName = "READY",
             lastActivityInstanceId = INVALID_INSTANCE,
             lastActivityPausedTimeMs = INVALID_TIME
         )
 
-        val BACKGROUNDED = OpenTraceZygote(
+        val BACKGROUNDED = UiLoadTraceZygote(
             lastActivityName = "BACKGROUNDED",
             lastActivityInstanceId = INVALID_INSTANCE,
             lastActivityPausedTimeMs = INVALID_TIME

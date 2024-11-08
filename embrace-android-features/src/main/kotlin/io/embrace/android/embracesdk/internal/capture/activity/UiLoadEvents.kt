@@ -1,20 +1,21 @@
 package io.embrace.android.embracesdk.internal.capture.activity
 
 /**
- * The relevant stages in the lifecycle of Activities pertaining to observing the performance of their loading
+ * Relevant events in during the lifecycle of UI loading. Listeners to these events should gather the data and log
+ * the appropriate loading traces and spans given the associated Activity.
  */
-interface OpenEvents {
+interface UiLoadEvents {
 
     /**
-     * When a previously in-progress Activity Open trace should be abandoned, and that the component managing
-     * the trace recording should prepare itself to start tracing the opening of a new Activity instance.
+     * When we no longer wish to observe the loading of the given Activity instance. This may be called during its load
+     * or after it has loaded. Calls to this for a given Activity instance is idempotent
      */
-    fun resetTrace(instanceId: Int, activityName: String, timestampMs: Long)
+    fun abandon(instanceId: Int, activityName: String, timestampMs: Long)
 
     /**
      * When the app is no longer in a state where it is trying to open up a new Activity
      */
-    fun hibernate(instanceId: Int, activityName: String, timestampMs: Long)
+    fun reset(instanceId: Int)
 
     /**
      * When the given Activity is entering the CREATE stage of its lifecycle.

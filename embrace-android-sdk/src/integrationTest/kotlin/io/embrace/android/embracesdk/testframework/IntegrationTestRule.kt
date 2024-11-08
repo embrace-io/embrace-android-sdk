@@ -104,7 +104,7 @@ internal class IntegrationTestRule(
      * assertions. This aims to enforce the better compartmentalisation & reuse of test code within
      * the integration test suite.
      */
-    inline fun runTest(
+    fun runTest(
         startSdk: Boolean = true,
         instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
         remoteConfig: RemoteConfig = RemoteConfig(),

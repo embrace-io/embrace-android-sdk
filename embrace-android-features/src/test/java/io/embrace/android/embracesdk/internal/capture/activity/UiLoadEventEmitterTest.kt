@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallb
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
-import io.embrace.android.embracesdk.internal.capture.activity.OpenEventEmitterTest.FakeOpenEvents.EventData
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventEmitterTest.FakeOpenEvents.EventData
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -21,10 +21,10 @@ import org.robolectric.android.controller.ActivityController
 import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
-internal class OpenEventEmitterTest {
+internal class UiLoadEventEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var openEvents: FakeOpenEvents
-    private lateinit var eventEmitter: OpenEventEmitter
+    private lateinit var eventEmitter: UiLoadEventEmitter
     private lateinit var activityController: ActivityController<*>
     private var startTimeMs: Long = 0L
     private var instanceId = 0
@@ -36,8 +36,8 @@ internal class OpenEventEmitterTest {
         val initModule = FakeInitModule(clock = clock)
         clock.tick(100L)
         openEvents = FakeOpenEvents()
-        eventEmitter = OpenEventEmitter(
-            openEvents = openEvents,
+        eventEmitter = UiLoadEventEmitter(
+            uiLoadEvents = openEvents,
             clock = initModule.openTelemetryModule.openTelemetryClock,
             versionChecker = BuildVersionChecker,
         )
@@ -82,12 +82,11 @@ internal class OpenEventEmitterTest {
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3
                 ),
                 createEvent(
-                    stage = "resetTrace",
+                    stage = "abandon",
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
                 ),
                 createEvent(
-                    stage = "hibernate",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 4 + STATE_DURATION
+                    stage = "reset",
                 ),
             )
         )
@@ -116,12 +115,11 @@ internal class OpenEventEmitterTest {
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2
                 ),
                 createEvent(
-                    stage = "resetTrace",
+                    stage = "abandon",
                     timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 2 + PRE_DURATION
                 ),
                 createEvent(
-                    stage = "hibernate",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + STATE_DURATION
+                    stage = "reset",
                 ),
             )
         )
@@ -154,12 +152,11 @@ internal class OpenEventEmitterTest {
                     timestampMs = startTimeMs + STATE_DURATION * 3
                 ),
                 createEvent(
-                    stage = "resetTrace",
+                    stage = "abandon",
                     timestampMs = startTimeMs + STATE_DURATION * 4
                 ),
                 createEvent(
-                    stage = "hibernate",
-                    timestampMs = startTimeMs + STATE_DURATION * 5
+                    stage = "reset",
                 ),
             )
         )
@@ -188,12 +185,11 @@ internal class OpenEventEmitterTest {
                     timestampMs = startTimeMs + STATE_DURATION * 2
                 ),
                 createEvent(
-                    stage = "resetTrace",
+                    stage = "abandon",
                     timestampMs = startTimeMs + STATE_DURATION * 3
                 ),
                 createEvent(
-                    stage = "hibernate",
-                    timestampMs = startTimeMs + STATE_DURATION * 4
+                    stage = "reset",
                 ),
             )
         )
@@ -217,7 +213,7 @@ internal class OpenEventEmitterTest {
         assertEquals(expectedEvents.map { it.stage to it.timestampMs }, map { it.stage to it.timestampMs })
     }
 
-    private fun createEvent(stage: String, timestampMs: Long) =
+    private fun createEvent(stage: String, timestampMs: Long? = null) =
         EventData(
             stage = stage,
             instanceId = instanceId,
@@ -225,13 +221,13 @@ internal class OpenEventEmitterTest {
             timestampMs = timestampMs
         )
 
-    class FakeOpenEvents : OpenEvents {
+    class FakeOpenEvents : UiLoadEvents {
         val events = mutableListOf<EventData>()
 
-        override fun resetTrace(instanceId: Int, activityName: String, timestampMs: Long) {
+        override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
             events.add(
                 EventData(
-                    stage = "resetTrace",
+                    stage = "abandon",
                     instanceId = instanceId,
                     activityName = activityName,
                     timestampMs = timestampMs
@@ -239,13 +235,11 @@ internal class OpenEventEmitterTest {
             )
         }
 
-        override fun hibernate(instanceId: Int, activityName: String, timestampMs: Long) {
+        override fun reset(instanceId: Int) {
             events.add(
                 EventData(
-                    stage = "hibernate",
+                    stage = "reset",
                     instanceId = instanceId,
-                    activityName = activityName,
-                    timestampMs = timestampMs
                 )
             )
         }
@@ -339,7 +333,7 @@ internal class OpenEventEmitterTest {
             val stage: String,
             val instanceId: Int,
             val activityName: String? = null,
-            val timestampMs: Long,
+            val timestampMs: Long? = null,
         )
     }
 }

@@ -10,16 +10,16 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.opentelemetry.sdk.common.Clock
 
 /**
- * Maps [ActivityLifecycleCallbacks] events to [OpenEvents] depending on the current state of the app and capabilities of the OS.
+ * Maps [ActivityLifecycleCallbacks] events to [UiLoadEvents] depending on the current state of the app and capabilities of the OS.
  *
  * The purpose of this is to leverage Activity lifecycle events to provide data for the underlying workflow to bring a new Activity on
  * screen. Due to the varying capabilities of the APIs available on the different versions of Android, the precise triggering events for
  * the start and intermediate steps may differ.
  *
- * See [OpenTraceEmitter] for details.
+ * See [UiLoadTraceEmitter] for details.
  */
-class OpenEventEmitter(
-    private val openEvents: OpenEvents,
+class UiLoadEventEmitter(
+    private val uiLoadEvents: UiLoadEvents,
     private val clock: Clock,
     private val versionChecker: VersionChecker,
 ) : ActivityLifecycleListener {
@@ -69,37 +69,35 @@ class OpenEventEmitter(
     }
 
     override fun onActivityPrePaused(activity: Activity) {
-        resetTrace(activity)
+        abandonTrace(activity)
     }
 
     override fun onActivityPaused(activity: Activity) {
         if (!versionChecker.firePrePostEvents()) {
-            resetTrace(activity)
+            abandonTrace(activity)
         }
     }
 
     override fun onActivityStopped(activity: Activity) {
-        hibernate(activity)
+        reset(activity)
     }
 
-    private fun resetTrace(activity: Activity) {
-        openEvents.resetTrace(
+    private fun abandonTrace(activity: Activity) {
+        uiLoadEvents.abandon(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
         )
     }
 
-    private fun hibernate(activity: Activity) {
-        openEvents.hibernate(
+    private fun reset(activity: Activity) {
+        uiLoadEvents.reset(
             instanceId = traceInstanceId(activity),
-            activityName = activity.localClassName,
-            timestampMs = nowMs()
         )
     }
 
     private fun create(activity: Activity) {
-        openEvents.create(
+        uiLoadEvents.create(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -107,14 +105,14 @@ class OpenEventEmitter(
     }
 
     private fun createEnd(activity: Activity) {
-        openEvents.createEnd(
+        uiLoadEvents.createEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
         )
     }
 
     private fun start(activity: Activity) {
-        openEvents.start(
+        uiLoadEvents.start(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -122,14 +120,14 @@ class OpenEventEmitter(
     }
 
     private fun startEnd(activity: Activity) {
-        openEvents.startEnd(
+        uiLoadEvents.startEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
         )
     }
 
     private fun resume(activity: Activity) {
-        openEvents.resume(
+        uiLoadEvents.resume(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -137,7 +135,7 @@ class OpenEventEmitter(
     }
 
     private fun resumeEnd(activity: Activity) {
-        openEvents.resumeEnd(
+        uiLoadEvents.resumeEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
         )

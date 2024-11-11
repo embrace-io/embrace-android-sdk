@@ -1,47 +1,15 @@
 package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.util.concurrent.Callable
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
 internal class EmbracePreferencesService(
-    private val backgroundWorker: BackgroundWorker,
-    private val lazyPrefs: Lazy<SharedPreferences>,
+    private val prefs: SharedPreferences,
     private val clock: Clock,
     private val serializer: PlatformSerializer,
 ) : PreferencesService {
-
-    // We get SharedPreferences on a background thread because it loads data from disk
-    // and can block. When client code needs to set/get a preference, getSharedPrefs() will
-    // block if necessary with Future.get(). Eagerly offloading buys us more time
-    // for SharedPreferences to load the File and reduces the likelihood of blocking
-    // when invoked by client code.
-    private val preferences: Future<SharedPreferences> = Systrace.traceSynchronous("trigger-load-prefs") {
-        backgroundWorker.submit(
-            callable = Callable {
-                Systrace.traceSynchronous("load-prefs") {
-                    lazyPrefs.value
-                }
-            }
-        )
-    }
-
-    // fallback from this very unlikely case by just loading on the main thread
-    private val prefs: SharedPreferences
-        get() = try {
-            Systrace.traceSynchronous("get-prefs") {
-                preferences.get(2, TimeUnit.SECONDS)
-            }
-        } catch (exc: Throwable) {
-            // fallback from this very unlikely case by just loading on the main thread
-            lazyPrefs.value
-        }
 
     private fun SharedPreferences.getStringPreference(key: String): String? {
         return getString(key, null)

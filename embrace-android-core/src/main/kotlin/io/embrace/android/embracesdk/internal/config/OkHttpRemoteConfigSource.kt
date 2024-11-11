@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.api.getHeaders
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -25,7 +26,7 @@ internal class OkHttpRemoteConfigSource(
     }
 
     private fun fetchConfigImpl(): RemoteConfig? {
-        val url = apiUrlBuilder.getConfigUrl()
+        val url = apiUrlBuilder.resolveUrl(Endpoint.CONFIG)
         val headers = prepareConfigRequest(url).getHeaders()
         val builder = Request.Builder().url(url)
 

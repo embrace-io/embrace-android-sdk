@@ -143,8 +143,8 @@ internal class DeliveryModuleImpl(
         requestExecutionServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
-            val appId = checkNotNull(configModule.configService.appId)
-            val coreBaseUrl = configModule.configService.sdkEndpointBehavior.getData(appId)
+            val appId = configModule.configService.appId ?: return@singleton null
+            val coreBaseUrl = configModule.urlBuilder?.baseDataUrl ?: return@singleton null
             val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
             if (configModule.configService.autoDataCaptureBehavior.shouldUseOkHttp()) {
                 OkHttpRequestExecutionService(

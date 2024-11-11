@@ -181,8 +181,8 @@ internal class PendingApiCallsTest {
     private fun Endpoint.getMaxPendingApiCalls(): Int {
         return when (this) {
             Endpoint.LOGS -> 10
-            Endpoint.UNKNOWN -> 50
             Endpoint.SESSIONS -> 100
+            else -> 50
         }
     }
 }

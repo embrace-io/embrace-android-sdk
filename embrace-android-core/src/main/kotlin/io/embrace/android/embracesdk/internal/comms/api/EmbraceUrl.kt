@@ -18,6 +18,7 @@ internal class EmbraceUrl(val url: URL) {
         return when (url.path.substringAfterLast("/")) {
             Endpoint.LOGS.path -> Endpoint.LOGS
             Endpoint.SESSIONS.path -> Endpoint.SESSIONS
+            Endpoint.CONFIG.path -> Endpoint.CONFIG
             else -> Endpoint.UNKNOWN
         }
     }

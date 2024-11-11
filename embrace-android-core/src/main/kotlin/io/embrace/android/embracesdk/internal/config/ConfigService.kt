@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBe
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
@@ -67,11 +66,6 @@ interface ConfigService {
      * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
      */
     val sdkModeBehavior: SdkModeBehavior
-
-    /**
-     * Provides base endpoints the SDK should send data to
-     */
-    val sdkEndpointBehavior: SdkEndpointBehavior
 
     /**
      * Provides whether the SDK should enable certain 'behavior' of web vitals

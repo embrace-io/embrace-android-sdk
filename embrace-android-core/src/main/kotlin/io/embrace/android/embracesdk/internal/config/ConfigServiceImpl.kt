@@ -19,8 +19,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
@@ -106,11 +104,6 @@ internal class ConfigServiceImpl(
     override val sdkModeBehavior: SdkModeBehavior = SdkModeBehaviorImpl(
         thresholdCheck = thresholdCheck,
         remoteSupplier = configProvider
-    )
-
-    override val sdkEndpointBehavior: SdkEndpointBehavior = SdkEndpointBehaviorImpl(
-        thresholdCheck = thresholdCheck,
-        instrumentedConfig = instrumentedConfig
     )
 
     override val appExitInfoBehavior: AppExitInfoBehavior = AppExitInfoBehaviorImpl(

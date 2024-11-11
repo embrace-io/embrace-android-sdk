@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityTracker
@@ -20,7 +19,6 @@ interface EssentialServiceModule {
     val processStateService: ProcessStateService
     val activityLifecycleTracker: ActivityTracker
     val userService: UserService
-    val urlBuilder: ApiUrlBuilder
     val apiClient: ApiClient
     val apiService: ApiService?
     val networkConnectivityService: NetworkConnectivityService

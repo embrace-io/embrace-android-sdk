@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
@@ -15,8 +16,10 @@ internal class ConfigModuleImplTest {
 
     @Test
     fun `test defaults`() {
+        val initModule = FakeInitModule()
         val module = ConfigModuleImpl(
-            initModule = FakeInitModule(),
+            initModule = initModule,
+            coreModule = createCoreModule(ApplicationProvider.getApplicationContext(), initModule),
             openTelemetryModule = FakeOpenTelemetryModule(),
             workerThreadModule = FakeWorkerThreadModule(),
             androidServicesModule = FakeAndroidServicesModule(),
@@ -24,5 +27,6 @@ internal class ConfigModuleImplTest {
             foregroundAction = {},
         )
         assertNotNull(module.configService)
+        assertNotNull(module.urlBuilder)
     }
 }

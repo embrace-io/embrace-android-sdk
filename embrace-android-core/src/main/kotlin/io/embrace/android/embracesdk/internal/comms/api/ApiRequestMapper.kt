@@ -13,7 +13,7 @@ internal class ApiRequestMapper(
 ) {
 
     private val apiUrlBuilders = Endpoint.values().associateWith {
-        urlBuilder.getEmbraceUrlWithSuffix(it.version, it.path)
+        urlBuilder.resolveUrl(it)
     }
 
     private fun Endpoint.asEmbraceUrl(): String = checkNotNull(apiUrlBuilders[this])

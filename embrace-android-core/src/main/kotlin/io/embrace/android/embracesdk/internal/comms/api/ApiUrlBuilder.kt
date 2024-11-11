@@ -16,12 +16,12 @@ interface ApiUrlBuilder {
     val deviceId: String
 
     /**
-     * Returns the url used to fetch the config.
+     * Base URL for the data endpoint
      */
-    fun getConfigUrl(): String
+    val baseDataUrl: String
 
     /**
      * Returns the url used to send data to Embrace.
      */
-    fun getEmbraceUrlWithSuffix(apiVersion: String, suffix: String): String
+    fun resolveUrl(endpoint: Endpoint): String
 }

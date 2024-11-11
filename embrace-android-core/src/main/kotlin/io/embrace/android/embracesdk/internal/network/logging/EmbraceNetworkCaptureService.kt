@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.logging
 
+import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -19,6 +20,7 @@ internal class EmbraceNetworkCaptureService(
     private val preferencesService: PreferencesService,
     private val networkCaptureDataSource: Provider<NetworkCaptureDataSource>,
     private val configService: ConfigService,
+    private val urlBuilder: ApiUrlBuilder?,
     private val serializer: PlatformSerializer,
     private val logger: EmbLogger,
 ) : NetworkCaptureService {
@@ -41,9 +43,10 @@ internal class EmbraceNetworkCaptureService(
         }
 
         // Embrace data endpoint cannot be captured, even if there is a rule for that.
-        val appId = configService.appId
-        if (url.contentEquals(configService.sdkEndpointBehavior.getData(appId))) {
-            return emptySet()
+        urlBuilder?.baseDataUrl?.let {
+            if (url.startsWith(it)) {
+                return emptySet()
+            }
         }
 
         val applicableRules = networkCaptureRules.filter { rule ->

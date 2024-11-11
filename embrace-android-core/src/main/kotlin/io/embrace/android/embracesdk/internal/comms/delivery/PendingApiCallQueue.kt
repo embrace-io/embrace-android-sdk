@@ -88,7 +88,7 @@ class PendingApiCallQueue(
         return when (this) {
             Endpoint.LOGS -> 10
             Endpoint.SESSIONS -> 100
-            Endpoint.UNKNOWN -> 50
+            else -> 50
         }
     }
 }

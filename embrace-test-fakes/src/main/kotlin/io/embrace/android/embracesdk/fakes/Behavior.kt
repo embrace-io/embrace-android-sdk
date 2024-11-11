@@ -17,8 +17,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -101,13 +99,6 @@ fun createSdkModeBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
     remoteCfg: Provider<RemoteConfig?> = { null },
 ): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteCfg)
-
-/**
- * A [SdkModeBehaviorImpl] that returns default values.
- */
-fun createSdkEndpointBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-): SdkEndpointBehavior = SdkEndpointBehaviorImpl(thresholdCheck, InstrumentedConfigImpl)
 
 /**
  * A [AppExitInfoBehavior] that returns default values.

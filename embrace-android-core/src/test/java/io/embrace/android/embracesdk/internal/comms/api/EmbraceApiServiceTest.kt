@@ -1,17 +1,14 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeDeliveryCacheManager
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.comms.api.ApiClient.Companion.NO_HTTP_RESPONSE
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -25,7 +22,6 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -43,7 +39,6 @@ internal class EmbraceApiServiceTest {
     private lateinit var fakeApiClient: FakeApiClient
     private lateinit var fakeCacheManager: DeliveryCacheManager
     private lateinit var testScheduledExecutor: BlockingScheduledExecutorService
-    private lateinit var cachedConfig: CachedConfig
     private lateinit var apiService: EmbraceApiService
     private lateinit var fakePendingApiCallsSender: FakePendingApiCallsSender
 
@@ -55,9 +50,6 @@ internal class EmbraceApiServiceTest {
             instrumentedConfig = FakeInstrumentedConfig()
         )
         fakeApiClient = FakeApiClient()
-        cachedConfig = CachedConfig(
-            remoteConfig = RemoteConfig()
-        )
         testScheduledExecutor = BlockingScheduledExecutorService(blockingMode = false)
         fakeCacheManager = FakeDeliveryCacheManager()
         fakePendingApiCallsSender = FakePendingApiCallsSender()
@@ -69,78 +61,6 @@ internal class EmbraceApiServiceTest {
         Endpoint.values().forEach {
             it.limiter.clearRateLimit()
         }
-    }
-
-    @Test
-    fun `test getConfig returns correct values in Response`() {
-        fakeApiClient.queueResponse(
-            ApiResponse.Success(
-                headers = emptyMap(),
-                body = defaultConfigResponseBody
-            )
-        )
-
-        val remoteConfig = apiService.getConfig()
-
-        // verify a few fields were serialized correctly.
-        checkNotNull(remoteConfig)
-        assertTrue(checkNotNull(remoteConfig.sessionConfig?.isEnabled))
-        assertEquals(100, remoteConfig.threshold)
-    }
-
-    @Test(expected = IllegalStateException::class)
-    fun `getConfig throws an exception when receiving ApiResponse_Incomplete`() {
-        val incompleteResponse: ApiResponse.Incomplete = ApiResponse.Incomplete(
-            IllegalStateException("Connection failed")
-        )
-        fakeApiClient.queueResponse(incompleteResponse)
-        apiService.getConfig()
-    }
-
-    @Test
-    fun `cached remote config returned when 304 received`() {
-        fakeApiClient.queueResponse(
-            ApiResponse.NotModified
-        )
-        assertEquals(cachedConfig.remoteConfig, apiService.getConfig())
-    }
-
-    @Test
-    fun `getConfig did not complete returns a null config`() {
-        fakeApiClient.queueResponse(
-            ApiResponse.Failure(
-                code = NO_HTTP_RESPONSE,
-                headers = emptyMap()
-            )
-        )
-        assertNull(apiService.getConfig())
-    }
-
-    @Test
-    fun `getConfig results in unexpected response code returns a null config`() {
-        fakeApiClient.queueResponse(
-            ApiResponse.Failure(
-                code = 400,
-                headers = emptyMap()
-            )
-        )
-        assertNull(apiService.getConfig())
-    }
-
-    @Test
-    fun testGetConfigWithMatchingEtag() {
-        val cfg = RemoteConfig()
-        cachedConfig = CachedConfig(cfg, "my_etag")
-        fakeApiClient.queueResponse(
-            ApiResponse.NotModified
-        )
-        val remoteConfig = apiService.getConfig()
-        assertSame(cfg, remoteConfig)
-    }
-
-    @Test
-    fun `getCacheConfig returns what the provider provides`() {
-        assertEquals(apiService.getCachedConfig(), cachedConfig)
     }
 
     @Test
@@ -412,7 +332,6 @@ internal class EmbraceApiServiceTest {
         apiService = EmbraceApiService(
             apiClient = fakeApiClient,
             serializer = serializer,
-            cachedConfigProvider = { _, _ -> cachedConfig },
             priorityWorker = PriorityWorker(testScheduledExecutor),
             pendingApiCallsSender = fakePendingApiCallsSender,
             lazyDeviceId = lazy { fakeDeviceId },
@@ -426,8 +345,6 @@ internal class EmbraceApiServiceTest {
         private const val fakeAppId = "abcde"
         private const val fakeDeviceId = "ajflkadsflkadslkfjds"
         private const val fakeAppVersionName = "6.1.0"
-        private val defaultConfigResponseBody =
-            ResourceReader.readResourceAsText("remote_config_response.json")
         private val successfulPostResponse = ApiResponse.Success(
             headers = emptyMap(),
             body = ""

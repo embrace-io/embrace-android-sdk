@@ -148,6 +148,7 @@ internal class DeliveryModuleImpl(
             val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
             if (configModule.configService.autoDataCaptureBehavior.shouldUseOkHttp()) {
                 OkHttpRequestExecutionService(
+                    configModule.okHttpClient,
                     coreBaseUrl,
                     lazyDeviceId,
                     appId,

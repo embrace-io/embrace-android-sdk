@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import okhttp3.Headers.Companion.toHeaders
+import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -15,12 +16,14 @@ import org.junit.Before
 import org.junit.Test
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 class OkHttpRequestExecutionServiceTest {
     private lateinit var requestExecutionService: OkHttpRequestExecutionService
     private lateinit var server: MockWebServer
     private lateinit var testServerUrl: String
     private lateinit var logger: FakeEmbLogger
+    private lateinit var client: OkHttpClient
 
     private val testAppId = "test_app_id"
     private val testDeviceId = "test_device_id"
@@ -49,14 +52,19 @@ class OkHttpRequestExecutionServiceTest {
             start()
         }
         testServerUrl = server.url("").toString()
+        client = OkHttpClient()
+            .newBuilder()
+            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .connectTimeout(1, TimeUnit.SECONDS)
+            .readTimeout(1, TimeUnit.SECONDS)
+            .build()
         requestExecutionService = OkHttpRequestExecutionService(
+            okHttpClient = client,
             coreBaseUrl = testServerUrl,
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,
             logger = logger,
-            connectionTimeoutSeconds = 1L,
-            readTimeoutSeconds = 1L,
         )
     }
 
@@ -69,6 +77,7 @@ class OkHttpRequestExecutionServiceTest {
     fun `return incomplete if the server does not exist`() {
         // given a request execution service with a non existent url
         requestExecutionService = OkHttpRequestExecutionService(
+            okHttpClient = client,
             coreBaseUrl = "https://nonexistenturl:1565/",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,

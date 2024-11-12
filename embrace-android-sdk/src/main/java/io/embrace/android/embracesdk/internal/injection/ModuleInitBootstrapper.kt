@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
-import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -146,17 +144,18 @@ internal class ModuleInitBootstrapper(
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,
-                            appFramework,
-                            {
-                                if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                                    EmbraceInternalApi.getInstance().internalInterface.stopSdk()
-                                }
-                            },
-                            { null }
-                        )
+                            appFramework
+                        ) { null }
+                        // FIXME: need to disable SDK properly.
+//                            {
+//                                if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
+//                                    EmbraceInternalApi.getInstance().internalInterface.stopSdk()
+//                                }
+//                            },
                     }
                     val serviceRegistry = coreModule.serviceRegistry
                     postInit(ConfigModule::class) {
+                        configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
                         serviceRegistry.registerService(lazy { configModule.configService })
                         serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
                         openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
@@ -185,11 +184,7 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(EssentialServiceModule::class) {
-                        // Allow config service to start making HTTP requests
                         with(essentialServiceModule) {
-                            (configModule.remoteConfigSource as? RemoteConfigSourceImpl)?.remoteConfigSource =
-                                apiService
-
                             serviceRegistry.registerServices(
                                 lazy { essentialServiceModule.processStateService },
                                 lazy { activityLifecycleTracker },

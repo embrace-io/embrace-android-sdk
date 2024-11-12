@@ -22,7 +22,7 @@ internal class OkHttpRemoteConfigSource(
     private val serializer: PlatformSerializer,
 ) : RemoteConfigSource {
 
-    override fun getConfig(): RemoteConfig? = try {
+    override fun getConfig(): ConfigHttpResponse? = try {
         fetchConfigImpl()
     } catch (exc: IOException) {
         null
@@ -34,7 +34,7 @@ internal class OkHttpRemoteConfigSource(
 
     private var etag: String? = null
 
-    private fun fetchConfigImpl(): RemoteConfig? {
+    private fun fetchConfigImpl(): ConfigHttpResponse? {
         val request = prepareRequest()
         val call = okhttpClient.newCall(request)
         val response = call.execute()
@@ -56,19 +56,20 @@ internal class OkHttpRemoteConfigSource(
         return request
     }
 
-    private fun processResponse(response: Response): RemoteConfig? {
-        response.header("ETag")?.let {
+    private fun processResponse(response: Response): ConfigHttpResponse? {
+        response.header("etag")?.let {
             this.etag = it
         }
         if (!response.isSuccessful) {
             return null
         }
-        return response.body?.source()?.use { src ->
+        val cfg = response.body?.source()?.use { src ->
             val gzipSource = GzipSource(src)
             gzipSource.buffer().inputStream().use {
                 serializer.fromJson(it, RemoteConfig::class.java)
             }
         }
+        return ConfigHttpResponse(cfg, etag)
     }
 
     private fun prepareConfigRequest(url: String) = ApiRequest(

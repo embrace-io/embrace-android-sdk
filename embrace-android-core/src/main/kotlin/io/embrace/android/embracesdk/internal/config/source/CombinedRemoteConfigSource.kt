@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 
-internal class CombinedRemoteConfigSource(
+class CombinedRemoteConfigSource(
     private val store: RemoteConfigStore,
     private val httpSource: RemoteConfigSource,
     private val worker: BackgroundWorker,
@@ -13,14 +13,12 @@ internal class CombinedRemoteConfigSource(
 ) {
 
     // the remote config that is used for the lifetime of the process.
-    private val cfg = store.loadConfig()
+    private val response by lazy { store.loadResponse() }
 
-    fun getConfig(): RemoteConfig? = cfg
+    fun getConfig(): RemoteConfig? = response?.cfg
 
     fun scheduleConfigRequests() {
-        worker.submit {
-            store.retrieveEtag()?.let(httpSource::setInitialEtag)
-        }
+        response?.etag?.let(httpSource::setInitialEtag)
         worker.scheduleWithFixedDelay(
             ::attemptConfigRequest,
             0,
@@ -30,6 +28,6 @@ internal class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
-        httpSource.getConfig()?.let(store::saveConfig)
+        httpSource.getConfig()?.let(store::saveResponse)
     }
 }

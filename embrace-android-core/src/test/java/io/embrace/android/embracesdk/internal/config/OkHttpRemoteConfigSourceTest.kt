@@ -116,7 +116,7 @@ class OkHttpRemoteConfigSourceTest {
         val (cfg, request) = executeRequest(
             MockResponse().setResponseCode(200)
                 .setBody(configResponseBuffer)
-                .setHeader("ETag", etagValue)
+                .setHeader("etag", etagValue)
         )
         assertConfigRequestReceived(request)
         assertNull(request?.getHeader("If-None-Match"))
@@ -125,7 +125,7 @@ class OkHttpRemoteConfigSourceTest {
         // second request with etag
         val (secondCfg, secondRequest) = executeRequest(
             MockResponse().setResponseCode(304)
-                .setHeader("ETag", etagValue)
+                .setHeader("etag", etagValue)
         )
         assertConfigRequestReceived(secondRequest)
         assertEquals(etagValue, secondRequest?.getHeader("If-None-Match"))
@@ -137,7 +137,7 @@ class OkHttpRemoteConfigSourceTest {
             return Pair(null, null)
         }
         server.enqueue(response)
-        val cfg = source.getConfig()
+        val cfg = source.getConfig()?.cfg
         val request = pollRequest()
         CallData(request, cfg)
         return Pair(cfg, request)

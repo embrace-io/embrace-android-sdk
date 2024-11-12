@@ -22,7 +22,6 @@ internal class StorageModuleImplTest {
         )
 
         assertNotNull(module.storageService)
-        assertNotNull(module.cache)
         assertNotNull(module.cacheService)
         assertNotNull(module.deliveryCacheManager)
         assertNotNull(module.storageService)

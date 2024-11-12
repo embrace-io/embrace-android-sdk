@@ -2,9 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiResponse
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -26,14 +24,6 @@ class FakeApiService : ApiService {
     val savedLogPayloads: MutableList<LogPayload> = mutableListOf()
     val sessionRequests: MutableList<Envelope<SessionPayload>> = mutableListOf()
     var futureGetCount: Int = 0
-
-    override fun getConfig(): RemoteConfig? {
-        TODO("Not yet implemented")
-    }
-
-    override fun getCachedConfig(): CachedConfig {
-        TODO("Not yet implemented")
-    }
 
     override fun sendLogEnvelope(logEnvelope: Envelope<LogPayload>) {
         sentLogPayloads.add(logEnvelope.data)

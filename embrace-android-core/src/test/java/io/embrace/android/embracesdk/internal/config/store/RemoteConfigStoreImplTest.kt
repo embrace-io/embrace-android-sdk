@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.config.store
 
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -22,30 +23,22 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `test config store`() {
-        assertNull(store.loadConfig())
+        assertNull(store.loadResponse())
 
         // store a config
         val config = RemoteConfig(50)
-        store.saveConfig(config)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
 
         // load the config
-        val loaded = checkNotNull(store.loadConfig())
-        assertEquals(config, loaded)
+        val loaded = checkNotNull(store.loadResponse())
+        assertEquals(config, loaded.cfg)
+        assertEquals("etag", loaded.etag)
 
         val newConfig = RemoteConfig(100)
-        store.saveConfig(newConfig)
+        store.saveResponse(ConfigHttpResponse(newConfig, "another"))
 
-        val newLoaded = checkNotNull(store.loadConfig())
-        assertEquals(newConfig, newLoaded)
-    }
-
-    @Test
-    fun `test etag store`() {
-        assertNull(store.retrieveEtag())
-        store.storeEtag("etag")
-        assertEquals("etag", store.retrieveEtag())
-
-        store.storeEtag("another")
-        assertEquals("another", store.retrieveEtag())
+        val newLoaded = checkNotNull(store.loadResponse())
+        assertEquals(newConfig, newLoaded.cfg)
+        assertEquals("another", newLoaded.etag)
     }
 }

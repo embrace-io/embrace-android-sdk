@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.os.Environment
 import android.view.WindowManager
-import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -23,7 +22,6 @@ internal class DeviceImplTest {
 
     companion object {
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
-        private val cpuInfoDelegate: FakeCpuInfoDelegate = FakeCpuInfoDelegate()
         private val windowManager = mockk<WindowManager>()
 
         @BeforeClass
@@ -63,38 +61,9 @@ internal class DeviceImplTest {
             preferencesService,
             fakeBackgroundWorker(),
             SystemInfo(),
-            Companion::cpuInfoDelegate,
             EmbLoggerImpl(),
         )
 
         assertEquals("200x300", device.screenResolution)
-    }
-
-    @Test
-    fun getCpuName() {
-        val device = DeviceImpl(
-            windowManager,
-            preferencesService,
-            fakeBackgroundWorker(),
-            SystemInfo(),
-            Companion::cpuInfoDelegate,
-            EmbLoggerImpl(),
-        )
-
-        assertEquals("fake_cpu", device.cpuName)
-    }
-
-    @Test
-    fun getEgl() {
-        val device = DeviceImpl(
-            windowManager,
-            preferencesService,
-            fakeBackgroundWorker(),
-            SystemInfo(),
-            Companion::cpuInfoDelegate,
-            EmbLoggerImpl(),
-        )
-
-        assertEquals("fake_egl", device.eglInfo)
     }
 }

@@ -10,6 +10,5 @@ internal class NativeCoreModuleImplTest {
     fun testDefaultImplementations() {
         val module = createNativeCoreModule(FakeInitModule())
         assertNotNull(module.sharedObjectLoader)
-        assertNotNull(module.cpuInfoDelegate)
     }
 }

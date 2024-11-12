@@ -125,9 +125,7 @@ internal class EmbraceMetadataService(
             operatingSystemVersionCode = osCode?.toInt(),
             screenResolution = screenResolution,
             timezoneDescription = meta.timezoneDescription,
-            cores = numCores,
-            cpuName = cpuName,
-            egl = eglInfo
+            cores = numCores
         )
     }
 

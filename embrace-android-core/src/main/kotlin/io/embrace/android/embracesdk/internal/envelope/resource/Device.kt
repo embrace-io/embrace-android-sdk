@@ -39,18 +39,4 @@ interface Device {
      * @return the total free capacity of the internal storage of the device in bytes
      */
     val internalStorageTotalCapacity: Lazy<Long>
-
-    /**
-     * The name of the primary CPU of the device, obtained with the system call 'ro.board.platform'.
-     *
-     * @return the name of the primary CPU of the device
-     */
-    val cpuName: String?
-
-    /**
-     * The EGL (Embedded-System Graphics Library) information obtained with the system call 'ro.hardware.egl'
-     *
-     * @return the ELG of the primary CPU of the device
-     */
-    val eglInfo: String?
 }

@@ -40,11 +40,5 @@ class DeviceInfo(
     val timezoneDescription: String? = null,
 
     @Json(name = "nc")
-    val cores: Int? = null,
-
-    @Json(name = "pt")
-    val cpuName: String? = null,
-
-    @Json(name = "gp")
-    val egl: String? = null,
+    val cores: Int? = null
 )

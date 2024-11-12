@@ -146,16 +146,19 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             appFramework
                         ) { null }
-                        // FIXME: need to disable SDK properly.
-//                            {
-//                                if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-//                                    EmbraceInternalApi.getInstance().internalInterface.stopSdk()
-//                                }
-//                            },
                     }
+
+                    Systrace.traceSynchronous("sdk-disable-check") {
+                        // kick off config HTTP request first so the SDK can't get in a permanently disabled state
+                        configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
+
+                        if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
+                            return false
+                        }
+                    }
+
                     val serviceRegistry = coreModule.serviceRegistry
                     postInit(ConfigModule::class) {
-                        configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
                         serviceRegistry.registerService(lazy { configModule.configService })
                         serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
                         openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
@@ -453,7 +456,6 @@ internal class ModuleInitBootstrapper(
         if (isInitialized()) {
             coreModule.serviceRegistry.close()
             workerThreadModule.close()
-            essentialServiceModule.processStateService.close()
             initialized.set(false)
         }
     }

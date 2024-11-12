@@ -147,7 +147,7 @@ internal class IntegrationTestRule(
                 assertEquals(
                     "SDK did not start in integration test.",
                     expectSdkToStart,
-                    bootstrapper.essentialServiceModule.processStateService.isInitialized()
+                    embraceImpl.isStarted
                 )
             }
         }

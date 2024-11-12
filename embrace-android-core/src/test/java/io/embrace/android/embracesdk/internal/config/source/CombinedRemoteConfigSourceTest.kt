@@ -16,14 +16,16 @@ class CombinedRemoteConfigSourceTest {
     private lateinit var remoteConfig: RemoteConfig
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var remoteConfigSource: FakeRemoteConfigSource
+    private lateinit var remoteConfigStore: FakeRemoteConfigStore
 
     @Before
     fun setUp() {
         remoteConfig = RemoteConfig(92)
         executorService = BlockingScheduledExecutorService()
         remoteConfigSource = FakeRemoteConfigSource(remoteConfig)
+        remoteConfigStore = FakeRemoteConfigStore()
         source = CombinedRemoteConfigSource(
-            FakeRemoteConfigStore(),
+            remoteConfigStore,
             remoteConfigSource,
             BackgroundWorker(executorService)
         )
@@ -51,5 +53,16 @@ class CombinedRemoteConfigSourceTest {
         source.scheduleConfigRequests()
         executorService.runCurrentlyBlocked()
         assertEquals(1, remoteConfigSource.callCount)
+        assertNull(remoteConfigSource.etag)
+    }
+
+    @Test
+    fun `test persisted etag value populated`() {
+        remoteConfigStore.etag = "etag"
+        assertEquals(0, remoteConfigSource.callCount)
+        source.scheduleConfigRequests()
+        executorService.runCurrentlyBlocked()
+        assertEquals(1, remoteConfigSource.callCount)
+        assertEquals("etag", remoteConfigSource.etag)
     }
 }

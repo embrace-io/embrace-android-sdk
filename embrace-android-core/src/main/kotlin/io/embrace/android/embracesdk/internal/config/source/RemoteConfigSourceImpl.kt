@@ -24,6 +24,10 @@ class RemoteConfigSourceImpl(
             attemptConfigRefresh()
         }
 
+    override fun setInitialEtag(etag: String) {
+        // no-op
+    }
+
     @Volatile
     private var configProp = RemoteConfig()
 

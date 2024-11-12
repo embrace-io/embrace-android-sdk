@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
+import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 

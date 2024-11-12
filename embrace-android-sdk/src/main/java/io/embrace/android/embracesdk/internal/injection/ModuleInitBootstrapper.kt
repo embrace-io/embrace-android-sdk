@@ -4,7 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
-import io.embrace.android.embracesdk.internal.config.RemoteConfigSourceImpl
+import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType

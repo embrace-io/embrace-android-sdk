@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.internal.config
+package io.embrace.android.embracesdk.internal.config.source
 
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest

@@ -6,5 +6,11 @@ import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 class FakeRemoteConfigSource(
     var cfg: RemoteConfig? = null
 ) : RemoteConfigSource {
-    override fun getConfig(): RemoteConfig? = cfg
+
+    var callCount: Int = 0
+
+    override fun getConfig(): RemoteConfig? {
+        callCount++
+        return cfg
+    }
 }

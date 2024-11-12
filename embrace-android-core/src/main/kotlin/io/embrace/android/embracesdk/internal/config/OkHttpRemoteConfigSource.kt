@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okio.GzipSource
+import okio.buffer
 import java.io.IOException
 
 internal class OkHttpRemoteConfigSource(
@@ -41,8 +43,11 @@ internal class OkHttpRemoteConfigSource(
         if (!response.isSuccessful) {
             return null
         }
-        val config = response.body?.source()?.inputStream()?.buffered()?.use {
-            serializer.fromJson(it, RemoteConfig::class.java)
+        val config = response.body?.source()?.use { src ->
+            val gzipSource = GzipSource(src)
+            gzipSource.buffer().inputStream().use {
+                serializer.fromJson(it, RemoteConfig::class.java)
+            }
         }
         return config
     }

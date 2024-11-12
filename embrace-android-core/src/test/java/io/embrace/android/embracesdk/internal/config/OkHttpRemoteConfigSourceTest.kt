@@ -11,6 +11,9 @@ import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
+import okio.Buffer
+import okio.GzipSink
+import okio.buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -29,7 +32,8 @@ class OkHttpRemoteConfigSourceTest {
     private val remoteConfig = RemoteConfig(
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
     )
-    private val configResponse = TestPlatformSerializer().toJson(remoteConfig)
+
+    private lateinit var configResponseBuffer: Buffer
 
     @Before
     fun setUp() {
@@ -48,12 +52,21 @@ class OkHttpRemoteConfigSourceTest {
                 )
             )
         )
+
+        // serialize the config response
+        configResponseBuffer = Buffer()
+        val gzipSink = GzipSink(configResponseBuffer).buffer()
+        TestPlatformSerializer().toJson(
+            remoteConfig,
+            RemoteConfig::class.java,
+            gzipSink.outputStream()
+        )
     }
 
     @Test
     fun `test config 2xx`() {
         val (cfg, request) = executeRequest(
-            MockResponse().setResponseCode(200).setBody(configResponse)
+            MockResponse().setResponseCode(200).setBody(configResponseBuffer)
         )
         assertConfigRequestReceived(request)
         assertConfigResponseDeserialized(cfg)
@@ -91,7 +104,7 @@ class OkHttpRemoteConfigSourceTest {
         val (cfg, request) = executeRequest(
             MockResponse()
                 .setResponseCode(200)
-                .setBody(configResponse)
+                .setBody(configResponseBuffer)
                 .throttleBody(1, 1, TimeUnit.MILLISECONDS)
         )
         assertConfigRequestReceived(request)

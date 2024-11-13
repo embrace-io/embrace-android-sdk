@@ -7,8 +7,6 @@ import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
-import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -42,7 +40,7 @@ internal class V1DeliveryFeatureTest {
     @Test
     fun `v1 session delivery`() {
         testRule.runTest(
-            remoteConfig = remoteConfig,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
             },
@@ -61,7 +59,7 @@ internal class V1DeliveryFeatureTest {
     @Test
     fun `v1 background activity delivery`() {
         testRule.runTest(
-            remoteConfig = remoteConfig,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
             },
@@ -79,7 +77,7 @@ internal class V1DeliveryFeatureTest {
     @Test
     fun `v1 crash delivery`() {
         testRule.runTest(
-            remoteConfig = remoteConfig,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
             },
@@ -98,7 +96,7 @@ internal class V1DeliveryFeatureTest {
     @Test
     fun `v1 log delivery`() {
         testRule.runTest(
-            remoteConfig = remoteConfig,
+            persistedRemoteConfig = remoteConfig,
             setupAction = {
                 useMockWebServer = false
                 setupFakeAeiData()

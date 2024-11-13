@@ -145,7 +145,7 @@ internal class ModuleInitBootstrapper(
                             workerThreadModule,
                             androidServicesModule,
                             appFramework
-                        ) { null }
+                        )
                     }
 
                     Systrace.traceSynchronous("sdk-disable-check") {

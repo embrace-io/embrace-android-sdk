@@ -12,6 +12,9 @@ import java.util.zip.GZIPInputStream
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.RecordedRequest
+import okio.Buffer
+import okio.GzipSink
+import okio.buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 
@@ -30,9 +33,6 @@ internal class FakeApiServer(private val remoteConfig: RemoteConfig) : Dispatche
     private val sessionRequests = ConcurrentLinkedQueue<Envelope<SessionPayload>>()
     private val logRequests = ConcurrentLinkedQueue<Envelope<LogPayload>>()
     private val configRequests = ConcurrentLinkedQueue<String>()
-    private val configResponse by lazy {
-        serializer.toJson(remoteConfig)
-    }
 
     /**
      * Returns a list of session envelopes in the order in which the server received them.
@@ -77,7 +77,19 @@ internal class FakeApiServer(private val remoteConfig: RemoteConfig) : Dispatche
 
     private fun handleConfigRequest(request: RecordedRequest): MockResponse {
         configRequests.add(request.requestUrl?.toUrl()?.query)
-        return MockResponse().setBody(configResponse).setResponseCode(200)
+
+        // serialize the config response
+        val configResponseBuffer = Buffer()
+        val gzipSink = GzipSink(configResponseBuffer).buffer()
+        serializer.toJson(
+            remoteConfig,
+            RemoteConfig::class.java,
+            gzipSink.outputStream()
+        )
+        return MockResponse()
+            .setBody(configResponseBuffer)
+            .addHeader("etag", "server_etag_value")
+            .setResponseCode(200)
     }
 
     private fun validateHeaders(headers: Map<String, String>) {

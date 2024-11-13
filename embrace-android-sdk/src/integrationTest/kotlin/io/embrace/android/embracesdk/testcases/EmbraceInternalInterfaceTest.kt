@@ -203,7 +203,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `access check methods work as expected`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(
+            persistedRemoteConfig = RemoteConfig(
                 disabledUrlPatterns = setOf("dontlogmebro.pizza"),
                 networkCaptureRules = setOf(
                     NetworkCaptureRuleRemoteConfig(
@@ -305,7 +305,7 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `SDK will not start if feature flag has it being disabled`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(threshold = 0),
+            persistedRemoteConfig = RemoteConfig(threshold = 0),
             expectSdkToStart = false,
             testCaseAction = {
                 assertFalse(embrace.isStarted)

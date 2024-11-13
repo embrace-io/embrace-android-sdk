@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.testframework
 
 import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.EmbraceHooks
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
@@ -25,6 +27,8 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInt
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import java.io.File
+import java.util.zip.GZIPOutputStream
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
@@ -107,7 +111,8 @@ internal class IntegrationTestRule(
     fun runTest(
         startSdk: Boolean = true,
         instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
-        remoteConfig: RemoteConfig = RemoteConfig(),
+        persistedRemoteConfig: RemoteConfig = RemoteConfig(),
+        serverResponseConfig: RemoteConfig = persistedRemoteConfig,
         expectSdkToStart: Boolean = startSdk,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
@@ -119,7 +124,7 @@ internal class IntegrationTestRule(
         var apiServer: FakeApiServer? = null
 
         if (setup.useMockWebServer) {
-            apiServer = FakeApiServer(remoteConfig)
+            apiServer = FakeApiServer(serverResponseConfig)
             val server: MockWebServer = MockWebServer().apply {
                 protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
                 dispatcher = apiServer
@@ -129,7 +134,7 @@ internal class IntegrationTestRule(
         }
 
         preSdkStart = EmbracePreSdkStartInterface(setup)
-        bootstrapper = setup.createBootstrapper(prepareConfig(instrumentedConfig), remoteConfig)
+        bootstrapper = setup.createBootstrapper(prepareConfig(instrumentedConfig))
         action = EmbraceActionInterface(setup, bootstrapper)
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
@@ -141,6 +146,9 @@ internal class IntegrationTestRule(
             EmbraceHooks.setImpl(embraceImpl)
             preSdkStartAction(preSdkStart)
             embraceImpl.addSpanExporter(spanExporter)
+
+            // persist config here before the SDK starts up
+            persistConfig(persistedRemoteConfig)
 
             if (startSdk) {
                 embraceImpl.start(overriddenCoreModule.context)
@@ -155,6 +163,22 @@ internal class IntegrationTestRule(
         assertAction(payloadAssertion)
         spanExporter.failOnDuplicate()
         otelExportAssertion(otelAssertion)
+    }
+
+    /**
+     * Writes a config response to the expected location on disk so the SDK can read it.
+     */
+    private fun persistConfig(persistedRemoteConfig: RemoteConfig) {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val storageDir = File(ctx.filesDir, "embrace_remote_config").apply {
+            mkdirs()
+        }
+        File(storageDir, "etag").writeText("persisted_etag")
+        val responseFile = File(storageDir, "most_recent_response")
+
+        GZIPOutputStream(responseFile.outputStream().buffered()).use { stream ->
+            TestPlatformSerializer().toJson(persistedRemoteConfig, RemoteConfig::class.java, stream)
+        }
     }
 
     private fun prepareConfig(instrumentedConfig: FakeInstrumentedConfig) =

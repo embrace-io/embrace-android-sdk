@@ -74,7 +74,7 @@ internal class PublicApiTest {
         var foregroundSessionId: String? = null
         var backgroundSessionId: String? = null
         testRule.runTest(
-            remoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {

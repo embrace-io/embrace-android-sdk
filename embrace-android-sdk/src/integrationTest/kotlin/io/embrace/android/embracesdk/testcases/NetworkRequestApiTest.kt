@@ -179,7 +179,7 @@ internal class NetworkRequestApiTest {
     @Test
     fun `disabled URLs not recorded`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(
+            persistedRemoteConfig = RemoteConfig(
                 disabledUrlPatterns = setOf("dontlogmebro.pizza"),
                 networkCaptureRules = setOf(
                     NetworkCaptureRuleRemoteConfig(

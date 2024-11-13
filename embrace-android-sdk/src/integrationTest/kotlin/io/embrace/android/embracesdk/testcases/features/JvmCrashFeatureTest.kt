@@ -62,7 +62,7 @@ internal class JvmCrashFeatureTest {
     @Test
     fun `app crash in the background generates a crash log`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             testCaseAction = {
                 simulateJvmUncaughtException(testException)
             },

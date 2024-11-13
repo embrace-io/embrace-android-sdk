@@ -64,5 +64,6 @@ class CombinedRemoteConfigSourceTest {
         assertEquals("etag", remoteConfigSource.etag)
         executorService.runCurrentlyBlocked()
         assertEquals(1, remoteConfigSource.callCount)
+        assertEquals(1, remoteConfigStore.saveCount)
     }
 }

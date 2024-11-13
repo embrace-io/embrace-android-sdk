@@ -37,6 +37,8 @@ class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
-        httpSource.getConfig()?.let(store::saveResponse)
+        httpSource.getConfig()?.let {
+            store.saveResponse(it)
+        }
     }
 }

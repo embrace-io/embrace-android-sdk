@@ -44,6 +44,19 @@ internal class RemoteConfigStoreImpl(
                 serializer.toJson(response.cfg, RemoteConfig::class.java, stream)
             }
             response.etag?.let(etagFile::writeText)
+        } catch (exc: Exception) {
+            // paranoia: purge the cache
+            // to avoid the possibility of getting trapped with stale config
+            // where the SDK is disabled & persistence fails. In that scenario we prefer
+            // the default SDK behavior which will fetch the correct config eventually
+            purgeCache()
+        }
+    }
+
+    private fun purgeCache() {
+        try {
+            configFile.delete()
+            etagFile.delete()
         } catch (ignored: Exception) {
         }
     }

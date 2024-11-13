@@ -7,9 +7,12 @@ class FakeRemoteConfigStore(
     var impl: ConfigHttpResponse? = null,
 ) : RemoteConfigStore {
 
+    var saveCount: Int = 0
+
     override fun loadResponse(): ConfigHttpResponse? = impl
 
     override fun saveResponse(response: ConfigHttpResponse) {
+        saveCount++
         impl = response
     }
 }

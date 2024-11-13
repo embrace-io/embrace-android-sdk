@@ -29,12 +29,13 @@ internal class ConfigModuleImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,
                 instrumentedConfig = initModule.instrumentedConfig,
-                configProvider = remoteConfigSource::getConfig,
+                configProvider = { remoteConfigSource?.getConfig() },
             )
         }
     }
 
     override val remoteConfigSource by singleton {
+        urlBuilder ?: return@singleton null
         remoteConfigSourceProvider() ?: RemoteConfigSourceImpl(
             clock = initModule.clock,
             backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),

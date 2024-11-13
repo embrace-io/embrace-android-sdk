@@ -6,6 +6,6 @@ import io.embrace.android.embracesdk.internal.config.RemoteConfigSource
 
 interface ConfigModule {
     val configService: ConfigService
-    val remoteConfigSource: RemoteConfigSource
+    val remoteConfigSource: RemoteConfigSource?
     val urlBuilder: ApiUrlBuilder?
 }

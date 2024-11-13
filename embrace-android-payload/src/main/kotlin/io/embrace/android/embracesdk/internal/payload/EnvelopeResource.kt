@@ -45,7 +45,6 @@ import com.squareup.moshi.JsonClass
  * @param sdkVersion The version number of the Embrace SDK. Previous name: a.sdk
  * @param sdkSimpleVersion The simple version number of the Embrace SDK. Previous name: a.sdc
  * @param reactNativeBundleId (React Native) the MD5 hash of the React Native bundle file. Previous name: a.rn
- * @param reactNativeVersion (React Native) the React Native version number. Previous name: a.rnv
  * @param javascriptPatchNumber (React Native) the JavaScript patch number. Previous name: a.jsp
  * @param hostedPlatformVersion The version of the hosted platform engine, i.e.
  * Unity/React Native/Flutter. Previous name: a.unv
@@ -109,10 +108,6 @@ data class EnvelopeResource(
     /* (React Native) the MD5 hash of the React Native bundle file. Previous name: a.rn */
     @Json(name = "react_native_bundle_id")
     val reactNativeBundleId: String? = null,
-
-    /* (React Native) the React Native version number. Previous name: a.rnv */
-    @Json(name = "react_native_version")
-    val reactNativeVersion: String? = null,
 
     /* (React Native) the JavaScript patch number. Previous name: a.jsp */
     @Json(name = "javascript_patch_number")

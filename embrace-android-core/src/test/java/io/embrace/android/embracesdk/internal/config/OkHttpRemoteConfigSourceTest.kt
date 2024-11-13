@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse

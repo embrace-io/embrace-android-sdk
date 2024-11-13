@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.CachedRemoteConfigSource
+import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl

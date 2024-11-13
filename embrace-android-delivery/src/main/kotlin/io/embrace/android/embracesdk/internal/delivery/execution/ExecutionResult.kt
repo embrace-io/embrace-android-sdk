@@ -21,7 +21,7 @@ sealed class ExecutionResult(
     /**
      * A completed HTTP request that returned a 429 (Too Many Requests) status code.
      */
-    data class TooManyRequests(val endpoint: Endpoint, val retryAfter: Long?) : ExecutionResult(true)
+    data class TooManyRequests(val endpoint: Endpoint, val retryAfterMs: Long?) : ExecutionResult(true)
 
     /**
      * A completed HTTP request that with a status code that indicates it did not succeed (4xx and 5xx)
@@ -78,7 +78,7 @@ sealed class ExecutionResult(
                 HTTP_ENTITY_TOO_LARGE -> PayloadTooLarge
                 HTTP_TOO_MANY_REQUESTS -> TooManyRequests(
                     endpoint,
-                    headersProvider()["Retry-After"]?.toLongOrNull()
+                    headersProvider()["Retry-After"]?.toLongOrNull()?.times(1000)
                 )
 
                 in HTTP_FAILURES -> Failure(responseCode)

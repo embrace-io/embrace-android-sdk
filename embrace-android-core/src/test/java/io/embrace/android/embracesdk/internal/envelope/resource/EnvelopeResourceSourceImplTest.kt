@@ -75,7 +75,6 @@ internal class EnvelopeResourceSourceImplTest {
 
         assertEquals("1.0.0", envelope.appVersion)
         assertEquals(AppFramework.NATIVE, envelope.appFramework)
-        assertEquals("com.embrace.fake", envelope.appEcosystemId)
         assertEquals("100", envelope.buildId)
         assertEquals("release", envelope.buildType)
         assertEquals("oem", envelope.buildFlavor)

@@ -15,7 +15,6 @@
     "app_version": "2.5.1",
     "app_framework": 1,
     "build_id": "fakeBuildId",
-    "app_ecosystem_id": "com.fake.package",
     "build_type": "fakeBuildType",
     "build_flavor": "fakeBuildFlavor",
     "environment": "dev",

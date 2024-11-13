@@ -38,9 +38,6 @@ import com.squareup.moshi.JsonClass
  * @param appVersion The app's publicly displayed version name. Previous name: a.v
  * @param appFramework The frameworks in use by the app. 1=Native, 2=React Native, 3=Unity. Previous name: a.f
  * @param buildId A unique ID for the build that is generated at build time. Previous name: a.bi
- * @param appEcosystemId Unique identifier for the app in its ecosystem.
- * In Apple, this is the Bundle ID (e.g. com.io.embrace).
- * In Android, this is the app's package name (e.g. io.embrace.testapp). Previous name: a.bid
  * @param buildType (Android) - the buildType name. Previous name: a.bt
  * @param buildFlavor (Android) - the flavor name. If productFlavors are not used this will be null. Previous name: a.fl
  * @param environment The name of the environment, i.e. dev or prod. Previous name: a.e
@@ -84,11 +81,6 @@ data class EnvelopeResource(
     /* A unique ID for the build that is generated at build time. Previous name: a.bi */
     @Json(name = "build_id")
     val buildId: String? = null,
-
-    /* Unique identifier for the app in its ecosystem. In Apple, this is the Bundle ID (e.g. com.io.embrace).
-    In Android, this is the app's package name (e.g. io.embrace.testapp). Previous name: a.bid */
-    @Json(name = "app_ecosystem_id")
-    val appEcosystemId: String? = null,
 
     /* (Android) - the buildType name. Previous name: a.bt */
     @Json(name = "build_type")

@@ -28,6 +28,10 @@ Version 7 of the Embrace Android SDK contains the following breaking changes:
     - `sdk_config.base_urls.images`
     - `sdk_config.networking.trace_id_header`
     - `sdk_config.startup_moment.automatically_end`
+- Removed the following properties from the Embrace Gradle plugin, that can be removed if they remain in your buildscripts:
+  - `customSymbolsDirectory`
+  - `jarSkipList`
+  - `encodeExtractedFileNames`
 
 ### Removed APIs
 

@@ -1,0 +1,14 @@
+name: Clear CI cache
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clear-cache:
+    name: Clear CI cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run GH CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh cache delete --all --repo embrace-io/embrace-android-sdk

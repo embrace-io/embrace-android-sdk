@@ -24,7 +24,6 @@ import java.io.File
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
-import java.util.zip.GZIPInputStream
 import org.json.JSONObject
 import org.junit.Assert
 
@@ -222,7 +221,7 @@ internal class EmbracePayloadAssertionInterface(
 
     private fun readRemoteConfigFile(file: File): RemoteConfig {
         try {
-            return GZIPInputStream(file.inputStream().buffered()).use {
+            return file.inputStream().buffered().use {
                 serializer.fromJson(it, RemoteConfig::class.java)
             }
         } catch (exc: Throwable) {

@@ -28,7 +28,6 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import java.io.File
-import java.util.zip.GZIPOutputStream
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
@@ -176,7 +175,7 @@ internal class IntegrationTestRule(
         File(storageDir, "etag").writeText("persisted_etag")
         val responseFile = File(storageDir, "most_recent_response")
 
-        GZIPOutputStream(responseFile.outputStream().buffered()).use { stream ->
+        responseFile.outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(persistedRemoteConfig, RemoteConfig::class.java, stream)
         }
     }

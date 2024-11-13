@@ -9,7 +9,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSharedPreferences
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,7 +26,6 @@ internal class EmbracePreferencesServiceTest {
     private lateinit var service: EmbracePreferencesService
     private lateinit var fakeClock: FakeClock
 
-    private val executorService = fakeBackgroundWorker()
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before
@@ -35,8 +33,7 @@ internal class EmbracePreferencesServiceTest {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
         fakeClock = FakeClock()
         service = EmbracePreferencesService(
-            executorService,
-            lazy { prefs },
+            prefs,
             fakeClock,
             EmbraceSerializer()
         )
@@ -190,8 +187,7 @@ internal class EmbracePreferencesServiceTest {
     @Test
     fun `test incrementAndGet returns -1 on an exception`() {
         service = EmbracePreferencesService(
-            executorService,
-            lazy { FakeSharedPreferences(throwExceptionOnGet = true) },
+            FakeSharedPreferences(throwExceptionOnGet = true),
             fakeClock,
             EmbraceSerializer()
         )

@@ -1,11 +1,15 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 
-class FakeRemoteConfigStore : RemoteConfigStore {
-    override fun getConfig(): RemoteConfig? = null
+class FakeRemoteConfigStore(
+    var impl: ConfigHttpResponse? = null,
+) : RemoteConfigStore {
 
-    override fun save(config: RemoteConfig) {
+    override fun loadResponse(): ConfigHttpResponse? = impl
+
+    override fun saveResponse(response: ConfigHttpResponse) {
+        impl = response
     }
 }

@@ -24,7 +24,6 @@ internal class ConfigModuleImplTest {
             workerThreadModule = FakeWorkerThreadModule(),
             androidServicesModule = FakeAndroidServicesModule(),
             framework = AppFramework.NATIVE,
-            foregroundAction = {},
         )
         assertNotNull(module.configService)
         assertNotNull(module.urlBuilder)

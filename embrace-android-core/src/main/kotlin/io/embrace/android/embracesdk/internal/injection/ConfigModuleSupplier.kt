@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
+import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 
@@ -14,8 +14,7 @@ typealias ConfigModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
-    foregroundAction: () -> Unit,
-    remoteConfigSourceProvider: Provider<RemoteConfigSource?>,
+    remoteConfigStoreProvider: Provider<RemoteConfigStore?>,
 ) -> ConfigModule
 
 fun createConfigModule(
@@ -25,8 +24,7 @@ fun createConfigModule(
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
-    foregroundAction: () -> Unit,
-    remoteConfigSourceProvider: Provider<RemoteConfigSource?>,
+    remoteConfigStoreProvider: Provider<RemoteConfigStore?>,
 ): ConfigModule = ConfigModuleImpl(
     initModule,
     coreModule,
@@ -34,6 +32,5 @@ fun createConfigModule(
     workerThreadModule,
     androidServicesModule,
     framework,
-    foregroundAction,
-    remoteConfigSourceProvider
+    remoteConfigStoreProvider
 )

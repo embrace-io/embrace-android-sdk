@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
+import io.embrace.android.embracesdk.fakes.FakeRemoteConfigStore
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -16,6 +17,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
@@ -101,7 +103,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 deliveryServiceProvider = deliveryServiceProvider
             )
         },
-        configModuleSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule, androidServicesModule, appFramework, foregroundAction, _ ->
+        configModuleSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule, androidServicesModule, appFramework, _ ->
             createConfigModule(
                 initModule,
                 coreModule,
@@ -109,9 +111,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 workerThreadModule,
                 androidServicesModule,
                 appFramework,
-                foregroundAction
             ) {
-                FakeRemoteConfigSource(remoteConfig)
+                FakeRemoteConfigStore(ConfigHttpResponse(remoteConfig, null))
             }
         },
         anrModuleSupplier = { _, _, _ -> fakeAnrModule },

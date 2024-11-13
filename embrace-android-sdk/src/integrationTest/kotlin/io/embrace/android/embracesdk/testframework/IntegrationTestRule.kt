@@ -144,7 +144,11 @@ internal class IntegrationTestRule(
 
             if (startSdk) {
                 embraceImpl.start(overriddenCoreModule.context)
-                assertEquals(expectSdkToStart, bootstrapper.essentialServiceModule.processStateService.isInitialized())
+                assertEquals(
+                    "SDK did not start in integration test.",
+                    expectSdkToStart,
+                    embraceImpl.isStarted
+                )
             }
         }
         testCaseAction(action)
@@ -153,17 +157,12 @@ internal class IntegrationTestRule(
         otelExportAssertion(otelAssertion)
     }
 
-    fun prepareConfig(instrumentedConfig: FakeInstrumentedConfig) =
+    private fun prepareConfig(instrumentedConfig: FakeInstrumentedConfig) =
         when {
-            setup.useMockWebServer -> {
-                instrumentedConfig.copy(
-                    baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
-                )
-            }
-
-            else -> {
-                instrumentedConfig
-            }
+            setup.useMockWebServer -> instrumentedConfig.copy(
+                baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
+            )
+            else -> instrumentedConfig
         }
 
     /**

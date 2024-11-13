@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import okio.GzipSource
 import okio.buffer
 import java.io.IOException
@@ -21,35 +22,54 @@ internal class OkHttpRemoteConfigSource(
     private val serializer: PlatformSerializer,
 ) : RemoteConfigSource {
 
-    override fun getConfig(): RemoteConfig? = try {
+    override fun getConfig(): ConfigHttpResponse? = try {
         fetchConfigImpl()
     } catch (exc: IOException) {
         null
     }
 
-    private fun fetchConfigImpl(): RemoteConfig? {
+    override fun setInitialEtag(etag: String) {
+        this.etag = etag
+    }
+
+    private var etag: String? = null
+
+    private fun fetchConfigImpl(): ConfigHttpResponse? {
+        val request = prepareRequest()
+        val call = okhttpClient.newCall(request)
+        val response = call.execute()
+        return processResponse(response)
+    }
+
+    private fun prepareRequest(): Request {
         val url = apiUrlBuilder.resolveUrl(Endpoint.CONFIG)
         val headers = prepareConfigRequest(url).getHeaders()
         val builder = Request.Builder().url(url)
 
+        etag?.let {
+            builder.header("If-None-Match", it)
+        }
         headers.forEach { entry ->
             builder.header(entry.key, entry.value)
         }
-        val call = okhttpClient.newCall(
-            builder.build()
-        )
+        val request = builder.build()
+        return request
+    }
 
-        val response = call.execute()
+    private fun processResponse(response: Response): ConfigHttpResponse? {
+        response.header("etag")?.let {
+            this.etag = it
+        }
         if (!response.isSuccessful) {
             return null
         }
-        val config = response.body?.source()?.use { src ->
+        val cfg = response.body?.source()?.use { src ->
             val gzipSource = GzipSource(src)
             gzipSource.buffer().inputStream().use {
                 serializer.fromJson(it, RemoteConfig::class.java)
             }
         }
-        return config
+        return ConfigHttpResponse(cfg, etag)
     }
 
     private fun prepareConfigRequest(url: String) = ApiRequest(

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -10,7 +9,6 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
  */
 interface StorageModule {
     val storageService: StorageService
-    val cache: ApiResponseCache
     val cacheService: CacheService
     val deliveryCacheManager: DeliveryCacheManager
 }

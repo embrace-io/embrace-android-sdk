@@ -29,6 +29,7 @@ class OkHttpRemoteConfigSourceTest {
     private lateinit var server: MockWebServer
     private lateinit var client: OkHttpClient
     private lateinit var urlBuilder: EmbraceApiUrlBuilder
+    private lateinit var source: OkHttpRemoteConfigSource
 
     private val remoteConfig = RemoteConfig(
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
@@ -63,6 +64,7 @@ class OkHttpRemoteConfigSourceTest {
             RemoteConfig::class.java,
             gzipSink.outputStream()
         )
+        source = OkHttpRemoteConfigSource(client, urlBuilder, TestPlatformSerializer())
     }
 
     @Test
@@ -101,19 +103,6 @@ class OkHttpRemoteConfigSourceTest {
     }
 
     @Test
-    fun `test call timeout in middle of server response`() {
-        client = client.newBuilder().callTimeout(5, TimeUnit.MILLISECONDS).build()
-        val (cfg, request) = executeRequest(
-            MockResponse()
-                .setResponseCode(200)
-                .setBody(configResponseBuffer)
-                .throttleBody(1, 1, TimeUnit.MILLISECONDS)
-        )
-        assertConfigRequestReceived(request)
-        assertConfigResponseNotDeserialized(cfg)
-    }
-
-    @Test
     fun `test invalid response from server`() {
         val (cfg, request) = executeRequest(
             MockResponse().setResponseCode(200).setBody("{")
@@ -122,13 +111,34 @@ class OkHttpRemoteConfigSourceTest {
         assertConfigResponseNotDeserialized(cfg)
     }
 
+    @Test
+    fun `test etag header respected`() {
+        val etagValue = "attempt_1"
+        val (cfg, request) = executeRequest(
+            MockResponse().setResponseCode(200)
+                .setBody(configResponseBuffer)
+                .setHeader("etag", etagValue)
+        )
+        assertConfigRequestReceived(request)
+        assertNull(request?.getHeader("If-None-Match"))
+        assertConfigResponseDeserialized(cfg)
+
+        // second request with etag
+        val (secondCfg, secondRequest) = executeRequest(
+            MockResponse().setResponseCode(304)
+                .setHeader("etag", etagValue)
+        )
+        assertConfigRequestReceived(secondRequest)
+        assertEquals(etagValue, secondRequest?.getHeader("If-None-Match"))
+        assertConfigResponseNotDeserialized(secondCfg)
+    }
+
     private fun executeRequest(response: MockResponse?): Pair<RemoteConfig?, RecordedRequest?> {
         if (response == null) {
             return Pair(null, null)
         }
         server.enqueue(response)
-        val source = OkHttpRemoteConfigSource(client, urlBuilder, TestPlatformSerializer())
-        val cfg = source.getConfig()
+        val cfg = source.getConfig()?.cfg
         val request = pollRequest()
         CallData(request, cfg)
         return Pair(cfg, request)

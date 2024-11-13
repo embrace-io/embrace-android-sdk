@@ -34,8 +34,6 @@ class OkHttpRemoteConfigSourceTest {
     private val remoteConfig = RemoteConfig(
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
     )
-    private val configResponse = TestPlatformSerializer().toJson(remoteConfig)
-
     private lateinit var configResponseBuffer: Buffer
 
     @Before

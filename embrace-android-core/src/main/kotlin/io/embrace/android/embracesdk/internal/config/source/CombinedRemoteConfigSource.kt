@@ -10,14 +10,17 @@ internal class CombinedRemoteConfigSource(
     private val httpSource: RemoteConfigSource,
     private val worker: BackgroundWorker,
     private val intervalMs: Long = 60 * 60 * 1000
-) : RemoteConfigSource {
+) {
 
     // the remote config that is used for the lifetime of the process.
-    private val cfg = store.getConfig()
+    private val cfg = store.loadConfig()
 
-    override fun getConfig(): RemoteConfig? = cfg
+    fun getConfig(): RemoteConfig? = cfg
 
     fun scheduleConfigRequests() {
+        worker.submit {
+            store.retrieveEtag()?.let(httpSource::setInitialEtag)
+        }
         worker.scheduleWithFixedDelay(
             ::attemptConfigRequest,
             0,
@@ -27,6 +30,6 @@ internal class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
-        httpSource.getConfig()?.let(store::save)
+        httpSource.getConfig()?.let(store::saveConfig)
     }
 }

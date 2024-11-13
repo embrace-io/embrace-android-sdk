@@ -8,9 +8,14 @@ class FakeRemoteConfigSource(
 ) : RemoteConfigSource {
 
     var callCount: Int = 0
+    var etag: String? = null
 
     override fun getConfig(): RemoteConfig? {
         callCount++
         return cfg
+    }
+
+    override fun setInitialEtag(etag: String) {
+        this.etag = etag
     }
 }

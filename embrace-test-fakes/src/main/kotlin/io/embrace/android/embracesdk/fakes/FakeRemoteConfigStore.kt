@@ -4,10 +4,18 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 
 class FakeRemoteConfigStore(
-    val impl: RemoteConfig? = null
+    val impl: RemoteConfig? = null,
+    var etag: String? = null,
 ) : RemoteConfigStore {
-    override fun getConfig(): RemoteConfig? = impl
 
-    override fun save(config: RemoteConfig) {
+    override fun loadConfig(): RemoteConfig? = impl
+
+    override fun saveConfig(config: RemoteConfig) {
+    }
+
+    override fun retrieveEtag(): String? = etag
+
+    override fun storeEtag(etag: String) {
+        this.etag = etag
     }
 }

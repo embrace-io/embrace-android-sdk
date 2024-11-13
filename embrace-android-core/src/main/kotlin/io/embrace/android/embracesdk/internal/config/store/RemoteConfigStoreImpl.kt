@@ -15,7 +15,11 @@ internal class RemoteConfigStoreImpl(
         createNewFile()
     }
 
-    override fun getConfig(): RemoteConfig? {
+    private val etagFile = File(storageDir, "etag").apply {
+        createNewFile()
+    }
+
+    override fun loadConfig(): RemoteConfig? {
         try {
             GZIPInputStream(configFile.inputStream().buffered()).use {
                 return serializer.fromJson(it, RemoteConfig::class.java)
@@ -25,11 +29,28 @@ internal class RemoteConfigStoreImpl(
         }
     }
 
-    override fun save(config: RemoteConfig) {
+    override fun saveConfig(config: RemoteConfig) {
         try {
             GZIPOutputStream(configFile.outputStream().buffered()).use { stream ->
                 serializer.toJson(config, RemoteConfig::class.java, stream)
             }
+        } catch (ignored: Exception) {
+        }
+    }
+
+    override fun retrieveEtag(): String? {
+        return try {
+            etagFile.readText().ifEmpty {
+                null
+            }
+        } catch (exc: Exception) {
+            null
+        }
+    }
+
+    override fun storeEtag(etag: String) {
+        try {
+            etagFile.writeText(etag)
         } catch (ignored: Exception) {
         }
     }

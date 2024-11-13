@@ -22,20 +22,30 @@ internal class RemoteConfigStoreImplTest {
 
     @Test
     fun `test config store`() {
-        assertNull(store.getConfig())
+        assertNull(store.loadConfig())
 
         // store a config
         val config = RemoteConfig(50)
-        store.save(config)
+        store.saveConfig(config)
 
         // load the config
-        val loaded = checkNotNull(store.getConfig())
+        val loaded = checkNotNull(store.loadConfig())
         assertEquals(config, loaded)
 
         val newConfig = RemoteConfig(100)
-        store.save(newConfig)
+        store.saveConfig(newConfig)
 
-        val newLoaded = checkNotNull(store.getConfig())
+        val newLoaded = checkNotNull(store.loadConfig())
         assertEquals(newConfig, newLoaded)
+    }
+
+    @Test
+    fun `test etag store`() {
+        assertNull(store.retrieveEtag())
+        store.storeEtag("etag")
+        assertEquals("etag", store.retrieveEtag())
+
+        store.storeEtag("another")
+        assertEquals("another", store.retrieveEtag())
     }
 }

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -19,10 +20,9 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.TimeUnit
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class OkHttpRemoteConfigSourceTest {
 
     private lateinit var server: MockWebServer
@@ -32,6 +32,7 @@ class OkHttpRemoteConfigSourceTest {
     private val remoteConfig = RemoteConfig(
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
     )
+    private val configResponse = TestPlatformSerializer().toJson(remoteConfig)
 
     private lateinit var configResponseBuffer: Buffer
 

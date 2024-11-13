@@ -101,9 +101,10 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 deliveryServiceProvider = deliveryServiceProvider
             )
         },
-        configModuleSupplier = { initModule, openTelemetryModule, workerThreadModule, androidServicesModule, appFramework, foregroundAction, _ ->
+        configModuleSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule, androidServicesModule, appFramework, foregroundAction, _ ->
             createConfigModule(
                 initModule,
+                coreModule,
                 openTelemetryModule,
                 workerThreadModule,
                 androidServicesModule,

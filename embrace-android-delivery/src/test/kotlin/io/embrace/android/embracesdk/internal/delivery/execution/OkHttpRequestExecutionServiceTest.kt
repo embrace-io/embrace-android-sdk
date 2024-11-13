@@ -48,7 +48,7 @@ class OkHttpRequestExecutionServiceTest {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             start()
         }
-        testServerUrl = server.url("").toString().removeSuffix("/")
+        testServerUrl = server.url("").toString()
         requestExecutionService = OkHttpRequestExecutionService(
             coreBaseUrl = testServerUrl,
             lazyDeviceId = lazy { testDeviceId },
@@ -69,7 +69,7 @@ class OkHttpRequestExecutionServiceTest {
     fun `return incomplete if the server does not exist`() {
         // given a request execution service with a non existent url
         requestExecutionService = OkHttpRequestExecutionService(
-            coreBaseUrl = "https://nonexistenturl:1565",
+            coreBaseUrl = "https://nonexistenturl:1565/",
             lazyDeviceId = lazy { testDeviceId },
             appId = testAppId,
             embraceVersionName = testEmbraceVersionName,

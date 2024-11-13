@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 typealias ConfigModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
@@ -19,6 +20,7 @@ typealias ConfigModuleSupplier = (
 
 fun createConfigModule(
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
@@ -27,6 +29,7 @@ fun createConfigModule(
     remoteConfigSourceProvider: Provider<RemoteConfigSource?>,
 ): ConfigModule = ConfigModuleImpl(
     initModule,
+    coreModule,
     openTelemetryModule,
     workerThreadModule,
     androidServicesModule,

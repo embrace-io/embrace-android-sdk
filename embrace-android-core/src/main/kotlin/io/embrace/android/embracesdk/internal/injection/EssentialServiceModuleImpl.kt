@@ -15,9 +15,7 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -54,25 +52,6 @@ class EssentialServiceModuleImpl(
 
     override val activityLifecycleTracker: ActivityLifecycleTracker by singleton {
         ActivityLifecycleTracker(coreModule.application, initModule.logger)
-    }
-
-    override val urlBuilder: ApiUrlBuilder by singleton {
-        Systrace.traceSynchronous("url-builder-init") {
-            // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
-            // but we want to access behaviors from ConfigService when possible.
-            val sdkEndpointBehavior = configService.sdkEndpointBehavior
-            val appId = checkNotNull(configService.appId)
-            val coreBaseUrl = sdkEndpointBehavior.getData(appId)
-            val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
-
-            EmbraceApiUrlBuilder(
-                coreBaseUrl = coreBaseUrl,
-                configBaseUrl = configBaseUrl,
-                appId = appId,
-                deviceIdImpl = lazyDeviceId,
-                lazyAppVersionName = lazy { coreModule.packageVersionInfo.versionName }
-            )
-        }
     }
 
     override val userService: UserService by singleton {
@@ -120,7 +99,7 @@ class EssentialServiceModuleImpl(
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,
-                urlBuilder = urlBuilder
+                urlBuilder = checkNotNull(configModule.urlBuilder)
             )
         }
     }

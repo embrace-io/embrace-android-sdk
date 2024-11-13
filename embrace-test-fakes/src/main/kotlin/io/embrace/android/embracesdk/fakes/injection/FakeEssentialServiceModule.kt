@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.fakes.injection
 import io.embrace.android.embracesdk.fakes.FakeActivityTracker
 import io.embrace.android.embracesdk.fakes.FakeApiClient
 import io.embrace.android.embracesdk.fakes.FakeApiService
-import io.embrace.android.embracesdk.fakes.FakeApiUrlBuilder
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePendingApiCallsSender
@@ -16,7 +15,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnec
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -32,7 +30,6 @@ class FakeEssentialServiceModule(
     override val apiService: ApiService = FakeApiService(),
     override val networkConnectivityService: NetworkConnectivityService = FakeNetworkConnectivityService(),
     override val pendingApiCallsSender: PendingApiCallsSender = FakePendingApiCallsSender(),
-    override val urlBuilder: ApiUrlBuilder = FakeApiUrlBuilder(),
     override val logWriter: LogWriter = FakeLogWriter(),
     override val sessionPropertiesService: FakeSessionPropertiesService = FakeSessionPropertiesService(),
 ) : EssentialServiceModule

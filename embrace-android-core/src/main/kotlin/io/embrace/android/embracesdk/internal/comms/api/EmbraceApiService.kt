@@ -34,7 +34,7 @@ internal class EmbraceApiService(
     }
     private val configUrl by lazy {
         Systrace.traceSynchronous("config-url-init") {
-            urlBuilder.getConfigUrl()
+            urlBuilder.resolveUrl(Endpoint.CONFIG)
         }
     }
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN

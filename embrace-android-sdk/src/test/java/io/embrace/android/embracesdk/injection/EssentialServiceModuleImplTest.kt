@@ -40,7 +40,6 @@ internal class EssentialServiceModuleImplTest {
         )
 
         assertNotNull(module.processStateService)
-        assertNotNull(module.urlBuilder)
         assertNotNull(module.apiClient)
         assertNotNull(module.apiService)
         assertNotNull(module.activityLifecycleTracker)

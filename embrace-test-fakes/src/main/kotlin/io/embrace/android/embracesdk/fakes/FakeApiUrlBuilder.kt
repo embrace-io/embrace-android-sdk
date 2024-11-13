@@ -1,15 +1,12 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
+import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 
 class FakeApiUrlBuilder(
-    private val config: String = "",
-    private val other: String = "",
     override val appId: String = "",
     override val deviceId: String = "",
+    override val baseDataUrl: String = "",
 ) : ApiUrlBuilder {
-
-    override fun getConfigUrl(): String = config
-
-    override fun getEmbraceUrlWithSuffix(apiVersion: String, suffix: String): String = other
+    override fun resolveUrl(endpoint: Endpoint): String = ""
 }

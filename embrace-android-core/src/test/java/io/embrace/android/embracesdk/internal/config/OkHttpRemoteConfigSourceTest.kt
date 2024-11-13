@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.config
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -11,7 +13,6 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -39,11 +40,13 @@ class OkHttpRemoteConfigSourceTest {
         val baseUrl = server.url("api").toString()
         client = OkHttpClient.Builder().build()
         urlBuilder = EmbraceApiUrlBuilder(
-            coreBaseUrl = baseUrl,
-            configBaseUrl = baseUrl,
-            appId = "abcde",
-            deviceIdImpl = lazy { "deviceId" },
-            lazyAppVersionName = lazy { "1.0.0" },
+            "deviceId",
+            "1.0.0",
+            FakeInstrumentedConfig(
+                baseUrls = FakeBaseUrlConfig(
+                    configImpl = baseUrl,
+                )
+            )
         )
     }
 
@@ -130,9 +133,9 @@ class OkHttpRemoteConfigSourceTest {
     }
 
     private fun assertConfigRequestReceived(request: RecordedRequest?) {
-        assertNotNull(request)
+        checkNotNull(request)
         assertEmbraceHeadersAdded(request)
-        val requestUrl = request?.requestUrl?.toUrl() ?: error("Request URL cannot be null")
+        val requestUrl = request.requestUrl?.toUrl() ?: error("Request URL cannot be null")
         assertEquals("/api/v2/config", requestUrl.path)
         assertEquals("appId=abcde&osVersion=21.0.0&appVersion=1.0.0&deviceId=deviceId", requestUrl.query)
     }

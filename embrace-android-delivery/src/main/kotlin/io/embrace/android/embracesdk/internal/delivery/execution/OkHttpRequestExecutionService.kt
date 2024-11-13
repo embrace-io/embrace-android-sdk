@@ -79,7 +79,7 @@ class OkHttpRequestExecutionService(
     }
 
     private fun Endpoint.getApiRequestFromEndpoint(): ApiRequestV2 = ApiRequestV2(
-        url = "$coreBaseUrl/v2/${this.path}",
+        url = "$coreBaseUrl${this.path}",
         appId = appId,
         deviceId = lazyDeviceId.value,
         contentEncoding = "gzip",

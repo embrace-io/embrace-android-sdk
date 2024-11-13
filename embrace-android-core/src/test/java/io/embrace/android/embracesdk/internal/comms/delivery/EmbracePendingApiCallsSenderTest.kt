@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.comms.delivery
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestMapper
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestUrl
@@ -251,11 +252,9 @@ internal class EmbracePendingApiCallsSenderTest {
         repeat(15) {
             val mapper = ApiRequestMapper(
                 EmbraceApiUrlBuilder(
-                    "https://data.emb-api.com/$it",
-                    "https://config.emb-api.com",
-                    "appId",
-                    lazy { "deviceId" },
-                    lazy { "appVersionName" }
+                    "deviceId",
+                    "appVersionName",
+                    FakeInstrumentedConfig()
                 ),
                 lazy { "deviceId" },
                 "appId"
@@ -271,22 +270,20 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // verify logs were added to the queue, and oldest added requests are dropped
         assertEquals(
-            "https://data.emb-api.com/5/v2/logs",
+            "https://a-abcde.data.emb-api.com/api/v2/logs",
             queue.pollNextPendingApiCall()?.apiRequest?.url?.url
         )
         assertEquals(
-            "https://data.emb-api.com/6/v2/logs",
+            "https://a-abcde.data.emb-api.com/api/v2/logs",
             queue.pollNextPendingApiCall()?.apiRequest?.url?.url
         )
 
         // now add some sessions for retry and verify they are returned first
         val mapper = ApiRequestMapper(
             EmbraceApiUrlBuilder(
-                "https://data.emb-api.com/session",
-                "https://config.emb-api.com",
-                "appId",
-                lazy { "deviceId" },
-                lazy { "appVersionName" }
+                "deviceId",
+                "appVersionName",
+                FakeInstrumentedConfig()
             ),
             lazy { "deviceId" },
             "appId"

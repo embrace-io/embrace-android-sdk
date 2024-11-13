@@ -8,7 +8,6 @@ import android.view.WindowManager
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeCpuInfoDelegate
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
@@ -49,7 +48,6 @@ internal class EmbraceMetadataServiceTest {
         private lateinit var ref: EmbraceMetadataService
         private val preferencesService: EmbracePreferencesService = mockk(relaxed = true)
         private val fakeClock = FakeClock()
-        private val cpuInfoDelegate: FakeCpuInfoDelegate = FakeCpuInfoDelegate()
         private val fakeArchitecture = FakeDeviceArchitecture()
         private val storageStatsManager = mockk<StorageStatsManager>()
 
@@ -128,7 +126,6 @@ internal class EmbraceMetadataServiceTest {
                         preferencesService,
                         fakeBackgroundWorker(),
                         SystemInfo(),
-                        Companion::cpuInfoDelegate,
                         FakeEmbLogger()
                     ),
                     FakeRnBundleIdTracker()
@@ -204,16 +201,5 @@ internal class EmbraceMetadataServiceTest {
         val metadataService = getMetadataService(precompute = false)
         val deviceInfo = serializer.toJson(metadataService.getDeviceInfo())
         assertTrue(deviceInfo.contains("\"da\":\"arm64-v8a\""))
-    }
-
-    @Test
-    fun `test async additional device info`() {
-        every { preferencesService.cpuName } returns null
-        every { preferencesService.egl } returns null
-
-        val metadataService = getMetadataService()
-        val info = metadataService.getDeviceInfo()
-        assertEquals("fake_cpu", info.cpuName)
-        assertEquals("fake_egl", info.egl)
     }
 }

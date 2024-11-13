@@ -41,7 +41,6 @@ add_library(# Sets the name of the library.
         serializer/file_writer.c
         3rdparty/base64/base_64_encoder.c
         3rdparty/parson/parson.c
-        utils/cpuinfo.c
         )
 
 include_directories(

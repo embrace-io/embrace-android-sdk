@@ -283,14 +283,6 @@ internal class EmbracePreferencesService(
         get() = prefs.getStringSet(AEI_HASH_CODES, null)
         set(value) = prefs.setArrayPreference(AEI_HASH_CODES, value)
 
-    override var cpuName: String?
-        get() = prefs.getStringPreference(CPU_NAME_KEY)
-        set(value) = prefs.setStringPreference(CPU_NAME_KEY, value)
-
-    override var egl: String?
-        get() = prefs.getStringPreference(EGL_KEY)
-        set(value) = prefs.setStringPreference(EGL_KEY, value)
-
     override fun isUsersFirstDay(): Boolean {
         val installDate = installDate
         return installDate != null && clock.now() - installDate <= PreferencesService.DAY_IN_MS
@@ -351,7 +343,5 @@ internal class EmbracePreferencesService(
         private const val SDK_DISABLED_KEY = "io.embrace.disabled"
         private const val SDK_CONFIG_FETCHED_TIMESTAMP = "io.embrace.sdkfetchedtimestamp"
         private const val AEI_HASH_CODES = "io.embrace.aeiHashCode"
-        private const val CPU_NAME_KEY = "io.embrace.cpuName"
-        private const val EGL_KEY = "io.embrace.egl"
     }
 }

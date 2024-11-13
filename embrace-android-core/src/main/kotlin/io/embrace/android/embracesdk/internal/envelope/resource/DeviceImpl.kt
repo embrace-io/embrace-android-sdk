@@ -5,12 +5,10 @@ import android.os.StatFs
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.capture.cpu.CpuInfoDelegate
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
@@ -20,7 +18,6 @@ internal class DeviceImpl(
     private val preferencesService: PreferencesService,
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
-    private val cpuInfoDelegate: Provider<CpuInfoDelegate?>,
     private val logger: EmbLogger,
 ) : Device {
     override var isJailbroken: Boolean? = null
@@ -126,8 +123,4 @@ internal class DeviceImpl(
      */
     override val internalStorageTotalCapacity: Lazy<Long> =
         lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
-
-    override val cpuName: String? by lazy { cpuInfoDelegate()?.getCpuName() }
-
-    override val eglInfo: String? by lazy { cpuInfoDelegate()?.getEgl() }
 }

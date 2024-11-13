@@ -156,16 +156,6 @@ interface PreferencesService {
     var screenResolution: String?
 
     /**
-     * The device's cpu name.
-     */
-    var cpuName: String?
-
-    /**
-     * The device's egl.
-     */
-    var egl: String?
-
-    /**
      * If background activity capture is enabled
      */
     var backgroundActivityEnabled: Boolean

@@ -32,7 +32,6 @@ internal class PayloadSourceModuleImpl(
     androidServicesModule: AndroidServicesModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    nativeCoreModuleProvider: Provider<NativeCoreModule?>,
     nativeSymbolsProvider: Provider<Map<String, String>?>,
     otelModule: OpenTelemetryModule,
     otelPayloadMapperProvider: Provider<OtelPayloadMapper>,
@@ -100,7 +99,6 @@ internal class PayloadSourceModuleImpl(
                         androidServicesModule.preferencesService,
                         workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                         initModule.systemInfo,
-                        { nativeCoreModuleProvider()?.cpuInfoDelegate },
                         initModule.logger
                     )
                 },

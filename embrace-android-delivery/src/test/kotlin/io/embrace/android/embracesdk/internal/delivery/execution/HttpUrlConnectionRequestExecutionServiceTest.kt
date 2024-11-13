@@ -150,7 +150,7 @@ class HttpUrlConnectionRequestExecutionServiceTest {
 
         // then the response should be too many requests
         check(response is ExecutionResult.TooManyRequests)
-        assertEquals(10L, response.retryAfter)
+        assertEquals(10000L, response.retryAfterMs)
     }
 
     @Test

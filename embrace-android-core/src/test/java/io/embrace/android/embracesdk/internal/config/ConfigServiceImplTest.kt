@@ -8,12 +8,8 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.comms.api.CachedConfig
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.source.CachedRemoteConfigSource
-import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logs.LogSinkImpl
@@ -43,14 +39,12 @@ internal class ConfigServiceImplTest {
     private lateinit var worker: BackgroundWorker
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var thresholdCheck: BehaviorThresholdCheck
-    private lateinit var remoteConfigSource: RemoteConfigSourceImpl
 
     companion object {
         private lateinit var remoteConfig: RemoteConfig
         private lateinit var processStateService: ProcessStateService
         private lateinit var logger: EmbLogger
         private lateinit var fakeClock: FakeClock
-        private lateinit var fakeCachedConfig: RemoteConfig
 
         /**
          * Setup before all tests get executed. Create mocks here.
@@ -63,9 +57,6 @@ internal class ConfigServiceImplTest {
             processStateService = FakeProcessStateService()
             fakeClock = FakeClock()
             logger = EmbLoggerImpl()
-            fakeCachedConfig = RemoteConfig( // alter config to trigger listener
-                anrConfig = AnrRemoteConfig()
-            )
         }
 
         /**
@@ -87,7 +78,7 @@ internal class ConfigServiceImplTest {
         fakePreferenceService = FakePreferenceService(deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF")
         executor = BlockingScheduledExecutorService(blockingMode = false)
         worker = BackgroundWorker(executor)
-        service = createService(worker = worker, action = {})
+        service = createService()
         assertFalse(service.isOnlyUsingOtelExporters())
     }
 
@@ -161,53 +152,18 @@ internal class ConfigServiceImplTest {
     }
 
     @Test
-    fun `test config does not exist in cache, so it's not loaded`() {
-        assertTrue(service.anrBehavior.isAnrCaptureEnabled())
-        remoteConfigSource.loadConfigFromCache()
-
-        // config was not updated
-        assertTrue(service.anrBehavior.isAnrCaptureEnabled())
-    }
-
-    /**
-     * Test that calling getConfig() refreshes the config
-     * As we are using a DirectExecutor this method will run synchronously and
-     * return the updated config.
-     * In a real situation, the async refresh would be triggered and the config returned would be the previous one.
-     */
-    @Test
-    fun `test onForeground() refreshes the config`() {
-        // advance the clock so it's safe to retry config refresh
-        fakeClock.tick(1000000000000)
-        val newConfig = RemoteConfig(anrConfig = AnrRemoteConfig())
-        var count = 0
-
-        remoteConfigSource.remoteConfigSource = object : CachedRemoteConfigSource {
-            override fun getCachedConfig(): CachedConfig {
-                return CachedConfig(null, null)
-            }
-            override fun getConfig(): RemoteConfig {
-                count++
-                return newConfig
-            }
-        }
-        remoteConfigSource.onForeground(true, 1100L)
-        assertEquals(1, count)
-    }
-
-    @Test
     fun `test app framework`() {
         assertEquals(AppFramework.NATIVE, service.appFramework)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun testEmptyAppId() {
-        createService(worker = worker, appId = null)
+        createService(appId = null)
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun testNullAppId() {
-        createService(worker = worker, appId = null)
+        createService(appId = null)
     }
 
     @Test
@@ -218,7 +174,7 @@ internal class ConfigServiceImplTest {
             SystemInfo()
         )
         cfg.addLogExporter(FakeLogRecordExporter())
-        val service = createService(worker = worker, config = cfg, appId = null)
+        val service = createService(config = cfg, appId = null)
         assertNotNull(service)
         assertTrue(service.isOnlyUsingOtelExporters())
     }
@@ -228,8 +184,6 @@ internal class ConfigServiceImplTest {
      * tasks for its internal [BackgroundWorker]
      */
     private fun createService(
-        worker: BackgroundWorker,
-        action: () -> Unit = {},
         config: OpenTelemetryConfiguration = OpenTelemetryConfiguration(
             SpanSinkImpl(),
             LogSinkImpl(),
@@ -238,18 +192,13 @@ internal class ConfigServiceImplTest {
         appId: String? = "AbCdE",
     ): ConfigServiceImpl {
         thresholdCheck = BehaviorThresholdCheck { fakePreferenceService.deviceIdentifier }
-        remoteConfigSource = RemoteConfigSourceImpl(
-            clock = fakeClock,
-            backgroundWorker = worker,
-            foregroundAction = action,
-        )
         return ConfigServiceImpl(
             openTelemetryCfg = config,
             preferencesService = fakePreferenceService,
             suppliedFramework = AppFramework.NATIVE,
             instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
             thresholdCheck = thresholdCheck,
-            configProvider = remoteConfigSource::getConfig,
+            configProvider = ::remoteConfig
         )
     }
 }

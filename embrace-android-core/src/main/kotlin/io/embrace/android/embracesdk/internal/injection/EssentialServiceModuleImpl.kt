@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
-import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
@@ -90,11 +89,6 @@ class EssentialServiceModuleImpl(
             EmbraceApiService(
                 apiClient = apiClient,
                 serializer = initModule.jsonSerializer,
-                cachedConfigProvider = { url: String, request: ApiRequest ->
-                    Systrace.traceSynchronous("provide-cache-config") {
-                        storageModule.cache.retrieveCachedConfig(url, request)
-                    }
-                },
                 priorityWorker = workerThreadModule.priorityWorker(Worker.Priority.NetworkRequestWorker),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,

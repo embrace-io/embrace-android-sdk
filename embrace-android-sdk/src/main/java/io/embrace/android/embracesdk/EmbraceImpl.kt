@@ -146,17 +146,18 @@ internal class EmbraceImpl @JvmOverloads constructor(
         val startTimeMs = sdkClock.now()
 
         val appFramework = fromFramework(framework)
-        bootstrapper.init(context, appFramework, startTimeMs)
+        if (!bootstrapper.init(context, appFramework, startTimeMs)) {
+            if (bootstrapper.configModule.configService.sdkModeBehavior.isSdkDisabled()) {
+                stop()
+            }
+            return
+        }
         startSynchronous("post-services-setup")
 
         val coreModule = bootstrapper.coreModule
         application = coreModule.application
 
         val configModule = bootstrapper.configModule
-        if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-            stop()
-            return
-        }
 
         if (configModule.configService.autoDataCaptureBehavior.isComposeClickCaptureEnabled()) {
             registerComposeActivityListener(coreModule.application)

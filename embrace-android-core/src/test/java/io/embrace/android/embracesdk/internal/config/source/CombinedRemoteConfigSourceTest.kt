@@ -22,7 +22,7 @@ class CombinedRemoteConfigSourceTest {
     fun setUp() {
         remoteConfig = RemoteConfig(92)
         executorService = BlockingScheduledExecutorService()
-        remoteConfigSource = FakeRemoteConfigSource(remoteConfig)
+        remoteConfigSource = FakeRemoteConfigSource(ConfigHttpResponse(remoteConfig, "another"))
         remoteConfigStore = FakeRemoteConfigStore()
         source = CombinedRemoteConfigSource(
             remoteConfigStore,
@@ -40,7 +40,7 @@ class CombinedRemoteConfigSourceTest {
     fun `test initial config populated`() {
         val cfg = RemoteConfig(100)
         source = CombinedRemoteConfigSource(
-            FakeRemoteConfigStore(cfg),
+            FakeRemoteConfigStore(ConfigHttpResponse(cfg, null)),
             remoteConfigSource,
             BackgroundWorker(executorService)
         )
@@ -58,11 +58,11 @@ class CombinedRemoteConfigSourceTest {
 
     @Test
     fun `test persisted etag value populated`() {
-        remoteConfigStore.etag = "etag"
+        remoteConfigStore.impl = ConfigHttpResponse(RemoteConfig(), "etag")
         assertEquals(0, remoteConfigSource.callCount)
         source.scheduleConfigRequests()
+        assertEquals("etag", remoteConfigSource.etag)
         executorService.runCurrentlyBlocked()
         assertEquals(1, remoteConfigSource.callCount)
-        assertEquals("etag", remoteConfigSource.etag)
     }
 }

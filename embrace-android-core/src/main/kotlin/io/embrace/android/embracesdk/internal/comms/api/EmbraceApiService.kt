@@ -1,25 +1,21 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
-import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.compression.ConditionalGzipOutputStream
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
-import io.embrace.android.embracesdk.network.http.HttpMethod
 import java.lang.reflect.ParameterizedType
 import java.util.concurrent.Future
 
 internal class EmbraceApiService(
     private val apiClient: ApiClient,
     private val serializer: PlatformSerializer,
-    private val cachedConfigProvider: (url: String, request: ApiRequest) -> CachedConfig,
     private val priorityWorker: PriorityWorker<ApiRequest>,
     private val pendingApiCallsSender: PendingApiCallsSender,
     lazyDeviceId: Lazy<String>,
@@ -32,11 +28,6 @@ internal class EmbraceApiService(
             ApiRequestMapper(urlBuilder, lazyDeviceId, appId)
         }
     }
-    private val configUrl by lazy {
-        Systrace.traceSynchronous("config-url-init") {
-            urlBuilder.resolveUrl(Endpoint.CONFIG)
-        }
-    }
     private var lastNetworkStatus: NetworkStatus = NetworkStatus.UNKNOWN
 
     init {
@@ -44,60 +35,6 @@ internal class EmbraceApiService(
             pendingApiCallsSender.initializeRetrySchedule(this::executePost)
         }
     }
-
-    @Throws(IllegalStateException::class)
-    @Suppress("UseCheckOrError")
-    override fun getConfig(): RemoteConfig? {
-        var request = prepareConfigRequest(configUrl)
-        val cachedResponse = cachedConfigProvider(configUrl, request)
-        if (cachedResponse.isValid()) { // only bother if we have a useful response.
-            request = request.copy(eTag = cachedResponse.eTag)
-        }
-
-        return when (val response = apiClient.executeGet(request)) {
-            is ApiResponse.Success -> {
-                response.body?.let {
-                    serializer.fromJson(it, RemoteConfig::class.java)
-                }
-            }
-
-            is ApiResponse.NotModified -> {
-                cachedResponse.remoteConfig
-            }
-
-            is ApiResponse.TooManyRequests -> {
-                // TODO: We should retry after the retryAfter time or 3 seconds and apply exponential backoff.
-                null
-            }
-
-            is ApiResponse.Failure, ApiResponse.None, ApiResponse.NoPayload -> {
-                null
-            }
-
-            is ApiResponse.Incomplete -> {
-                throw response.exception
-            }
-
-            ApiResponse.PayloadTooLarge -> {
-                // Not expected to receive a 413 response for a GET request.
-                null
-            }
-        }
-    }
-
-    override fun getCachedConfig(): CachedConfig {
-        val request = prepareConfigRequest(configUrl)
-        return cachedConfigProvider(configUrl, request)
-    }
-
-    private fun prepareConfigRequest(url: String) = ApiRequest(
-        contentType = "application/json",
-        userAgent = "Embrace/a/" + BuildConfig.VERSION_NAME,
-        accept = "application/json",
-        url = ApiRequestUrl(url),
-        httpMethod = HttpMethod.GET,
-        acceptEncoding = "gzip",
-    )
 
     override fun onNetworkConnectivityStatusChanged(status: NetworkStatus) {
         lastNetworkStatus = status

@@ -5,14 +5,17 @@ import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
-import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
-import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSourceImpl
+import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
+import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
+import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 internal class ConfigModuleImpl(
     initModule: InitModule,
@@ -21,9 +24,31 @@ internal class ConfigModuleImpl(
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
-    foregroundAction: () -> Unit,
-    remoteConfigSourceProvider: Provider<RemoteConfigSource?> = { null },
+    remoteConfigStoreProvider: Provider<RemoteConfigStore?> = { null },
 ) : ConfigModule {
+
+    companion object {
+        private const val DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10L
+        private const val DEFAULT_READ_TIMEOUT_SECONDS = 60L
+    }
+
+    override val okHttpClient by singleton {
+        OkHttpClient()
+            .newBuilder()
+            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(DEFAULT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .build()
+    }
+
+    override val combinedRemoteConfigSource: CombinedRemoteConfigSource? by singleton {
+        configService.appId ?: return@singleton null
+        CombinedRemoteConfigSource(
+            store = remoteConfigStore,
+            httpSource = remoteConfigSource ?: return@singleton null,
+            worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+        )
+    }
 
     override val configService: ConfigService by singleton {
         Systrace.traceSynchronous("config-service-init") {
@@ -32,22 +57,22 @@ internal class ConfigModuleImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,
                 instrumentedConfig = initModule.instrumentedConfig,
-                configProvider = { remoteConfigSource?.getConfig() },
+                configProvider = { combinedRemoteConfigSource?.getConfig() },
             )
         }
     }
 
     override val remoteConfigSource by singleton {
-        urlBuilder ?: return@singleton null
-        remoteConfigSourceProvider() ?: RemoteConfigSourceImpl(
-            clock = initModule.clock,
-            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-            foregroundAction = foregroundAction,
+        val builder = urlBuilder ?: return@singleton null
+        OkHttpRemoteConfigSource(
+            okhttpClient = okHttpClient,
+            apiUrlBuilder = builder,
+            serializer = initModule.jsonSerializer,
         )
     }
 
     override val remoteConfigStore: RemoteConfigStore by singleton {
-        RemoteConfigStoreImpl(
+        remoteConfigStoreProvider() ?: RemoteConfigStoreImpl(
             serializer = initModule.jsonSerializer,
             storageDir = File(coreModule.context.filesDir, "embrace_remote_config"),
         )

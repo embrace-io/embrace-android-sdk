@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.comms.api.ApiResponseCache
 import io.embrace.android.embracesdk.internal.comms.delivery.CacheService
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryCacheManager
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceCacheService
@@ -22,13 +21,6 @@ internal class StorageModuleImpl(
             coreModule.context,
             initModule.telemetryService,
             StatFsAvailabilityChecker(coreModule.context)
-        )
-    }
-
-    override val cache by singleton {
-        ApiResponseCache(
-            initModule.jsonSerializer,
-            storageService
         )
     }
 

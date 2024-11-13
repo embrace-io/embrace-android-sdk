@@ -22,6 +22,7 @@ dependencies {
     compileOnly(libs.opentelemetry.semconv.incubating)
 
     implementation(libs.junit)
+    implementation(libs.okhttp)
     implementation(libs.robolectric)
     implementation(libs.lifecycle.runtime)
 }

@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 
 class FakeRemoteConfigSource(
-    var cfg: RemoteConfig? = null
+    var cfg: ConfigHttpResponse? = null
 ) : RemoteConfigSource {
 
     var callCount: Int = 0
     var etag: String? = null
 
-    override fun getConfig(): RemoteConfig? {
+    override fun getConfig(): ConfigHttpResponse? {
         callCount++
         return cfg
     }

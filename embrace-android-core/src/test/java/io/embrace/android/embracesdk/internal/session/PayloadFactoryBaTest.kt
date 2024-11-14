@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -70,9 +71,9 @@ internal class PayloadFactoryBaTest {
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior {
-                BackgroundActivityRemoteConfig(threshold = 100f)
-            }
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            )
         )
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }

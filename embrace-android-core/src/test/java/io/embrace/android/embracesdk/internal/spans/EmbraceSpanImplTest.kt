@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
@@ -23,7 +25,6 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -55,8 +56,7 @@ internal class EmbraceSpanImplTest {
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
     private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-        listOf("password"),
-        InstrumentedConfigImpl
+        FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
     )
 
     @Before

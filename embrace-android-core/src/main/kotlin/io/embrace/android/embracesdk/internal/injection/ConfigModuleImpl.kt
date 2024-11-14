@@ -40,7 +40,7 @@ internal class ConfigModuleImpl(
     }
 
     override val combinedRemoteConfigSource: CombinedRemoteConfigSource? by singleton {
-        configService.appId ?: return@singleton null
+        if (initModule.onlyOtelExportEnabled()) return@singleton null
         CombinedRemoteConfigSource(
             store = remoteConfigStore,
             httpSource = remoteConfigSource ?: return@singleton null,
@@ -55,16 +55,16 @@ internal class ConfigModuleImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,
                 instrumentedConfig = initModule.instrumentedConfig,
-                configProvider = { combinedRemoteConfigSource?.getConfig() },
+                remoteConfig = combinedRemoteConfigSource?.getConfig(),
             )
         }
     }
 
     override val remoteConfigSource by singleton {
-        val builder = urlBuilder ?: return@singleton null
+        if (initModule.onlyOtelExportEnabled()) return@singleton null
         OkHttpRemoteConfigSource(
             okhttpClient = okHttpClient,
-            apiUrlBuilder = builder,
+            apiUrlBuilder = urlBuilder ?: return@singleton null,
             serializer = initModule.jsonSerializer,
         )
     }
@@ -77,7 +77,7 @@ internal class ConfigModuleImpl(
     }
 
     override val urlBuilder: ApiUrlBuilder? by singleton {
-        configService.appId ?: return@singleton null
+        if (initModule.onlyOtelExportEnabled()) return@singleton null
         Systrace.traceSynchronous("url-builder-init") {
             EmbraceApiUrlBuilder(
                 deviceId = androidServicesModule.preferencesService.deviceIdentifier,
@@ -85,5 +85,10 @@ internal class ConfigModuleImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
             )
         }
+    }
+
+    private fun InitModule.onlyOtelExportEnabled(): Boolean {
+        instrumentedConfig.project.getAppId() ?: return true
+        return false
     }
 }

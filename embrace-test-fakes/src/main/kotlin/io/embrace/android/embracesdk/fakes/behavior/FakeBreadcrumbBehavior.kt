@@ -1,6 +1,8 @@
-package io.embrace.android.embracesdk.fakes
+package io.embrace.android.embracesdk.fakes.behavior
 
 import io.embrace.android.embracesdk.internal.config.behavior.BreadcrumbBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
 class FakeBreadcrumbBehavior(
     var customBreadcrumbLimitImpl: Int = 100,
@@ -13,6 +15,12 @@ class FakeBreadcrumbBehavior(
     var queryParamCaptureEnabled: Boolean = true,
     var captureFcmPiiDataEnabled: Boolean = false,
 ) : BreadcrumbBehavior {
+
+    override val local: EnabledFeatureConfig
+        get() = throw UnsupportedOperationException()
+    override val remote: RemoteConfig
+        get() = throw UnsupportedOperationException()
+
     override fun getCustomBreadcrumbLimit(): Int = customBreadcrumbLimitImpl
     override fun getFragmentBreadcrumbLimit(): Int = fragmentBreadcrumbLimitImpl
     override fun getTapBreadcrumbLimit(): Int = tapBreadcrumbLimitImpl

@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -68,9 +69,9 @@ internal class SessionOrchestratorTest {
         clock = FakeClock()
         logger = EmbLoggerImpl()
         configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior {
-                BackgroundActivityRemoteConfig(threshold = 100f)
-            }
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            )
         )
     }
 
@@ -260,9 +261,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end with crash in background`() {
         configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior {
-                BackgroundActivityRemoteConfig(threshold = 100f)
-            }
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            )
         )
         createOrchestrator(true)
         orchestrator.handleCrash("crashId")
@@ -272,9 +273,9 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end with crash in foreground`() {
         configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior {
-                BackgroundActivityRemoteConfig(threshold = 100f)
-            }
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            )
         )
         createOrchestrator(false)
         orchestrator.handleCrash("crashId")

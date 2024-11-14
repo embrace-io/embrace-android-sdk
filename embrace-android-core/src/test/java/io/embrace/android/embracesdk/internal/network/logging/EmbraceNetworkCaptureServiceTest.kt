@@ -37,7 +37,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun setUp() {
         cfg = RemoteConfig()
         configService = FakeConfigService(
-            networkBehavior = createNetworkBehavior(remoteCfg = { cfg })
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
         )
         preferenceService = FakePreferenceService()
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
@@ -191,19 +191,24 @@ internal class EmbraceNetworkCaptureServiceTest {
         assertEquals(2, networkCaptureDataSource.loggedCalls.size)
     }
 
-    private fun getService() = EmbraceNetworkCaptureService(
-        sessionIdTracker,
-        preferenceService,
-        { networkCaptureDataSource },
-        configService,
-        EmbraceApiUrlBuilder(
-            "deviceId",
-            "1.0.0",
-            FakeInstrumentedConfig()
-        ),
-        EmbraceSerializer(),
-        EmbLoggerImpl()
-    )
+    private fun getService(): EmbraceNetworkCaptureService {
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
+        )
+        return EmbraceNetworkCaptureService(
+            sessionIdTracker,
+            preferenceService,
+            { networkCaptureDataSource },
+            configService,
+            EmbraceApiUrlBuilder(
+                "deviceId",
+                "1.0.0",
+                FakeInstrumentedConfig()
+            ),
+            EmbraceSerializer(),
+            EmbLoggerImpl()
+        )
+    }
 
     private fun getDefaultRule(
         id: String = "123",

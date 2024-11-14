@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -24,7 +25,7 @@ internal class BackgroundActivityBehaviorImplTest {
 
     @Test
     fun testRemoteAndLocal() {
-        with(createBackgroundActivityBehavior(remoteCfg = { remote })) {
+        with(createBackgroundActivityBehavior(remoteCfg = RemoteConfig(backgroundActivityConfig = remote))) {
             assertFalse(isBackgroundActivityCaptureEnabled())
             assertEquals(100, getManualBackgroundActivityLimit())
             assertEquals(5000L, getMinBackgroundActivityDuration())

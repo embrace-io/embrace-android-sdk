@@ -25,12 +25,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
 private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
@@ -40,64 +35,60 @@ private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
  */
 fun createAnrBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<AnrRemoteConfig?> = { null },
-): AnrBehavior = AnrBehaviorImpl(thresholdCheck, remoteCfg, InstrumentedConfigImpl)
+    remoteCfg: RemoteConfig? = null,
+): AnrBehavior = AnrBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [SessionBehaviorImpl] that returns default values.
  */
 fun createSessionBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): SessionBehavior = SessionBehaviorImpl(thresholdCheck, remoteCfg, InstrumentedConfigImpl)
+    remoteCfg: RemoteConfig? = null,
+): SessionBehavior = SessionBehaviorImpl(InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [NetworkBehaviorImpl] that returns default values.
  */
 fun createNetworkBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
+    remoteCfg: RemoteConfig? = null,
     disabledUrlPatterns: List<String>? = null,
-): NetworkBehavior = NetworkBehaviorImpl(thresholdCheck, remoteCfg, disabledUrlPatterns, InstrumentedConfigImpl)
+): NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteCfg, disabledUrlPatterns)
 
 /**
  * A [BackgroundActivityBehaviorImpl] that returns default values.
  */
 fun createBackgroundActivityBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<BackgroundActivityRemoteConfig?> = { null },
-): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, remoteCfg, InstrumentedConfigImpl)
+    remoteCfg: RemoteConfig? = null,
+): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [AutoDataCaptureBehaviorImpl] that returns default values.
  */
 fun createAutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, remoteCfg, InstrumentedConfigImpl)
+    remoteCfg: RemoteConfig? = null,
+): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [LogMessageBehaviorImpl] that returns default values.
  */
 fun createLogMessageBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<LogRemoteConfig?> = { null },
-): LogMessageBehavior = LogMessageBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): LogMessageBehavior = LogMessageBehaviorImpl(remoteCfg)
 
 /**
  * A [DataCaptureEventBehaviorImpl] that returns default values.
  */
 fun createDataCaptureEventBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteCfg)
 
 /**
  * A [SdkModeBehaviorImpl] that returns default values.
  */
 fun createSdkModeBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
+    remoteCfg: RemoteConfig? = null,
 ): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
@@ -105,19 +96,19 @@ fun createSdkModeBehavior(
  */
 fun createAppExitInfoBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, remoteCfg, InstrumentedConfigImpl)
+    remoteCfg: RemoteConfig? = null,
+): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [NetworkSpanForwardingBehaviorImpl] that returns default values.
  */
 fun createNetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null },
+    remoteConfig: RemoteConfig? = null,
 ): NetworkSpanForwardingBehavior = NetworkSpanForwardingBehaviorImpl(
     thresholdCheck,
-    remoteConfig,
-    InstrumentedConfigImpl
+    InstrumentedConfigImpl,
+    remoteConfig
 )
 
 /**
@@ -125,10 +116,10 @@ fun createNetworkSpanForwardingBehavior(
  */
 fun createWebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
+    remoteCfg: RemoteConfig? = null,
 ): WebViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [SensitiveKeysBehaviorImpl] that returns default values.
  */
-internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(instrumentedConfig = InstrumentedConfigImpl)
+internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
-import io.embrace.android.embracesdk.fakes.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
+import io.embrace.android.embracesdk.fakes.behavior.FakeBreadcrumbBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl

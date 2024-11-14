@@ -105,14 +105,12 @@ internal class TelemetryAttributesTest {
     fun `log properties and session properties are not included in the attributes`() {
         val configService = FakeConfigService(
             sessionBehavior = createSessionBehavior(
-                remoteCfg = {
-                    RemoteConfig(
-                        sessionConfig = SessionRemoteConfig(
-                            fullSessionEvents = setOf(),
-                            sessionComponents = setOf()
-                        )
+                remoteCfg = RemoteConfig(
+                    sessionConfig = SessionRemoteConfig(
+                        fullSessionEvents = setOf(),
+                        sessionComponents = setOf()
                     )
-                }
+                )
             )
         )
         sessionPropertiesService.addProperty("perm", "permVal", true)
@@ -133,14 +131,12 @@ internal class TelemetryAttributesTest {
     fun `log properties and session properties are included in the attributes`() {
         val configService = FakeConfigService(
             sessionBehavior = createSessionBehavior(
-                remoteCfg = {
-                    RemoteConfig(
-                        sessionConfig = SessionRemoteConfig(
-                            fullSessionEvents = setOf(),
-                            sessionComponents = setOf("s_props", "log_pr")
-                        )
+                remoteCfg = RemoteConfig(
+                    sessionConfig = SessionRemoteConfig(
+                        fullSessionEvents = setOf(),
+                        sessionComponents = setOf("s_props", "log_pr")
                     )
-                }
+                )
             )
         )
         sessionPropertiesService.addProperty("perm", "permVal", true)

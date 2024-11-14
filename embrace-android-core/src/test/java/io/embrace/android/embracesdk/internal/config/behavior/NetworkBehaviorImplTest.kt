@@ -32,7 +32,7 @@ internal class NetworkBehaviorImplTest {
 
     @Test
     fun testDefaults() {
-        with(createNetworkBehavior(remoteCfg = { null })) {
+        with(createNetworkBehavior(remoteCfg = null)) {
             assertFalse(isRequestContentLengthCaptureEnabled())
             assertTrue(isHttpUrlConnectionCaptureEnabled())
             assertEquals(1000, getRequestLimitPerDomain())
@@ -46,7 +46,7 @@ internal class NetworkBehaviorImplTest {
 
     @Test
     fun testRemoteOnly() {
-        with(createNetworkBehavior(remoteCfg = { remote })) {
+        with(createNetworkBehavior(remoteCfg = remote)) {
             assertEquals(409, getRequestLimitPerDomain())
             assertEquals(mapOf("google.com" to 50), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))

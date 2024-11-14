@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrInterval
 import io.embrace.android.embracesdk.internal.payload.NativeThreadAnrSample
@@ -46,7 +47,12 @@ internal class EmbraceNativeThreadSamplerServiceTest {
     @Before
     fun setUp() {
         cfg = AnrRemoteConfig(pctNativeThreadAnrSamplingEnabled = 100f)
-        anrBehavior = createAnrBehavior { cfg }
+        setupSampler()
+        every { random.nextInt(any()) } returns 0
+    }
+
+    private fun setupSampler() {
+        anrBehavior = createAnrBehavior(remoteCfg = RemoteConfig(anrConfig = cfg))
         configService = FakeConfigService(anrBehavior = anrBehavior)
         sharedObjectLoader = FakeSharedObjectLoader()
         delegate = mockk(relaxed = true)
@@ -62,7 +68,6 @@ internal class EmbraceNativeThreadSamplerServiceTest {
                 FakeDeviceArchitecture(),
                 sharedObjectLoader
             )
-        every { random.nextInt(any()) } returns 0
     }
 
     @Test
@@ -90,6 +95,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
     @Test
     fun testSessionEndDisabledSampling() {
         cfg = cfg.copy(pctNativeThreadAnrSamplingEnabled = 0f)
+        setupSampler()
         sampler.intervals = mutableListOf(obj)
         simulateUnityThreadSample()
         assertNull(sampler.getCapturedIntervals(false))
@@ -210,6 +216,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
             ),
             ignoreNativeThreadAnrSamplingAllowlist = false
         )
+        setupSampler()
 
         val unityPlayer =
             StackTraceElement("com.unity3d.player.UnityPlayer", "pauseUnity", null, -1)
@@ -252,6 +259,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         cfg = cfg.copy(
             ignoreNativeThreadAnrSamplingAllowlist = false
         )
+        setupSampler()
         assertEquals(-1, sampler.count)
         assertEquals(-1, sampler.factor)
         assertTrue(sampler.ignored)
@@ -268,6 +276,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         cfg = cfg.copy(
             pctNativeThreadAnrSamplingEnabled = 0f
         )
+        setupSampler()
 
         sampler.onThreadBlocked(Thread.currentThread(), 0)
         verify(exactly = 0) { delegate.startSampling(any(), any()) }
@@ -281,6 +290,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         cfg = cfg.copy(
             ignoreNativeThreadAnrSamplingAllowlist = false
         )
+        setupSampler()
         sampler.onThreadBlocked(Thread.currentThread(), 0)
 
         repeat(10) {
@@ -294,6 +304,7 @@ internal class EmbraceNativeThreadSamplerServiceTest {
         cfg = cfg.copy(
             pctNativeThreadAnrSamplingEnabled = 0f
         )
+        setupSampler()
 
         sampler.onThreadBlocked(Thread.currentThread(), 0)
         repeat(10) {

@@ -34,7 +34,7 @@ internal class OtelSessionGatingTest {
     @Test
     fun `session sent in full without gating`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig()),
+            persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig()),
             testCaseAction = {
                 simulateSession()
             },
@@ -48,7 +48,7 @@ internal class OtelSessionGatingTest {
     @Test
     fun `session gated`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(
+            persistedRemoteConfig = RemoteConfig(
                 sessionConfig = SessionRemoteConfig(
                     sessionComponents = emptySet(),
                     fullSessionEvents = setOf(

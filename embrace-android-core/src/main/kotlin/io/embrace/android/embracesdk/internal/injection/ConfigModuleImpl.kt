@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSo
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -24,7 +23,6 @@ internal class ConfigModuleImpl(
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
-    remoteConfigStoreProvider: Provider<RemoteConfigStore?> = { null },
 ) : ConfigModule {
 
     companion object {
@@ -72,7 +70,7 @@ internal class ConfigModuleImpl(
     }
 
     override val remoteConfigStore: RemoteConfigStore by singleton {
-        remoteConfigStoreProvider() ?: RemoteConfigStoreImpl(
+        RemoteConfigStoreImpl(
             serializer = initModule.jsonSerializer,
             storageDir = File(coreModule.context.filesDir, "embrace_remote_config"),
         )

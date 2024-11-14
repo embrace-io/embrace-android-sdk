@@ -48,7 +48,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when session control enabled does not end sessions`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
+            persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
             testCaseAction = {
                 recordSession {
                     clock.tick(10000)
@@ -65,7 +65,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when state session is below 5s has no effect`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
+            persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
             testCaseAction = {
                 recordSession {
                     clock.tick(1000) // not enough to trigger new session

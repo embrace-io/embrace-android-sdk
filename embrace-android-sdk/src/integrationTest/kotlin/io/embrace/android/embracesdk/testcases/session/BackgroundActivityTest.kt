@@ -31,7 +31,7 @@ internal class BackgroundActivityTest {
     @Test
     fun `bg activity messages are recorded`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             testCaseAction = {
                 recordSession()
                 clock.tick(30000)

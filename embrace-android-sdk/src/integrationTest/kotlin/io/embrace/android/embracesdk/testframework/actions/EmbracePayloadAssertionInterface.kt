@@ -1,11 +1,15 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
@@ -16,9 +20,11 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import java.io.File
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
+import java.util.zip.GZIPInputStream
 import org.json.JSONObject
 import org.junit.Assert
 
@@ -33,6 +39,9 @@ internal class EmbracePayloadAssertionInterface(
 
     companion object {
         private const val WAIT_TIME_MS = 10000
+        private const val CONFIG_OUTPUT_DIR = "embrace_remote_config"
+        private const val CONFIG_RESPONSE_FILE = "most_recent_response"
+        private const val CONFIG_ETAG_FILE = "etag"
     }
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
@@ -187,6 +196,45 @@ internal class EmbracePayloadAssertionInterface(
                 "Expected $expectedRequests config requests, but got ${supplier().size}.",
                 exc
             )
+        }
+    }
+
+    /**
+     * Asserts that config was persisted on disk and returns the persisted information.
+     */
+    internal fun readPersistedConfigResponse(): ConfigHttpResponse {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val storageDir = File(ctx.filesDir, "embrace_remote_config")
+        if (!storageDir.exists()) {
+            throw IllegalStateException("Config storage directory does not exist.")
+        }
+        val responseFile = File(storageDir, "most_recent_response")
+        if (!responseFile.exists()) {
+            throw IllegalStateException("Config response file does not exist.")
+        }
+        val etagFile = File(storageDir, "etag")
+        if (!etagFile.exists()) {
+            throw IllegalStateException("Config etag file does not exist.")
+        }
+        val remoteConfig = readRemoteConfigFile(responseFile)
+        return ConfigHttpResponse(remoteConfig, readEtagFile(etagFile))
+    }
+
+    private fun readRemoteConfigFile(file: File): RemoteConfig {
+        try {
+            return GZIPInputStream(file.inputStream().buffered()).use {
+                serializer.fromJson(it, RemoteConfig::class.java)
+            }
+        } catch (exc: Throwable) {
+            throw IllegalStateException("Failed to read remote config file.", exc)
+        }
+    }
+
+    private fun readEtagFile(etagFile: File): String {
+        try {
+            return etagFile.readText()
+        } catch (exc: Throwable) {
+            throw IllegalStateException("Failed to read etag file for config.", exc)
         }
     }
 

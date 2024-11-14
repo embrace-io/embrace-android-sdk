@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeFeatureModule
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
-import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
-import io.embrace.android.embracesdk.fakes.FakeRemoteConfigStore
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeAnrModule
@@ -16,8 +14,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
@@ -26,7 +22,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.createAndroidServicesModule
-import io.embrace.android.embracesdk.internal.injection.createConfigModule
 import io.embrace.android.embracesdk.internal.injection.createDeliveryModule
 import io.embrace.android.embracesdk.internal.injection.createEssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.createWorkerThreadModule
@@ -57,7 +52,6 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
 ) {
     fun createBootstrapper(
         instrumentedConfig: FakeInstrumentedConfig,
-        remoteConfig: RemoteConfig,
     ): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule.apply {
             this.instrumentedConfig = instrumentedConfig
@@ -102,18 +96,6 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 requestExecutionServiceProvider = requestExecutionServiceProvider,
                 deliveryServiceProvider = deliveryServiceProvider
             )
-        },
-        configModuleSupplier = { initModule, coreModule, openTelemetryModule, workerThreadModule, androidServicesModule, appFramework, _ ->
-            createConfigModule(
-                initModule,
-                coreModule,
-                openTelemetryModule,
-                workerThreadModule,
-                androidServicesModule,
-                appFramework,
-            ) {
-                FakeRemoteConfigStore(ConfigHttpResponse(remoteConfig, null))
-            }
         },
         anrModuleSupplier = { _, _, _ -> fakeAnrModule },
         nativeCoreModuleSupplier = { FakeNativeCoreModule() },

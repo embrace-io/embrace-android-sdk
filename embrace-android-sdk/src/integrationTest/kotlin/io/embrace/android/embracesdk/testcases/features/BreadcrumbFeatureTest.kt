@@ -25,7 +25,7 @@ internal class BreadcrumbFeatureTest {
     @Test
     fun `custom breadcrumb feature`() {
         testRule.runTest(
-            remoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
+            persistedRemoteConfig = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)),
             testCaseAction = {
                 recordSession {
                     embrace.addBreadcrumb("Hello, world!")

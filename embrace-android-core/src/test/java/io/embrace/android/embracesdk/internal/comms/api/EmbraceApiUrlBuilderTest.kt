@@ -29,11 +29,11 @@ internal class EmbraceApiUrlBuilderTest {
             apiUrlBuilder.resolveUrl(Endpoint.CONFIG)
         )
         assertEquals(
-            "https://a-$APP_ID.data.emb-api.com/api/v2/logs",
+            "https://a-$APP_ID.data.emb-api.com/v2/logs",
             apiUrlBuilder.resolveUrl(Endpoint.LOGS)
         )
         assertEquals(
-            "https://a-$APP_ID.data.emb-api.com/api/v2/spans",
+            "https://a-$APP_ID.data.emb-api.com/v2/spans",
             apiUrlBuilder.resolveUrl(Endpoint.SESSIONS)
         )
     }

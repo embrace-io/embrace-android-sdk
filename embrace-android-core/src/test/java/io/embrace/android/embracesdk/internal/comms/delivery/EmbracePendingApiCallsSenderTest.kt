@@ -270,11 +270,11 @@ internal class EmbracePendingApiCallsSenderTest {
 
         // verify logs were added to the queue, and oldest added requests are dropped
         assertEquals(
-            "https://a-abcde.data.emb-api.com/api/v2/logs",
+            "https://a-abcde.data.emb-api.com/v2/logs",
             queue.pollNextPendingApiCall()?.apiRequest?.url?.url
         )
         assertEquals(
-            "https://a-abcde.data.emb-api.com/api/v2/logs",
+            "https://a-abcde.data.emb-api.com/v2/logs",
             queue.pollNextPendingApiCall()?.apiRequest?.url?.url
         )
 

@@ -40,5 +40,9 @@ internal class RemoteConfigStoreImplTest {
         val newLoaded = checkNotNull(store.loadResponse())
         assertEquals(newConfig, newLoaded.cfg)
         assertEquals("another", newLoaded.etag)
+
+        store.saveResponse(ConfigHttpResponse(newConfig, "another"))
+        assertEquals(newConfig, newLoaded.cfg)
+        assertEquals("another", newLoaded.etag)
     }
 }

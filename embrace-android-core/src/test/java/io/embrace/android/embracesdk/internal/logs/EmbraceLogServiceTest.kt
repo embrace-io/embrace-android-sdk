@@ -7,11 +7,12 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embExceptionHandling
@@ -39,8 +40,7 @@ internal class EmbraceLogServiceTest {
     fun setUp() {
         fakeConfigService = FakeConfigService(
             sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-                listOf("password"),
-                InstrumentedConfigImpl
+                FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
             )
         )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
@@ -109,14 +109,12 @@ internal class EmbraceLogServiceTest {
         // given a config that gates info and warning logs
         fakeConfigService = FakeConfigService(
             sessionBehavior = createSessionBehavior(
-                remoteCfg = {
-                    RemoteConfig(
-                        sessionConfig = SessionRemoteConfig(
-                            isEnabled = true,
-                            sessionComponents = emptySet() // empty set will gate everything
-                        )
+                remoteCfg = RemoteConfig(
+                    sessionConfig = SessionRemoteConfig(
+                        isEnabled = true,
+                        sessionComponents = emptySet() // empty set will gate everything
                     )
-                }
+                )
             )
         )
         logService = createEmbraceLogService()

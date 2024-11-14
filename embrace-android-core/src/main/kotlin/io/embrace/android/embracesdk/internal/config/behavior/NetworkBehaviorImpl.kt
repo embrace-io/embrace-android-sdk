@@ -1,10 +1,8 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.regex.Pattern
 import kotlin.math.min
 
@@ -12,14 +10,10 @@ import kotlin.math.min
  * Provides the behavior that functionality relating to network call capture should follow.
  */
 class NetworkBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>,
+    override val local: InstrumentedConfig,
+    override val remote: RemoteConfig?,
     private val disabledUrlPatterns: List<String>? = null,
-    private val instrumentedConfig: InstrumentedConfig,
-) : NetworkBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+) : NetworkBehavior {
 
     companion object {
 
@@ -35,13 +29,13 @@ class NetworkBehaviorImpl(
         )
     }
 
-    private val cfg = instrumentedConfig.networkCapture
+    private val cfg = local.networkCapture
 
     override fun isRequestContentLengthCaptureEnabled(): Boolean =
-        instrumentedConfig.enabledFeatures.isRequestContentLengthCaptureEnabled()
+        local.enabledFeatures.isRequestContentLengthCaptureEnabled()
 
     override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
-        instrumentedConfig.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
+        local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
 
     override fun getLimitsByDomain(): Map<String, Int> {
         val limits = remote?.networkConfig?.domainLimits ?: cfg.getLimitsByDomain()

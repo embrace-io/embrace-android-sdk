@@ -32,8 +32,8 @@ internal class EmbraceGatingServiceV2PayloadTest {
 
     @Before
     fun setUp() {
-        sessionBehavior = createSessionBehavior { cfg }
-        configService = FakeConfigService(sessionBehavior = createSessionBehavior { cfg })
+        sessionBehavior = createSessionBehavior(cfg)
+        configService = FakeConfigService(sessionBehavior = createSessionBehavior(cfg))
         logService = FakeLogService()
         gatingService = EmbraceGatingService(configService, logService)
     }

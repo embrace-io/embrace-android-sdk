@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -78,9 +79,9 @@ internal class SessionOrchestrationModuleImplTest {
     private fun createEnabledBehavior(): FakeConfigModule {
         return FakeConfigModule(
             configService = FakeConfigService(
-                backgroundActivityBehavior = createBackgroundActivityBehavior {
-                    BackgroundActivityRemoteConfig(threshold = 100f)
-                },
+                backgroundActivityBehavior = createBackgroundActivityBehavior(
+                    remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+                ),
             )
         )
     }

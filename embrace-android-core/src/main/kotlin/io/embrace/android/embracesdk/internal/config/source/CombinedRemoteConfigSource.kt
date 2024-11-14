@@ -8,10 +8,12 @@ import java.util.concurrent.TimeUnit
 
 class CombinedRemoteConfigSource(
     private val store: RemoteConfigStore,
-    private val httpSource: RemoteConfigSource,
+    httpSource: Lazy<RemoteConfigSource>,
     private val worker: BackgroundWorker,
     private val intervalMs: Long = 60 * 60 * 1000
 ) {
+
+    private val httpSource: RemoteConfigSource by httpSource
 
     // the remote config that is used for the lifetime of the process.
     private val response by lazy {
@@ -37,6 +39,8 @@ class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
-        httpSource.getConfig()?.let(store::saveResponse)
+        httpSource.getConfig()?.let {
+            store.saveResponse(it)
+        }
     }
 }

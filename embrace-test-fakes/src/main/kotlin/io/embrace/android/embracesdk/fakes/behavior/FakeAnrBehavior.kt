@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
 import io.embrace.android.embracesdk.internal.config.behavior.AnrBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 
 class FakeAnrBehavior(
@@ -14,6 +16,11 @@ class FakeAnrBehavior(
     var frameLimit: Int = 200,
     var nativeThreadAnrSamplingAllowlistImpl: List<AllowedNdkSampleMethod> = emptyList(),
 ) : AnrBehavior {
+
+    override val local: EnabledFeatureConfig
+        get() = throw UnsupportedOperationException()
+    override val remote: AnrRemoteConfig
+        get() = throw UnsupportedOperationException()
 
     override fun isAnrCaptureEnabled(): Boolean = anrCaptureEnabled
     override fun getSamplingIntervalMs(): Long = sampleIntervalMsImpl

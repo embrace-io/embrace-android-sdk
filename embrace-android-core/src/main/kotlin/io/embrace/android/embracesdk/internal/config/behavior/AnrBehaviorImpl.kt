@@ -1,23 +1,18 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that the ANR feature should follow.
  */
 class AnrBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<AnrRemoteConfig?>,
-    private val instrumentedConfig: InstrumentedConfig,
-) : AnrBehavior, MergedConfigBehavior<UnimplementedConfig, AnrRemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    private val thresholdCheck: BehaviorThresholdCheck,
+    local: InstrumentedConfig,
+    remote: RemoteConfig?,
+) : AnrBehavior {
 
     private companion object {
         private const val DEFAULT_ANR_PCT_ENABLED = true
@@ -33,6 +28,9 @@ class AnrBehaviorImpl(
             AllowedNdkSampleMethod("UnityPlayer", "pauseUnity")
         )
     }
+
+    override val local = local.enabledFeatures
+    override val remote = remote?.anrConfig
 
     override fun isAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctEnabled)
@@ -65,7 +63,7 @@ class AnrBehaviorImpl(
 
     override fun isUnityAnrCaptureEnabled(): Boolean {
         return thresholdCheck.isBehaviorEnabled(remote?.pctNativeThreadAnrSamplingEnabled)
-            ?: instrumentedConfig.enabledFeatures.isUnityAnrCaptureEnabled()
+            ?: local.isUnityAnrCaptureEnabled()
     }
 
     override fun isNativeThreadAnrSamplingOffsetEnabled(): Boolean =

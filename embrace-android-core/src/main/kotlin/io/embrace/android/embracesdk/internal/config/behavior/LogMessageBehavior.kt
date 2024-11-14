@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface LogMessageBehavior {
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
+
+interface LogMessageBehavior : ConfigBehavior<UnimplementedConfig, LogRemoteConfig> {
     fun getLogMessageMaximumAllowedLength(): Int
     fun getInfoLogLimit(): Int
     fun getWarnLogLimit(): Int

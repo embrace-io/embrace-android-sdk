@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -40,7 +41,7 @@ internal class LivenessCheckSchedulerTest {
         anrMonitorThread = AtomicReference(Thread.currentThread())
         cfg = AnrRemoteConfig()
         fakeClock = FakeClock(160982340900)
-        configService = FakeConfigService(anrBehavior = createAnrBehavior { cfg })
+        configService = FakeConfigService(anrBehavior = createAnrBehavior(remoteCfg = RemoteConfig(anrConfig = cfg)))
         anrExecutorService = BlockingScheduledExecutorService(fakeClock)
         logger = EmbLoggerImpl()
         looper = mockk {
@@ -144,21 +145,6 @@ internal class LivenessCheckSchedulerTest {
 
         // verify heartbeat check
         assertEquals(160982340900, state.lastMonitorThreadResponseMs)
-    }
-
-    @Test
-    fun testExecuteHealthCheckDifferentIntervalMs() {
-        // alter the intervalMs to trigger rescheduling
-        scheduler.startMonitoringThread()
-        anrExecutorService.runCurrentlyBlocked()
-        assertEquals(fakeClock.now(), state.lastMonitorThreadResponseMs)
-        cfg = cfg.copy(sampleIntervalMs = 10)
-        assertEquals(1, anrExecutorService.scheduledTasksCount())
-        anrExecutorService.moveForwardAndRunBlocked(100)
-        anrExecutorService.runCurrentlyBlocked()
-        anrExecutorService.moveForwardAndRunBlocked(10)
-        assertEquals(fakeClock.now(), state.lastMonitorThreadResponseMs)
-        assertEquals(1, anrExecutorService.scheduledTasksCount())
     }
 
     @Test

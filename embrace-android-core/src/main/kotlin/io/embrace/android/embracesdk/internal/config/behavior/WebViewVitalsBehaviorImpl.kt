@@ -2,15 +2,11 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 class WebViewVitalsBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>,
-) : WebViewVitalsBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    private val thresholdCheck: BehaviorThresholdCheck,
+    override val remote: RemoteConfig?,
+) : WebViewVitalsBehavior {
 
     private companion object {
         /**
@@ -23,6 +19,8 @@ class WebViewVitalsBehaviorImpl(
          */
         private const val DEFAULT_MAX_VITALS = 300
     }
+
+    override val local: UnimplementedConfig = null
 
     private fun getWebVitalsPct(): Float = remote?.webViewVitals?.pctEnabled ?: DEFAULT_WEB_VITALS_PCT
 

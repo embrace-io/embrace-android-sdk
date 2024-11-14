@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
+import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 
-interface AnrBehavior {
+interface AnrBehavior : ConfigBehavior<EnabledFeatureConfig, AnrRemoteConfig> {
 
     /**
      * Percentage of users for which ANR stack trace capture is enabled.

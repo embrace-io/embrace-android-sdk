@@ -33,7 +33,7 @@ internal class SessionBehaviorImplImplTest {
 
     @Test
     fun testRemoteAndLocal() {
-        with(createSessionBehavior(remoteCfg = { remote })) {
+        with(createSessionBehavior(remoteCfg = remote)) {
             assertTrue(isGatingFeatureEnabled())
             assertTrue(isSessionControlEnabled())
             assertEquals(setOf("test"), getSessionComponents())
@@ -45,9 +45,7 @@ internal class SessionBehaviorImplImplTest {
     @Test
     fun `test upper case full session events`() {
         val behavior = createSessionBehavior(
-            remoteCfg = {
-                buildGatingConfig(setOf("CRASHES", "ERRORS"))
-            }
+            remoteCfg = buildGatingConfig(setOf("CRASHES", "ERRORS"))
         )
         assertEquals(setOf("crashes", "errors"), behavior.getFullSessionEvents())
     }
@@ -55,9 +53,7 @@ internal class SessionBehaviorImplImplTest {
     @Test
     fun `test lower case full session events`() {
         val behavior = createSessionBehavior(
-            remoteCfg = {
-                buildGatingConfig(setOf("crashes", "errors"))
-            }
+            remoteCfg = buildGatingConfig(setOf("crashes", "errors"))
         )
         assertEquals(setOf("crashes", "errors"), behavior.getFullSessionEvents())
     }

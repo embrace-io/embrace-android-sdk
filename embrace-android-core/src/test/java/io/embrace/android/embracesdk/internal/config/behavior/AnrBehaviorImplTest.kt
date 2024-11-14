@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.config.behavior
 import io.embrace.android.embracesdk.fakes.createAnrBehavior
 import io.embrace.android.embracesdk.internal.config.remote.AllowedNdkSampleMethod
 import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.Unwinder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -57,7 +58,7 @@ internal class AnrBehaviorImplTest {
 
     @Test
     fun testRemoteAndLocal() {
-        with(createAnrBehavior(remoteCfg = { remote })) {
+        with(createAnrBehavior(remoteCfg = RemoteConfig(anrConfig = remote))) {
             assertEquals(200L, getSamplingIntervalMs())
             assertFalse(isNativeThreadAnrSamplingOffsetEnabled())
             assertFalse(isNativeThreadAnrSamplingAllowlistIgnored())

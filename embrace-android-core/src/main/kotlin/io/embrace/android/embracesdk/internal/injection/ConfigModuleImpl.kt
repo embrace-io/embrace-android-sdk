@@ -31,19 +31,21 @@ internal class ConfigModuleImpl(
     }
 
     override val okHttpClient by singleton {
-        OkHttpClient()
-            .newBuilder()
-            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-            .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .readTimeout(DEFAULT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .build()
+        Systrace.traceSynchronous("okhttp-client-init") {
+            OkHttpClient()
+                .newBuilder()
+                .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(DEFAULT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .build()
+        }
     }
 
     override val combinedRemoteConfigSource: CombinedRemoteConfigSource? by singleton {
-        configService.appId ?: return@singleton null
+        if (initModule.onlyOtelExportEnabled()) return@singleton null
         CombinedRemoteConfigSource(
             store = remoteConfigStore,
-            httpSource = remoteConfigSource ?: return@singleton null,
+            httpSource = lazy { checkNotNull(remoteConfigSource) },
             worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
         )
     }
@@ -55,16 +57,16 @@ internal class ConfigModuleImpl(
                 preferencesService = androidServicesModule.preferencesService,
                 suppliedFramework = framework,
                 instrumentedConfig = initModule.instrumentedConfig,
-                configProvider = { combinedRemoteConfigSource?.getConfig() },
+                remoteConfig = combinedRemoteConfigSource?.getConfig(),
             )
         }
     }
 
     override val remoteConfigSource by singleton {
-        val builder = urlBuilder ?: return@singleton null
+        if (initModule.onlyOtelExportEnabled()) return@singleton null
         OkHttpRemoteConfigSource(
             okhttpClient = okHttpClient,
-            apiUrlBuilder = builder,
+            apiUrlBuilder = urlBuilder ?: return@singleton null,
             serializer = initModule.jsonSerializer,
         )
     }
@@ -77,7 +79,7 @@ internal class ConfigModuleImpl(
     }
 
     override val urlBuilder: ApiUrlBuilder? by singleton {
-        configService.appId ?: return@singleton null
+        if (initModule.onlyOtelExportEnabled()) return@singleton null
         Systrace.traceSynchronous("url-builder-init") {
             EmbraceApiUrlBuilder(
                 deviceId = androidServicesModule.preferencesService.deviceIdentifier,
@@ -85,5 +87,10 @@ internal class ConfigModuleImpl(
                 instrumentedConfig = initModule.instrumentedConfig,
             )
         }
+    }
+
+    private fun InitModule.onlyOtelExportEnabled(): Boolean {
+        instrumentedConfig.project.getAppId() ?: return true
+        return false
     }
 }

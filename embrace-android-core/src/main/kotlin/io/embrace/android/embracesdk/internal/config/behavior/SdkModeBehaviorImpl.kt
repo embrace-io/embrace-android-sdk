@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.math.max
 import kotlin.math.min
 
@@ -10,12 +9,9 @@ import kotlin.math.min
  * Provides whether the SDK should enable certain 'behavior' modes, such as 'integration mode'
  */
 class SdkModeBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>,
-) : SdkModeBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    private val thresholdCheck: BehaviorThresholdCheck,
+    override val remote: RemoteConfig?,
+) : SdkModeBehavior {
 
     private companion object {
 
@@ -29,6 +25,8 @@ class SdkModeBehaviorImpl(
          */
         private const val DEFAULT_OFFSET = 0
     }
+
+    override val local: UnimplementedConfig = null
 
     /**
      * The % of devices that should be enabled.

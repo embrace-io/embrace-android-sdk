@@ -26,7 +26,7 @@ class CombinedRemoteConfigSourceTest {
         remoteConfigStore = FakeRemoteConfigStore()
         source = CombinedRemoteConfigSource(
             remoteConfigStore,
-            remoteConfigSource,
+            lazy { remoteConfigSource },
             BackgroundWorker(executorService)
         )
     }
@@ -41,7 +41,7 @@ class CombinedRemoteConfigSourceTest {
         val cfg = RemoteConfig(100)
         source = CombinedRemoteConfigSource(
             FakeRemoteConfigStore(ConfigHttpResponse(cfg, null)),
-            remoteConfigSource,
+            lazy { remoteConfigSource },
             BackgroundWorker(executorService)
         )
         assertEquals(cfg, source.getConfig())

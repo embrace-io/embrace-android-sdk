@@ -150,10 +150,14 @@ internal class ModuleInitBootstrapper(
 
                     Systrace.traceSynchronous("sdk-disable-check") {
                         // kick off config HTTP request first so the SDK can't get in a permanently disabled state
-                        configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
+                        Systrace.traceSynchronous("load-config-response") {
+                            configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
+                        }
 
-                        if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
-                            return false
+                        Systrace.traceSynchronous("behavior-check") {
+                            if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
+                                return false
+                            }
                         }
                     }
 

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.source
 
+import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -13,18 +14,26 @@ class CombinedRemoteConfigSource(
 ) {
 
     // the remote config that is used for the lifetime of the process.
-    private val response by lazy { store.loadResponse() }
+    private val response by lazy {
+        Systrace.traceSynchronous("load-config-from-store") {
+            store.loadResponse()
+        }
+    }
 
     fun getConfig(): RemoteConfig? = response?.cfg
 
     fun scheduleConfigRequests() {
-        response?.etag?.let(httpSource::setInitialEtag)
-        worker.scheduleWithFixedDelay(
-            ::attemptConfigRequest,
-            0,
-            intervalMs,
-            TimeUnit.MILLISECONDS
-        )
+        Systrace.traceSynchronous("set-initial-etag") {
+            response?.etag?.let(httpSource::setInitialEtag)
+        }
+        Systrace.traceSynchronous("schedule-http-request") {
+            worker.scheduleWithFixedDelay(
+                ::attemptConfigRequest,
+                0,
+                intervalMs,
+                TimeUnit.MILLISECONDS
+            )
+        }
     }
 
     private fun attemptConfigRequest() {

@@ -316,7 +316,6 @@ internal class ModuleInitBootstrapper(
                             androidServicesModule,
                             essentialServiceModule,
                             configModule,
-                            { nativeCoreModule },
                             { nativeFeatureModule.nativeThreadSamplerService?.getNativeSymbols() },
                             openTelemetryModule,
                             { OtelPayloadMapperImpl(anrModule.anrOtelMapper, nativeFeatureModule.nativeAnrOtelMapper) },

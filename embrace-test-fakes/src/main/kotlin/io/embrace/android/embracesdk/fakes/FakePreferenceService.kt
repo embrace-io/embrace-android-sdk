@@ -28,8 +28,6 @@ class FakePreferenceService(
     override var embraceFlutterSdkVersion: String? = null,
     override var jailbroken: Boolean? = null,
     override var applicationExitInfoHistory: Set<String>? = null,
-    override var cpuName: String? = null,
-    override var egl: String? = null,
     val sessionNumber: () -> Int = { 0 },
     val bgActivityNumber: () -> Int = { 5 },
 ) : PreferencesService {

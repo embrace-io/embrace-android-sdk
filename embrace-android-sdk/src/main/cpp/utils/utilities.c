@@ -24,43 +24,6 @@ void emb_set_report_paths(emb_env *env, const char *session_id) {
     snprintf(env->map_src_path, MAP_SRC_PATH_SIZE, "/proc/%d/maps", getpid());
 }
 
-int emb_dump_map(emb_env *env) {
-    int fd_in = open(env->map_src_path, O_RDONLY | O_CLOEXEC);
-    if (fd_in == -1) {
-        return -1;
-    }
-
-    int fd_out = open(env->map_path, O_WRONLY | O_CREAT, 0644);
-    if (fd_out == -1) {
-        close(fd_in);
-        return -2;
-    }
-
-    char buf[1024];
-    int size;
-    int rv = 0;
-
-    while (true) {
-        size = read(fd_in, &buf, sizeof(buf));
-        if (size == 0) {
-            break;
-        }
-        if (size < 0) {
-            rv = -3;
-            goto cleanup;
-        }
-        write(fd_out, &buf, size);
-    }
-
-    cleanup:
-
-    close(fd_in);
-    close(fd_out);
-
-    return rv;
-}
-
-
 void emb_set_crash_time(emb_env *env) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);

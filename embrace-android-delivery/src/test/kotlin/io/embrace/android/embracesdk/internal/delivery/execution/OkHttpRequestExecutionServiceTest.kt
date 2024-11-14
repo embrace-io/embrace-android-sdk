@@ -163,7 +163,7 @@ class OkHttpRequestExecutionServiceTest {
 
         // then the result should be too many requests
         check(result is ExecutionResult.TooManyRequests)
-        assertEquals(10L, result.retryAfter)
+        assertEquals(10000L, result.retryAfterMs)
     }
 
     @Test

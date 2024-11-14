@@ -3,9 +3,10 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -23,8 +24,7 @@ internal class SessionPropertiesServiceImplTest {
         val fakeConfigService =
             FakeConfigService(
                 sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-                    listOf("password"),
-                    InstrumentedConfigImpl
+                    FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
                 )
             )
         fakeCurrentSessionSpan = FakeCurrentSessionSpan()

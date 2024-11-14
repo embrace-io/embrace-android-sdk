@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.config.behavior
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Uuid
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -20,15 +19,12 @@ internal class BreadcrumbBehaviorImplTest {
         )
     )
 
-    private val behaviorThresholdCheck = BehaviorThresholdCheck { Uuid.getEmbUuid() }
-
     @Test
     fun testDefaults() {
         with(
             BreadcrumbBehaviorImpl(
-                thresholdCheck = behaviorThresholdCheck,
-                { null },
-                InstrumentedConfigImpl
+                InstrumentedConfigImpl,
+                null,
             )
         ) {
             assertEquals(100, getCustomBreadcrumbLimit())
@@ -47,9 +43,8 @@ internal class BreadcrumbBehaviorImplTest {
     fun testRemoteAndLocal() {
         with(
             BreadcrumbBehaviorImpl(
-                thresholdCheck = behaviorThresholdCheck,
-                { remote },
-                InstrumentedConfigImpl
+                InstrumentedConfigImpl,
+                remote,
             )
         ) {
             assertEquals(99, getCustomBreadcrumbLimit())

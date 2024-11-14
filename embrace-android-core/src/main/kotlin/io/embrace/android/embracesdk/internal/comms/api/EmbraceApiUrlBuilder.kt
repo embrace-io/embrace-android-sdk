@@ -15,7 +15,7 @@ internal class EmbraceApiUrlBuilder(
     }
 
     override val appId: String = checkNotNull(instrumentedConfig.project.getAppId())
-    private val coreBaseUrl = instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.$DATA_DEFAULT/api"
+    private val coreBaseUrl = instrumentedConfig.baseUrls.getData() ?: "https://a-$appId.$DATA_DEFAULT"
     private val configBaseUrl = instrumentedConfig.baseUrls.getConfig() ?: "https://a-$appId.$CONFIG_DEFAULT"
     private val operatingSystemCode = Build.VERSION.SDK_INT.toString() + ".0.0"
     override val baseDataUrl: String = resolveUrl(Endpoint.SESSIONS).split(Endpoint.SESSIONS.path).first()

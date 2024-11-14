@@ -22,7 +22,7 @@ internal class WebVitalsBehaviorTest {
 
     @Test
     fun testRemote() {
-        with(createWebViewVitalsBehavior(remoteCfg = { remote })) {
+        with(createWebViewVitalsBehavior(remoteCfg = remote)) {
             assertEquals(100, getMaxWebViewVitals())
             assertFalse(isWebViewVitalsEnabled())
         }

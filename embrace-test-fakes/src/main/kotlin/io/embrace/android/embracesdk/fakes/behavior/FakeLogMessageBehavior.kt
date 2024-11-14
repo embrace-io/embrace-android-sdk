@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.behavior
 
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
+import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
 
 class FakeLogMessageBehavior(
     private val logMessageMaximumAllowedLength: Int = 128,
@@ -8,6 +9,11 @@ class FakeLogMessageBehavior(
     private val warnLogLimit: Int = 100,
     private val errorLogLimit: Int = 100,
 ) : LogMessageBehavior {
+
+    override val local: Unit
+        get() = throw UnsupportedOperationException()
+    override val remote: LogRemoteConfig
+        get() = throw UnsupportedOperationException()
 
     override fun getLogMessageMaximumAllowedLength(): Int = logMessageMaximumAllowedLength
     override fun getInfoLogLimit(): Int = infoLogLimit

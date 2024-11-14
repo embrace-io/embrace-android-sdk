@@ -197,8 +197,8 @@ internal class ConfigServiceImplTest {
             preferencesService = fakePreferenceService,
             suppliedFramework = AppFramework.NATIVE,
             instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId)),
-            thresholdCheck = thresholdCheck,
-            configProvider = ::remoteConfig
+            remoteConfig = remoteConfig,
+            thresholdCheck = thresholdCheck
         )
     }
 }

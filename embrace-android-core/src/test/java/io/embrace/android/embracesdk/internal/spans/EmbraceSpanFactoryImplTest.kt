@@ -4,11 +4,12 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePayloadCachingService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,8 +42,7 @@ internal class EmbraceSpanFactoryImplTest {
             openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock,
             spanRepository = spanRepository,
             sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-                listOf("password"),
-                InstrumentedConfigImpl
+                FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
             ),
         )
     }

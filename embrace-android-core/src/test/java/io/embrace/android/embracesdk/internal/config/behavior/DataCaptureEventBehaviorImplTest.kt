@@ -26,7 +26,7 @@ internal class DataCaptureEventBehaviorImplTest {
 
     @Test
     fun testRemoteOnly() {
-        with(createDataCaptureEventBehavior(remoteCfg = { remote })) {
+        with(createDataCaptureEventBehavior(remoteCfg = remote)) {
             assertFalse(isInternalExceptionCaptureEnabled())
             assertFalse(isEventEnabled("my_event"))
             assertTrue(isEventEnabled("other_event"))

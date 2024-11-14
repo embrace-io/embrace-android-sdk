@@ -40,7 +40,7 @@ internal class AutoDataCaptureBehaviorImplTest {
 
     @Test
     fun testLocalAndRemote() {
-        with(createAutoDataCaptureBehavior(remoteCfg = { remote })) {
+        with(createAutoDataCaptureBehavior(remoteCfg = remote)) {
             assertFalse(is3rdPartySigHandlerDetectionEnabled())
             assertFalse(isComposeClickCaptureEnabled())
             assertFalse(isThermalStatusCaptureEnabled())
@@ -56,7 +56,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         }
 
         // Jetpack Compose disabled remotely
-        with(createAutoDataCaptureBehavior(remoteCfg = { remote })) {
+        with(createAutoDataCaptureBehavior(remoteCfg = remote)) {
             assertFalse(isComposeClickCaptureEnabled())
         }
         val remoteComposeKillSwitchOff = RemoteConfig(
@@ -69,7 +69,7 @@ internal class AutoDataCaptureBehaviorImplTest {
         // Jetpack Compose enabled remotely
         with(
             createAutoDataCaptureBehavior(
-                remoteCfg = { remoteComposeKillSwitchOff }
+                remoteCfg = remoteComposeKillSwitchOff
             )
         ) {
             assertTrue(isComposeClickCaptureEnabled())

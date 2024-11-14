@@ -37,7 +37,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun setUp() {
         cfg = RemoteConfig()
         configService = FakeConfigService(
-            networkBehavior = createNetworkBehavior(remoteCfg = { cfg })
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
         )
         preferenceService = FakePreferenceService()
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
@@ -67,9 +67,9 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     @Test
     fun `test capture rule doesn't capture Embrace endpoints`() {
-        val rule = getDefaultRule(urlRegex = "https://a-abcde.data.emb-api.com/api/v2")
+        val rule = getDefaultRule(urlRegex = "https://a-abcde.data.emb-api.com/v2")
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        val result = getService().getNetworkCaptureRules("https://a-abcde.data.emb-api.com/api/v2/spans", "GET")
+        val result = getService().getNetworkCaptureRules("https://a-abcde.data.emb-api.com/v2/spans", "GET")
         assertEquals(0, result.size)
     }
 
@@ -191,19 +191,24 @@ internal class EmbraceNetworkCaptureServiceTest {
         assertEquals(2, networkCaptureDataSource.loggedCalls.size)
     }
 
-    private fun getService() = EmbraceNetworkCaptureService(
-        sessionIdTracker,
-        preferenceService,
-        { networkCaptureDataSource },
-        configService,
-        EmbraceApiUrlBuilder(
-            "deviceId",
-            "1.0.0",
-            FakeInstrumentedConfig()
-        ),
-        EmbraceSerializer(),
-        EmbLoggerImpl()
-    )
+    private fun getService(): EmbraceNetworkCaptureService {
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
+        )
+        return EmbraceNetworkCaptureService(
+            sessionIdTracker,
+            preferenceService,
+            { networkCaptureDataSource },
+            configService,
+            EmbraceApiUrlBuilder(
+                "deviceId",
+                "1.0.0",
+                FakeInstrumentedConfig()
+            ),
+            EmbraceSerializer(),
+            EmbLoggerImpl()
+        )
+    }
 
     private fun getDefaultRule(
         id: String = "123",

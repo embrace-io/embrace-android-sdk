@@ -3,19 +3,16 @@ package io.embrace.android.embracesdk.internal.config.behavior
 import io.embrace.android.embracesdk.internal.PatternCache
 import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 class DataCaptureEventBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?> = { null },
-) : DataCaptureEventBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    override val remote: RemoteConfig?,
+) : DataCaptureEventBehavior {
 
     private companion object {
         private const val DEFAULT_INTERNAL_EXCEPTION_CAPTURE = true
     }
+
+    override val local: UnimplementedConfig = null
 
     private val patternCache = PatternCache()
 

@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface AppExitInfoBehavior {
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
+
+interface AppExitInfoBehavior : ConfigBehavior<EnabledFeatureConfig, AppExitInfoConfig> {
 
     fun getTraceMaxLimit(): Int
 

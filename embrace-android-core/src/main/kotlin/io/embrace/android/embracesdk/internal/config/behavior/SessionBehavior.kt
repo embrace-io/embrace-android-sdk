@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface SessionBehavior {
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.SessionConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+
+interface SessionBehavior : ConfigBehavior<SessionConfig, RemoteConfig> {
 
     /**
      * The whitelist of events (crashes, errors) that should send a full session payload even

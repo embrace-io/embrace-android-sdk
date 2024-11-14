@@ -4,8 +4,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import java.io.File
-import java.util.zip.GZIPInputStream
-import java.util.zip.GZIPOutputStream
 
 internal class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
@@ -26,7 +24,7 @@ internal class RemoteConfigStoreImpl(
 
     override fun loadResponse(): ConfigHttpResponse? {
         try {
-            val cfg = GZIPInputStream(configFile.inputStream().buffered()).use {
+            val cfg = configFile.inputStream().buffered().use {
                 serializer.fromJson(it, RemoteConfig::class.java)
             }
             return ConfigHttpResponse(
@@ -42,7 +40,7 @@ internal class RemoteConfigStoreImpl(
 
     override fun saveResponse(response: ConfigHttpResponse) {
         try {
-            GZIPOutputStream(configFile.outputStream().buffered()).use { stream ->
+            configFile.outputStream().buffered().use { stream ->
                 serializer.toJson(response.cfg, RemoteConfig::class.java, stream)
             }
             response.etag?.let(etagFile::writeText)

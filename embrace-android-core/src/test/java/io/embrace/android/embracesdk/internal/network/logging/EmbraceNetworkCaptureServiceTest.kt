@@ -67,9 +67,9 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     @Test
     fun `test capture rule doesn't capture Embrace endpoints`() {
-        val rule = getDefaultRule(urlRegex = "https://a-abcde.data.emb-api.com/api/v2")
+        val rule = getDefaultRule(urlRegex = "https://a-abcde.data.emb-api.com/v2")
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        val result = getService().getNetworkCaptureRules("https://a-abcde.data.emb-api.com/api/v2/spans", "GET")
+        val result = getService().getNetworkCaptureRules("https://a-abcde.data.emb-api.com/v2/spans", "GET")
         assertEquals(0, result.size)
     }
 

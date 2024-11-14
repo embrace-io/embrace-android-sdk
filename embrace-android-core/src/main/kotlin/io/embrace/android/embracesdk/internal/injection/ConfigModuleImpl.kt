@@ -31,19 +31,21 @@ internal class ConfigModuleImpl(
     }
 
     override val okHttpClient by singleton {
-        OkHttpClient()
-            .newBuilder()
-            .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-            .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .readTimeout(DEFAULT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .build()
+        Systrace.traceSynchronous("okhttp-client-init") {
+            OkHttpClient()
+                .newBuilder()
+                .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+                .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(DEFAULT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .build()
+        }
     }
 
     override val combinedRemoteConfigSource: CombinedRemoteConfigSource? by singleton {
         if (initModule.onlyOtelExportEnabled()) return@singleton null
         CombinedRemoteConfigSource(
             store = remoteConfigStore,
-            httpSource = remoteConfigSource ?: return@singleton null,
+            httpSource = lazy { checkNotNull(remoteConfigSource) },
             worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
         )
     }

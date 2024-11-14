@@ -70,7 +70,7 @@ internal class EmbraceApiServiceTest {
         var finished = false
         apiService.sendSession({ it.write(payload) }) { finished = true }
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/spans",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/spans",
             expectedPayload = payload
         )
         assertTrue(finished)
@@ -100,7 +100,7 @@ internal class EmbraceApiServiceTest {
         val type: ParameterizedType = TypeUtils.parameterizedType(Envelope::class, LogPayload::class)
 
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/logs",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
             expectedPayload = getGenericsExpectedPayloadSerialized(logsEnvelope, type)
         )
     }
@@ -130,7 +130,7 @@ internal class EmbraceApiServiceTest {
 
         val request = fakePendingApiCallsSender.retryQueue.single().first
         val payload = fakePendingApiCallsSender.retryQueue.single().second
-        assertEquals("https://a-$fakeAppId.data.emb-api.com/api/v2/logs", request.url.url)
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v2/logs", request.url.url)
         val type: ParameterizedType = TypeUtils.parameterizedType(Envelope::class, LogPayload::class)
         assertArrayEquals(getGenericsExpectedPayloadSerialized(logsEnvelope, type), payload)
     }
@@ -149,7 +149,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLogEnvelope(logPayload)
         assertEquals(0, fakeApiClient.sentRequests.size)
         val request = fakePendingApiCallsSender.retryQueue.single().first
-        assertEquals("https://a-$fakeAppId.data.emb-api.com/api/v2/logs", request.url.url)
+        assertEquals("https://a-$fakeAppId.data.emb-api.com/v2/logs", request.url.url)
     }
 
     @Test
@@ -165,7 +165,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLogEnvelope(logPayload)
 
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/logs",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
             expectedPayload = getExpectedPayloadSerialized(logPayload, logType)
         )
         assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
@@ -183,7 +183,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLogEnvelope(logPayload)
 
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/logs",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
             expectedPayload = getExpectedPayloadSerialized(logPayload, logType)
         )
         assertEquals(1, fakePendingApiCallsSender.retryQueue.size)
@@ -204,7 +204,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLogEnvelope(logPayload)
 
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/logs",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
             expectedPayload = getExpectedPayloadSerialized(logPayload, logType)
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -222,7 +222,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLogEnvelope(logPayload)
 
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/logs",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
             expectedPayload = getExpectedPayloadSerialized(logPayload, logType)
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)
@@ -243,7 +243,7 @@ internal class EmbraceApiServiceTest {
         apiService.sendLogEnvelope(logPayload)
 
         verifyOnlyRequest(
-            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/api/v2/logs",
+            expectedUrl = "https://a-$fakeAppId.data.emb-api.com/v2/logs",
             expectedPayload = getExpectedPayloadSerialized(logPayload, logType)
         )
         assertEquals(0, fakePendingApiCallsSender.retryQueue.size)

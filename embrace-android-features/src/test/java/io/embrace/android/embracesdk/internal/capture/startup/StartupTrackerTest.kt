@@ -39,7 +39,7 @@ internal class StartupTrackerTest {
         dataCollector = FakeAppStartupDataCollector(clock = clock)
         startupTracker = StartupTracker(
             appStartupDataCollector = dataCollector,
-            uiLoadEventEmitter = object : ActivityLifecycleListener { },
+            activityLoadEventEmitter = object : ActivityLifecycleListener { },
             logger = logger,
             versionChecker = BuildVersionChecker
         )

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.fakes
 
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEvents
+import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
 
-class FakeUiLoadEvents : UiLoadEvents {
+class FakeUiLoadEventListener : UiLoadEventListener {
     val events = mutableListOf<EventData>()
 
     override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
@@ -16,11 +16,11 @@ class FakeUiLoadEvents : UiLoadEvents {
         )
     }
 
-    override fun reset(instanceId: Int) {
+    override fun reset(lastInstanceId: Int) {
         events.add(
             EventData(
                 stage = "reset",
-                instanceId = instanceId,
+                instanceId = lastInstanceId,
             )
         )
     }

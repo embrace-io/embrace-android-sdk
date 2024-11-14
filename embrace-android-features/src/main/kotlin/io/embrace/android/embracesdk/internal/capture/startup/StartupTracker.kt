@@ -39,7 +39,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
  */
 class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
-    private val uiLoadEventEmitter: ActivityLifecycleListener?,
+    private val activityLoadEventEmitter: ActivityLifecycleListener?,
     private val logger: EmbLogger,
     private val versionChecker: VersionChecker,
 ) : Application.ActivityLifecycleCallbacks {
@@ -125,7 +125,7 @@ class StartupTracker(
     private fun startupComplete(application: Application) {
         if (!startupDataCollectionComplete) {
             application.unregisterActivityLifecycleCallbacks(this)
-            uiLoadEventEmitter?.apply {
+            activityLoadEventEmitter?.apply {
                 application.registerActivityLifecycleCallbacks(this)
             }
             startupDataCollectionComplete = true

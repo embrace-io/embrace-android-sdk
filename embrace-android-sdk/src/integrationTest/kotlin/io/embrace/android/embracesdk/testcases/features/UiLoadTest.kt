@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter.LifecycleEvent
+import io.embrace.android.embracesdk.internal.capture.activity.LifecycleStage
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.opentelemetry.api.trace.SpanId
@@ -89,14 +89,14 @@ internal class UiLoadTest {
                 )
 
                 assertEmbraceSpanData(
-                    span = payload.findSpansByName("emb-${LifecycleEvent.CREATE.spanName(ACTIVITY2_NAME)}").single(),
+                    span = payload.findSpansByName("emb-${LifecycleStage.CREATE.spanName(ACTIVITY2_NAME)}").single(),
                     expectedStartTimeMs = expectedTraceStartTime + 50,
                     expectedEndTimeMs = expectedTraceStartTime + 150,
                     expectedParentId = rootSpanId,
                 )
 
                 assertEmbraceSpanData(
-                    span = payload.findSpansByName("emb-${LifecycleEvent.START.spanName(ACTIVITY2_NAME)}").single(),
+                    span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY2_NAME)}").single(),
                     expectedStartTimeMs = expectedTraceStartTime + 150,
                     expectedEndTimeMs = expectedTraceStartTime + 250,
                     expectedParentId = rootSpanId,
@@ -144,7 +144,7 @@ internal class UiLoadTest {
                 val lastBackgroundActivity = getSessionEnvelopes(2, ApplicationState.BACKGROUND)[1]
                 assertEmbraceSpanData(
                     span = lastBackgroundActivity
-                        .findSpansByName("emb-${LifecycleEvent.CREATE.spanName(ACTIVITY1_NAME)}")
+                        .findSpansByName("emb-${LifecycleStage.CREATE.spanName(ACTIVITY1_NAME)}")
                         .single(),
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + 100,
@@ -152,7 +152,7 @@ internal class UiLoadTest {
                 )
 
                 assertEmbraceSpanData(
-                    span = payload.findSpansByName("emb-${LifecycleEvent.START.spanName(ACTIVITY1_NAME)}").single(),
+                    span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY1_NAME)}").single(),
                     expectedStartTimeMs = expectedTraceStartTime + 100,
                     expectedEndTimeMs = expectedTraceStartTime + 200,
                     expectedParentId = rootSpanId,
@@ -198,7 +198,7 @@ internal class UiLoadTest {
                 )
 
                 assertEmbraceSpanData(
-                    span = payload.findSpansByName("emb-${LifecycleEvent.START.spanName(ACTIVITY1_NAME)}").single(),
+                    span = payload.findSpansByName("emb-${LifecycleStage.START.spanName(ACTIVITY1_NAME)}").single(),
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + 100,
                     expectedParentId = rootSpanId,

@@ -19,7 +19,7 @@ dependencies {
     implementation("com.android.tools.build:gradle:8.7.3")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:1.23.7")
     implementation("org.jetbrains.kotlinx:binary-compatibility-validator:0.16.3")
-    implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.8.3")
+    implementation("org.jetbrains.kotlinx:kover-gradle-plugin:0.9.0")
 }
 
 // ensure the Kotlin + Java compilers both use the same language level.

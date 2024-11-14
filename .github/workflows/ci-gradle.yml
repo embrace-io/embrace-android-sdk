@@ -55,8 +55,8 @@ jobs:
       - name: Run Kover Code Coverage
         run: ./gradlew koverXmlReportRelease
 
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-          file: embrace-android-sdk/build/reports/kover/reportRelease.xml
+          files: embrace-android-sdk/build/reports/kover/reportRelease.xml

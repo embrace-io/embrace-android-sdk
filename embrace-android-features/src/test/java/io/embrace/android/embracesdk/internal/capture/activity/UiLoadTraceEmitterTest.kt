@@ -41,7 +41,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `verify cold open trace from another activity in U`() {
+    fun `verify cold ui load trace from another activity in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
@@ -52,7 +52,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `verify cold open trace from the same activity in U`() {
+    fun `verify cold ui load trace from the same activity in U`() {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_ACTIVITY,
@@ -64,7 +64,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `verify cold open trace from background in U`() {
+    fun `verify cold ui load trace from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
@@ -75,7 +75,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `verify hot open trace in from background in U`() {
+    fun `verify hot ui load trace in from background in U`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.HOT,
@@ -86,7 +86,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `verify cold open trace in from another activity L`() {
+    fun `verify cold ui load trace in from another activity L`() {
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
@@ -97,7 +97,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `verify cold open trace from background in L`() {
+    fun `verify cold ui load trace from background in L`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
@@ -108,7 +108,7 @@ internal class UiLoadTraceEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `verify hot open trace in L from background`() {
+    fun `verify hot ui load trace in L from background`() {
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.HOT,

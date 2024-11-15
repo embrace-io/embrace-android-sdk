@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallb
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -24,10 +25,10 @@ import org.robolectric.annotation.Config
 import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
-internal class ActivityLoadEventEmitterTest {
+internal class UiLoadExtTest {
     private lateinit var clock: FakeClock
-    private lateinit var openEvents: FakeUiLoadEventListener
-    private lateinit var eventEmitter: ActivityLoadEventEmitter
+    private lateinit var uiLoadEventListener: FakeUiLoadEventListener
+    private lateinit var eventEmitter: ActivityLifecycleListener
     private lateinit var activityController: ActivityController<*>
     private var startTimeMs: Long = 0L
     private var instanceId = 0
@@ -36,16 +37,14 @@ internal class ActivityLoadEventEmitterTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        val initModule = FakeInitModule(clock = clock)
-        clock.tick(100L)
-        openEvents = FakeUiLoadEventListener()
-        eventEmitter = ActivityLoadEventEmitter(
-            uiLoadEventListener = openEvents,
-            clock = initModule.openTelemetryModule.openTelemetryClock,
-            versionChecker = BuildVersionChecker,
-        )
+        uiLoadEventListener = FakeUiLoadEventListener()
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
             ClockTickingActivityLifecycleCallbacks(clock)
+        )
+        eventEmitter = createActivityLoadEventEmitter(
+            uiLoadEventListener = uiLoadEventListener,
+            clock = FakeInitModule(clock = clock).openTelemetryModule.openTelemetryClock,
+            versionChecker = BuildVersionChecker
         )
         RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(eventEmitter)
         startTimeMs = clock.now()
@@ -54,9 +53,9 @@ internal class ActivityLoadEventEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `check cold open event stages in U`() {
+    fun `check cold ui load event stages in U`() {
         stepThroughActivityLifecycle()
-        openEvents.events.assertEventData(
+        uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
                     stage = "create",
@@ -95,9 +94,9 @@ internal class ActivityLoadEventEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `check hot open event stages in U`() {
+    fun `check hot ui load event stages in U`() {
         stepThroughActivityLifecycle(isColdOpen = false)
-        openEvents.events.assertEventData(
+        uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
                     stage = "start",
@@ -126,11 +125,29 @@ internal class ActivityLoadEventEmitterTest {
         )
     }
 
+    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
+    @Test
+    fun `unobserved activities will not emit ui load events in U`() {
+        setupActivityController(Activity::class)
+        stepThroughActivityLifecycle()
+        uiLoadEventListener.events.assertEventData(
+            listOf(
+                createEvent(
+                    stage = "abandon",
+                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
+                ),
+                createEvent(
+                    stage = "reset",
+                ),
+            )
+        )
+    }
+
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `check cold open event stages in L`() {
+    fun `check cold ui load event stages in L`() {
         stepThroughActivityLifecycle()
-        openEvents.events.assertEventData(
+        uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
                     stage = "create",
@@ -165,9 +182,9 @@ internal class ActivityLoadEventEmitterTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `check hot open event stages in L`() {
+    fun `check hot ui load event stages in L`() {
         stepThroughActivityLifecycle(isColdOpen = false)
-        openEvents.events.assertEventData(
+        uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
                     stage = "createEnd",
@@ -196,30 +213,12 @@ internal class ActivityLoadEventEmitterTest {
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
-    @Test
-    fun `unobserved activities will not emit open events in U`() {
-        setupActivityController(Activity::class)
-        stepThroughActivityLifecycle()
-        openEvents.events.assertEventData(
-            listOf(
-                createEvent(
-                    stage = "abandon",
-                    timestampMs = startTimeMs + (POST_DURATION + STATE_DURATION + PRE_DURATION) * 3 + PRE_DURATION
-                ),
-                createEvent(
-                    stage = "reset",
-                ),
-            )
-        )
-    }
-
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `unobserved activities will not emit open events in L`() {
+    fun `unobserved activities will not emit ui load events in L`() {
         setupActivityController(Activity::class)
         stepThroughActivityLifecycle()
-        openEvents.events.assertEventData(
+        uiLoadEventListener.events.assertEventData(
             listOf(
                 createEvent(
                     stage = "abandon",

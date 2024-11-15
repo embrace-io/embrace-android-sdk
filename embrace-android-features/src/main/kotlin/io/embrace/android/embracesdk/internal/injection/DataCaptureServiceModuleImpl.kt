@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.capture.activity.ActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadTraceEmitter
+import io.embrace.android.embracesdk.internal.capture.activity.createActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
 import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataCollector
@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.capture.webview.EmbraceWebViewService
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -78,12 +79,12 @@ internal class DataCaptureServiceModuleImpl @JvmOverloads constructor(
         )
     }
 
-    override val activityLoadEventEmitter: ActivityLoadEventEmitter? by singleton {
+    override val activityLoadEventEmitter: ActivityLifecycleListener? by singleton {
         if (configService.autoDataCaptureBehavior.isUiLoadPerfCaptureEnabled()) {
-            ActivityLoadEventEmitter(
+            createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadTraceEmitter,
                 clock = openTelemetryModule.openTelemetryClock,
-                versionChecker = versionChecker,
+                versionChecker = versionChecker
             )
         } else {
             null

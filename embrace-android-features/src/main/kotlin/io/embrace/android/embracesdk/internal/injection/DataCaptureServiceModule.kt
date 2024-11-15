@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.capture.activity.ActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventListener
 import io.embrace.android.embracesdk.internal.capture.crumbs.ActivityBreadcrumbTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.PushNotificationCaptureService
@@ -8,6 +7,7 @@ import io.embrace.android.embracesdk.internal.capture.startup.AppStartupDataColl
 import io.embrace.android.embracesdk.internal.capture.startup.StartupService
 import io.embrace.android.embracesdk.internal.capture.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.capture.webview.WebViewService
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleListener
 
 /**
  * This modules provides services that capture data from within an application. It could be argued
@@ -43,5 +43,5 @@ interface DataCaptureServiceModule {
 
     val uiLoadTraceEmitter: UiLoadEventListener
 
-    val activityLoadEventEmitter: ActivityLoadEventEmitter?
+    val activityLoadEventEmitter: ActivityLifecycleListener?
 }

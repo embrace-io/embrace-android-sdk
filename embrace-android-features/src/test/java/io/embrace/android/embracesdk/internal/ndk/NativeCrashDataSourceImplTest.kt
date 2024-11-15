@@ -18,9 +18,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeC
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -87,6 +89,8 @@ internal class NativeCrashDataSourceImplTest {
 
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
+            assertEquals(testNativeCrashData.timestamp, timestampEpochNanos.nanosToMillis())
+            assertEquals(testNativeCrashData.appState, attributes.getAttribute(embState))
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
@@ -159,6 +163,7 @@ internal class NativeCrashDataSourceImplTest {
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))
+            assertNull(attributes.getAttribute(embState))
             assertNull(attributes.getAttribute(embNativeCrashException))
             assertNull(attributes.getAttribute(embNativeCrashErrors))
             assertNull(attributes.getAttribute(embNativeCrashSymbols))

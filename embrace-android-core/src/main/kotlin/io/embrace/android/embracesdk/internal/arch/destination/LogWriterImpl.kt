@@ -15,6 +15,7 @@ import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.logs.Severity
 import io.opentelemetry.semconv.incubating.LogIncubatingAttributes
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
+import java.util.concurrent.TimeUnit
 
 class LogWriterImpl(
     private val logger: Logger,
@@ -27,28 +28,31 @@ class LogWriterImpl(
         severity: Severity,
         message: String,
         isPrivate: Boolean,
-        addCurrentSessionId: Boolean,
+        addCurrentSessionInfo: Boolean,
+        timestampMs: Long?,
     ) {
         val builder = logger.logRecordBuilder()
             .setBody(message)
             .setSeverity(severity)
             .setSeverityText(getSeverityText(severity))
 
+        timestampMs?.let { ts -> builder.setTimestamp(ts, TimeUnit.MILLISECONDS) }
+
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 
-        var sessionState: String? = null
-        sessionIdTracker.getActiveSession()?.let { session ->
-            if (addCurrentSessionId) {
+        if (addCurrentSessionInfo) {
+            var sessionState: String? = null
+            sessionIdTracker.getActiveSession()?.let { session ->
                 builder.setAttribute(SessionIncubatingAttributes.SESSION_ID, session.id, false)
+                sessionState = if (session.isForeground) {
+                    FOREGROUND_STATE
+                } else {
+                    BACKGROUND_STATE
+                }
             }
-            sessionState = if (session.isForeground) {
-                FOREGROUND_STATE
-            } else {
-                BACKGROUND_STATE
-            }
-        }
 
-        builder.setAttribute(embState.attributeKey, sessionState ?: processStateService.getAppState())
+            builder.setAttribute(embState.attributeKey, sessionState ?: processStateService.getAppState())
+        }
 
         if (isPrivate) {
             builder.setFixedAttribute(PrivateSpan)

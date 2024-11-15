@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.assertions.findAttributeValue
+import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -8,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionData
 import io.embrace.android.embracesdk.internal.spans.getAttribute
@@ -48,7 +50,7 @@ internal class LogWriterImplTest {
             schemaType = SchemaType.Log(
                 TelemetryAttributes(
                     configService = FakeConfigService(),
-                    customAttributes = mapOf<String, String>(PrivateSpan.toEmbraceKeyValuePair())
+                    customAttributes = mapOf(PrivateSpan.toEmbraceKeyValuePair())
                 )
             ),
             severity = Severity.ERROR,
@@ -62,6 +64,7 @@ internal class LogWriterImplTest {
             assertNotNull(attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertTrue(attributes.hasFixedAttribute(PrivateSpan))
+            assertEquals(0, timestampEpochNanos)
         }
     }
 
@@ -135,6 +138,45 @@ internal class LogWriterImplTest {
         with(logger.builders.last()) {
             assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
             assertEquals("background", attributes.findAttributeValue(embState.attributeKey.key))
+        }
+    }
+
+    @Test
+    fun `timestamp can be overridden`() {
+        val fakeTimeMs = DEFAULT_FAKE_CURRENT_TIME
+        logWriterImpl.addLog(
+            schemaType = SchemaType.Log(
+                TelemetryAttributes(
+                    configService = FakeConfigService()
+                )
+            ),
+            severity = Severity.ERROR,
+            message = "test",
+            timestampMs = fakeTimeMs
+        )
+
+        with(logger.builders.last()) {
+            assertEquals(timestampEpochNanos, fakeTimeMs.millisToNanos())
+        }
+    }
+
+    @Test
+    fun `only set current session info on log if instructed to`() {
+        sessionIdTracker.setActiveSession("foreground-session", true)
+        logWriterImpl.addLog(
+            schemaType = SchemaType.Log(
+                TelemetryAttributes(
+                    configService = FakeConfigService()
+                )
+            ),
+            severity = Severity.ERROR,
+            message = "test",
+            addCurrentSessionInfo = false,
+        )
+
+        with(logger.builders.last()) {
+            assertNull(attributes.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
+            assertNull(attributes.getAttribute(embState))
         }
     }
 

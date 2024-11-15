@@ -13,7 +13,8 @@ class FakeLogWriter : LogWriter {
         severity: Severity,
         message: String,
         isPrivate: Boolean,
-        addCurrentSessionId: Boolean,
+        addCurrentSessionInfo: Boolean,
+        timestampMs: Long?,
     ) {
         logEvents.add(LogEventData(schemaType, severity, message))
     }

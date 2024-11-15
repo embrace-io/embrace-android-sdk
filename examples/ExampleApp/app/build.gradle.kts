@@ -61,6 +61,12 @@ dependencies {
     implementation(libs.opentelemetry.api)
     implementation(libs.opentelemetry.sdk)
 
+    // uncomment to enable debugging through source contained in those modules
+//    implementation(libs.embrace.android.sdk)
+//    implementation(libs.embrace.android.core)
+//    implementation(libs.embrace.android.features)
+//    implementation(libs.embrace.android.payload)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

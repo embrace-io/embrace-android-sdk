@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.caching
 
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
@@ -16,6 +17,7 @@ internal class PayloadCachingServiceImpl(
     private val clock: Clock,
     private val sessionIdTracker: SessionIdTracker,
     private val payloadStore: PayloadStore,
+    private val deliveryTracer: DeliveryTracer? = null,
 ) : PayloadCachingService {
 
     private var stateChanged: AtomicBoolean = AtomicBoolean(true)
@@ -24,6 +26,7 @@ internal class PayloadCachingServiceImpl(
     override fun reportBackgroundActivityStateChange() = stateChanged.set(true)
 
     override fun stopCaching() {
+        deliveryTracer?.onCachingStopped()
         periodicSessionCacher.stop()
         stateChanged.set(true) // reset flag
     }
@@ -33,6 +36,7 @@ internal class PayloadCachingServiceImpl(
         state: ProcessState,
         supplier: SessionPayloadSupplier,
     ) {
+        deliveryTracer?.onCachingStarted()
         periodicSessionCacher.start {
             if (state == ProcessState.BACKGROUND) {
                 if (stateChanged.getAndSet(false)) {
@@ -51,6 +55,8 @@ internal class PayloadCachingServiceImpl(
         endProcessState: ProcessState,
         supplier: SessionPayloadSupplier,
     ): Envelope<SessionPayload>? {
+        deliveryTracer?.onSessionCache()
+
         Systrace.traceSynchronous("on-session-cache") {
             if (initial.sessionId != sessionIdTracker.getActiveSessionId()) {
                 return null

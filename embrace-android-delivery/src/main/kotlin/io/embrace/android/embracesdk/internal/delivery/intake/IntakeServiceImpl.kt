@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -18,6 +19,7 @@ class IntakeServiceImpl(
     private val logger: EmbLogger,
     private val serializer: PlatformSerializer,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
+    private val deliveryTracer: DeliveryTracer? = null,
     private val shutdownTimeoutMs: Long = 3000,
 ) : IntakeService {
 
@@ -29,6 +31,7 @@ class IntakeServiceImpl(
     }
 
     override fun take(intake: Envelope<*>, metadata: StoredTelemetryMetadata) {
+        deliveryTracer?.onTake(metadata)
         val future = worker.submit(metadata) {
             processIntake(intake, metadata)
         }

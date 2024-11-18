@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
@@ -24,4 +25,5 @@ class FakeDeliveryModule(
     override val cacheStorageService: PayloadStorageService = FakePayloadStorageService(),
     override val requestExecutionService: RequestExecutionService = FakeRequestExecutionService(),
     override val schedulingService: SchedulingService = FakeSchedulingService(),
+    override val deliveryTracer: DeliveryTracer? = null
 ) : DeliveryModule

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.execution
 import io.embrace.android.embracesdk.internal.comms.api.ApiRequestV2
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Companion.getResult
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -24,6 +25,7 @@ class OkHttpRequestExecutionService(
     private val appId: String,
     private val embraceVersionName: String,
     private val logger: EmbLogger,
+    private val deliveryTracer: DeliveryTracer? = null,
 ) : RequestExecutionService {
 
     override fun attemptHttpRequest(
@@ -65,7 +67,9 @@ class OkHttpRequestExecutionService(
             responseCode = httpCallResponse?.code,
             headersProvider = { httpCallResponse?.headers?.toMap() ?: emptyMap() },
             executionError = executionError,
-        )
+        ).apply {
+            deliveryTracer?.onHttpCallEnded(this, envelopeType, payloadType)
+        }
     }
 
     private fun Endpoint.getApiRequestFromEndpoint(): ApiRequestV2 = ApiRequestV2(

@@ -90,7 +90,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `test objects pruned past limit`() {
         assertNull(outputDir.listFiles())
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, 4)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, null, 4)
 
         // exceed storage limit
         listOf(

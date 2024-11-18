@@ -29,6 +29,10 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+embrace-android-sdk = { group = "io.embrace", name = "embrace-android-sdk", version.ref = "embrace" }
+embrace-android-core = { group = "io.embrace", name = "embrace-android-core", version.ref = "embrace" }
+embrace-android-features = { group = "io.embrace", name = "embrace-android-features", version.ref = "embrace" }
+embrace-android-payload = { group = "io.embrace", name = "embrace-android-payload", version.ref = "embrace" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 opentelemetry-bom = { group = "io.opentelemetry", name = "opentelemetry-bom", version.ref = "otel" }
 opentelemetry-api = { group = "io.opentelemetry", name = "opentelemetry-api"}

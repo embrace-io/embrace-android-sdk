@@ -9,7 +9,7 @@ fun LogRecordData.toNewPayload(): Log {
     return Log(
         traceId = if (isSpanContextValid) spanContext.traceId else null,
         spanId = if (isSpanContextValid) spanContext.spanId else null,
-        timeUnixNano = observedTimestampEpochNanos,
+        timeUnixNano = timestampEpochNanos,
         severityNumber = severity.severityNumber,
         severityText = severityText,
         body = body.asString(),

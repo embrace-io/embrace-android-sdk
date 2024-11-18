@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.EmbraceProcessStateService.Companion.BACKGROUND_STATE
@@ -21,6 +22,7 @@ class LogWriterImpl(
     private val logger: Logger,
     private val sessionIdTracker: SessionIdTracker,
     private val processStateService: ProcessStateService,
+    private val clock: Clock
 ) : LogWriter {
 
     override fun addLog(
@@ -31,12 +33,12 @@ class LogWriterImpl(
         addCurrentSessionInfo: Boolean,
         timestampMs: Long?,
     ) {
+        val logTimeMs = timestampMs ?: clock.now()
         val builder = logger.logRecordBuilder()
             .setBody(message)
             .setSeverity(severity)
             .setSeverityText(getSeverityText(severity))
-
-        timestampMs?.let { ts -> builder.setTimestamp(ts, TimeUnit.MILLISECONDS) }
+            .setTimestamp(logTimeMs, TimeUnit.MILLISECONDS)
 
         builder.setAttribute(LogIncubatingAttributes.LOG_RECORD_UID, Uuid.getEmbUuid())
 

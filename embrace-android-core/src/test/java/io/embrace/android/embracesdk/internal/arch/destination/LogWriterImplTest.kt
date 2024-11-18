@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.destination
 
 import io.embrace.android.embracesdk.assertions.findAttributeValue
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
@@ -30,16 +31,19 @@ internal class LogWriterImplTest {
     private lateinit var sessionIdTracker: FakeSessionIdTracker
     private lateinit var logWriterImpl: LogWriterImpl
     private lateinit var processStateService: FakeProcessStateService
+    private lateinit var clock: FakeClock
 
     @Before
     fun setup() {
         sessionIdTracker = FakeSessionIdTracker()
         logger = FakeOpenTelemetryLogger()
         processStateService = FakeProcessStateService()
+        clock = FakeClock()
         logWriterImpl = LogWriterImpl(
             logger = logger,
             sessionIdTracker = sessionIdTracker,
             processStateService = processStateService,
+            clock = clock,
         )
     }
 
@@ -64,7 +68,8 @@ internal class LogWriterImplTest {
             assertNotNull(attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertTrue(attributes.hasFixedAttribute(PrivateSpan))
-            assertEquals(0, timestampEpochNanos)
+            assertEquals(clock.nowInNanos(), timestampEpochNanos)
+            assertEquals(0, observedTimestampEpochNanos)
         }
     }
 
@@ -156,7 +161,8 @@ internal class LogWriterImplTest {
         )
 
         with(logger.builders.last()) {
-            assertEquals(timestampEpochNanos, fakeTimeMs.millisToNanos())
+            assertEquals(fakeTimeMs.millisToNanos(), timestampEpochNanos)
+            assertEquals(0, observedTimestampEpochNanos)
         }
     }
 

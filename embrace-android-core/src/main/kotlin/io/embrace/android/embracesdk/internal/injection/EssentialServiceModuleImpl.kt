@@ -120,7 +120,8 @@ class EssentialServiceModuleImpl(
         LogWriterImpl(
             logger = openTelemetryModule.logger,
             sessionIdTracker = sessionIdTracker,
-            processStateService = processStateService
+            processStateService = processStateService,
+            clock = initModule.clock,
         )
     }
 }

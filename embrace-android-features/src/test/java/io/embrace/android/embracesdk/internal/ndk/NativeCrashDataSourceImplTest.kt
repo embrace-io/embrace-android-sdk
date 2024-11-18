@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNdkService
@@ -53,6 +54,7 @@ internal class NativeCrashDataSourceImplTest {
     private lateinit var metadataService: FakeMetadataService
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
+    private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
@@ -63,11 +65,13 @@ internal class NativeCrashDataSourceImplTest {
         sessionIdTracker = FakeSessionIdTracker().apply { setActiveSession("currentSessionId", true) }
         metadataService = FakeMetadataService()
         processStateService = FakeProcessStateService()
+        clock = FakeClock()
         otelLogger = FakeOpenTelemetryLogger()
         logWriter = LogWriterImpl(
             sessionIdTracker = sessionIdTracker,
             processStateService = processStateService,
-            logger = otelLogger
+            logger = otelLogger,
+            clock = clock
         )
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
@@ -90,6 +94,7 @@ internal class NativeCrashDataSourceImplTest {
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
             assertEquals(testNativeCrashData.timestamp, timestampEpochNanos.nanosToMillis())
+            assertEquals(0, observedTimestampEpochNanos.nanosToMillis())
             assertEquals(testNativeCrashData.appState, attributes.getAttribute(embState))
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))

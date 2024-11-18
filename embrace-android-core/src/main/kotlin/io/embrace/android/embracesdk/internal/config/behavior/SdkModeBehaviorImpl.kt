@@ -39,7 +39,6 @@ class SdkModeBehaviorImpl(
     private fun getOffset(): Int = remote?.offset ?: DEFAULT_OFFSET
 
     override fun isSdkDisabled(): Boolean {
-        @Suppress("DEPRECATION")
         val result = thresholdCheck.getNormalizedDeviceId()
         // Check if this is lower than the threshold, to determine whether
         // we should enable/disable the SDK.

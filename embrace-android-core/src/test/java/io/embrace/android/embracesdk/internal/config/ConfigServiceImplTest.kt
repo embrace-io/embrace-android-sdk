@@ -90,35 +90,19 @@ internal class ConfigServiceImplTest {
         clearAllMocks()
     }
 
-    @Suppress("DEPRECATION")
-    @Test
-    fun `test legacy normalized DeviceId`() {
-        fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D0700"
-        assertEquals(0.0, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-
-        fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07FF"
-        assertEquals(100.0, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-
-        fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D0739"
-        assertEquals(22.35, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-
-        fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D07D9"
-        assertEquals(85.09, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-    }
-
     @Test
     fun `test new normalized DeviceId`() {
         fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFC000000"
-        assertEquals(0.0, thresholdCheck.getNormalizedLargeDeviceId().toDouble(), 0.01)
+        assertEquals(0.0, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
 
         fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFCFFFFFF"
-        assertEquals(100.0, thresholdCheck.getNormalizedLargeDeviceId().toDouble(), 0.01)
+        assertEquals(100.0, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
 
         fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFC0D0739"
-        assertEquals(5.08, thresholdCheck.getNormalizedLargeDeviceId().toDouble(), 0.01)
+        assertEquals(5.08, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
 
         fakePreferenceService.deviceIdentifier = "07D85B44E4E245F4A30E559BFCED0739"
-        assertEquals(92.58, thresholdCheck.getNormalizedLargeDeviceId().toDouble(), 0.01)
+        assertEquals(92.58, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
     }
 
     @Test

@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSessionSpan
-import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.SessionRemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embSessionNumber
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
@@ -47,10 +48,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when session control enabled does not end sessions`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.sessionBehavior =
-                    FakeSessionBehavior(sessionControlEnabled = true)
-            },
+            persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
             testCaseAction = {
                 recordSession {
                     clock.tick(10000)
@@ -67,9 +65,7 @@ internal class ManualSessionTest {
     @Test
     fun `calling endSession when state session is below 5s has no effect`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.sessionBehavior = FakeSessionBehavior(sessionControlEnabled = true)
-            },
+            persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig(isEnabled = true)),
             testCaseAction = {
                 recordSession {
                     clock.tick(1000) // not enough to trigger new session

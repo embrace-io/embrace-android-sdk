@@ -4,10 +4,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -45,9 +46,6 @@ internal class ResurrectionFeatureTest {
         )
         testRule.runTest(
             setupAction = {
-                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    v2StorageEnabled = true
-                )
                 cacheStorageService.addPayload(sessionMetadata, deadSessionEnvelope)
                 cacheStorageServiceProvider = { cacheStorageService }
                 val nativeCrashService = fakeNativeFeatureModule.nativeCrashService as FakeNativeCrashService
@@ -84,11 +82,9 @@ internal class ResurrectionFeatureTest {
     @Test
     fun `resurrection attempt with v2 delivery layer off does not crash the SDK`() {
         testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(killSwitchConfig = KillSwitchRemoteConfig(v2StoragePct = 0f)),
             setupAction = {
                 useMockWebServer = false
-                overriddenConfigService.autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(
-                    v2StorageEnabled = false
-                )
             },
             testCaseAction = {
                 recordSession()

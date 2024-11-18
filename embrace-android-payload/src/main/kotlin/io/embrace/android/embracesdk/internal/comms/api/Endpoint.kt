@@ -9,5 +9,6 @@ enum class Endpoint(
 ) {
     LOGS("logs", "v2"),
     SESSIONS("spans", "v2"),
-    UNKNOWN("unknown", "v1")
+    CONFIG("config", "v2"),
+    UNKNOWN("unknown", "v1"),
 }

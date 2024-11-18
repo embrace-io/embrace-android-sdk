@@ -56,9 +56,7 @@ internal class BackgroundActivityDisabledTest {
             overriddenClock = clock,
             overriddenInitModule = initModule,
             overriddenWorkerThreadModule = workerThreadModule,
-        ).apply {
-            overriddenConfigService.backgroundActivityCaptureEnabled = false
-        }
+        )
     }
 
     @Test

@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface BackgroundActivityBehavior {
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+
+interface BackgroundActivityBehavior : ConfigBehavior<EnabledFeatureConfig, BackgroundActivityRemoteConfig> {
 
     /**
      * Whether the feature is enabled or not.

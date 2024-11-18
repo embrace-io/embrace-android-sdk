@@ -5,8 +5,6 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.hasEventOfType
 import io.embrace.android.embracesdk.assertions.hasSpanOfType
 import io.embrace.android.embracesdk.fakes.FakeAnrService
-import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeCompletedAnrInterval
 import io.embrace.android.embracesdk.fakes.fakeInProgressAnrInterval
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -17,7 +15,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Rule
@@ -30,26 +27,14 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class OtelSessionGatingTest {
 
-    private var gatingConfig = SessionRemoteConfig(
-        fullSessionEvents = setOf(),
-        sessionComponents = setOf()
-    )
-
     @Rule
     @JvmField
-    val testRule: IntegrationTestRule = IntegrationTestRule {
-        EmbraceSetupInterface(
-            overriddenConfigService = FakeConfigService(
-                sessionBehavior = createSessionBehavior(remoteCfg = { RemoteConfig(sessionConfig = gatingConfig) })
-            )
-        )
-    }
+    val testRule: IntegrationTestRule = IntegrationTestRule()
 
     @Test
     fun `session sent in full without gating`() {
-        gatingConfig = SessionRemoteConfig()
-
         testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(sessionConfig = SessionRemoteConfig()),
             testCaseAction = {
                 simulateSession()
             },
@@ -62,14 +47,16 @@ internal class OtelSessionGatingTest {
 
     @Test
     fun `session gated`() {
-        gatingConfig = SessionRemoteConfig(
-            sessionComponents = emptySet(),
-            fullSessionEvents = setOf(
-                "crashes",
-                "errors"
-            )
-        )
         testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(
+                sessionConfig = SessionRemoteConfig(
+                    sessionComponents = emptySet(),
+                    fullSessionEvents = setOf(
+                        "crashes",
+                        "errors"
+                    )
+                )
+            ),
             testCaseAction = {
                 simulateSession()
             },

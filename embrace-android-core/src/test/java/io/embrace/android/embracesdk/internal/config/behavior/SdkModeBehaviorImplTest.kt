@@ -33,28 +33,28 @@ internal class SdkModeBehaviorImplTest {
         // SDK disabled
         var behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
-            remoteCfg = { RemoteConfig(threshold = 0) }
+            remoteCfg = RemoteConfig(threshold = 0)
         )
         assertTrue(behavior.isSdkDisabled())
 
         // SDK enabled
         behavior = createSdkModeBehavior(
             thresholdCheck = enabled,
-            remoteCfg = { RemoteConfig(threshold = 100) }
+            remoteCfg = RemoteConfig(threshold = 100)
         )
         assertFalse(behavior.isSdkDisabled())
 
         // SDK 30% enabled with default offset
         behavior = createSdkModeBehavior(
             thresholdCheck = halfEnabled,
-            remoteCfg = { RemoteConfig(threshold = 30) }
+            remoteCfg = RemoteConfig(threshold = 30)
         )
         assertTrue(behavior.isSdkDisabled())
 
         // SDK 30% enabled with non-default offset
         behavior = createSdkModeBehavior(
             thresholdCheck = halfEnabled,
-            remoteCfg = { RemoteConfig(threshold = 30, offset = 25) }
+            remoteCfg = RemoteConfig(threshold = 30, offset = 25)
         )
         assertFalse(behavior.isSdkDisabled())
     }

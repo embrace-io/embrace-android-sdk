@@ -29,7 +29,7 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication()),
+            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),
@@ -52,7 +52,7 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule()
         val module = PayloadSourceModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication()),
+            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeWorkerThreadModule(),
             FakeSystemServiceModule(),
             FakeAndroidServicesModule(),

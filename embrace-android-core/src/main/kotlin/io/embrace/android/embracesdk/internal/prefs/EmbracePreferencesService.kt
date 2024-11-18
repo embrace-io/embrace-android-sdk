@@ -1,47 +1,15 @@
 package io.embrace.android.embracesdk.internal.prefs
 
 import android.content.SharedPreferences
-import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid.getEmbUuid
-import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.util.concurrent.Callable
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
 internal class EmbracePreferencesService(
-    private val backgroundWorker: BackgroundWorker,
-    private val lazyPrefs: Lazy<SharedPreferences>,
+    private val prefs: SharedPreferences,
     private val clock: Clock,
     private val serializer: PlatformSerializer,
 ) : PreferencesService {
-
-    // We get SharedPreferences on a background thread because it loads data from disk
-    // and can block. When client code needs to set/get a preference, getSharedPrefs() will
-    // block if necessary with Future.get(). Eagerly offloading buys us more time
-    // for SharedPreferences to load the File and reduces the likelihood of blocking
-    // when invoked by client code.
-    private val preferences: Future<SharedPreferences> = Systrace.traceSynchronous("trigger-load-prefs") {
-        backgroundWorker.submit(
-            callable = Callable {
-                Systrace.traceSynchronous("load-prefs") {
-                    lazyPrefs.value
-                }
-            }
-        )
-    }
-
-    // fallback from this very unlikely case by just loading on the main thread
-    private val prefs: SharedPreferences
-        get() = try {
-            Systrace.traceSynchronous("get-prefs") {
-                preferences.get(2, TimeUnit.SECONDS)
-            }
-        } catch (exc: Throwable) {
-            // fallback from this very unlikely case by just loading on the main thread
-            lazyPrefs.value
-        }
 
     private fun SharedPreferences.getStringPreference(key: String): String? {
         return getString(key, null)
@@ -159,10 +127,6 @@ internal class EmbracePreferencesService(
         }
         set(value) = prefs.setStringPreference(DEVICE_IDENTIFIER_KEY, value)
 
-    override var sdkDisabled: Boolean
-        get() = prefs.getBooleanPreference(SDK_DISABLED_KEY, false)
-        set(value) = prefs.setBooleanPreference(SDK_DISABLED_KEY, value)
-
     override var userPayer: Boolean
         get() = prefs.getBooleanPreference(USER_IS_PAYER_KEY, false)
         set(value) = prefs.setBooleanPreference(USER_IS_PAYER_KEY, value)
@@ -190,10 +154,6 @@ internal class EmbracePreferencesService(
     override var lastConfigFetchDate: Long?
         get() = prefs.getLongPreference(SDK_CONFIG_FETCHED_TIMESTAMP)
         set(value) = prefs.setLongPreference(SDK_CONFIG_FETCHED_TIMESTAMP, value)
-
-    override var userMessageNeedsRetry: Boolean
-        get() = prefs.getBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, false)
-        set(value) = prefs.setBooleanPreference(LAST_USER_MESSAGE_FAILED_KEY, value)
 
     override fun incrementAndGetSessionNumber(): Int {
         return incrementAndGetOrdinal(LAST_SESSION_NUMBER_KEY)
@@ -275,10 +235,6 @@ internal class EmbracePreferencesService(
         get() = prefs.getStringPreference(SCREEN_RESOLUTION_KEY)
         set(value) = prefs.setStringPreference(SCREEN_RESOLUTION_KEY, value)
 
-    override var backgroundActivityEnabled: Boolean
-        get() = prefs.getBooleanPreference(BACKGROUND_ACTIVITY_ENABLED_KEY, false)
-        set(value) = prefs.setBooleanPreference(BACKGROUND_ACTIVITY_ENABLED_KEY, value)
-
     override var applicationExitInfoHistory: Set<String>?
         get() = prefs.getStringSet(AEI_HASH_CODES, null)
         set(value) = prefs.setArrayPreference(AEI_HASH_CODES, value)
@@ -309,8 +265,6 @@ internal class EmbracePreferencesService(
     }
 
     companion object {
-        internal const val SDK_STARTUP_IN_PROGRESS = "startup_entered"
-        internal const val SDK_STARTUP_COMPLETED = "startup_completed"
         private const val DEVICE_IDENTIFIER_KEY = "io.embrace.deviceid"
         private const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"
         private const val PREVIOUS_OS_VERSION_KEY = "io.embrace.lastosversion"
@@ -320,7 +274,6 @@ internal class EmbracePreferencesService(
         private const val USER_USERNAME_KEY = "io.embrace.username"
         private const val USER_IS_PAYER_KEY = "io.embrace.userispayer"
         private const val USER_PERSONAS_KEY = "io.embrace.userpersonas"
-        private const val LAST_USER_MESSAGE_FAILED_KEY = "io.embrace.userupdatefailed"
         private const val LAST_SESSION_NUMBER_KEY = "io.embrace.sessionnumber"
         private const val LAST_BACKGROUND_ACTIVITY_NUMBER_KEY = "io.embrace.bgactivitynumber"
         private const val LAST_CRASH_NUMBER_KEY = "io.embrace.crashnumber"
@@ -338,9 +291,7 @@ internal class EmbracePreferencesService(
         private const val EMBRACE_FLUTTER_SDK_VERSION_KEY = "io.embrace.flutter.sdk.version"
         private const val IS_JAILBROKEN_KEY = "io.embrace.is_jailbroken"
         private const val SCREEN_RESOLUTION_KEY = "io.embrace.screen.resolution"
-        private const val BACKGROUND_ACTIVITY_ENABLED_KEY = "io.embrace.bgactivitycapture"
         private const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
-        private const val SDK_DISABLED_KEY = "io.embrace.disabled"
         private const val SDK_CONFIG_FETCHED_TIMESTAMP = "io.embrace.sdkfetchedtimestamp"
         private const val AEI_HASH_CODES = "io.embrace.aeiHashCode"
     }

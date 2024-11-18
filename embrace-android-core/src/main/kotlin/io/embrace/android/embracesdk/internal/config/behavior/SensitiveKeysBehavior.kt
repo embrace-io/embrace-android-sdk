@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-fun interface SensitiveKeysBehavior {
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.RedactionConfig
+
+interface SensitiveKeysBehavior : ConfigBehavior<RedactionConfig, UnimplementedConfig> {
 
     /**
      * Checks if the given key is sensitive.

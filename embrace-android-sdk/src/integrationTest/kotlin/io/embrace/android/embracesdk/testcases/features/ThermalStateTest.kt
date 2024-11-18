@@ -5,7 +5,6 @@ import android.os.PowerManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansOfType
-import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
@@ -26,16 +25,11 @@ internal class ThermalStateFeatureTest {
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
-    private val autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(thermalStatusCaptureEnabled = true)
-
     @Test
     fun `single thermal state change generates a snapshot`() {
         var startTimeMs = 0L
 
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.autoDataCaptureBehavior = autoDataCaptureBehavior
-            },
             testCaseAction = {
                 recordSession {
                     startTimeMs = clock.now()
@@ -64,9 +58,6 @@ internal class ThermalStateFeatureTest {
         var startTimeMs = 0L
 
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.autoDataCaptureBehavior = autoDataCaptureBehavior
-            },
             testCaseAction = {
                 recordSession {
                     startTimeMs = clock.now()

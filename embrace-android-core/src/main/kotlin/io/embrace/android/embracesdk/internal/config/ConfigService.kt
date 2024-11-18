@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.DataCaptureEventBe
 import io.embrace.android.embracesdk.internal.config.behavior.LogMessageBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
@@ -22,8 +21,6 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  * Configuration is configured for the user's app, and exposed via the API.
  */
 interface ConfigService {
-
-    var remoteConfigSource: RemoteConfigSource?
 
     /**
      * How background activity functionality should behave.
@@ -71,11 +68,6 @@ interface ConfigService {
     val sdkModeBehavior: SdkModeBehavior
 
     /**
-     * Provides base endpoints the SDK should send data to
-     */
-    val sdkEndpointBehavior: SdkEndpointBehavior
-
-    /**
      * Provides whether the SDK should enable certain 'behavior' of web vitals
      */
     val webViewVitalsBehavior: WebViewVitalsBehavior
@@ -111,49 +103,4 @@ interface ConfigService {
      * to Embrace).
      */
     fun isOnlyUsingOtelExporters(): Boolean
-
-    /**
-     * Adds a listener for changes to the [RemoteConfig]. The listeners will be notified when the
-     * [ConfigService] refreshes its configuration.
-     *
-     * @param configListener the listener to add
-     */
-    fun addListener(configListener: () -> Unit)
-
-    /**
-     * Checks if the SDK is enabled.
-     *
-     * The SDK can be configured to disable a percentage of devices based on the normalization of
-     * their device ID between 1-100. This threshold is set in [RemoteConfig].
-     *
-     * @return true if the sdk is enabled, false otherwise
-     */
-    fun isSdkDisabled(): Boolean
-
-    /**
-     * Checks if the capture of background activity is enabled.
-     *
-     *
-     * The background activity capture can be configured to enable a percentage of
-     * devices based on the normalization of their device ID between 1-100.
-     *
-     * @return true if background activity capture is enabled.
-     */
-    fun isBackgroundActivityCaptureEnabled(): Boolean
-
-    /**
-     * Returns true if the remote config has been fetched and is not expired. Generally speaking
-     * use of this function should be discouraged - but it can be useful to prevent running risky
-     * behavior that should only be switched on via remote config.
-     *
-     * Most callers will not need this function - try not to abuse it.
-     */
-    fun hasValidRemoteConfig(): Boolean
-
-    /**
-     * Checks if the capture of Application Exit Info is enabled.
-     *
-     * @return true if AEI capture is enabled.
-     */
-    fun isAppExitInfoCaptureEnabled(): Boolean
 }

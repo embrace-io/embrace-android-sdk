@@ -32,8 +32,8 @@ internal class ModuleInitBootstrapperTest {
         logger = EmbLoggerImpl()
         coreModule = FakeCoreModule()
         moduleInitBootstrapper = ModuleInitBootstrapper(
-            configModuleSupplier = { _, _, _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
-            coreModuleSupplier = { _ -> coreModule },
+            configModuleSupplier = { _, _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
+            coreModuleSupplier = { _, _ -> coreModule },
             nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = logger
         )

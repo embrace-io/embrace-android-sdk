@@ -1,14 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.capture.envelope.session.OtelPayloadMapperImpl
-import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryService
-import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.delivery.execution.HttpUrlConnectionRequestExecutionService
-import io.embrace.android.embracesdk.internal.delivery.execution.OkHttpRequestExecutionService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -117,7 +111,6 @@ internal class ModuleInitBootstrapper(
         context: Context,
         appFramework: AppFramework,
         sdkStartTimeMs: Long,
-        configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
         versionChecker: VersionChecker = BuildVersionChecker,
     ): Boolean {
         try {
@@ -128,9 +121,8 @@ internal class ModuleInitBootstrapper(
 
             synchronized(initialized) {
                 val result = if (!isInitialized()) {
-                    coreModule = init(CoreModule::class) { coreModuleSupplier(context) }
+                    coreModule = init(CoreModule::class) { coreModuleSupplier(context, initModule) }
 
-                    val serviceRegistry = coreModule.serviceRegistry
                     workerThreadModule = init(WorkerThreadModule::class) {
                         workerThreadModuleSupplier()
                     }
@@ -141,31 +133,43 @@ internal class ModuleInitBootstrapper(
                         }
                     }
 
-                    systemServiceModule = init(SystemServiceModule::class) {
-                        systemServiceModuleSupplier(coreModule, versionChecker)
-                    }
-
                     androidServicesModule = init(AndroidServicesModule::class) {
-                        androidServicesModuleSupplier(initModule, coreModule, workerThreadModule)
+                        androidServicesModuleSupplier(initModule, coreModule)
                     }
 
                     configModule = init(ConfigModule::class) {
                         configModuleSupplier(
                             initModule,
+                            coreModule,
                             openTelemetryModule,
                             workerThreadModule,
                             androidServicesModule,
-                            appFramework,
-                            configServiceProvider,
-                        ) {
-                            if (isSdkDisabled()) {
-                                EmbraceInternalApi.getInstance().internalInterface.stopSdk()
+                            appFramework
+                        )
+                    }
+
+                    Systrace.traceSynchronous("sdk-disable-check") {
+                        // kick off config HTTP request first so the SDK can't get in a permanently disabled state
+                        Systrace.traceSynchronous("load-config-response") {
+                            configModule.combinedRemoteConfigSource?.scheduleConfigRequests()
+                        }
+
+                        Systrace.traceSynchronous("behavior-check") {
+                            if (configModule.configService.sdkModeBehavior.isSdkDisabled()) {
+                                return false
                             }
                         }
                     }
+
+                    val serviceRegistry = coreModule.serviceRegistry
                     postInit(ConfigModule::class) {
                         serviceRegistry.registerService(lazy { configModule.configService })
+                        serviceRegistry.registerService(lazy { configModule.remoteConfigSource })
                         openTelemetryModule.setupSensitiveKeysBehavior(configModule.configService.sensitiveKeysBehavior)
+                    }
+
+                    systemServiceModule = init(SystemServiceModule::class) {
+                        systemServiceModuleSupplier(coreModule, versionChecker)
                     }
 
                     storageModule = init(StorageModule::class) {
@@ -187,10 +191,7 @@ internal class ModuleInitBootstrapper(
                         )
                     }
                     postInit(EssentialServiceModule::class) {
-                        // Allow config service to start making HTTP requests
                         with(essentialServiceModule) {
-                            configModule.configService.remoteConfigSource = apiService
-
                             serviceRegistry.registerServices(
                                 lazy { essentialServiceModule.processStateService },
                                 lazy { activityLifecycleTracker },
@@ -226,7 +227,6 @@ internal class ModuleInitBootstrapper(
                     dataSourceModule = init(DataSourceModule::class) {
                         dataSourceModuleSupplier(
                             initModule,
-                            configModule.configService,
                             workerThreadModule
                         )
                     }
@@ -285,49 +285,15 @@ internal class ModuleInitBootstrapper(
                             coreModule,
                             storageModule,
                             essentialServiceModule,
-                            { null },
-                            { null },
-                            {
-                                if (configModule.configService.isOnlyUsingOtelExporters()) {
-                                    null
-                                } else {
-                                    val appId = checkNotNull(configModule.configService.appId)
-                                    val coreBaseUrl = configModule.configService.sdkEndpointBehavior.getData(appId)
-                                    val lazyDeviceId = lazy(androidServicesModule.preferencesService::deviceIdentifier)
-                                    if (configModule.configService.autoDataCaptureBehavior.shouldUseOkHttp()) {
-                                        OkHttpRequestExecutionService(
-                                            coreBaseUrl,
-                                            lazyDeviceId,
-                                            appId,
-                                            BuildConfig.VERSION_NAME,
-                                            logger,
-                                        )
-                                    } else {
-                                        HttpUrlConnectionRequestExecutionService(
-                                            coreBaseUrl,
-                                            lazyDeviceId,
-                                            appId,
-                                            BuildConfig.VERSION_NAME,
-                                            logger,
-                                        )
-                                    }
-                                }
-                            },
-                            {
-                                val apiService = essentialServiceModule.apiService
-                                if (configModule.configService.isOnlyUsingOtelExporters() || apiService == null) {
-                                    null
-                                } else {
-                                    EmbraceDeliveryService(
-                                        storageModule.deliveryCacheManager,
-                                        apiService,
-                                        initModule.jsonSerializer
-                                    )
-                                }
-                            }
+                            androidServicesModule,
+                            null,
+                            null,
+                            null,
+                            null
                         )
-                    }.apply {
-                        payloadCachingService?.run {
+                    }
+                    postInit(DeliveryModule::class) {
+                        deliveryModule.payloadCachingService?.run {
                             openTelemetryModule.spanRepository.setSpanUpdateNotifier {
                                 reportBackgroundActivityStateChange()
                             }
@@ -493,7 +459,6 @@ internal class ModuleInitBootstrapper(
         if (isInitialized()) {
             coreModule.serviceRegistry.close()
             workerThreadModule.close()
-            essentialServiceModule.processStateService.close()
             initialized.set(false)
         }
     }

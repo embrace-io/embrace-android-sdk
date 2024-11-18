@@ -3,6 +3,10 @@ package io.embrace.android.embracesdk.testcases.features
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.assertions.findSessionSpan
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.getSessionProperty
@@ -25,6 +29,7 @@ internal class SessionPropertiesTest {
     @Test
     fun `session properties additions and removal works at all stages app state transition`() {
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             setupAction = {
                 setupPermanentProperties()
             },
@@ -67,7 +72,6 @@ internal class SessionPropertiesTest {
     fun `session properties work with background activity disabled`() {
         testRule.runTest(
             setupAction = {
-                overriddenConfigService.backgroundActivityCaptureEnabled = false
                 setupPermanentProperties()
             },
             testCaseAction = {
@@ -114,7 +118,6 @@ internal class SessionPropertiesTest {
     fun `session properties are persisted in cached payloads when bg activities are disabled`() {
         testRule.runTest(
             setupAction = {
-                overriddenConfigService.backgroundActivityCaptureEnabled = false
                 setupPermanentProperties()
             },
             testCaseAction = {

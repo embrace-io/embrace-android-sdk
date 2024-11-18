@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.comms.api
 
+import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -19,11 +21,14 @@ internal class ApiRequestMapperTest {
     private val deviceId = lazy { "deviceId" }
     private val mapper = ApiRequestMapper(
         urlBuilder = EmbraceApiUrlBuilder(
-            BASE_URL,
-            CONFIG_URL,
-            "appId",
-            deviceId,
-            lazy { "appVersionName" }
+            deviceId.value,
+            "1.0",
+            FakeInstrumentedConfig(
+                baseUrls = FakeBaseUrlConfig(
+                    configImpl = CONFIG_URL,
+                    dataImpl = BASE_URL
+                )
+            )
         ),
         lazyDeviceId = deviceId,
         appId = "appId"

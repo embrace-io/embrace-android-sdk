@@ -1,34 +1,32 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.SessionConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.gating.SessionGatingKeys
-import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.Locale
 
 /**
  * Provides the behavior that functionality relating to sessions should follow.
  */
 class SessionBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>,
-) : SessionBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    local: InstrumentedConfig,
+    override val remote: RemoteConfig?,
+) : SessionBehavior {
 
     companion object {
         const val SESSION_PROPERTY_LIMIT: Int = 10
     }
 
+    override val local: SessionConfig = local.session
+
     override fun getFullSessionEvents(): Set<String> {
-        val strings = remote?.sessionConfig?.fullSessionEvents ?: InstrumentedConfig.session.getFullSessionEvents()
+        val strings = remote?.sessionConfig?.fullSessionEvents ?: local.getFullSessionEvents()
         return strings.map { it.lowercase(Locale.US) }.toSet()
     }
 
     override fun getSessionComponents(): Set<String>? =
-        (remote?.sessionConfig?.sessionComponents ?: InstrumentedConfig.session.getSessionComponents())?.toSet()
+        (remote?.sessionConfig?.sessionComponents ?: local.getSessionComponents())?.toSet()
 
     override fun isGatingFeatureEnabled(): Boolean = getSessionComponents() != null
 

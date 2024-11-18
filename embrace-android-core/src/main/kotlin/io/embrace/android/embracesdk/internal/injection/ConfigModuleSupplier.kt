@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 
 /**
@@ -8,28 +7,25 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
  */
 typealias ConfigModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
-    configServiceProvider: (framework: AppFramework) -> ConfigService?,
-    foregroundAction: ConfigService.() -> Unit,
 ) -> ConfigModule
 
 fun createConfigModule(
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     workerThreadModule: WorkerThreadModule,
     androidServicesModule: AndroidServicesModule,
     framework: AppFramework,
-    configServiceProvider: (framework: AppFramework) -> ConfigService? = { null },
-    foregroundAction: ConfigService.() -> Unit,
 ): ConfigModule = ConfigModuleImpl(
     initModule,
+    coreModule,
     openTelemetryModule,
     workerThreadModule,
     androidServicesModule,
     framework,
-    configServiceProvider,
-    foregroundAction
 )

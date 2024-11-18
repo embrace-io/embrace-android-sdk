@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePayloadCachingService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
@@ -39,7 +41,9 @@ internal class EmbraceSpanFactoryImplTest {
             tracer = tracer,
             openTelemetryClock = initModule.openTelemetryModule.openTelemetryClock,
             spanRepository = spanRepository,
-            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password")),
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
+            ),
         )
     }
 

@@ -6,11 +6,9 @@ package io.embrace.android.embracesdk.internal.injection
 typealias AndroidServicesModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
 ) -> AndroidServicesModule
 
 fun createAndroidServicesModule(
     initModule: InitModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
-): AndroidServicesModule = AndroidServicesModuleImpl(initModule, coreModule, workerThreadModule)
+): AndroidServicesModule = AndroidServicesModuleImpl(initModule, coreModule)

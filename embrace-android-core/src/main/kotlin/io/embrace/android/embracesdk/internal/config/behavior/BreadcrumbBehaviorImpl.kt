@@ -1,21 +1,17 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
 class BreadcrumbBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>,
-) : BreadcrumbBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    local: InstrumentedConfig,
+    override val remote: RemoteConfig?,
+) : BreadcrumbBehavior {
 
     private companion object {
 
@@ -25,7 +21,7 @@ class BreadcrumbBehaviorImpl(
         const val DEFAULT_BREADCRUMB_LIMIT = 100
     }
 
-    private val cfg = InstrumentedConfig.enabledFeatures
+    override val local: EnabledFeatureConfig = local.enabledFeatures
 
     override fun getCustomBreadcrumbLimit(): Int =
         remote?.uiConfig?.breadcrumbs ?: DEFAULT_BREADCRUMB_LIMIT
@@ -38,16 +34,16 @@ class BreadcrumbBehaviorImpl(
         remote?.uiConfig?.webViews ?: DEFAULT_BREADCRUMB_LIMIT
 
     override fun isViewClickCoordinateCaptureEnabled(): Boolean =
-        cfg.isViewClickCoordinateCaptureEnabled()
+        local.isViewClickCoordinateCaptureEnabled()
 
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean =
-        cfg.isActivityBreadcrumbCaptureEnabled()
+        local.isActivityBreadcrumbCaptureEnabled()
 
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean =
-        cfg.isWebViewBreadcrumbCaptureEnabled()
+        local.isWebViewBreadcrumbCaptureEnabled()
 
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean =
-        cfg.isWebViewBreadcrumbQueryParamCaptureEnabled()
+        local.isWebViewBreadcrumbQueryParamCaptureEnabled()
 
-    override fun isFcmPiiDataCaptureEnabled(): Boolean = cfg.isFcmPiiDataCaptureEnabled()
+    override fun isFcmPiiDataCaptureEnabled(): Boolean = local.isFcmPiiDataCaptureEnabled()
 }

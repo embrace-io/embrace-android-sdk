@@ -30,6 +30,7 @@ internal class LogModuleImpl(
             androidServicesModule.preferencesService,
             { networkCaptureDataSource },
             configModule.configService,
+            configModule.urlBuilder,
             initModule.jsonSerializer,
             initModule.logger
         )

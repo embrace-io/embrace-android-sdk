@@ -55,30 +55,10 @@ class NativeThreadSamplerInstaller(
         if (configService.anrBehavior.isUnityAnrCaptureEnabled()) {
             monitorCurrentThread(sampler, anrService)
         }
-
-        // always install the handler. if config subsequently changes we take the decision
-        // to just ignore anr intervals, rather than attempting to uninstall the handler
-        configService.addListener {
-            onConfigChange(configService, sampler, anrService)
-        }
     }
 
     private fun isMonitoringCurrentThread(): Boolean {
         return isMonitoring.get() && Thread.currentThread().id == currentThread?.id
-    }
-
-    private fun onConfigChange(
-        configService: ConfigService,
-        sampler: NativeThreadSamplerService,
-        anrService: AnrService,
-    ) {
-        targetHandler?.post(
-            Runnable {
-                if (configService.anrBehavior.isUnityAnrCaptureEnabled() && !isMonitoring.get()) {
-                    monitorCurrentThread(sampler, anrService)
-                }
-            }
-        )
     }
 
     private fun monitorCurrentThread(sampler: NativeThreadSamplerService, anrService: AnrService) {

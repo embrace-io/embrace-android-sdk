@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface AutoDataCaptureBehavior {
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+
+interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteConfig> {
 
     /**
      * Returns true if [io.embrace.android.embracesdk.MemoryService] should

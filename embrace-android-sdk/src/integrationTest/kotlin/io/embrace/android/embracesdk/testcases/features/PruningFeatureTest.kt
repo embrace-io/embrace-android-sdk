@@ -40,9 +40,6 @@ internal class PruningFeatureTest {
     @Test
     fun `stored payloads are pruned appropriately`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.backgroundActivityCaptureEnabled = false
-            },
             testCaseAction = {
                 simulateNetworkChange(NetworkStatus.NOT_REACHABLE)
                 repeat(STORAGE_LIMIT + OVERAGE) { k ->

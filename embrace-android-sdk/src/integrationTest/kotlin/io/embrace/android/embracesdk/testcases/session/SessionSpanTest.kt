@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -21,6 +23,7 @@ internal class SessionSpanTest {
         val ids = mutableListOf<String?>()
 
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             testCaseAction = {
                 recordSession {
                     ids.add(embrace.currentSessionId)

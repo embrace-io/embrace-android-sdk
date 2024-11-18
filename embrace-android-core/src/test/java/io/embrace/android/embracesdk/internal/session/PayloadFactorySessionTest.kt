@@ -60,7 +60,6 @@ internal class PayloadFactorySessionTest {
     companion object {
 
         private val processStateService = FakeProcessStateService()
-        private val clock = FakeClock()
 
         @BeforeClass
         @JvmStatic
@@ -86,13 +85,12 @@ internal class PayloadFactorySessionTest {
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
         ndkService = FakeNdkService()
-        preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
+        preferencesService = FakePreferenceService()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
-        configService.updateListeners()
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 

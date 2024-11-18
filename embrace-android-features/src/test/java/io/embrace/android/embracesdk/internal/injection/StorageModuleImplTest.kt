@@ -14,7 +14,7 @@ internal class StorageModuleImplTest {
     @Test
     fun testDefaultImplementations() {
         val initModule = FakeInitModule()
-        val coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication())
+        val coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
         val module = createStorageModuleSupplier(
             initModule = initModule,
             coreModule = coreModule,
@@ -22,7 +22,6 @@ internal class StorageModuleImplTest {
         )
 
         assertNotNull(module.storageService)
-        assertNotNull(module.cache)
         assertNotNull(module.cacheService)
         assertNotNull(module.deliveryCacheManager)
         assertNotNull(module.storageService)

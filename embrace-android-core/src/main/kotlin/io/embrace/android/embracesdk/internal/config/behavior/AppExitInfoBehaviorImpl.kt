@@ -1,21 +1,18 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Provides the behavior that should be followed for select services that automatically
  * capture data.
  */
 class AppExitInfoBehaviorImpl(
-    thresholdCheck: BehaviorThresholdCheck,
-    remoteSupplier: Provider<RemoteConfig?>,
-) : AppExitInfoBehavior, MergedConfigBehavior<UnimplementedConfig, RemoteConfig>(
-    thresholdCheck = thresholdCheck,
-    remoteSupplier = remoteSupplier
-) {
+    private val thresholdCheck: BehaviorThresholdCheck,
+    local: InstrumentedConfig,
+    remote: RemoteConfig?,
+) : AppExitInfoBehavior {
+
     companion object {
         /**
          * Max size of bytes to allow capturing AppExitInfo ndk/anr traces
@@ -24,14 +21,17 @@ class AppExitInfoBehaviorImpl(
         const val AEI_MAX_NUM_DEFAULT: Int = 0 // 0 means no limit
     }
 
+    override val local = local.enabledFeatures
+    override val remote = remote?.appExitInfoConfig
+
     override fun getTraceMaxLimit(): Int =
-        remote?.appExitInfoConfig?.appExitInfoTracesLimit
+        remote?.appExitInfoTracesLimit
             ?: MAX_TRACE_SIZE_BYTES
 
     override fun isAeiCaptureEnabled(): Boolean {
-        return thresholdCheck.isBehaviorEnabled(remote?.appExitInfoConfig?.pctAeiCaptureEnabled)
-            ?: InstrumentedConfig.enabledFeatures.isAeiCaptureEnabled()
+        return thresholdCheck.isBehaviorEnabled(remote?.pctAeiCaptureEnabled)
+            ?: local.isAeiCaptureEnabled()
     }
 
-    override fun appExitInfoMaxNum(): Int = remote?.appExitInfoConfig?.aeiMaxNum ?: AEI_MAX_NUM_DEFAULT
+    override fun appExitInfoMaxNum(): Int = remote?.aeiMaxNum ?: AEI_MAX_NUM_DEFAULT
 }

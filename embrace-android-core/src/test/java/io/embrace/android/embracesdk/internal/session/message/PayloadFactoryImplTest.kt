@@ -6,7 +6,10 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.BACKGROUND
@@ -54,7 +57,9 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `verify expected payloads with ba enabled`() {
-        configService.backgroundActivityCaptureEnabled = true
+        configService.backgroundActivityBehavior = createBackgroundActivityBehavior(
+            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+        )
         verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = true)
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = true, startNewSession = true)
         verifyPayloadWithManual()
@@ -62,7 +67,9 @@ internal class PayloadFactoryImplTest {
 
     @Test
     fun `verify expected payloads with ba disabled`() {
-        configService.backgroundActivityCaptureEnabled = false
+        configService.backgroundActivityBehavior = createBackgroundActivityBehavior(
+            remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
+        )
         verifyPayloadWithState(state = FOREGROUND, zygoteCreated = true, startNewSession = false)
         verifyPayloadWithState(state = BACKGROUND, zygoteCreated = false, startNewSession = false)
         verifyPayloadWithManual()

@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.behavior.FakeLogMessageBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
@@ -37,7 +39,9 @@ internal class EmbraceLogServiceTest {
     @Before
     fun setUp() {
         fakeConfigService = FakeConfigService(
-            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password"))
+            sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+                FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
+            )
         )
         fakeSessionPropertiesService = FakeSessionPropertiesService()
         fakeLogWriter = FakeLogWriter()
@@ -105,14 +109,12 @@ internal class EmbraceLogServiceTest {
         // given a config that gates info and warning logs
         fakeConfigService = FakeConfigService(
             sessionBehavior = createSessionBehavior(
-                remoteCfg = {
-                    RemoteConfig(
-                        sessionConfig = SessionRemoteConfig(
-                            isEnabled = true,
-                            sessionComponents = emptySet() // empty set will gate everything
-                        )
+                remoteCfg = RemoteConfig(
+                    sessionConfig = SessionRemoteConfig(
+                        isEnabled = true,
+                        sessionComponents = emptySet() // empty set will gate everything
                     )
-                }
+                )
             )
         )
         logService = createEmbraceLogService()

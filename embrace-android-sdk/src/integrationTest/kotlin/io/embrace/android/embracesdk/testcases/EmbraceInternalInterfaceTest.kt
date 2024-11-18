@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.LogType
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.findSpansByName
-import io.embrace.android.embracesdk.fakes.behavior.FakeSdkModeBehavior
-import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
@@ -114,8 +112,6 @@ internal class EmbraceInternalInterfaceTest {
             testCaseAction = {
                 recordSession {
                     clock.tick()
-                    configService.updateListeners()
-                    clock.tick()
                     EmbraceInternalApi.getInstance().internalInterface.recordCompletedNetworkRequest(
                         url = URL,
                         httpMethod = "GET",
@@ -207,23 +203,18 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `access check methods work as expected`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.networkBehavior =
-                    createNetworkBehavior(remoteCfg = {
-                        RemoteConfig(
-                            disabledUrlPatterns = setOf("dontlogmebro.pizza"),
-                            networkCaptureRules = setOf(
-                                NetworkCaptureRuleRemoteConfig(
-                                    id = "test",
-                                    duration = 10000,
-                                    method = "GET",
-                                    urlRegex = "capture.me",
-                                    expiresIn = 10000
-                                )
-                            )
-                        )
-                    })
-            },
+            persistedRemoteConfig = RemoteConfig(
+                disabledUrlPatterns = setOf("dontlogmebro.pizza"),
+                networkCaptureRules = setOf(
+                    NetworkCaptureRuleRemoteConfig(
+                        id = "test",
+                        duration = 10000,
+                        method = "GET",
+                        urlRegex = "capture.me",
+                        expiresIn = 10000
+                    )
+                )
+            ),
             testCaseAction = {
                 recordSession {
                     assertTrue(
@@ -239,7 +230,7 @@ internal class EmbraceInternalInterfaceTest {
                         )
                     )
                     assertFalse(EmbraceInternalApi.getInstance().internalInterface.shouldCaptureNetworkBody(URL, "GET"))
-                    assertTrue(EmbraceInternalApi.getInstance().internalInterface.isNetworkSpanForwardingEnabled())
+                    assertFalse(EmbraceInternalApi.getInstance().internalInterface.isNetworkSpanForwardingEnabled())
                 }
             }
         )
@@ -314,10 +305,8 @@ internal class EmbraceInternalInterfaceTest {
     @Test
     fun `SDK will not start if feature flag has it being disabled`() {
         testRule.runTest(
+            persistedRemoteConfig = RemoteConfig(threshold = 0),
             expectSdkToStart = false,
-            setupAction = {
-                overriddenConfigService.sdkModeBehavior = FakeSdkModeBehavior(sdkDisabled = true)
-            },
             testCaseAction = {
                 assertFalse(embrace.isStarted)
             }

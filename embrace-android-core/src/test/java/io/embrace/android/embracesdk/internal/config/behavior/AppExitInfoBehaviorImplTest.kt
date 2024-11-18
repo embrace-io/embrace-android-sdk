@@ -23,7 +23,7 @@ internal class AppExitInfoBehaviorImplTest {
 
     @Test
     fun testLocalAndRemote() {
-        with(createAppExitInfoBehavior(remoteCfg = { remote })) {
+        with(createAppExitInfoBehavior(remoteCfg = remote)) {
             assertEquals(55209, getTraceMaxLimit())
             assertTrue(isAeiCaptureEnabled())
         }

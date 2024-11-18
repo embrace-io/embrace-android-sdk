@@ -21,14 +21,8 @@ internal class DataSourceStateTest {
             configGate = { true }
         )
 
-        // data source not retrievable if not session type is null
+        // data source not retrievable if the session type is null
         assertNull(state.dataSource)
-
-        // data capture is enabled by default.
-        state.onConfigChange()
-        state.currentSessionType = null
-        assertEquals(0, source.enableDataCaptureCount)
-        assertEquals(0, source.disableDataCaptureCount)
 
         // data capture enabled for a session
         state.currentSessionType = SessionType.FOREGROUND
@@ -64,7 +58,7 @@ internal class DataSourceStateTest {
     }
 
     @Test
-    fun `test config gate enabled by default`() {
+    fun `test config gate enabled`() {
         val source = FakeDataSource(RuntimeEnvironment.getApplication())
         DataSourceState(
             factory = { source },
@@ -79,47 +73,18 @@ internal class DataSourceStateTest {
     }
 
     @Test
-    fun `test config gate affects data capture`() {
+    fun `test config gate disabled`() {
         val source = FakeDataSource(RuntimeEnvironment.getApplication())
-        var enabled = false
-        val state = DataSourceState(
+        DataSourceState(
             factory = { source },
-            configGate = { enabled },
+            configGate = { false },
         ).apply {
             currentSessionType = SessionType.FOREGROUND
         }
 
-        // data source not retrievable if disabled
-        assertNull(state.dataSource)
-
-        // data capture is disabled by default.
+        // data capture is enabled by default.
         assertEquals(0, source.enableDataCaptureCount)
         assertEquals(0, source.disableDataCaptureCount)
-
-        // enabling the config gate should enable data capture
-        enabled = true
-        state.onConfigChange()
-        assertEquals(1, source.enableDataCaptureCount)
-        assertEquals(0, source.disableDataCaptureCount)
-
-        // another config change should not reregister listeners
-        state.onConfigChange()
-        assertEquals(1, source.enableDataCaptureCount)
-        assertEquals(0, source.disableDataCaptureCount)
-
-        // deregistering works
-        enabled = false
-        state.onConfigChange()
-        assertEquals(1, source.enableDataCaptureCount)
-        assertEquals(1, source.disableDataCaptureCount)
-
-        // functions can be called multiple times without issue
-        enabled = true
-        state.onConfigChange()
-        enabled = false
-        state.onConfigChange()
-        assertEquals(2, source.enableDataCaptureCount)
-        assertEquals(2, source.disableDataCaptureCount)
     }
 
     @Test

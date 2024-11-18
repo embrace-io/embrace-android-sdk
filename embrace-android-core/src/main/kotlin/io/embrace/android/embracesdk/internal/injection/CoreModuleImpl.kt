@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.registry.ServiceRegistry
 
 class CoreModuleImpl(
     ctx: Context,
+    initModule: InitModule
 ) : CoreModule {
 
     override val context: Context by singleton {
@@ -39,6 +40,6 @@ class CoreModuleImpl(
     }
 
     override val buildInfoService: BuildInfoService by lazy {
-        BuildInfoServiceImpl(resources, context.packageName)
+        BuildInfoServiceImpl(initModule.instrumentedConfig, resources, context.packageName)
     }
 }

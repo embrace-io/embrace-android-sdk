@@ -2,6 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
   <CurrentIssues>
-    <ID>LongParameterList:DeliveryModuleSupplier.kt$( configModule: ConfigModule, initModule: InitModule, otelModule: OpenTelemetryModule, workerThreadModule: WorkerThreadModule, coreModule: CoreModule, storageModule: StorageModule, essentialServiceModule: EssentialServiceModule, payloadStorageServiceProvider: Provider&lt;PayloadStorageService?&gt;, cacheStorageServiceProvider: Provider&lt;PayloadStorageService?&gt;, requestExecutionServiceProvider: Provider&lt;RequestExecutionService?&gt;, deliveryServiceProvider: Provider&lt;DeliveryService?&gt;, )</ID>
+    <ID>LongParameterList:DeliveryModuleSupplier.kt$( configModule: ConfigModule, initModule: InitModule, otelModule: OpenTelemetryModule, workerThreadModule: WorkerThreadModule, coreModule: CoreModule, storageModule: StorageModule, essentialServiceModule: EssentialServiceModule, androidServicesModule: AndroidServicesModule, payloadStorageServiceProvider: Provider&lt;PayloadStorageService&gt;?, cacheStorageServiceProvider: Provider&lt;PayloadStorageService&gt;?, requestExecutionServiceProvider: Provider&lt;RequestExecutionService&gt;?, deliveryServiceProvider: Provider&lt;DeliveryService&gt;?, )</ID>
   </CurrentIssues>
 </SmellBaseline>

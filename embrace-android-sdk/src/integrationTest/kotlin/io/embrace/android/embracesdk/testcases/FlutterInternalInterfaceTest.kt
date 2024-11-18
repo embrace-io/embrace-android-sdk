@@ -1,11 +1,10 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.testcases
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.AppFramework.FLUTTER
 import io.embrace.android.embracesdk.LogExceptionType
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -30,13 +29,17 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class FlutterInternalInterfaceTest {
 
+    private val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(
+        appId = "abcde",
+        appFramework = "flutter"
+    ))
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule {
         val clock = FakeClock(IntegrationTestRule.DEFAULT_SDK_START_TIME_MS)
         val fakeInitModule = FakeInitModule(clock = clock)
         EmbraceSetupInterface(
-            appFramework = FLUTTER,
             overriddenClock = clock,
             overriddenInitModule = fakeInitModule,
             overriddenWorkerThreadModule = FakeWorkerThreadModule(
@@ -49,6 +52,7 @@ internal class FlutterInternalInterfaceTest {
     @Test
     fun `flutter without values should return defaults`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession()
             },
@@ -65,6 +69,7 @@ internal class FlutterInternalInterfaceTest {
     @Test
     fun `flutter methods work in current session`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
@@ -84,6 +89,7 @@ internal class FlutterInternalInterfaceTest {
     @Test
     fun `flutter metadata already present from previous session`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
@@ -104,6 +110,7 @@ internal class FlutterInternalInterfaceTest {
     @Test
     fun `setting null is ignored`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
@@ -128,6 +135,7 @@ internal class FlutterInternalInterfaceTest {
     @Test
     fun `flutter values from current session override previous values`() {
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.setDartVersion("28.9.1")
@@ -158,6 +166,7 @@ internal class FlutterInternalInterfaceTest {
         val expectedLibrary = "library"
 
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.logHandledDartException(
@@ -202,6 +211,7 @@ internal class FlutterInternalInterfaceTest {
         val expectedLibrary = "library"
 
         testRule.runTest(
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     EmbraceInternalApi.getInstance().flutterInternalInterface.logUnhandledDartException(

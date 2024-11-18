@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryClock
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
@@ -53,7 +55,9 @@ internal class EmbraceSpanImplTest {
         .setTracerProvider(SdkTracerProvider.builder().build()).build()
         .getTracer(EmbraceSpanImplTest::class.java.name)
 
-    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(listOf("password"))
+    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
+        FakeInstrumentedConfig(redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))),
+    )
 
     @Before
     fun setup() {

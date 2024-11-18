@@ -14,10 +14,13 @@ import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -60,7 +63,7 @@ internal class PayloadFactoryBaTest {
         activityService = FakeProcessStateService(isInBackground = true)
         deliveryService = FakeDeliveryService()
         ndkService = FakeNdkService()
-        preferencesService = FakePreferenceService(backgroundActivityEnabled = true)
+        preferencesService = FakePreferenceService()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)
         spanRepository = initModule.openTelemetryModule.spanRepository
@@ -68,9 +71,10 @@ internal class PayloadFactoryBaTest {
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
         spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
-            backgroundActivityCaptureEnabled = true
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+            )
         )
-        configService.updateListeners()
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 

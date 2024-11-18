@@ -9,7 +9,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSharedPreferences
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,7 +26,6 @@ internal class EmbracePreferencesServiceTest {
     private lateinit var service: EmbracePreferencesService
     private lateinit var fakeClock: FakeClock
 
-    private val executorService = fakeBackgroundWorker()
     private val context = ApplicationProvider.getApplicationContext<Context>()
 
     @Before
@@ -35,8 +33,7 @@ internal class EmbracePreferencesServiceTest {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
         fakeClock = FakeClock()
         service = EmbracePreferencesService(
-            executorService,
-            lazy { prefs },
+            prefs,
             fakeClock,
             EmbraceSerializer()
         )
@@ -82,13 +79,6 @@ internal class EmbracePreferencesServiceTest {
     @Test
     fun `test device identifier is created`() {
         assertNotNull(service.deviceIdentifier)
-    }
-
-    @Test
-    fun `test sdk disabled is saved`() {
-        assertFalse(service.sdkDisabled)
-        service.sdkDisabled = true
-        assertTrue(service.sdkDisabled)
     }
 
     @Test
@@ -157,13 +147,6 @@ internal class EmbracePreferencesServiceTest {
     }
 
     @Test
-    fun `test user message needs retry is saved`() {
-        assertFalse(service.userMessageNeedsRetry)
-        service.userMessageNeedsRetry = true
-        assertTrue(service.userMessageNeedsRetry)
-    }
-
-    @Test
     fun `test session number is saved`() {
         assertEquals(1, service.incrementAndGetSessionNumber())
         assertEquals(2, service.incrementAndGetSessionNumber())
@@ -204,8 +187,7 @@ internal class EmbracePreferencesServiceTest {
     @Test
     fun `test incrementAndGet returns -1 on an exception`() {
         service = EmbracePreferencesService(
-            executorService,
-            lazy { FakeSharedPreferences(throwExceptionOnGet = true) },
+            FakeSharedPreferences(throwExceptionOnGet = true),
             fakeClock,
             EmbraceSerializer()
         )
@@ -315,15 +297,6 @@ internal class EmbracePreferencesServiceTest {
         val version = "3.1.2"
         service.embraceFlutterSdkVersion = version
         assertEquals(version, service.embraceFlutterSdkVersion)
-    }
-
-    @Test
-    fun `test background activity enabled is saved`() {
-        assertFalse(service.backgroundActivityEnabled)
-
-        val expected = true
-        service.backgroundActivityEnabled = true
-        assertEquals(expected, service.backgroundActivityEnabled)
     }
 
     @Test

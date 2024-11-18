@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.fakes.FakeConfigModule
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeStartupService
+import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -10,11 +11,12 @@ import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.SessionOrchestrationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.createDataSourceModule
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class SessionOrchestrationModuleImplTest {
@@ -30,7 +32,6 @@ internal class SessionOrchestrationModuleImplTest {
     fun testDefaultImplementations() {
         val dataSourceModule = createDataSourceModule(
             initModule,
-            configService,
             workerThreadModule
         )
         val module = SessionOrchestrationModuleImpl(
@@ -48,10 +49,6 @@ internal class SessionOrchestrationModuleImplTest {
         assertNotNull(module.payloadMessageCollator)
         assertNotNull(module.payloadFactory)
         assertNotNull(module.sessionOrchestrator)
-        assertTrue(
-            configService.listeners.single().javaClass.toString()
-                .contains("DataCaptureOrchestrator")
-        )
     }
 
     @Test
@@ -59,7 +56,6 @@ internal class SessionOrchestrationModuleImplTest {
         val configModule = createEnabledBehavior()
         val dataSourceModule = createDataSourceModule(
             initModule,
-            configService,
             workerThreadModule
         )
 
@@ -83,7 +79,9 @@ internal class SessionOrchestrationModuleImplTest {
     private fun createEnabledBehavior(): FakeConfigModule {
         return FakeConfigModule(
             configService = FakeConfigService(
-                backgroundActivityCaptureEnabled = true
+                backgroundActivityBehavior = createBackgroundActivityBehavior(
+                    remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
+                ),
             )
         )
     }

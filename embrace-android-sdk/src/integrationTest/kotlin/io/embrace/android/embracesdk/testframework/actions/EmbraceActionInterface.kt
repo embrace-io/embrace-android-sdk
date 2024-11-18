@@ -26,9 +26,6 @@ internal class EmbraceActionInterface(
     val clock: FakeClock
         get() = setup.overriddenClock
 
-    val configService: FakeConfigService
-        get() = setup.overriddenConfigService
-
     /**
      * Starts & ends a session for the purposes of testing. An action can be supplied as a lambda
      * parameter: any code inside the lambda will be executed, so can be used to add breadcrumbs,

@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureDataSource
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
+import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -35,7 +37,7 @@ internal class EmbraceNetworkCaptureServiceTest {
     fun setUp() {
         cfg = RemoteConfig()
         configService = FakeConfigService(
-            networkBehavior = createNetworkBehavior(remoteCfg = { cfg })
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
         )
         preferenceService = FakePreferenceService()
         networkCaptureDataSource = FakeNetworkCaptureDataSource()
@@ -65,10 +67,9 @@ internal class EmbraceNetworkCaptureServiceTest {
 
     @Test
     fun `test capture rule doesn't capture Embrace endpoints`() {
-        configService.appId = "o0o0o"
-        val rule = getDefaultRule(urlRegex = "https://a-o0o0o.data.emb-api.com")
+        val rule = getDefaultRule(urlRegex = "https://a-abcde.data.emb-api.com/v2")
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))
-        val result = getService().getNetworkCaptureRules("https://a-o0o0o.data.emb-api.com", "GET")
+        val result = getService().getNetworkCaptureRules("https://a-abcde.data.emb-api.com/v2/spans", "GET")
         assertEquals(0, result.size)
     }
 
@@ -190,14 +191,24 @@ internal class EmbraceNetworkCaptureServiceTest {
         assertEquals(2, networkCaptureDataSource.loggedCalls.size)
     }
 
-    private fun getService() = EmbraceNetworkCaptureService(
-        sessionIdTracker,
-        preferenceService,
-        { networkCaptureDataSource },
-        configService,
-        EmbraceSerializer(),
-        EmbLoggerImpl()
-    )
+    private fun getService(): EmbraceNetworkCaptureService {
+        configService = FakeConfigService(
+            networkBehavior = createNetworkBehavior(remoteCfg = cfg)
+        )
+        return EmbraceNetworkCaptureService(
+            sessionIdTracker,
+            preferenceService,
+            { networkCaptureDataSource },
+            configService,
+            EmbraceApiUrlBuilder(
+                "deviceId",
+                "1.0.0",
+                FakeInstrumentedConfig()
+            ),
+            EmbraceSerializer(),
+            EmbLoggerImpl()
+        )
+    }
 
     private fun getDefaultRule(
         id: String = "123",

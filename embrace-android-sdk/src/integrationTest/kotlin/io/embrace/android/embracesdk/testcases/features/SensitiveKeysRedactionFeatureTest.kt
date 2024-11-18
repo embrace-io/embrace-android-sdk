@@ -2,8 +2,9 @@ package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.findSpanByName
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Rule
@@ -12,20 +13,19 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 internal class SensitiveKeysRedactionFeatureTest {
+
+    private val instrumentedConfig = FakeInstrumentedConfig(
+        redaction = FakeRedactionConfig(sensitiveKeys = listOf("password"))
+    )
+
     @Rule
     @JvmField
     val testRule: IntegrationTestRule = IntegrationTestRule()
 
-    private val sensitiveKeysBehavior = SensitiveKeysBehaviorImpl(
-        listOf("password")
-    )
-
     @Test
     fun `custom span properties are redacted if they are sensitive`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.sensitiveKeysBehavior = sensitiveKeysBehavior
-            },
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     embrace.startSpan("test span")?.apply {
@@ -49,9 +49,7 @@ internal class SensitiveKeysRedactionFeatureTest {
     @Test
     fun `custom span events are redacted if they are sensitive`() {
         testRule.runTest(
-            setupAction = {
-                overriddenConfigService.sensitiveKeysBehavior = sensitiveKeysBehavior
-            },
+            instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
                     embrace.startSpan("test span")?.apply {

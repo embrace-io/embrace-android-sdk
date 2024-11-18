@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody
 import okio.BufferedSink
@@ -17,24 +16,15 @@ import okio.buffer
 import okio.source
 import java.io.IOException
 import java.io.InputStream
-import java.util.concurrent.TimeUnit
 
 class OkHttpRequestExecutionService(
+    private val okHttpClient: OkHttpClient,
     private val coreBaseUrl: String,
     private val lazyDeviceId: Lazy<String>,
     private val appId: String,
     private val embraceVersionName: String,
     private val logger: EmbLogger,
-    connectionTimeoutSeconds: Long = DEFAULT_CONNECTION_TIMEOUT_SECONDS,
-    readTimeoutSeconds: Long = DEFAULT_READ_TIMEOUT_SECONDS,
 ) : RequestExecutionService {
-
-    private val okHttpClient = OkHttpClient()
-        .newBuilder()
-        .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-        .connectTimeout(connectionTimeoutSeconds, TimeUnit.SECONDS)
-        .readTimeout(readTimeoutSeconds, TimeUnit.SECONDS)
-        .build()
 
     override fun attemptHttpRequest(
         payloadStream: () -> InputStream,
@@ -79,7 +69,7 @@ class OkHttpRequestExecutionService(
     }
 
     private fun Endpoint.getApiRequestFromEndpoint(): ApiRequestV2 = ApiRequestV2(
-        url = "$coreBaseUrl/v2/${this.path}",
+        url = "$coreBaseUrl${this.path}",
         appId = appId,
         deviceId = lazyDeviceId.value,
         contentEncoding = "gzip",
@@ -87,8 +77,6 @@ class OkHttpRequestExecutionService(
     )
 
     private companion object {
-        const val DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10L
-        const val DEFAULT_READ_TIMEOUT_SECONDS = 60L
         private val mediaType = "application/json".toMediaType()
 
         class ApiRequestBody(

@@ -17,8 +17,6 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SdkEndpointBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SdkModeBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
@@ -26,12 +24,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.SessionBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.SessionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.WebViewVitalsBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.remote.AnrRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.LogRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.NetworkSpanForwardingRemoteConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 
 private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
@@ -41,98 +35,91 @@ private val behaviorThresholdCheck = BehaviorThresholdCheck(Uuid::getEmbUuid)
  */
 fun createAnrBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<AnrRemoteConfig?> = { null },
-): AnrBehavior = AnrBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): AnrBehavior = AnrBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [SessionBehaviorImpl] that returns default values.
  */
 fun createSessionBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): SessionBehavior = SessionBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): SessionBehavior = SessionBehaviorImpl(InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [NetworkBehaviorImpl] that returns default values.
  */
 fun createNetworkBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
+    remoteCfg: RemoteConfig? = null,
     disabledUrlPatterns: List<String>? = null,
-): NetworkBehavior = NetworkBehaviorImpl(thresholdCheck, remoteCfg, disabledUrlPatterns)
+): NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteCfg, disabledUrlPatterns)
 
 /**
  * A [BackgroundActivityBehaviorImpl] that returns default values.
  */
 fun createBackgroundActivityBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<BackgroundActivityRemoteConfig?> = { null },
-): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): BackgroundActivityBehavior = BackgroundActivityBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [AutoDataCaptureBehaviorImpl] that returns default values.
  */
 fun createAutoDataCaptureBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): AutoDataCaptureBehavior = AutoDataCaptureBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [LogMessageBehaviorImpl] that returns default values.
  */
 fun createLogMessageBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<LogRemoteConfig?> = { null },
-): LogMessageBehavior = LogMessageBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): LogMessageBehavior = LogMessageBehaviorImpl(remoteCfg)
 
 /**
  * A [DataCaptureEventBehaviorImpl] that returns default values.
  */
 fun createDataCaptureEventBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): DataCaptureEventBehavior = DataCaptureEventBehaviorImpl(remoteCfg)
 
 /**
  * A [SdkModeBehaviorImpl] that returns default values.
  */
 fun createSdkModeBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
+    remoteCfg: RemoteConfig? = null,
 ): SdkModeBehavior = SdkModeBehaviorImpl(thresholdCheck, remoteCfg)
-
-/**
- * A [SdkModeBehaviorImpl] that returns default values.
- */
-fun createSdkEndpointBehavior(
-    thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-): SdkEndpointBehavior = SdkEndpointBehaviorImpl(thresholdCheck)
 
 /**
  * A [AppExitInfoBehavior] that returns default values.
  */
 fun createAppExitInfoBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
-): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, remoteCfg)
+    remoteCfg: RemoteConfig? = null,
+): AppExitInfoBehavior = AppExitInfoBehaviorImpl(thresholdCheck, InstrumentedConfigImpl, remoteCfg)
 
 /**
  * A [NetworkSpanForwardingBehaviorImpl] that returns default values.
  */
 fun createNetworkSpanForwardingBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteConfig: Provider<NetworkSpanForwardingRemoteConfig?> = { null },
-): NetworkSpanForwardingBehavior = NetworkSpanForwardingBehaviorImpl(thresholdCheck, remoteConfig)
+    remoteConfig: RemoteConfig? = null,
+): NetworkSpanForwardingBehavior = NetworkSpanForwardingBehaviorImpl(
+    thresholdCheck,
+    InstrumentedConfigImpl,
+    remoteConfig
+)
 
 /**
  * A [WebViewVitalsBehaviorImpl] that returns default values.
  */
 fun createWebViewVitalsBehavior(
     thresholdCheck: BehaviorThresholdCheck = behaviorThresholdCheck,
-    remoteCfg: Provider<RemoteConfig?> = { null },
+    remoteCfg: RemoteConfig? = null,
 ): WebViewVitalsBehavior = WebViewVitalsBehaviorImpl(thresholdCheck, remoteCfg)
 
 /**
  * A [SensitiveKeysBehaviorImpl] that returns default values.
  */
-internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl()
+internal fun createSensitiveKeysBehavior() = SensitiveKeysBehaviorImpl(InstrumentedConfigImpl)

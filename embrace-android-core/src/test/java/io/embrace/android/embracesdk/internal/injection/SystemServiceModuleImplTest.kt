@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -15,17 +16,18 @@ import org.robolectric.annotation.Config
 internal class SystemServiceModuleImplTest {
 
     private lateinit var coreModule: CoreModule
+    private val initModule = FakeInitModule()
 
     @Before
     fun setUp() {
-        coreModule = createCoreModule(RuntimeEnvironment.getApplication())
+        coreModule = createCoreModule(RuntimeEnvironment.getApplication(), initModule)
     }
 
     @Config(sdk = [Build.VERSION_CODES.O])
     @Test
     fun testVersionChecksNew() {
         val new = SystemServiceModuleImpl(
-            createCoreModule(RuntimeEnvironment.getApplication()),
+            createCoreModule(RuntimeEnvironment.getApplication(), initModule),
             FakeVersionChecker(true)
         )
         assertNotNull(new.storageManager)

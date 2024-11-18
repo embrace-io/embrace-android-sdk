@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
@@ -29,17 +30,19 @@ class DeliveryModuleImplTest {
     @Before
     fun setUp() {
         configService = FakeConfigService()
+        val initModule = FakeInitModule()
         module = DeliveryModuleImpl(
             FakeConfigModule(configService),
-            FakeInitModule(),
+            initModule,
             FakeOpenTelemetryModule(),
             FakeWorkerThreadModule(),
-            CoreModuleImpl(ApplicationProvider.getApplicationContext()),
+            CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
+            FakeAndroidServicesModule(),
             ::FakeRequestExecutionService,
-            { null },
-            { null },
+            null,
+            null,
             ::FakeDeliveryService
         )
     }

@@ -195,5 +195,5 @@ internal class PayloadFactoryImpl(
         )
     }
 
-    private fun isBackgroundActivityEnabled(): Boolean = configService.isBackgroundActivityCaptureEnabled()
+    private fun isBackgroundActivityEnabled(): Boolean = configService.backgroundActivityBehavior.isBackgroundActivityCaptureEnabled()
 }

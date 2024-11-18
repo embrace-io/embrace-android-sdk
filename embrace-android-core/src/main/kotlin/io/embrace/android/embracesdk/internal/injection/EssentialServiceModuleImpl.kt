@@ -13,11 +13,8 @@ import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.comms.api.ApiClient
 import io.embrace.android.embracesdk.internal.comms.api.ApiClientImpl
-import io.embrace.android.embracesdk.internal.comms.api.ApiRequest
 import io.embrace.android.embracesdk.internal.comms.api.ApiService
-import io.embrace.android.embracesdk.internal.comms.api.ApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiService
-import io.embrace.android.embracesdk.internal.comms.api.EmbraceApiUrlBuilder
 import io.embrace.android.embracesdk.internal.comms.delivery.EmbracePendingApiCallsSender
 import io.embrace.android.embracesdk.internal.comms.delivery.PendingApiCallsSender
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -56,25 +53,6 @@ class EssentialServiceModuleImpl(
         ActivityLifecycleTracker(coreModule.application, initModule.logger)
     }
 
-    override val urlBuilder: ApiUrlBuilder by singleton {
-        Systrace.traceSynchronous("url-builder-init") {
-            // We use SdkEndpointBehavior and localConfig directly to avoid a circular dependency
-            // but we want to access behaviors from ConfigService when possible.
-            val sdkEndpointBehavior = configService.sdkEndpointBehavior
-            val appId = checkNotNull(configService.appId)
-            val coreBaseUrl = sdkEndpointBehavior.getData(appId)
-            val configBaseUrl = sdkEndpointBehavior.getConfig(appId)
-
-            EmbraceApiUrlBuilder(
-                coreBaseUrl = coreBaseUrl,
-                configBaseUrl = configBaseUrl,
-                appId = appId,
-                lazyDeviceId = lazyDeviceId,
-                lazyAppVersionName = lazy { coreModule.packageVersionInfo.versionName }
-            )
-        }
-    }
-
     override val userService: UserService by singleton {
         Systrace.traceSynchronous("user-service-init") {
             EmbraceUserService(
@@ -111,16 +89,11 @@ class EssentialServiceModuleImpl(
             EmbraceApiService(
                 apiClient = apiClient,
                 serializer = initModule.jsonSerializer,
-                cachedConfigProvider = { url: String, request: ApiRequest ->
-                    Systrace.traceSynchronous("provide-cache-config") {
-                        storageModule.cache.retrieveCachedConfig(url, request)
-                    }
-                },
                 priorityWorker = workerThreadModule.priorityWorker(Worker.Priority.NetworkRequestWorker),
                 pendingApiCallsSender = pendingApiCallsSender,
                 lazyDeviceId = lazyDeviceId,
                 appId = appId,
-                urlBuilder = urlBuilder
+                urlBuilder = checkNotNull(configModule.urlBuilder)
             )
         }
     }

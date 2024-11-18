@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-interface BreadcrumbBehavior {
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+
+interface BreadcrumbBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteConfig> {
 
     fun getCustomBreadcrumbLimit(): Int
     fun getFragmentBreadcrumbLimit(): Int

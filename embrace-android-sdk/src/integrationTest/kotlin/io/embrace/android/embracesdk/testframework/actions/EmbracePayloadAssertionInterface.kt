@@ -1,12 +1,15 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
-import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
@@ -17,6 +20,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import java.io.File
 import java.io.IOException
 import java.util.Locale
 import java.util.concurrent.TimeoutException
@@ -32,8 +36,14 @@ internal class EmbracePayloadAssertionInterface(
     private val apiServer: FakeApiServer?,
 ) {
 
+    companion object {
+        private const val WAIT_TIME_MS = 10000
+        private const val CONFIG_OUTPUT_DIR = "embrace_remote_config"
+        private const val CONFIG_RESPONSE_FILE = "most_recent_response"
+        private const val CONFIG_ETAG_FILE = "etag"
+    }
+
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
-    private val requestExecutionService by lazy { bootstrapper.deliveryModule.requestExecutionService as FakeRequestExecutionService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
     private val nativeCrashService by lazy {
         bootstrapper.nativeFeatureModule.nativeCrashService as FakeNativeCrashService
@@ -53,17 +63,6 @@ internal class EmbracePayloadAssertionInterface(
 
     internal fun getSingleLogEnvelope(): Envelope<LogPayload> {
         return getLogEnvelopes(1).single()
-    }
-
-    /**
-     * Returns a list of logs that were completed by the SDK & sent to a mock web server.
-     */
-    internal fun getLogEnvelopesFromMockServer(
-        expectedSize: Int,
-    ): List<Envelope<LogPayload>> {
-        return retrievePayload(expectedSize) {
-            checkNotNull(apiServer).getLogEnvelopes()
-        }
     }
 
     private fun retrieveLogEnvelopes(
@@ -136,7 +135,7 @@ internal class EmbracePayloadAssertionInterface(
     internal fun getSessionEnvelopes(
         expectedSize: Int,
         state: ApplicationState = ApplicationState.FOREGROUND,
-        waitTimeMs: Int = 1000,
+        waitTimeMs: Int = WAIT_TIME_MS,
     ): List<Envelope<SessionPayload>> {
         return retrieveSessionEnvelopes(expectedSize, state, waitTimeMs)
     }
@@ -179,6 +178,63 @@ internal class EmbracePayloadAssertionInterface(
         }
         val value = state.uppercase(Locale.ENGLISH)
         return ApplicationState.valueOf(value)
+    }
+
+
+    /*** Config ***/
+
+
+    internal fun assertConfigRequested(expectedRequests: Int) {
+        val supplier = {
+            checkNotNull(apiServer).getConfigRequests()
+        }
+        try {
+            retrievePayload(expectedRequests, supplier)
+        } catch (exc: TimeoutException) {
+            throw IllegalStateException(
+                "Expected $expectedRequests config requests, but got ${supplier().size}.",
+                exc
+            )
+        }
+    }
+
+    /**
+     * Asserts that config was persisted on disk and returns the persisted information.
+     */
+    internal fun readPersistedConfigResponse(): ConfigHttpResponse {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val storageDir = File(ctx.filesDir, "embrace_remote_config")
+        if (!storageDir.exists()) {
+            throw IllegalStateException("Config storage directory does not exist.")
+        }
+        val responseFile = File(storageDir, "most_recent_response")
+        if (!responseFile.exists()) {
+            throw IllegalStateException("Config response file does not exist.")
+        }
+        val etagFile = File(storageDir, "etag")
+        if (!etagFile.exists()) {
+            throw IllegalStateException("Config etag file does not exist.")
+        }
+        val remoteConfig = readRemoteConfigFile(responseFile)
+        return ConfigHttpResponse(remoteConfig, readEtagFile(etagFile))
+    }
+
+    private fun readRemoteConfigFile(file: File): RemoteConfig {
+        try {
+            return file.inputStream().buffered().use {
+                serializer.fromJson(it, RemoteConfig::class.java)
+            }
+        } catch (exc: Throwable) {
+            throw IllegalStateException("Failed to read remote config file.", exc)
+        }
+    }
+
+    private fun readEtagFile(etagFile: File): String {
+        try {
+            return etagFile.readText()
+        } catch (exc: Throwable) {
+            throw IllegalStateException("Failed to read etag file for config.", exc)
+        }
     }
 
     /*** Native ***/
@@ -247,14 +303,14 @@ internal class EmbracePayloadAssertionInterface(
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
         supplier: () -> List<T>,
-    ): List<T> = retrievePayload(expectedSize, 1000, supplier)
+    ): List<T> = retrievePayload(expectedSize, WAIT_TIME_MS, supplier)
 
     /**
      * Retrieves a payload that was stored in the delivery service.
      */
     private inline fun <reified T> retrievePayload(
         expectedSize: Int?,
-        waitTimeMs: Int = 1000,
+        waitTimeMs: Int = WAIT_TIME_MS,
         supplier: () -> List<T>,
     ): List<T> {
         return when (expectedSize) {

@@ -1,16 +1,22 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.UnimplementedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.RedactionConfig
 
 private const val SENSITIVE_KEY_MAX_LENGTH = 128
 private const val SENSITIVE_KEYS_LIST_MAX_SIZE = 10000
 
 const val REDACTED_LABEL: String = "<redacted>"
 
-class SensitiveKeysBehaviorImpl(denyList: List<String>? = null) : SensitiveKeysBehavior {
+class SensitiveKeysBehaviorImpl(
+    local: InstrumentedConfig,
+) : SensitiveKeysBehavior {
 
-    private val denyList =
-        (denyList ?: InstrumentedConfig.redaction.getSensitiveKeysDenylist())?.take(SENSITIVE_KEYS_LIST_MAX_SIZE)
+    override val local: RedactionConfig = local.redaction
+    override val remote: UnimplementedConfig = null
+
+    private val denyList = local.redaction.getSensitiveKeysDenylist()?.take(SENSITIVE_KEYS_LIST_MAX_SIZE)
 
     override fun isSensitiveKey(key: String): Boolean {
         return denyList?.any { it.take(SENSITIVE_KEY_MAX_LENGTH) == key } ?: false

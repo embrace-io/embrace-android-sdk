@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -24,6 +25,7 @@ class PayloadStorageServiceImpl(
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val processIdProvider: () -> String,
     private val logger: EmbLogger,
+    private val deliveryTracer: DeliveryTracer? = null,
     private val storageLimit: Int = 500,
 ) : PayloadStorageService {
 
@@ -46,8 +48,9 @@ class PayloadStorageServiceImpl(
         processIdProvider: () -> String,
         outputType: OutputType,
         logger: EmbLogger,
+        deliveryTracer: DeliveryTracer? = null,
         storageLimit: Int = 500,
-    ) : this(createOutputDir(ctx, outputType, logger), worker, processIdProvider, logger, storageLimit)
+    ) : this(createOutputDir(ctx, outputType, logger), worker, processIdProvider, logger, deliveryTracer, storageLimit)
 
     private val payloadDir by outputDir
 
@@ -98,6 +101,7 @@ class PayloadStorageServiceImpl(
         if (tmpFile.renameTo(dst)) {
             storedFiles.add(metadata)
         }
+        deliveryTracer?.onStore(metadata)
     }
 
     override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
@@ -117,6 +121,7 @@ class PayloadStorageServiceImpl(
             if (metadata.asFile().delete()) {
                 storedFiles.remove(metadata)
             }
+            deliveryTracer?.onDelete(metadata)
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
                 logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
@@ -130,19 +135,28 @@ class PayloadStorageServiceImpl(
      */
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
         return try {
-            metadata.asFile().inputStream().buffered()
+            metadata.asFile().inputStream().buffered().apply {
+                deliveryTracer?.onLoadPayloadAsStream(true)
+            }
         } catch (exc: Throwable) {
+            deliveryTracer?.onLoadPayloadAsStream(false)
             logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
             null
         }
     }
 
-    override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> = storedFiles.toList()
+    override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> {
+        return storedFiles.toList().apply {
+            deliveryTracer?.onGetPayloadsByPriority(this)
+        }
+    }
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> {
         return storedFiles
             .filter { !it.complete && it.processId != processIdProvider() }
-            .toList()
+            .toList().apply {
+                deliveryTracer?.onGetUndeliveredPayloads(this)
+            }
     }
 
     private fun pruneStorage(metadata: StoredTelemetryMetadata): Boolean {

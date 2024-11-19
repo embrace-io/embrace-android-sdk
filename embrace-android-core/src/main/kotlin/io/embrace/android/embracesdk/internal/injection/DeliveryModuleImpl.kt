@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.comms.delivery.EmbraceDeliveryServ
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.HttpUrlConnectionRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.OkHttpRequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
@@ -35,7 +36,8 @@ internal class DeliveryModuleImpl(
     requestExecutionServiceProvider: Provider<RequestExecutionService>?,
     payloadStorageServiceProvider: Provider<PayloadStorageService>?,
     cacheStorageServiceProvider: Provider<PayloadStorageService>?,
-    deliveryServiceProvider: Provider<DeliveryService>?
+    deliveryServiceProvider: Provider<DeliveryService>?,
+    override val deliveryTracer: DeliveryTracer? = null,
 ) : DeliveryModule {
 
     private val processIdProvider = { otelModule.openTelemetryConfiguration.processIdentifier }
@@ -85,7 +87,8 @@ internal class DeliveryModuleImpl(
                 cacheStorageService,
                 initModule.logger,
                 initModule.jsonSerializer,
-                dataPersistenceWorker
+                dataPersistenceWorker,
+                deliveryTracer
             )
         }
     }
@@ -106,7 +109,8 @@ internal class DeliveryModuleImpl(
                 periodicSessionCacher,
                 initModule.clock,
                 essentialServiceModule.sessionIdTracker,
-                payloadStore
+                payloadStore,
+                deliveryTracer
             )
         }
     }
@@ -121,6 +125,7 @@ internal class DeliveryModuleImpl(
                 processIdProvider,
                 PayloadStorageServiceImpl.OutputType.PAYLOAD,
                 initModule.logger,
+                deliveryTracer
             )
         }
     }
@@ -135,6 +140,7 @@ internal class DeliveryModuleImpl(
                 processIdProvider,
                 PayloadStorageServiceImpl.OutputType.CACHE,
                 initModule.logger,
+                deliveryTracer
             )
         }
     }
@@ -154,6 +160,7 @@ internal class DeliveryModuleImpl(
                     appId,
                     BuildConfig.VERSION_NAME,
                     initModule.logger,
+                    deliveryTracer
                 )
             } else {
                 HttpUrlConnectionRequestExecutionService(
@@ -179,7 +186,8 @@ internal class DeliveryModuleImpl(
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 initModule.clock,
-                initModule.logger
+                initModule.logger,
+                deliveryTracer
             )
         }
     }

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.internal.comms.delivery.DeliveryService
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.injection.AndroidServicesModule
@@ -73,7 +74,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 { lifecycleOwner }
             ) { networkConnectivityService }
         },
-        deliveryModuleSupplier = { configModule, otelModule, initModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, androidServicesModule, _, _, _, _ ->
+        deliveryModuleSupplier = { configModule, initModule, otelModule, workerThreadModule, coreModule, storageModule, essentialServiceModule, androidServicesModule, _, _, _, _, _ ->
             val requestExecutionServiceProvider: Provider<RequestExecutionService>? = when {
                 useMockWebServer -> null
                 else -> ::FakeRequestExecutionService
@@ -84,8 +85,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
             }
             createDeliveryModule(
                 configModule,
-                otelModule,
                 initModule,
+                otelModule,
                 workerThreadModule,
                 coreModule,
                 storageModule,
@@ -94,7 +95,8 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 payloadStorageServiceProvider = payloadStorageServiceProvider,
                 cacheStorageServiceProvider = cacheStorageServiceProvider,
                 requestExecutionServiceProvider = requestExecutionServiceProvider,
-                deliveryServiceProvider = deliveryServiceProvider
+                deliveryServiceProvider = deliveryServiceProvider,
+                deliveryTracer = DeliveryTracer()
             )
         },
         anrModuleSupplier = { _, _, _ -> fakeAnrModule },

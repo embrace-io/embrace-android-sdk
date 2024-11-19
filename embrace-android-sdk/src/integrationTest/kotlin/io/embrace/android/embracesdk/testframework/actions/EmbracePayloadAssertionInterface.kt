@@ -48,6 +48,9 @@ internal class EmbracePayloadAssertionInterface(
     private val nativeCrashService by lazy {
         bootstrapper.nativeFeatureModule.nativeCrashService as FakeNativeCrashService
     }
+    private val deliveryTracer by lazy {
+        checkNotNull(bootstrapper.deliveryModule.deliveryTracer)
+    }
 
     /*** LOGS ***/
 
@@ -79,10 +82,7 @@ internal class EmbracePayloadAssertionInterface(
                     "hashCodes" to envelope.data.logs?.map { it.hashCode() }?.joinToString { ", " }
                 )
             }
-            throw IllegalStateException(
-                "Expected $expectedSize envelopes, but got ${envelopes.size}. " +
-                    "Envelopes: $envelopes", exc
-            )
+            throwPayloadErrMsg(expectedSize, envelopes, exc)
         }
     }
 
@@ -164,10 +164,7 @@ internal class EmbracePayloadAssertionInterface(
                     "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
                 )
             }
-            throw IllegalStateException(
-                "Expected $expectedSize sessions, but got ${sessions.size}. Sessions: $sessions",
-                exc
-            )
+            throwPayloadErrMsg(expectedSize, sessions, exc)
         }
     }
 
@@ -267,6 +264,9 @@ internal class EmbracePayloadAssertionInterface(
 
     /*** TEST INFRA ***/
 
+    internal fun debugDeliveryLayer(): String {
+        error(deliveryTracer.generateReport())
+    }
 
     /**
      * Validates a payload against a golden file in the test resources. If the payload does not match
@@ -329,5 +329,16 @@ internal class EmbracePayloadAssertionInterface(
                     }
                 )
         }
+    }
+
+    private fun throwPayloadErrMsg(
+        expectedSize: Int,
+        envelopes: List<Map<String, String?>>,
+        exc: TimeoutException,
+    ): Nothing {
+        throw IllegalStateException(
+            "Expected $expectedSize envelopes, but got ${envelopes.size}. " +
+                "Envelopes: $envelopes.\n${deliveryTracer.generateReport()}", exc
+        )
     }
 }

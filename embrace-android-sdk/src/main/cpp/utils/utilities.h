@@ -39,6 +39,7 @@ extern "C" {
 
 #define EMB_MAX_ERRORS 10
 
+int emb_dump_map(emb_env *env);
 void emb_log_last_error(emb_env *env, int num, int context);
 void emb_set_crash_time(emb_env *env);
 void emb_set_report_paths(emb_env *env, const char *session_id);

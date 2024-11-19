@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeNdkService
@@ -18,9 +19,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeC
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -51,6 +54,7 @@ internal class NativeCrashDataSourceImplTest {
     private lateinit var metadataService: FakeMetadataService
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
+    private lateinit var clock: FakeClock
 
     @Before
     fun setUp() {
@@ -61,11 +65,13 @@ internal class NativeCrashDataSourceImplTest {
         sessionIdTracker = FakeSessionIdTracker().apply { setActiveSession("currentSessionId", true) }
         metadataService = FakeMetadataService()
         processStateService = FakeProcessStateService()
+        clock = FakeClock()
         otelLogger = FakeOpenTelemetryLogger()
         logWriter = LogWriterImpl(
             sessionIdTracker = sessionIdTracker,
             processStateService = processStateService,
-            logger = otelLogger
+            logger = otelLogger,
+            clock = clock
         )
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
@@ -87,6 +93,9 @@ internal class NativeCrashDataSourceImplTest {
 
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
+            assertEquals(testNativeCrashData.timestamp, timestampEpochNanos.nanosToMillis())
+            assertEquals(0, observedTimestampEpochNanos.nanosToMillis())
+            assertEquals(testNativeCrashData.appState, attributes.getAttribute(embState))
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
@@ -159,6 +168,7 @@ internal class NativeCrashDataSourceImplTest {
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))
+            assertNull(attributes.getAttribute(embState))
             assertNull(attributes.getAttribute(embNativeCrashException))
             assertNull(attributes.getAttribute(embNativeCrashErrors))
             assertNull(attributes.getAttribute(embNativeCrashSymbols))

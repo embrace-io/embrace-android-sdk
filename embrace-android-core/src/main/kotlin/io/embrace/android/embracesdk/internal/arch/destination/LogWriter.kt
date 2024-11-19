@@ -12,6 +12,7 @@ interface LogWriter {
         severity: Severity,
         message: String,
         isPrivate: Boolean = false,
-        addCurrentSessionId: Boolean = true,
+        addCurrentSessionInfo: Boolean = true,
+        timestampMs: Long? = null
     )
 }

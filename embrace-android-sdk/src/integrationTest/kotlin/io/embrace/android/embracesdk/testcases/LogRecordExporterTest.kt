@@ -22,6 +22,7 @@ internal class LogRecordExporterTest {
     @Test
     fun `SDK can receive a LogRecordExporter`() {
         val fakeLogRecordExporter = FakeLogRecordExporter()
+        var logTimestampNanos = 0L
 
         testRule.runTest(
             preSdkStartAction = {
@@ -29,6 +30,7 @@ internal class LogRecordExporterTest {
             },
             testCaseAction = {
                 recordSession {
+                    logTimestampNanos = clock.nowInNanos()
                     embrace.logMessage("test message", Severity.INFO)
                 }
             },
@@ -42,7 +44,11 @@ internal class LogRecordExporterTest {
                         },
                     )
                 )
-                assertEquals("test message", fakeLogRecordExporter.exportedLogs?.first()?.body?.asString())
+                with(checkNotNull(fakeLogRecordExporter.exportedLogs?.first())) {
+                    assertEquals("test message", body.asString())
+                    assertEquals(logTimestampNanos, timestampEpochNanos)
+                    assertEquals(logTimestampNanos, observedTimestampEpochNanos)
+                }
             }
         )
     }

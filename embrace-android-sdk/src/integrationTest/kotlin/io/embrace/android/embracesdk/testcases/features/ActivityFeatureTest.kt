@@ -36,9 +36,9 @@ internal class ActivityFeatureTest {
                 val message = getSingleSessionEnvelope()
                 val viewSpan = message.findSpanOfType(EmbType.Ux.View)
 
-                viewSpan.attributes?.assertMatches {
+                viewSpan.attributes?.assertMatches(mapOf(
                     "view.name" to "android.app.Activity"
-                }
+                ))
 
                 with(viewSpan) {
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())

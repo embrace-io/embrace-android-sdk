@@ -104,24 +104,24 @@ internal class BackgroundActivityDisabledTest {
 
                 with(logs[0]) {
                     assertEquals("error", body)
-                    attributes?.assertMatches {
+                    attributes?.assertMatches(mapOf(
                         embState.attributeKey.key to "background"
-                    }
+                    ))
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
                 }
                 with(logs[1]) {
                     assertEquals("info", body)
-                    attributes?.assertMatches {
+                    attributes?.assertMatches(mapOf(
                         embState.attributeKey.key to "background"
-                    }
+                    ))
                     assertNull(attributes?.findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key))
                 }
                 with(logs[2]) {
                     assertEquals("warning", body)
-                    attributes?.assertMatches {
-                        embState.attributeKey.key to "foreground"
-                        SessionIncubatingAttributes.SESSION_ID.key to sessions[0].getSessionId()
-                    }
+                    attributes?.assertMatches(mapOf(
+                        embState.attributeKey.key to "foreground",
+                        SessionIncubatingAttributes.SESSION_ID.key to sessions[1].getSessionId()
+                    ))
                 }
                 val secondSession = sessions[1]
                 assertEquals(
@@ -131,19 +131,19 @@ internal class BackgroundActivityDisabledTest {
 
                 with(logs[3]) {
                     assertEquals("sent-after-session", body)
-                    attributes?.assertMatches {
-                        embState.attributeKey.key to "foreground"
+                    attributes?.assertMatches(mapOf(
+                        embState.attributeKey.key to "foreground",
                         SessionIncubatingAttributes.SESSION_ID.key to secondSession.getSessionId()
-                    }
+                    ))
                 }
 
                 with(secondSession) {
                     with(findSessionSpan()) {
                         with(findEventsOfType(EmbType.System.Breadcrumb)) {
                             assertEquals(1, size)
-                            single().attributes?.assertMatches {
+                            single().attributes?.assertMatches(mapOf(
                                 "message" to "logged"
-                            }
+                            ))
                         }
                     }
 
@@ -240,16 +240,16 @@ internal class BackgroundActivityDisabledTest {
     ) {
         assertEquals(startMs, startTimeNanos?.nanosToMillis())
         assertEquals(endMs, endTimeNanos?.nanosToMillis())
-        attributes?.assertMatches {
-            embSessionNumber.attributeKey.key to sessionNumber
-            embSequenceId.attributeKey.key to sequenceId
-            embColdStart.attributeKey.key to coldStart
-            embState.attributeKey.key to "foreground"
-            embCleanExit.attributeKey.key to "true"
-            embTerminated.attributeKey.key to "false"
-            embSessionStartType.attributeKey.key to "state"
-            embSessionEndType.attributeKey.key to "state"
-        }
+        attributes?.assertMatches(mapOf(
+            embSessionNumber.attributeKey.key to sessionNumber,
+            embSequenceId.attributeKey.key to sequenceId,
+            embColdStart.attributeKey.key to coldStart,
+            embState.attributeKey.key to "foreground",
+            embCleanExit.attributeKey.key to "true",
+            embTerminated.attributeKey.key to "false",
+            embSessionStartType.attributeKey.key to "state",
+            embSessionEndType.attributeKey.key to "state",
+        ))
         with(checkNotNull(attributes)) {
             assertFalse(findAttributeValue(embProcessIdentifier.attributeKey.key).isNullOrBlank())
             assertFalse(findAttributeValue(SessionIncubatingAttributes.SESSION_ID.key).isNullOrBlank())

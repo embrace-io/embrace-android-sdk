@@ -193,11 +193,11 @@ internal class FlutterInternalInterfaceTest {
                     expectedEmbType = "sys.flutter_exception",
                     expectedState = "foreground",
                 )
-                log.attributes?.assertMatches {
-                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace
-                    "emb.exception.context" to expectedContext
-                    "emb.exception.library" to expectedLibrary
-                }
+                log.attributes?.assertMatches(mapOf(
+                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
+                    "emb.exception.context" to expectedContext,
+                    "emb.exception.library" to expectedLibrary,
+                ))
             }
         )
     }
@@ -238,11 +238,11 @@ internal class FlutterInternalInterfaceTest {
                     expectedEmbType = "sys.flutter_exception",
                     expectedState = "foreground",
                 )
-                log.attributes?.assertMatches {
-                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace
-                    "emb.exception.context" to expectedContext
-                    "emb.exception.library" to expectedLibrary
-                }
+                log.attributes?.assertMatches(mapOf(
+                    ExceptionAttributes.EXCEPTION_STACKTRACE.key to expectedStacktrace,
+                    "emb.exception.context" to expectedContext,
+                    "emb.exception.library" to expectedLibrary,
+                ))
             }
         )
     }

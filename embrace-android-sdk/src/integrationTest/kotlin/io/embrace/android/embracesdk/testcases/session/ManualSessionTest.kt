@@ -35,12 +35,12 @@ internal class ManualSessionTest {
                 val stateSession = messages[0] // started via state, ended manually
                 val manualSession = messages[1] // started manually, ended via state
 
-                stateSession.findSessionSpan().attributes?.assertMatches {
+                stateSession.findSessionSpan().attributes?.assertMatches(mapOf(
                     embSessionNumber.name to 1
-                }
-                manualSession.findSessionSpan().attributes?.assertMatches {
+                ))
+                manualSession.findSessionSpan().attributes?.assertMatches(mapOf(
                     embSessionNumber.name to 2
-                }
+                ))
             }
         )
     }
@@ -74,9 +74,9 @@ internal class ManualSessionTest {
             },
             assertAction = {
                 val message = getSingleSessionEnvelope()
-                message.findSessionSpan().attributes?.assertMatches {
+                message.findSessionSpan().attributes?.assertMatches(mapOf(
                     embSessionNumber.name to 1
-                }
+                ))
             }
         )
     }

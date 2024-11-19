@@ -44,10 +44,10 @@ internal class WebviewFeatureTest {
 
                 val event = events[0]
                 assertEquals("emb-webview-info", event.name)
-                event.attributes?.assertMatches {
-                    "emb.webview_info.tag" to "myWebView"
+                event.attributes?.assertMatches(mapOf(
+                    "emb.webview_info.tag" to "myWebView",
                     URL_FULL.key to "https://embrace.io/"
-                }
+                ))
 
 
                 val webVitalsAttr = checkNotNull(event.attributes?.findAttributeValue("emb.webview_info.web_vitals"))

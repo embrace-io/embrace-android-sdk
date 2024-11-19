@@ -60,9 +60,9 @@ internal class SessionApiTest {
                 // validate network status span
                 val networkStatusSpan = snapshots.single { it.name == "emb-network-status" }
                 assertEquals(startTime, networkStatusSpan.startTimeNanos?.nanosToMillis())
-                networkStatusSpan.attributes?.assertMatches {
-                    "emb.type" to "sys.network_status"
-                }
+                networkStatusSpan.attributes?.assertMatches(mapOf(
+                    "emb.type" to "sys.network_status",
+                ))
 
                 // validate session span
                 val spans = checkNotNull(message.data.spans)

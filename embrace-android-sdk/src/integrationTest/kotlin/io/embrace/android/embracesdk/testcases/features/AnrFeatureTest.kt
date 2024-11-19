@@ -183,10 +183,10 @@ internal class AnrFeatureTest {
         assertEquals(endTime, span.endTimeNanos?.nanosToMillis())
 
         // assert span attributes
-        span.attributes?.assertMatches {
-            "emb.type" to "perf.thread_blockage"
+        span.attributes?.assertMatches(mapOf(
+            "emb.type" to "perf.thread_blockage",
             "interval_code" to expectedIntervalCode
-        }
+        ))
 
         val events = checkNotNull(span.events)
 
@@ -194,14 +194,14 @@ internal class AnrFeatureTest {
             assertEquals("perf.thread_blockage_sample", event.name)
 
             // assert attributes
-            event.attributes?.assertMatches {
-                "emb.type" to "perf.thread_blockage_sample"
-                "sample_overhead" to 0
+            event.attributes?.assertMatches(mapOf(
+                "emb.type" to "perf.thread_blockage_sample",
+                "sample_overhead" to 0,
                 "sample_code" to when {
                     index < MAX_SAMPLE_COUNT -> "0"
                     else -> "1"
                 }
-            }
+            ))
 
             // assert interval time
             val expectedTime = startTime + ANR_THRESHOLD_MS + ((index + 1) * INTERVAL_MS)

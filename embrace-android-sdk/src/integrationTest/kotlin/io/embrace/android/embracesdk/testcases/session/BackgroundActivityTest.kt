@@ -44,16 +44,16 @@ internal class BackgroundActivityTest {
 
                 // verify first bg activity
                 val first = bgActivities[0]
-                first.findSessionSpan().attributes?.assertMatches {
+                first.findSessionSpan().attributes?.assertMatches(mapOf(
                     embSessionNumber.name to 1
-                }
+                ))
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 
                 // verify second bg activity
                 val second = bgActivities[1]
-                second.findSessionSpan().attributes?.assertMatches {
+                second.findSessionSpan().attributes?.assertMatches(mapOf(
                     embSessionNumber.name to 2
-                }
+                ))
 
                 // ID should be different for each
                 assertNotEquals(first.getSessionId(), second.getSessionId())

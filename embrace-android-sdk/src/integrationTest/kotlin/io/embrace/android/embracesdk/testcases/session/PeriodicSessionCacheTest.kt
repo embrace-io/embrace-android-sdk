@@ -83,17 +83,17 @@ internal class PeriodicSessionCacheTest {
                 val endMessage = checkNotNull(snapshot)
                 val span = endMessage.findSpanSnapshotOfType(EmbType.Ux.Session)
                 assertNotNull(span.getSessionProperty("Test"))
-                span.attributes?.assertMatches {
-                    "emb.clean_exit" to false
+                span.attributes?.assertMatches(mapOf(
+                    "emb.clean_exit" to false,
                     "emb.terminated" to true
-                }
+                ))
                 val completedMessage = getSingleSessionEnvelope()
                 val completedSpan = completedMessage.findSessionSpan()
                 assertEquals("Test", completedSpan.getSessionProperty("Test"))
-                completedSpan.attributes?.assertMatches {
-                    "emb.clean_exit" to true
+                completedSpan.attributes?.assertMatches(mapOf(
+                    "emb.clean_exit" to true,
                     "emb.terminated" to false
-                }
+                ))
             }
         )
     }

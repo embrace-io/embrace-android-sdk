@@ -44,8 +44,8 @@ internal class BreadcrumbFeatureTest {
     }
 
     private fun Envelope<SessionPayload>.assertBreadcrumbWithMessage(message: String) {
-        findSessionSpan().findEventOfType(EmbType.System.Breadcrumb).attributes?.assertMatches {
+        findSessionSpan().findEventOfType(EmbType.System.Breadcrumb).attributes?.assertMatches(mapOf(
             "message" to message
-        }
+        ))
     }
 }

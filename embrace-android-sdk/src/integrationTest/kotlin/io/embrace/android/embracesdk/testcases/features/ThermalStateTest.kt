@@ -79,24 +79,24 @@ internal class ThermalStateFeatureTest {
                     assertEquals("perf.thermal_state", it.attributes?.findAttributeValue("emb.type"))
                 }
                 val firstSpan = spans.first()
-                firstSpan.attributes?.assertMatches {
+                firstSpan.attributes?.assertMatches(mapOf(
                     "status" to PowerManager.THERMAL_STATUS_CRITICAL.toString()
-                }
+                ))
                 assertEquals(startTimeMs, firstSpan.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, firstSpan.endTimeNanos?.nanosToMillis())
                 val secondSpan = spans.last()
-                secondSpan.attributes?.assertMatches {
+                secondSpan.attributes?.assertMatches(mapOf(
                     "status" to PowerManager.THERMAL_STATUS_MODERATE.toString()
-                }
+                ))
                 assertEquals(startTimeMs + tickTimeMs, secondSpan.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs * 2, secondSpan.endTimeNanos?.nanosToMillis())
 
                 val snapshot = message.findSpanSnapshotOfType(EmbType.Performance.ThermalState)
                 assertEquals("emb-thermal-state", snapshot.name)
                 assertEquals("perf.thermal_state", snapshot.attributes?.findAttributeValue("emb.type"))
-                snapshot.attributes?.assertMatches {
+                snapshot.attributes?.assertMatches(mapOf(
                     "status" to PowerManager.THERMAL_STATUS_NONE.toString()
-                }
+                ))
                 assertEquals(startTimeMs + tickTimeMs * 2, snapshot.startTimeNanos?.nanosToMillis())
             }
         )

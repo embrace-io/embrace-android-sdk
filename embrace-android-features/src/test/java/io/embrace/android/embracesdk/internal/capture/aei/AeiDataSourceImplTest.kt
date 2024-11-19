@@ -175,7 +175,7 @@ internal class AeiDataSourceImplTest {
         every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } returns
             listOf(appExitInfo1, appExitInfo2, appExitInfo3)
 
-        preferenceService.applicationExitInfoHistory = setOf(
+        preferenceService.deliveredAeiIds = setOf(
             appExitInfo1Hash,
             appExitInfo2Hash
         )

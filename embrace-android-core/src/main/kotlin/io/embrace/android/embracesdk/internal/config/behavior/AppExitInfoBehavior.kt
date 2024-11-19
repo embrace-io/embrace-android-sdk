@@ -13,10 +13,4 @@ interface AppExitInfoBehavior : ConfigBehavior<EnabledFeatureConfig, AppExitInfo
     fun isAeiCaptureEnabled(): Boolean
 
     fun appExitInfoMaxNum(): Int
-
-    sealed class CollectTracesResult(val result: String?) {
-        class Success(result: String?) : CollectTracesResult(result)
-        class TooLarge(result: String?) : CollectTracesResult(result)
-        class TraceException(message: String?) : CollectTracesResult(message)
-    }
 }

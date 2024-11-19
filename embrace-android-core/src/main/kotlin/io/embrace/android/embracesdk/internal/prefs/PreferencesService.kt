@@ -148,7 +148,7 @@ interface PreferencesService {
     /**
      * Set of hashcodes derived from ApplicationExitInfo objects
      */
-    var applicationExitInfoHistory: Set<String>?
+    var deliveredAeiIds: Set<String>
 
     /**
      * Whether or not the app was installed within the last 24 hours.

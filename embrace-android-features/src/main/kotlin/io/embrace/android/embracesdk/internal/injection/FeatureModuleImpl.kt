@@ -181,11 +181,12 @@ internal class FeatureModuleImpl(
     }
 
     private val aeiService: AeiDataSourceImpl? by singleton {
-        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R)) {
+        val activityManager = systemServiceModule.activityManager
+        if (BuildVersionChecker.isAtLeast(Build.VERSION_CODES.R) && activityManager != null) {
             AeiDataSourceImpl(
                 workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                 configService.appExitInfoBehavior,
-                systemServiceModule.activityManager,
+                activityManager,
                 androidServicesModule.preferencesService,
                 logWriter,
                 initModule.logger

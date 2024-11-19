@@ -10,6 +10,10 @@ class BehaviorThresholdCheck(
     private val deviceIdProvider: Provider<String>,
 ) {
 
+    private companion object {
+        private const val DIGITS = 6
+    }
+
     /**
      * An implementation of [isBehaviorEnabled] that returns null if the pctEnabled parameter
      * is null.
@@ -40,26 +44,16 @@ class BehaviorThresholdCheck(
         if (pctEnabled <= 0 || pctEnabled > 100) {
             return false
         }
-        val deviceId = getNormalizedLargeDeviceId()
+        val deviceId = getNormalizedDeviceId()
         return pctEnabled >= deviceId
     }
 
-    fun getNormalizedLargeDeviceId(): Float = getNormalizedDeviceId(6)
-
-    /**
-     * Use [.isBehaviorEnabled] instead as it allows rollouts to be controlled
-     * at greater granularity.
-     */
-    @Deprecated("")
-    fun getNormalizedDeviceId(): Float = getNormalizedDeviceId(2)
-
-    private fun getNormalizedDeviceId(digits: Int): Float {
+    fun getNormalizedDeviceId(): Float {
         val deviceId = deviceIdProvider()
-        val finalChars = deviceId.substring(deviceId.length - digits)
-
+        val finalChars = deviceId.substring(deviceId.length - DIGITS)
         // Normalize the device ID to a value between 0.0 - 100.0
         val radix = 16
-        val space = (radix.toDouble().pow(digits.toDouble()) - 1).toInt()
+        val space = (radix.toDouble().pow(DIGITS.toDouble()) - 1).toInt()
         val value = Integer.valueOf(finalChars, radix)
         return value.toFloat() / space * 100
     }

@@ -8,6 +8,9 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     return JNI_VERSION_1_6;
 }
 
+// emb_jniIsAttached is used by Embrace Unity to check if the current thread is attached to the JVM,
+// and thus the SDK is ready for calls. Do not remove without checking Embrace_Android.cs.
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
 import io.embrace.android.embracesdk.internal.ndk.NdkService
+import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class NativeFeatureModuleImpl(
@@ -39,7 +39,7 @@ internal class NativeFeatureModuleImpl(
                 nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,
-                NdkDelegateImpl(),
+                JniDelegateImpl(),
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer

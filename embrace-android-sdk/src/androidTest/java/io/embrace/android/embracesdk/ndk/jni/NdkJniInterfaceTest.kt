@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.ndk.jni
 
-import io.embrace.android.embracesdk.internal.ndk.NdkDelegateImpl
+import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.ndk.NativeTestSuite
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -8,12 +8,12 @@ import org.junit.Test
 
 internal class NdkJniInterfaceTest : NativeTestSuite() {
 
-    private val ndkDelegate = NdkDelegateImpl()
+    private val delegate = JniDelegateImpl()
 
     @Before
     fun setUp() {
         // install signal handlers first so we can test the other methods without race conditions
-        val result = ndkDelegate._installSignalHandlers(
+        val result = delegate.installSignalHandlers(
             "report_path",
             "markerFilePath",
             "null",
@@ -29,43 +29,43 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
 
     @Test
     fun updateMetaDataTest() {
-        val result = ndkDelegate._updateMetaData("new_device_meta_data")
+        val result = delegate.updateMetaData("new_device_meta_data")
         assertEquals(Unit.javaClass, result.javaClass)
     }
 
     @Test
     fun updateSessionIdTest() {
-        val result = ndkDelegate._updateSessionId("new_session_id")
+        val result = delegate.updateSessionId("new_session_id")
         assertEquals(Unit.javaClass, result.javaClass)
     }
 
     @Test
     fun updateAppStateTest() {
-        val result = ndkDelegate._updateAppState("new_app_state")
+        val result = delegate.updateAppState("new_app_state")
         assertEquals(Unit.javaClass, result.javaClass)
     }
 
     @Test
     fun getCrashReportTest() {
-        val result = ndkDelegate._getCrashReport("path")
+        val result = delegate.getCrashReport("path")
         assertEquals(null, result)
     }
 
     @Test
     fun getErrorsTest() {
-        val result = ndkDelegate._getErrors("path")
+        val result = delegate.getErrors("path")
         assertEquals(null, result)
     }
 
     @Test
     fun checkForOverwrittenHandlersTest() {
-        val result = ndkDelegate._checkForOverwrittenHandlers()
+        val result = delegate.checkForOverwrittenHandlers()
         assertEquals(null, result)
     }
 
     @Test
     fun reinstallSignalHandlersTest() {
-        val result = ndkDelegate._reinstallSignalHandlers()
+        val result = delegate.reinstallSignalHandlers()
         assertEquals(false, result)
     }
 }

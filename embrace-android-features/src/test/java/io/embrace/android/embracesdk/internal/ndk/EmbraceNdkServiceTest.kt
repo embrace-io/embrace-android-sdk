@@ -25,6 +25,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
+import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -79,7 +80,7 @@ internal class EmbraceNdkServiceTest {
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var sharedObjectLoader: FakeSharedObjectLoader
     private lateinit var logger: EmbLogger
-    private lateinit var delegate: NdkServiceDelegate.NdkDelegate
+    private lateinit var delegate: JniDelegate
     private lateinit var repository: FakeNdkServiceRepository
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
@@ -177,14 +178,14 @@ internal class EmbraceNdkServiceTest {
     fun `test updateSessionId where installSignals was executed and isInstalled true`() {
         initializeService()
         embraceNdkService.updateSessionId("sessionId")
-        verify(exactly = 1) { delegate._updateSessionId("sessionId") }
+        verify(exactly = 1) { delegate.updateSessionId("sessionId") }
     }
 
     @Test
     fun `test onBackground runs _updateAppState when _updateMetaData was executed and isInstalled true`() {
         initializeService()
         embraceNdkService.onBackground(0L)
-        verify(exactly = 1) { delegate._updateAppState("background") }
+        verify(exactly = 1) { delegate.updateAppState("background") }
     }
 
     @Test
@@ -200,7 +201,7 @@ internal class EmbraceNdkServiceTest {
             )
 
         val expected = serializer.toJson(newDeviceMetaData)
-        verify { delegate._updateMetaData(expected) }
+        verify { delegate.updateMetaData(expected) }
     }
 
     @Test
@@ -216,7 +217,7 @@ internal class EmbraceNdkServiceTest {
         val markerFilePath =
             storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
         verify(exactly = 1) {
-            delegate._installSignalHandlers(
+            delegate.installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
                 "null",
@@ -237,7 +238,7 @@ internal class EmbraceNdkServiceTest {
             )
         )
 
-        verify(exactly = 1) { delegate._updateMetaData(newDeviceMetaData) }
+        verify(exactly = 1) { delegate.updateMetaData(newDeviceMetaData) }
         assertEquals(embraceNdkService.unityCrashId, Uuid.getEmbUuid())
     }
 
@@ -253,7 +254,7 @@ internal class EmbraceNdkServiceTest {
             storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
 
         verifyOrder {
-            delegate._installSignalHandlers(
+            delegate.installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
                 "null",
@@ -263,7 +264,7 @@ internal class EmbraceNdkServiceTest {
                 deviceArchitecture.is32BitDevice,
                 false
             )
-            delegate._updateMetaData(any())
+            delegate.updateMetaData(any())
         }
     }
 
@@ -289,14 +290,14 @@ internal class EmbraceNdkServiceTest {
             )
 
         val expected = serializer.toJson(newDeviceMetaData)
-        verify { delegate._updateMetaData(expected) }
+        verify { delegate.updateMetaData(expected) }
     }
 
     @Test
     fun `test onForeground runs _updateAppState when _updateMetaData was executed and isInstalled true`() {
         initializeService()
         embraceNdkService.onForeground(true, 10)
-        verify(exactly = 1) { delegate._updateAppState("foreground") }
+        verify(exactly = 1) { delegate.updateAppState("foreground") }
     }
 
     @Test
@@ -304,7 +305,7 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         val result = embraceNdkService.getLatestNativeCrash()
         assertNull(result)
-        verify(exactly = 0) { delegate._getCrashReport(any()) }
+        verify(exactly = 0) { delegate.getCrashReport(any()) }
     }
 
     @Test
@@ -337,7 +338,7 @@ internal class EmbraceNdkServiceTest {
             "    }\n" +
             "  ]\n" +
             "}"
-        every { delegate._getCrashReport(any()) } returns json
+        every { delegate.getCrashReport(any()) } returns json
 
         initializeService()
         val crashData = embraceNdkService.getLatestNativeCrash()
@@ -349,7 +350,7 @@ internal class EmbraceNdkServiceTest {
         repository.addCrashFiles(
             nativeCrashFile = File.createTempFile("test", "crash-test")
         )
-        every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
+        every { delegate.getCrashReport(any()) } returns getNativeCrashRaw()
 
         configService.appFramework = AppFramework.UNITY
 
@@ -390,7 +391,7 @@ internal class EmbraceNdkServiceTest {
 
     @Test
     fun `getNativeCrashes returns all the crashes in the repository and doesn't invoke delete`() {
-        every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
+        every { delegate.getCrashReport(any()) } returns getNativeCrashRaw()
         initializeService()
         repository.addCrashFiles(File.createTempFile("file1", "tmp"))
         repository.addCrashFiles(File.createTempFile("file2", "temp"))
@@ -400,7 +401,7 @@ internal class EmbraceNdkServiceTest {
 
     @Test
     fun `getLatestNativeCrash returns only one crash even if there are many and deletes them all`() {
-        every { delegate._getCrashReport(any()) } returns getNativeCrashRaw()
+        every { delegate.getCrashReport(any()) } returns getNativeCrashRaw()
         initializeService()
         repository.addCrashFiles(File.createTempFile("file1", "tmp"))
         repository.addCrashFiles(File.createTempFile("file2", "temp"))
@@ -410,7 +411,7 @@ internal class EmbraceNdkServiceTest {
 
     private fun assertNativeSignalHandlerInstalled() {
         verify(exactly = 1) {
-            delegate._installSignalHandlers(
+            delegate.installSignalHandlers(
                 any(),
                 any(),
                 any(),

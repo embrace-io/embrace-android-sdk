@@ -32,4 +32,6 @@ interface NdkServiceRepository {
         mapFile: File?,
         nativeCrash: NativeCrashData?,
     )
+
+    fun cleanOldCrashFiles()
 }

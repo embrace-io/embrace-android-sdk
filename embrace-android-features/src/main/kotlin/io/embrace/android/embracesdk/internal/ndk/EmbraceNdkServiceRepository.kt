@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
 import java.io.FilenameFilter
 
+private const val MAX_NATIVE_CRASH_FILES_ALLOWED = 4
+
 /**
  * Encapsulates the logic of managing Files to get, sort and or delete them
  */
@@ -93,6 +95,35 @@ internal class EmbraceNdkServiceRepository(
         crashFile.delete()
         errorFile?.delete()
         mapFile?.delete()
+    }
+
+    override fun cleanOldCrashFiles() {
+        val sortedFiles = sortNativeCrashes(true)
+        val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
+        if (deleteCount > 0) {
+            sortedFiles.take(deleteCount).forEach { file ->
+                runCatching { file.delete() }
+            }
+        }
+
+        // delete error files that don't have matching crash files
+        getNativeErrorFiles().filterNot { hasNativeCrashFile(it) }.forEach { it.delete() }
+
+        // delete map files that don't have matching crash files
+        getNativeMapFiles().filterNot { hasNativeCrashFile(it) }.forEach { it.delete() }
+    }
+
+    private fun getNativeErrorFiles(): Array<File> = getNativeFiles { _, name ->
+        name.startsWith(NATIVE_CRASH_FILE_PREFIX) && name.endsWith(NATIVE_CRASH_ERROR_FILE_SUFFIX)
+    }
+
+    private fun getNativeMapFiles(): Array<File> = getNativeFiles { _, name ->
+        name.startsWith(NATIVE_CRASH_FILE_PREFIX) && name.endsWith(NATIVE_CRASH_MAP_FILE_SUFFIX)
+    }
+
+    private fun hasNativeCrashFile(file: File): Boolean {
+        val crashFilename = file.absolutePath.substringBeforeLast('.') + NATIVE_CRASH_FILE_SUFFIX
+        return File(crashFilename).exists()
     }
 }
 

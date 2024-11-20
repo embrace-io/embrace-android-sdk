@@ -36,4 +36,8 @@ class FakeNdkServiceRepository : NdkServiceRepository {
             mapFiles[nativeCrashFile] = this
         }
     }
+
+    override fun cleanOldCrashFiles() {
+        // do nothing
+    }
 }

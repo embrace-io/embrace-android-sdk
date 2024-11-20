@@ -126,18 +126,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1updateAppState
     snprintf(__emb_env->crash.app_state, EMB_APP_DATA_SIZE, "%s", app_state);
 }
 
-JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1testNativeCrash_1C(JNIEnv *env,
-                                                                            jobject thiz) {
-    abort();
-}
-
-JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1testNativeCrash_1CPP(JNIEnv *env,
-                                                                              jobject thiz) {
-    emb_fake_crash();
-}
-
 JNIEXPORT jstring JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1getCrashReport(
         JNIEnv *env, jobject _this, jstring _report_path) {

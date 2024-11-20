@@ -21,10 +21,6 @@ void emb_termination_handler();
 std::terminate_handler emb_prev_handler = nullptr;
 static emb_env *_emb_env = nullptr;
 
-void emb_fake_crash() {
-    throw std::overflow_error("fake Embrace crash");
-}
-
 void install_cpp_signal_handler() {
     static pthread_mutex_t _emb_signal_mutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_lock(&_emb_signal_mutex);

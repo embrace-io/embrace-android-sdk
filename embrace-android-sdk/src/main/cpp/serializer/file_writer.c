@@ -35,6 +35,7 @@ static const char *kFrameAddrKey = "fa";
 static const char *kOffsetAddrKey = "oa";
 static const char *kModuleAddrKey = "ma";
 static const char *kLineNumKey = "ln";
+static const char *kBuildIdKey = "build_id";
 static const char *kFullNameKey = "full_name";
 static const char *kFunctionNameKey = "function_name";
 static const char *kRelPcKey = "rel_pc";

@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateService
-import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -34,10 +33,8 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
-import java.io.FilenameFilter
 import java.io.IOException
 import java.io.InputStreamReader
-import java.util.LinkedList
 
 internal class EmbraceNdkService(
     private val context: Context,
@@ -77,7 +74,7 @@ internal class EmbraceNdkService(
                 if (configService.appFramework == AppFramework.UNITY) {
                     unityCrashId = Uuid.getEmbUuid()
                 }
-                cleanOldCrashFiles()
+                repository.cleanOldCrashFiles()
             }
         }
     }
@@ -286,36 +283,6 @@ internal class EmbraceNdkService(
         return null
     }
 
-    private fun getNativeFiles(filter: FilenameFilter): Array<File> {
-        val ndkDirs: List<File> = storageService.listFiles { file, name ->
-            file.isDirectory && name == NATIVE_CRASH_FILE_FOLDER
-        }
-
-        val matchingFiles = ndkDirs.flatMap { dir ->
-            dir.listFiles(filter)?.toList() ?: emptyList()
-        }.toTypedArray()
-
-        return matchingFiles
-    }
-
-    private fun getNativeErrorFiles(): Array<File> {
-        val nativeCrashFilter = FilenameFilter { _: File?, name: String ->
-            name.startsWith(
-                NATIVE_CRASH_FILE_PREFIX
-            ) && name.endsWith(NATIVE_CRASH_ERROR_FILE_SUFFIX)
-        }
-        return getNativeFiles(nativeCrashFilter)
-    }
-
-    private fun getNativeMapFiles(): Array<File> {
-        val nativeCrashFilter = FilenameFilter { _: File?, name: String ->
-            name.startsWith(
-                NATIVE_CRASH_FILE_PREFIX
-            ) && name.endsWith(NATIVE_CRASH_MAP_FILE_SUFFIX)
-        }
-        return getNativeFiles(nativeCrashFilter)
-    }
-
     private fun readMapFile(mapFile: File): String? {
         try {
             FileInputStream(mapFile).use { fin ->
@@ -331,50 +298,6 @@ internal class EmbraceNdkService(
         } catch (e: IOException) {
             return null
         }
-    }
-
-    private fun cleanOldCrashFiles() {
-        backgroundWorker.submit {
-            val sortedFiles = repository.sortNativeCrashes(true)
-            val deleteCount = sortedFiles.size - MAX_NATIVE_CRASH_FILES_ALLOWED
-            if (deleteCount > 0) {
-                val files = LinkedList(sortedFiles)
-                for (i in 0 until deleteCount) {
-                    runCatching {
-                        files[i].delete()
-                    }
-                }
-            }
-
-            // delete error files that don't have matching crash files
-            val errorFiles = getNativeErrorFiles()
-            for (errorFile in errorFiles) {
-                if (hasNativeCrashFile(errorFile)) {
-                    continue
-                }
-                errorFile.delete()
-            }
-
-            // delete map files that don't have matching crash files
-            val mapFiles = getNativeMapFiles()
-            for (mapFile in mapFiles) {
-                if (hasNativeCrashFile(mapFile)) {
-                    continue
-                }
-                mapFile.delete()
-            }
-        }
-    }
-
-    private fun hasNativeCrashFile(file: File): Boolean {
-        val filename = file.absolutePath
-        if (!filename.contains(".")) {
-            return false
-        }
-        val crashFilename =
-            filename.substring(0, filename.lastIndexOf('.')) + NATIVE_CRASH_FILE_SUFFIX
-        val crashFile = File(crashFilename)
-        return crashFile.exists()
     }
 
     private fun updateAppState(newAppState: String) {
@@ -433,7 +356,6 @@ internal class EmbraceNdkService(
         internal const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
         internal const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
         internal const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
-        private const val MAX_NATIVE_CRASH_FILES_ALLOWED = 4
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
         private const val HANDLER_CHECK_DELAY_MS = 5000
     }

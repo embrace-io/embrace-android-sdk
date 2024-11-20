@@ -23,7 +23,7 @@ class FakeStorageService : StorageService {
     override fun getConfigCacheDir(): File =
         File(cacheDirectory, "emb_config_cache")
 
-    override fun getNativeCrashDir(): File =
+    override fun getOrCreateNativeCrashDir(): File =
         File(filesDirectory, "ndk")
 
     override fun listFiles(filter: FilenameFilter): List<File> {

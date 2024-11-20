@@ -45,8 +45,10 @@ internal class EmbraceStorageService(
         return File(cacheDirectory, EMBRACE_CONFIG_CACHE_DIRECTORY)
     }
 
-    override fun getNativeCrashDir(): File {
-        return File(filesDirectory, NATIVE_CRASH_FILE_FOLDER)
+    override fun getOrCreateNativeCrashDir(): File {
+        val nativeCrashDirectory = File(filesDirectory, NATIVE_CRASH_FILE_FOLDER)
+        nativeCrashDirectory.mkdirs()
+        return nativeCrashDirectory
     }
 
     override fun listFiles(filter: FilenameFilter): List<File> {

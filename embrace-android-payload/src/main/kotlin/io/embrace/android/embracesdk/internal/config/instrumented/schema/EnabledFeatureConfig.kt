@@ -91,13 +91,6 @@ interface EnabledFeatureConfig {
     fun isAeiCaptureEnabled(): Boolean = true
 
     /**
-     * Gates 3rd party signal handler detection
-     *
-     * sdk_config.sig_handler_detection
-     */
-    fun is3rdPartySigHandlerDetectionEnabled(): Boolean = true
-
-    /**
      * Gates background activity capture
      *
      * sdk_config.background_activity.capture_enabled

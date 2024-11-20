@@ -18,6 +18,4 @@ class NdkDelegateImpl : NdkServiceDelegate.NdkDelegate {
     external override fun _updateAppState(new_app_state: String?)
     external override fun _getCrashReport(path: String?): String?
     external override fun _getErrors(path: String?): String?
-    external override fun _checkForOverwrittenHandlers(): String?
-    external override fun _reinstallSignalHandlers(): Boolean
 }

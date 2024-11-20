@@ -12,7 +12,6 @@ class FakeAutoDataCaptureBehavior(
     private val anrServiceEnabled: Boolean = true,
     private val uncaughtExceptionHandlerEnabled: Boolean = true,
     private val composeOnClickEnabled: Boolean = true,
-    private val sigHandlerDetectionEnabled: Boolean = true,
     private val ndkEnabled: Boolean = false,
     private val diskUsageReportingEnabled: Boolean = true,
     private val v2StorageEnabled: Boolean = true,
@@ -31,7 +30,6 @@ class FakeAutoDataCaptureBehavior(
     override fun isAnrCaptureEnabled(): Boolean = anrServiceEnabled
     override fun isJvmCrashCaptureEnabled(): Boolean = uncaughtExceptionHandlerEnabled
     override fun isComposeClickCaptureEnabled(): Boolean = composeOnClickEnabled
-    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean = sigHandlerDetectionEnabled
     override fun isNativeCrashCaptureEnabled(): Boolean = ndkEnabled
     override fun isDiskUsageCaptureEnabled(): Boolean = diskUsageReportingEnabled
     override fun isV2StorageEnabled(): Boolean = v2StorageEnabled

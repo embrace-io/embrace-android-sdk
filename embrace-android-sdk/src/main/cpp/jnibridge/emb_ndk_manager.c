@@ -19,8 +19,6 @@
 extern "C" {
 #endif
 
-#define WARNING_LOG_BUFFER_SIZE 1024
-
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma clang diagnostic push
@@ -257,38 +255,6 @@ Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelega
         jlong interval_ms) {
     emb_set_unwinder(unwinder);
     emb_start_thread_sampler((long) interval_ms);
-}
-
-JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1checkForOverwrittenHandlers(JNIEnv *env,
-                                                                                     jobject thiz) {
-    char buffer[WARNING_LOG_BUFFER_SIZE];
-    EMB_LOGINFO("Checking for Overwritten handlers");
-    if (emb_check_for_overwritten_handlers(buffer, WARNING_LOG_BUFFER_SIZE)) {
-        return emb_jni_new_string_utf(env, buffer);
-    } else {
-        return NULL;
-    }
-}
-
-JNIEXPORT jboolean JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_NdkDelegateImpl__1reinstallSignalHandlers(JNIEnv *env,
-                                                                                 jobject thiz) {
-    EMB_LOGINFO("About to reinstall 3rd party handlers");
-
-    // install signal handlers
-    if (!emb_setup_c_signal_handlers(__emb_env)) {
-        EMB_LOGWARN("failed to reinstall c handlers.");
-    } else {
-        EMB_LOGINFO("c handlers reinstalled.");
-    }
-    if (!emb_setup_cpp_sig_handler(__emb_env)) {
-        EMB_LOGWARN("failed to reinstall cpp handlers.");
-    } else {
-        EMB_LOGINFO("cpp handlers reinstalled.");
-    }
-    EMB_LOGDEV("Completed signal handler reinstall.");
-    return false;
 }
 
 #pragma clang diagnostic pop

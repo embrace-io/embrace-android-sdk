@@ -45,11 +45,6 @@ interface AutoDataCaptureBehavior : ConfigBehavior<EnabledFeatureConfig, RemoteC
     fun isComposeClickCaptureEnabled(): Boolean
 
     /**
-     * Whether embrace should attempt to overwrite other signal handlers
-     */
-    fun is3rdPartySigHandlerDetectionEnabled(): Boolean
-
-    /**
      * Whether NDK error capture is enabled
      */
     fun isNativeCrashCaptureEnabled(): Boolean

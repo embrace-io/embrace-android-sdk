@@ -18,7 +18,5 @@ internal class NdkServiceDelegate {
         fun _updateAppState(new_app_state: String?)
         fun _getCrashReport(path: String?): String?
         fun _getErrors(path: String?): String?
-        fun _checkForOverwrittenHandlers(): String?
-        fun _reinstallSignalHandlers(): Boolean
     }
 }

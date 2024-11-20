@@ -38,9 +38,6 @@ class AutoDataCaptureBehaviorImpl(
     override fun isComposeClickCaptureEnabled(): Boolean =
         remote?.killSwitchConfig?.jetpackCompose ?: local.isComposeClickCaptureEnabled()
 
-    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean =
-        remote?.killSwitchConfig?.sigHandlerDetection ?: local.is3rdPartySigHandlerDetectionEnabled()
-
     override fun isNativeCrashCaptureEnabled(): Boolean = local.isNativeCrashCaptureEnabled()
     override fun isDiskUsageCaptureEnabled(): Boolean = local.isDiskUsageCaptureEnabled()
 

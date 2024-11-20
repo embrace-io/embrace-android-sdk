@@ -113,10 +113,6 @@ internal class EmbraceNdkService(
             if (sharedObjectLoader.loadEmbraceNative()) {
                 createCrashReportDirectory()
                 handler.postAtFrontOfQueue { installSignals(sessionIdProvider) }
-                handler.postDelayed(
-                    Runnable(::checkSignalHandlersOverwritten),
-                    HANDLER_CHECK_DELAY_MS.toLong()
-                )
                 true
             } else {
                 false
@@ -125,30 +121,6 @@ internal class EmbraceNdkService(
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
             false
         }
-    }
-
-    private fun checkSignalHandlersOverwritten() {
-        if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
-            val culprit = delegate._checkForOverwrittenHandlers()
-            if (culprit != null) {
-                if (shouldIgnoreOverriddenHandler(culprit)) {
-                    return
-                }
-                delegate._reinstallSignalHandlers()
-            }
-        }
-    }
-
-    /**
-     * Contains a list of SO files which are known to install signal handlers that do not
-     * interfere with crash detection. This list will probably expand over time.
-     *
-     * @param culprit the culprit SO file as identified by dladdr
-     * @return true if we can safely ignore
-     */
-    private fun shouldIgnoreOverriddenHandler(culprit: String): Boolean {
-        val allowList = listOf("libwebviewchromium.so")
-        return allowList.any(culprit::contains)
     }
 
     private fun createCrashReportDirectory() {
@@ -435,6 +407,5 @@ internal class EmbraceNdkService(
         internal const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
         private const val MAX_NATIVE_CRASH_FILES_ALLOWED = 4
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
-        private const val HANDLER_CHECK_DELAY_MS = 5000
     }
 }

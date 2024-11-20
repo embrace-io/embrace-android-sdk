@@ -20,7 +20,6 @@
 #include "../utils/string_utils.h"
 
 #define EMB_SIG_HANDLER_COUNT 6
-#define EMB_TMP_BUF_SIZE 1024
 
 struct emb_sig_handler_entry {
     int signum;
@@ -121,75 +120,7 @@ void emb_handle_signal(int signum, siginfo_t *info, void *user_context) __asyncs
     invoke_prev_sigaction(signum, info, user_context);
 }
 
-static void retrieve_symbol_info(char *buf, Dl_info *info, int result) {
-    if (result != 0) {
-        if ((info)->dli_sname != NULL) {
-            snprintf(buf, EMB_TMP_BUF_SIZE, "%s (%s)", (info)->dli_sname, (info)->dli_fname);
-        } else {
-            snprintf(buf, EMB_TMP_BUF_SIZE, "%s", (info)->dli_fname);
-        }
-    } else {
-        snprintf(buf, EMB_TMP_BUF_SIZE, "%s", "Unknown");
-    }
-}
-
-static void gen_sig_handler_override_msg(char *buffer, const size_t buffer_size, const unsigned long ptr,
-                                         bool overrides[EMB_SIG_HANDLER_COUNT]) {
-    // try and get the symbol symbol_info of the external handler via dladdr
-    Dl_info info = {0};
-    int result = dladdr((const void *) ptr, &info);
-    char buf[EMB_TMP_BUF_SIZE];
-    retrieve_symbol_info(buf, &info, result);
-
-    snprintf(buffer, buffer_size, "%s - SIGILL=%d, SIGTRAP=%d, SIGABRT=%d, SIGBUS=%d, "
-                                  "SIGFPE=%d, SIGSEGV=%d", buf, overrides[0], overrides[1],
-             overrides[2], overrides[3], overrides[4], overrides[5]);
-}
-
-bool emb_check_for_overwritten_handlers(char *buffer, const size_t buffer_size) {
-    if (!_emb_env) {
-        return false;
-    }
-
-    void *ptr = NULL;
-    bool result = false;
-    struct sigaction _handler = {0};
-    struct sigaction *handler = &_handler;
-    bool overrides[EMB_SIG_HANDLER_COUNT] = {0};
-
-    for (int k = 0; k < EMB_SIG_HANDLER_COUNT; k++) {
-        // get the current handler without altering it
-        struct emb_sig_handler_entry *entry = &handler_entries[k];
-        const int signal = entry->signum;
-        int code = sigaction(signal, NULL, handler);
-
-        if (code != 0) { // something went wrong, bomb out.
-            EMB_LOGWARN("Failed to check for overwritten handler for signal %d, code=%d", signal, code);
-            result = false;
-            break;
-        }
-
-        // get pointer to function supplied to either sigaction() or signal()
-        if (handler->sa_flags & SA_SIGINFO) {
-            ptr = handler->sa_sigaction;
-        } else {
-            ptr = handler->sa_handler;
-        }
-
-        // Someone overwrote us for this signal. Log a warning that shows the culprit
-        if (ptr != NULL && ptr != &emb_handle_signal) {
-            overrides[k] = true;
-            result = true;
-        }
-    }
-
-    if (result) { // generate a message. for now, assume that the handler is the same for all.
-        gen_sig_handler_override_msg(buffer, buffer_size, (unsigned long) ptr, overrides);
-    }
-    return result;
-}
-
-bool emb_install_signal_handlers(bool reinstall) {
+bool emb_install_signal_handlers() {
     if (!emb_sig_stk_setup(emb_sig_stack)) {
         return false;
     }
@@ -202,13 +133,7 @@ bool emb_install_signal_handlers(bool reinstall) {
         action->sa_sigaction = emb_handle_signal;
         action->sa_flags = SA_SIGINFO | SA_ONSTACK;
 
-        // only store the original handler from when we were first installed.
-        // this avoids the possibility of the overwritten handler calling us back
-        // and triggering a hang
-        struct sigaction *old_action = NULL;
-        if (!reinstall) {
-            old_action = &entry->prev_action;
-        }
+        struct sigaction *old_action = &entry->prev_action;
         int success = sigaction(entry->signum, action, old_action);
         if (success != 0) {
             EMB_LOGWARN("Sig install failed: %s", strerror(errno));
@@ -226,9 +151,8 @@ bool emb_setup_c_signal_handlers(emb_env *env) {
     if (_emb_env) {
         EMB_LOGINFO("c handler already installed.");
     } else {
-        bool reinstall = _emb_env != NULL;
         _emb_env = env;
-        result = emb_install_signal_handlers(reinstall);
+        result = emb_install_signal_handlers();
     }
     pthread_mutex_unlock(&_emb_signal_mutex);
     return result;

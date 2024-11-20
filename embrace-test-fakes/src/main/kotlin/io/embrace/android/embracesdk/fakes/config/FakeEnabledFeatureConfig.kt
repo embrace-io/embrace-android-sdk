@@ -18,7 +18,6 @@ class FakeEnabledFeatureConfig(
     private val jvmCrashCapture: Boolean = base.isJvmCrashCaptureEnabled(),
     private val nativeCrashCapture: Boolean = base.isNativeCrashCaptureEnabled(),
     private val aeiCapture: Boolean = base.isAeiCaptureEnabled(),
-    private val sigHandlerDetection: Boolean = base.is3rdPartySigHandlerDetectionEnabled(),
     private val bgActivityCapture: Boolean = base.isBackgroundActivityCaptureEnabled(),
     private val webviewBreadcrumbCapture: Boolean = base.isWebViewBreadcrumbCaptureEnabled(),
     private val webviewQueryCapture: Boolean = base.isWebViewBreadcrumbQueryParamCaptureEnabled(),
@@ -42,7 +41,6 @@ class FakeEnabledFeatureConfig(
     override fun isJvmCrashCaptureEnabled(): Boolean = jvmCrashCapture
     override fun isNativeCrashCaptureEnabled(): Boolean = nativeCrashCapture
     override fun isAeiCaptureEnabled(): Boolean = aeiCapture
-    override fun is3rdPartySigHandlerDetectionEnabled(): Boolean = sigHandlerDetection
     override fun isBackgroundActivityCaptureEnabled(): Boolean = bgActivityCapture
     override fun isWebViewBreadcrumbCaptureEnabled(): Boolean = webviewBreadcrumbCapture
     override fun isWebViewBreadcrumbQueryParamCaptureEnabled(): Boolean = webviewQueryCapture

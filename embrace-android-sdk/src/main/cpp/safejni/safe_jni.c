@@ -93,19 +93,6 @@ jboolean emb_jni_call_boolean_method(_Nonnull JNIEnv *_Nonnull env,
     }
 }
 
-
-jboolean emb_jni_call_void_method(_Nonnull JNIEnv *_Nonnull env,
-                                     const _Nonnull jclass clz,
-                                     const _Nonnull jmethodID mthd,
-                                     ...) {
-    va_list vargs;
-    va_start(vargs, mthd);
-    (*env)->CallVoidMethodV(env, clz, mthd, vargs);
-    va_end(vargs);
-
-    return jni_has_pending_exception(env);
-}
-
 void emb_jni_delete_local_ref(_Nonnull JNIEnv *_Nonnull env,
                               _Nonnull jobject obj) {
     (*env)->DeleteLocalRef(env, obj);

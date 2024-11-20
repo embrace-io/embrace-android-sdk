@@ -50,15 +50,6 @@ jboolean emb_jni_call_boolean_method(_Nonnull JNIEnv *_Nonnull env,
                                      ...);
 
 /**
- * Calls (*env)->CallVoidMethod and clears any pending exceptions, returning
- * false if an exception occurred.
- */
-jboolean emb_jni_call_void_method(_Nonnull JNIEnv *_Nonnull env,
-                                     const _Nonnull jclass clz,
-                                     const _Nonnull jmethodID mthd,
-                                     ...);
-
-/**
  * Calls (*env)->DeleteLocalRef.
  */
 void emb_jni_delete_local_ref(_Nonnull JNIEnv *_Nonnull env,

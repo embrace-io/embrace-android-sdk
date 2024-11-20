@@ -69,7 +69,6 @@ internal class CrashDataSourceImplTest {
         )
         crashDataSource = CrashDataSourceImpl(
             sessionPropertiesService,
-            ndkService::unityCrashId,
             preferencesService,
             logWriter,
             configService,
@@ -127,22 +126,6 @@ internal class CrashDataSourceImplTest {
         assertEquals(1, anrService.crashCount)
         assertEquals(1, logWriter.logEvents.size)
         assertSame(lastSentCrash, logWriter.logEvents.single())
-    }
-
-    @Test
-    fun `test LogWriter and SessionOrchestrator are called when handleCrash is called with unityId`() {
-        setupForHandleCrash()
-        ndkService.lastUnityCrashId = "Unity123"
-
-        crashDataSource.handleCrash(testException)
-
-        assertEquals(1, anrService.crashCount)
-        assertEquals(1, logWriter.logEvents.size)
-        assertEquals(
-            logWriter.logEvents.single().schemaType.attributes()[LogIncubatingAttributes.LOG_RECORD_UID.key],
-            sessionOrchestrator.crashId
-        )
-        assertEquals(ndkService.lastUnityCrashId, sessionOrchestrator.crashId)
     }
 
     @Test

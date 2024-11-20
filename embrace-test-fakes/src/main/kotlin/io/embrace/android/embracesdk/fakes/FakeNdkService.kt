@@ -8,7 +8,6 @@ class FakeNdkService : NdkService {
     val propUpdates: MutableList<Map<String, String>> = mutableListOf()
     var sessionId: String? = null
     var userUpdateCount: Int = 0
-    var lastUnityCrashId: String? = null
     private val nativeCrashDataBlobs = mutableListOf<NativeCrashData>()
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
@@ -29,11 +28,6 @@ class FakeNdkService : NdkService {
     override fun onUserInfoUpdate() {
         userUpdateCount++
     }
-
-    override val unityCrashId: String?
-        get() {
-            return lastUnityCrashId
-        }
 
     override fun getLatestNativeCrash(): NativeCrashData? = nativeCrashDataBlobs.lastOrNull()
 

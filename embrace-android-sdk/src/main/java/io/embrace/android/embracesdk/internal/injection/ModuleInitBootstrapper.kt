@@ -410,7 +410,6 @@ internal class ModuleInitBootstrapper(
                             essentialServiceModule,
                             configModule,
                             androidServicesModule,
-                            nativeFeatureModule.ndkService::unityCrashId
                         )
                     }
 

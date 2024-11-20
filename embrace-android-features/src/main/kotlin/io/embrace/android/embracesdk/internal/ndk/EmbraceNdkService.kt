@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
@@ -55,7 +54,6 @@ internal class EmbraceNdkService(
     private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
 ) : NdkService, ProcessStateListener {
 
-    override var unityCrashId: String? = null
     override val symbolsForCurrentArch by lazy {
         val nativeSymbols = getNativeSymbols()
         if (nativeSymbols != null) {
@@ -72,9 +70,6 @@ internal class EmbraceNdkService(
                 userService.addUserInfoListener(::onUserInfoUpdate)
                 sessionIdTracker.addListener { updateSessionId(it ?: "") }
                 sessionPropertiesService.addChangeListener(::onSessionPropertiesUpdate)
-                if (configService.appFramework == AppFramework.UNITY) {
-                    unityCrashId = Uuid.getEmbUuid()
-                }
                 repository.cleanOldCrashFiles()
             }
         }
@@ -163,9 +158,7 @@ internal class EmbraceNdkService(
             CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
         ).absolutePath
 
-        // Assign the native crash id to the unity crash id. Then when a unity crash occurs, the
-        // Embrace crash service will set the unity crash id to the java crash.
-        val nativeCrashId: String = unityCrashId ?: Uuid.getEmbUuid()
+        val nativeCrashId: String = Uuid.getEmbUuid()
         val is32bit = deviceArchitecture.is32BitDevice
         Systrace.traceSynchronous("native-install-handlers") {
             delegate.installSignalHandlers(

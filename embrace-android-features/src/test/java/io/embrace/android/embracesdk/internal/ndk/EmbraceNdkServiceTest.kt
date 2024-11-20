@@ -205,10 +205,7 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test initialization with unity id and ndk enabled runs installSignals and updateDeviceMetaData`() {
-        val unityId = "unityId"
-        every { Uuid.getEmbUuid() } returns unityId
-
+    fun `test initialization with ndk enabled runs installSignals and updateDeviceMetaData`() {
         configService.appFramework = AppFramework.UNITY
         initializeService()
         assertEquals(1, processStateService.listeners.size)
@@ -222,7 +219,7 @@ internal class EmbraceNdkServiceTest {
                 markerFilePath,
                 "null",
                 "foreground",
-                unityId,
+                any(),
                 Build.VERSION.SDK_INT,
                 deviceArchitecture.is32BitDevice,
                 false
@@ -239,7 +236,6 @@ internal class EmbraceNdkServiceTest {
         )
 
         verify(exactly = 1) { delegate.updateMetaData(newDeviceMetaData) }
-        assertEquals(embraceNdkService.unityCrashId, Uuid.getEmbUuid())
     }
 
     @Test
@@ -266,15 +262,6 @@ internal class EmbraceNdkServiceTest {
             )
             delegate.updateMetaData(any())
         }
-    }
-
-    @Test
-    fun `test getUnityCrashId`() {
-        configService.appFramework = AppFramework.UNITY
-        every { Uuid.getEmbUuid() } returns "unityId"
-        initializeService()
-        val uuid = embraceNdkService.unityCrashId
-        assertEquals(uuid, "unityId")
     }
 
     @Test
@@ -330,7 +317,6 @@ internal class EmbraceNdkServiceTest {
     @Test
     fun `test getLatestNativeCrash catches an exception if _getCrashReport returns invalid json syntax`() {
         repository.addCrashFiles(File.createTempFile("test", "test"))
-        every { Uuid.getEmbUuid() } returns "unityId"
 
         val json = "{\n" +
             "  \"sid\": [\n" +

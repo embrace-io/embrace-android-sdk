@@ -14,8 +14,6 @@ extern "C" {
 bool emb_setup_cpp_sig_handler(emb_env *env);
 void emb_remove_cpp_sig_handler(void);
 
-void emb_fake_crash(void);
-
 #ifdef __cplusplus
 }
 #endif

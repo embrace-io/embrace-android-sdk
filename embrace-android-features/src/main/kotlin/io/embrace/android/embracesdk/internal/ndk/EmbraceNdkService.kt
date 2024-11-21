@@ -15,8 +15,8 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -42,16 +42,13 @@ internal class EmbraceNdkService(
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,
     private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
-) : NdkService, ProcessStateListener {
-
-    private val symbolService = SymbolServiceImpl(
+    private val symbolService: SymbolService = SymbolServiceImpl(
         context,
         deviceArchitecture,
         serializer,
         logger
-    )
-
-    private val processor: NativeCrashProcessorImpl = NativeCrashProcessorImpl(
+    ),
+    private val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
         sharedObjectLoader,
         logger,
         repository,
@@ -59,9 +56,10 @@ internal class EmbraceNdkService(
         serializer,
         symbolService
     )
-
-    override val symbolsForCurrentArch
-        get() = symbolService.symbolsForCurrentArch
+) : NdkService,
+    ProcessStateListener,
+    SymbolService by symbolService,
+    NativeCrashProcessor by processor {
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {
@@ -175,12 +173,6 @@ internal class EmbraceNdkService(
         backgroundWorker.submit(runnable = ::updateDeviceMetaData)
     }
 
-    override fun getLatestNativeCrash(): NativeCrashData? = processor.getLatestNativeCrash()
-
-    override fun getNativeCrashes(): List<NativeCrashData> = processor.getNativeCrashes()
-
-    override fun deleteAllNativeCrashes() = processor.deleteAllNativeCrashes()
-
     private fun updateAppState(newAppState: String) {
         if (sharedObjectLoader.loaded.get()) {
             delegate.updateAppState(newAppState)
@@ -228,11 +220,6 @@ internal class EmbraceNdkService(
          * Signals to the API that the application was in the background.
          */
         private const val APPLICATION_STATE_BACKGROUND = "background"
-
-        internal const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
-        internal const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-        internal const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
-        internal const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
         private const val HANDLER_CHECK_DELAY_MS = 5000
     }

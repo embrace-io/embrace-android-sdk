@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
-import java.util.concurrent.ConcurrentSkipListSet
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.RejectedExecutionException
 import java.util.zip.GZIPOutputStream
 
@@ -57,15 +57,13 @@ class PayloadStorageServiceImpl(
     // maintain an in-memory list of payloads to avoid calling listFiles() every time we need
     // to check the storage limit. This will always remain in sync with the actual files on disk
     // as the files are only manipulated from within this class.
-    private val storedFiles: ConcurrentSkipListSet<StoredTelemetryMetadata> by lazy {
+    private val storedFiles: CopyOnWriteArraySet<StoredTelemetryMetadata> by lazy {
         val result = runCatching { payloadDir.listFiles() }.getOrNull()
         val files = result?.toList() ?: emptyList()
         val metadata = files.mapNotNull {
             StoredTelemetryMetadata.fromFilename(it.name).getOrNull()
         }
-        ConcurrentSkipListSet(storedTelemetryComparator).apply<ConcurrentSkipListSet<StoredTelemetryMetadata>> {
-            addAll(metadata)
-        }
+        CopyOnWriteArraySet(metadata)
     }
 
     /**
@@ -146,13 +144,13 @@ class PayloadStorageServiceImpl(
     }
 
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> {
-        return storedFiles.toList().apply {
+        return storedFiles.toList().sortedWith(storedTelemetryComparator).apply {
             deliveryTracer?.onGetPayloadsByPriority(this)
         }
     }
 
     override fun getUndeliveredPayloads(): List<StoredTelemetryMetadata> {
-        return storedFiles
+        return storedFiles.sortedWith(storedTelemetryComparator)
             .filter { !it.complete && it.processId != processIdProvider() }
             .toList().apply {
                 deliveryTracer?.onGetUndeliveredPayloads(this)

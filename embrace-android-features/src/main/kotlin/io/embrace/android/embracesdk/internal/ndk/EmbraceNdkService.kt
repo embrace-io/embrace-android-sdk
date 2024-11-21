@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
@@ -47,7 +48,7 @@ internal class EmbraceNdkService(
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
     private val repository: NdkServiceRepository,
-    private val delegate: NdkServiceDelegate.NdkDelegate,
+    private val delegate: JniDelegate,
     private val backgroundWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,
@@ -81,7 +82,7 @@ internal class EmbraceNdkService(
 
     override fun updateSessionId(newSessionId: String) {
         if (sharedObjectLoader.loaded.get()) {
-            delegate._updateSessionId(newSessionId)
+            delegate.updateSessionId(newSessionId)
         }
     }
 
@@ -126,12 +127,12 @@ internal class EmbraceNdkService(
 
     private fun checkSignalHandlersOverwritten() {
         if (configService.autoDataCaptureBehavior.is3rdPartySigHandlerDetectionEnabled()) {
-            val culprit = delegate._checkForOverwrittenHandlers()
+            val culprit = delegate.checkForOverwrittenHandlers()
             if (culprit != null) {
                 if (shouldIgnoreOverriddenHandler(culprit)) {
                     return
                 }
-                delegate._reinstallSignalHandlers()
+                delegate.reinstallSignalHandlers()
             }
         }
     }
@@ -167,7 +168,7 @@ internal class EmbraceNdkService(
         val nativeCrashId: String = unityCrashId ?: Uuid.getEmbUuid()
         val is32bit = deviceArchitecture.is32BitDevice
         Systrace.traceSynchronous("native-install-handlers") {
-            delegate._installSignalHandlers(
+            delegate.installSignalHandlers(
                 reportBasePath,
                 markerFilePath,
                 sessionIdProvider(),
@@ -189,7 +190,7 @@ internal class EmbraceNdkService(
     private fun getNativeCrashErrors(errorFile: File?): List<NativeCrashDataError?>? {
         if (errorFile != null) {
             val absolutePath = errorFile.absolutePath
-            val errorsRaw = delegate._getErrors(absolutePath)
+            val errorsRaw = delegate.getErrors(absolutePath)
             if (errorsRaw != null) {
                 runCatching {
                     val type = TypeUtils.typedList(NativeCrashDataError::class)
@@ -230,7 +231,7 @@ internal class EmbraceNdkService(
             for (crashFile in matchingFiles) {
                 try {
                     val path = crashFile.path
-                    delegate._getCrashReport(path)?.let { crashRaw ->
+                    delegate.getCrashReport(path)?.let { crashRaw ->
                         val nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
                         val errorFile = repository.errorFileForCrash(crashFile)?.apply {
                             getNativeCrashErrors(this).let { errors ->
@@ -302,7 +303,7 @@ internal class EmbraceNdkService(
 
     private fun updateAppState(newAppState: String) {
         if (sharedObjectLoader.loaded.get()) {
-            delegate._updateAppState(newAppState)
+            delegate.updateAppState(newAppState)
         }
     }
 
@@ -316,7 +317,7 @@ internal class EmbraceNdkService(
             if (json.length >= EMB_DEVICE_META_DATA_SIZE) {
                 json = serializeMetadata(src.copy(sessionProperties = null))
             }
-            delegate._updateMetaData(json)
+            delegate.updateMetaData(json)
         }
     }
 

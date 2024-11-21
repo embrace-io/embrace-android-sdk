@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -22,14 +22,14 @@ internal class NativeCrashProcessorImpl(
     private val repository: NdkServiceRepository,
     private val delegate: JniDelegate,
     private val serializer: PlatformSerializer,
-    private val symbolService: SymbolServiceImpl,
-) {
+    private val symbolService: SymbolService,
+) : NativeCrashProcessor {
 
-    fun getLatestNativeCrash(): NativeCrashData? = getAllNativeCrashes(repository::deleteFiles).lastOrNull()
+    override fun getLatestNativeCrash(): NativeCrashData? = getAllNativeCrashes(repository::deleteFiles).lastOrNull()
 
-    fun getNativeCrashes(): List<NativeCrashData> = getAllNativeCrashes()
+    override fun getNativeCrashes(): List<NativeCrashData> = getAllNativeCrashes()
 
-    fun deleteAllNativeCrashes() {
+    override fun deleteAllNativeCrashes() {
         getAllNativeCrashes(repository::deleteFiles)
     }
 

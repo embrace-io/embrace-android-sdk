@@ -10,8 +10,6 @@ interface NdkService {
 
     fun onUserInfoUpdate()
 
-    val unityCrashId: String?
-
     /**
      * Get the latest stored [NativeCrashData] instance and purge all existing native crash data files.
      */

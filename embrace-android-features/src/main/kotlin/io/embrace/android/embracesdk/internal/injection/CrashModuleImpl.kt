@@ -11,8 +11,7 @@ internal class CrashModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
-    androidServicesModule: AndroidServicesModule,
-    private val unityCrashIdProvider: () -> String?,
+    androidServicesModule: AndroidServicesModule
 ) : CrashModule {
 
     private val crashMarker: CrashFileMarker by singleton {
@@ -25,7 +24,6 @@ internal class CrashModuleImpl(
     override val crashDataSource: CrashDataSource by singleton {
         CrashDataSourceImpl(
             essentialServiceModule.sessionPropertiesService,
-            unityCrashIdProvider,
             androidServicesModule.preferencesService,
             essentialServiceModule.logWriter,
             configModule.configService,

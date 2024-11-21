@@ -38,10 +38,10 @@ internal class SensitiveKeysRedactionFeatureTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 val recordedSpan = session.findSpanByName("test span")
-                recordedSpan.attributes?.assertMatches {
-                    "password" to REDACTED_LABEL
+                recordedSpan.attributes?.assertMatches(mapOf(
+                    "password" to REDACTED_LABEL,
                     "not a password" to "1234"
-                }
+                ))
             }
         )
     }
@@ -65,14 +65,14 @@ internal class SensitiveKeysRedactionFeatureTest {
 
                 val event = recordedSpan.events?.first { it.name == "event" }
                 val anotherEvent = recordedSpan.events?.first { it.name == "anotherEvent" }
-                event?.attributes?.assertMatches {
-                    "password" to REDACTED_LABEL
+                event?.attributes?.assertMatches(mapOf(
+                    "password" to REDACTED_LABEL,
                     "status" to "ok"
-                }
-                anotherEvent?.attributes?.assertMatches {
-                    "password" to REDACTED_LABEL
+                ))
+                anotherEvent?.attributes?.assertMatches(mapOf(
+                    "password" to REDACTED_LABEL,
                     "someKey" to "someValue"
-                }
+                ))
             }
         )
     }

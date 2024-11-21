@@ -40,17 +40,17 @@ internal class ViewFeatureTest {
                 assertEquals(2, viewSpans.size)
 
                 with(viewSpans[0]) {
-                    attributes?.assertMatches {
+                    attributes?.assertMatches(mapOf(
                         "view.name" to "MyView"
-                    }
+                    ))
                     assertEquals(startTimeMs, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }
 
                 with(viewSpans[1]) {
-                    attributes?.assertMatches {
+                    attributes?.assertMatches(mapOf(
                         "view.name" to "AnotherView"
-                    }
+                    ))
                     assertEquals(startTimeMs + 1000L, startTimeNanos?.nanosToMillis())
                     assertEquals(startTimeMs + 3000L, endTimeNanos?.nanosToMillis())
                 }

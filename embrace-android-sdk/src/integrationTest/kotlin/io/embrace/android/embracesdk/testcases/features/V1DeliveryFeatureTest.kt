@@ -108,17 +108,17 @@ internal class V1DeliveryFeatureTest {
                 val log = getLogEnvelopesV1(1).getLastLog()
 
                 // assert AEI fields populated
-                log.attributes?.assertMatches {
-                    "timestamp" to 15000000000L
-                    "aei_session_id" to "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
-                    "process_importance" to 125
-                    "pss" to 1509123409L
-                    "rss" to 1123409L
-                    "exit_status" to 1
-                    "description" to "testDescription"
-                    "reason" to 4
-                    "emb.type" to "sys.exit"
-                }
+                log.attributes?.assertMatches(mapOf(
+                    "timestamp" to 15000000000L,
+                    "aei_session_id" to "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d",
+                    "process_importance" to 125,
+                    "pss" to 1509123409L,
+                    "rss" to 1123409L,
+                    "exit_status" to 1,
+                    "description" to "testDescription",
+                    "reason" to 4,
+                    "emb.type" to "sys.exit",
+                ))
                 assertEquals("testInputStream", log.body)
             }
         )

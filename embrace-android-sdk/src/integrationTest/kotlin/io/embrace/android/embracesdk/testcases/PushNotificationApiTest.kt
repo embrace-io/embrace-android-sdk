@@ -98,15 +98,15 @@ internal class PushNotificationApiTest {
                 val sessionSpan = payload.findSessionSpan()
                 val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
                 assertTrue(checkNotNull(event.timestampNanos) > 0)
-                event.attributes?.assertMatches {
-                    EmbType.System.PushNotification.toEmbraceKeyValuePair()
-                    "notification.title" to "title"
-                    "notification.type" to "notif-data"
-                    "notification.body" to "body"
-                    "notification.id" to "id"
-                    "notification.from" to "from"
-                    "notification.priority" to 1
-                }
+                event.attributes?.assertMatches(mapOf(
+                    EmbType.System.PushNotification.toEmbraceKeyValuePair(),
+                    "notification.title" to "title",
+                    "notification.type" to "notif-data",
+                    "notification.body" to "body",
+                    "notification.id" to "id",
+                    "notification.from" to "from",
+                    "notification.priority" to 1,
+                ))
             }
         )
     }
@@ -115,11 +115,11 @@ internal class PushNotificationApiTest {
         val sessionSpan = findSessionSpan()
         val event = sessionSpan.findEventOfType(EmbType.System.PushNotification)
         assertTrue(checkNotNull(event.timestampNanos) > 0)
-        event.attributes?.assertMatches {
-            EmbType.System.PushNotification.toEmbraceKeyValuePair()
-            "notification.type" to type
-            "notification.id" to "id"
-            "notification.priority" to 1
-        }
+        event.attributes?.assertMatches(mapOf(
+            EmbType.System.PushNotification.toEmbraceKeyValuePair(),
+            "notification.type" to type,
+            "notification.id" to "id",
+            "notification.priority" to 1,
+        ))
     }
 }

@@ -38,22 +38,22 @@ internal class SequentialSessionTest {
                 val third = sessions[2]
 
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
-                first.findSessionSpan().attributes?.assertMatches {
-                    embSessionNumber.name to 1
+                first.findSessionSpan().attributes?.assertMatches(mapOf(
+                    embSessionNumber.name to 1,
                     embColdStart.name to true
-                }
+                ))
 
                 assertFalse(second.hasSpanSnapshotsOfType(EmbType.Ux.Session))
-                second.findSessionSpan().attributes?.assertMatches {
-                    embSessionNumber.name to 2
+                second.findSessionSpan().attributes?.assertMatches(mapOf(
+                    embSessionNumber.name to 2,
                     embColdStart.name to false
-                }
+                ))
 
                 assertFalse(third.hasSpanSnapshotsOfType(EmbType.Ux.Session))
-                third.findSessionSpan().attributes?.assertMatches {
-                    embSessionNumber.name to 3
+                third.findSessionSpan().attributes?.assertMatches(mapOf(
+                    embSessionNumber.name to 3,
                     embColdStart.name to false
-                }
+                ))
             }
         )
     }

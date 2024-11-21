@@ -118,12 +118,12 @@ internal class JvmCrashFeatureTest {
                 val message = getSingleSessionEnvelope()
                 val crashId = message.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
                 assertNotNull(crashId)
-                log.attributes?.assertMatches {
-                    "emb.android.react_native_crash.js_exception" to expectedJsException
-                    "emb.android.crash_number" to 1
-                    "emb.android.crash.exception_cause" to expectedExceptionCause
+                log.attributes?.assertMatches(mapOf(
+                    "emb.android.react_native_crash.js_exception" to expectedJsException,
+                    "emb.android.crash_number" to 1,
+                    "emb.android.crash.exception_cause" to expectedExceptionCause,
                     LogIncubatingAttributes.LOG_RECORD_UID.key to crashId
-                }
+                ))
                 assertNotNull(log.attributes?.findAttributeValue("emb.android.threads"))
             }
         )
@@ -155,12 +155,12 @@ internal class JvmCrashFeatureTest {
         val exceptionInfo = LegacyExceptionInfo.ofThrowable(testException)
         val expectedExceptionCause = serializer.toJson(listOf(exceptionInfo), List::class.java)
 
-        attributes?.assertMatches {
-            embState.attributeKey.key to state
-            "emb.android.crash_number" to 1
-            "emb.android.crash.exception_cause" to expectedExceptionCause
+        attributes?.assertMatches(mapOf(
+            embState.attributeKey.key to state,
+            "emb.android.crash_number" to 1,
+            "emb.android.crash.exception_cause" to expectedExceptionCause,
             LogIncubatingAttributes.LOG_RECORD_UID.key to crashId
-        }
+        ))
         assertNotNull(attributes?.findAttributeValue("emb.android.threads"))
     }
 }

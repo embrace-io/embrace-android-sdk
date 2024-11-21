@@ -231,9 +231,9 @@ internal class NetworkRequestApiTest {
                 }
             },
             assertAction = {
-                validateAndReturnExpectedNetworkSpan().attributes?.assertMatches {
+                validateAndReturnExpectedNetworkSpan().attributes?.assertMatches(mapOf(
                     "url.full" to URL
-                }
+                ))
             }
         )
     }
@@ -307,32 +307,32 @@ internal class NetworkRequestApiTest {
                         assertEquals(Span.Status.ERROR, status)
                     }
 
-                    attributes?.assertMatches {
-                        "url.full" to expectedRequest.url
-                        HttpAttributes.HTTP_REQUEST_METHOD.key to expectedRequest.httpMethod
-                        "emb.trace_id" to expectedRequest.traceId
-                        "emb.w3c_traceparent" to expectedRequest.w3cTraceparent
+                    attributes?.assertMatches(mapOf(
+                        "url.full" to expectedRequest.url,
+                        HttpAttributes.HTTP_REQUEST_METHOD.key to expectedRequest.httpMethod,
+                        "emb.trace_id" to expectedRequest.traceId,
+                        "emb.w3c_traceparent" to expectedRequest.w3cTraceparent,
                         HttpAttributes.HTTP_RESPONSE_STATUS_CODE.key to when {
                             completed -> expectedRequest.responseCode
                             else -> null
-                        }
+                        },
                         HttpIncubatingAttributes.HTTP_REQUEST_BODY_SIZE.key to when {
                             completed -> expectedRequest.bytesSent
                             else -> null
-                        }
+                        },
                         HttpIncubatingAttributes.HTTP_RESPONSE_BODY_SIZE.key to when {
                             completed -> expectedRequest.bytesReceived
                             else -> null
-                        }
+                        },
                         "error.type" to when {
                             completed -> null
                             else -> expectedRequest.errorType
-                        }
+                        },
                         ExceptionAttributes.EXCEPTION_MESSAGE.key to when {
                             completed -> null
                             else -> expectedRequest.errorMessage
-                        }
-                    }
+                        },
+                    ))
                 }
             }
         )

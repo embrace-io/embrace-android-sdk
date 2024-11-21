@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testframework.assertions
 
 import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.utils.toNonNullMap
 import org.junit.Assert.assertEquals
 
 internal fun List<Attribute>.toMap(): Map<String, String> {
@@ -12,8 +13,8 @@ internal fun List<Attribute>.toMap(): Map<String, String> {
  *
  * This does _not_ check for the presence of any other attributes.
  */
-internal fun List<Attribute>.assertMatches(expected: MutableMap<String, Any>.() -> Unit) {
-    val expectedMap = mutableMapOf<String, Any>().apply(expected).mapValues { it.toString() }
-    val observed = toMap().filterKeys(expectedMap::containsKey)
-    assertEquals(expectedMap.toSortedMap(), observed.toSortedMap())
+internal fun List<Attribute>.assertMatches(expected: Map<String, Any?>) {
+    val expectedMap = expected.toNonNullMap().mapValues { it.value.toString() }.toSortedMap()
+    val observedMap = toMap().toNonNullMap().filterKeys(expected::containsKey).toSortedMap()
+    assertEquals(expectedMap, observedMap)
 }

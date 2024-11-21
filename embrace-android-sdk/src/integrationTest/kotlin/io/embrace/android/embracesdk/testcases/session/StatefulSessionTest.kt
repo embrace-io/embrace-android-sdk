@@ -43,11 +43,11 @@ internal class StatefulSessionTest {
                 // verify first session
                 val messages = getSessionEnvelopesFromMockServer(2)
                 val first = messages[0]
-                first.findSessionSpan().attributes?.assertMatches {
-                    embSessionStartType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH)
-                    embSessionEndType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH)
+                first.findSessionSpan().attributes?.assertMatches(mapOf(
+                    embSessionStartType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
+                    embSessionEndType.name to LifeEventType.STATE.name.lowercase(Locale.ENGLISH),
                     embErrorLogCount.name to 0
-                }
+                ))
 
                 assertFalse(first.hasSpanSnapshotsOfType(EmbType.Ux.Session))
 

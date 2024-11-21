@@ -40,18 +40,18 @@ internal class NetworkStatusFeatureTest {
                 assertEquals(startTimeMs, span.startTimeNanos?.nanosToMillis())
                 assertEquals(startTimeMs + tickTimeMs, span.endTimeNanos?.nanosToMillis())
 
-                span.attributes?.assertMatches {
-                    "emb.type" to "sys.network_status"
+                span.attributes?.assertMatches(mapOf(
+                    "emb.type" to "sys.network_status",
                     "network" to "unknown"
-                }
+                ))
 
                 val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
                 assertEquals("emb-network-status", snapshot.name)
                 assertEquals(startTimeMs + tickTimeMs, snapshot.startTimeNanos?.nanosToMillis())
-                snapshot.attributes?.assertMatches {
-                    "emb.type" to "sys.network_status"
+                snapshot.attributes?.assertMatches(mapOf(
+                    "emb.type" to "sys.network_status",
                     "network" to "wifi"
-                }
+                ))
             }
         )
     }
@@ -70,10 +70,10 @@ internal class NetworkStatusFeatureTest {
                 val snapshot = message.findSpanSnapshotOfType(EmbType.System.NetworkStatus)
                 assertEquals("emb-network-status", snapshot.name)
                 assertEquals(startTimeMs, snapshot.startTimeNanos?.nanosToMillis())
-                snapshot.attributes?.assertMatches {
-                    "emb.type" to "sys.network_status"
+                snapshot.attributes?.assertMatches(mapOf(
+                    "emb.type" to "sys.network_status",
                     "network" to "unknown"
-                }
+                ))
             }
         )
     }

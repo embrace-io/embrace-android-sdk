@@ -191,11 +191,11 @@ internal class EmbraceInternalInterfaceTest {
             assertAction = {
                 val session = getSingleSessionEnvelope()
                 val tapBreadcrumb = session.findSessionSpan().findEventOfType(EmbType.Ux.Tap)
-                tapBreadcrumb.attributes?.assertMatches {
-                    "view.name" to "button"
-                    "tap.coords" to "10,99"
-                    "tap.type" to "tap"
-                }
+                tapBreadcrumb.attributes?.assertMatches(mapOf(
+                    "view.name" to "button",
+                    "tap.coords" to "0,0",
+                    "tap.type" to "tap",
+                ))
             }
         )
     }
@@ -282,15 +282,15 @@ internal class EmbraceInternalInterfaceTest {
                         .associateBy { it.name })
                 assertEquals(4, spans.size)
                 with(checkNotNull(spans["tz-parent-span"])) {
-                    attributes?.assertMatches {
-                        "testkey" to "testvalue"
-                    }
+                    attributes?.assertMatches(mapOf(
+                        "testkey" to "testvalue",
+                    ))
                 }
                 with(checkNotNull(spans["tz-child-span"])) {
                     val spanEvent = checkNotNull(events)[0]
-                    spanEvent.attributes?.assertMatches {
-                        "key" to "value"
-                    }
+                    spanEvent.attributes?.assertMatches(mapOf(
+                        "key" to "value",
+                    ))
                     assertEquals("cool event bro", spanEvent.name)
                     assertEquals(Span.Status.ERROR, status)
                 }

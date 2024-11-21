@@ -4,35 +4,30 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
-import io.embrace.android.embracesdk.Severity
+import io.embrace.android.embracesdk.Severity.INFO
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.NoInputValidation
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
-import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.AeiLog
 import io.embrace.android.embracesdk.internal.config.behavior.AppExitInfoBehavior
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.payload.AppExitInfoData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.io.IOException
-import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicBoolean
 
 @RequiresApi(VERSION_CODES.R)
 internal class AeiDataSourceImpl(
     private val backgroundWorker: BackgroundWorker,
     private val appExitInfoBehavior: AppExitInfoBehavior,
-    private val activityManager: ActivityManager?,
+    private val activityManager: ActivityManager,
     private val preferencesService: PreferencesService,
     logWriter: LogWriter,
     private val logger: EmbLogger,
-    private val buildVersionChecker: VersionChecker = BuildVersionChecker,
+    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : AeiDataSource, LogDataSourceImpl(
     logWriter,
     logger,
@@ -43,193 +38,42 @@ internal class AeiDataSourceImpl(
         private const val SDK_AEI_SEND_LIMIT = 32
     }
 
-    @Volatile
-    private var backgroundExecution: Future<*>? = null
-    private val sessionApplicationExitInfoData: MutableList<AppExitInfoData> = mutableListOf()
-    private val isSessionApplicationExitInfoDataReady = AtomicBoolean(false)
-
     override fun enableDataCapture() {
-        if (backgroundExecution != null) {
-            return
-        }
-        backgroundExecution = backgroundWorker.submit {
+        backgroundWorker.submit {
             try {
-                processApplicationExitInfo()
+                processAeiRecords()
             } catch (exc: Throwable) {
                 logger.trackInternalError(InternalErrorType.ENABLE_DATA_CAPTURE, exc)
             }
         }
     }
 
-    override fun disableDataCapture() {
-        try {
-            backgroundExecution?.cancel(true)
-            backgroundExecution = null
-        } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.DISABLE_DATA_CAPTURE, t)
-        }
-    }
-
-    private fun processApplicationExitInfo() {
-        val historicalProcessExitReasons = getHistoricalProcessExitReasons()
-        val unsentExitReasons = getUnsentExitReasons(historicalProcessExitReasons)
-
-        unsentExitReasons.forEach {
-            sessionApplicationExitInfoData.add(buildSessionAppExitInfoData(it, null, null))
-        }
-
-        isSessionApplicationExitInfoDataReady.set(true)
-        processApplicationExitInfoBlobs(unsentExitReasons)
-    }
-
-    private fun processApplicationExitInfoBlobs(unsentExitReasons: List<ApplicationExitInfo>) {
-        unsentExitReasons.forEach { aei: ApplicationExitInfo ->
-            val traceResult = collectExitInfoTrace(aei)
-            if (traceResult != null) {
-                val payload = buildSessionAppExitInfoData(
-                    aei,
-                    getTrace(traceResult),
-                    getTraceStatus(traceResult)
-                )
-                sendApplicationExitInfoWithTraces(listOf(payload))
-            }
-        }
-    }
-
-    private fun getHistoricalProcessExitReasons(): List<ApplicationExitInfo> {
-        // A process ID that used to belong to this package but died later;
-        // a value of 0 means to ignore this parameter and return all matching records.
-        val pid = 0
-
-        // number of results to be returned; a value of 0 means to ignore this parameter and return
-        // all matching records with a maximum of 16 entries
+    private fun processAeiRecords() {
         val maxNum = appExitInfoBehavior.appExitInfoMaxNum()
+        val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
+        val unsentRecords = getUnsentRecords(records)
 
-        var historicalProcessExitReasons: List<ApplicationExitInfo> =
-            activityManager?.getHistoricalProcessExitReasons(null, pid, maxNum)
-                ?: return emptyList()
-
-        if (historicalProcessExitReasons.size > SDK_AEI_SEND_LIMIT) {
-            historicalProcessExitReasons = historicalProcessExitReasons.take(SDK_AEI_SEND_LIMIT)
-        }
-
-        return historicalProcessExitReasons
-    }
-
-    private fun getUnsentExitReasons(historicalProcessExitReasons: List<ApplicationExitInfo>): List<ApplicationExitInfo> {
-        // Generates the set of current aei captured
-        val allAeiHashCodes = historicalProcessExitReasons.map(::generateUniqueHash).toSet()
-
-        // Get hash codes that were previously delivered
-        val deliveredHashCodes = preferencesService.applicationExitInfoHistory ?: emptySet()
-
-        // Subtracts aei hashcodes of already sent information to get new entries
-        val unsentHashCodes = allAeiHashCodes.subtract(deliveredHashCodes)
-
-        // Updates preferences with the new set of hashcodes
-        preferencesService.applicationExitInfoHistory = allAeiHashCodes
-
-        // Get AEI objects that were not sent
-        val unsentAeiObjects = historicalProcessExitReasons.filter {
-            unsentHashCodes.contains(generateUniqueHash(it))
-        }
-
-        return unsentAeiObjects
-    }
-
-    private fun buildSessionAppExitInfoData(
-        appExitInfo: ApplicationExitInfo,
-        trace: String?,
-        traceStatus: String?,
-    ): AppExitInfoData {
-        val sessionId = String(appExitInfo.processStateSummary ?: ByteArray(0))
-
-        return AppExitInfoData(
-            sessionId = sessionId,
-            sessionIdError = getSessionIdValidationError(sessionId),
-            importance = appExitInfo.importance,
-            pss = appExitInfo.pss,
-            reason = appExitInfo.reason,
-            rss = appExitInfo.rss,
-            status = appExitInfo.status,
-            timestamp = appExitInfo.timestamp,
-            trace = trace,
-            description = appExitInfo.description,
-            traceStatus = traceStatus
-        )
-    }
-
-    private fun getTrace(traceResult: AppExitInfoBehavior.CollectTracesResult): String? =
-        when (traceResult) {
-            is AppExitInfoBehavior.CollectTracesResult.Success -> traceResult.result
-            is AppExitInfoBehavior.CollectTracesResult.TooLarge -> traceResult.result
-            else -> null
-        }
-
-    private fun getTraceStatus(traceResult: AppExitInfoBehavior.CollectTracesResult): String? =
-        when (traceResult) {
-            is AppExitInfoBehavior.CollectTracesResult.Success -> null
-            is AppExitInfoBehavior.CollectTracesResult.TooLarge -> "Trace was too large, sending truncated trace"
-            else -> traceResult.result
-        }
-
-    private fun sendApplicationExitInfoWithTraces(appExitInfoWithTraces: List<AppExitInfoData>) {
-        appExitInfoWithTraces.forEach { data ->
+        unsentRecords.forEach {
+            val obj = it.constructAeiObject(versionChecker, appExitInfoBehavior.getTraceMaxLimit()) ?: return@forEach
             captureData(
                 inputValidation = NoInputValidation,
                 captureAction = {
-                    val schemaType = SchemaType.AeiLog(data)
-                    addLog(schemaType, Severity.INFO.toOtelSeverity(), data.trace ?: "")
+                    val schemaType = AeiLog(obj)
+                    addLog(schemaType, INFO.toOtelSeverity(), obj.trace ?: "")
                 }
             )
         }
     }
 
-    private fun collectExitInfoTrace(appExitInfo: ApplicationExitInfo): AppExitInfoBehavior.CollectTracesResult? {
-        try {
-            val trace = readTraceAsString(appExitInfo) ?: return null
-
-            val traceMaxLimit = appExitInfoBehavior.getTraceMaxLimit()
-            if (trace.length > traceMaxLimit) {
-                return AppExitInfoBehavior.CollectTracesResult.TooLarge(trace.take(traceMaxLimit))
-            }
-
-            return AppExitInfoBehavior.CollectTracesResult.Success(trace)
-        } catch (e: IOException) {
-            return AppExitInfoBehavior.CollectTracesResult.TraceException(("ioexception: ${e.message}"))
-        } catch (e: OutOfMemoryError) {
-            return AppExitInfoBehavior.CollectTracesResult.TraceException(("oom: ${e.message}"))
-        } catch (tr: Throwable) {
-            return AppExitInfoBehavior.CollectTracesResult.TraceException(("error: ${tr.message}"))
-        }
-    }
-
-    private fun readTraceAsString(appExitInfo: ApplicationExitInfo): String? {
-        if (appExitInfo.isNdkProtobufFile()) {
-            val bytes = appExitInfo.traceInputStream?.readBytes() ?: return null
-            return bytes.toUTF8String()
-        } else {
-            return appExitInfo.traceInputStream?.bufferedReader()?.readText()
-        }
-    }
-
     /**
-     * NDK protobuf files are only available on Android 12 and above for AEI with
-     * the REASON_CRASH_NATIVE reason.
+     * Calculates what AEI records have been sent by subtracting a collection of IDs that have been previously
+     * sent from the return value of getHistoricalProcessExitReasons.
      */
-    private fun ApplicationExitInfo.isNdkProtobufFile(): Boolean {
-        return buildVersionChecker.isAtLeast(VERSION_CODES.S) && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
+    private fun getUnsentRecords(records: List<ApplicationExitInfo>): List<ApplicationExitInfo> {
+        val deliveredIds = preferencesService.deliveredAeiIds
+        preferencesService.deliveredAeiIds = records.map { it.getAeiId() }.toSet()
+        return records.filter { !deliveredIds.contains(it.getAeiId()) }
     }
 
-    private fun getSessionIdValidationError(sid: String): String {
-        return if (sid.isEmpty() || sid.matches(Regex("^[0-9a-fA-F]{32}\$"))) {
-            ""
-        } else {
-            "invalid session ID: $sid"
-        }
-    }
-
-    private fun generateUniqueHash(appExitInfo: ApplicationExitInfo): String {
-        return "${appExitInfo.timestamp}_${appExitInfo.pid}"
-    }
+    private fun ApplicationExitInfo.getAeiId(): String = "${timestamp}_$pid"
 }

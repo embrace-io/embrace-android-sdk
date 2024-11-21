@@ -235,8 +235,8 @@ internal class EmbracePreferencesService(
         get() = prefs.getStringPreference(SCREEN_RESOLUTION_KEY)
         set(value) = prefs.setStringPreference(SCREEN_RESOLUTION_KEY, value)
 
-    override var applicationExitInfoHistory: Set<String>?
-        get() = prefs.getStringSet(AEI_HASH_CODES, null)
+    override var deliveredAeiIds: Set<String>
+        get() = prefs.getStringSet(AEI_HASH_CODES, null) ?: emptySet()
         set(value) = prefs.setArrayPreference(AEI_HASH_CODES, value)
 
     override fun isUsersFirstDay(): Boolean {

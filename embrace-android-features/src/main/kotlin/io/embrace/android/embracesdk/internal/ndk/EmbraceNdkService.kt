@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -43,18 +44,24 @@ internal class EmbraceNdkService(
     private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
 ) : NdkService, ProcessStateListener {
 
-    private val processor: NativeCrashProcessorImpl = NativeCrashProcessorImpl(
+    private val symbolService = SymbolServiceImpl(
         context,
+        deviceArchitecture,
+        serializer,
+        logger
+    )
+
+    private val processor: NativeCrashProcessorImpl = NativeCrashProcessorImpl(
         sharedObjectLoader,
         logger,
         repository,
         delegate,
-        deviceArchitecture,
-        serializer
+        serializer,
+        symbolService
     )
 
     override val symbolsForCurrentArch
-        get() = processor.symbolsForCurrentArch
+        get() = symbolService.symbolsForCurrentArch
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {

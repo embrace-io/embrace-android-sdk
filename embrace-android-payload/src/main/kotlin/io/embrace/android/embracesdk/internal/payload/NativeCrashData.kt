@@ -12,7 +12,7 @@ class NativeCrashData(
     @Json(name = "meta") val metadata: NativeCrashMetadata?,
     @Json(name = "ue") val unwindError: Int?,
     @Json(name = "crash") val crash: String?,
-    @Json(name = "symbols") var symbols: Map<String?, String?>?,
+    @Json(name = "symbols") var symbols: Map<String, String>?,
     @Json(name = "errors") var errors: List<NativeCrashDataError?>?,
     @Json(name = "map") var map: String?,
 )

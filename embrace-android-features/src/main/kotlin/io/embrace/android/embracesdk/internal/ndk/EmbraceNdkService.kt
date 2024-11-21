@@ -1,15 +1,12 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Base64
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -18,10 +15,9 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
-import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateListener
@@ -29,15 +25,9 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateServ
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.InputStreamReader
 
 internal class EmbraceNdkService(
-    private val context: Context,
+    context: Context,
     private val storageService: StorageService,
     private val metadataService: MetadataService,
     private val processStateService: ProcessStateService,
@@ -52,16 +42,24 @@ internal class EmbraceNdkService(
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,
     private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
-) : NdkService, ProcessStateListener {
-
-    override val symbolsForCurrentArch by lazy {
-        val nativeSymbols = getNativeSymbols()
-        if (nativeSymbols != null) {
-            val arch = deviceArchitecture.architecture
-            return@lazy nativeSymbols.getSymbolByArchitecture(arch)
-        }
-        null
-    }
+    private val symbolService: SymbolService = SymbolServiceImpl(
+        context,
+        deviceArchitecture,
+        serializer,
+        logger
+    ),
+    private val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
+        sharedObjectLoader,
+        logger,
+        repository,
+        delegate,
+        serializer,
+        symbolService
+    )
+) : NdkService,
+    ProcessStateListener,
+    SymbolService by symbolService,
+    NativeCrashProcessor by processor {
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {
@@ -175,125 +173,6 @@ internal class EmbraceNdkService(
         backgroundWorker.submit(runnable = ::updateDeviceMetaData)
     }
 
-    /**
-     * Find and parse a native error File to NativeCrashData Error List
-     *
-     * @return List of NativeCrashData error
-     */
-    private fun getNativeCrashErrors(errorFile: File?): List<NativeCrashDataError?>? {
-        if (errorFile != null) {
-            val absolutePath = errorFile.absolutePath
-            val errorsRaw = delegate.getErrors(absolutePath)
-            if (errorsRaw != null) {
-                runCatching {
-                    val type = TypeUtils.typedList(NativeCrashDataError::class)
-                    return serializer.fromJson(errorsRaw, type)
-                }
-            }
-        }
-        return null
-    }
-
-    /**
-     * Process map file for crash to read and return its content as String
-     */
-    private fun getMapFileContent(mapFile: File?): String? {
-        if (mapFile != null) {
-            val mapContents = readMapFile(mapFile)
-            if (mapContents != null) {
-                return mapContents
-            }
-        }
-        return null
-    }
-
-    override fun getLatestNativeCrash(): NativeCrashData? = getAllNativeCrashes(repository::deleteFiles).lastOrNull()
-
-    override fun getNativeCrashes(): List<NativeCrashData> = getAllNativeCrashes()
-
-    override fun deleteAllNativeCrashes() {
-        getAllNativeCrashes(repository::deleteFiles)
-    }
-
-    private fun getAllNativeCrashes(
-        cleanup: CleanupFunction? = null,
-    ): List<NativeCrashData> {
-        val nativeCrashes = mutableListOf<NativeCrashData>()
-        if (sharedObjectLoader.loaded.get()) {
-            val matchingFiles = repository.sortNativeCrashes(false)
-            for (crashFile in matchingFiles) {
-                try {
-                    val path = crashFile.path
-                    delegate.getCrashReport(path)?.let { crashRaw ->
-                        val nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
-                        val errorFile = repository.errorFileForCrash(crashFile)?.apply {
-                            getNativeCrashErrors(this).let { errors ->
-                                nativeCrash.errors = errors
-                            }
-                        }
-                        val mapFile = repository.mapFileForCrash(crashFile)?.apply {
-                            nativeCrash.map = getMapFileContent(this)
-                        }
-                        nativeCrash.symbols = symbolsForCurrentArch?.toMap()
-
-                        nativeCrashes.add(nativeCrash)
-                        cleanup?.invoke(crashFile, errorFile, mapFile, nativeCrash)
-                    } ?: {
-                        logger.trackInternalError(
-                            type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
-                            throwable = FileNotFoundException("Failed to load crash report at $path")
-                        )
-                    }
-                } catch (t: Throwable) {
-                    crashFile.delete()
-                    logger.trackInternalError(
-                        type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
-                        throwable = RuntimeException(
-                            "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                            t
-                        )
-                    )
-                }
-            }
-        }
-        return nativeCrashes
-    }
-
-    @SuppressLint("DiscouragedApi")
-    private fun getNativeSymbols(): NativeSymbols? {
-        val resources = context.resources
-        val resourceId = resources.getIdentifier(KEY_NDK_SYMBOLS, "string", context.packageName)
-        if (resourceId != 0) {
-            try {
-                val encodedSymbols: String = Base64.decode(
-                    context.resources.getString(resourceId),
-                    Base64.DEFAULT
-                ).decodeToString()
-                return serializer.fromJson(encodedSymbols, NativeSymbols::class.java)
-            } catch (ex: Exception) {
-                logger.trackInternalError(InternalErrorType.INVALID_NATIVE_SYMBOLS, ex)
-            }
-        }
-        return null
-    }
-
-    private fun readMapFile(mapFile: File): String? {
-        try {
-            FileInputStream(mapFile).use { fin ->
-                BufferedReader(InputStreamReader(fin)).use { reader ->
-                    val sb = StringBuilder()
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        sb.append(line).append("\n")
-                    }
-                    return sb.toString()
-                }
-            }
-        } catch (e: IOException) {
-            return null
-        }
-    }
-
     private fun updateAppState(newAppState: String) {
         if (sharedObjectLoader.loaded.get()) {
             delegate.updateAppState(newAppState)
@@ -341,15 +220,6 @@ internal class EmbraceNdkService(
          * Signals to the API that the application was in the background.
          */
         private const val APPLICATION_STATE_BACKGROUND = "background"
-
-        /**
-         * The NDK symbols name that matches with the resource name injected by the plugin.
-         */
-        private const val KEY_NDK_SYMBOLS = "emb_ndk_symbols"
-        internal const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
-        internal const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-        internal const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
-        internal const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
         private const val EMB_DEVICE_META_DATA_SIZE = 2048
         private const val HANDLER_CHECK_DELAY_MS = 5000
     }

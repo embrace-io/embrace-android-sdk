@@ -1,17 +1,24 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import android.os.Build
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.anr.ndk.EmbraceNativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeAnrOtelMapper
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstaller
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
+import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
+import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class NativeFeatureModuleImpl(
@@ -93,6 +100,51 @@ internal class NativeFeatureModuleImpl(
                 logger = initModule.logger,
             )
         }
+    }
+
+    override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {
+        if (configModule.configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
+            NativeCrashHandlerInstallerImpl(
+                configService = configModule.configService,
+                sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
+                logger = initModule.logger,
+                repository = embraceNdkServiceRepository,
+                delegate = JniDelegateImpl(),
+                backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                nativeInstallMessageProvider = {
+                    createNativeInstallMessage(
+                        storageModule.storageService,
+                        essentialServiceModule.sessionIdTracker.getActiveSessionId(),
+                        essentialServiceModule.processStateService.getAppState(),
+                        payloadSourceModule.deviceArchitecture.is32BitDevice
+                    )
+                },
+            )
+        } else {
+            null
+        }
+    }
+
+    private fun createNativeInstallMessage(
+        storageService: StorageService,
+        activeSessionId: String?,
+        appState: String,
+        is32BitDevice: Boolean,
+    ): NativeInstallMessage? {
+        val reportBasePath = runCatching { storageService.getOrCreateNativeCrashDir().absolutePath }.getOrNull()
+            ?: return null
+        val sessionId = activeSessionId ?: return null
+        val markerFilePath = storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME).absolutePath
+        return NativeInstallMessage(
+            reportPath = reportBasePath,
+            markerFilePath = markerFilePath,
+            sessionId = sessionId,
+            appState = appState,
+            reportId = Uuid.getEmbUuid(),
+            apiLevel = Build.VERSION.SDK_INT,
+            is32bit = is32BitDevice,
+            devLogging = false,
+        )
     }
 
     private fun nativeThreadSamplingEnabled(configService: ConfigService) =

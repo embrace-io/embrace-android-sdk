@@ -15,8 +15,4 @@ class NativeCrashData(
     @Json(name = "symbols") var symbols: Map<String?, String?>?,
     @Json(name = "errors") var errors: List<NativeCrashDataError?>?,
     @Json(name = "map") var map: String?,
-) {
-
-    fun getCrash(crashNumber: Int): NativeCrash =
-        NativeCrash(nativeCrashId, crash, symbols, errors, unwindError, map, crashNumber)
-}
+)

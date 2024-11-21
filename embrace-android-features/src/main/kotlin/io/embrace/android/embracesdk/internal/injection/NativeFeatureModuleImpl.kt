@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerInstall
 import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
+import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
@@ -119,6 +120,7 @@ internal class NativeFeatureModuleImpl(
                         payloadSourceModule.deviceArchitecture.is32BitDevice
                     )
                 },
+                mainThreadHandler = AndroidMainThreadHandler()
             )
         } else {
             null

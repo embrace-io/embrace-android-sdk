@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk.jni
 
-internal interface JniDelegate {
+interface JniDelegate {
     fun installSignalHandlers(
         reportPath: String?,
         markerFilePath: String?,

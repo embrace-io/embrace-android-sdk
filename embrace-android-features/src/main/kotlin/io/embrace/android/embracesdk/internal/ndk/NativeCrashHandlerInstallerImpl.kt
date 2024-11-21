@@ -1,17 +1,16 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import android.os.Handler
-import android.os.Looper
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
-private const val HANDLER_CHECK_DELAY_MS = 5000
+private const val HANDLER_CHECK_DELAY_MS = 5000L
 
 internal class NativeCrashHandlerInstallerImpl(
     private val configService: ConfigService,
@@ -21,34 +20,28 @@ internal class NativeCrashHandlerInstallerImpl(
     private val delegate: JniDelegate,
     private val backgroundWorker: BackgroundWorker,
     private val nativeInstallMessageProvider: Provider<NativeInstallMessage?>,
-    private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
+    private val mainThreadHandler: MainThreadHandler,
 ) : NativeCrashHandlerInstaller {
 
     override fun install() {
         backgroundWorker.submit {
             Systrace.traceSynchronous("install-native-crash-signal-handlers") {
-                if (startNativeCrashMonitoring()) {
-                    repository.cleanOldCrashFiles()
-                }
+                startNativeCrashMonitoring()
             }
         }
     }
 
-    private fun startNativeCrashMonitoring(): Boolean {
-        return try {
+    private fun startNativeCrashMonitoring() {
+        try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                handler.postAtFrontOfQueue { installSignals() }
-                handler.postDelayed(
+                mainThreadHandler.postAtFrontOfQueue { installSignals() }
+                mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
-                    HANDLER_CHECK_DELAY_MS.toLong()
+                    HANDLER_CHECK_DELAY_MS
                 )
-                true
-            } else {
-                false
             }
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
-            false
         }
     }
 
@@ -96,5 +89,6 @@ internal class NativeCrashHandlerInstallerImpl(
                 nativeInstallMessage.devLogging
             )
         }
+        backgroundWorker.submit { repository.cleanOldCrashFiles() }
     }
 }

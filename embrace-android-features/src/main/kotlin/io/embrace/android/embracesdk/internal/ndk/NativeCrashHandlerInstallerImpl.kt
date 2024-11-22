@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 private const val HANDLER_CHECK_DELAY_MS = 5000L
@@ -19,7 +18,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private val repository: NdkServiceRepository,
     private val delegate: JniDelegate,
     private val backgroundWorker: BackgroundWorker,
-    private val nativeInstallMessageProvider: Provider<NativeInstallMessage?>,
+    private val nativeInstallMessage: NativeInstallMessage,
     private val mainThreadHandler: MainThreadHandler,
 ) : NativeCrashHandlerInstaller {
 
@@ -71,23 +70,18 @@ internal class NativeCrashHandlerInstallerImpl(
 
     private fun installSignals() {
         Systrace.traceSynchronous("native-install-handlers") {
-            val nativeInstallMessage = nativeInstallMessageProvider() ?: run {
-                logger.trackInternalError(
-                    InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL,
-                    IllegalStateException("Native install message is null")
+            with(nativeInstallMessage) {
+                delegate.installSignalHandlers(
+                    reportPath,
+                    markerFilePath,
+                    sessionId,
+                    appState,
+                    reportId,
+                    apiLevel,
+                    is32bit,
+                    devLogging
                 )
-                return
             }
-            delegate.installSignalHandlers(
-                nativeInstallMessage.reportPath,
-                nativeInstallMessage.markerFilePath,
-                nativeInstallMessage.sessionId,
-                nativeInstallMessage.appState,
-                nativeInstallMessage.reportId,
-                nativeInstallMessage.apiLevel,
-                nativeInstallMessage.is32bit,
-                nativeInstallMessage.devLogging
-            )
         }
         backgroundWorker.submit { repository.cleanOldCrashFiles() }
     }

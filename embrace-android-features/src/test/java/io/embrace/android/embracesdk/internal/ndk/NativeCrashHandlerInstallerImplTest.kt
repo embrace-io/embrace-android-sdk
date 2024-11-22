@@ -53,7 +53,7 @@ class NativeCrashHandlerInstallerImplTest {
             fakeRepository,
             fakeDelegate,
             fakeBackgroundWorker(),
-            { testNativeInstallMessage },
+            testNativeInstallMessage,
             fakeMainThreadHandler,
         )
     }
@@ -63,26 +63,6 @@ class NativeCrashHandlerInstallerImplTest {
         nativeCrashHandlerInstaller.install()
 
         assertTrue(fakeDelegate.signalHandlerInstalled)
-    }
-
-    @Test
-    fun `do not install signals when the native install message is null`() {
-        nativeCrashHandlerInstaller = NativeCrashHandlerInstallerImpl(
-            fakeConfigService,
-            fakeSharedObjectLoader,
-            fakeLogger,
-            fakeRepository,
-            fakeDelegate,
-            fakeBackgroundWorker(),
-            { null },
-            fakeMainThreadHandler,
-        )
-
-        nativeCrashHandlerInstaller.install()
-
-        assertFalse(fakeDelegate.signalHandlerInstalled)
-        assertEquals(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL.toString(), fakeLogger.internalErrorMessages.last().msg)
-        assertEquals("Native install message is null", fakeLogger.internalErrorMessages.last().throwable?.message)
     }
 
     @Test

@@ -8,7 +8,7 @@ class FakeMainThreadHandler : MainThreadHandler {
     }
 
     override fun postDelayed(runnable: Runnable, delayMillis: Long) {
-        Thread.sleep(1000L)
+        Thread.sleep(20L)
         runnable.run()
     }
 }

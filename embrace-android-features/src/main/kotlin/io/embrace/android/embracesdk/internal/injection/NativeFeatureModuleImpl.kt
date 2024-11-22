@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
-import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -112,14 +111,7 @@ internal class NativeFeatureModuleImpl(
                 repository = embraceNdkServiceRepository,
                 delegate = JniDelegateImpl(),
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                nativeInstallMessageProvider = {
-                    createNativeInstallMessage(
-                        storageModule.storageService,
-                        essentialServiceModule.sessionIdTracker.getActiveSessionId(),
-                        essentialServiceModule.processStateService.getAppState(),
-                        payloadSourceModule.deviceArchitecture.is32BitDevice
-                    )
-                },
+                nativeInstallMessage = nativeInstallMessage ?: return@singleton null,
                 mainThreadHandler = AndroidMainThreadHandler()
             )
         } else {
@@ -127,24 +119,20 @@ internal class NativeFeatureModuleImpl(
         }
     }
 
-    private fun createNativeInstallMessage(
-        storageService: StorageService,
-        activeSessionId: String?,
-        appState: String,
-        is32BitDevice: Boolean,
-    ): NativeInstallMessage? {
-        val reportBasePath = runCatching { storageService.getOrCreateNativeCrashDir().absolutePath }.getOrNull()
-            ?: return null
-        val sessionId = activeSessionId ?: return null
-        val markerFilePath = storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME).absolutePath
-        return NativeInstallMessage(
+    private val nativeInstallMessage: NativeInstallMessage? by singleton {
+        val reportBasePath = runCatching { storageModule.storageService.getOrCreateNativeCrashDir().absolutePath }
+            .getOrNull() ?: return@singleton null
+        val sessionId = essentialServiceModule.sessionIdTracker.getActiveSessionId() ?: return@singleton null
+        val markerFilePath =
+            storageModule.storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME).absolutePath
+        NativeInstallMessage(
             reportPath = reportBasePath,
             markerFilePath = markerFilePath,
             sessionId = sessionId,
-            appState = appState,
+            appState = essentialServiceModule.processStateService.getAppState(),
             reportId = Uuid.getEmbUuid(),
             apiLevel = Build.VERSION.SDK_INT,
-            is32bit = is32BitDevice,
+            is32bit = payloadSourceModule.deviceArchitecture.is32BitDevice,
             devLogging = false,
         )
     }

@@ -60,6 +60,7 @@ class IntakeServiceImpl(
 
             if (metadata.complete) {
                 schedulingService.onPayloadIntake()
+                deliveryTracer?.onPayloadIntake(metadata)
             } else if (metadata.envelopeType == SupportedEnvelopeType.SESSION) {
                 lastCacheSessionRef = metadata
             }

@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -26,8 +25,7 @@ class SchedulingServiceImpl(
     private val schedulingWorker: BackgroundWorker,
     private val deliveryWorker: BackgroundWorker,
     private val clock: Clock,
-    private val logger: EmbLogger,
-    private val deliveryTracer: DeliveryTracer? = null
+    private val logger: EmbLogger
 ) : SchedulingService {
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
@@ -39,7 +37,6 @@ class SchedulingServiceImpl(
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
 
     override fun onPayloadIntake() {
-        deliveryTracer?.onPayloadIntake()
         queryForPayloads.set(true)
         startDeliveryLoop()
     }

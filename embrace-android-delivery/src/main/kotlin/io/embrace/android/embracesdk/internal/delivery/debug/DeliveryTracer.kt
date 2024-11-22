@@ -13,8 +13,8 @@ class DeliveryTracer {
         events.add(DeliveryTraceState.HttpCallEnded(result, envelopeType, payloadType))
     }
 
-    fun onPayloadIntake() {
-        events.add(DeliveryTraceState.ScheduleServiceInformed)
+    fun onPayloadIntake(metadata: StoredTelemetryMetadata) {
+        events.add(DeliveryTraceState.ScheduleServiceInformed(metadata))
     }
 
     fun onTake(metadata: StoredTelemetryMetadata) {

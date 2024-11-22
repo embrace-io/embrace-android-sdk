@@ -21,8 +21,8 @@ internal sealed class DeliveryTraceState {
     /**
      * An envelope was accepted by the intake service
      */
-    internal object ScheduleServiceInformed : DeliveryTraceState() {
-        override fun toString(): String = "ScheduleServiceInformed"
+    internal class ScheduleServiceInformed(val metadata: StoredTelemetryMetadata) : DeliveryTraceState() {
+        override fun toString(): String = "ScheduleServiceInformed, ${metadata.toReportString()}"
     }
 
     /**

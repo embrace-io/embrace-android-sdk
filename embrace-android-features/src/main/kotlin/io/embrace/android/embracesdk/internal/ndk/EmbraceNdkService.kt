@@ -102,7 +102,6 @@ internal class EmbraceNdkService(
     private fun startNativeCrashMonitoring(sessionIdProvider: () -> String): Boolean {
         return try {
             if (sharedObjectLoader.loadEmbraceNative()) {
-                createCrashReportDirectory()
                 handler.postAtFrontOfQueue { installSignals(sessionIdProvider) }
                 handler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
@@ -142,16 +141,13 @@ internal class EmbraceNdkService(
         return allowList.any(culprit::contains)
     }
 
-    private fun createCrashReportDirectory() {
-        val directoryFile = storageService.getNativeCrashDir()
-        if (directoryFile.exists()) {
+    private fun installSignals(sessionIdProvider: () -> String) {
+        val reportBasePath = try {
+            storageService.getOrCreateNativeCrashDir().absolutePath
+        } catch (e: Exception) {
+            logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, e)
             return
         }
-        directoryFile.mkdirs()
-    }
-
-    private fun installSignals(sessionIdProvider: () -> String) {
-        val reportBasePath = storageService.getNativeCrashDir().absolutePath
         val markerFilePath = storageService.getFileForWrite(
             CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
         ).absolutePath

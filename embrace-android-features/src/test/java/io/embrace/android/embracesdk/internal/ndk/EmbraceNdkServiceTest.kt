@@ -365,7 +365,6 @@ internal class EmbraceNdkServiceTest {
         sharedObjectLoader.failLoad = true
         initializeService()
         verify(exactly = 0) { embraceNdkService["installSignals"]({ "null" }) }
-        verify(exactly = 0) { embraceNdkService["createCrashReportDirectory"]() }
     }
 
     @Test

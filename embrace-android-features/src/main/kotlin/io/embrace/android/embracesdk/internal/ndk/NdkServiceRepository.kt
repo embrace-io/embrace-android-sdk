@@ -33,5 +33,8 @@ interface NdkServiceRepository {
         nativeCrash: NativeCrashData?,
     )
 
+    /**
+     * Delete old native crash files when the number of files exceeds the maximum allowed
+     */
     fun cleanOldCrashFiles()
 }

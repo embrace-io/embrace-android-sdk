@@ -7,9 +7,14 @@ class FakeSharedObjectLoader(
     var failLoad: Boolean = false
 ) : SharedObjectLoader {
 
+    var throwWhenLoading = false
+
     override val loaded: AtomicBoolean = AtomicBoolean(false)
 
     override fun loadEmbraceNative(): Boolean {
+        if (throwWhenLoading) {
+            throw SecurityException()
+        }
         loaded.set(!failLoad)
         return loaded.get()
     }

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -15,8 +14,6 @@ import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
@@ -27,7 +24,6 @@ import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class EmbraceNdkService(
-    context: Context,
     private val storageService: StorageService,
     private val metadataService: MetadataService,
     private val processStateService: ProcessStateService,
@@ -42,24 +38,7 @@ internal class EmbraceNdkService(
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,
     private val handler: Handler = Handler(checkNotNull(Looper.getMainLooper())),
-    private val symbolService: SymbolService = SymbolServiceImpl(
-        context,
-        deviceArchitecture,
-        serializer,
-        logger
-    ),
-    private val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
-        sharedObjectLoader,
-        logger,
-        repository,
-        delegate,
-        serializer,
-        symbolService
-    )
-) : NdkService,
-    ProcessStateListener,
-    SymbolService by symbolService,
-    NativeCrashProcessor by processor {
+) : NdkService, ProcessStateListener {
 
     override fun initializeService(sessionIdTracker: SessionIdTracker) {
         Systrace.traceSynchronous("init-ndk-service") {

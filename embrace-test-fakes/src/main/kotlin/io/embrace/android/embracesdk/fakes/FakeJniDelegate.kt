@@ -3,6 +3,11 @@ package io.embrace.android.embracesdk.fakes
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
 
 class FakeJniDelegate : JniDelegate {
+
+    var culprit: String? = "testCulprit"
+    var signalHandlerInstalled: Boolean = false
+    var signalHandlerReinstalled = false
+
     override fun installSignalHandlers(
         reportPath: String?,
         markerFilePath: String?,
@@ -13,7 +18,7 @@ class FakeJniDelegate : JniDelegate {
         is32bit: Boolean,
         devLogging: Boolean,
     ) {
-        // do nothing
+        signalHandlerInstalled = true
     }
 
     override fun updateMetaData(metadata: String?) {
@@ -37,10 +42,11 @@ class FakeJniDelegate : JniDelegate {
     }
 
     override fun checkForOverwrittenHandlers(): String? {
-        return null
+        return culprit
     }
 
     override fun reinstallSignalHandlers(): Boolean {
+        signalHandlerReinstalled = true
         return false
     }
 }

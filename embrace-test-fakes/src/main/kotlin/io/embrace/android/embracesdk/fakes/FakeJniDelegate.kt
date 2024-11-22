@@ -37,10 +37,6 @@ class FakeJniDelegate : JniDelegate {
         return null
     }
 
-    override fun getErrors(path: String?): String? {
-        return null
-    }
-
     override fun checkForOverwrittenHandlers(): String? {
         return culprit
     }

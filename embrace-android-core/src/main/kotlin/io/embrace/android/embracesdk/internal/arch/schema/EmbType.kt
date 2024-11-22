@@ -107,17 +107,6 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
              * Native symbols used to symbolicate a native crash
              */
             val embNativeCrashSymbols: EmbraceAttributeKey = EmbraceAttributeKey("android.native_crash.symbols")
-
-            /**
-             * Errors associated with the native crash
-             */
-            val embNativeCrashErrors: EmbraceAttributeKey = EmbraceAttributeKey("android.native_crash.errors")
-
-            /**
-             * Error encountered during stack unwinding
-             */
-            val embNativeCrashUnwindError: EmbraceAttributeKey =
-                EmbraceAttributeKey("android.native_crash.unwind_error")
         }
 
         object LowPower : System("low_power")

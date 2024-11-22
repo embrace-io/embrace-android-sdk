@@ -263,9 +263,6 @@ internal class EmbraceDeliveryServiceTest {
                 null,
                 null,
                 null,
-                null,
-                null,
-                null
             )
         )
         deliveryService.sendCachedSessions({ fakeNativeCrashService }, sessionIdTracker)

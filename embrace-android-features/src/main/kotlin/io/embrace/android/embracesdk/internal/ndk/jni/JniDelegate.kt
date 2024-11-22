@@ -15,7 +15,6 @@ interface JniDelegate {
     fun updateSessionId(sessionId: String?)
     fun updateAppState(appState: String?)
     fun getCrashReport(path: String?): String?
-    fun getErrors(path: String?): String?
     fun checkForOverwrittenHandlers(): String?
     fun reinstallSignalHandlers(): Boolean
 }

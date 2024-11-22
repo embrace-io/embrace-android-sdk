@@ -16,7 +16,6 @@ class JniDelegateImpl : JniDelegate {
     external override fun updateSessionId(sessionId: String?)
     external override fun updateAppState(appState: String?)
     external override fun getCrashReport(path: String?): String?
-    external override fun getErrors(path: String?): String?
     external override fun checkForOverwrittenHandlers(): String?
     external override fun reinstallSignalHandlers(): Boolean
 }

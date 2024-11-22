@@ -127,10 +127,6 @@ void emb_termination_handler() {
     // Used to determine during the next launch if we crashed on the previous launch.
     emb_write_crash_marker_file(_emb_env, CRASH_MARKER_SOURCE_CPP_EXCEPTION);
 
-    if (_emb_env->err_fd > 0) {
-        close(_emb_env->err_fd);
-    }
-
     emb_remove_cpp_sig_handler();
     if (emb_prev_handler != nullptr) {
         emb_prev_handler();

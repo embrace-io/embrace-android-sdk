@@ -346,8 +346,6 @@ internal class EmbraceNdkServiceTest {
         val result = checkNotNull(embraceNdkService.getLatestNativeCrash())
         with(result) {
             assertNotNull(crash)
-            assertNull(map)
-            assertNull(errors)
         }
     }
 

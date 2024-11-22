@@ -91,96 +91,36 @@ internal class EmbraceNdkServiceRepositoryTest {
     }
 
     @Test
-    fun `test errorFileForCrash when file does not exist`() {
-        val mockedRepository = spyk(repository, recordPrivateCalls = true)
-        val file1: File = mockk()
-        every { file1.absolutePath } returns "path.path"
-        every { file1.exists() } returns false
-        val result = mockedRepository.errorFileForCrash(file1)
-        assertEquals(result, null)
-    }
-
-    @Test
-    fun `test errorFileForCrash when there is an error file`() {
-        val mockedRepository = spyk(repository, recordPrivateCalls = true)
-        val file1: File = mockk()
-        val file2: File = mockk()
-        every { file1.absolutePath } returns "path.path"
-        every { mockedRepository["companionFileForCrash"](file1, ".error") } returns file2
-        val result = mockedRepository.errorFileForCrash(file1)
-        assert(result != null)
-    }
-
-    @Test
-    fun `test mapFileForCrash when file does not exist`() {
-        val mockedRepository = spyk(repository, recordPrivateCalls = true)
-        val file1: File = mockk()
-        every { file1.absolutePath } returns "path.path"
-        every { file1.exists() } returns false
-        val result = mockedRepository.mapFileForCrash(file1)
-        assertEquals(result, null)
-    }
-
-    @Test
-    fun `test mapFileForCrash when there is an error file`() {
-        val mockedRepository = spyk(repository, recordPrivateCalls = true)
-        val file1: File = mockk()
-        val file2: File = mockk()
-        every { file1.absolutePath } returns "path.path"
-        every { mockedRepository["companionFileForCrash"](file1, ".map") } returns file2
-        val result = mockedRepository.mapFileForCrash(file1)
-        assert(result != null)
-    }
-
-    @Test
     fun `test deleteFiles when native crash is null`() {
         val crashFile: File = mockk()
-        val errorFile: File = mockk()
-        val mapFile: File = mockk()
 
         every { crashFile.delete() } returns false
-        every { errorFile.delete() } returns false
-        every { mapFile.delete() } returns false
         every { crashFile.absolutePath } returns "path"
-        repository.deleteFiles(crashFile, errorFile, mapFile, null)
-
-        verify { errorFile.delete() }
-        verify { mapFile.delete() }
+        repository.deleteFiles(crashFile)
+        verify { crashFile.delete() }
     }
 
     @Test
     fun `test deleteFiles when native crash is not null`() {
         val crashFile: File = mockk()
-        val errorFile: File = mockk()
-        val mapFile: File = mockk()
         val nativeCrash: NativeCrashData = mockk()
 
         every { crashFile.delete() } returns false
-        every { errorFile.delete() } returns false
-        every { mapFile.delete() } returns false
         every { crashFile.absolutePath } returns "path"
         every { nativeCrash.sessionId } returns "1"
         every { nativeCrash.nativeCrashId } returns "10"
-        repository.deleteFiles(crashFile, errorFile, mapFile, nativeCrash)
-
-        verify { errorFile.delete() }
-        verify { mapFile.delete() }
+        repository.deleteFiles(crashFile)
+        verify { crashFile.delete() }
     }
 
     @Test
     fun `test deleteFiles when native crash delete() is true`() {
         val crashFile: File = mockk()
-        val errorFile: File = mockk()
-        val mapFile: File = mockk()
 
         every { crashFile.delete() } returns true
-        every { errorFile.delete() } returns false
-        every { mapFile.delete() } returns false
         every { crashFile.absolutePath } returns "path"
 
-        repository.deleteFiles(crashFile, errorFile, mapFile, null)
+        repository.deleteFiles(crashFile)
         verify { crashFile.delete() }
-        verify { errorFile.delete() }
-        verify { mapFile.delete() }
     }
 }

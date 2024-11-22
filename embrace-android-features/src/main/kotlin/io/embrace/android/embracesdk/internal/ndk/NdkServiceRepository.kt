@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import java.io.File
 
 /**
@@ -14,24 +13,9 @@ interface NdkServiceRepository {
     fun sortNativeCrashes(byOldest: Boolean): List<File>
 
     /**
-     * Return the [File] containing errors during the processing of a given native crash
-     */
-    fun errorFileForCrash(crashFile: File): File?
-
-    /**
-     * Return the [File] containing process mapping info for a given native crash
-     */
-    fun mapFileForCrash(crashFile: File): File?
-
-    /**
      * Delete specific files used to store data about native crashes
      */
-    fun deleteFiles(
-        crashFile: File,
-        errorFile: File?,
-        mapFile: File?,
-        nativeCrash: NativeCrashData?,
-    )
+    fun deleteFiles(crashFile: File)
 
     /**
      * Delete old native crash files when the number of files exceeds the maximum allowed

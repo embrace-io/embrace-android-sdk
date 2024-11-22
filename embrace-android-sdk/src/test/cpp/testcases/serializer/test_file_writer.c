@@ -87,19 +87,8 @@ TEST read_invalid_emb_crash(void) {
     PASS();
 }
 
-TEST read_invalid_emb_errors(void) {
-    emb_error *result = emb_read_errors_from_file("foo");
-    ASSERT_EQ(NULL, result);
-    PASS();
-}
-
 TEST serialize_null_emb_crash(void) {
     ASSERT_EQ(NULL, emb_crash_to_json(NULL));
-    PASS();
-}
-
-TEST serialize_null_emb_errors(void) {
-    ASSERT_EQ(NULL, emb_errors_to_json(NULL));
     PASS();
 }
 
@@ -124,23 +113,9 @@ TEST serialize_emb_crash(void) {
     PASS();
 }
 
-TEST serialize_emb_errors(void) {
-    emb_error *errors = calloc(EMB_MAX_ERRORS, sizeof(emb_error));
-    errors[0].num = 5;
-    errors[0].context = 100;
-
-    char *json = emb_errors_to_json(errors);
-    char *expected = "[{\"n\":5,\"c\":100}]";
-    ASSERT_EQ(0, strncmp(expected, json, strlen(expected)));
-    PASS();
-}
-
 SUITE (suite_file_writer) {
     RUN_TEST(read_invalid_emb_crash);
-    RUN_TEST(read_invalid_emb_errors);
     RUN_TEST(serialize_null_emb_crash);
-    RUN_TEST(serialize_null_emb_errors);
     RUN_TEST(save_and_load_emb_crash);
     RUN_TEST(serialize_emb_crash);
-    RUN_TEST(serialize_emb_errors);
 }

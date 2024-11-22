@@ -14,9 +14,7 @@ extern "C" {
 
 bool emb_write_crash_to_file(emb_env *stack);
 emb_crash *emb_read_crash_from_file(const char *path);
-emb_error *emb_read_errors_from_file(const char *path);
 char *emb_crash_to_json(emb_crash *crash);
-char *emb_errors_to_json(emb_error *errors);
 
 #ifdef __cplusplus
 }

@@ -180,60 +180,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_getCrashRepo
     return payload_str;
 }
 
-
-JNIEXPORT jstring JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_getErrors(
-        JNIEnv *env, jobject _this, jstring _report_path) {
-    EMB_LOGDEV("Called getErrors().");
-    static pthread_mutex_t error_reader_mutex = PTHREAD_MUTEX_INITIALIZER;
-    pthread_mutex_lock(&error_reader_mutex);
-    const char *error_path = NULL;
-    emb_error *errors = NULL;
-    char *payload = NULL;
-    jstring payload_str = NULL;
-
-    error_path = (*env)->GetStringUTFChars(env, _report_path, NULL);
-    if (error_path == NULL) {
-        EMB_LOGERROR("Failed to allocate error path.");
-        goto cleanup;
-    } else {
-        EMB_LOGDEV("Loading error from %s", error_path);
-    }
-    errors = emb_read_errors_from_file(error_path);
-    if (errors != NULL) {
-        EMB_LOGDEV("Successfully read emb_error struct into memory.");
-
-        payload = emb_errors_to_json(errors);
-        if (payload == NULL) {
-            EMB_LOGERROR("failed to convert errors to JSON at %s", error_path);
-        } else {
-            EMB_LOGDEV("Serialized emb_error into JSON payload.");
-        }
-    } else {
-        EMB_LOGERROR("failed to read errors at %s", error_path);
-    }
-
-    payload_str = (*env)->NewStringUTF(env, payload);
-
-    if (payload_str != NULL) {
-        EMB_LOGDEV("Creating UTF string for payload.");
-    } else {
-        EMB_LOGDEV("Failed to create UTF string for payload.");
-    }
-
-    cleanup:
-    pthread_mutex_unlock(&error_reader_mutex);
-    if (errors != NULL) {
-        free(errors);
-    }
-    if (payload != NULL) {
-        free(payload);
-    }
-    emb_jni_release_string_utf_chars(env, _report_path, error_path);
-
-    return payload_str;
-}
-
 JNIEXPORT jboolean JNICALL
 Java_io_embrace_android_embracesdk_internal_anr_ndk_NativeThreadSamplerNdkDelegate_setupNativeThreadSampler(
         JNIEnv *env,

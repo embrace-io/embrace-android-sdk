@@ -110,7 +110,6 @@ static void emb_sample_target_thread(siginfo_t *info, void *user_context, emb_sa
             break;
         default:
             sample->result = EMB_UNKNOWN_UNWIND_TYPE;
-            emb_log_last_error(env, EMB_UNKNOWN_UNWIND_TYPE, unwind_type);
     }
 
     // check we captured something sensible.

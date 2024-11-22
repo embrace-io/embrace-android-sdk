@@ -56,11 +56,8 @@ internal class ResurrectionFeatureTest {
                         timestamp = lastHeartbeatTimeMs,
                         appState = "foreground",
                         metadata = null,
-                        unwindError = null,
                         crash = "somebinary",
                         symbols = null,
-                        errors = null,
-                        map = null
                     )
                 )
             },

@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.FakeSessionEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.internal.DeviceArchitecture
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSource
@@ -33,15 +32,18 @@ class FakePayloadSourceModule(
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource(),
 ) : PayloadSourceModule {
 
+    private val envelopeResourceSource = FakeEnvelopeResourceSource()
+    private val envelopeMetadataSource = FakeEnvelopeMetadataSource()
+
     override val sessionEnvelopeSource: SessionEnvelopeSource = FakeSessionEnvelopeSource(
-        FakeEnvelopeMetadataSource(),
-        FakeEnvelopeResourceSource(),
+        envelopeMetadataSource,
+        envelopeResourceSource,
         sessionPayloadSource
     )
 
-    override val logEnvelopeSource: LogEnvelopeSource = FakeLogEnvelopeSource(
-        FakeEnvelopeMetadataSource(),
-        FakeEnvelopeResourceSource(),
+    override val logEnvelopeSource: FakeLogEnvelopeSource = FakeLogEnvelopeSource(
+        envelopeMetadataSource,
+        envelopeResourceSource,
         logPayloadSource
     )
 }

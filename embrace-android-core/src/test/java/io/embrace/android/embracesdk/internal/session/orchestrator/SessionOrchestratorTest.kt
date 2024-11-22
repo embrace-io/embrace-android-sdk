@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
+import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.FakeMemoryCleanerService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -19,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.FakeV2PayloadCollator
 import io.embrace.android.embracesdk.fakes.behavior.FakeSessionBehavior
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.DataCaptureOrchestrator
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceState
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
@@ -48,6 +50,7 @@ internal class SessionOrchestratorTest {
     private lateinit var orchestrator: SessionOrchestratorImpl
     private lateinit var payloadFactory: PayloadFactoryImpl
     private lateinit var payloadCollator: FakeV2PayloadCollator
+    private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
@@ -84,6 +87,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
         assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -96,6 +100,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadCollator.baCount.get())
         assertEquals(sessionIdTracker.sessionData?.id, currentSessionSpan.getSessionId())
         assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
     }
 
@@ -113,6 +118,7 @@ internal class SessionOrchestratorTest {
             endTimeMs = foregroundTime,
             endType = LifeEventType.BKGND_STATE
         )
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
@@ -128,6 +134,7 @@ internal class SessionOrchestratorTest {
             endTimeMs = backgroundTime,
             endType = LifeEventType.STATE
         )
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
@@ -191,6 +198,7 @@ internal class SessionOrchestratorTest {
             endTimeMs = endTimeMs,
             endType = LifeEventType.MANUAL
         )
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
@@ -200,6 +208,38 @@ internal class SessionOrchestratorTest {
         orchestrator.endSessionWithManual(true)
         assertEquals(1, memoryCleanerService.callCount)
         assertTrue(store.storedSessionPayloads.isEmpty())
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
+    }
+
+    @Test
+    fun `backgrounding with background activity enabled does not cache empty crash envelope`() {
+        createOrchestrator(false)
+        orchestrator.onBackground(orchestratorStartTimeMs)
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
+    }
+
+    @Test
+    fun `backgrounding with background activity disabled caches empty crash envelope`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
+            )
+        )
+        createOrchestrator(false)
+        orchestrator.onBackground(orchestratorStartTimeMs)
+        assertEquals(1, store.cachedEmptyCrashPayloads.size)
+    }
+
+    @Test
+    fun `foregrounding with background activity disabled does not cache empty crash envelope`() {
+        configService = FakeConfigService(
+            backgroundActivityBehavior = createBackgroundActivityBehavior(
+                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 0f))
+            )
+        )
+        createOrchestrator(true)
+        orchestrator.onForeground(false, orchestratorStartTimeMs)
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
@@ -250,7 +290,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `ending session manually when no session exists doesn not start a new session`() {
+    fun `ending session manually when no session exists does not start a new session`() {
         configService = FakeConfigService()
         createOrchestrator(true)
         clock.tick(1000)
@@ -260,26 +300,18 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `end with crash in background`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            )
-        )
         createOrchestrator(true)
         orchestrator.handleCrash("crashId")
         assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
     fun `end with crash in foreground`() {
-        configService = FakeConfigService(
-            backgroundActivityBehavior = createBackgroundActivityBehavior(
-                remoteCfg = RemoteConfig(backgroundActivityConfig = BackgroundActivityRemoteConfig(threshold = 100f))
-            )
-        )
         createOrchestrator(false)
         orchestrator.handleCrash("crashId")
         assertEquals("crashId", currentSessionSpan.getAttribute(embCrashId.name))
+        assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
 
     @Test
@@ -359,8 +391,11 @@ internal class SessionOrchestratorTest {
         processStateService = FakeProcessStateService(background)
         currentSessionSpan = FakeCurrentSessionSpan(clock).apply { initializeService(clock.now()) }
         payloadCollator = FakeV2PayloadCollator(currentSessionSpan = currentSessionSpan)
+        val payloadSourceModule = FakePayloadSourceModule()
+        logEnvelopeSource = payloadSourceModule.logEnvelopeSource
         payloadFactory = PayloadFactoryImpl(
             payloadMessageCollator = payloadCollator,
+            logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
             logger = logger
         )

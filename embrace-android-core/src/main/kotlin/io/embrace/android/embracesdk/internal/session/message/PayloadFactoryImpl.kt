@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LifeEventType
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
@@ -12,6 +14,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionSnapsh
 
 internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
+    private val logEnvelopeSource: LogEnvelopeSource,
     private val configService: ConfigService,
     private val logger: EmbLogger,
 ) : PayloadFactory {
@@ -72,6 +75,10 @@ internal class PayloadFactoryImpl(
                 continueMonitoring = true,
             )
         )
+    }
+
+    override fun createEmptyLogEnvelope(): Envelope<LogPayload> {
+        return logEnvelopeSource.getEmptySingleLogEnvelope()
     }
 
     private fun startSessionWithState(timestamp: Long, coldStart: Boolean): SessionZygote {

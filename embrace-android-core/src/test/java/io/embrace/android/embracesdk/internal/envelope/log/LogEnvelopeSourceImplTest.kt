@@ -7,32 +7,48 @@ import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.internal.logs.LogRequest
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 internal class LogEnvelopeSourceImplTest {
 
-    private val metadataSource = FakeEnvelopeMetadataSource()
-    private val resourceSource = FakeEnvelopeResourceSource()
-    private val logSource = FakeLogPayloadSource()
-    private val source = LogEnvelopeSourceImpl(
-        metadataSource,
-        resourceSource,
-        logSource,
-    )
+    private lateinit var metadataSource: FakeEnvelopeMetadataSource
+    private lateinit var resourceSource: FakeEnvelopeResourceSource
+    private lateinit var logSource: FakeLogPayloadSource
+    private lateinit var logEnvelopeSource: LogEnvelopeSourceImpl
+
+    @Before
+    fun setup() {
+        metadataSource = FakeEnvelopeMetadataSource()
+        resourceSource = FakeEnvelopeResourceSource()
+        logSource = FakeLogPayloadSource()
+        logEnvelopeSource = LogEnvelopeSourceImpl(
+            metadataSource,
+            resourceSource,
+            logSource,
+        )
+    }
 
     @Test
     fun getBatchedLogEnvelope() {
-        val payload = source.getBatchedLogEnvelope()
-        assertEquals(metadataSource.metadata, payload.metadata)
-        assertEquals(resourceSource.resource, payload.resource)
-        assertEquals(logSource.getBatchedLogPayload(), payload.data)
-        assertEquals("logs", payload.type)
-        assertEquals("0.1.0", payload.version)
+        logSource.singleLogPayloadsSource = mutableListOf<LogRequest<LogPayload>>().apply {
+            repeat(5) {
+                add(LogRequest(LogPayload(listOf(sendImmediatelyLog.copy(body = "$it")))))
+            }
+        }
+        with(logEnvelopeSource.getBatchedLogEnvelope()) {
+            assertEquals(metadataSource.metadata, metadata)
+            assertEquals(resourceSource.resource, resource)
+            assertEquals(logSource.getBatchedLogPayload(), data)
+            assertEquals("logs", type)
+            assertEquals("0.1.0", version)
+        }
     }
 
     @Test
     fun getSingleLogEnvelopes() {
-        with(source.getSingleLogEnvelopes().single().payload) {
+        with(logEnvelopeSource.getSingleLogEnvelopes().single().payload) {
             assertEquals(metadataSource.metadata, metadata)
             assertEquals(resourceSource.resource, resource)
             assertEquals(logSource.getSingleLogPayloads().single().payload, data)
@@ -42,19 +58,13 @@ internal class LogEnvelopeSourceImplTest {
     }
 
     @Test
-    fun `check maximum number of envelopes returned`() {
-        val fakeLogPayloadSource = FakeLogPayloadSource()
-        val logRequests = mutableListOf<LogRequest<LogPayload>>()
-        repeat(5) {
-            logRequests.add(LogRequest(LogPayload(listOf(sendImmediatelyLog.copy(body = "$it")))))
+    fun `check empty log envelope`() {
+        with(logEnvelopeSource.getEmptySingleLogEnvelope()) {
+            assertEquals(metadataSource.metadata, metadata)
+            assertEquals(resourceSource.resource, resource)
+            assertTrue(checkNotNull(data.logs).isEmpty())
+            assertEquals("logs", type)
+            assertEquals("0.1.0", version)
         }
-
-        fakeLogPayloadSource.singleLogPayloadsSource = logRequests
-        val maxedOutSource = LogEnvelopeSourceImpl(
-            metadataSource,
-            resourceSource,
-            fakeLogPayloadSource,
-        )
-        assertEquals(5, maxedOutSource.getSingleLogEnvelopes().size)
     }
 }

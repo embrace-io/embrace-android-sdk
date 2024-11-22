@@ -51,6 +51,7 @@ internal class SessionOrchestrationModuleImpl(
     override val payloadFactory: PayloadFactory by singleton {
         PayloadFactoryImpl(
             Systrace.traceSynchronous("payloadMessageCollator") { payloadMessageCollator },
+            Systrace.traceSynchronous("logEnvelopeSource") { payloadSourceModule.logEnvelopeSource },
             Systrace.traceSynchronous("configService") { configModule.configService },
             initModule.logger
         )

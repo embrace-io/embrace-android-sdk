@@ -47,8 +47,8 @@ internal class PayloadResurrectionServiceImpl(
 
         cacheStorageService
             .getUndeliveredPayloads()
-            .forEach { deadSessionMetadata ->
-                deadSessionMetadata.sendResurrectedPayload(nativeCrashes::get)
+            .forEach { deadProcessPayloadMetadata ->
+                deadProcessPayloadMetadata.processUndeliveredPayload(nativeCrashes::get)
             }
         nativeCrashService?.deleteAllNativeCrashes()
     }
@@ -57,7 +57,7 @@ internal class PayloadResurrectionServiceImpl(
      * Load and modify the given incomplete payload envelope and send the result to the [IntakeService] for delivery.
      * Resurrected payloads sent to the [IntakeService] will be deleted.
      */
-    private fun StoredTelemetryMetadata.sendResurrectedPayload(nativeCrashProvider: (String) -> NativeCrashData?) {
+    private fun StoredTelemetryMetadata.processUndeliveredPayload(nativeCrashProvider: (String) -> NativeCrashData?) {
         val result = runCatching {
             val resurrectedPayload = when (envelopeType) {
                 SupportedEnvelopeType.SESSION -> {
@@ -75,7 +75,6 @@ internal class PayloadResurrectionServiceImpl(
                             "Session resurrection failed. Payload does not contain exactly one session span."
                         )
                 }
-
                 else -> null
             }
 

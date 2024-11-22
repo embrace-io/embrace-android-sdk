@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 
 class IntakeServiceImpl(
@@ -23,8 +24,8 @@ class IntakeServiceImpl(
     private val shutdownTimeoutMs: Long = 3000,
 ) : IntakeService {
 
-    private var lastSessionCacheAttempt: Future<*>? = null
-    private var lastCacheSessionRef: StoredTelemetryMetadata? = null
+    private var cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
+    private var cacheReferences: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
 
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)
@@ -37,9 +38,9 @@ class IntakeServiceImpl(
         }
 
         // cancel any cache attempts that are already pending to avoid unnecessary I/O.
-        if (!metadata.complete && metadata.envelopeType == SupportedEnvelopeType.SESSION) {
-            val prev = lastSessionCacheAttempt
-            lastSessionCacheAttempt = future
+        if (!metadata.complete) {
+            val prev = cachingTasks[metadata.envelopeType]
+            cachingTasks[metadata.envelopeType] = future
             prev?.cancel(false)
         }
     }
@@ -56,24 +57,33 @@ class IntakeServiceImpl(
             service.store(metadata) { stream ->
                 serializer.toJson(intake, metadata.envelopeType.serializedType, stream)
             }
-            val lastCachedSession = lastCacheSessionRef
+            val lastReference = cacheReferences[metadata.envelopeType]
 
             if (metadata.complete) {
                 schedulingService.onPayloadIntake()
                 deliveryTracer?.onPayloadIntake(metadata)
-            } else if (metadata.envelopeType == SupportedEnvelopeType.SESSION) {
-                lastCacheSessionRef = metadata
+            } else {
+                cacheReferences[metadata.envelopeType] = metadata
+                if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
+                    logger.trackInternalError(
+                        InternalErrorType.INTAKE_UNEXPECTED_TYPE,
+                        IllegalStateException("Unexpected envelope type cache attempt: ${metadata.envelopeType}"),
+                    )
+                }
             }
 
-            // If the intake was for a session payload, delete the last cached session if it exists.
-            // There should only ever be one cached session at one time.
-            // If more than one thing is being cached, consider refactoring this so the clean up is managed
-            // by the caching component.
-            if (metadata.envelopeType == SupportedEnvelopeType.SESSION && lastCachedSession != null) {
-                cacheStorageService.delete(lastCachedSession)
+            // Clean up any previously cached payload of the current type.
+            // If the newly saved payload is complete, the cached copy is no longer needed. If it's a cache attempt,
+            // the old copy is stale. Either way, it should be deleted.
+            lastReference?.let {
+                cacheStorageService.delete(it)
             }
         } catch (exc: Throwable) {
             logger.trackInternalError(InternalErrorType.INTAKE_FAIL, exc)
         }
+    }
+
+    private companion object {
+        private val cacheableEnvelopeTypes = listOf(SupportedEnvelopeType.SESSION, SupportedEnvelopeType.CRASH)
     }
 }

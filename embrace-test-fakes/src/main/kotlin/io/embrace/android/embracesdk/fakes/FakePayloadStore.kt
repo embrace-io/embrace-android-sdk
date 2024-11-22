@@ -14,6 +14,7 @@ class FakePayloadStore(
     val storedSessionPayloads = mutableListOf<Pair<Envelope<SessionPayload>, TransitionType>>()
     val storedLogPayloads = mutableListOf<Pair<Envelope<LogPayload>, Boolean>>()
     val cachedSessionPayloads = mutableListOf<Envelope<SessionPayload>>()
+    val cachedEmptyCrashPayloads = mutableListOf<Envelope<LogPayload>>()
     var crashCount: Int = 0
 
     override fun storeSessionPayload(
@@ -30,6 +31,10 @@ class FakePayloadStore(
 
     override fun storeLogPayload(envelope: Envelope<LogPayload>, attemptImmediateRequest: Boolean) {
         storedLogPayloads.add(Pair(envelope, attemptImmediateRequest))
+    }
+
+    override fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>) {
+        cachedEmptyCrashPayloads.add(envelope)
     }
 
     override fun handleCrash(crashId: String) {

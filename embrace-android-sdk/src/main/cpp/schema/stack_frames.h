@@ -46,14 +46,6 @@
 #define kEMBMaxExceptionMessageSize 256
 #endif
 
-#ifndef EMB_APP_DATA_SIZE
-#define EMB_APP_DATA_SIZE 128
-#endif
-
-#ifndef EMB_DEVICE_META_DATA_SIZE
-#define EMB_DEVICE_META_DATA_SIZE 2048
-#endif
-
 #ifndef EMB_REPORT_ID_SIZE
 #define EMB_REPORT_ID_SIZE 256
 #endif
@@ -108,8 +100,6 @@ typedef struct {
     int unhandled_count;
     char session_id[EMB_SESSION_ID_SIZE];
     char report_id[EMB_REPORT_ID_SIZE];
-    char meta_data[EMB_DEVICE_META_DATA_SIZE];
-    char app_state[EMB_APP_DATA_SIZE];
     int64_t crash_ts;
     int64_t start_ts;
     int sig_code;

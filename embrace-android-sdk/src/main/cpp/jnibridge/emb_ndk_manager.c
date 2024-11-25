@@ -54,13 +54,10 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSigna
     EMB_LOGDEV("unwinder args: apiLevel=%d, 32bit=%d", api_level, is_32bit);
 
     EMB_LOGDEV("Setting up initial state.");
-    snprintf(__emb_env->crash.meta_data, EMB_DEVICE_META_DATA_SIZE, "%s", "{}");
     const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
     snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
     const char *report_id = (*env)->GetStringUTFChars(env, _report_id, 0);
     snprintf(__emb_env->crash.report_id, EMB_REPORT_ID_SIZE, "%s", report_id);
-    const char *app_state = (*env)->GetStringUTFChars(env, _app_state, 0);
-    snprintf(__emb_env->crash.app_state, EMB_APP_DATA_SIZE, "%s", app_state);
 
     EMB_LOGDEV("Setting up base path.");
     const char *base_path = (*env)->GetStringUTFChars(env, _base_path, 0);
@@ -99,31 +96,21 @@ JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateMetaData(JNIEnv *env,
                                                                                jobject thiz,
                                                                                jstring _device_meta_data) {
-    const char *device_meta_data = (*env)->GetStringUTFChars(env, _device_meta_data, 0);
-
-    if (strlen(device_meta_data) >= EMB_DEVICE_META_DATA_SIZE) {
-        EMB_LOGWARN("Failed to update metadata: too large");
-        return;
-    }
-
-    snprintf(__emb_env->crash.meta_data, EMB_DEVICE_META_DATA_SIZE, "%s", device_meta_data);
+    // do nothing
 }
 
 JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateSessionId(JNIEnv *env,
                                                                                 jobject thiz,
                                                                                 jstring _session_id) {
-    const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
-    snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
-    emb_set_report_paths(__emb_env, session_id);
+    // do nothing
 }
 
 JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateAppState(JNIEnv *env,
                                                                                jobject thiz,
                                                                                jstring _app_state) {
-    const char *app_state = (*env)->GetStringUTFChars(env, _app_state, 0);
-    snprintf(__emb_env->crash.app_state, EMB_APP_DATA_SIZE, "%s", app_state);
+    // do nothing
 }
 
 JNIEXPORT jstring JNICALL

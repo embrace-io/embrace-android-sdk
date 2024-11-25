@@ -186,8 +186,7 @@ internal class DeliveryModuleImpl(
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 initModule.clock,
-                initModule.logger,
-                deliveryTracer
+                initModule.logger
             )
         }
     }

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.ndk
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNdkService
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -39,7 +39,7 @@ import org.junit.Test
 internal class NativeCrashDataSourceImplTest {
 
     private lateinit var sessionPropertiesService: SessionPropertiesService
-    private lateinit var fakeNdkService: FakeNdkService
+    private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
@@ -55,7 +55,7 @@ internal class NativeCrashDataSourceImplTest {
     @Before
     fun setUp() {
         sessionPropertiesService = FakeSessionPropertiesService()
-        fakeNdkService = FakeNdkService()
+        crashProcessor = FakeNativeCrashProcessor()
         preferencesService = FakePreferenceService()
         logger = EmbLoggerImpl()
         sessionIdTracker = FakeSessionIdTracker().apply { setActiveSession("currentSessionId", true) }
@@ -73,7 +73,7 @@ internal class NativeCrashDataSourceImplTest {
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             sessionPropertiesService = sessionPropertiesService,
-            ndkService = fakeNdkService,
+            nativeCrashProcessor = crashProcessor,
             preferencesService = preferencesService,
             logWriter = logWriter,
             configService = configService,
@@ -84,7 +84,7 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent when there is one to be found`() {
-        fakeNdkService.addNativeCrashData(testNativeCrashData)
+        crashProcessor.addNativeCrashData(testNativeCrashData)
         assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
 
         with(otelLogger.builders.single()) {
@@ -106,7 +106,7 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent without attributes that are null`() {
-        fakeNdkService.addNativeCrashData(
+        crashProcessor.addNativeCrashData(
             NativeCrashData(
                 nativeCrashId = "nativeCrashId",
                 sessionId = "null",
@@ -132,7 +132,7 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent without attributes that are blankish`() {
-        fakeNdkService.addNativeCrashData(
+        crashProcessor.addNativeCrashData(
             NativeCrashData(
                 nativeCrashId = "nativeCrashId",
                 sessionId = "",

@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.os.Build
 import android.os.Handler
-import android.util.Base64
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
@@ -42,8 +40,6 @@ import io.mockk.verifyOrder
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Test
@@ -113,7 +109,6 @@ internal class EmbraceNdkServiceTest {
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         sessionIdTracker = FakeSessionIdTracker()
-        mockNativeSymbols()
     }
 
     @After
@@ -133,7 +128,6 @@ internal class EmbraceNdkServiceTest {
     private fun initializeService() {
         embraceNdkService = spyk(
             EmbraceNdkService(
-                context,
                 storageManager,
                 metadataService,
                 processStateService,
@@ -288,77 +282,6 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test getLatestNativeCrash does nothing if there are no matchingFiles`() {
-        initializeService()
-        val result = embraceNdkService.getLatestNativeCrash()
-        assertNull(result)
-        verify(exactly = 0) { delegate.getCrashReport(any()) }
-    }
-
-    @Test
-    fun `test getSymbolsForCurrentArch`() {
-        mockNativeSymbols()
-        initializeService()
-
-        val result = embraceNdkService.symbolsForCurrentArch
-        assert(result != null)
-        assert(result?.containsKey("symbol1") ?: false)
-        assert(result?.getOrDefault("symbol1", "") == "test")
-    }
-
-    @Test
-    fun `test getLatestNativeCrash catches an exception if _getCrashReport returns an empty string`() {
-        repository.addCrashFiles(File.createTempFile("test", "test"))
-        initializeService()
-        val crashData = embraceNdkService.getLatestNativeCrash()
-        assertNull(crashData)
-    }
-
-    @Test
-    fun `test getLatestNativeCrash catches an exception if _getCrashReport returns invalid json syntax`() {
-        repository.addCrashFiles(File.createTempFile("test", "test"))
-
-        val json = "{\n" +
-            "  \"sid\": [\n" +
-            "    {\n" +
-            "    }\n" +
-            "  ]\n" +
-            "}"
-        every { delegate.getCrashReport(any()) } returns json
-
-        initializeService()
-        val crashData = embraceNdkService.getLatestNativeCrash()
-        assertNull(crashData)
-    }
-
-    @Test
-    fun `test getLatestNativeCrash when a native crash was captured`() {
-        repository.addCrashFiles(
-            nativeCrashFile = File.createTempFile("test", "crash-test")
-        )
-        every { delegate.getCrashReport(any()) } returns getNativeCrashRaw()
-
-        configService.appFramework = AppFramework.UNITY
-
-        initializeService()
-        mockNativeSymbols()
-
-        val result = checkNotNull(embraceNdkService.getLatestNativeCrash())
-        with(result) {
-            assertNotNull(crash)
-        }
-    }
-
-    @Test
-    fun `test getLatestNativeCrash when there is no native crash does not execute crash files logic`() {
-        configService.appFramework = AppFramework.UNITY
-        initializeService()
-
-        val result = embraceNdkService.getLatestNativeCrash()
-        assertNull(result)
-    }
-
-    @Test
     fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
         sharedObjectLoader.failLoad = true
         initializeService()
@@ -370,26 +293,6 @@ internal class EmbraceNdkServiceTest {
         blockableExecutorService.blockingMode = true
         initializeService()
         assertNativeSignalHandlerInstalled()
-    }
-
-    @Test
-    fun `getNativeCrashes returns all the crashes in the repository and doesn't invoke delete`() {
-        every { delegate.getCrashReport(any()) } returns getNativeCrashRaw()
-        initializeService()
-        repository.addCrashFiles(File.createTempFile("file1", "tmp"))
-        repository.addCrashFiles(File.createTempFile("file2", "temp"))
-        assertEquals(2, embraceNdkService.getNativeCrashes().size)
-        assertEquals(2, embraceNdkService.getNativeCrashes().size)
-    }
-
-    @Test
-    fun `getLatestNativeCrash returns only one crash even if there are many and deletes them all`() {
-        every { delegate.getCrashReport(any()) } returns getNativeCrashRaw()
-        initializeService()
-        repository.addCrashFiles(File.createTempFile("file1", "tmp"))
-        repository.addCrashFiles(File.createTempFile("file2", "temp"))
-        assertNotNull(embraceNdkService.getLatestNativeCrash())
-        assertEquals(0, embraceNdkService.getNativeCrashes().size)
     }
 
     private fun assertNativeSignalHandlerInstalled() {
@@ -405,31 +308,5 @@ internal class EmbraceNdkServiceTest {
                 any()
             )
         }
-    }
-
-    private fun getNativeCrashRaw() = ResourceReader.readResourceAsText("native_crash_raw.txt")
-
-    private fun mockNativeSymbols() {
-        mockkStatic(Base64::class)
-        val resourceId = 10
-        val nativeSymbolsJson = "{\"symbols\":{\"arm64-v8a\":{\"symbol1\":\"test\"}}}"
-
-        every { context.resources } returns resources
-        every { context.packageName } returns "package-name"
-        every { resources.getString(resourceId) } returns "result"
-        every {
-            resources.getIdentifier(
-                "emb_ndk_symbols",
-                "string",
-                "package-name"
-            )
-        } returns resourceId
-        every { resources.getString(resourceId) } returns nativeSymbolsJson
-        every {
-            Base64.decode(
-                nativeSymbolsJson,
-                Base64.DEFAULT
-            )
-        } returns nativeSymbolsJson.encodeToByteArray()
     }
 }

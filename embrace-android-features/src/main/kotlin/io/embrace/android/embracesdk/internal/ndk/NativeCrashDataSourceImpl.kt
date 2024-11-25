@@ -20,7 +20,7 @@ import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class NativeCrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
-    private val ndkService: NdkService,
+    private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
@@ -32,12 +32,12 @@ internal class NativeCrashDataSourceImpl(
     limitStrategy = NoopLimitStrategy,
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {
-        return ndkService.getLatestNativeCrash()?.apply {
+        return nativeCrashProcessor.getLatestNativeCrash()?.apply {
             sendNativeCrash(this)
         }
     }
 
-    override fun getNativeCrashes(): List<NativeCrashData> = ndkService.getNativeCrashes()
+    override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashProcessor.getNativeCrashes()
 
     override fun sendNativeCrash(nativeCrash: NativeCrashData) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
@@ -95,6 +95,6 @@ internal class NativeCrashDataSourceImpl(
     }
 
     override fun deleteAllNativeCrashes() {
-        ndkService.deleteAllNativeCrashes()
+        nativeCrashProcessor.deleteAllNativeCrashes()
     }
 }

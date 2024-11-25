@@ -117,7 +117,6 @@ internal class PayloadSourceModuleImpl(
         Systrace.traceSynchronous("metadata-service-init") {
             EmbraceMetadataService(
                 lazy { resourceSource },
-                metadataSource,
                 coreModule.context,
                 lazy { systemServiceModule.storageManager },
                 configModule.configService,

@@ -252,8 +252,6 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashId = nativeCrashId,
         sessionId = sessionId,
         timestamp = 0L,
-        appState = null,
-        metadata = null,
         crash = null,
         symbols = null,
     )

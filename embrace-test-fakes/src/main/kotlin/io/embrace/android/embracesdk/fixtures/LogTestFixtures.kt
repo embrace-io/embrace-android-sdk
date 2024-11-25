@@ -45,8 +45,6 @@ val testNativeCrashData: NativeCrashData = NativeCrashData(
     nativeCrashId = "nativeCrashId",
     sessionId = "sessionId",
     timestamp = 1700000000000,
-    appState = "background",
-    metadata = null,
     crash = "base64binarystring",
     symbols = mapOf("key" to "value"),
 )

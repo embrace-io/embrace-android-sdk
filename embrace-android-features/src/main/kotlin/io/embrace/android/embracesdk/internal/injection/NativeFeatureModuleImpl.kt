@@ -60,7 +60,6 @@ internal class NativeFeatureModuleImpl(
         Systrace.traceSynchronous("ndk-service-init") {
             EmbraceNdkService(
                 storageModule.storageService,
-                payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
                 configModule.configService,
                 essentialServiceModule.userService,
@@ -68,9 +67,7 @@ internal class NativeFeatureModuleImpl(
                 nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
                 delegate,
-                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
-                initModule.jsonSerializer,
             )
         }
     }

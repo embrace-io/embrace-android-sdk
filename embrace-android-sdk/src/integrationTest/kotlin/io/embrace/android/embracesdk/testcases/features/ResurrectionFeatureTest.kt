@@ -54,8 +54,6 @@ internal class ResurrectionFeatureTest {
                         nativeCrashId = "fake-native-crash-id",
                         sessionId = deadSessionEnvelope.getSessionId(),
                         timestamp = lastHeartbeatTimeMs,
-                        appState = "foreground",
-                        metadata = null,
                         crash = "somebinary",
                         symbols = null,
                     )

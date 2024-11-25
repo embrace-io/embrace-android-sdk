@@ -91,7 +91,6 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals(1, emitCalled)
             assertEquals(testNativeCrashData.timestamp, timestampEpochNanos.nanosToMillis())
             assertEquals(0, observedTimestampEpochNanos.nanosToMillis())
-            assertEquals(testNativeCrashData.appState, attributes.getAttribute(embState))
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
@@ -111,8 +110,6 @@ internal class NativeCrashDataSourceImplTest {
                 nativeCrashId = "nativeCrashId",
                 sessionId = "null",
                 timestamp = 1700000000000,
-                appState = null,
-                metadata = null,
                 crash = null,
                 symbols = null,
             )
@@ -137,8 +134,6 @@ internal class NativeCrashDataSourceImplTest {
                 nativeCrashId = "nativeCrashId",
                 sessionId = "",
                 timestamp = 1700000000000,
-                appState = "",
-                metadata = null,
                 crash = "",
                 symbols = emptyMap(),
             )

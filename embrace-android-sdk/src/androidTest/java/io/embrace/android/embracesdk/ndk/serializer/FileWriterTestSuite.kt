@@ -17,6 +17,6 @@ internal class FileWriterTestSuite : NativeTestSuite() {
         val expectedJson = stream.bufferedReader().readText()
 
         val file = File.createTempFile("test", "txt")
-        runNativeTestSuite { run(file.absolutePath, expectedJson) }
+        runNativeTestSuite { run(file.absolutePath, expectedJson.trim()) }
     }
 }

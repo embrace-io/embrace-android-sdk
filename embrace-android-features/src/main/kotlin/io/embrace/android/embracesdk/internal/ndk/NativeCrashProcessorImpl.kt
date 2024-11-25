@@ -30,33 +30,34 @@ internal class NativeCrashProcessorImpl(
     private fun getAllNativeCrashes(
         cleanup: CleanupFunction? = null,
     ): List<NativeCrashData> {
-        val nativeCrashes = mutableListOf<NativeCrashData>()
-        if (sharedObjectLoader.loaded.get()) {
-            val matchingFiles = repository.sortNativeCrashes(false)
-            for (crashFile in matchingFiles) {
-                try {
-                    val path = crashFile.path
-                    delegate.getCrashReport(path)?.let { crashRaw ->
-                        val nativeCrash = serializer.fromJson(crashRaw, NativeCrashData::class.java)
-                        nativeCrash.symbols = symbolService.symbolsForCurrentArch
-                        nativeCrashes.add(nativeCrash)
+        if (!sharedObjectLoader.loaded.get()) {
+            return emptyList()
+        }
+        val nativeCrashes = repository.sortNativeCrashes(false).mapNotNull { crashFile ->
+            try {
+                val crashReport = delegate.getCrashReport(crashFile.path)
+                if (crashReport != null) {
+                    serializer.fromJson(crashReport, NativeCrashData::class.java).apply {
+                        symbols = symbolService.symbolsForCurrentArch
                         cleanup?.invoke(crashFile)
-                    } ?: {
-                        logger.trackInternalError(
-                            type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
-                            throwable = FileNotFoundException("Failed to load crash report at $path")
-                        )
                     }
-                } catch (t: Throwable) {
-                    crashFile.delete()
+                } else {
                     logger.trackInternalError(
                         type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
-                        throwable = RuntimeException(
-                            "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                            t
-                        )
+                        throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path}")
                     )
+                    null
                 }
+            } catch (t: Throwable) {
+                crashFile.delete()
+                logger.trackInternalError(
+                    type = InternalErrorType.NATIVE_CRASH_LOAD_FAIL,
+                    throwable = RuntimeException(
+                        "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
+                        t
+                    )
+                )
+                null
             }
         }
         return nativeCrashes

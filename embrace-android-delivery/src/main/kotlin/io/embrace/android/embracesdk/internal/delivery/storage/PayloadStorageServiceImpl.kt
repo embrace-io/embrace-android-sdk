@@ -27,6 +27,10 @@ class PayloadStorageServiceImpl(
     private val logger: EmbLogger,
     private val deliveryTracer: DeliveryTracer? = null,
     private val storageLimit: Int = 500,
+    private val fileStorageService: FileStorageService = FileStorageServiceImpl(
+        outputDir,
+        logger
+    ),
 ) : PayloadStorageService {
 
     enum class OutputType(internal val dir: String) {
@@ -132,14 +136,8 @@ class PayloadStorageServiceImpl(
      * deserializing the bytes.
      */
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
-        return try {
-            metadata.asFile().inputStream().buffered().apply {
-                deliveryTracer?.onLoadPayloadAsStream(true)
-            }
-        } catch (exc: Throwable) {
-            deliveryTracer?.onLoadPayloadAsStream(false)
-            logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
-            null
+        return fileStorageService.loadPayloadAsStream(metadata).apply {
+            deliveryTracer?.onLoadPayloadAsStream(this != null)
         }
     }
 

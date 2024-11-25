@@ -32,7 +32,6 @@ internal class EmbraceNdkService(
     private val sessionPropertiesService: SessionPropertiesService,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
-    private val repository: NdkServiceRepository,
     private val delegate: JniDelegate,
     private val backgroundWorker: BackgroundWorker,
     private val deviceArchitecture: DeviceArchitecture,
@@ -47,7 +46,6 @@ internal class EmbraceNdkService(
                 userService.addUserInfoListener(::onUserInfoUpdate)
                 sessionIdTracker.addListener { updateSessionId(it ?: "") }
                 sessionPropertiesService.addChangeListener(::onSessionPropertiesUpdate)
-                repository.cleanOldCrashFiles()
             }
         }
     }

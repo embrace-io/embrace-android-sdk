@@ -15,7 +15,6 @@ internal class NativeCrashHandlerInstallerImpl(
     private val configService: ConfigService,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
-    private val repository: NdkServiceRepository,
     private val delegate: JniDelegate,
     private val backgroundWorker: BackgroundWorker,
     private val nativeInstallMessage: NativeInstallMessage,
@@ -83,6 +82,5 @@ internal class NativeCrashHandlerInstallerImpl(
                 )
             }
         }
-        backgroundWorker.submit { repository.cleanOldCrashFiles() }
     }
 }

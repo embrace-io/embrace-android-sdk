@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
-import io.embrace.android.embracesdk.fakes.FakeNdkServiceRepository
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -31,7 +30,6 @@ class NativeCrashHandlerInstallerImplTest {
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var fakeSharedObjectLoader: FakeSharedObjectLoader
     private lateinit var fakeLogger: FakeEmbLogger
-    private lateinit var fakeRepository: FakeNdkServiceRepository
     private lateinit var fakeDelegate: FakeJniDelegate
     private lateinit var fakeMainThreadHandler: FakeMainThreadHandler
 
@@ -42,7 +40,6 @@ class NativeCrashHandlerInstallerImplTest {
         fakeConfigService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(sigHandlerDetectionEnabled = true))
         fakeSharedObjectLoader = FakeSharedObjectLoader()
         fakeLogger = FakeEmbLogger(false)
-        fakeRepository = FakeNdkServiceRepository()
         fakeDelegate = FakeJniDelegate()
         fakeMainThreadHandler = FakeMainThreadHandler()
 
@@ -50,7 +47,6 @@ class NativeCrashHandlerInstallerImplTest {
             fakeConfigService,
             fakeSharedObjectLoader,
             fakeLogger,
-            fakeRepository,
             fakeDelegate,
             fakeBackgroundWorker(),
             testNativeInstallMessage,

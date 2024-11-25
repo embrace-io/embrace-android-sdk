@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNdkServiceRepository
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -77,7 +76,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var sharedObjectLoader: FakeSharedObjectLoader
     private lateinit var logger: EmbLogger
     private lateinit var delegate: JniDelegate
-    private lateinit var repository: FakeNdkServiceRepository
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
@@ -105,7 +103,6 @@ internal class EmbraceNdkServiceTest {
         sharedObjectLoader = FakeSharedObjectLoader()
         logger = EmbLoggerImpl()
         delegate = mockk(relaxed = true)
-        repository = FakeNdkServiceRepository()
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         sessionIdTracker = FakeSessionIdTracker()
@@ -136,7 +133,6 @@ internal class EmbraceNdkServiceTest {
                 sessionPropertiesService,
                 sharedObjectLoader,
                 logger,
-                repository,
                 delegate,
                 fakeBackgroundWorker(),
                 deviceArchitecture,

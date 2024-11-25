@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
-import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImpl
@@ -37,12 +36,6 @@ internal class NativeFeatureModuleImpl(
     nativeCoreModule: NativeCoreModule,
 ) : NativeFeatureModule {
 
-    private val embraceNdkServiceRepository by singleton {
-        EmbraceNdkServiceRepository(
-            storageModule.storageService
-        )
-    }
-
     private val delegate by singleton {
         JniDelegateImpl()
     }
@@ -57,10 +50,10 @@ internal class NativeFeatureModuleImpl(
     override val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
         nativeCoreModule.sharedObjectLoader,
         initModule.logger,
-        embraceNdkServiceRepository,
         delegate,
         initModule.jsonSerializer,
-        symbolService
+        symbolService,
+        storageModule.storageService
     )
 
     override val ndkService: NdkService by singleton {
@@ -74,7 +67,6 @@ internal class NativeFeatureModuleImpl(
                 essentialServiceModule.sessionPropertiesService,
                 nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
-                embraceNdkServiceRepository,
                 delegate,
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
@@ -137,7 +129,6 @@ internal class NativeFeatureModuleImpl(
                 configService = configModule.configService,
                 sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 logger = initModule.logger,
-                repository = embraceNdkServiceRepository,
                 delegate = JniDelegateImpl(),
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 nativeInstallMessage = nativeInstallMessage ?: return@singleton null,

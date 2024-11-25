@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
 
 class FakeJniDelegate : JniDelegate {
 
+    var crashRaw: String? = null
     var culprit: String? = "testCulprit"
     var signalHandlerInstalled: Boolean = false
     var signalHandlerReinstalled = false
@@ -34,11 +35,7 @@ class FakeJniDelegate : JniDelegate {
     }
 
     override fun getCrashReport(path: String?): String? {
-        return null
-    }
-
-    override fun getErrors(path: String?): String? {
-        return null
+        return crashRaw
     }
 
     override fun checkForOverwrittenHandlers(): String? {

@@ -43,6 +43,8 @@ internal class NativeFeatureModuleImplTest {
         assertNull(module.nativeThreadSamplerService)
         assertNull(module.nativeThreadSamplerInstaller)
         assertNotNull(module.nativeAnrOtelMapper)
+        assertNotNull(module.symbolService)
+        assertNotNull(module.processor)
         assertNull(module.nativeCrashService)
         assertNull(module.nativeCrashHandlerInstaller)
     }

@@ -78,7 +78,6 @@ static inline void invoke_prev_sigaction(int signum, siginfo_t *info,
 void emb_handle_signal(int signum, siginfo_t *info, void *user_context) __asyncsafe {
     emb_env *env = (emb_env *) _emb_env;
     if (env == NULL) {
-        emb_log_last_error(env, EMB_ERROR_C_SIGNAL_HANDLER_NOT_INSTALLED, 0);
         return;
     }
     if (env->currently_handling) {
@@ -115,9 +114,6 @@ void emb_handle_signal(int signum, siginfo_t *info, void *user_context) __asyncs
     // Used to determine during the next launch if we crashed on the previous launch.
     emb_write_crash_marker_file(env, CRASH_MARKER_SOURCE_SIGNAL);
 
-    if (env->err_fd > 0) {
-        close(env->err_fd);
-    }
     invoke_prev_sigaction(signum, info, user_context);
 }
 

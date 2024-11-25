@@ -14,10 +14,14 @@ import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkServiceRepository
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImpl
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessor
+import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessorImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
 import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
+import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -33,10 +37,35 @@ internal class NativeFeatureModuleImpl(
     nativeCoreModule: NativeCoreModule,
 ) : NativeFeatureModule {
 
+    private val embraceNdkServiceRepository by singleton {
+        EmbraceNdkServiceRepository(
+            storageModule.storageService
+        )
+    }
+
+    private val delegate by singleton {
+        JniDelegateImpl()
+    }
+
+    override val symbolService: SymbolService = SymbolServiceImpl(
+        coreModule.context,
+        payloadSourceModule.deviceArchitecture,
+        initModule.jsonSerializer,
+        initModule.logger
+    )
+
+    override val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
+        nativeCoreModule.sharedObjectLoader,
+        initModule.logger,
+        embraceNdkServiceRepository,
+        delegate,
+        initModule.jsonSerializer,
+        symbolService
+    )
+
     override val ndkService: NdkService by singleton {
         Systrace.traceSynchronous("ndk-service-init") {
             EmbraceNdkService(
-                coreModule.context,
                 storageModule.storageService,
                 payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
@@ -46,10 +75,10 @@ internal class NativeFeatureModuleImpl(
                 nativeCoreModule.sharedObjectLoader,
                 initModule.logger,
                 embraceNdkServiceRepository,
-                JniDelegateImpl(),
+                delegate,
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 payloadSourceModule.deviceArchitecture,
-                initModule.jsonSerializer
+                initModule.jsonSerializer,
             )
         }
     }
@@ -59,7 +88,7 @@ internal class NativeFeatureModuleImpl(
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 EmbraceNativeThreadSamplerService(
                     configService = configModule.configService,
-                    symbols = lazy { ndkService.symbolsForCurrentArch },
+                    symbols = lazy { symbolService.symbolsForCurrentArch },
                     worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
@@ -92,7 +121,7 @@ internal class NativeFeatureModuleImpl(
         } else {
             NativeCrashDataSourceImpl(
                 sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
-                ndkService = ndkService,
+                nativeCrashProcessor = processor,
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,
                 configService = configModule.configService,
@@ -139,10 +168,4 @@ internal class NativeFeatureModuleImpl(
 
     private fun nativeThreadSamplingEnabled(configService: ConfigService) =
         configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()
-
-    private val embraceNdkServiceRepository by singleton {
-        EmbraceNdkServiceRepository(
-            storageModule.storageService
-        )
-    }
 }

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.ndk
 
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.storage.NATIVE_CRASH_FILE_FOLDER
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
@@ -63,34 +62,8 @@ internal class EmbraceNdkServiceRepository(
         return matchingFiles
     }
 
-    private fun companionFileForCrash(crashFile: File, suffix: String): File? {
-        val crashFilename = crashFile.absolutePath
-        val errorFilename = crashFilename.substring(0, crashFilename.lastIndexOf('.')) + suffix
-        val errorFile = File(errorFilename)
-        return if (!errorFile.exists()) {
-            null
-        } else {
-            errorFile
-        }
-    }
-
-    override fun errorFileForCrash(crashFile: File): File? {
-        return companionFileForCrash(crashFile, NATIVE_CRASH_ERROR_FILE_SUFFIX)
-    }
-
-    override fun mapFileForCrash(crashFile: File): File? {
-        return companionFileForCrash(crashFile, NATIVE_CRASH_MAP_FILE_SUFFIX)
-    }
-
-    override fun deleteFiles(
-        crashFile: File,
-        errorFile: File?,
-        mapFile: File?,
-        nativeCrash: NativeCrashData?,
-    ) {
+    override fun deleteFiles(crashFile: File) {
         crashFile.delete()
-        errorFile?.delete()
-        mapFile?.delete()
     }
 
     override fun cleanOldCrashFiles() {
@@ -101,38 +74,12 @@ internal class EmbraceNdkServiceRepository(
                 runCatching { file.delete() }
             }
         }
-
-        // delete error files that don't have matching crash files
-        getNativeErrorFiles().filterNot { hasNativeCrashFile(it) }.forEach { it.delete() }
-
-        // delete map files that don't have matching crash files
-        getNativeMapFiles().filterNot { hasNativeCrashFile(it) }.forEach { it.delete() }
-    }
-
-    private fun getNativeErrorFiles(): Array<File> = getNativeFiles { _, name ->
-        name.startsWith(NATIVE_CRASH_FILE_PREFIX) && name.endsWith(NATIVE_CRASH_ERROR_FILE_SUFFIX)
-    }
-
-    private fun getNativeMapFiles(): Array<File> = getNativeFiles { _, name ->
-        name.startsWith(NATIVE_CRASH_FILE_PREFIX) && name.endsWith(NATIVE_CRASH_MAP_FILE_SUFFIX)
-    }
-
-    private fun hasNativeCrashFile(file: File): Boolean {
-        val crashFilename = file.absolutePath.substringBeforeLast('.') + NATIVE_CRASH_FILE_SUFFIX
-        return File(crashFilename).exists()
     }
 
     private companion object {
         const val NATIVE_CRASH_FILE_PREFIX = "emb_ndk"
         const val NATIVE_CRASH_FILE_SUFFIX = ".crash"
-        const val NATIVE_CRASH_ERROR_FILE_SUFFIX = ".error"
-        const val NATIVE_CRASH_MAP_FILE_SUFFIX = ".map"
     }
 }
 
-typealias CleanupFunction = (
-    crashFile: File,
-    errorFile: File?,
-    mapFile: File?,
-    nativeCrash: NativeCrashData?,
-) -> Unit
+typealias CleanupFunction = (crashFile: File) -> Unit

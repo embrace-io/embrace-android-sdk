@@ -52,12 +52,6 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
     }
 
     @Test
-    fun getErrorsTest() {
-        val result = delegate.getErrors("path")
-        assertEquals(null, result)
-    }
-
-    @Test
     fun checkForOverwrittenHandlersTest() {
         val result = delegate.checkForOverwrittenHandlers()
         assertEquals(null, result)

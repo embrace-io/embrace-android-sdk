@@ -95,7 +95,7 @@ interface EnabledFeatureConfig {
      *
      * sdk_config.sig_handler_detection
      */
-    fun is3rdPartySigHandlerDetectionEnabled(): Boolean = true
+    fun is3rdPartySigHandlerDetectionEnabled(): Boolean = false
 
     /**
      * Gates background activity capture

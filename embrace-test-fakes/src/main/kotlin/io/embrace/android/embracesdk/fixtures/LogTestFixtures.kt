@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embSendMode
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 
 val testLog: Log = Log(
     traceId = "ceadd56622414a06ae382e4e5a70bcf7",
@@ -48,14 +47,6 @@ val testNativeCrashData: NativeCrashData = NativeCrashData(
     timestamp = 1700000000000,
     appState = "background",
     metadata = null,
-    unwindError = 5,
     crash = "base64binarystring",
     symbols = mapOf("key" to "value"),
-    errors = listOf(
-        NativeCrashDataError(
-            6,
-            7
-        )
-    ),
-    map = null
 )

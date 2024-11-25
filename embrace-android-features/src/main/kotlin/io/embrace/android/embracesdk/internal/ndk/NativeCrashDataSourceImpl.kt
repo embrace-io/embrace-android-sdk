@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.datasource.LogDataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -14,16 +13,14 @@ import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
-import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class NativeCrashDataSourceImpl(
     private val sessionPropertiesService: SessionPropertiesService,
-    private val ndkService: NdkService,
+    private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
     private val configService: ConfigService,
@@ -35,12 +32,12 @@ internal class NativeCrashDataSourceImpl(
     limitStrategy = NoopLimitStrategy,
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {
-        return ndkService.getLatestNativeCrash()?.apply {
+        return nativeCrashProcessor.getLatestNativeCrash()?.apply {
             sendNativeCrash(this)
         }
     }
 
-    override fun getNativeCrashes(): List<NativeCrashData> = ndkService.getNativeCrashes()
+    override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashProcessor.getNativeCrashes()
 
     override fun sendNativeCrash(nativeCrash: NativeCrashData) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
@@ -76,18 +73,6 @@ internal class NativeCrashDataSourceImpl(
             )
         }
 
-        if (!nativeCrash.errors.isNullOrEmpty()) {
-            runCatching {
-                serializer.toJson(nativeCrash.errors, errorSerializerType).let { nativeErrorsJson ->
-                    crashAttributes.setAttribute(
-                        key = EmbType.System.NativeCrash.embNativeCrashErrors,
-                        value = nativeErrorsJson.toByteArray().toUTF8String(),
-                        keepBlankishValues = false,
-                    )
-                }
-            }
-        }
-
         if (!nativeCrash.symbols.isNullOrEmpty()) {
             runCatching {
                 serializer.toJson(nativeCrash.symbols, Map::class.java).let { nativeSymbolsJson ->
@@ -97,16 +82,6 @@ internal class NativeCrashDataSourceImpl(
                         keepBlankishValues = false,
                     )
                 }
-            }
-        }
-
-        if (nativeCrash.unwindError != null) {
-            runCatching {
-                crashAttributes.setAttribute(
-                    key = EmbType.System.NativeCrash.embNativeCrashUnwindError,
-                    value = nativeCrash.unwindError.toString(),
-                    keepBlankishValues = false,
-                )
             }
         }
 
@@ -120,10 +95,6 @@ internal class NativeCrashDataSourceImpl(
     }
 
     override fun deleteAllNativeCrashes() {
-        ndkService.deleteAllNativeCrashes()
-    }
-
-    private companion object {
-        private val errorSerializerType = TypeUtils.typedList(NativeCrashDataError::class)
+        nativeCrashProcessor.deleteAllNativeCrashes()
     }
 }

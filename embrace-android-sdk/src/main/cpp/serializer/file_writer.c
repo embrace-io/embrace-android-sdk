@@ -35,7 +35,6 @@ static const char *kFrameAddrKey = "fa";
 static const char *kOffsetAddrKey = "oa";
 static const char *kModuleAddrKey = "ma";
 static const char *kLineNumKey = "ln";
-static const char *kBuildIdKey = "build_id";
 static const char *kFullNameKey = "full_name";
 static const char *kFunctionNameKey = "function_name";
 static const char *kRelPcKey = "rel_pc";
@@ -50,10 +49,6 @@ static const char *kFlagsKey = "flags";
 static const char *kElfFileNotReadableKey = "elf_file_not_readable";
 static const char *kCrashKey = "crash";
 static const char *kVersionKey = "v";
-
-// error keys
-static const char *kErrNum = "n";
-static const char *kErrContext = "c";
 
 // when values are "" in our tracking struct this string will be used instead so the server knows it was intentional
 // currently sticking with ""
@@ -86,7 +81,6 @@ bool emb_build_crash_json_tree(emb_crash *crash, JSON_Object *root_object,
 bool emb_write_crash_to_file(emb_env *env) {
     int fd = open(env->report_path, O_WRONLY | O_CREAT, 0644);
     if (fd == -1) {
-        emb_log_last_error(env, EMB_ERROR_FAILED_TO_OPEN_CRASH_FILE, 0);
         return false;
     }
 
@@ -124,48 +118,6 @@ emb_crash *emb_read_crash_from_file(const char *path) {
         return NULL;
     }
     return crash;
-}
-
-emb_error *emb_read_errors_from_file(const char *path) {
-    int fd = open(path, O_RDONLY);
-    if (fd == -1) {
-        EMB_LOGERROR("failed to open native crash error file at %s", path);
-        return NULL;
-    }
-
-    size_t error_size = sizeof(emb_error);
-    emb_error *errors = calloc(EMB_MAX_ERRORS, error_size);
-    if (errors == NULL) {
-        close(fd);
-        return NULL;
-    }
-    emb_error *wp = errors;
-    int count = 0;
-
-    while (count < EMB_MAX_ERRORS) {
-        ssize_t len = read(fd, wp++, error_size);
-
-        if (len == -1) { // log the error code for more debug info.
-            EMB_LOGERROR("Encountered error reading emb_error struct. %d: %s", errno,
-                         strerror(errno));
-        }
-        if (len == 0) {
-            break;
-        }
-        if (len != error_size) {
-            EMB_LOGERROR(
-                    "exiting native crash error file read because we read %d instead of %d after %d errors",
-                    (int) len, (int) error_size, count);
-            free(errors);
-            close(fd);
-            return NULL;
-        }
-        count++;
-    }
-
-    close(fd);
-
-    return errors;
 }
 
 char *emb_crash_to_json(emb_crash *crash) {
@@ -392,58 +344,4 @@ bool emb_add_b64_value_to_json(JSON_Object *root_object, const JSON_Value *crash
     }
     free(base64_crash);
     return true;
-}
-
-char *emb_errors_to_json(emb_error *errors) {
-    if (errors == NULL) {
-        return NULL;
-    }
-    EMB_LOGDEV("Starting serialization of emb_error struct to JSON string.");
-    char *serialized_string = NULL;
-    emb_error *cur_error = errors;
-    int count = 0;
-
-    JSON_Value *errors_value = json_value_init_array();
-    if (errors_value == NULL) {
-        return NULL;
-    }
-    JSON_Array *errors_object = json_value_get_array(errors_value);
-    if (errors_object == NULL) {
-        return NULL;
-    }
-
-    while (count < EMB_MAX_ERRORS) {
-        // errors is calloc'd so we know that once we hit a value with zero, we are done.
-        if (cur_error->num == 0) {
-            break;
-        }
-
-        JSON_Value *error_value = json_value_init_object();
-        if (error_value == NULL) {
-            return NULL;
-        }
-        JSON_Object *error_object = json_value_get_object(error_value);
-        if (error_object == NULL) {
-            return NULL;
-        }
-
-        if (json_object_set_number(error_object, kErrNum, cur_error->num) != JSONSuccess) {
-            return NULL;
-        }
-        if (json_object_set_number(error_object, kErrContext, cur_error->context) != JSONSuccess) {
-            return NULL;
-        }
-
-        if (json_array_append_value(errors_object, error_value) != JSONSuccess) {
-            return NULL;
-        }
-
-        cur_error++;
-        count++;
-    }
-    EMB_LOGDEV("Converted %d errors.", count);
-    EMB_LOGDEV("Serializing final JSON string.");
-    serialized_string = json_serialize_to_string(errors_value);
-    json_value_free(errors_value);
-    return serialized_string;
 }

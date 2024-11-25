@@ -254,11 +254,8 @@ class PayloadResurrectionServiceImplTest {
         timestamp = 0L,
         appState = null,
         metadata = null,
-        unwindError = null,
         crash = null,
         symbols = null,
-        errors = null,
-        map = null
     )
 
     private fun assertResurrectionFailure() {

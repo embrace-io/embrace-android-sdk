@@ -3,21 +3,18 @@ package io.embrace.android.embracesdk.internal.ndk
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNdkService
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
-import io.embrace.android.embracesdk.internal.TypeUtils
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashErrors
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashUnwindError
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
@@ -25,7 +22,6 @@ import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.NativeCrashDataError
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
 import io.embrace.android.embracesdk.internal.spans.getAttribute
@@ -41,9 +37,9 @@ import org.junit.Before
 import org.junit.Test
 
 internal class NativeCrashDataSourceImplTest {
-    private val errorSerializerType = TypeUtils.typedList(NativeCrashDataError::class)
+
     private lateinit var sessionPropertiesService: SessionPropertiesService
-    private lateinit var fakeNdkService: FakeNdkService
+    private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var configService: FakeConfigService
     private lateinit var serializer: EmbraceSerializer
@@ -59,7 +55,7 @@ internal class NativeCrashDataSourceImplTest {
     @Before
     fun setUp() {
         sessionPropertiesService = FakeSessionPropertiesService()
-        fakeNdkService = FakeNdkService()
+        crashProcessor = FakeNativeCrashProcessor()
         preferencesService = FakePreferenceService()
         logger = EmbLoggerImpl()
         sessionIdTracker = FakeSessionIdTracker().apply { setActiveSession("currentSessionId", true) }
@@ -77,7 +73,7 @@ internal class NativeCrashDataSourceImplTest {
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             sessionPropertiesService = sessionPropertiesService,
-            ndkService = fakeNdkService,
+            nativeCrashProcessor = crashProcessor,
             preferencesService = preferencesService,
             logWriter = logWriter,
             configService = configService,
@@ -88,7 +84,7 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent when there is one to be found`() {
-        fakeNdkService.addNativeCrashData(testNativeCrashData)
+        crashProcessor.addNativeCrashData(testNativeCrashData)
         assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
 
         with(otelLogger.builders.single()) {
@@ -102,31 +98,23 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals("1", attributes.getAttribute(embCrashNumber))
             assertEquals(testNativeCrashData.crash, attributes.getAttribute(embNativeCrashException))
             assertEquals(
-                serializer.toJson(testNativeCrashData.errors, errorSerializerType).toByteArray().toUTF8String(),
-                attributes.getAttribute(embNativeCrashErrors)
-            )
-            assertEquals(
                 serializer.toJson(testNativeCrashData.symbols, Map::class.java).toByteArray().toUTF8String(),
                 attributes.getAttribute(embNativeCrashSymbols)
             )
-            assertEquals(testNativeCrashData.unwindError.toString(), attributes.getAttribute(embNativeCrashUnwindError))
         }
     }
 
     @Test
     fun `native crash sent without attributes that are null`() {
-        fakeNdkService.addNativeCrashData(
+        crashProcessor.addNativeCrashData(
             NativeCrashData(
                 nativeCrashId = "nativeCrashId",
                 sessionId = "null",
                 timestamp = 1700000000000,
                 appState = null,
                 metadata = null,
-                unwindError = null,
                 crash = null,
                 symbols = null,
-                errors = null,
-                map = null
             )
         )
         assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
@@ -138,26 +126,21 @@ internal class NativeCrashDataSourceImplTest {
             assertNull(attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))
             assertNull(attributes.getAttribute(embNativeCrashException))
-            assertNull(attributes.getAttribute(embNativeCrashErrors))
             assertNull(attributes.getAttribute(embNativeCrashSymbols))
-            assertNull(attributes.getAttribute(embNativeCrashUnwindError))
         }
     }
 
     @Test
     fun `native crash sent without attributes that are blankish`() {
-        fakeNdkService.addNativeCrashData(
+        crashProcessor.addNativeCrashData(
             NativeCrashData(
                 nativeCrashId = "nativeCrashId",
                 sessionId = "",
                 timestamp = 1700000000000,
                 appState = "",
                 metadata = null,
-                unwindError = null,
                 crash = "",
                 symbols = emptyMap(),
-                errors = emptyList(),
-                map = ""
             )
         )
         assertNotNull(nativeCrashDataSource.getAndSendNativeCrash())
@@ -170,9 +153,7 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals("1", attributes.getAttribute(embCrashNumber))
             assertNull(attributes.getAttribute(embState))
             assertNull(attributes.getAttribute(embNativeCrashException))
-            assertNull(attributes.getAttribute(embNativeCrashErrors))
             assertNull(attributes.getAttribute(embNativeCrashSymbols))
-            assertNull(attributes.getAttribute(embNativeCrashUnwindError))
         }
     }
 }

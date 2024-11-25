@@ -39,7 +39,7 @@ class NativeCrashHandlerInstallerImplTest {
 
     @Before
     fun setUp() {
-        fakeConfigService = FakeConfigService()
+        fakeConfigService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(sigHandlerDetectionEnabled = true))
         fakeSharedObjectLoader = FakeSharedObjectLoader()
         fakeLogger = FakeEmbLogger(false)
         fakeRepository = FakeNdkServiceRepository()

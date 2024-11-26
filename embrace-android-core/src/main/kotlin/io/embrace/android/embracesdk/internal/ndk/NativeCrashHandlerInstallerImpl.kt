@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 private const val HANDLER_CHECK_DELAY_MS = 5000L
 
-internal class NativeCrashHandlerInstallerImpl(
+class NativeCrashHandlerInstallerImpl(
     private val configService: ConfigService,
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,

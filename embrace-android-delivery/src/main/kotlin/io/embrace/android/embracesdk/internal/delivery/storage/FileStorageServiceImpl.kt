@@ -11,7 +11,7 @@ import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.RejectedExecutionException
 
-internal class FileStorageServiceImpl(
+class FileStorageServiceImpl(
     outputDir: Lazy<File>,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val logger: EmbLogger,

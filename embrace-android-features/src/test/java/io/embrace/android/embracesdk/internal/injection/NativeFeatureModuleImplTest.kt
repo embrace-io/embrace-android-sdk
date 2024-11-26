@@ -18,7 +18,6 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
 
 @RunWith(AndroidJUnit4::class)
 internal class NativeFeatureModuleImplTest {
@@ -43,8 +42,6 @@ internal class NativeFeatureModuleImplTest {
         assertNull(module.nativeThreadSamplerService)
         assertNull(module.nativeThreadSamplerInstaller)
         assertNotNull(module.nativeAnrOtelMapper)
-        assertNotNull(module.symbolService)
-        assertNotNull(module.processor)
         assertNull(module.nativeCrashService)
         assertNull(module.nativeCrashHandlerInstaller)
     }
@@ -123,7 +120,6 @@ internal class NativeFeatureModuleImplTest {
         val initModule = FakeInitModule()
         return NativeFeatureModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
             FakeStorageModule(storageService = fakeStorageService),
             fakeEssentialServiceModule,
             fakeConfigModule,

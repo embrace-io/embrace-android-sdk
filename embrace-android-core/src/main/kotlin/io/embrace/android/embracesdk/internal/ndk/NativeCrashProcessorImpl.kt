@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 import java.io.File
 import java.io.FileNotFoundException
 
-internal class NativeCrashProcessorImpl(
+class NativeCrashProcessorImpl(
     private val sharedObjectLoader: SharedObjectLoader,
     private val logger: EmbLogger,
     private val delegate: JniDelegate,

@@ -328,13 +328,17 @@ internal class ModuleInitBootstrapper(
                     }
 
                     nativeCoreModule = init(NativeCoreModule::class) {
-                        nativeCoreModuleSupplier(initModule)
+                        nativeCoreModuleSupplier(
+                            initModule,
+                            coreModule,
+                            payloadSourceModule,
+                            storageModule
+                        )
                     }
 
                     nativeFeatureModule = init(NativeFeatureModule::class) {
                         nativeFeatureModuleSupplier(
                             initModule,
-                            coreModule,
                             storageModule,
                             essentialServiceModule,
                             configModule,

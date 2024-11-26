@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 
-internal class SymbolServiceImpl(
+class SymbolServiceImpl(
     private val context: Context,
     private val deviceArchitecture: DeviceArchitecture,
     private val serializer: PlatformSerializer,

@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -19,6 +20,7 @@ class FileStorageServiceImplTest {
     private lateinit var outputDir: File
     private lateinit var service: FileStorageService
     private lateinit var logger: FakeEmbLogger
+    private lateinit var executor: BlockingScheduledExecutorService
 
     @Before
     fun setUp() {
@@ -26,26 +28,35 @@ class FileStorageServiceImplTest {
             mkdirs()
         }
         logger = FakeEmbLogger(throwOnInternalError = false)
+        executor = BlockingScheduledExecutorService()
         service = FileStorageServiceImpl(
             lazy { outputDir },
+            PriorityWorker(executor),
             logger
         )
     }
 
     @Test
     fun `load payload stream`() {
-        writePayload(fakeSessionStoredTelemetryMetadata)
-        val stream = checkNotNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
-        assertEquals(DUMMY_CONTENT, stream.bufferedReader().readText())
+        service.store(fakeSessionStoredTelemetryMetadata) {
+            it.write(DUMMY_CONTENT.toByteArray())
+        }
+
+        val storedPayload = service.getStoredPayloads().single()
+        assertEquals(fakeSessionStoredTelemetryMetadata.filename, storedPayload.filename)
+
+        service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata)?.use {
+            assertEquals(DUMMY_CONTENT, it.bufferedReader().readText())
+        }
+
+        service.delete(fakeSessionStoredTelemetryMetadata)
+        executor.queueCompletionTask()
+        assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
     }
 
     @Test
     fun `load payload stream error`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
         checkNotNull(logger.internalErrorMessages.single())
-    }
-
-    private fun writePayload(metadata: StoredTelemetryMetadata) {
-        File(outputDir, metadata.filename).writeText(DUMMY_CONTENT)
     }
 }

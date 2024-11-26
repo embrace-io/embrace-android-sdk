@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.internal.ndk
 
 import android.content.Context
 import android.content.res.Resources
-import android.os.Build
 import android.os.Handler
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -19,11 +17,9 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
-import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
@@ -35,7 +31,6 @@ import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
-import io.mockk.verifyOrder
 import org.junit.After
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
@@ -79,7 +74,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private val deviceArchitecture = FakeDeviceArchitecture()
     private val serializer = EmbraceSerializer()
 
     @Before
@@ -106,6 +100,7 @@ internal class EmbraceNdkServiceTest {
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         sessionIdTracker = FakeSessionIdTracker()
+        sharedObjectLoader.loaded.set(true)
     }
 
     @After
@@ -125,19 +120,14 @@ internal class EmbraceNdkServiceTest {
     private fun initializeService() {
         embraceNdkService = spyk(
             EmbraceNdkService(
-                storageManager,
                 metadataService,
                 processStateService,
-                configService,
                 userService,
                 sessionPropertiesService,
                 sharedObjectLoader,
-                logger,
                 delegate,
                 fakeBackgroundWorker(),
-                deviceArchitecture,
-                EmbraceSerializer(),
-                handler
+                EmbraceSerializer()
             ),
             recordPrivateCalls = true
         ).apply {
@@ -155,17 +145,7 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `failed native library loading attaches no listeners`() {
-        sharedObjectLoader.failLoad = true
-        initializeService()
-        assertEquals(0, userService.listeners.size)
-        assertEquals(0, sessionIdTracker.listeners.size)
-        assertEquals(0, sessionPropertiesService.listeners.size)
-        assertEquals(0, processStateService.listeners.size)
-    }
-
-    @Test
-    fun `test updateSessionId where installSignals was executed and isInstalled true`() {
+    fun `test updateSessionId where isInstalled true`() {
         initializeService()
         embraceNdkService.updateSessionId("sessionId")
         verify(exactly = 1) { delegate.updateSessionId("sessionId") }
@@ -195,66 +175,6 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `test initialization with ndk enabled runs installSignals and updateDeviceMetaData`() {
-        configService.appFramework = AppFramework.UNITY
-        initializeService()
-        assertEquals(1, processStateService.listeners.size)
-
-        val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
-        val markerFilePath =
-            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
-        verify(exactly = 1) {
-            delegate.installSignalHandlers(
-                reportBasePath,
-                markerFilePath,
-                "null",
-                "foreground",
-                any(),
-                Build.VERSION.SDK_INT,
-                deviceArchitecture.is32BitDevice,
-                false
-            )
-        }
-
-        val newDeviceMetaData = serializer.toJson(
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-        )
-
-        verify(exactly = 1) { delegate.updateMetaData(newDeviceMetaData) }
-    }
-
-    @Test
-    fun `test metadata is updated after installation of the signal handler`() {
-        every { Uuid.getEmbUuid() } returns "uuid"
-
-        initializeService()
-        assertEquals(1, processStateService.listeners.size)
-
-        val reportBasePath = storageManager.filesDirectory.absolutePath + "/ndk"
-        val markerFilePath =
-            storageManager.filesDirectory.absolutePath + "/" + CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME
-
-        verifyOrder {
-            delegate.installSignalHandlers(
-                reportBasePath,
-                markerFilePath,
-                "null",
-                "foreground",
-                "uuid",
-                Build.VERSION.SDK_INT,
-                deviceArchitecture.is32BitDevice,
-                false
-            )
-            delegate.updateMetaData(any())
-        }
-    }
-
-    @Test
     fun `test onUserInfoUpdate where _updateMetaData was executed and isInstalled true`() {
         initializeService()
         embraceNdkService.onUserInfoUpdate()
@@ -275,34 +195,5 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         embraceNdkService.onForeground(true, 10)
         verify(exactly = 1) { delegate.updateAppState("foreground") }
-    }
-
-    @Test
-    fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
-        sharedObjectLoader.failLoad = true
-        initializeService()
-        verify(exactly = 0) { embraceNdkService["installSignals"]({ "null" }) }
-    }
-
-    @Test
-    fun `initialization happens`() {
-        blockableExecutorService.blockingMode = true
-        initializeService()
-        assertNativeSignalHandlerInstalled()
-    }
-
-    private fun assertNativeSignalHandlerInstalled() {
-        verify(exactly = 1) {
-            delegate.installSignalHandlers(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-            )
-        }
     }
 }

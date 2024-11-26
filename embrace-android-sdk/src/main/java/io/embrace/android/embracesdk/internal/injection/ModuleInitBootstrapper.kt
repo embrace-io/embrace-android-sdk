@@ -360,6 +360,7 @@ internal class ModuleInitBootstrapper(
                         if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
                             worker.submit {
+                                nativeFeatureModule.nativeCrashHandlerInstaller?.install()
                                 ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }
                         }

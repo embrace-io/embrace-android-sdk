@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
-import android.content.Context
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.injection.SerializationAction
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.InputStream
@@ -25,29 +23,6 @@ class PayloadStorageServiceImpl(
     private val deliveryTracer: DeliveryTracer? = null,
     storageLimit: Int = 500,
 ) : PayloadStorageService {
-
-    enum class OutputType(internal val dir: String) {
-
-        /**
-         * A complete payload that is ready to send
-         */
-        PAYLOAD("embrace_payloads"),
-
-        /**
-         * An incomplete cached payload that is not ready to send
-         */
-        CACHE("embrace_cache")
-    }
-
-    constructor(
-        ctx: Context,
-        worker: PriorityWorker<StoredTelemetryMetadata>,
-        processIdProvider: () -> String,
-        outputType: OutputType,
-        logger: EmbLogger,
-        deliveryTracer: DeliveryTracer? = null,
-        storageLimit: Int = 500,
-    ) : this(createOutputDir(ctx, outputType, logger), worker, processIdProvider, logger, deliveryTracer, storageLimit)
 
     private val fileStorageService: FileStorageService = FileStorageServiceImpl(
         outputDir,
@@ -94,20 +69,5 @@ class PayloadStorageServiceImpl(
             .toList().apply {
                 deliveryTracer?.onGetUndeliveredPayloads(this)
             }
-    }
-
-    private companion object {
-        fun createOutputDir(
-            ctx: Context,
-            outputType: OutputType,
-            logger: EmbLogger,
-        ) = lazy {
-            try {
-                File(ctx.filesDir, outputType.dir).apply(File::mkdirs)
-            } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.PAYLOAD_STORAGE_FAIL, exc)
-                File(ctx.cacheDir, outputType.dir).apply(File::mkdirs)
-            }
-        }
     }
 }

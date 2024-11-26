@@ -36,6 +36,6 @@ internal class NativeCoreModuleImpl(
         delegate,
         initModule.jsonSerializer,
         symbolService,
-        storageModule.storageService
+        storageModule.storageService,
     )
 }

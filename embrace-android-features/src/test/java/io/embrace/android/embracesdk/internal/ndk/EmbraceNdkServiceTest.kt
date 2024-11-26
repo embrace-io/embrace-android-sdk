@@ -6,7 +6,6 @@ import android.os.Handler
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -15,13 +14,9 @@ import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
-import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
-import io.embrace.android.embracesdk.internal.payload.NativeCrashMetadata
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -61,7 +56,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var context: Context
     private lateinit var handler: Handler
     private lateinit var storageManager: FakeStorageService
-    private lateinit var metadataService: MetadataService
     private lateinit var configService: FakeConfigService
     private lateinit var processStateService: FakeProcessStateService
     private lateinit var deliveryService: FakeDeliveryService
@@ -74,7 +68,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private val serializer = EmbraceSerializer()
 
     @Before
     fun setup() {
@@ -87,7 +80,6 @@ internal class EmbraceNdkServiceTest {
             }
         }
         storageManager = FakeStorageService()
-        metadataService = FakeMetadataService()
         configService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true))
         processStateService = FakeProcessStateService()
         deliveryService = FakeDeliveryService()
@@ -120,14 +112,11 @@ internal class EmbraceNdkServiceTest {
     private fun initializeService() {
         embraceNdkService = spyk(
             EmbraceNdkService(
-                metadataService,
                 processStateService,
                 userService,
                 sessionPropertiesService,
                 sharedObjectLoader,
                 delegate,
-                fakeBackgroundWorker(),
-                EmbraceSerializer()
             ),
             recordPrivateCalls = true
         ).apply {
@@ -156,38 +145,6 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         embraceNdkService.onBackground(0L)
         verify(exactly = 1) { delegate.updateAppState("background") }
-    }
-
-    @Test
-    fun `test onSessionPropertiesUpdate where _updateMetaData was executed and isInstalled true`() {
-        initializeService()
-        embraceNdkService.onSessionPropertiesUpdate(sessionPropertiesService.getProperties())
-        val newDeviceMetaData =
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-
-        val expected = serializer.toJson(newDeviceMetaData)
-        verify { delegate.updateMetaData(expected) }
-    }
-
-    @Test
-    fun `test onUserInfoUpdate where _updateMetaData was executed and isInstalled true`() {
-        initializeService()
-        embraceNdkService.onUserInfoUpdate()
-        val newDeviceMetaData =
-            NativeCrashMetadata(
-                metadataService.getAppInfo(),
-                metadataService.getDeviceInfo(),
-                userService.getUserInfo(),
-                sessionPropertiesService.getProperties()
-            )
-
-        val expected = serializer.toJson(newDeviceMetaData)
-        verify { delegate.updateMetaData(expected) }
     }
 
     @Test

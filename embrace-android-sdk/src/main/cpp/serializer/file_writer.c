@@ -16,11 +16,9 @@
 #include <unistd.h>
 
 // crash keys
-static const char *kDeviceMetaKey = "meta";
 static const char *kReportIDKey = "report_id";
 static const char *kSessionIDKey = "sid";
 static const char *kCrashTSKey = "ts";
-static const char *kAppStateKey = "state";
 static const char *kUnwinderErrorCode = "ue";
 static const char *kExceptionNameKey = "en";
 static const char *kExceptionMsgKey = "em";
@@ -59,8 +57,6 @@ static const char *kCurrentPayloadVersion = "1";
 if ((func) != JSONSuccess) { \
     return false; \
 }
-
-bool emb_add_metadata_to_json(const emb_crash *crash, JSON_Object *root_object);
 
 bool emb_add_basic_info_to_json(const emb_crash *crash, JSON_Object *root_object);
 
@@ -148,11 +144,6 @@ char *emb_crash_to_json(emb_crash *crash) {
     if (crash_object == NULL) {
         goto Exit;
     }
-
-    // start adding metadata/basic info to tree
-    if (!emb_add_metadata_to_json(crash, root_object)) {
-        goto Exit;
-    }
     if (!emb_add_basic_info_to_json(crash, root_object)) {
         goto Exit;
     }
@@ -180,23 +171,12 @@ char *emb_crash_to_json(emb_crash *crash) {
     return serialized_string;
 }
 
-bool emb_add_metadata_to_json(const emb_crash *crash, JSON_Object *root_object) {
-    JSON_Value *meta_value = json_parse_string(crash->meta_data);
-    bool success = false;
-
-    if (meta_value != NULL) {
-        success = json_object_set_value(root_object, kDeviceMetaKey, meta_value) == JSONSuccess;
-    }
-    return success;
-}
-
 bool emb_add_basic_info_to_json(const emb_crash *crash, JSON_Object *root_object) {
     EMB_LOGDEV("Serializing IDs + payload version.");
     RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kReportIDKey, crash->report_id));
     RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kVersionKey, kCurrentPayloadVersion));
     RETURN_ON_JSON_FAILURE(json_object_set_number(root_object, kCrashTSKey, crash->crash_ts));
     RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kSessionIDKey, crash->session_id));
-    RETURN_ON_JSON_FAILURE(json_object_set_string(root_object, kAppStateKey, crash->app_state));
     return true;
 }
 

@@ -33,14 +33,11 @@ internal class NativeFeatureModuleImpl(
     override val ndkService: NdkService by singleton {
         Systrace.traceSynchronous("ndk-service-init") {
             EmbraceNdkService(
-                payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
                 essentialServiceModule.userService,
                 essentialServiceModule.sessionPropertiesService,
                 nativeCoreModule.sharedObjectLoader,
                 nativeCoreModule.delegate,
-                workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                initModule.jsonSerializer,
             )
         }
     }

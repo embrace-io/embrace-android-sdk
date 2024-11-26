@@ -10,7 +10,7 @@ class FakeJniDelegate : JniDelegate {
     var signalHandlerReinstalled = false
 
     override fun installSignalHandlers(
-        reportPath: String?,
+        reportPath: String,
         markerFilePath: String?,
         sessionId: String?,
         appState: String?,
@@ -26,7 +26,7 @@ class FakeJniDelegate : JniDelegate {
         // do nothing
     }
 
-    override fun updateSessionId(sessionId: String?) {
+    override fun onSessionChange(sessionId: String?) {
         // do nothing
     }
 

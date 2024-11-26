@@ -332,14 +332,16 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             coreModule,
                             payloadSourceModule,
-                            storageModule
+                            workerThreadModule,
+                            configModule,
+                            storageModule,
+                            essentialServiceModule,
                         )
                     }
 
                     nativeFeatureModule = init(NativeFeatureModule::class) {
                         nativeFeatureModuleSupplier(
                             initModule,
-                            storageModule,
                             essentialServiceModule,
                             configModule,
                             payloadSourceModule,
@@ -353,7 +355,7 @@ internal class ModuleInitBootstrapper(
                         serviceRegistry.registerServices(
                             lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )
-                        nativeFeatureModule.nativeCrashHandlerInstaller?.install()
+                        nativeCoreModule.nativeCrashHandlerInstaller?.install()
                     }
 
                     logModule = init(LogModule::class) {

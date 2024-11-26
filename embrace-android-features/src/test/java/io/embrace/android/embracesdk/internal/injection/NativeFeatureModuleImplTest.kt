@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeNativeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -42,7 +41,6 @@ internal class NativeFeatureModuleImplTest {
         assertNull(module.nativeThreadSamplerInstaller)
         assertNotNull(module.nativeAnrOtelMapper)
         assertNull(module.nativeCrashService)
-        assertNull(module.nativeCrashHandlerInstaller)
     }
 
     @Test
@@ -57,8 +55,6 @@ internal class NativeFeatureModuleImplTest {
         )
 
         module = createNativeFeatureModule(fakeConfigModule)
-
-        assertNull(module.nativeCrashHandlerInstaller)
     }
 
     @Test
@@ -74,8 +70,6 @@ internal class NativeFeatureModuleImplTest {
         fakeEssentialServiceModule = FakeEssentialServiceModule(sessionIdTracker = FakeSessionIdTracker())
 
         module = createNativeFeatureModule(fakeConfigModule)
-
-        assertNull(module.nativeCrashHandlerInstaller)
     }
 
     @Test
@@ -94,8 +88,6 @@ internal class NativeFeatureModuleImplTest {
         )
 
         module = createNativeFeatureModule(fakeConfigModule)
-
-        assertNotNull(module.nativeCrashHandlerInstaller)
     }
 
     @Test
@@ -119,7 +111,6 @@ internal class NativeFeatureModuleImplTest {
         val initModule = FakeInitModule()
         return NativeFeatureModuleImpl(
             initModule,
-            FakeStorageModule(storageService = fakeStorageService),
             fakeEssentialServiceModule,
             fakeConfigModule,
             FakePayloadSourceModule(),

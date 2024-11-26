@@ -34,7 +34,7 @@ internal class ModuleInitBootstrapperTest {
         moduleInitBootstrapper = ModuleInitBootstrapper(
             configModuleSupplier = { _, _, _, _, _, _ -> FakeConfigModule(FakeConfigService()) },
             coreModuleSupplier = { _, _ -> coreModule },
-            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
+            nativeFeatureModuleSupplier = { _, _, _, _, _, _, _ -> FakeNativeFeatureModule() },
             logger = logger
         )
         context = RuntimeEnvironment.getApplication().applicationContext

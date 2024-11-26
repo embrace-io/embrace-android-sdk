@@ -100,7 +100,7 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateMetaDa
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateSessionId(JNIEnv *env,
+Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_onSessionChange(JNIEnv *env,
                                                                                 jobject thiz,
                                                                                 jstring _session_id) {
     // do nothing

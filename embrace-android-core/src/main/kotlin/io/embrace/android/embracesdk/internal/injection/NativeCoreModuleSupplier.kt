@@ -7,17 +7,26 @@ typealias NativeCoreModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     payloadSourceModule: PayloadSourceModule,
+    workerThreadModule: WorkerThreadModule,
+    configModule: ConfigModule,
     storageModule: StorageModule,
+    essentialServiceModule: EssentialServiceModule,
 ) -> NativeCoreModule
 
 fun createNativeCoreModule(
     initModule: InitModule,
     coreModule: CoreModule,
     payloadSourceModule: PayloadSourceModule,
+    workerThreadModule: WorkerThreadModule,
+    configModule: ConfigModule,
     storageModule: StorageModule,
+    essentialServiceModule: EssentialServiceModule,
 ): NativeCoreModule = NativeCoreModuleImpl(
     initModule,
     coreModule,
     payloadSourceModule,
+    workerThreadModule,
+    configModule,
     storageModule,
+    essentialServiceModule
 )

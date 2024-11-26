@@ -9,13 +9,11 @@ import io.embrace.android.embracesdk.internal.anr.ndk.NativeThreadSamplerService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
-import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
-import io.embrace.android.embracesdk.internal.ndk.NdkService
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -29,18 +27,6 @@ internal class NativeFeatureModuleImpl(
     workerThreadModule: WorkerThreadModule,
     nativeCoreModule: NativeCoreModule,
 ) : NativeFeatureModule {
-
-    override val ndkService: NdkService by singleton {
-        Systrace.traceSynchronous("ndk-service-init") {
-            EmbraceNdkService(
-                essentialServiceModule.processStateService,
-                essentialServiceModule.userService,
-                essentialServiceModule.sessionPropertiesService,
-                nativeCoreModule.sharedObjectLoader,
-                nativeCoreModule.delegate,
-            )
-        }
-    }
 
     override val nativeThreadSamplerService: NativeThreadSamplerService? by singleton {
         Systrace.traceSynchronous("native-thread-sampler-init") {

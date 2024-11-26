@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCrashFileMarker
 import io.embrace.android.embracesdk.fakes.FakeLogOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeLogWriter
-import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
@@ -31,7 +30,6 @@ internal class CrashDataSourceImplTest {
     private lateinit var sessionOrchestrator: FakeSessionOrchestrator
     private lateinit var sessionPropertiesService: FakeSessionPropertiesService
     private lateinit var anrService: FakeAnrService
-    private lateinit var ndkService: FakeNdkService
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var crashMarker: FakeCrashFileMarker
     private lateinit var configService: FakeConfigService
@@ -47,7 +45,6 @@ internal class CrashDataSourceImplTest {
         sessionOrchestrator = FakeSessionOrchestrator()
         sessionPropertiesService = FakeSessionPropertiesService()
         anrService = FakeAnrService()
-        ndkService = FakeNdkService()
         preferencesService = FakePreferenceService()
         crashMarker = FakeCrashFileMarker()
         logWriter = FakeLogWriter()

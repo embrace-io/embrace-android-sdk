@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
-import io.embrace.android.embracesdk.fakes.FakeNdkService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
@@ -46,7 +45,6 @@ internal class PayloadFactoryBaTest {
     private lateinit var activityService: FakeProcessStateService
     private lateinit var userService: UserService
     private lateinit var deliveryService: FakeDeliveryService
-    private lateinit var ndkService: FakeNdkService
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
     private lateinit var spanSink: SpanSink
@@ -62,7 +60,6 @@ internal class PayloadFactoryBaTest {
         sessionIdTracker = FakeSessionIdTracker()
         activityService = FakeProcessStateService(isInBackground = true)
         deliveryService = FakeDeliveryService()
-        ndkService = FakeNdkService()
         preferencesService = FakePreferenceService()
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock)

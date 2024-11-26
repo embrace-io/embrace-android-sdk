@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesS
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
-import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -57,13 +56,13 @@ internal class NativeCrashDataSourceImpl(
             keepBlankishValues = false,
         )
 
-        nativeCrash.appState?.let { appState ->
-            crashAttributes.setAttribute(
-                key = embState,
-                value = appState,
-                keepBlankishValues = false,
-            )
-        }
+//        nativeCrash.appState?.let { appState ->
+//            crashAttributes.setAttribute(
+//                key = embState,
+//                value = appState,
+//                keepBlankishValues = false,
+//            )
+//        }
 
         nativeCrash.crash?.let { crashData ->
             crashAttributes.setAttribute(

@@ -2,9 +2,7 @@ package io.embrace.android.embracesdk.internal.ndk.jni
 
 class JniDelegateImpl : JniDelegate {
     external override fun installSignalHandlers(
-        reportPath: String,
         markerFilePath: String?,
-        sessionId: String?,
         appState: String?,
         reportId: String?,
         apiLevel: Int,
@@ -13,7 +11,7 @@ class JniDelegateImpl : JniDelegate {
     )
 
     external override fun updateMetaData(metadata: String?)
-    external override fun onSessionChange(sessionId: String?)
+    external override fun onSessionChange(sessionId: String?, reportPath: String)
     external override fun updateAppState(appState: String?)
     external override fun getCrashReport(path: String?): String?
     external override fun checkForOverwrittenHandlers(): String?

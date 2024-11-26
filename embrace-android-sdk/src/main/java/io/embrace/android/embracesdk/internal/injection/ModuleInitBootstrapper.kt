@@ -336,6 +336,7 @@ internal class ModuleInitBootstrapper(
                             configModule,
                             storageModule,
                             essentialServiceModule,
+                            openTelemetryModule,
                         )
                     }
 
@@ -352,6 +353,7 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeFeatureModule::class) {
+                        nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
                         serviceRegistry.registerServices(
                             lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )

@@ -5,20 +5,23 @@ import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
-import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.FakeSymbolService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import org.junit.After
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
 
 internal class NativeCrashProcessorImplTest {
 
@@ -28,44 +31,32 @@ internal class NativeCrashProcessorImplTest {
     private lateinit var logger: EmbLogger
     private lateinit var delegate: FakeJniDelegate
     private lateinit var blockableExecutorService: BlockableExecutorService
-    private lateinit var storageService: FakeStorageService
-    private lateinit var ndkDir: File
+    private lateinit var storageDir: File
+    private lateinit var worker: PriorityWorker<StoredTelemetryMetadata>
     private val serializer = EmbraceSerializer()
 
     @Before
     fun setup() {
-        storageService = FakeStorageService()
+        storageDir = Files.createTempDirectory("ndk").toFile().apply {
+            mkdirs()
+        }
         configService = FakeConfigService(autoDataCaptureBehavior = FakeAutoDataCaptureBehavior(ndkEnabled = true))
         sharedObjectLoader = FakeSharedObjectLoader().apply { loadEmbraceNative() }
         logger = EmbLoggerImpl()
         delegate = FakeJniDelegate()
         blockableExecutorService = BlockableExecutorService()
-    }
-
-    @After
-    fun after() {
-        val cacheDir = File("${storageService.cacheDirectory}/ndk")
-        if (cacheDir.exists()) {
-            cacheDir.delete()
-        }
-        val filesDir = File("${storageService.filesDirectory}/ndk")
-        if (filesDir.exists()) {
-            filesDir.delete()
-        }
+        worker = PriorityWorker(blockableExecutorService)
     }
 
     private fun initializeService() {
-        ndkDir = File("${storageService.filesDirectory}/ndk").apply {
-            mkdirs()
-        }
-
         service = NativeCrashProcessorImpl(
             sharedObjectLoader,
             logger,
             delegate,
             serializer,
             FakeSymbolService(mapOf("symbol1" to "test")),
-            storageService
+            lazy { storageDir },
+            worker
         )
     }
 
@@ -144,7 +135,14 @@ internal class NativeCrashProcessorImplTest {
     }
 
     private fun addCrashFiles(name: String) {
-        File(ndkDir, "emb_ndk_$name.crash").createNewFile()
+        val metadata = StoredTelemetryMetadata(
+            timestamp = 1000000,
+            uuid = name,
+            processId = "pid",
+            envelopeType = SupportedEnvelopeType.CRASH,
+            payloadType = PayloadType.NATIVE_CRASH,
+        )
+        File(storageDir, metadata.filename).createNewFile()
     }
 
     private fun getNativeCrashRaw() = ResourceReader.readResourceAsText("native_crash_raw.txt")

@@ -2,12 +2,19 @@ package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.Systrace
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.session.id.SessionIdTracker
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import java.io.File
 
 private const val HANDLER_CHECK_DELAY_MS = 5000L
 
@@ -19,6 +26,10 @@ class NativeCrashHandlerInstallerImpl(
     private val backgroundWorker: BackgroundWorker,
     private val nativeInstallMessage: NativeInstallMessage,
     private val mainThreadHandler: MainThreadHandler,
+    private val clock: Clock,
+    private val sessionIdTracker: SessionIdTracker,
+    private val processIdProvider: Provider<String>,
+    private val outputDir: Lazy<File>,
 ) : NativeCrashHandlerInstaller {
 
     override fun install() {
@@ -32,11 +43,15 @@ class NativeCrashHandlerInstallerImpl(
     private fun startNativeCrashMonitoring() {
         try {
             if (sharedObjectLoader.loadEmbraceNative()) {
+                delegate.onSessionChange(sessionIdTracker.getActiveSessionId(), createNativeReportPath())
                 mainThreadHandler.postAtFrontOfQueue { installSignals() }
                 mainThreadHandler.postDelayed(
                     Runnable(::checkSignalHandlersOverwritten),
                     HANDLER_CHECK_DELAY_MS
                 )
+                sessionIdTracker.addListener { sessionId ->
+                    delegate.onSessionChange(sessionId, createNativeReportPath())
+                }
             }
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.NATIVE_HANDLER_INSTALL_FAIL, ex)
@@ -71,9 +86,7 @@ class NativeCrashHandlerInstallerImpl(
         Systrace.traceSynchronous("native-install-handlers") {
             with(nativeInstallMessage) {
                 delegate.installSignalHandlers(
-                    reportPath,
                     markerFilePath,
-                    sessionId,
                     appState,
                     reportId,
                     apiLevel,
@@ -82,5 +95,16 @@ class NativeCrashHandlerInstallerImpl(
                 )
             }
         }
+    }
+
+    private fun createNativeReportPath(): String {
+        val metadata = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = sessionIdTracker.getActiveSessionId() ?: "null",
+            processId = processIdProvider(),
+            envelopeType = SupportedEnvelopeType.CRASH,
+            payloadType = PayloadType.NATIVE_CRASH,
+        )
+        return File(outputDir.value, metadata.filename).absolutePath
     }
 }

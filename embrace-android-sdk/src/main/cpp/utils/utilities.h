@@ -27,10 +27,7 @@ extern "C" {
 
 // the backend can handle error codes between 0-255.
 
-#define EMB_MAX_ERRORS 10
-
 void emb_set_crash_time(emb_env *env);
-void emb_set_report_paths(emb_env *env, const char *session_id);
 
 #ifdef __cplusplus
 }

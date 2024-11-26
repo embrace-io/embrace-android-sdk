@@ -350,20 +350,10 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeFeatureModule::class) {
-                        val configService = configModule.configService
-                        val ndkService = nativeFeatureModule.ndkService
                         serviceRegistry.registerServices(
-                            lazy { ndkService },
                             lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )
-
-                        if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
-                            val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
-                            worker.submit {
-                                nativeFeatureModule.nativeCrashHandlerInstaller?.install()
-                                ndkService.initializeService(essentialServiceModule.sessionIdTracker)
-                            }
-                        }
+                        nativeFeatureModule.nativeCrashHandlerInstaller?.install()
                     }
 
                     logModule = init(LogModule::class) {

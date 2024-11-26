@@ -38,7 +38,6 @@ internal class NativeFeatureModuleImplTest {
 
     @Test
     fun testDefaultImplementations() {
-        assertNotNull(module.ndkService)
         assertNull(module.nativeThreadSamplerService)
         assertNull(module.nativeThreadSamplerInstaller)
         assertNotNull(module.nativeAnrOtelMapper)

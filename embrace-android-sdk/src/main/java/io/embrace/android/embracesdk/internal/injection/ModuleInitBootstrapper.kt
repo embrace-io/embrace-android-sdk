@@ -328,13 +328,17 @@ internal class ModuleInitBootstrapper(
                     }
 
                     nativeCoreModule = init(NativeCoreModule::class) {
-                        nativeCoreModuleSupplier(initModule)
+                        nativeCoreModuleSupplier(
+                            initModule,
+                            coreModule,
+                            payloadSourceModule,
+                            storageModule
+                        )
                     }
 
                     nativeFeatureModule = init(NativeFeatureModule::class) {
                         nativeFeatureModuleSupplier(
                             initModule,
-                            coreModule,
                             storageModule,
                             essentialServiceModule,
                             configModule,
@@ -356,6 +360,7 @@ internal class ModuleInitBootstrapper(
                         if (configService.autoDataCaptureBehavior.isNativeCrashCaptureEnabled()) {
                             val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
                             worker.submit {
+                                nativeFeatureModule.nativeCrashHandlerInstaller?.install()
                                 ndkService.initializeService(essentialServiceModule.sessionIdTracker)
                             }
                         }

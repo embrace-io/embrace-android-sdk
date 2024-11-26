@@ -6,7 +6,6 @@ import android.os.Handler
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeDeviceArchitecture
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
@@ -69,7 +68,6 @@ internal class EmbraceNdkServiceTest {
     private lateinit var resources: Resources
     private lateinit var blockableExecutorService: BlockableExecutorService
     private lateinit var sessionIdTracker: FakeSessionIdTracker
-    private val deviceArchitecture = FakeDeviceArchitecture()
 
     @Before
     fun setup() {
@@ -94,6 +92,7 @@ internal class EmbraceNdkServiceTest {
         resources = mockk(relaxed = true)
         blockableExecutorService = BlockableExecutorService()
         sessionIdTracker = FakeSessionIdTracker()
+        sharedObjectLoader.loaded.set(true)
     }
 
     @After
@@ -113,16 +112,11 @@ internal class EmbraceNdkServiceTest {
     private fun initializeService() {
         embraceNdkService = spyk(
             EmbraceNdkService(
-                storageManager,
                 processStateService,
-                configService,
                 userService,
                 sessionPropertiesService,
                 sharedObjectLoader,
-                logger,
                 delegate,
-                deviceArchitecture,
-                handler
             ),
             recordPrivateCalls = true
         ).apply {
@@ -140,17 +134,7 @@ internal class EmbraceNdkServiceTest {
     }
 
     @Test
-    fun `failed native library loading attaches no listeners`() {
-        sharedObjectLoader.failLoad = true
-        initializeService()
-        assertEquals(0, userService.listeners.size)
-        assertEquals(0, sessionIdTracker.listeners.size)
-        assertEquals(0, sessionPropertiesService.listeners.size)
-        assertEquals(0, processStateService.listeners.size)
-    }
-
-    @Test
-    fun `test updateSessionId where installSignals was executed and isInstalled true`() {
+    fun `test updateSessionId where isInstalled true`() {
         initializeService()
         embraceNdkService.updateSessionId("sessionId")
         verify(exactly = 1) { delegate.updateSessionId("sessionId") }
@@ -168,34 +152,5 @@ internal class EmbraceNdkServiceTest {
         initializeService()
         embraceNdkService.onForeground(true, 10)
         verify(exactly = 1) { delegate.updateAppState("foreground") }
-    }
-
-    @Test
-    fun `test initialization does not does not install signals and create directories if loadEmbraceNative is false`() {
-        sharedObjectLoader.failLoad = true
-        initializeService()
-        verify(exactly = 0) { embraceNdkService["installSignals"]({ "null" }) }
-    }
-
-    @Test
-    fun `initialization happens`() {
-        blockableExecutorService.blockingMode = true
-        initializeService()
-        assertNativeSignalHandlerInstalled()
-    }
-
-    private fun assertNativeSignalHandlerInstalled() {
-        verify(exactly = 1) {
-            delegate.installSignalHandlers(
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-            )
-        }
     }
 }

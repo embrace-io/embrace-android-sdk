@@ -13,20 +13,14 @@ import io.embrace.android.embracesdk.internal.ndk.EmbraceNdkService
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashDataSourceImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImpl
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessor
-import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessorImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
 import io.embrace.android.embracesdk.internal.ndk.NdkService
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
-import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 internal class NativeFeatureModuleImpl(
     initModule: InitModule,
-    coreModule: CoreModule,
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     configModule: ConfigModule,
@@ -36,38 +30,14 @@ internal class NativeFeatureModuleImpl(
     nativeCoreModule: NativeCoreModule,
 ) : NativeFeatureModule {
 
-    private val delegate by singleton {
-        JniDelegateImpl()
-    }
-
-    override val symbolService: SymbolService = SymbolServiceImpl(
-        coreModule.context,
-        payloadSourceModule.deviceArchitecture,
-        initModule.jsonSerializer,
-        initModule.logger
-    )
-
-    override val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
-        nativeCoreModule.sharedObjectLoader,
-        initModule.logger,
-        delegate,
-        initModule.jsonSerializer,
-        symbolService,
-        storageModule.storageService
-    )
-
     override val ndkService: NdkService by singleton {
         Systrace.traceSynchronous("ndk-service-init") {
             EmbraceNdkService(
-                storageModule.storageService,
                 essentialServiceModule.processStateService,
-                configModule.configService,
                 essentialServiceModule.userService,
                 essentialServiceModule.sessionPropertiesService,
                 nativeCoreModule.sharedObjectLoader,
-                initModule.logger,
-                delegate,
-                payloadSourceModule.deviceArchitecture,
+                nativeCoreModule.delegate,
             )
         }
     }
@@ -77,7 +47,7 @@ internal class NativeFeatureModuleImpl(
             if (nativeThreadSamplingEnabled(configModule.configService)) {
                 EmbraceNativeThreadSamplerService(
                     configService = configModule.configService,
-                    symbols = lazy { symbolService.symbolsForCurrentArch },
+                    symbols = lazy { nativeCoreModule.symbolService.symbolsForCurrentArch },
                     worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
                     deviceArchitecture = payloadSourceModule.deviceArchitecture,
                     sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
@@ -110,7 +80,7 @@ internal class NativeFeatureModuleImpl(
         } else {
             NativeCrashDataSourceImpl(
                 sessionPropertiesService = essentialServiceModule.sessionPropertiesService,
-                nativeCrashProcessor = processor,
+                nativeCrashProcessor = nativeCoreModule.processor,
                 preferencesService = androidServicesModule.preferencesService,
                 logWriter = essentialServiceModule.logWriter,
                 configService = configModule.configService,
@@ -126,7 +96,7 @@ internal class NativeFeatureModuleImpl(
                 configService = configModule.configService,
                 sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 logger = initModule.logger,
-                delegate = JniDelegateImpl(),
+                delegate = nativeCoreModule.delegate,
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 nativeInstallMessage = nativeInstallMessage ?: return@singleton null,
                 mainThreadHandler = AndroidMainThreadHandler()

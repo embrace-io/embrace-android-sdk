@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServ
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionCacher
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.V1PayloadStore
@@ -119,11 +120,11 @@ internal class DeliveryModuleImpl(
         payloadStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
+            val location = StorageLocation.PAYLOAD.asFile(coreModule.context, initModule.logger)
             PayloadStorageServiceImpl(
-                coreModule.context,
+                location,
                 dataPersistenceWorker,
                 processIdProvider,
-                PayloadStorageServiceImpl.OutputType.PAYLOAD,
                 initModule.logger,
                 deliveryTracer
             )
@@ -134,11 +135,11 @@ internal class DeliveryModuleImpl(
         cacheStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
             null
         } else {
+            val location = StorageLocation.CACHE.asFile(coreModule.context, initModule.logger)
             PayloadStorageServiceImpl(
-                coreModule.context,
+                location,
                 dataPersistenceWorker,
                 processIdProvider,
-                PayloadStorageServiceImpl.OutputType.CACHE,
                 initModule.logger,
                 deliveryTracer
             )

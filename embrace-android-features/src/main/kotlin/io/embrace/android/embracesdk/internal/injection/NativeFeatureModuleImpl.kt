@@ -16,7 +16,6 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImp
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
 import io.embrace.android.embracesdk.internal.ndk.NdkService
-import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -34,17 +33,13 @@ internal class NativeFeatureModuleImpl(
     override val ndkService: NdkService by singleton {
         Systrace.traceSynchronous("ndk-service-init") {
             EmbraceNdkService(
-                storageModule.storageService,
                 payloadSourceModule.metadataService,
                 essentialServiceModule.processStateService,
-                configModule.configService,
                 essentialServiceModule.userService,
                 essentialServiceModule.sessionPropertiesService,
                 nativeCoreModule.sharedObjectLoader,
-                initModule.logger,
                 nativeCoreModule.delegate,
                 workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
-                payloadSourceModule.deviceArchitecture,
                 initModule.jsonSerializer,
             )
         }
@@ -104,7 +99,7 @@ internal class NativeFeatureModuleImpl(
                 configService = configModule.configService,
                 sharedObjectLoader = nativeCoreModule.sharedObjectLoader,
                 logger = initModule.logger,
-                delegate = JniDelegateImpl(),
+                delegate = nativeCoreModule.delegate,
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 nativeInstallMessage = nativeInstallMessage ?: return@singleton null,
                 mainThreadHandler = AndroidMainThreadHandler()

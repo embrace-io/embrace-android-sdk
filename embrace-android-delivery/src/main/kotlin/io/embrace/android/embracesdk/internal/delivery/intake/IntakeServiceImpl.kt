@@ -24,8 +24,8 @@ class IntakeServiceImpl(
     private val shutdownTimeoutMs: Long = 3000,
 ) : IntakeService {
 
-    private var cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
-    private var cacheReferences: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
+    private val cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
+    private val cacheReferences: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
 
     override fun shutdown() {
         worker.shutdownAndWait(shutdownTimeoutMs)

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
@@ -19,6 +20,7 @@ import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -119,7 +121,12 @@ internal class ResurrectionFeatureTest {
             },
             assertAction = {
                 getSessionEnvelopes(3)
-                assertEquals(1, cacheStorageService.getCachedCrashEnvelope().size)
+                with(cacheStorageService.getCachedCrashEnvelope().single()) {
+                    assertEquals(SupportedEnvelopeType.CRASH, envelopeType)
+                    assertEquals(PayloadType.NATIVE_CRASH, payloadType)
+                    assertFalse(complete)
+                }
+
             }
         )
     }

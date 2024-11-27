@@ -10,9 +10,11 @@ import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImp
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessor
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashProcessorImpl
 import io.embrace.android.embracesdk.internal.ndk.NativeInstallMessage
+import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.ndk.jni.JniDelegateImpl
 import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolService
 import io.embrace.android.embracesdk.internal.ndk.symbols.SymbolServiceImpl
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.Uuid
 import io.embrace.android.embracesdk.internal.worker.Worker
 
@@ -25,21 +27,26 @@ internal class NativeCoreModuleImpl(
     storageModule: StorageModule,
     essentialServiceModule: EssentialServiceModule,
     otelModule: OpenTelemetryModule,
+    delegateProvider: Provider<JniDelegate?>,
+    sharedObjectLoaderProvider: Provider<SharedObjectLoader?>,
+    symbolServiceProvider: Provider<SymbolService?>,
 ) : NativeCoreModule {
 
     override val delegate by singleton {
-        JniDelegateImpl()
+        delegateProvider() ?: JniDelegateImpl()
     }
 
-    override val symbolService: SymbolService = SymbolServiceImpl(
-        coreModule.context,
-        payloadSourceModule.deviceArchitecture,
-        initModule.jsonSerializer,
-        initModule.logger
-    )
+    override val symbolService: SymbolService by singleton {
+        symbolServiceProvider() ?: SymbolServiceImpl(
+            coreModule.context,
+            payloadSourceModule.deviceArchitecture,
+            initModule.jsonSerializer,
+            initModule.logger
+        )
+    }
 
     override val sharedObjectLoader: SharedObjectLoader by singleton {
-        SharedObjectLoaderImpl(initModule.logger)
+        sharedObjectLoaderProvider() ?: SharedObjectLoaderImpl(initModule.logger)
     }
 
     private val nativeOutputDir by lazy { StorageLocation.NATIVE.asFile(coreModule.context, initModule.logger) }

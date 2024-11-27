@@ -1,26 +1,5 @@
 <?xml version="1.0" ?>
 <SmellBaseline>
   <ManuallySuppressedIssues></ManuallySuppressedIssues>
-  <CurrentIssues>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _checkForOverwrittenHandlers(): String?</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _getCrashReport(path: String?): String?</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _getErrors(path: String?): String?</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _installSignalHandlers( report_path: String?, markerFilePath: String?, session_id: String?, app_state: String?, report_id: String?, api_level: Int, is_32bit: Boolean, dev_logging: Boolean, )</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _reinstallSignalHandlers(): Boolean</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _testNativeCrash_C()</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _testNativeCrash_CPP()</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _updateAppState(new_app_state: String?)</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _updateMetaData(new_device_meta_data: String?)</ID>
-    <ID>FunctionNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$fun _updateSessionId(new_session_id: String?)</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$api_level: Int</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$app_state: String?</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$dev_logging: Boolean</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$is_32bit: Boolean</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$new_app_state: String?</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$new_device_meta_data: String?</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$new_session_id: String?</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$report_id: String?</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$report_path: String?</ID>
-    <ID>FunctionParameterNaming:NdkServiceDelegate.kt$NdkServiceDelegate.NdkDelegate$session_id: String?</ID>
-  </CurrentIssues>
+  <CurrentIssues></CurrentIssues>
 </SmellBaseline>

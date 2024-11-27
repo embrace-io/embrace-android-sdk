@@ -4,7 +4,7 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-class NativeCrashData(
+data class NativeCrashData(
     @Json(name = "report_id") val nativeCrashId: String,
     @Json(name = "sid") val sessionId: String,
     @Json(name = "ts") val timestamp: Long,

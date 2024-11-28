@@ -15,5 +15,8 @@ class FakeSessionIdTracker : SessionIdTracker {
 
     override fun setActiveSession(sessionId: String?, isSession: Boolean) {
         sessionData = sessionId?.run { SessionData(sessionId, isSession) }
+        listeners.forEach {
+            it(sessionId)
+        }
     }
 }

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.os.Build
 import io.embrace.android.embracesdk.internal.SharedObjectLoader
 import io.embrace.android.embracesdk.internal.SharedObjectLoaderImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashHandlerInstallerImpl
@@ -22,7 +23,8 @@ internal class NativeCoreModuleImpl(
     workerThreadModule: WorkerThreadModule,
     configModule: ConfigModule,
     storageModule: StorageModule,
-    essentialServiceModule: EssentialServiceModule
+    essentialServiceModule: EssentialServiceModule,
+    otelModule: OpenTelemetryModule,
 ) : NativeCoreModule {
 
     override val delegate by singleton {
@@ -40,13 +42,16 @@ internal class NativeCoreModuleImpl(
         SharedObjectLoaderImpl(initModule.logger)
     }
 
+    private val nativeOutputDir by lazy { StorageLocation.NATIVE.asFile(coreModule.context, initModule.logger) }
+
     override val processor: NativeCrashProcessor = NativeCrashProcessorImpl(
         sharedObjectLoader,
         initModule.logger,
         delegate,
         initModule.jsonSerializer,
         symbolService,
-        storageModule.storageService,
+        nativeOutputDir,
+        workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
     )
 
     override val nativeCrashHandlerInstaller: NativeCrashHandlerInstaller? by singleton {
@@ -59,6 +64,10 @@ internal class NativeCoreModuleImpl(
                 backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
                 nativeInstallMessage = nativeInstallMessage ?: return@singleton null,
                 mainThreadHandler = AndroidMainThreadHandler(),
+                clock = initModule.clock,
+                sessionIdTracker = essentialServiceModule.sessionIdTracker,
+                processIdProvider = { otelModule.openTelemetryConfiguration.processIdentifier },
+                outputDir = nativeOutputDir
             )
         } else {
             null
@@ -66,15 +75,10 @@ internal class NativeCoreModuleImpl(
     }
 
     private val nativeInstallMessage: NativeInstallMessage? by singleton {
-        val reportBasePath = runCatching { storageModule.storageService.getOrCreateNativeCrashDir().absolutePath }
-            .getOrNull() ?: return@singleton null
-        val sessionId = essentialServiceModule.sessionIdTracker.getActiveSessionId() ?: return@singleton null
         val markerFilePath =
             storageModule.storageService.getFileForWrite("embrace_crash_marker").absolutePath
         NativeInstallMessage(
-            reportPath = reportBasePath,
             markerFilePath = markerFilePath,
-            sessionId = sessionId,
             appState = essentialServiceModule.processStateService.getAppState(),
             reportId = Uuid.getEmbUuid(),
             apiLevel = Build.VERSION.SDK_INT,

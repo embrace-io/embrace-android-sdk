@@ -18,9 +18,8 @@
 #define CRASH_REPORT_CURRENT_VERSION CRASH_REPORT_VERSION1
 
 typedef struct {
-    char base_path[EMB_PATH_SIZE];
-    char crash_marker_path[EMB_PATH_SIZE];
     char report_path[EMB_PATH_SIZE];
+    char crash_marker_path[EMB_PATH_SIZE];
     bool currently_handling;
     bool already_handled_crash;
     emb_crash crash;

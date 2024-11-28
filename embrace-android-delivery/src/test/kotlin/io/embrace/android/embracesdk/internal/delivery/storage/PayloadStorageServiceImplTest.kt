@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.File
@@ -70,7 +71,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `delete non existent file`() {
         service.delete(metadata) // no exception thrown
-        assertNull(outputDir.listFiles())
+        assertTrue(checkNotNull(outputDir.listFiles()).isEmpty())
     }
 
     @Test

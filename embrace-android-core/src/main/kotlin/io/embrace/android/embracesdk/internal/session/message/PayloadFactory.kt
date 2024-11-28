@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 
 /**
- * Factory that creates session + background activity payloads.
+ * Factory that creates payload envelopes.
  */
 interface PayloadFactory {
 
@@ -48,4 +49,9 @@ interface PayloadFactory {
      * Ends a session manually.
      */
     fun endSessionWithManual(timestamp: Long, initial: SessionZygote): Envelope<SessionPayload>
+
+    /**
+     * Create and return and empty [Envelope] for a [LogPayload] based on the current state of the SDK
+     */
+    fun createEmptyLogEnvelope(): Envelope<LogPayload>
 }

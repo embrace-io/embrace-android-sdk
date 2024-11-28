@@ -23,6 +23,10 @@ internal class LogEnvelopeSourceImpl(
         }
     }
 
+    override fun getEmptySingleLogEnvelope(): Envelope<LogPayload> {
+        return getLogEnvelope(LogPayload(logs = emptyList()))
+    }
+
     private fun getLogEnvelope(payload: LogPayload) = Envelope(
         resourceSource.getEnvelopeResource(),
         metadataSource.getEnvelopeMetadata(),

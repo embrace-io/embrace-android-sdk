@@ -25,6 +25,8 @@ class FakeLogEnvelopeSource(
         }
     }
 
+    override fun getEmptySingleLogEnvelope(): Envelope<LogPayload> = getLogEnvelope(LogPayload())
+
     private fun getLogEnvelope(payload: LogPayload) = Envelope(
         resourceSource.getEnvelopeResource(),
         metadataSource.getEnvelopeMetadata(),

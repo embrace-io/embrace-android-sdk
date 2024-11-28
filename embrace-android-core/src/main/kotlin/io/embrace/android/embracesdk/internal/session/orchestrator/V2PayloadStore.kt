@@ -41,6 +41,17 @@ internal class V2PayloadStore(
         intakeService.take(envelope, createMetadata(type, payloadType = payloadType))
     }
 
+    override fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>) {
+        intakeService.take(
+            intake = envelope,
+            metadata = createMetadata(
+                type = SupportedEnvelopeType.CRASH,
+                complete = false,
+                payloadType = PayloadType.NATIVE_CRASH
+            )
+        )
+    }
+
     override fun handleCrash(crashId: String) {
         intakeService.shutdown()
     }

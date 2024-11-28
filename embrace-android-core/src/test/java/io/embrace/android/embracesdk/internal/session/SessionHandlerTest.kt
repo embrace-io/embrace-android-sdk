@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.createSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeSessionZygote
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPayloadSourceImpl
@@ -90,25 +91,28 @@ internal class SessionHandlerTest {
         spanService = initModule.openTelemetryModule.spanService
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan
-
+        val sessionPayloadSource = SessionPayloadSourceImpl(
+            { null },
+            spanSink,
+            currentSessionSpan,
+            spanRepository,
+            FakeOtelPayloadMapper(),
+            logger
+        )
+        val payloadSourceModule = FakePayloadSourceModule(
+            sessionPayloadSource = sessionPayloadSource
+        )
         val collator = PayloadMessageCollatorImpl(
             gatingService,
             SessionEnvelopeSourceImpl(
                 metadataSource = FakeEnvelopeMetadataSource(),
                 resourceSource = FakeEnvelopeResourceSource(),
-                sessionPayloadSource = SessionPayloadSourceImpl(
-                    { null },
-                    spanSink,
-                    currentSessionSpan,
-                    spanRepository,
-                    FakeOtelPayloadMapper(),
-                    logger
-                )
+                sessionPayloadSource = sessionPayloadSource
             ),
             preferencesService,
             currentSessionSpan
         )
-        payloadFactory = PayloadFactoryImpl(collator, configService, logger)
+        payloadFactory = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger)
     }
 
     @Test

@@ -8,4 +8,6 @@ interface LogEnvelopeSource {
     fun getBatchedLogEnvelope(): Envelope<LogPayload>
 
     fun getSingleLogEnvelopes(): List<LogRequest<Envelope<LogPayload>>>
+
+    fun getEmptySingleLogEnvelope(): Envelope<LogPayload>
 }

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.session.SessionZygote
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
@@ -118,6 +119,8 @@ class FakePayloadFactory : PayloadFactory {
         activeSession = null
         return fakeSessionEnvelope()
     }
+
+    override fun createEmptyLogEnvelope(): Envelope<LogPayload> = fakeEmptyLogEnvelope()
 
     private fun snapshotSession(): Envelope<SessionPayload>? {
         snapshotSessionCount++

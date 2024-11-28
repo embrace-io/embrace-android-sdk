@@ -31,6 +31,10 @@ class V1PayloadStore(
         }
     }
 
+    override fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>) {
+        // ignore - there's no good place to stash this, and since this will be deleted soon, I'm not going to find one
+    }
+
     override fun cacheSessionSnapshot(envelope: Envelope<SessionPayload>) {
         deliveryService.sendSession(envelope, SessionSnapshotType.PERIODIC_CACHE)
     }

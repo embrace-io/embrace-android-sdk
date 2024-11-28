@@ -4,19 +4,16 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
-import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
@@ -122,19 +119,15 @@ internal class PayloadFactorySessionTest {
     ) {
         processStateService.isInBackground = isActivityInBackground
 
-        val sessionEnvelopeSource = SessionEnvelopeSourceImpl(
-            metadataSource = FakeEnvelopeMetadataSource(),
-            resourceSource = FakeEnvelopeResourceSource(),
-            sessionPayloadSource = FakeSessionPayloadSource()
-        )
+        val payloadSourceModule = FakePayloadSourceModule()
         val logger = EmbLoggerImpl()
         val gatingService = FakeGatingService()
         val collator = PayloadMessageCollatorImpl(
             gatingService,
-            sessionEnvelopeSource,
+            payloadSourceModule.sessionEnvelopeSource,
             preferencesService,
             currentSessionSpan
         )
-        service = PayloadFactoryImpl(collator, FakeConfigService(), logger)
+        service = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, FakeConfigService(), logger)
     }
 }

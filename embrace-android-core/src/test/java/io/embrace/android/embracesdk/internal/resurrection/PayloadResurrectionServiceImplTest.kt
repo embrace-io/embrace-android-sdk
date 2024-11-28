@@ -12,8 +12,10 @@ import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanData.Companion.perfSpanSnapshot
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
+import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -86,6 +88,20 @@ class PayloadResurrectionServiceImplTest {
                 EmbType.Ux.Session.toEmbraceKeyValuePair()
             )
         )
+    }
+
+    @Test
+    fun `all payloads from previous app launches are deleted after resurrection`() {
+        cacheStorageService.addPayload(
+            metadata = fakeNativeCrashStoredTelemetryMetadata,
+            data = fakeEmptyLogEnvelope()
+        )
+        assertEquals(1, cacheStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.deleteCount.get())
+        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+
+        assertTrue(intakeService.getIntakes<SessionPayload>().isEmpty())
+        assertEquals(1, cacheStorageService.deleteCount.get())
     }
 
     @Test

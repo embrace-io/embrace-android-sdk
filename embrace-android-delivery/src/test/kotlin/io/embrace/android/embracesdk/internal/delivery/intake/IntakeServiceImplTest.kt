@@ -6,12 +6,14 @@ import io.embrace.android.embracesdk.fakes.FakeEmbLogger
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -288,5 +290,46 @@ class IntakeServiceImplTest {
 
         assertFalse(cacheStorageService.storedFilenames().contains(cache2.filename))
         assertTrue(payloadStorageService.storedFilenames().contains(session.filename))
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `new empty crash envelope caching will remove the old copy`() {
+        executorService.blockingMode = false
+        val cache1 =
+            StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, CRASH, false, PayloadType.NATIVE_CRASH).apply {
+                intakeService.take(
+                    intake = logEnvelope,
+                    metadata = this
+                )
+            }
+
+        assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
+
+        val cache2 =
+            StoredTelemetryMetadata(clock.tick(), UUID, PROCESS_ID, CRASH, false, PayloadType.NATIVE_CRASH).apply {
+                intakeService.take(
+                    intake = logEnvelope,
+                    metadata = this
+                )
+            }
+
+        assertEquals(cache2.filename, cacheStorageService.storedFilenames().single())
+        assertTrue(logger.internalErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `intake of cache request for unexpected envelope type will succeed but produce internal error`() {
+        executorService.blockingMode = false
+        val cache1 =
+            StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, BLOB, false, PayloadType.AEI).apply {
+                intakeService.take(
+                    intake = logEnvelope,
+                    metadata = this
+                )
+            }
+
+        assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
+        assertEquals(InternalErrorType.INTAKE_UNEXPECTED_TYPE.toString(), logger.internalErrorMessages.single().msg)
     }
 }

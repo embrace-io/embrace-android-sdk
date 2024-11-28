@@ -1,16 +1,14 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
-import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeGatingService
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeSessionPayloadSource
 import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.envelope.session.SessionEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.BACKGROUND
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessState.FOREGROUND
@@ -32,18 +30,18 @@ internal class PayloadFactoryImplTest {
         val initModule = FakeInitModule()
         configService = FakeConfigService()
         sessionPayloadSource = FakeSessionPayloadSource()
+        val payloadSourceModule = FakePayloadSourceModule(
+            sessionPayloadSource = sessionPayloadSource
+        )
         val collator = PayloadMessageCollatorImpl(
             gatingService = FakeGatingService(),
             preferencesService = FakePreferenceService(),
             currentSessionSpan = initModule.openTelemetryModule.currentSessionSpan,
-            sessionEnvelopeSource = SessionEnvelopeSourceImpl(
-                FakeEnvelopeMetadataSource(),
-                FakeEnvelopeResourceSource(),
-                sessionPayloadSource
-            )
+            sessionEnvelopeSource = payloadSourceModule.sessionEnvelopeSource
         )
         factory = PayloadFactoryImpl(
             payloadMessageCollator = collator,
+            logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
             logger = initModule.logger
         )

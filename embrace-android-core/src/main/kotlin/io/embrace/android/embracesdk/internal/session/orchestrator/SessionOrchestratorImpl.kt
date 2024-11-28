@@ -213,6 +213,12 @@ internal class SessionOrchestratorImpl(
                 }
                 Systrace.endSynchronous()
             }
+
+            if (activeSession == null && transitionType == TransitionType.ON_BACKGROUND) {
+                // if a new session hasn't been created when we background, cache an empty envelope to be used
+                // in case a native crash needs to be sent in the future after the current process dies
+                payloadStore?.cacheEmptyCrashEnvelope(payloadFactory.createEmptyLogEnvelope())
+            }
             Systrace.endSynchronous()
 
             Systrace.startSynchronous("alter-session-state")

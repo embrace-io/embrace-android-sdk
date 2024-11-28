@@ -10,55 +10,55 @@ class ClockTickingActivityLifecycleCallbacks(
 ) : ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        clock.tick(2)
+        clock.tick(PRE_DURATION)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        clock.tick(10)
+        clock.tick(STATE_DURATION)
     }
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
-        clock.tick(1)
+        clock.tick(POST_DURATION)
     }
 
     override fun onActivityPreStarted(activity: Activity) {
-        clock.tick(2)
+        clock.tick(PRE_DURATION)
     }
 
     override fun onActivityStarted(activity: Activity) {
-        clock.tick(10)
+        clock.tick(STATE_DURATION)
     }
 
     override fun onActivityPostStarted(activity: Activity) {
-        clock.tick(1)
+        clock.tick(POST_DURATION)
     }
 
     override fun onActivityPreResumed(activity: Activity) {
-        clock.tick(2)
+        clock.tick(PRE_DURATION)
     }
 
     override fun onActivityResumed(activity: Activity) {
-        clock.tick(10)
+        clock.tick(STATE_DURATION)
     }
 
     override fun onActivityPostResumed(activity: Activity) {
-        clock.tick(1)
+        clock.tick(POST_DURATION)
     }
 
     override fun onActivityPrePaused(activity: Activity) {
-        clock.tick(2)
+        clock.tick(PRE_DURATION)
     }
 
     override fun onActivityPaused(activity: Activity) {
-        clock.tick(10)
+        clock.tick(STATE_DURATION)
     }
 
     override fun onActivityPostPaused(activity: Activity) {
-        clock.tick(1)
+        clock.tick(POST_DURATION)
     }
 
     override fun onActivityStopped(activity: Activity) {
-        clock.tick(10)
+        clock.tick(STATE_DURATION)
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
@@ -68,8 +68,8 @@ class ClockTickingActivityLifecycleCallbacks(
     }
 
     companion object {
-        const val PRE_DURATION = 2
-        const val STATE_DURATION = 10
-        const val POST_DURATION = 1
+        const val PRE_DURATION = 2L
+        const val STATE_DURATION = 10L
+        const val POST_DURATION = 1L
     }
 }

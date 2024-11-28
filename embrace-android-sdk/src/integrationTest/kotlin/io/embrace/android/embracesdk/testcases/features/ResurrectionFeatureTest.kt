@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.assertions.getSessionId
-import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
+import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -15,10 +17,8 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
-import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.getSessionSpan
-import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -31,6 +31,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class ResurrectionFeatureTest {
 
+    private val serializer = TestPlatformSerializer()
     private lateinit var cacheStorageService: FakePayloadStorageService
 
     @Rule
@@ -51,36 +52,30 @@ internal class ResurrectionFeatureTest {
     fun `crashed session and native crash resurrected and sent properly`() {
         val sessionMetadata = fakeCachedSessionStoredTelemetryMetadata
         val lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L
+
+        val nativeCrashData: NativeCrashData = serializer.fromJson(
+            ResourceReader.readResource("native_crash_1.txt"),
+            NativeCrashData::class.java
+        )
         val deadSessionEnvelope = fakeIncompleteSessionEnvelope(
             startMs = sessionMetadata.timestamp,
-            lastHeartbeatTimeMs = lastHeartbeatTimeMs
+            lastHeartbeatTimeMs = lastHeartbeatTimeMs,
+            sessionId = nativeCrashData.sessionId
         )
         testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
-                cacheStorageService.addPayload(sessionMetadata, deadSessionEnvelope)
-                cacheStorageServiceProvider = { cacheStorageService }
-                val nativeCrashService = fakeNativeFeatureModule.nativeCrashService as FakeNativeCrashService
-                nativeCrashService.addNativeCrashData(
-                    nativeCrashData = NativeCrashData(
-                        nativeCrashId = "fake-native-crash-id",
-                        sessionId = deadSessionEnvelope.getSessionId(),
-                        timestamp = lastHeartbeatTimeMs,
-                        crash = "somebinary",
-                        symbols = null,
-                    )
-                )
+                setupFakeDeadSession(cacheStorageService, sessionMetadata, deadSessionEnvelope)
+                setupFakeNativeCrash(serializer, nativeCrashData)
             },
-            testCaseAction = { },
+            testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertEquals(deadSessionEnvelope.getSessionId(), getSessionId())
-                    with(checkNotNull(getSessionSpan())) {
-                        assertEquals(lastHeartbeatTimeMs, endTimeNanos?.nanosToMillis())
-                        assertEquals(Span.Status.ERROR, status)
-                        assertEquals("fake-native-crash-id", attributes?.findAttributeValue(embCrashId.name))
-                    }
+                    assertDeadSessionResurrected(deadSessionEnvelope, lastHeartbeatTimeMs, nativeCrashData, embCrashId)
                 }
-                assertNotNull(getSentNativeCrashes().singleOrNull())
+                val envelope = getSingleLogEnvelope()
+                val log = envelope.getLastLog()
+                assertNativeCrashSent(log, nativeCrashData, deadSessionEnvelope, testRule.setup.symbols)
             }
         )
     }

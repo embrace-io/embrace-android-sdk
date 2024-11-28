@@ -18,7 +18,9 @@ class FileStorageServiceImpl(
     private val storageLimit: Int = 500,
 ) : FileStorageService {
 
-    private val payloadDir by outputDir
+    private val payloadDir by lazy {
+        outputDir.value.apply { mkdirs() }
+    }
 
     // maintain an in-memory list of payloads to avoid calling listFiles() every time we need
     // to check the storage limit. This will always remain in sync with the actual files on disk

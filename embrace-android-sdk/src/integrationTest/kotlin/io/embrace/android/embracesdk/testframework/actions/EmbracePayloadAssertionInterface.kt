@@ -7,7 +7,9 @@ import io.embrace.android.embracesdk.assertions.findSessionSpan
 import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
-import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
+import io.embrace.android.embracesdk.internal.TypeUtils
+import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -15,10 +17,15 @@ import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.payload.getSessionSpan
 import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator
+import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import java.io.File
 import java.io.IOException
@@ -26,6 +33,8 @@ import java.util.Locale
 import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -38,16 +47,10 @@ internal class EmbracePayloadAssertionInterface(
 
     companion object {
         private const val WAIT_TIME_MS = 10000
-        private const val CONFIG_OUTPUT_DIR = "embrace_remote_config"
-        private const val CONFIG_RESPONSE_FILE = "most_recent_response"
-        private const val CONFIG_ETAG_FILE = "etag"
     }
 
     private val deliveryService by lazy { bootstrapper.deliveryModule.deliveryService as FakeDeliveryService }
     private val serializer by lazy { bootstrapper.initModule.jsonSerializer }
-    private val nativeCrashService by lazy {
-        bootstrapper.nativeFeatureModule.nativeCrashService as FakeNativeCrashService
-    }
     private val deliveryTracer by lazy {
         checkNotNull(bootstrapper.deliveryModule.deliveryTracer)
     }
@@ -234,9 +237,51 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
-    /*** Native ***/
+    fun Envelope<SessionPayload>.assertDeadSessionResurrected(
+        deadSessionEnvelope: Envelope<SessionPayload>,
+        lastHeartbeatTimeMs: Long,
+        nativeCrashData: NativeCrashData,
+        embCrashId: EmbraceAttributeKey,
+    ) {
+        assertEquals(deadSessionEnvelope.getSessionId(), getSessionId())
+        with(checkNotNull(getSessionSpan())) {
+            assertEquals(lastHeartbeatTimeMs, endTimeNanos?.nanosToMillis())
+            assertEquals(Span.Status.ERROR, status)
+            assertEquals(
+                nativeCrashData.nativeCrashId,
+                attributes?.findAttributeValue(embCrashId.name)
+            )
+        }
+    }
 
-    internal fun getSentNativeCrashes() = nativeCrashService.nativeCrashesSent.toList()
+    fun assertNativeCrashSent(
+        log: Log,
+        nativeCrashData: NativeCrashData,
+        deadSessionEnvelope: Envelope<SessionPayload>,
+        symbolMap: Map<String, String>
+    ) {
+        assertEquals("ERROR", log.severityText)
+        assertEquals("", log.body)
+
+        val symbols = serializer.toJson(
+            symbolMap,
+            TypeUtils.typedMap(String::class.java, String::class.java)
+        )
+        assertEquals(nativeCrashData.timestamp, log.timeUnixNano?.nanosToMillis())
+
+        val attrs = checkNotNull(log.attributes)
+        attrs.assertMatches(
+            mapOf(
+                "emb.android.crash_number" to "1",
+                "emb.android.native_crash.exception" to nativeCrashData.crash,
+                "emb.android.native_crash.symbols" to symbols,
+                "emb.private.send_mode" to "DEFER",
+                "emb.type" to "sys.android.native_crash",
+            )
+        )
+        assertNotNull(attrs.findAttributeValue("log.record.uid"))
+        assertEquals(deadSessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
+    }
 
 
     /*** SESSIONS V1 ***/

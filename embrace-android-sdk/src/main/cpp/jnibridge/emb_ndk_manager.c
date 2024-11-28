@@ -33,9 +33,7 @@ static emb_env *__emb_env = &__impl_emb_env;
 JNIEXPORT void JNICALL
 Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSignalHandlers(JNIEnv *env,
                                                                                       jobject thiz,
-                                                                                      jstring _base_path,
                                                                                       jstring _crash_marker_path,
-                                                                                      jstring _session_id,
                                                                                       jstring _app_state,
                                                                                       jstring _report_id,
                                                                                       jint api_level,
@@ -54,15 +52,8 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSigna
     EMB_LOGDEV("unwinder args: apiLevel=%d, 32bit=%d", api_level, is_32bit);
 
     EMB_LOGDEV("Setting up initial state.");
-    const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
-    snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
     const char *report_id = (*env)->GetStringUTFChars(env, _report_id, 0);
     snprintf(__emb_env->crash.report_id, EMB_REPORT_ID_SIZE, "%s", report_id);
-
-    EMB_LOGDEV("Setting up base path.");
-    const char *base_path = (*env)->GetStringUTFChars(env, _base_path, 0);
-    snprintf(__emb_env->base_path, EMB_PATH_SIZE, "%s", base_path);
-    EMB_LOGINFO("base path: %s", base_path);
 
     EMB_LOGDEV("Setting up crash marker path.");
     const char *crash_marker_path = (*env)->GetStringUTFChars(env, _crash_marker_path, 0);
@@ -74,9 +65,6 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_installSigna
     clock_gettime(CLOCK_REALTIME, &ts);
     // get timestamp in millis
     __emb_env->crash.start_ts = ((int64_t) ts.tv_sec * 1000) + ((int64_t) ts.tv_nsec / 1000000);
-
-    // must set start_ts before calling this
-    emb_set_report_paths(__emb_env, session_id);
 
     // install signal handlers
     if (!emb_setup_c_signal_handlers(__emb_env)) {
@@ -100,10 +88,14 @@ Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateMetaDa
 }
 
 JNIEXPORT void JNICALL
-Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_updateSessionId(JNIEnv *env,
-                                                                                jobject thiz,
-                                                                                jstring _session_id) {
-    // do nothing
+Java_io_embrace_android_embracesdk_internal_ndk_jni_JniDelegateImpl_onSessionChange(JNIEnv *env,
+                                                                                   jobject thiz,
+                                                                                   jstring _session_id,
+                                                                                   jstring _report_path) {
+    const char *session_id = (*env)->GetStringUTFChars(env, _session_id, 0);
+    snprintf(__emb_env->crash.session_id, EMB_SESSION_ID_SIZE, "%s", session_id);
+    const char *report_path = (*env)->GetStringUTFChars(env, _report_path, 0);
+    snprintf(__emb_env->report_path, EMB_PATH_SIZE, "%s", report_path);
 }
 
 JNIEXPORT void JNICALL

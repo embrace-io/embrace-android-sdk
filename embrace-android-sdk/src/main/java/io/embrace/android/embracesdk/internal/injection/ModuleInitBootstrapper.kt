@@ -332,14 +332,20 @@ internal class ModuleInitBootstrapper(
                             initModule,
                             coreModule,
                             payloadSourceModule,
-                            storageModule
+                            workerThreadModule,
+                            configModule,
+                            storageModule,
+                            essentialServiceModule,
+                            openTelemetryModule,
+                            { null },
+                            { null },
+                            { null },
                         )
                     }
 
                     nativeFeatureModule = init(NativeFeatureModule::class) {
                         nativeFeatureModuleSupplier(
                             initModule,
-                            storageModule,
                             essentialServiceModule,
                             configModule,
                             payloadSourceModule,
@@ -350,10 +356,11 @@ internal class ModuleInitBootstrapper(
                     }
 
                     postInit(NativeFeatureModule::class) {
+                        nativeCoreModule.sharedObjectLoader.loadEmbraceNative()
                         serviceRegistry.registerServices(
                             lazy { nativeFeatureModule.nativeThreadSamplerService }
                         )
-                        nativeFeatureModule.nativeCrashHandlerInstaller?.install()
+                        nativeCoreModule.nativeCrashHandlerInstaller?.install()
                     }
 
                     logModule = init(LogModule::class) {

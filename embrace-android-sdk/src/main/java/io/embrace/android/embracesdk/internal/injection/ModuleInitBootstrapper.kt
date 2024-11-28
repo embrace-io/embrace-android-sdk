@@ -337,6 +337,9 @@ internal class ModuleInitBootstrapper(
                             storageModule,
                             essentialServiceModule,
                             openTelemetryModule,
+                            { null },
+                            { null },
+                            { null },
                         )
                     }
 

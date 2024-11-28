@@ -35,7 +35,10 @@ internal class NativeCoreModuleImplTest {
             ),
             FakeStorageModule(),
             FakeEssentialServiceModule(),
-            FakeOpenTelemetryModule()
+            FakeOpenTelemetryModule(),
+            { null },
+            { null },
+            { null },
         )
         assertNotNull(module.sharedObjectLoader)
         assertNotNull(module.symbolService)

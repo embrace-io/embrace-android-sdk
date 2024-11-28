@@ -14,9 +14,7 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
     fun setUp() {
         // install signal handlers first so we can test the other methods without race conditions
         val result = delegate.installSignalHandlers(
-            "report_path",
             "markerFilePath",
-            "null",
             "app_state",
             "report_id",
             29,
@@ -35,7 +33,7 @@ internal class NdkJniInterfaceTest : NativeTestSuite() {
 
     @Test
     fun updateSessionIdTest() {
-        val result = delegate.onSessionChange("new_session_id")
+        val result = delegate.onSessionChange("new_session_id", "new_native_report_path")
         assertEquals(Unit.javaClass, result.javaClass)
     }
 

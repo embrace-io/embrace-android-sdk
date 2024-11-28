@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsKeySpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -13,6 +11,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.api.trace.SpanId
 import io.opentelemetry.api.trace.StatusCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -356,9 +355,9 @@ internal class EmbraceTracerTest {
         assertEquals(name, currentSpan.name)
         currentSpan.assertIsTypePerformance()
         if (traceRoot) {
-            currentSpan.assertIsKeySpan()
+            assertEquals(SpanId.getInvalid(), currentSpan.parentSpanId)
         } else {
-            currentSpan.assertNotKeySpan()
+            assertNotNull(currentSpan.parentSpanId)
         }
         if (errorCode == null) {
             currentSpan.assertSuccessful()

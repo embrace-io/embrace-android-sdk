@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.assertions
 
 import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsKeySpan
 import io.embrace.android.embracesdk.arch.assertIsPrivateSpan
-import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -29,7 +27,6 @@ fun assertEmbraceSpanData(
     expectedCustomAttributes: Map<String, String> = emptyMap(),
     expectedEvents: List<SpanEvent> = emptyList(),
     private: Boolean = false,
-    key: Boolean = false,
 ) {
     checkNotNull(span)
     with(span) {
@@ -57,11 +54,6 @@ fun assertEmbraceSpanData(
             assertIsPrivateSpan()
         } else {
             assertNotPrivateSpan()
-        }
-        if (key) {
-            assertIsKeySpan()
-        } else {
-            assertNotKeySpan()
         }
     }
 }

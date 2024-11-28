@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.arch.assertError
 import io.embrace.android.embracesdk.arch.assertHasEmbraceAttribute
 import io.embrace.android.embracesdk.arch.assertIsType
-import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -235,7 +234,6 @@ internal class CurrentSessionSpanImplTests {
                 assertEquals("emb-session", name)
                 assertIsType(EmbType.Ux.Session)
                 assertError(ErrorCode.FAILURE)
-                assertNotKeySpan()
                 assertHasEmbraceAttribute(cause)
             }
 
@@ -278,8 +276,7 @@ internal class CurrentSessionSpanImplTests {
             expectedErrorCode = ErrorCode.FAILURE,
             expectedCustomAttributes = mapOf(
                 EmbType.Performance.Default.toEmbraceKeyValuePair()
-            ),
-            key = true
+            )
         )
 
         assertEquals(0, spanSink.completedSpans().size)

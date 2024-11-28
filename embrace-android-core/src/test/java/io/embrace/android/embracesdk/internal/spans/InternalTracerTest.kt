@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsKeySpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
-import io.embrace.android.embracesdk.arch.assertNotKeySpan
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -61,7 +59,7 @@ internal class InternalTracerTest {
         val childEndTimeMs = clock.now() - 1L
         assertTrue(internalTracer.stopSpan(spanId = spanId, endTimeMs = childEndTimeMs))
         assertFalse(internalTracer.addSpanAttribute(spanId = spanId, key = "fail", value = "value"))
-        with(verifyPublicSpan(name = "test-span", traceRoot = false)) {
+        with(verifyPublicSpan(name = "test-span")) {
             assertEquals("valuez", attributes["keyz"])
             assertEquals(childStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(childEndTimeMs, endTimeNanos.nanosToMillis())
@@ -211,7 +209,7 @@ internal class InternalTracerTest {
             )
         )
 
-        with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
+        with(verifyPublicSpan(expectedName, ErrorCode.FAILURE)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertEquals(StatusCode.ERROR, status)
@@ -234,7 +232,7 @@ internal class InternalTracerTest {
             )
         )
 
-        with(verifyPublicSpan(expectedName, false)) {
+        with(verifyPublicSpan(expectedName)) {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
         }
@@ -269,7 +267,6 @@ internal class InternalTracerTest {
             assertEquals(expectedStartTimeMs, startTimeNanos.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos.nanosToMillis())
             assertIsTypePerformance()
-            assertIsKeySpan()
             expectedAttributes.forEach {
                 assertEquals(it.value, attributes[it.key])
             }
@@ -305,7 +302,6 @@ internal class InternalTracerTest {
 
     private fun verifyPublicSpan(
         name: String,
-        traceRoot: Boolean = true,
         errorCode: ErrorCode? = null,
     ): EmbraceSpanData {
         val currentSpans = spanSink.completedSpans()
@@ -313,11 +309,6 @@ internal class InternalTracerTest {
         val currentSpan = currentSpans[0]
         assertEquals(name, currentSpan.name)
         currentSpan.assertIsTypePerformance()
-        if (traceRoot) {
-            currentSpan.assertIsKeySpan()
-        } else {
-            currentSpan.assertNotKeySpan()
-        }
         if (errorCode == null) {
             currentSpan.assertSuccessful()
         } else {

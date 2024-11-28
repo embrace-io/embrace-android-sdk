@@ -144,8 +144,7 @@ internal class ExternalTracerTest {
                     expectedStartTimeMs = checkNotNull(startTimeMs),
                     expectedEndTimeMs = checkNotNull(endTimeMs),
                     expectedParentId = SpanId.getInvalid(),
-                    expectedCustomAttributes = mapOf("failures" to "1"),
-                    key = true
+                    expectedCustomAttributes = mapOf("failures" to "1")
                 )
                 assertEmbraceSpanData(
                     span = child,
@@ -168,8 +167,7 @@ internal class ExternalTracerTest {
                                 )
                             )
                         )
-                    ),
-                    key = false
+                    )
                 )
 
                 assertTrue("Timed out waiting for the span to be exported", spanExporter.awaitSpanExport(3))

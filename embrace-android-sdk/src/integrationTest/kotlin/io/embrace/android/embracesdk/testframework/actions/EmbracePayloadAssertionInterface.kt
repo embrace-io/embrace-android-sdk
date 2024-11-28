@@ -8,18 +8,17 @@ import io.embrace.android.embracesdk.assertions.getSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.internal.TypeUtils
-import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.opentelemetry.embCleanExit
+import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.getSessionSpan
@@ -34,7 +33,9 @@ import java.util.concurrent.TimeoutException
 import org.json.JSONObject
 import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 
 /**
  * Provides assertions that can be used in integration tests to validate the behavior of the SDK,
@@ -237,28 +238,27 @@ internal class EmbracePayloadAssertionInterface(
         }
     }
 
-    fun Envelope<SessionPayload>.assertDeadSessionResurrected(
-        deadSessionEnvelope: Envelope<SessionPayload>,
-        lastHeartbeatTimeMs: Long,
-        nativeCrashData: NativeCrashData,
-        embCrashId: EmbraceAttributeKey,
-    ) {
-        assertEquals(deadSessionEnvelope.getSessionId(), getSessionId())
+    fun Envelope<SessionPayload>.assertDeadSessionResurrected(crashData: StoredNativeCrashData?) {
         with(checkNotNull(getSessionSpan())) {
-            assertEquals(lastHeartbeatTimeMs, endTimeNanos?.nanosToMillis())
             assertEquals(Span.Status.ERROR, status)
-            assertEquals(
-                nativeCrashData.nativeCrashId,
-                attributes?.findAttributeValue(embCrashId.name)
-            )
+
+            if (crashData != null) {
+                assertEquals(crashData.sessionEnvelope.getSessionId(), getSessionId())
+                assertEquals(crashData.lastHeartbeatMs, endTimeNanos?.nanosToMillis())
+                assertEquals(
+                    crashData.nativeCrash.nativeCrashId,
+                    attributes?.findAttributeValue(embCrashId.name)
+                )
+            } else {
+                assertNull(attributes?.findAttributeValue(embCrashId.name))
+            }
         }
     }
 
     fun assertNativeCrashSent(
         log: Log,
-        nativeCrashData: NativeCrashData,
-        deadSessionEnvelope: Envelope<SessionPayload>,
-        symbolMap: Map<String, String>
+        crashData: StoredNativeCrashData,
+        symbolMap: Map<String, String>,
     ) {
         assertEquals("ERROR", log.severityText)
         assertEquals("", log.body)
@@ -267,20 +267,21 @@ internal class EmbracePayloadAssertionInterface(
             symbolMap,
             TypeUtils.typedMap(String::class.java, String::class.java)
         )
-        assertEquals(nativeCrashData.timestamp, log.timeUnixNano?.nanosToMillis())
+        assertEquals(crashData.nativeCrash.timestamp, log.timeUnixNano?.nanosToMillis())
 
         val attrs = checkNotNull(log.attributes)
         attrs.assertMatches(
             mapOf(
-                "emb.android.crash_number" to "1",
-                "emb.android.native_crash.exception" to nativeCrashData.crash,
+                "emb.android.native_crash.exception" to crashData.nativeCrash.crash,
                 "emb.android.native_crash.symbols" to symbols,
                 "emb.private.send_mode" to "DEFER",
                 "emb.type" to "sys.android.native_crash",
             )
         )
         assertNotNull(attrs.findAttributeValue("log.record.uid"))
-        assertEquals(deadSessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
+        assertNotNull(attrs.findAttributeValue("emb.android.crash_number"))
+        assertEquals(crashData.sessionEnvelope.getSessionId(), attrs.findAttributeValue("session.id"))
+        assertFalse(crashData.getCrashFile().exists())
     }
 
 

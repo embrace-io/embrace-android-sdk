@@ -1,23 +1,20 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
-import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.createStoredNativeCrashData
 import io.embrace.android.embracesdk.testframework.assertions.getLastLog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -50,32 +47,26 @@ internal class ResurrectionFeatureTest {
 
     @Test
     fun `crashed session and native crash resurrected and sent properly`() {
-        val sessionMetadata = fakeCachedSessionStoredTelemetryMetadata
-        val lastHeartbeatTimeMs = sessionMetadata.timestamp + 1000L
-
-        val nativeCrashData: NativeCrashData = serializer.fromJson(
-            ResourceReader.readResource("native_crash_1.txt"),
-            NativeCrashData::class.java
-        )
-        val deadSessionEnvelope = fakeIncompleteSessionEnvelope(
-            startMs = sessionMetadata.timestamp,
-            lastHeartbeatTimeMs = lastHeartbeatTimeMs,
-            sessionId = nativeCrashData.sessionId
+        val crashData = createStoredNativeCrashData(
+            serializer,
+            fakeCachedSessionStoredTelemetryMetadata,
+            fakeNativeCrashStoredTelemetryMetadata,
+            "native_crash_1.txt",
         )
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true)),
             setupAction = {
-                setupFakeDeadSession(cacheStorageService, sessionMetadata, deadSessionEnvelope)
-                setupFakeNativeCrash(serializer, nativeCrashData)
+                setupFakeDeadSession(cacheStorageService, crashData)
+                setupFakeNativeCrash(serializer, crashData)
             },
             testCaseAction = {},
             assertAction = {
                 with(getSingleSessionEnvelope()) {
-                    assertDeadSessionResurrected(deadSessionEnvelope, lastHeartbeatTimeMs, nativeCrashData, embCrashId)
+                    assertDeadSessionResurrected(crashData)
                 }
                 val envelope = getSingleLogEnvelope()
                 val log = envelope.getLastLog()
-                assertNativeCrashSent(log, nativeCrashData, deadSessionEnvelope, testRule.setup.symbols)
+                assertNativeCrashSent(log, crashData, testRule.setup.symbols)
             }
         )
     }

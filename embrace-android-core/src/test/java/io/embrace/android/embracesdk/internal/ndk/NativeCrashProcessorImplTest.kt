@@ -70,7 +70,7 @@ internal class NativeCrashProcessorImplTest {
     @Test
     fun `test getLatestNativeCrash catches an exception if _getCrashReport returns an empty string`() {
         initializeService()
-        addCrashFiles("test")
+        addCrashFiles("test", json = "")
         val crashData = service.getLatestNativeCrash()
         assertNull(crashData)
     }
@@ -83,17 +83,14 @@ internal class NativeCrashProcessorImplTest {
             "    }\n" +
             "  ]\n" +
             "}"
-        delegate.crashRaw = json
-
         initializeService()
-        addCrashFiles("test")
+        addCrashFiles("test", json = json)
         val crashData = service.getLatestNativeCrash()
         assertNull(crashData)
     }
 
     @Test
     fun `test getLatestNativeCrash when a native crash was captured`() {
-        delegate.crashRaw = getNativeCrashRaw()
         configService.appFramework = AppFramework.UNITY
 
         initializeService()
@@ -116,7 +113,6 @@ internal class NativeCrashProcessorImplTest {
 
     @Test
     fun `getNativeCrashes returns all the crashes in the repository and doesn't invoke delete`() {
-        delegate.crashRaw = getNativeCrashRaw()
         initializeService()
         addCrashFiles("file1")
         addCrashFiles("file2")
@@ -126,7 +122,6 @@ internal class NativeCrashProcessorImplTest {
 
     @Test
     fun `getLatestNativeCrash returns only one crash even if there are many and deletes them all`() {
-        delegate.crashRaw = getNativeCrashRaw()
         initializeService()
         addCrashFiles("file1")
         addCrashFiles("file2")
@@ -134,7 +129,7 @@ internal class NativeCrashProcessorImplTest {
         assertEquals(0, service.getNativeCrashes().size)
     }
 
-    private fun addCrashFiles(name: String) {
+    private fun addCrashFiles(name: String, json: String = nativeCrashRaw) {
         val metadata = StoredTelemetryMetadata(
             timestamp = 1000000,
             uuid = name,
@@ -142,8 +137,10 @@ internal class NativeCrashProcessorImplTest {
             envelopeType = SupportedEnvelopeType.CRASH,
             payloadType = PayloadType.NATIVE_CRASH,
         )
-        File(storageDir, metadata.filename).createNewFile()
+        val dst = File(storageDir, metadata.filename)
+        dst.createNewFile()
+        delegate.addCrashRaw(dst.absolutePath, json)
     }
 
-    private fun getNativeCrashRaw() = ResourceReader.readResourceAsText("native_crash_raw.txt")
+    private val nativeCrashRaw = ResourceReader.readResourceAsText("native_crash_raw.txt")
 }

@@ -12,7 +12,7 @@ interface JniDelegate {
     fun updateMetaData(metadata: String?)
     fun onSessionChange(sessionId: String?, reportPath: String)
     fun updateAppState(appState: String?)
-    fun getCrashReport(path: String?): String?
+    fun getCrashReport(path: String): String?
     fun checkForOverwrittenHandlers(): String?
     fun reinstallSignalHandlers(): Boolean
 }

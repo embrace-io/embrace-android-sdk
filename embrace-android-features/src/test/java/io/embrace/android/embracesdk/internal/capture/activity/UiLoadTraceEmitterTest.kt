@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.opentelemetry.api.trace.SpanId
 import org.junit.Assert.assertNull
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
@@ -57,31 +56,6 @@ internal class UiLoadTraceEmitterTest {
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_ACTIVITY,
-            uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
-        )
-    }
-
-    @Ignore("Not working yet")
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
-    @Test
-    fun `verify cold open trace from an interrupted opening of another activity in U`() {
-        verifyOpen(
-            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
-            uiLoadType = UiLoadType.COLD,
-            firePreAndPost = true,
-            hasRenderEvent = true,
-        )
-    }
-
-    @Ignore("Not working yet")
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
-    @Test
-    fun `verify cold open trace from an interrupted opening of the same activity in U`() {
-        verifyOpen(
-            lastActivityName = ACTIVITY_NAME,
-            previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
             firePreAndPost = true,
             hasRenderEvent = true,

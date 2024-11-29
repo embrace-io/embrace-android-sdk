@@ -11,4 +11,5 @@ interface InstrumentedConfig {
     val project: ProjectConfig
     val redaction: RedactionConfig
     val session: SessionConfig
+    val spanLimits: OtelLimitsConfig
 }

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.BaseUrl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.EnabledFeatureConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.NetworkCaptureConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.ProjectConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.RedactionConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.SessionConfig
@@ -26,6 +27,7 @@ object InstrumentedConfigImpl : InstrumentedConfig {
     override val project: ProjectConfig = ProjectConfigImpl
     override val redaction: RedactionConfig = RedactionConfigImpl
     override val session: SessionConfig = SessionConfigImpl
+    override val spanLimits: OtelLimitsConfig = OtelLimitsConfigImpl
 }
 
 @Swazzled
@@ -45,3 +47,6 @@ object RedactionConfigImpl : RedactionConfig
 
 @Swazzled
 object SessionConfigImpl : SessionConfig
+
+@Swazzled
+object OtelLimitsConfigImpl : OtelLimitsConfig

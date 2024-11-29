@@ -38,7 +38,7 @@ class RnActionDataSource(
                 startTimeMs = startTime,
                 endTimeMs = endTime,
                 type = schemaType.telemetryType,
-                attributes = schemaType.attributes()
+                attributes = schemaType.attributes(),
             )
         }
     )

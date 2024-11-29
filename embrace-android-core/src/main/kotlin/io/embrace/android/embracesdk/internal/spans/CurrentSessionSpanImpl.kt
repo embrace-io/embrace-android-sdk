@@ -172,7 +172,7 @@ internal class CurrentSessionSpanImpl(
             name = "session",
             type = EmbType.Ux.Session,
             internal = true,
-            private = false
+            private = false,
         ).apply {
             start(startTimeMs = startTimeMs)
             setSystemAttribute(SessionIncubatingAttributes.SESSION_ID, Uuid.getEmbUuid())

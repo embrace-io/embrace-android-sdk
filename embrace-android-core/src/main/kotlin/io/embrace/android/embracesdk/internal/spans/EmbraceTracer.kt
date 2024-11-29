@@ -23,6 +23,7 @@ class EmbraceTracer(
             parent = parent,
             internal = false,
             private = false,
+            autoTerminationMode = autoTerminationMode
         )
 
     override fun startSpan(
@@ -37,6 +38,7 @@ class EmbraceTracer(
             startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
             internal = false,
             private = false,
+            autoTerminationMode = autoTerminationMode
         )
 
     override fun <T> recordSpan(
@@ -53,6 +55,7 @@ class EmbraceTracer(
         private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
+        autoTerminationMode = autoTerminationMode,
         code = code
     )
 
@@ -74,6 +77,7 @@ class EmbraceTracer(
         private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
+        autoTerminationMode = autoTerminationMode,
         errorCode = errorCode
     )
 

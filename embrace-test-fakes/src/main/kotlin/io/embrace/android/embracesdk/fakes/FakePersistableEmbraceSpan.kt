@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.embrace.android.embracesdk.internal.spans.toStatus
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -33,6 +34,7 @@ class FakePersistableEmbraceSpan(
     val type: TelemetryType = EmbType.Performance.Default,
     val internal: Boolean = false,
     val private: Boolean = internal,
+    override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     private val fakeClock: FakeClock = FakeClock(),
 ) : PersistableEmbraceSpan {
 

@@ -50,14 +50,16 @@ internal sealed class DeliveryTraceState {
      * The payload store returned a list of payloads by priority
      */
     internal class GetPayloadsByPriority(val payloads: List<StoredTelemetryMetadata>) : DeliveryTraceState() {
-        override fun toString(): String = "GetPayloadsByPriority, count=${payloads.size},\n${payloads.reportListString()}"
+        override fun toString(): String =
+            "GetPayloadsByPriority, count=${payloads.size},\n${payloads.reportListString()}"
     }
 
     /**
      * The payload store returned a list of undelivered payloads
      */
     internal class GetUndeliveredPayloads(val payloads: List<StoredTelemetryMetadata>) : DeliveryTraceState() {
-        override fun toString(): String = "GetUndeliveredPayloads, count=${payloads.size},\n${payloads.reportListString()}"
+        override fun toString(): String =
+            "GetUndeliveredPayloads, count=${payloads.size},\n${payloads.reportListString()}"
     }
 
     /**
@@ -90,6 +92,43 @@ internal sealed class DeliveryTraceState {
      */
     internal object SessionCacheAttempt : DeliveryTraceState() {
         override fun toString(): String = "SessionCacheAttempt"
+    }
+
+    /**
+     * The delivery loop was started
+     */
+    internal class StartDeliveryLoop(private val loopAlreadyActive: Boolean) : DeliveryTraceState() {
+        override fun toString(): String = "StartDeliveryLoop loopAlreadyActive=$loopAlreadyActive"
+    }
+
+    /**
+     * A payload was enqueued for delivery
+     */
+    class PayloadEnqueued(private val payload: StoredTelemetryMetadata) : DeliveryTraceState() {
+        override fun toString(): String = "PayloadEnqueued, ${payload.toReportString()}"
+    }
+
+    /**
+     * A payload result was obtained
+     */
+    class PayloadResult(
+        private val payload: StoredTelemetryMetadata,
+        private val result: ExecutionResult,
+    ) : DeliveryTraceState() {
+        override fun toString(): String = "PayloadResult, ${payload.toReportString()}, result=${result.javaClass.simpleName}"
+    }
+
+    /**
+     * A payload queue was created
+     */
+    class PayloadQueueCreated(
+        private val payloadsByPriority: List<StoredTelemetryMetadata>,
+        private val payloadsToSend: List<StoredTelemetryMetadata>,
+    ) : DeliveryTraceState() {
+        override fun toString(): String {
+            return "PayloadQueueCreated, payloadsByPriority=${payloadsByPriority.map { it.uuid }}, " +
+                "payloadsToSend=${payloadsToSend.map { it.uuid }}"
+        }
     }
 
     internal fun StoredTelemetryMetadata.toReportString(): String {

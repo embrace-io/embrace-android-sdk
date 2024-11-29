@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.comms.delivery.NetworkStatus
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -25,7 +26,8 @@ class SchedulingServiceImpl(
     private val schedulingWorker: BackgroundWorker,
     private val deliveryWorker: BackgroundWorker,
     private val clock: Clock,
-    private val logger: EmbLogger
+    private val logger: EmbLogger,
+    private val deliveryTracer: DeliveryTracer? = null,
 ) : SchedulingService {
 
     private val blockedEndpoints: MutableMap<Endpoint, Long> = ConcurrentHashMap()
@@ -65,9 +67,12 @@ class SchedulingServiceImpl(
         // When a payload arrives, check to see if there's already an active job try to deliver payloads
         // If not, schedule job. If so, do nothing.
         if (sendLoopActive.compareAndSet(false, true)) {
+            deliveryTracer?.onStartDeliveryLoop(true)
             schedulingWorker.submit {
                 deliveryLoop()
             }
+        } else {
+            deliveryTracer?.onStartDeliveryLoop(false)
         }
     }
 
@@ -120,13 +125,20 @@ class SchedulingServiceImpl(
         }
     }
 
-    private fun createPayloadQueue(exclude: Set<StoredTelemetryMetadata> = emptySet()) = LinkedList(
-        storageService.getPayloadsByPriority()
+    private fun createPayloadQueue(exclude: Set<StoredTelemetryMetadata> = emptySet()): LinkedList<StoredTelemetryMetadata> {
+        val payloadsByPriority = storageService.getPayloadsByPriority()
+        val payloadsToSend = payloadsByPriority
             .filter { it.shouldSendPayload() && !exclude.contains(it) }
             .sortedWith(storedTelemetryComparator)
-    )
+        deliveryTracer?.onPayloadQueueCreated(
+            payloadsByPriority,
+            payloadsToSend,
+        )
+        return LinkedList(payloadsToSend)
+    }
 
     private fun queueDelivery(payload: StoredTelemetryMetadata): Future<ExecutionResult> {
+        deliveryTracer?.onPayloadEnqueued(payload)
         activeSends.add(payload)
         return deliveryWorker.submit<ExecutionResult> {
             val result: ExecutionResult =
@@ -148,6 +160,8 @@ class SchedulingServiceImpl(
                     logger.trackInternalError(InternalErrorType.DELIVERY_SCHEDULING_FAIL, t)
                     ExecutionResult.Incomplete(exception = t, retry = false)
                 }
+
+            deliveryTracer?.onPayloadResult(payload, result)
 
             with(result) {
                 if (!shouldRetry) {

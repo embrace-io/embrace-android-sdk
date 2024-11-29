@@ -249,8 +249,8 @@ class PayloadResurrectionServiceImplTest {
         }
 
         assertEquals(2, nativeCrashService.nativeCrashesSent.size)
-        assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.first())
-        assertEquals(earlierSessionCrashData, nativeCrashService.nativeCrashesSent.last())
+        assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.first().first)
+        assertEquals(earlierSessionCrashData, nativeCrashService.nativeCrashesSent.last().first)
     }
 
     private fun Envelope<SessionPayload>.resurrectPayload() {

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.ndk
 
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.opentelemetry.api.common.AttributeKey
 
 /**
  * Service to retrieve and delivery native crash data
@@ -21,7 +22,11 @@ interface NativeCrashService {
     /**
      * Send the given native crash
      */
-    fun sendNativeCrash(nativeCrash: NativeCrashData)
+    fun sendNativeCrash(
+        nativeCrash: NativeCrashData,
+        sessionProperties: Map<String, String>,
+        metadata: Map<AttributeKey<String>, String> = emptyMap(),
+    )
 
     /**
      * Delete the data files associated with all the native crashes that have been recorded by the SDK

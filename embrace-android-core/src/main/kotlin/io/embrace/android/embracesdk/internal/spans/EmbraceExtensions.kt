@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -54,7 +55,7 @@ fun AttributesBuilder.fromMap(
     return this
 }
 
-fun io.embrace.android.embracesdk.internal.payload.Span.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean {
+fun Span.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean {
     return fixedAttribute.value == attributes?.singleOrNull { it.key == fixedAttribute.key.name }?.data
 }
 
@@ -70,9 +71,13 @@ fun SpanEvent.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
 
 fun List<Attribute>.findAttributeValue(key: String): String? = singleOrNull { it.key == key }?.data
 
-fun io.embrace.android.embracesdk.internal.payload.Span.getSessionProperty(key: String): String? {
+fun Span.getSessionProperty(key: String): String? {
     return attributes?.findAttributeValue(key.toSessionPropertyAttributeName())
 }
+
+@Suppress("UNCHECKED_CAST")
+fun Span.getSessionProperties(): Map<String, String> =
+    attributes?.filter { it.key != null && it.data != null }?.associate { it.key to it.data } as Map<String, String>
 
 fun Map<String, String>.hasFixedAttribute(fixedAttribute: FixedAttribute): Boolean =
     this[fixedAttribute.key.name] == fixedAttribute.value
@@ -92,7 +97,7 @@ private fun String.isValidLongValueAttribute(): Boolean = longValueAttributes.co
 
 private val longValueAttributes: Set<String> = setOf(ExceptionAttributes.EXCEPTION_STACKTRACE.key)
 
-fun StatusCode.toStatus(): io.embrace.android.embracesdk.internal.payload.Span.Status {
+fun StatusCode.toStatus(): Span.Status {
     return when (this) {
         StatusCode.UNSET -> io.embrace.android.embracesdk.internal.payload.Span.Status.UNSET
         StatusCode.OK -> io.embrace.android.embracesdk.internal.payload.Span.Status.OK

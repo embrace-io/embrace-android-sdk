@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.spans
  * The actual trace won't be recorded until the SDK is started, but it's safe to use this prior to SDK initialization.
  */
 public interface TracingApi {
+
     /**
      * Create an [EmbraceSpan] with the given name that will be the root span of a new trace. Returns null if the [EmbraceSpan] cannot
      * be created given the current conditions of the SDK or an invalid name.
@@ -13,6 +14,7 @@ public interface TracingApi {
      */
     public fun createSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSpan? = createSpan(name = name, parent = null)
 
     /**
@@ -25,6 +27,7 @@ public interface TracingApi {
     public fun createSpan(
         name: String,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSpan?
 
     /**
@@ -33,6 +36,7 @@ public interface TracingApi {
      */
     public fun startSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSpan? = startSpan(name = name, parent = null)
 
     /**
@@ -42,6 +46,7 @@ public interface TracingApi {
     public fun startSpan(
         name: String,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSpan? = startSpan(
         name = name,
         parent = parent,
@@ -56,6 +61,7 @@ public interface TracingApi {
         name: String,
         parent: EmbraceSpan?,
         startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): EmbraceSpan?
 
     /**
@@ -65,6 +71,7 @@ public interface TracingApi {
      */
     public fun <T> recordSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
     ): T = recordSpan(name = name, parent = null, attributes = null, events = null, code = code)
 
@@ -77,6 +84,7 @@ public interface TracingApi {
     public fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
     ): T = recordSpan(name = name, parent = parent, attributes = null, events = null, code = code)
 
@@ -89,6 +97,7 @@ public interface TracingApi {
         name: String,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
     ): T = recordSpan(name = name, parent = null, attributes = attributes, events = events, code = code)
 
@@ -104,6 +113,7 @@ public interface TracingApi {
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
     ): T
 
@@ -115,6 +125,7 @@ public interface TracingApi {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): Boolean =
         recordCompletedSpan(
             name = name,
@@ -136,6 +147,7 @@ public interface TracingApi {
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCode?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): Boolean =
         recordCompletedSpan(
             name = name,
@@ -156,6 +168,7 @@ public interface TracingApi {
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): Boolean =
         recordCompletedSpan(
             name = name,
@@ -178,6 +191,7 @@ public interface TracingApi {
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): Boolean = recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs,
@@ -199,6 +213,7 @@ public interface TracingApi {
         endTimeMs: Long,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): Boolean = recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs,
@@ -224,6 +239,7 @@ public interface TracingApi {
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     ): Boolean
 
     /**

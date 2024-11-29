@@ -39,12 +39,20 @@ class FakeAppStartupDataCollector(
         startupActivityInitEndMs = timestampMs ?: clock.now()
     }
 
-    override fun startupActivityResumed(activityName: String, timestampMs: Long?) {
+    override fun startupActivityResumed(
+        activityName: String,
+        collectionCompleteCallback: (() -> Unit)?,
+        timestampMs: Long?
+    ) {
         startupActivityName = activityName
         startupActivityResumedMs = timestampMs ?: clock.now()
     }
 
-    override fun firstFrameRendered(activityName: String, timestampMs: Long?) {
+    override fun firstFrameRendered(
+        activityName: String,
+        collectionCompleteCallback: (() -> Unit)?,
+        timestampMs: Long?
+    ) {
         startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: clock.now()
     }

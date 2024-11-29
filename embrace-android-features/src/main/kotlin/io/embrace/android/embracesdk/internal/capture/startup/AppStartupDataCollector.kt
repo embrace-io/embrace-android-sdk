@@ -40,12 +40,20 @@ interface AppStartupDataCollector {
     /**
      * Set the time for when the startup Activity begins to render as well as its name
      */
-    fun startupActivityResumed(activityName: String, timestampMs: Long? = null)
+    fun startupActivityResumed(
+        activityName: String,
+        collectionCompleteCallback: (() -> Unit)? = null,
+        timestampMs: Long? = null,
+    )
 
     /**
      * Set the time for when the startup Activity has finished rendering its first frame as well as its name
      */
-    fun firstFrameRendered(activityName: String, timestampMs: Long? = null)
+    fun firstFrameRendered(
+        activityName: String,
+        collectionCompleteCallback: (() -> Unit)? = null,
+        timestampMs: Long? = null,
+    )
 
     /**
      * Set an arbitrary time interval during startup that is of note

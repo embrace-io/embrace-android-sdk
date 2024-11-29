@@ -128,19 +128,27 @@ internal class AppStartupTraceEmitter(
         startupActivityInitEndMs = timestampMs ?: nowMs()
     }
 
-    override fun startupActivityResumed(activityName: String, timestampMs: Long?) {
+    override fun startupActivityResumed(
+        activityName: String,
+        collectionCompleteCallback: (() -> Unit)?,
+        timestampMs: Long?
+    ) {
         startupActivityName = activityName
         startupActivityResumedMs = timestampMs ?: nowMs()
         if (!endWithFrameDraw) {
-            dataCollectionComplete()
+            dataCollectionComplete(collectionCompleteCallback)
         }
     }
 
-    override fun firstFrameRendered(activityName: String, timestampMs: Long?) {
+    override fun firstFrameRendered(
+        activityName: String,
+        collectionCompleteCallback: (() -> Unit)?,
+        timestampMs: Long?
+    ) {
         startupActivityName = activityName
         firstFrameRenderedMs = timestampMs ?: nowMs()
         if (endWithFrameDraw) {
-            dataCollectionComplete()
+            dataCollectionComplete(collectionCompleteCallback)
         }
     }
 
@@ -153,7 +161,7 @@ internal class AppStartupTraceEmitter(
     /**
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
-    private fun dataCollectionComplete() {
+    private fun dataCollectionComplete(callback: (() -> Unit)?) {
         if (!startupRecorded.get()) {
             synchronized(startupRecorded) {
                 if (!startupRecorded.get()) {
@@ -166,6 +174,7 @@ internal class AppStartupTraceEmitter(
                             )
                         }
                     }
+                    callback?.invoke()
                 }
             }
         }

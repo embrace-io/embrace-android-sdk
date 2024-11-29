@@ -8,14 +8,12 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakePreferenceService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdTracker
-import io.embrace.android.embracesdk.fakes.FakeSessionPropertiesService
 import io.embrace.android.embracesdk.fixtures.testNativeCrashData
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriter
 import io.embrace.android.embracesdk.internal.arch.destination.LogWriterImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -38,7 +36,6 @@ import org.junit.Test
 
 internal class NativeCrashDataSourceImplTest {
 
-    private lateinit var sessionPropertiesService: SessionPropertiesService
     private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var preferencesService: FakePreferenceService
     private lateinit var configService: FakeConfigService
@@ -54,7 +51,6 @@ internal class NativeCrashDataSourceImplTest {
 
     @Before
     fun setUp() {
-        sessionPropertiesService = FakeSessionPropertiesService()
         crashProcessor = FakeNativeCrashProcessor()
         preferencesService = FakePreferenceService()
         logger = EmbLoggerImpl()
@@ -72,7 +68,6 @@ internal class NativeCrashDataSourceImplTest {
         configService = FakeConfigService()
         serializer = EmbraceSerializer()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
-            sessionPropertiesService = sessionPropertiesService,
             nativeCrashProcessor = crashProcessor,
             preferencesService = preferencesService,
             logWriter = logWriter,

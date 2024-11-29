@@ -150,7 +150,7 @@ internal class UiLoadTraceEmitterTest {
 
             val events = timestamps.third
             if (uiLoadType == UiLoadType.COLD) {
-                checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.CREATE]).run {
+                checkNotNull(events[LifecycleStage.CREATE]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-create"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
@@ -162,7 +162,7 @@ internal class UiLoadTraceEmitterTest {
                 assertNull(spanMap["emb-$activityName-create"])
             }
 
-            checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.START]).run {
+            checkNotNull(events[LifecycleStage.START]).run {
                 assertEmbraceSpanData(
                     span = checkNotNull(spanMap["emb-$activityName-start"]).toNewPayload(),
                     expectedStartTimeMs = startMs(),
@@ -172,7 +172,7 @@ internal class UiLoadTraceEmitterTest {
             }
 
             if (hasRenderEvent) {
-                checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.RESUME]).run {
+                checkNotNull(events[LifecycleStage.RESUME]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-resume"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
@@ -180,7 +180,7 @@ internal class UiLoadTraceEmitterTest {
                         expectedParentId = trace.spanId
                     )
                 }
-                checkNotNull(events[UiLoadTraceEmitter.LifecycleEvent.RENDER]).run {
+                checkNotNull(events[LifecycleStage.RENDER]).run {
                     assertEmbraceSpanData(
                         span = checkNotNull(spanMap["emb-$activityName-render"]).toNewPayload(),
                         expectedStartTimeMs = startMs(),
@@ -205,8 +205,8 @@ internal class UiLoadTraceEmitterTest {
         uiLoadType: UiLoadType,
         firePreAndPost: Boolean,
         hasRenderEvent: Boolean,
-    ): Triple<Long, Long, Map<UiLoadTraceEmitter.LifecycleEvent, LifecycleEvents>> {
-        val events = mutableMapOf<UiLoadTraceEmitter.LifecycleEvent, LifecycleEvents>()
+    ): Triple<Long, Long, Map<LifecycleStage, LifecycleEvents>> {
+        val events = mutableMapOf<LifecycleStage, LifecycleEvents>()
         val lastActivityExitMs = clock.now()
         clock.tick(100L)
 
@@ -243,7 +243,7 @@ internal class UiLoadTraceEmitterTest {
         } else {
             null
         }?.apply {
-            events[UiLoadTraceEmitter.LifecycleEvent.CREATE] = this
+            events[LifecycleStage.CREATE] = this
         }
 
         val startEvents = activityStart(
@@ -251,7 +251,7 @@ internal class UiLoadTraceEmitterTest {
             instanceId = instanceId,
             firePreAndPost = firePreAndPost
         ).apply {
-            events[UiLoadTraceEmitter.LifecycleEvent.START] = this
+            events[LifecycleStage.START] = this
         }
 
         val resumeEvents = activityResume(
@@ -259,7 +259,7 @@ internal class UiLoadTraceEmitterTest {
             instanceId = instanceId,
             firePreAndPost = firePreAndPost
         ).apply {
-            events[UiLoadTraceEmitter.LifecycleEvent.RESUME] = this
+            events[LifecycleStage.RESUME] = this
         }
 
         val renderEvents = if (hasRenderEvent) {
@@ -271,7 +271,7 @@ internal class UiLoadTraceEmitterTest {
         } else {
             null
         }?.apply {
-            events[UiLoadTraceEmitter.LifecycleEvent.RENDER] = this
+            events[LifecycleStage.RENDER] = this
         }
 
         val traceStartMs = if (previousState != PreviousState.FROM_BACKGROUND) {

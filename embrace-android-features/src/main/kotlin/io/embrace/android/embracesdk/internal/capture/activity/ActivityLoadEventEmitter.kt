@@ -11,16 +11,17 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.opentelemetry.sdk.common.Clock
 
 /**
- * Maps [ActivityLifecycleCallbacks] events to [UiLoadEvents] depending on the current state of the app and capabilities of the OS.
+ * Maps [ActivityLifecycleCallbacks] events to [UiLoadEventListener] depending on version of the OS and whether or
+ * not the given [Activity]'s load should be traced.
  *
  * The purpose of this is to leverage Activity lifecycle events to provide data for the underlying workflow to bring a new Activity on
  * screen. Due to the varying capabilities of the APIs available on the different versions of Android, the precise triggering events for
  * the start and intermediate steps may differ.
  *
- * See [UiLoadTraceEmitter] for details.
+ * See [UiLoadTraceEmitter] for details about how these events are turned into traces.
  */
-class UiLoadEventEmitter(
-    private val uiLoadEvents: UiLoadEvents,
+class ActivityLoadEventEmitter(
+    private val uiLoadEventListener: UiLoadEventListener,
     private val clock: Clock,
     private val versionChecker: VersionChecker,
 ) : ActivityLifecycleListener {
@@ -96,7 +97,7 @@ class UiLoadEventEmitter(
     }
 
     private fun abandonTrace(activity: Activity) {
-        uiLoadEvents.abandon(
+        uiLoadEventListener.abandon(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -104,13 +105,13 @@ class UiLoadEventEmitter(
     }
 
     private fun reset(activity: Activity) {
-        uiLoadEvents.reset(
-            instanceId = traceInstanceId(activity),
+        uiLoadEventListener.reset(
+            lastInstanceId = traceInstanceId(activity),
         )
     }
 
     private fun create(activity: Activity) {
-        uiLoadEvents.create(
+        uiLoadEventListener.create(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -118,14 +119,14 @@ class UiLoadEventEmitter(
     }
 
     private fun createEnd(activity: Activity) {
-        uiLoadEvents.createEnd(
+        uiLoadEventListener.createEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
         )
     }
 
     private fun start(activity: Activity) {
-        uiLoadEvents.start(
+        uiLoadEventListener.start(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -133,14 +134,14 @@ class UiLoadEventEmitter(
     }
 
     private fun startEnd(activity: Activity) {
-        uiLoadEvents.startEnd(
+        uiLoadEventListener.startEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
         )
     }
 
     private fun resume(activity: Activity) {
-        uiLoadEvents.resume(
+        uiLoadEventListener.resume(
             instanceId = traceInstanceId(activity),
             activityName = activity.localClassName,
             timestampMs = nowMs()
@@ -148,7 +149,7 @@ class UiLoadEventEmitter(
     }
 
     private fun resumeEnd(activity: Activity) {
-        uiLoadEvents.resumeEnd(
+        uiLoadEventListener.resumeEnd(
             instanceId = traceInstanceId(activity),
             timestampMs = nowMs()
         )

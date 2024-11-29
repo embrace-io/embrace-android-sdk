@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Observes [UiLoadEvents] to create traces that model the workflow for displaying UI on screen.
+ * Observes [UiLoadEventListener] to create traces that model the workflow for displaying UI on screen.
  * This will record traces for all [UiLoadType] but will ignore any UI load that is part of the app startup workflow.
  *
  * Depending on the version of Android and the state of the app, the start, end, and intermediate stages of the workflow will use
@@ -48,11 +48,99 @@ import java.util.concurrent.atomic.AtomicReference
 class UiLoadTraceEmitter(
     private val spanService: SpanService,
     private val versionChecker: VersionChecker,
-) : UiLoadEvents {
+) : UiLoadEventListener {
 
     private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
     private val traceZygoteHolder: AtomicReference<UiLoadTraceZygote> = AtomicReference(INITIAL)
     private var currentTracedInstanceId: Int? = null
+
+    override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
+        startTrace(
+            uiLoadType = UiLoadType.COLD,
+            instanceId = instanceId,
+            activityName = activityName,
+            timestampMs = timestampMs
+        )
+        startChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.CREATE
+        )
+    }
+
+    override fun createEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.CREATE
+        )
+    }
+
+    override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
+        startTrace(
+            uiLoadType = UiLoadType.HOT,
+            instanceId = instanceId,
+            activityName = activityName,
+            timestampMs = timestampMs
+        )
+        startChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.START
+        )
+    }
+
+    override fun startEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.START
+        )
+    }
+
+    override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
+        if (!hasRenderEvent()) {
+            endTrace(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+            )
+        } else {
+            startChildSpan(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+                lifecycleStage = LifecycleStage.RESUME
+            )
+        }
+        traceZygoteHolder.set(READY)
+    }
+
+    override fun resumeEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.RESUME
+        )
+    }
+
+    override fun render(instanceId: Int, activityName: String, timestampMs: Long) {
+        startChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.RENDER
+        )
+    }
+
+    override fun renderEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleStage = LifecycleStage.RENDER
+        )
+        endTrace(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+        )
+    }
 
     override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
         currentTracedInstanceId?.let { currentlyTracedInstanceId ->
@@ -69,98 +157,10 @@ class UiLoadTraceEmitter(
         )
     }
 
-    override fun reset(instanceId: Int) {
-        if (traceZygoteHolder.get().lastActivityInstanceId == instanceId) {
+    override fun reset(lastInstanceId: Int) {
+        if (traceZygoteHolder.get().lastActivityInstanceId == lastInstanceId) {
             traceZygoteHolder.set(BACKGROUNDED)
         }
-    }
-
-    override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
-        startTrace(
-            uiLoadType = UiLoadType.COLD,
-            instanceId = instanceId,
-            activityName = activityName,
-            timestampMs = timestampMs
-        )
-        startChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.CREATE
-        )
-    }
-
-    override fun createEnd(instanceId: Int, timestampMs: Long) {
-        endChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.CREATE
-        )
-    }
-
-    override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
-        startTrace(
-            uiLoadType = UiLoadType.HOT,
-            instanceId = instanceId,
-            activityName = activityName,
-            timestampMs = timestampMs
-        )
-        startChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.START
-        )
-    }
-
-    override fun startEnd(instanceId: Int, timestampMs: Long) {
-        endChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.START
-        )
-    }
-
-    override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
-        if (!hasRenderEvent()) {
-            endTrace(
-                instanceId = instanceId,
-                timestampMs = timestampMs,
-            )
-        } else {
-            startChildSpan(
-                instanceId = instanceId,
-                timestampMs = timestampMs,
-                lifecycleEvent = LifecycleEvent.RESUME
-            )
-        }
-        traceZygoteHolder.set(READY)
-    }
-
-    override fun resumeEnd(instanceId: Int, timestampMs: Long) {
-        endChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.RESUME
-        )
-    }
-
-    override fun render(instanceId: Int, activityName: String, timestampMs: Long) {
-        startChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.RENDER
-        )
-    }
-
-    override fun renderEnd(instanceId: Int, timestampMs: Long) {
-        endChildSpan(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-            lifecycleEvent = LifecycleEvent.RENDER
-        )
-        endTrace(
-            instanceId = instanceId,
-            timestampMs = timestampMs,
-        )
     }
 
     private fun startTrace(
@@ -206,15 +206,15 @@ class UiLoadTraceEmitter(
         }
     }
 
-    private fun startChildSpan(instanceId: Int, timestampMs: Long, lifecycleEvent: LifecycleEvent) {
+    private fun startChildSpan(instanceId: Int, timestampMs: Long, lifecycleStage: LifecycleStage) {
         val trace = activeTraces[instanceId]
-        if (trace != null && !trace.children.containsKey(lifecycleEvent)) {
+        if (trace != null && !trace.children.containsKey(lifecycleStage)) {
             spanService.startSpan(
-                name = lifecycleEvent.spanName(trace.activityName),
+                name = lifecycleStage.spanName(trace.activityName),
                 parent = trace.root,
                 startTimeMs = timestampMs,
             )?.let { newSpan ->
-                val newChildren = trace.children.plus(lifecycleEvent to newSpan)
+                val newChildren = trace.children.plus(lifecycleStage to newSpan)
                 activeTraces[instanceId] = trace.copy(
                     children = newChildren
                 )
@@ -222,9 +222,9 @@ class UiLoadTraceEmitter(
         }
     }
 
-    private fun endChildSpan(instanceId: Int, timestampMs: Long, lifecycleEvent: LifecycleEvent) {
+    private fun endChildSpan(instanceId: Int, timestampMs: Long, lifecycleStage: LifecycleStage) {
         activeTraces[instanceId]?.let { trace ->
-            trace.children[lifecycleEvent]?.stop(timestampMs)
+            trace.children[lifecycleStage]?.stop(timestampMs)
         }
     }
 
@@ -235,19 +235,10 @@ class UiLoadTraceEmitter(
         uiLoadType: UiLoadType
     ): String = "$activityName-${uiLoadType.typeName}-time-to-initial-display"
 
-    enum class LifecycleEvent(private val typeName: String) {
-        CREATE("create"),
-        START("start"),
-        RESUME("resume"),
-        RENDER("render");
-
-        fun spanName(activityName: String): String = "$activityName-$typeName"
-    }
-
     private data class UiLoadTrace(
         val activityName: String,
         val root: PersistableEmbraceSpan,
-        val children: Map<LifecycleEvent, PersistableEmbraceSpan> = ConcurrentHashMap(),
+        val children: Map<LifecycleStage, PersistableEmbraceSpan> = ConcurrentHashMap(),
     )
 
     private data class UiLoadTraceZygote(

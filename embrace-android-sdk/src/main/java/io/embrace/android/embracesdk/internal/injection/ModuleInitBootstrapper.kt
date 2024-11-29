@@ -273,7 +273,7 @@ internal class ModuleInitBootstrapper(
                             lazy { dataCaptureServiceModule.webviewService },
                             lazy { dataCaptureServiceModule.activityBreadcrumbTracker },
                             lazy { dataCaptureServiceModule.pushNotificationService },
-                            lazy { dataCaptureServiceModule.uiLoadEvents },
+                            lazy { dataCaptureServiceModule.uiLoadTraceEmitter },
                         )
                     }
 

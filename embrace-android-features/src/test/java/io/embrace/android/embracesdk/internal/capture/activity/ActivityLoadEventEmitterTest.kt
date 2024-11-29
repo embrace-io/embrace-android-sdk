@@ -5,8 +5,8 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeObservedActivity
-import io.embrace.android.embracesdk.fakes.FakeUiLoadEvents
-import io.embrace.android.embracesdk.fakes.FakeUiLoadEvents.EventData
+import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
+import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener.EventData
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
@@ -24,10 +24,10 @@ import org.robolectric.annotation.Config
 import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
-internal class UiLoadEventEmitterTest {
+internal class ActivityLoadEventEmitterTest {
     private lateinit var clock: FakeClock
-    private lateinit var openEvents: FakeUiLoadEvents
-    private lateinit var eventEmitter: UiLoadEventEmitter
+    private lateinit var openEvents: FakeUiLoadEventListener
+    private lateinit var eventEmitter: ActivityLoadEventEmitter
     private lateinit var activityController: ActivityController<*>
     private var startTimeMs: Long = 0L
     private var instanceId = 0
@@ -38,9 +38,9 @@ internal class UiLoadEventEmitterTest {
         clock = FakeClock()
         val initModule = FakeInitModule(clock = clock)
         clock.tick(100L)
-        openEvents = FakeUiLoadEvents()
-        eventEmitter = UiLoadEventEmitter(
-            uiLoadEvents = openEvents,
+        openEvents = FakeUiLoadEventListener()
+        eventEmitter = ActivityLoadEventEmitter(
+            uiLoadEventListener = openEvents,
             clock = initModule.openTelemetryModule.openTelemetryClock,
             versionChecker = BuildVersionChecker,
         )

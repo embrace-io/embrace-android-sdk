@@ -168,7 +168,7 @@ internal class EmbraceSpanBuilderTest {
 
         assertTrue(perfSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
 
-        val activityOpenSpanBuilder = EmbraceSpanBuilder(
+        val uiLoadSpanBuilder = EmbraceSpanBuilder(
             tracer = tracer,
             name = "test",
             telemetryType = EmbType.Performance.UiLoad,
@@ -177,7 +177,7 @@ internal class EmbraceSpanBuilderTest {
             parentSpan = null,
         )
 
-        assertTrue(activityOpenSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
+        assertTrue(uiLoadSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
     }
 
     @Test

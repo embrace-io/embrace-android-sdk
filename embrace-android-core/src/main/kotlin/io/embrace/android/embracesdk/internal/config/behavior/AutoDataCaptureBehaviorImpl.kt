@@ -43,6 +43,7 @@ class AutoDataCaptureBehaviorImpl(
 
     override fun isNativeCrashCaptureEnabled(): Boolean = local.isNativeCrashCaptureEnabled()
     override fun isDiskUsageCaptureEnabled(): Boolean = local.isDiskUsageCaptureEnabled()
+    override fun isUiLoadPerfCaptureEnabled(): Boolean = local.isUiLoadPerfCaptureEnabled()
 
     private val v2StorageImpl by lazy {
         thresholdCheck.isBehaviorEnabled(remote?.killSwitchConfig?.v2StoragePct) ?: V2_STORAGE_ENABLED_DEFAULT

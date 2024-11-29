@@ -5,12 +5,13 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeObservedActivity
+import io.embrace.android.embracesdk.fakes.FakeUiLoadEvents
+import io.embrace.android.embracesdk.fakes.FakeUiLoadEvents.EventData
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
-import io.embrace.android.embracesdk.internal.capture.activity.UiLoadEventEmitterTest.FakeOpenEvents.EventData
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -25,7 +26,7 @@ import kotlin.reflect.KClass
 @RunWith(AndroidJUnit4::class)
 internal class UiLoadEventEmitterTest {
     private lateinit var clock: FakeClock
-    private lateinit var openEvents: FakeOpenEvents
+    private lateinit var openEvents: FakeUiLoadEvents
     private lateinit var eventEmitter: UiLoadEventEmitter
     private lateinit var activityController: ActivityController<*>
     private var startTimeMs: Long = 0L
@@ -37,7 +38,7 @@ internal class UiLoadEventEmitterTest {
         clock = FakeClock()
         val initModule = FakeInitModule(clock = clock)
         clock.tick(100L)
-        openEvents = FakeOpenEvents()
+        openEvents = FakeUiLoadEvents()
         eventEmitter = UiLoadEventEmitter(
             uiLoadEvents = openEvents,
             clock = initModule.openTelemetryModule.openTelemetryClock,
@@ -262,120 +263,4 @@ internal class UiLoadEventEmitterTest {
             activityName = activityName,
             timestampMs = timestampMs
         )
-
-    class FakeOpenEvents : UiLoadEvents {
-        val events = mutableListOf<EventData>()
-
-        override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "abandon",
-                    instanceId = instanceId,
-                    activityName = activityName,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun reset(instanceId: Int) {
-            events.add(
-                EventData(
-                    stage = "reset",
-                    instanceId = instanceId,
-                )
-            )
-        }
-
-        override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "create",
-                    instanceId = instanceId,
-                    activityName = activityName,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun createEnd(instanceId: Int, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "createEnd",
-                    instanceId = instanceId,
-                    activityName = null,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "start",
-                    instanceId = instanceId,
-                    activityName = activityName,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun startEnd(instanceId: Int, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "startEnd",
-                    instanceId = instanceId,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "resume",
-                    instanceId = instanceId,
-                    activityName = activityName,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun resumeEnd(instanceId: Int, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "resumeEnd",
-                    instanceId = instanceId,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun render(instanceId: Int, activityName: String, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "render",
-                    instanceId = instanceId,
-                    activityName = activityName,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        override fun renderEnd(instanceId: Int, timestampMs: Long) {
-            events.add(
-                EventData(
-                    stage = "renderEnd",
-                    instanceId = instanceId,
-                    timestampMs = timestampMs
-                )
-            )
-        }
-
-        data class EventData(
-            val stage: String,
-            val instanceId: Int,
-            val activityName: String? = null,
-            val timestampMs: Long? = null,
-        )
-    }
 }

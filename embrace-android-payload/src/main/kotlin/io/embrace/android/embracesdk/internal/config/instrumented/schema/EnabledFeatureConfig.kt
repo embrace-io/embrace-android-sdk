@@ -145,4 +145,11 @@ interface EnabledFeatureConfig {
      * sdk_config.networking.enable_network_span_forwarding
      */
     fun isNetworkSpanForwardingEnabled(): Boolean = false
+
+    /**
+     * Gates whether the SDK will capture traces for the performance of the opening of Activities.
+     *
+     * sdk_config.automatic_data_capture.ui_load_perf_info
+     */
+    fun isUiLoadPerfCaptureEnabled(): Boolean = false
 }

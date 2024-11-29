@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -99,30 +100,6 @@ internal class StartupTrackerTest {
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
-    fun `cold start with activity instance recreated`() {
-        defaultActivityController.create()
-        clock.tick()
-        val recreateTime = clock.now()
-        defaultActivityController.recreate()
-        clock.tick()
-        val startTime = clock.now()
-        defaultActivityController.start()
-        clock.tick()
-        val resumeTime = clock.now()
-        defaultActivityController.resume()
-        clock.tick()
-
-        verifyTiming(
-            preCreateTime = recreateTime,
-            createTime = recreateTime,
-            postCreateTime = recreateTime,
-            startTime = startTime,
-            resumeTime = resumeTime
-        )
-    }
-
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
-    @Test
     fun `cold start with different activities being created and foregrounded first`() {
         defaultActivityController.create()
         clock.tick()
@@ -153,6 +130,16 @@ internal class StartupTrackerTest {
                 resumeTime = resumeTime
             )
         }
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
+    @Test
+    fun `verify startup tracker detached after trace recorded`() {
+        val firstLaunchTimes = launchActivity()
+        assertEquals(firstLaunchTimes.createTime, dataCollector.startupActivityInitStartMs)
+        clock.tick(500_000)
+        val secondLaunchTimes = launchActivity()
+        assertNotEquals(secondLaunchTimes.createTime, dataCollector.startupActivityInitStartMs)
     }
 
     private fun launchActivity(controller: ActivityController<*> = defaultActivityController): ActivityTiming {

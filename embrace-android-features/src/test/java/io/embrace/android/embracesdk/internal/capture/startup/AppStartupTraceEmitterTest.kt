@@ -20,7 +20,6 @@ import io.embrace.android.embracesdk.internal.spans.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +36,7 @@ import org.robolectric.annotation.Config
 @RunWith(AndroidJUnit4::class)
 internal class AppStartupTraceEmitterTest {
     private var startupService: StartupService? = null
-    private var dataCollectionCompletedCallbackInvoked: Boolean = false
+    private var dataCollectionCompletedCallbackInvokedCount = 0
     private lateinit var clock: FakeClock
     private lateinit var spanSink: SpanSink
     private lateinit var spanService: SpanService
@@ -73,7 +72,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in T`() {
         startupService = null
         appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertTrue(dataCollectionCompletedCallbackInvoked)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
     @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
@@ -100,12 +99,21 @@ internal class AppStartupTraceEmitterTest {
         verifyWarmStartWithRenderWithoutAppInitEvents(processCreateDelayMs = 0L)
     }
 
+    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @Test
+    fun `trace end callback will not be invoked twice`() {
+        startupService = null
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+    }
+
     @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `no crashes if startup service not available in S`() {
         startupService = null
         appStartupTraceEmitter.firstFrameRendered(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertTrue(dataCollectionCompletedCallbackInvoked)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
     @Config(sdk = [Build.VERSION_CODES.S])
@@ -137,7 +145,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in P`() {
         startupService = null
         appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertTrue(dataCollectionCompletedCallbackInvoked)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
     @Config(sdk = [Build.VERSION_CODES.P])
@@ -163,7 +171,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in M`() {
         startupService = null
         appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertTrue(dataCollectionCompletedCallbackInvoked)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
     @Config(sdk = [Build.VERSION_CODES.M])
@@ -189,7 +197,7 @@ internal class AppStartupTraceEmitterTest {
     fun `no crashes if startup service not available in L`() {
         startupService = null
         appStartupTraceEmitter.startupActivityResumed(STARTUP_ACTIVITY_NAME, ::dataCollectionCompletedCallback)
-        assertTrue(dataCollectionCompletedCallbackInvoked)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
@@ -211,7 +219,7 @@ internal class AppStartupTraceEmitterTest {
     }
 
     private fun dataCollectionCompletedCallback() {
-        dataCollectionCompletedCallbackInvoked = true
+        dataCollectionCompletedCallbackInvokedCount++
     }
 
     private fun verifyColdStartWithRender(processCreateDelayMs: Long? = null) {
@@ -559,7 +567,7 @@ internal class AppStartupTraceEmitterTest {
         )
         assertEquals("false", attrs.findAttributeValue("embrace-init-in-foreground"))
         assertEquals("main", attrs.findAttributeValue("embrace-init-thread-name"))
-        assertTrue(dataCollectionCompletedCallbackInvoked)
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
     private fun assertChildSpan(span: EmbraceSpanData, expectedStartTimeNanos: Long, expectedEndTimeNanos: Long) {

@@ -44,6 +44,7 @@ class StartupTracker(
     private var isFirstDraw = false
     private var nullWindowCallbackErrorLogged = false
     private var startupActivityId: Int? = null
+    private var startupDataCollectionComplete = false
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.useAsStartupActivity()) {
@@ -54,6 +55,7 @@ class StartupTracker(
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (activity.useAsStartupActivity()) {
             val activityName = activity.localClassName
+            val application = activity.application
             appStartupDataCollector.startupActivityInitStart()
             if (versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
                 if (!isFirstDraw) {
@@ -66,7 +68,8 @@ class StartupTracker(
                                     isFirstDraw = true
                                     val callback = {
                                         appStartupDataCollector.firstFrameRendered(
-                                            activityName = activityName
+                                            activityName = activityName,
+                                            collectionCompleteCallback = { startupComplete(application) }
                                         )
                                     }
                                     decorView.viewTreeObserver.registerFrameCommitCallback(callback)
@@ -101,8 +104,10 @@ class StartupTracker(
 
     override fun onActivityResumed(activity: Activity) {
         if (activity.observeForStartup()) {
+            val application = activity.application
             appStartupDataCollector.startupActivityResumed(
-                activityName = activity.localClassName
+                activityName = activity.localClassName,
+                collectionCompleteCallback = { startupComplete(application) }
             )
         }
     }
@@ -114,6 +119,13 @@ class StartupTracker(
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
     override fun onActivityDestroyed(activity: Activity) {}
+
+    private fun startupComplete(application: Application) {
+        if (!startupDataCollectionComplete) {
+            application.unregisterActivityLifecycleCallbacks(this)
+            startupDataCollectionComplete = true
+        }
+    }
 
     /**
      * Returns true if the Activity instance is being used as the startup Activity. It will return false if [useAsStartupActivity] has

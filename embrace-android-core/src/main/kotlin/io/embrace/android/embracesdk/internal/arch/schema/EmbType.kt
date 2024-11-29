@@ -26,7 +26,7 @@ sealed class EmbType(type: String, subtype: String?) : TelemetryType {
 
         object ThermalState : Performance("thermal_state")
 
-        object ActivityOpen : Performance("activity_open")
+        object UiLoad : Performance("ui_load")
     }
 
     /**

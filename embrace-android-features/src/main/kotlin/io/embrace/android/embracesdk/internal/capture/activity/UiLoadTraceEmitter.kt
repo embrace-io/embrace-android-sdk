@@ -1,0 +1,281 @@
+package io.embrace.android.embracesdk.internal.capture.activity
+
+import android.app.Application.ActivityLifecycleCallbacks
+import android.os.Build
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
+import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.spans.ErrorCode
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicReference
+
+/**
+ * Observes [UiLoadEvents] to create traces that model the workflow for displaying UI on screen.
+ * This will record traces for all [UiLoadType] but will ignore any UI load that is part of the app startup workflow.
+ *
+ * Depending on the version of Android and the state of the app, the start, end, and intermediate stages of the workflow will use
+ * timestamps from different events, which affects the precision of the measurements as well as the child spans contained in the trace.
+ *
+ * An assumption that there can only be one activity going through its the activity lifecycle at a time. If we see events
+ * that come from a different Activity instance than the last one processed, we assume that last one's loading has been
+ * interrupted so any load traces associated with it can be abandoned.
+ *
+ * The start for [UiLoadType.COLD]:
+ *
+ * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPostPaused] is fired, denoting that the previous activity has completed
+ *   its [ActivityLifecycleCallbacks.onActivityPaused] callbacks and a new Activity is ready to be created.
+ *
+ * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityPaused] is fired, denoting that the previous activity is in the
+ *   process of exiting. This will possibly result in some cleanup work of exiting the previous activity being included in the duration
+ *   of the next trace that is logged.
+ *
+ *  The start for [UiLoadType.HOT]
+ *
+ * - On Android 10+, when [ActivityLifecycleCallbacks.onActivityPreStarted] is fired, denoting that an existing Activity instance is ready
+ *   to be started
+ *
+ * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityStarted] is fired, denoting that an existing activity is in the
+ *   process of starting. This will possibly result in some of the work to start the activity already having happened depending on the
+ *   other callbacks that have been registered.
+ *
+ * The end for both [UiLoadType.COLD] and [UiLoadType.HOT]:
+ *
+ * - Android 10+, when the Activity's first UI frame finishes rendering and is delivered to the screen
+ *
+ * - Android 9 and lower, when [ActivityLifecycleCallbacks.onActivityResumed] is fired.
+ */
+class UiLoadTraceEmitter(
+    private val spanService: SpanService,
+    private val versionChecker: VersionChecker,
+) : UiLoadEvents {
+
+    private val activeTraces: MutableMap<Int, UiLoadTrace> = ConcurrentHashMap()
+    private val traceZygoteHolder: AtomicReference<UiLoadTraceZygote> = AtomicReference(INITIAL)
+    private var currentTracedInstanceId: Int? = null
+
+    override fun abandon(instanceId: Int, activityName: String, timestampMs: Long) {
+        currentTracedInstanceId?.let { currentlyTracedInstanceId ->
+            if (instanceId != currentlyTracedInstanceId) {
+                endTrace(instanceId = currentlyTracedInstanceId, timestampMs = timestampMs, errorCode = ErrorCode.USER_ABANDON)
+            }
+        }
+        traceZygoteHolder.set(
+            UiLoadTraceZygote(
+                lastActivityName = activityName,
+                lastActivityInstanceId = instanceId,
+                lastActivityPausedTimeMs = timestampMs
+            )
+        )
+    }
+
+    override fun reset(instanceId: Int) {
+        if (traceZygoteHolder.get().lastActivityInstanceId == instanceId) {
+            traceZygoteHolder.set(BACKGROUNDED)
+        }
+    }
+
+    override fun create(instanceId: Int, activityName: String, timestampMs: Long) {
+        startTrace(
+            uiLoadType = UiLoadType.COLD,
+            instanceId = instanceId,
+            activityName = activityName,
+            timestampMs = timestampMs
+        )
+        startChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.CREATE
+        )
+    }
+
+    override fun createEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.CREATE
+        )
+    }
+
+    override fun start(instanceId: Int, activityName: String, timestampMs: Long) {
+        startTrace(
+            uiLoadType = UiLoadType.HOT,
+            instanceId = instanceId,
+            activityName = activityName,
+            timestampMs = timestampMs
+        )
+        startChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.START
+        )
+    }
+
+    override fun startEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.START
+        )
+    }
+
+    override fun resume(instanceId: Int, activityName: String, timestampMs: Long) {
+        if (!hasRenderEvent()) {
+            endTrace(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+            )
+        } else {
+            startChildSpan(
+                instanceId = instanceId,
+                timestampMs = timestampMs,
+                lifecycleEvent = LifecycleEvent.RESUME
+            )
+        }
+        traceZygoteHolder.set(READY)
+    }
+
+    override fun resumeEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.RESUME
+        )
+    }
+
+    override fun render(instanceId: Int, activityName: String, timestampMs: Long) {
+        startChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.RENDER
+        )
+    }
+
+    override fun renderEnd(instanceId: Int, timestampMs: Long) {
+        endChildSpan(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+            lifecycleEvent = LifecycleEvent.RENDER
+        )
+        endTrace(
+            instanceId = instanceId,
+            timestampMs = timestampMs,
+        )
+    }
+
+    private fun startTrace(
+        uiLoadType: UiLoadType,
+        instanceId: Int,
+        activityName: String,
+        timestampMs: Long
+    ) {
+        if (traceZygoteHolder.get() == INITIAL) {
+            return
+        }
+
+        if (!activeTraces.containsKey(instanceId)) {
+            val zygote = traceZygoteHolder.getAndSet(READY)
+            val startTimeMs = if (zygote.lastActivityPausedTimeMs != -1L) {
+                zygote.lastActivityPausedTimeMs
+            } else {
+                timestampMs
+            }
+
+            spanService.startSpan(
+                name = traceName(activityName, uiLoadType),
+                type = EmbType.Performance.UiLoad,
+                startTimeMs = startTimeMs,
+            )?.let { root ->
+                if (zygote.lastActivityInstanceId != -1) {
+                    root.addSystemAttribute("last_activity", zygote.lastActivityName)
+                }
+                activeTraces[instanceId] = UiLoadTrace(root = root, activityName = activityName)
+            }
+        }
+    }
+
+    private fun endTrace(instanceId: Int, timestampMs: Long, errorCode: ErrorCode? = null) {
+        activeTraces[instanceId]?.let { trace ->
+            with(trace) {
+                children.values.filter { it.isRecording }.forEach { span ->
+                    span.stop(endTimeMs = timestampMs, errorCode = errorCode)
+                }
+                root.stop(endTimeMs = timestampMs, errorCode = errorCode)
+            }
+            activeTraces.remove(instanceId)
+        }
+    }
+
+    private fun startChildSpan(instanceId: Int, timestampMs: Long, lifecycleEvent: LifecycleEvent) {
+        val trace = activeTraces[instanceId]
+        if (trace != null && !trace.children.containsKey(lifecycleEvent)) {
+            spanService.startSpan(
+                name = lifecycleEvent.spanName(trace.activityName),
+                parent = trace.root,
+                startTimeMs = timestampMs,
+            )?.let { newSpan ->
+                val newChildren = trace.children.plus(lifecycleEvent to newSpan)
+                activeTraces[instanceId] = trace.copy(
+                    children = newChildren
+                )
+            }
+        }
+    }
+
+    private fun endChildSpan(instanceId: Int, timestampMs: Long, lifecycleEvent: LifecycleEvent) {
+        activeTraces[instanceId]?.let { trace ->
+            trace.children[lifecycleEvent]?.stop(timestampMs)
+        }
+    }
+
+    private fun hasRenderEvent(): Boolean = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
+
+    private fun traceName(
+        activityName: String,
+        uiLoadType: UiLoadType
+    ): String = "$activityName-${uiLoadType.typeName}-time-to-initial-display"
+
+    enum class LifecycleEvent(private val typeName: String) {
+        CREATE("create"),
+        START("start"),
+        RESUME("resume"),
+        RENDER("render");
+
+        fun spanName(activityName: String): String = "$activityName-$typeName"
+    }
+
+    private data class UiLoadTrace(
+        val activityName: String,
+        val root: PersistableEmbraceSpan,
+        val children: Map<LifecycleEvent, PersistableEmbraceSpan> = ConcurrentHashMap(),
+    )
+
+    private data class UiLoadTraceZygote(
+        val lastActivityName: String,
+        val lastActivityInstanceId: Int,
+        val lastActivityPausedTimeMs: Long,
+    )
+
+    private companion object {
+        const val INVALID_INSTANCE: Int = -1
+        const val INVALID_TIME: Long = -1L
+
+        val INITIAL = UiLoadTraceZygote(
+            lastActivityName = "NEW_APP_LAUNCH",
+            lastActivityInstanceId = INVALID_INSTANCE,
+            lastActivityPausedTimeMs = INVALID_TIME
+        )
+
+        val READY = UiLoadTraceZygote(
+            lastActivityName = "READY",
+            lastActivityInstanceId = INVALID_INSTANCE,
+            lastActivityPausedTimeMs = INVALID_TIME
+        )
+
+        val BACKGROUNDED = UiLoadTraceZygote(
+            lastActivityName = "BACKGROUNDED",
+            lastActivityInstanceId = INVALID_INSTANCE,
+            lastActivityPausedTimeMs = INVALID_TIME
+        )
+    }
+}

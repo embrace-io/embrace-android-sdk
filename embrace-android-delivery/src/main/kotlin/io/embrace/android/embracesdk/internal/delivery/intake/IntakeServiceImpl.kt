@@ -60,8 +60,8 @@ class IntakeServiceImpl(
             val lastReference = cacheReferences[metadata.envelopeType]
 
             if (metadata.complete) {
-                schedulingService.onPayloadIntake()
                 deliveryTracer?.onPayloadIntake(metadata)
+                schedulingService.onPayloadIntake()
             } else {
                 cacheReferences[metadata.envelopeType] = metadata
                 if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {

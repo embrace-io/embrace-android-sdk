@@ -59,4 +59,23 @@ class DeliveryTracer {
                 "#$k, $state"
             }.joinToString("\n")
     }
+
+    fun onStartDeliveryLoop(sendLoopActive: Boolean) {
+        events.add(DeliveryTraceState.StartDeliveryLoop(sendLoopActive))
+    }
+
+    fun onPayloadQueueCreated(
+        payloadsByPriority: List<StoredTelemetryMetadata>,
+        payloadsToSend: List<StoredTelemetryMetadata>,
+    ) {
+        events.add(DeliveryTraceState.PayloadQueueCreated(payloadsByPriority, payloadsToSend))
+    }
+
+    fun onPayloadEnqueued(payload: StoredTelemetryMetadata) {
+        events.add(DeliveryTraceState.PayloadEnqueued(payload))
+    }
+
+    fun onPayloadResult(payload: StoredTelemetryMetadata, result: ExecutionResult) {
+        events.add(DeliveryTraceState.PayloadResult(payload, result))
+    }
 }

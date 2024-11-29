@@ -54,7 +54,7 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `opening first non-startup activity creates cold open trace in L`() {
+    fun `opening first non-startup activity creates cold ui load trace in L`() {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
@@ -107,7 +107,7 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `foregrounding and initializing new activity creates cold open trace in L`() {
+    fun `foregrounding and initializing new activity creates cold ui load trace in L`() {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
@@ -163,7 +163,7 @@ internal class UiLoadTest {
 
     @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
-    fun `foregrounding already-created activity creates hot open trace in L`() {
+    fun `foregrounding already-created activity creates hot ui load trace in L`() {
         var preLaunchTimeMs = 0L
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(

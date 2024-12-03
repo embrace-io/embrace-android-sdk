@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeDeliveryModule
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
@@ -121,9 +122,10 @@ internal class IntegrationTestRule(
     ) {
         setup = embraceSetupInterfaceSupplier()
         var apiServer: FakeApiServer? = null
+        val deliveryTracer = DeliveryTracer()
 
         if (setup.useMockWebServer) {
-            apiServer = FakeApiServer(serverResponseConfig)
+            apiServer = FakeApiServer(serverResponseConfig, deliveryTracer)
             val server: MockWebServer = MockWebServer().apply {
                 protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
                 dispatcher = apiServer
@@ -133,7 +135,7 @@ internal class IntegrationTestRule(
         }
 
         preSdkStart = EmbracePreSdkStartInterface(setup)
-        bootstrapper = setup.createBootstrapper(prepareConfig(instrumentedConfig))
+        bootstrapper = setup.createBootstrapper(prepareConfig(instrumentedConfig), deliveryTracer)
         action = EmbraceActionInterface(setup, bootstrapper)
         payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
         spanExporter = FilteredSpanExporter()
@@ -185,6 +187,7 @@ internal class IntegrationTestRule(
             setup.useMockWebServer -> instrumentedConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             )
+
             else -> instrumentedConfig
         }
 

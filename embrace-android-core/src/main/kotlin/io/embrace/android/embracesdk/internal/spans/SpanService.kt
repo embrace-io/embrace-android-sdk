@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -18,6 +19,7 @@ interface SpanService : Initializable {
      */
     fun createSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
@@ -35,6 +37,7 @@ interface SpanService : Initializable {
      */
     fun startSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
         type: TelemetryType = EmbType.Performance.Default,
@@ -43,6 +46,7 @@ interface SpanService : Initializable {
     ): PersistableEmbraceSpan? {
         createSpan(
             name = name,
+            autoTerminationMode = autoTerminationMode,
             parent = parent,
             type = type,
             internal = internal,
@@ -62,6 +66,7 @@ interface SpanService : Initializable {
      */
     fun <T> recordSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,
@@ -79,6 +84,7 @@ interface SpanService : Initializable {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         parent: EmbraceSpan? = null,
         type: TelemetryType = EmbType.Performance.Default,
         internal: Boolean = true,

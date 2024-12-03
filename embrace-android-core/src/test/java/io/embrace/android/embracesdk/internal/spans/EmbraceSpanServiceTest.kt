@@ -76,7 +76,7 @@ internal class EmbraceSpanServiceTest {
             endTimeMs = expectedEndTimeMs,
             type = expectedType,
             attributes = expectedAttributes,
-            events = expectedEvents
+            events = expectedEvents,
         )
 
         val name = "emb-$expectedName"
@@ -101,14 +101,15 @@ internal class EmbraceSpanServiceTest {
         spanSink.flushSpans()
         val parent = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(parent.start())
-        val child = checkNotNull(spanService.createSpan(name = "child-span", parent = parent))
+        val child =
+            checkNotNull(spanService.createSpan(name = "child-span", parent = parent))
         assertTrue(child.start(startTimeMs = clock.now() - 10))
         val grandchild =
             checkNotNull(
                 spanService.startSpan(
                     name = "grand-child-span",
                     parent = child,
-                    startTimeMs = clock.now() + 1L
+                    startTimeMs = clock.now() + 1L,
                 )
             )
         assertTrue(grandchild.stop())
@@ -128,7 +129,7 @@ internal class EmbraceSpanServiceTest {
             spanService.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
-                endTimeMs = expectedEndTimeMs
+                endTimeMs = expectedEndTimeMs,
             )
         )
 
@@ -141,14 +142,14 @@ internal class EmbraceSpanServiceTest {
         val expectedName = "child-span"
         val expectedStartTimeMs = clock.now()
         val expectedEndTimeMs = expectedStartTimeMs + 100L
-        val parentSpan = checkNotNull(spanService.createSpan(name = "test-span"))
+        val parentSpan = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(parentSpan.start())
         assertTrue(
             spanService.recordCompletedSpan(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
-                parent = parentSpan
+                parent = parentSpan,
             )
         )
         assertTrue(parentSpan.stop())
@@ -162,7 +163,7 @@ internal class EmbraceSpanServiceTest {
     @Test
     fun `can record span after init`() {
         spanSink.flushSpans()
-        spanService.recordSpan(name = "test-span") {
+        spanService.recordSpan("test-span") {
             spanService.hashCode()
         }
 

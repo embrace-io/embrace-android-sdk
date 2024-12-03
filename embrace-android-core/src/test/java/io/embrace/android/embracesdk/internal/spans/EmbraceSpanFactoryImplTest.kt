@@ -53,7 +53,7 @@ internal class EmbraceSpanFactoryImplTest {
             name = "test",
             type = EmbType.Performance.Default,
             internal = false,
-            private = false
+            private = false,
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -72,7 +72,7 @@ internal class EmbraceSpanFactoryImplTest {
             name = "test",
             type = EmbType.Performance.Default,
             internal = true,
-            private = true
+            private = true,
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -89,7 +89,7 @@ internal class EmbraceSpanFactoryImplTest {
             name = "test",
             type = EmbType.Performance.Default,
             internal = true,
-            private = false
+            private = false,
         )
         assertTrue(span.start(clock.now()))
         with(span) {
@@ -108,7 +108,7 @@ internal class EmbraceSpanFactoryImplTest {
             type = EmbType.System.LowPower,
             internal = false,
             private = false,
-            parent = spanParent
+            parent = spanParent,
         )
 
         with(embraceSpanFactory.create(embraceSpanBuilder = spanBuilder)) {

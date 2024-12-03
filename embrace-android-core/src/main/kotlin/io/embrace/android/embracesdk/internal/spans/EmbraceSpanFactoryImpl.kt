@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.common.Clock
@@ -19,6 +20,7 @@ internal class EmbraceSpanFactoryImpl(
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
     ): PersistableEmbraceSpan = create(
         embraceSpanBuilder = tracer.embraceSpanBuilder(
@@ -27,6 +29,7 @@ internal class EmbraceSpanFactoryImpl(
             internal = internal,
             private = private,
             parent = parent,
+            autoTerminationMode = autoTerminationMode
         )
     )
 

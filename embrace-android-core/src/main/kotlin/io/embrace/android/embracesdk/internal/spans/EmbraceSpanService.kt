@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -44,12 +45,20 @@ internal class EmbraceSpanService(
 
     override fun createSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
         private: Boolean,
     ): PersistableEmbraceSpan? =
-        currentDelegate.createSpan(name = name, parent = parent, type = type, internal = internal, private = private)
+        currentDelegate.createSpan(
+            name = name,
+            autoTerminationMode = autoTerminationMode,
+            parent = parent,
+            type = type,
+            internal = internal,
+            private = private
+        )
 
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? =
         currentDelegate.createSpan(
@@ -58,6 +67,7 @@ internal class EmbraceSpanService(
 
     override fun <T> recordSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -67,6 +77,7 @@ internal class EmbraceSpanService(
         code: () -> T,
     ): T = currentDelegate.recordSpan(
         name = name,
+        autoTerminationMode = autoTerminationMode,
         parent = parent,
         type = type,
         internal = internal,
@@ -80,6 +91,7 @@ internal class EmbraceSpanService(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -91,6 +103,7 @@ internal class EmbraceSpanService(
         name = name,
         startTimeMs = startTimeMs,
         endTimeMs = endTimeMs,
+        autoTerminationMode = autoTerminationMode,
         parent = parent,
         type = type,
         internal = internal,

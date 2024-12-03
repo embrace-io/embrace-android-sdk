@@ -60,7 +60,7 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `create trace with default parameters`() {
-        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
+        val embraceSpan = checkNotNull(spansService.createSpan("test-span"))
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
@@ -73,7 +73,9 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `create trace that is internally logged but public`() {
-        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span", internal = true, private = false))
+        val embraceSpan = checkNotNull(
+            spansService.createSpan(name = "test-span", internal = true, private = false)
+        )
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
@@ -84,7 +86,9 @@ internal class SpanServiceImplTest {
 
     @Test
     fun `create trace that is private but not considered internally logged`() {
-        val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span", internal = false, private = true))
+        val embraceSpan = checkNotNull(
+            spansService.createSpan(name = "test-span", internal = false, private = true)
+        )
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
         assertTrue(embraceSpan.stop())
@@ -107,7 +111,7 @@ internal class SpanServiceImplTest {
         val embraceSpan = checkNotNull(
             spansService.createSpan(
                 name = "test-span",
-                type = EmbType.Performance.Default
+                type = EmbType.Performance.Default,
             )
         )
         assertTrue(embraceSpan.start())
@@ -187,7 +191,8 @@ internal class SpanServiceImplTest {
     fun `start a span directly`() {
         spanSink.flushSpans()
         val parentStartTime = clock.now()
-        val parent = checkNotNull(spansService.startSpan(name = "test-span", private = false))
+        val parent =
+            checkNotNull(spansService.startSpan(name = "test-span", private = false))
         val childStartTimeMs = clock.now() + 10L
         val child = checkNotNull(
             spansService.startSpan(
@@ -240,7 +245,7 @@ internal class SpanServiceImplTest {
             type = expectedType,
             private = false,
             attributes = expectedAttributes,
-            events = expectedEvents
+            events = expectedEvents,
         )
 
         with(verifyAndReturnSoleCompletedSpan("emb-$expectedName")) {
@@ -268,7 +273,7 @@ internal class SpanServiceImplTest {
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
-                parent = parentSpan
+                parent = parentSpan,
             )
         )
 
@@ -299,7 +304,7 @@ internal class SpanServiceImplTest {
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
-                parent = parentSpan
+                parent = parentSpan,
             )
         )
     }
@@ -313,7 +318,7 @@ internal class SpanServiceImplTest {
                 name = expectedName,
                 startTimeMs = 10L,
                 endTimeMs = 100L,
-                parent = parentSpan
+                parent = parentSpan,
             )
         )
     }
@@ -326,7 +331,7 @@ internal class SpanServiceImplTest {
                     name = "test${errorCode.name}",
                     startTimeMs = 0,
                     endTimeMs = 1,
-                    errorCode = errorCode
+                    errorCode = errorCode,
                 )
             )
             with(verifyAndReturnSoleCompletedSpan("emb-test${errorCode.name}")) {
@@ -342,7 +347,7 @@ internal class SpanServiceImplTest {
             spansService.recordCompletedSpan(
                 name = "test-pan",
                 startTimeMs = 500,
-                endTimeMs = 499
+                endTimeMs = 499,
             )
         )
     }
@@ -357,7 +362,7 @@ internal class SpanServiceImplTest {
             spansService.recordCompletedSpan(
                 name = "test-span",
                 startTimeMs = 500,
-                endTimeMs = 600
+                endTimeMs = 600,
             )
         )
     }
@@ -470,7 +475,7 @@ internal class SpanServiceImplTest {
                 name = TOO_LONG_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                internal = false
+                internal = false,
             )
         )
         assertNotNull(spansService.recordSpan(name = TOO_LONG_SPAN_NAME, internal = false) { 1 })
@@ -482,7 +487,7 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                internal = false
+                internal = false,
             )
         )
         assertEquals(2, spanSink.completedSpans().size)
@@ -496,19 +501,27 @@ internal class SpanServiceImplTest {
                 name = TOO_LONG_INTERNAL_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                internal = true
+                internal = true,
             )
         )
-        assertNotNull(spansService.recordSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true) { 1 })
+        assertNotNull(
+            spansService.recordSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true) {
+                1
+            }
+        )
         assertEquals(0, spanSink.completedSpans().size)
         assertNotNull(spansService.createSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true))
-        assertNotNull(spansService.recordSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true) { 2 })
+        assertNotNull(
+            spansService.recordSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true) {
+                2
+            }
+        )
         assertTrue(
             spansService.recordCompletedSpan(
                 name = MAX_LENGTH_INTERNAL_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                internal = true
+                internal = true,
             )
         )
         assertEquals(2, spanSink.completedSpans().size)
@@ -521,7 +534,7 @@ internal class SpanServiceImplTest {
                 name = "too many events",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = tooBigEvents
+                events = tooBigEvents,
             )
         )
         assertTrue(
@@ -529,7 +542,7 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                events = maxSizeEvents
+                events = maxSizeEvents,
             )
         )
 
@@ -553,7 +566,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 events = events,
-                internal = false
+                internal = false,
             )
         )
 
@@ -570,7 +583,7 @@ internal class SpanServiceImplTest {
                 name = "too many attributes",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = tooBigAttributes
+                attributes = tooBigAttributes,
             )
         )
         assertTrue(
@@ -578,7 +591,7 @@ internal class SpanServiceImplTest {
                 name = MAX_LENGTH_SPAN_NAME,
                 startTimeMs = 100L,
                 endTimeMs = 200L,
-                attributes = maxSizeAttributes
+                attributes = maxSizeAttributes,
             )
         )
 
@@ -598,7 +611,7 @@ internal class SpanServiceImplTest {
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 attributes = attributesMap,
-                internal = false
+                internal = false,
             )
         )
 

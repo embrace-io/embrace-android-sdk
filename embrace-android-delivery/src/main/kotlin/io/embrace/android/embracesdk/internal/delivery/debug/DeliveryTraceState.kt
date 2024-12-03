@@ -131,6 +131,23 @@ internal sealed class DeliveryTraceState {
         }
     }
 
+    /**
+     * A HTTP request was started
+     */
+    class ServerReceivedRequest(private val endpoint: String) : DeliveryTraceState() {
+        override fun toString(): String = "ServerReceivedRequest, $endpoint"
+    }
+
+    /**
+     * A HTTP request was completed
+     */
+    class ServerCompletedRequest(
+        private val endpoint: String,
+        private val metadata: String
+    ) : DeliveryTraceState() {
+        override fun toString(): String = "ServerCompletedRequest, $endpoint $metadata"
+    }
+
     internal fun StoredTelemetryMetadata.toReportString(): String {
         return "$timestamp, $uuid, $payloadType, complete=$complete"
     }

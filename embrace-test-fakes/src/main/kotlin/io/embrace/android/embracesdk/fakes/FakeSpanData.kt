@@ -3,7 +3,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.spans.fromMap
 import io.opentelemetry.api.common.Attributes
@@ -32,7 +31,6 @@ class FakeSpanData(
         Attributes.builder().fromMap(
             attributes = mapOf(
                 type.toEmbraceKeyValuePair(),
-                KeySpan.toEmbraceKeyValuePair(),
                 Pair("my-key", "my-value")
             ),
             internal = true,

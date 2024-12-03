@@ -7,12 +7,10 @@ import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecut
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.createBackgroundActivityBehavior
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.payload.ApplicationState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -185,8 +183,7 @@ internal class TracingApiTest {
                     expectedStartTimeMs = testStartTimeMs + 100,
                     expectedEndTimeMs = testStartTimeMs + 100,
                     expectedParentId = SpanId.getInvalid(),
-                    private = true,
-                    key = true
+                    private = true
                 )
                 assertEmbraceSpanData(
                     span = traceRootSpan,
@@ -210,8 +207,7 @@ internal class TracingApiTest {
                             timestampNanos = (testStartTimeMs + 350).millisToNanos(),
                             attributes = emptyList()
                         ),
-                    ),
-                    key = true
+                    )
                 )
                 val expectedParentId = traceRootSpan.spanId
                 assertEmbraceSpanData(
@@ -279,8 +275,7 @@ internal class TracingApiTest {
                             timestampNanos = (testStartTimeMs + 800).millisToNanos(),
                             attributes = emptyList()
                         )
-                    ),
-                    key = true
+                    )
                 )
             }
         )

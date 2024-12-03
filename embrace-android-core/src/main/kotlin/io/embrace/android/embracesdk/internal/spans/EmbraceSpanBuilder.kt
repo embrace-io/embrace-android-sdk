@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.spans
 
-import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -71,26 +69,14 @@ class EmbraceSpanBuilder(
     fun setParentContext(context: Context) {
         parentContext = context
         sdkSpanBuilder.setParent(parentContext)
-        updateKeySpan()
     }
 
     fun setNoParent() {
         parentContext = Context.root()
         sdkSpanBuilder.setNoParent()
-        updateKeySpan()
     }
 
     fun setSpanKind(spanKind: SpanKind) {
         sdkSpanBuilder.setSpanKind(spanKind)
-    }
-
-    private fun updateKeySpan() {
-        if (fixedAttributes.contains(EmbType.Performance.Default) || fixedAttributes.contains(EmbType.Performance.UiLoad)) {
-            if (getParentSpan() == null) {
-                fixedAttributes.add(KeySpan)
-            } else {
-                fixedAttributes.remove(KeySpan)
-            }
-        }
     }
 }

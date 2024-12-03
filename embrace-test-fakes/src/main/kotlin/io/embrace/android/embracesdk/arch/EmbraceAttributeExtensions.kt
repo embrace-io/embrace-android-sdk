@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute.Failure.fromErrorCode
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
-import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.arch.schema.toPayload
@@ -30,10 +29,6 @@ fun EmbraceSpanData.assertIsTypePerformance(): Unit = assertIsType(EmbType.Perfo
  * Assert [EmbraceSpanData] is of type [telemetryType]
  */
 fun EmbraceSpanData.assertIsType(telemetryType: TelemetryType): Unit = assertHasEmbraceAttribute(telemetryType)
-
-fun EmbraceSpanData.assertIsKeySpan(): Unit = assertHasEmbraceAttribute(KeySpan)
-
-fun EmbraceSpanData.assertNotKeySpan(): Unit = assertDoesNotHaveEmbraceAttribute(KeySpan)
 
 fun EmbraceSpanData.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 
@@ -69,10 +64,6 @@ fun EmbraceSpanData.assertSuccessful() {
 fun Span.assertIsTypePerformance(): Unit = assertIsType(EmbType.Performance.Default)
 
 fun Span.assertIsType(telemetryType: TelemetryType): Unit = assertHasEmbraceAttribute(telemetryType)
-
-fun Span.assertIsKeySpan(): Unit = assertHasEmbraceAttribute(KeySpan)
-
-fun Span.assertNotKeySpan(): Unit = assertDoesNotHaveEmbraceAttribute(KeySpan)
 
 fun Span.assertIsPrivateSpan(): Unit = assertHasEmbraceAttribute(PrivateSpan)
 

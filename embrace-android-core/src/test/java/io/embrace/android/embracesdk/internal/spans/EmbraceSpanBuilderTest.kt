@@ -6,15 +6,11 @@ import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
-import io.embrace.android.embracesdk.internal.arch.schema.KeySpan
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -44,7 +40,6 @@ internal class EmbraceSpanBuilderTest {
         with(spanBuilder.getFixedAttributes().toSet()) {
             assertTrue(contains(PrivateSpan))
             assertTrue(contains(EmbType.Performance.Default))
-            assertTrue(contains(KeySpan))
         }
         assertEquals("emb-test", spanBuilder.spanName)
         spanBuilder.startSpan(startTime).assertFakeSpanBuilder(
@@ -67,9 +62,6 @@ internal class EmbraceSpanBuilderTest {
         val parent = FakePersistableEmbraceSpan.started()
         val parentContext = checkNotNull(parent.asNewContext()?.with(fakeContextKey, "value"))
         spanBuilder.setParentContext(parentContext)
-        with(spanBuilder.getFixedAttributes().toSet()) {
-            assertFalse(contains(KeySpan))
-        }
         val startTime = clock.now()
         spanBuilder.startSpan(startTime).assertFakeSpanBuilder(
             expectedName = "test",
@@ -92,9 +84,7 @@ internal class EmbraceSpanBuilderTest {
             parentSpan = parent,
         )
 
-        assertNull(spanBuilder.getFixedAttributes().find { it == KeySpan })
         spanBuilder.setNoParent()
-        assertNotNull(spanBuilder.getFixedAttributes().find { it == KeySpan })
         with(spanBuilder.startSpan(startTime)) {
             assertFakeSpanBuilder(
                 expectedName = "test",
@@ -111,9 +101,7 @@ internal class EmbraceSpanBuilderTest {
             parentSpan = parent,
         )
 
-        assertNull(uxSpanBuilder.getFixedAttributes().find { it == KeySpan })
         uxSpanBuilder.setNoParent()
-        assertNull(uxSpanBuilder.getFixedAttributes().find { it == KeySpan })
         with(uxSpanBuilder.startSpan(startTime)) {
             assertFakeSpanBuilder(
                 expectedName = "ux-test",
@@ -153,31 +141,6 @@ internal class EmbraceSpanBuilderTest {
         )
         spanBuilder.setCustomAttribute("test-key", "test-value")
         assertEquals("test-value", spanBuilder.getCustomAttributes()["test-key"])
-    }
-
-    @Test
-    fun `perf and ui_load spans are key spans if parent is null`() {
-        val perfSpanBuilder = EmbraceSpanBuilder(
-            tracer = tracer,
-            name = "test",
-            telemetryType = EmbType.Performance.Default,
-            internal = false,
-            private = false,
-            parentSpan = null,
-        )
-
-        assertTrue(perfSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
-
-        val uiLoadSpanBuilder = EmbraceSpanBuilder(
-            tracer = tracer,
-            name = "test",
-            telemetryType = EmbType.Performance.UiLoad,
-            internal = false,
-            private = false,
-            parentSpan = null,
-        )
-
-        assertTrue(uiLoadSpanBuilder.getFixedAttributes().toSet().contains(KeySpan))
     }
 
     @Test

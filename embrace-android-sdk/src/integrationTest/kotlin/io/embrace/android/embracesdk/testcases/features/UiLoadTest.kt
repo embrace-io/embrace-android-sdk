@@ -85,7 +85,6 @@ internal class UiLoadTest {
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + 250,
                     expectedParentId = SpanId.getInvalid(),
-                    key = true
                 )
 
                 assertEmbraceSpanData(
@@ -138,7 +137,6 @@ internal class UiLoadTest {
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + 200,
                     expectedParentId = SpanId.getInvalid(),
-                    key = true
                 )
 
                 val lastBackgroundActivity = getSessionEnvelopes(2, ApplicationState.BACKGROUND)[1]
@@ -194,7 +192,6 @@ internal class UiLoadTest {
                     expectedStartTimeMs = expectedTraceStartTime,
                     expectedEndTimeMs = expectedTraceStartTime + 100,
                     expectedParentId = SpanId.getInvalid(),
-                    key = true
                 )
 
                 assertEmbraceSpanData(

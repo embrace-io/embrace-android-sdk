@@ -508,7 +508,7 @@ internal class EmbraceSpanImplTest {
         expectedType: EmbType = EmbType.Performance.Default,
         expectedStatus: Span.Status = Span.Status.UNSET,
         eventCount: Int = 0,
-        expectedEmbraceAttributes: Int = 2,
+        expectedEmbraceAttributes: Int = 1,
         expectedCustomAttributeCount: Int = 0,
         isPrivate: Boolean = false,
     ) {

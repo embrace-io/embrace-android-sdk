@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.payload
 
 import io.embrace.android.embracesdk.arch.assertError
-import io.embrace.android.embracesdk.arch.assertIsKeySpan
 import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.arch.assertSuccessful
@@ -35,7 +34,6 @@ internal class SpanMapperTest {
         // test attributes
         output.assertSuccessful()
         output.assertIsTypePerformance()
-        output.assertIsKeySpan()
         output.assertNotPrivateSpan()
         checkNotNull(output.attributes).forEach {
             assertEquals(input.attributes[it.key], it.data)
@@ -58,7 +56,6 @@ internal class SpanMapperTest {
         assertEquals(snapshot.events?.single(), failedSpan.events?.single())
         failedSpan.assertError(ErrorCode.FAILURE)
         failedSpan.assertIsTypePerformance()
-        failedSpan.assertIsKeySpan()
         failedSpan.assertNotPrivateSpan()
         val attributesOfFailedSpan = failedSpan.attributes?.associate { it.key to it.data } ?: emptyMap()
         checkNotNull(snapshot.attributes).forEach {

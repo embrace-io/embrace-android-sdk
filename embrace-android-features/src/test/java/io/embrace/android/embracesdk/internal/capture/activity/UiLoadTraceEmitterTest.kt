@@ -145,7 +145,6 @@ internal class UiLoadTraceEmitterTest {
                 expectedStartTimeMs = timestamps.first,
                 expectedEndTimeMs = timestamps.second,
                 expectedParentId = SpanId.getInvalid(),
-                key = true,
             )
 
             val events = timestamps.third

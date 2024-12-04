@@ -8,6 +8,7 @@ interface InstrumentedConfig {
     val baseUrls: BaseUrlConfig
     val enabledFeatures: EnabledFeatureConfig
     val networkCapture: NetworkCaptureConfig
+    val otelLimits: OtelLimitsConfig
     val project: ProjectConfig
     val redaction: RedactionConfig
     val session: SessionConfig

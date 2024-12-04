@@ -25,10 +25,10 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -228,7 +228,7 @@ internal class EmbraceSpanImplTest {
             val sanitizedEvents = checkNotNull(events)
             assertEquals(2, sanitizedEvents.size)
             with(sanitizedEvents.first()) {
-                assertEquals(EmbraceSpanLimits.EXCEPTION_EVENT_NAME, name)
+                assertEquals(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -242,7 +242,7 @@ internal class EmbraceSpanImplTest {
                 )
             }
             with(sanitizedEvents.last()) {
-                assertEquals(EmbraceSpanLimits.EXCEPTION_EVENT_NAME, name)
+                assertEquals(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -281,7 +281,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT - 5) {
+            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomEventCount() - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(
@@ -308,7 +308,7 @@ internal class EmbraceSpanImplTest {
     fun `check adding and removing system attributes not affected by custom attributes`() {
         with(embraceSpan) {
             assertTrue(start())
-            repeat(MAX_CUSTOM_ATTRIBUTE_COUNT) {
+            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount()) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failed", value = "value"))
@@ -329,7 +329,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY, value = "value"))
             assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
             assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
-            repeat(MAX_CUSTOM_ATTRIBUTE_COUNT - 3) {
+            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount() - 3) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))

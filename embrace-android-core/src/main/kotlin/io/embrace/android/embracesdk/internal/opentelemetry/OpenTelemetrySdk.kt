@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.Systrace
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_ATTRIBUTE_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.opentelemetry.api.logs.Logger
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.sdk.OpenTelemetrySdk
@@ -19,6 +19,7 @@ import io.opentelemetry.sdk.trace.SpanLimits
 internal class OpenTelemetrySdk(
     openTelemetryClock: Clock,
     configuration: OpenTelemetryConfiguration,
+    limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) {
     init {
         // Enforce the use of default ThreadLocal ContextStorage of the OTel Java to bypass SPI looking that violates Android strict mode
@@ -35,8 +36,8 @@ internal class OpenTelemetrySdk(
                     SpanLimits
                         .getDefault()
                         .toBuilder()
-                        .setMaxNumberOfEvents(MAX_TOTAL_EVENT_COUNT)
-                        .setMaxNumberOfAttributes(MAX_TOTAL_ATTRIBUTE_COUNT)
+                        .setMaxNumberOfEvents(limits.getMaxTotalEventCount())
+                        .setMaxNumberOfAttributes(limits.getMaxTotalAttributeCount())
                         .build()
                 )
                 .setClock(openTelemetryClock)

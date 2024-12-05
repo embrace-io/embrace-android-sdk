@@ -27,7 +27,7 @@ internal class ConfigServiceImpl(
     openTelemetryCfg: OpenTelemetryConfiguration,
     preferencesService: PreferencesService,
     suppliedFramework: AppFramework,
-    instrumentedConfig: InstrumentedConfig,
+    private val instrumentedConfig: InstrumentedConfig,
     remoteConfig: RemoteConfig?,
     thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck { preferencesService.deviceIdentifier },
 ) : ConfigService {
@@ -50,8 +50,6 @@ internal class ConfigServiceImpl(
 
     override val appId: String? = resolveAppId(instrumentedConfig.project.getAppId(), openTelemetryCfg)
 
-    override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
-
     /**
      * Loads the build information from resources provided by the config file packaged within the application by Gradle at
      * build-time.
@@ -59,7 +57,9 @@ internal class ConfigServiceImpl(
      * @return the local configuration
      */
     fun resolveAppId(id: String?, openTelemetryCfg: OpenTelemetryConfiguration): String? {
-        require(!id.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters()) {
+        require(
+            !id.isNullOrEmpty() || openTelemetryCfg.hasConfiguredOtelExporters() || instrumentedConfig.enabledFeatures.isOtelExportOnly()
+        ) {
             "No appId supplied in embrace-config.json. This is required if you want to " +
                 "send data to Embrace, unless you configure an OTel exporter and add" +
                 " embrace.disableMappingFileUpload=true to gradle.properties."

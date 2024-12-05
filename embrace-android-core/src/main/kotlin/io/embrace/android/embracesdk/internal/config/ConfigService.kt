@@ -96,11 +96,4 @@ interface ConfigService {
      * The Embrace app ID. This is used to identify the app within the database.
      */
     val appId: String?
-
-    /**
-     * Whether only OTel exporters should be used. If this returns true,
-     * the SDK should avoid enabling unnecessary systems (such as anything that creates requests
-     * to Embrace).
-     */
-    fun isOnlyUsingOtelExporters(): Boolean
 }

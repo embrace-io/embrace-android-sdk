@@ -34,6 +34,7 @@ Currently, only Spans and Logs are supported, but other signals will be added in
      - Doing bytecode instrumentation to enable the capture of certain telemetry.
 2. For multi-module projects, in the Gradle files of modules you want to invoke Embrace SDK API methods, add a dependency to the main Embrace SDK module: `'io.embrace:embrace-android-sdk:<version>`.
 3. In the `main` directory of your app's root source folder (i.e. `app/src/main/`), add in a file called `embrace-config.json` that contains `{}` as its only line.
+   - Add `sdk_config.otel_export_only: true` to the JSON object
    - To further configure the SDK, additional attributes can be added to this configuration file. 
    - See our [configuration documentation page](https://embrace.io/docs/android/features/configuration-file/) for further details.
 4. In your app's Gradle properties file, add in the entry `embrace.disableMappingFileUpload=true`

@@ -8,11 +8,14 @@ import io.embrace.android.embracesdk.fakes.FakeDeliveryService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.behavior.FakeAutoDataCaptureBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeAndroidServicesModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeStorageModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.session.orchestrator.V2PayloadStore
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -30,7 +33,11 @@ class DeliveryModuleImplTest {
     @Before
     fun setUp() {
         configService = FakeConfigService()
-        val initModule = FakeInitModule()
+        createModule()
+    }
+
+    private fun createModule(cfg: InstrumentedConfig = FakeInstrumentedConfig()) {
+        val initModule = FakeInitModule(instrumentedConfig = cfg)
         module = DeliveryModuleImpl(
             FakeConfigModule(configService),
             initModule,
@@ -62,7 +69,7 @@ class DeliveryModuleImplTest {
 
     @Test
     fun `test otel export only`() {
-        configService.onlyUsingOtelExporters = true
+        createModule(FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(otelExportOnly = true)))
         assertNotNull(module)
         assertTrue(module.deliveryService is FakeDeliveryService)
         assertNull(module.intakeService)

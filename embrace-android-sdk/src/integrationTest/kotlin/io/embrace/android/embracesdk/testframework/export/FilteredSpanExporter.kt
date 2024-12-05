@@ -28,11 +28,11 @@ internal class FilteredSpanExporter : SpanExporter {
     }
 
     fun awaitSpansWithType(type: EmbType, expectedCount: Int): List<SpanData> {
-        return awaitSpanExport({
+        return awaitSpanExport(expectedCount) {
             it.attributes.asMap().any { entry ->
                 entry.key.key == "emb.type" && entry.value == type.value
             }
-        }, expectedCount)
+        }
     }
 
     fun failOnDuplicate() {
@@ -52,11 +52,11 @@ internal class FilteredSpanExporter : SpanExporter {
         }
     }
 
-    private fun awaitSpanExport(
-        spanFilter: (SpanData) -> Boolean,
+    fun awaitSpanExport(
         expectedCount: Int,
+        filter: (SpanData) -> Boolean,
     ): List<SpanData> {
-        val supplier = { spanData.filter(spanFilter) }
+        val supplier = { spanData.filter(filter) }
         return returnIfConditionMet(
             desiredValueSupplier = supplier,
             dataProvider = supplier,

@@ -6,6 +6,13 @@ package io.embrace.android.embracesdk.internal.config.instrumented.schema
 interface EnabledFeatureConfig {
 
     /**
+     * Whether the SDK is configured to send data to Embrace or should be used purely for OTel export.
+     *
+     * sdk_config.otel_export_only
+     */
+    fun isOtelExportOnly(): Boolean = false
+
+    /**
      * Gates Unity ANR capture.
      *
      * sdk_config.anr.capture_unity_thread

@@ -79,7 +79,6 @@ internal class ConfigServiceImplTest {
         executor = BlockingScheduledExecutorService(blockingMode = false)
         worker = BackgroundWorker(executor)
         service = createService()
-        assertFalse(service.isOnlyUsingOtelExporters())
     }
 
     /**
@@ -160,7 +159,6 @@ internal class ConfigServiceImplTest {
         cfg.addLogExporter(FakeLogRecordExporter())
         val service = createService(config = cfg, appId = null)
         assertNotNull(service)
-        assertTrue(service.isOnlyUsingOtelExporters())
     }
 
     /**

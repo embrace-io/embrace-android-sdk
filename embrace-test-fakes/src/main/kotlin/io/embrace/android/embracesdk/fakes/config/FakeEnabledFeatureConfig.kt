@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Enabled
 @Suppress("DEPRECATION")
 class FakeEnabledFeatureConfig(
     base: EnabledFeatureConfig = InstrumentedConfigImpl.enabledFeatures,
+    private val otelExportOnly: Boolean = base.isOtelExportOnly(),
     private val unityAnrCapture: Boolean = base.isUnityAnrCaptureEnabled(),
     private val activityBreadcrumbCapture: Boolean = base.isActivityBreadcrumbCaptureEnabled(),
     private val composeClickCapture: Boolean = base.isComposeClickCaptureEnabled(),
@@ -29,6 +30,7 @@ class FakeEnabledFeatureConfig(
     private val uiLoadPerfCapture: Boolean = base.isUiLoadPerfCaptureEnabled()
 ) : EnabledFeatureConfig {
 
+    override fun isOtelExportOnly(): Boolean = otelExportOnly
     override fun isUnityAnrCaptureEnabled(): Boolean = unityAnrCapture
     override fun isActivityBreadcrumbCaptureEnabled(): Boolean = activityBreadcrumbCapture
     override fun isComposeClickCaptureEnabled(): Boolean = composeClickCapture

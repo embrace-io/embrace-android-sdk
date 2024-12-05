@@ -41,11 +41,12 @@ internal class DeliveryModuleImpl(
     override val deliveryTracer: DeliveryTracer? = null,
 ) : DeliveryModule {
 
+    private val enabledFeatures = initModule.instrumentedConfig.enabledFeatures
     private val processIdProvider = { otelModule.openTelemetryConfiguration.processIdentifier }
 
     override val payloadStore: PayloadStore? by singleton {
         val configService = configModule.configService
-        if (configService.isOnlyUsingOtelExporters()) {
+        if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val deliveryService = deliveryService ?: return@singleton null
@@ -60,7 +61,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val deliveryService: DeliveryService? by singleton {
-        deliveryServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        deliveryServiceProvider?.invoke() ?: if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             EmbraceDeliveryService(
@@ -76,7 +77,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val intakeService: IntakeService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val payloadStorageService = payloadStorageService ?: return@singleton null
@@ -102,7 +103,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val payloadCachingService: PayloadCachingService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val payloadStore = payloadStore ?: return@singleton null
@@ -117,7 +118,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val payloadStorageService: PayloadStorageService? by singleton {
-        payloadStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        payloadStorageServiceProvider?.invoke() ?: if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val location = StorageLocation.PAYLOAD.asFile(coreModule.context, initModule.logger)
@@ -132,7 +133,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val cacheStorageService: PayloadStorageService? by singleton {
-        cacheStorageServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        cacheStorageServiceProvider?.invoke() ?: if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val location = StorageLocation.CACHE.asFile(coreModule.context, initModule.logger)
@@ -147,7 +148,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val requestExecutionService: RequestExecutionService? by singleton {
-        requestExecutionServiceProvider?.invoke() ?: if (configModule.configService.isOnlyUsingOtelExporters()) {
+        requestExecutionServiceProvider?.invoke() ?: if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val appId = configModule.configService.appId ?: return@singleton null
@@ -176,7 +177,7 @@ internal class DeliveryModuleImpl(
     }
 
     override val schedulingService: SchedulingService? by singleton {
-        if (configModule.configService.isOnlyUsingOtelExporters()) {
+        if (enabledFeatures.isOtelExportOnly()) {
             null
         } else {
             val payloadStorageService = payloadStorageService ?: return@singleton null

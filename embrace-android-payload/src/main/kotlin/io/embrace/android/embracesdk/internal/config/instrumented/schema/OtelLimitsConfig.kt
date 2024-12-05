@@ -5,6 +5,8 @@ package io.embrace.android.embracesdk.internal.config.instrumented.schema
  *
  * Currently this is not instrumented by the gradle plugin so the values won't change - that will
  * be implemented in a future PR.
+ *
+ * IMPORTANT NOTE: these functions are only swazzled when the sdk_config.send_data_to_embrace is set to `true`.
  */
 interface OtelLimitsConfig {
 

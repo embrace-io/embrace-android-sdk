@@ -187,7 +187,7 @@ class UiLoadTraceEmitter(
                 startTimeMs = startTimeMs,
             )?.let { root ->
                 if (zygote.lastActivityInstanceId != -1) {
-                    root.addSystemAttribute("last_activity", zygote.lastActivityName)
+                    root.addAttribute("last_activity", zygote.lastActivityName)
                 }
                 activeTraces[instanceId] = UiLoadTrace(root = root, activityName = activityName)
             }

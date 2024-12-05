@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.internal.config.behavior
 
 import io.embrace.android.embracesdk.fakes.createSdkModeBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.mockk.core.ValueClassSupport.boxedValue
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class SdkModeBehaviorImplTest {

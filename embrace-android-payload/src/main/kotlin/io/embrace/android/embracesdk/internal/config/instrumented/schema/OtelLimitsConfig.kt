@@ -7,15 +7,39 @@ package io.embrace.android.embracesdk.internal.config.instrumented.schema
  * be implemented in a future PR.
  */
 interface OtelLimitsConfig {
-    fun getMaxInternalNameLength(): Int = 2000
-    fun getMaxNameLength(): Int = 50
-    fun getMaxCustomEventCount(): Int = 10
-    fun getMaxTotalEventCount(): Int = 11000
-    fun getMaxCustomAttributeCount(): Int = 50
-    fun getMaxTotalAttributeCount(): Int = 300
-    fun getMaxInternalAttributeKeyLength(): Int = 1000
-    fun getMaxInternalAttributeValueLength(): Int = 2000
-    fun getMaxCustomAttributeKeyLength(): Int = 50
-    fun getMaxCustomAttributeValueLength(): Int = 500
-    fun getExceptionEventName(): String = "exception"
+
+    /**
+     * The maximum length of a span name.
+     *
+     * sdk_config.otel_limits.max_span_name_length
+     */
+    fun getMaxNameLength(): Int = 2000
+
+    /**
+     * The maximum number of events in a span.
+     *
+     * sdk_config.otel_limits.max_events
+     */
+    fun getMaxEventCount(): Int = 11000
+
+    /**
+     * The maximum number of attributes in a span.
+     *
+     * sdk_config.otel_limits.max_attributes
+     */
+    fun getMaxAttributeCount(): Int = 300
+
+    /**
+     * The maximum number of characters in an attribute key.
+     *
+     * sdk_config.otel_limits.max_attribute_key_length
+     */
+    fun getMaxAttributeKeyLength(): Int = 1000
+
+    /**
+     * The maximum number of characters in an attribute value.
+     *
+     * sdk_config.otel_limits.max_attribute_value_length
+     */
+    fun getMaxAttributeValueLength(): Int = 2000
 }

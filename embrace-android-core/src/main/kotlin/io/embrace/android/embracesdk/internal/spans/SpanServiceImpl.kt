@@ -37,7 +37,7 @@ internal class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
     ): PersistableEmbraceSpan? {
-        return if (inputsValid(name, internal) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+        return if (inputsValid(name) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             embraceSpanFactory.create(
                 name = name,
                 type = type,
@@ -52,7 +52,7 @@ internal class SpanServiceImpl(
 
     override fun createSpan(embraceSpanBuilder: EmbraceSpanBuilder): PersistableEmbraceSpan? {
         return if (
-            inputsValid(embraceSpanBuilder.spanName, embraceSpanBuilder.internal) &&
+            inputsValid(embraceSpanBuilder.spanName) &&
             currentSessionSpan.canStartNewSpan(embraceSpanBuilder.getParentSpan(), embraceSpanBuilder.internal)
         ) {
             embraceSpanFactory.create(embraceSpanBuilder)
@@ -113,7 +113,7 @@ internal class SpanServiceImpl(
             return false
         }
 
-        if (inputsValid(name, internal, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
+        if (inputsValid(name, events, attributes) && currentSessionSpan.canStartNewSpan(parent, internal)) {
             val newSpan = embraceSpanFactory.create(
                 name = name,
                 type = type,
@@ -139,13 +139,12 @@ internal class SpanServiceImpl(
 
     private fun inputsValid(
         name: String,
-        internal: Boolean,
         events: List<EmbraceSpanEvent>? = null,
         attributes: Map<String, String>? = null,
     ): Boolean {
-        return (limits.isNameValid(name, internal)) &&
-            ((events == null) || (events.size <= limits.getMaxCustomEventCount())) &&
-            ((attributes == null) || (attributes.size <= limits.getMaxCustomAttributeCount()))
+        return (limits.isNameValid(name)) &&
+            ((events == null) || (events.size <= limits.getMaxEventCount())) &&
+            ((attributes == null) || (attributes.size <= limits.getMaxAttributeCount()))
     }
 
     companion object {

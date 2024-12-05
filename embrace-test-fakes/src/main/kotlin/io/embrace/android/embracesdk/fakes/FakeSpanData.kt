@@ -33,7 +33,6 @@ class FakeSpanData(
                 type.toEmbraceKeyValuePair(),
                 Pair("my-key", "my-value")
             ),
-            internal = true,
         ).build(),
     private var events: MutableList<EventData> = mutableListOf(
         EventData.create(

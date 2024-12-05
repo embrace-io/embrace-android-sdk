@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
 import io.opentelemetry.api.common.AttributeKey
@@ -143,7 +142,7 @@ internal class EmbSpanTest {
 
         with(checkNotNull(fakeEmbraceSpan.events)) {
             assertEquals(2, size)
-            val expectedName = InstrumentedConfigImpl.otelLimits.getExceptionEventName()
+            val expectedName = "exception"
             with(first()) {
                 assertEquals(expectedName, name)
                 assertEquals(firstExceptionTime, timestampNanos)

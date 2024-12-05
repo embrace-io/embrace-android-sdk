@@ -15,10 +15,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_ATTRIBUTE_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -367,7 +366,8 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum events on session span`() {
-        repeat(MAX_TOTAL_EVENT_COUNT + 1) {
+        val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalEventCount()
+        repeat(limit + 1) {
             currentSessionSpan.addEvent(SchemaType.Breadcrumb("test-event"), 1000L + it)
         }
 
@@ -375,7 +375,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        assertEquals(MAX_TOTAL_EVENT_COUNT, span.toNewPayload().events?.size)
+        assertEquals(limit, span.toNewPayload().events?.size)
     }
 
     @Test
@@ -393,7 +393,8 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate maximum attributes on session span`() {
-        repeat(MAX_TOTAL_ATTRIBUTE_COUNT + 1) {
+        val limit = InstrumentedConfigImpl.otelLimits.getMaxTotalAttributeCount()
+        repeat(limit + 1) {
             currentSessionSpan.addSystemAttribute(SpanAttributeData("attribute-$it", "value"))
         }
 
@@ -401,7 +402,7 @@ internal class CurrentSessionSpanImplTests {
         assertEquals("emb-session", span.name)
 
         // verify event was added to the span
-        assertEquals(MAX_TOTAL_ATTRIBUTE_COUNT, span.toNewPayload().attributes?.size)
+        assertEquals(limit, span.toNewPayload().attributes?.size)
     }
 
     private fun CurrentSessionSpan.assertNoSessionSpan() {

@@ -3,9 +3,11 @@ package io.embrace.android.embracesdk.internal.spans
 import io.embrace.android.embracesdk.internal.arch.schema.EmbraceAttributeKey
 import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeValid
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isAttributeValid
 import io.embrace.android.embracesdk.internal.utils.isBlankish
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.opentelemetry.api.common.AttributeKey
@@ -39,8 +41,14 @@ internal fun LogRecordBuilder.setAttribute(
 /**
  * Populate an [AttributesBuilder] with String key-value pairs from a [Map]
  */
-fun AttributesBuilder.fromMap(attributes: Map<String, String>, internal: Boolean): AttributesBuilder {
-    attributes.filter { isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute() }.forEach {
+fun AttributesBuilder.fromMap(
+    attributes: Map<String, String>,
+    internal: Boolean,
+    limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
+): AttributesBuilder {
+    attributes.filter {
+        limits.isAttributeValid(it.key, it.value, internal) || it.key.isValidLongValueAttribute()
+    }.forEach {
         put(it.key, it.value)
     }
     return this

@@ -2,7 +2,9 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isNameValid
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -15,6 +17,7 @@ internal class SpanServiceImpl(
     private val spanRepository: SpanRepository,
     private val embraceSpanFactory: EmbraceSpanFactory,
     private val currentSessionSpan: CurrentSessionSpan,
+    private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) : SpanService {
     private val initialized = AtomicBoolean(false)
 
@@ -140,9 +143,9 @@ internal class SpanServiceImpl(
         events: List<EmbraceSpanEvent>? = null,
         attributes: Map<String, String>? = null,
     ): Boolean {
-        return (name.isNameValid(internal)) &&
-            ((events == null) || (events.size <= EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT)) &&
-            ((attributes == null) || (attributes.size <= EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT))
+        return (limits.isNameValid(name, internal)) &&
+            ((events == null) || (events.size <= limits.getMaxCustomEventCount())) &&
+            ((attributes == null) || (attributes.size <= limits.getMaxCustomAttributeCount()))
     }
 
     companion object {

@@ -22,10 +22,10 @@ interface SessionSpanWriter {
     /**
      * Add the given key-value pair as an Attribute to the session span
      */
-    fun addSystemAttribute(attribute: SpanAttributeData)
+    fun addAttribute(attribute: SpanAttributeData)
 
     /**
      * Remove the attribute with the given key
      */
-    fun removeSystemAttribute(key: String)
+    fun removeAttribute(key: String)
 }

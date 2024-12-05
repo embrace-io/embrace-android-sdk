@@ -29,39 +29,39 @@ internal class SessionSpanAttrPopulatorImpl(
 
     override fun populateSessionSpanStartAttrs(session: SessionZygote) {
         with(sessionSpanWriter) {
-            addSystemAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
-            addSystemAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
-            addSystemAttribute(SpanAttributeData(embState.name, session.appState.name.lowercase(Locale.US)))
-            addSystemAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
-            addSystemAttribute(SpanAttributeData(embTerminated.name, true.toString()))
+            addAttribute(SpanAttributeData(embColdStart.name, session.isColdStart.toString()))
+            addAttribute(SpanAttributeData(embSessionNumber.name, session.number.toString()))
+            addAttribute(SpanAttributeData(embState.name, session.appState.name.lowercase(Locale.US)))
+            addAttribute(SpanAttributeData(embCleanExit.name, false.toString()))
+            addAttribute(SpanAttributeData(embTerminated.name, true.toString()))
 
             session.startType.toString().lowercase(Locale.US).let {
-                addSystemAttribute(SpanAttributeData(embSessionStartType.name, it))
+                addAttribute(SpanAttributeData(embSessionStartType.name, it))
             }
         }
     }
 
     override fun populateSessionSpanEndAttrs(endType: LifeEventType?, crashId: String?, coldStart: Boolean) {
         with(sessionSpanWriter) {
-            addSystemAttribute(SpanAttributeData(embCleanExit.name, true.toString()))
-            addSystemAttribute(SpanAttributeData(embTerminated.name, false.toString()))
+            addAttribute(SpanAttributeData(embCleanExit.name, true.toString()))
+            addAttribute(SpanAttributeData(embTerminated.name, false.toString()))
             crashId?.let {
-                addSystemAttribute(SpanAttributeData(embCrashId.name, crashId))
+                addAttribute(SpanAttributeData(embCrashId.name, crashId))
             }
             endType?.toString()?.lowercase(Locale.US)?.let {
-                addSystemAttribute(SpanAttributeData(embSessionEndType.name, it))
+                addAttribute(SpanAttributeData(embSessionEndType.name, it))
             }
             if (coldStart) {
                 startupService.getSdkStartupDuration()?.let { duration ->
-                    addSystemAttribute(SpanAttributeData(embSessionStartupDuration.name, duration.toString()))
+                    addAttribute(SpanAttributeData(embSessionStartupDuration.name, duration.toString()))
                 }
             }
 
             val logCount = logService.getErrorLogsCount()
-            addSystemAttribute(SpanAttributeData(embErrorLogCount.name, logCount.toString()))
+            addAttribute(SpanAttributeData(embErrorLogCount.name, logCount.toString()))
 
             metadataService.getDiskUsage()?.deviceDiskFree?.let { free ->
-                addSystemAttribute(SpanAttributeData(embFreeDiskBytes.name, free.toString()))
+                addAttribute(SpanAttributeData(embFreeDiskBytes.name, free.toString()))
             }
         }
     }

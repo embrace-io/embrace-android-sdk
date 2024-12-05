@@ -36,8 +36,8 @@ internal class OpenTelemetrySdk(
                     SpanLimits
                         .getDefault()
                         .toBuilder()
-                        .setMaxNumberOfEvents(limits.getMaxTotalEventCount())
-                        .setMaxNumberOfAttributes(limits.getMaxTotalAttributeCount())
+                        .setMaxNumberOfEvents(limits.getMaxEventCount())
+                        .setMaxNumberOfAttributes(limits.getMaxAttributeCount())
                         .build()
                 )
                 .setClock(openTelemetryClock)

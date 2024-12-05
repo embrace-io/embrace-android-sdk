@@ -247,7 +247,7 @@ internal class SessionOrchestratorImpl(
     private fun updatePeriodicCacheAttrs() {
         val now = clock.now().millisToNanos()
         val attr = SpanAttributeData(embHeartbeatTimeUnixNano.name, now.toString())
-        sessionSpanWriter.addSystemAttribute(attr)
-        sessionSpanWriter.addSystemAttribute(SpanAttributeData(embTerminated.name, true.toString()))
+        sessionSpanWriter.addAttribute(attr)
+        sessionSpanWriter.addAttribute(SpanAttributeData(embTerminated.name, true.toString()))
     }
 }

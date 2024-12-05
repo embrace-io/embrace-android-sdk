@@ -34,36 +34,17 @@ interface PersistableEmbraceSpan : EmbraceSpan, ImplicitContextKeyed {
     /**
      * Get the value of the attribute with the given key. Returns null if the attribute does not exist.
      */
-    fun getSystemAttribute(key: AttributeKey<String>): String?
-
-    /**
-     * Set the value of the attribute with the given key, overwriting the original value if it's already set
-     */
-    fun setSystemAttribute(key: AttributeKey<String>, value: String)
-
-    /**
-     * Add the given key value pair as a system attribute to ths span
-     */
-    fun addSystemAttribute(key: String, value: String)
+    fun getAttribute(key: AttributeKey<String>): String?
 
     /**
      * Remove the system attribute with the given key name
      */
-    fun removeSystemAttribute(key: String)
-
-    /**
-     * Add a system event to the span that will subjected to a different maximum than typical span events.
-     */
-    fun addSystemEvent(
-        name: String,
-        timestampMs: Long?,
-        attributes: Map<String, String>?,
-    ): Boolean
+    fun removeAttribute(key: String)
 
     /**
      * Removes all system events with the given [EmbType]
      */
-    fun removeSystemEvents(type: EmbType): Boolean
+    fun removeEvents(type: EmbType): Boolean
 
     /**
      * Set the [StatusCode] and status description of the wrapped Span

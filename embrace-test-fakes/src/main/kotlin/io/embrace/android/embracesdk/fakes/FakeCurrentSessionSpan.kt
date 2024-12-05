@@ -34,11 +34,11 @@ class FakeCurrentSessionSpan(
         addedEvents.removeAll { it.schemaType.telemetryType.key == type.key }
     }
 
-    override fun addSystemAttribute(attribute: SpanAttributeData) {
+    override fun addAttribute(attribute: SpanAttributeData) {
         attributes[attribute.key] = attribute.value
     }
 
-    override fun removeSystemAttribute(key: String) {
+    override fun removeAttribute(key: String) {
         attributes.remove(key)
     }
 

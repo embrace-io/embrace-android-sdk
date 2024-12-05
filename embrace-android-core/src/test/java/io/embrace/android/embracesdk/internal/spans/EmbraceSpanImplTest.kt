@@ -6,14 +6,10 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeRedactionConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY
-import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE
-import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
-import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
-import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_EVENT_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.fakeContextKey
@@ -228,7 +224,7 @@ internal class EmbraceSpanImplTest {
             val sanitizedEvents = checkNotNull(events)
             assertEquals(2, sanitizedEvents.size)
             with(sanitizedEvents.first()) {
-                assertEquals(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), name)
+                assertEquals("exception", name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -242,7 +238,7 @@ internal class EmbraceSpanImplTest {
                 )
             }
             with(sanitizedEvents.last()) {
-                assertEquals(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), name)
+                assertEquals("exception", name)
                 val attrs = checkNotNull(attributes)
                 assertEquals(timestampNanos, timestampNanos)
                 assertEquals(
@@ -281,7 +277,7 @@ internal class EmbraceSpanImplTest {
             assertTrue(addEvent(name = MAX_LENGTH_EVENT_NAME, timestampMs = null, attributes = null))
             assertTrue(addEvent(name = "yo", timestampMs = null, attributes = maxSizeEventAttributes))
             assertTrue(recordException(exception = RuntimeException()))
-            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomEventCount() - 5) {
+            repeat(InstrumentedConfigImpl.otelLimits.getMaxEventCount() - 5) {
                 assertTrue(addEvent(name = "event $it"))
             }
             val eventAttributesAMap = mutableMapOf(
@@ -305,22 +301,6 @@ internal class EmbraceSpanImplTest {
     }
 
     @Test
-    fun `check adding and removing system attributes not affected by custom attributes`() {
-        with(embraceSpan) {
-            assertTrue(start())
-            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount()) {
-                assertTrue(addAttribute(key = "key$it", value = "value"))
-            }
-            assertFalse(addAttribute(key = "failed", value = "value"))
-            addSystemAttribute("system-attribute", "value")
-            assertEquals("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
-            removeSystemAttribute("system-attribute")
-            assertNull("value", embraceSpan.snapshot()?.attributes?.findAttributeValue("system-attribute"))
-            assertTrue(updateNotified)
-        }
-    }
-
-    @Test
     fun `check custom attribute limits`() {
         with(embraceSpan) {
             assertTrue(start())
@@ -329,26 +309,11 @@ internal class EmbraceSpanImplTest {
             assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY, value = "value"))
             assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
             assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE))
-            repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount() - 3) {
+            repeat(InstrumentedConfigImpl.otelLimits.getMaxAttributeCount() - 4) {
                 assertTrue(addAttribute(key = "key$it", value = "value"))
             }
             assertFalse(addAttribute(key = "failedKey", value = "value"))
             assertTrue(updateNotified)
-        }
-    }
-
-    @Test
-    fun `check internal span attribute key and value limits`() {
-        embraceSpan = createEmbraceSpanImpl(
-            spanBuilder = createEmbraceSpanBuilder()
-        )
-        with(embraceSpan) {
-            assertTrue(start())
-            assertFalse(addAttribute(key = TOO_LONG_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "value"))
-            assertFalse(addAttribute(key = "key", value = TOO_LONG_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
-            assertTrue(addAttribute(key = MAX_LENGTH_ATTRIBUTE_KEY_FOR_INTERNAL_SPAN, value = "value"))
-            assertTrue(addAttribute(key = "key", value = MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
-            assertTrue(addAttribute(key = "Key", value = MAX_LENGTH_ATTRIBUTE_VALUE_FOR_INTERNAL_SPAN))
         }
     }
 

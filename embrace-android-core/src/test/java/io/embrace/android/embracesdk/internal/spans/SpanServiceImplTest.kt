@@ -8,11 +8,9 @@ import io.embrace.android.embracesdk.arch.assertIsTypePerformance
 import io.embrace.android.embracesdk.arch.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.MAX_LENGTH_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_KEY
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_ATTRIBUTE_VALUE
-import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.fixtures.maxSizeAttributes
 import io.embrace.android.embracesdk.fixtures.maxSizeEvents
@@ -495,40 +493,6 @@ internal class SpanServiceImplTest {
     }
 
     @Test
-    fun `check name length limit for spans by internally by the SDK`() {
-        assertNull(spansService.createSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true))
-        assertFalse(
-            spansService.recordCompletedSpan(
-                name = TOO_LONG_INTERNAL_SPAN_NAME,
-                startTimeMs = 100L,
-                endTimeMs = 200L,
-                internal = true,
-            )
-        )
-        assertNotNull(
-            spansService.recordSpan(name = TOO_LONG_INTERNAL_SPAN_NAME, internal = true) {
-                1
-            }
-        )
-        assertEquals(0, spanSink.completedSpans().size)
-        assertNotNull(spansService.createSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true))
-        assertNotNull(
-            spansService.recordSpan(name = MAX_LENGTH_INTERNAL_SPAN_NAME, internal = true) {
-                2
-            }
-        )
-        assertTrue(
-            spansService.recordCompletedSpan(
-                name = MAX_LENGTH_INTERNAL_SPAN_NAME,
-                startTimeMs = 100L,
-                endTimeMs = 200L,
-                internal = true,
-            )
-        )
-        assertEquals(2, spanSink.completedSpans().size)
-    }
-
-    @Test
     fun `check events limit`() {
         assertFalse(
             spansService.recordCompletedSpan(
@@ -558,7 +522,7 @@ internal class SpanServiceImplTest {
         }
 
         val events = mutableListOf(checkNotNull(EmbraceSpanEvent.create("event", 100L, attributesMap)))
-        repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomEventCount() - 1) {
+        repeat(InstrumentedConfigImpl.otelLimits.getMaxEventCount() - 1) {
             events.add(checkNotNull(EmbraceSpanEvent.create("event", 100L, null)))
         }
         assertTrue(
@@ -573,7 +537,7 @@ internal class SpanServiceImplTest {
 
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
-        assertEquals(10, completedSpans[0].events.size)
+        assertEquals(11000, completedSpans[0].events.size)
         assertEquals(8, completedSpans[0].events[0].attributes.size)
     }
 
@@ -602,7 +566,7 @@ internal class SpanServiceImplTest {
             Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
             Pair("key", TOO_LONG_ATTRIBUTE_VALUE),
         )
-        repeat(InstrumentedConfigImpl.otelLimits.getMaxCustomAttributeCount() - 2) {
+        repeat(InstrumentedConfigImpl.otelLimits.getMaxAttributeCount() - 2) {
             attributesMap["key$it"] = "value"
         }
 
@@ -618,7 +582,7 @@ internal class SpanServiceImplTest {
 
         val completedSpans = spanSink.completedSpans()
         assertEquals(1, completedSpans.size)
-        assertEquals(48, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
+        assertEquals(297, completedSpans[0].attributes.filterNot { it.key.startsWith("emb.") }.size)
     }
 
     private fun verifyAndReturnSoleCompletedSpan(name: String): EmbraceSpanData {

@@ -18,12 +18,6 @@ data class RemoteConfig(
     val threshold: Int? = null,
 
     /**
-     * Used to shift the offset of devices for which the SDK is enabled/disabled.
-     */
-    @Json(name = "offset")
-    val offset: Int? = null,
-
-    /**
      * List of regular expressions matching event names and log messages which should be disabled.
      */
     @Json(name = "disabled_event_and_log_patterns")

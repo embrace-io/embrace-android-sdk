@@ -130,6 +130,8 @@ internal class PayloadFactoryBaTest {
                 currentSessionSpan,
                 spanRepository,
                 FakeOtelPayloadMapper(),
+                FakeProcessStateService(),
+                FakeClock(),
                 logger
             )
         )

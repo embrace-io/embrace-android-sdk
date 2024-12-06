@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -22,6 +23,7 @@ internal class UninitializedSdkSpanService : SpanService {
 
     override fun createSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -32,6 +34,7 @@ internal class UninitializedSdkSpanService : SpanService {
 
     override fun <T> recordSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -45,6 +48,7 @@ internal class UninitializedSdkSpanService : SpanService {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -57,6 +61,7 @@ internal class UninitializedSdkSpanService : SpanService {
             name = name,
             startTimeMs = startTimeMs,
             endTimeMs = endTimeMs,
+            autoTerminationMode = autoTerminationMode,
             parent = parent,
             type = type,
             internal = internal,
@@ -73,13 +78,14 @@ internal class UninitializedSdkSpanService : SpanService {
                         name = name,
                         startTimeMs = startTimeMs,
                         endTimeMs = endTimeMs,
+                        autoTerminationMode = autoTerminationMode,
                         parent = parent,
                         type = type,
                         internal = internal,
                         private = private,
                         attributes = attributes,
                         events = events,
-                        errorCode = errorCode
+                        errorCode = errorCode,
                     )
                 )
             }
@@ -103,6 +109,7 @@ internal class UninitializedSdkSpanService : SpanService {
                         name = it.name,
                         startTimeMs = it.startTimeMs,
                         endTimeMs = it.endTimeMs,
+                        autoTerminationMode = it.autoTerminationMode,
                         parent = it.parent,
                         type = it.type,
                         internal = it.internal,
@@ -127,6 +134,7 @@ internal class UninitializedSdkSpanService : SpanService {
         val name: String,
         val startTimeMs: Long,
         val endTimeMs: Long,
+        val autoTerminationMode: AutoTerminationMode,
         val parent: EmbraceSpan?,
         val type: TelemetryType,
         val internal: Boolean,

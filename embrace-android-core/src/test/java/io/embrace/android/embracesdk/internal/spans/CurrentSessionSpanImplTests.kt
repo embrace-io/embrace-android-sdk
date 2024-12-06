@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.opentelemetry.embraceSpanBuilder
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.telemetry.TelemetryService
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.api.trace.SpanId
@@ -79,17 +80,37 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `check trace limits with maximum not started traces`() {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
-            assertNotNull(spanService.createSpan(name = "spanzzz$it", internal = false))
+            assertNotNull(
+                spanService.createSpan(
+                    name = "spanzzz$it",
+                    internal = false
+                )
+            )
         }
-        assertNull(spanService.createSpan(name = "failed-span", internal = false))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                internal = false
+            )
+        )
     }
 
     @Test
     fun `check trace limits with maximum internal not started traces`() {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
-            assertNotNull(spanService.createSpan(name = "spanzzz$it", internal = false))
+            assertNotNull(
+                spanService.createSpan(
+                    name = "spanzzz$it",
+                    internal = false
+                )
+            )
         }
-        assertNull(spanService.createSpan(name = "failed-span", internal = false))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                internal = false
+            )
+        )
 
         repeat(SpanServiceImpl.MAX_INTERNAL_SPANS_PER_SESSION) {
             assertNotNull(spanService.createSpan(name = "internal$it"))
@@ -139,9 +160,20 @@ internal class CurrentSessionSpanImplTests {
     @Test
     fun `check trace limits with maximum traces recorded around a lambda`() {
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
-            assertEquals("derp", spanService.recordSpan(name = "record$it", internal = false) { "derp" })
+            assertEquals(
+                "derp",
+                spanService.recordSpan(
+                    name = "record$it",
+                    internal = false,
+                ) { "derp" }
+            )
         }
-        assertNull(spanService.createSpan(name = "failed-span", internal = false))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                internal = false,
+            )
+        )
     }
 
     @Test
@@ -152,70 +184,160 @@ internal class CurrentSessionSpanImplTests {
                     name = "complete$it",
                     startTimeMs = 100L,
                     endTimeMs = 200L,
-                    internal = false
+                    internal = false,
                 )
             )
         }
-        assertNull(spanService.createSpan(name = "failed-span", internal = false))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                internal = false,
+            )
+        )
     }
 
     @Test
     fun `check internal traces and child spans don't count towards limit`() {
-        val parent = checkNotNull(spanService.createSpan(name = "test-span", internal = false))
+        val parent = checkNotNull(
+            spanService.createSpan(
+                name = "test-span",
+                internal = false,
+            )
+        )
         assertTrue(parent.start())
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION - 1) {
-            assertNotNull("Adding span $it failed", spanService.createSpan(name = "spanzzz$it", internal = false))
+            assertNotNull(
+                "Adding span $it failed",
+                spanService.createSpan(
+                    name = "spanzzz$it",
+                    internal = false,
+                )
+            )
         }
-        assertNull(spanService.createSpan(name = "failed-span", internal = false))
-        assertNull(spanService.createSpan(name = "child-span", parent = parent, internal = false))
-        assertNotNull(spanService.createSpan(name = "internal-again", internal = true))
-        assertNotNull(spanService.createSpan(name = "internal-child-span", parent = parent, internal = true))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                internal = false,
+            )
+        )
+        assertNull(
+            spanService.createSpan(
+                name = "child-span",
+                parent = parent,
+                internal = false,
+            )
+        )
+        assertNotNull(
+            spanService.createSpan(
+                name = "internal-again",
+                internal = true,
+            )
+        )
+        assertNotNull(
+            spanService.createSpan(
+                name = "internal-child-span",
+                parent = parent,
+                internal = true,
+            )
+        )
     }
 
     @Test
     fun `check total limit can be reached with descendant spans`() {
         var parentSpan: EmbraceSpan? = null
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
-            val span = spanService.createSpan(name = "spanzzz$it", parent = parentSpan, internal = false)
+            val span = spanService.createSpan(
+                name = "spanzzz$it",
+                parent = parentSpan,
+                internal = false,
+            )
             assertTrue(checkNotNull(span).start())
             parentSpan = span
         }
-        assertNull(spanService.createSpan(name = "failed-span", parent = parentSpan, internal = false))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                parent = parentSpan,
+                internal = false,
+            )
+        )
         assertFalse(
             spanService.recordCompletedSpan(
                 name = "failed-span",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 parent = parentSpan,
-                internal = false
+                internal = false,
             )
         )
         spanSink.flushSpans()
-        assertEquals(2, spanService.recordSpan(name = "failed-span", parent = parentSpan, internal = false) { 2 })
+        assertEquals(
+            2,
+            spanService.recordSpan(
+                name = "failed-span",
+                parent = parentSpan,
+                internal = false,
+            ) { 2 }
+        )
         assertEquals(0, spanSink.completedSpans().size)
     }
 
     @Test
     fun `check internal child spans don't count towards limit`() {
-        val parentSpan = checkNotNull(spanService.createSpan(name = "parent-span", internal = true))
+        val parentSpan = checkNotNull(
+            spanService.createSpan(
+                name = "parent-span",
+                internal = true,
+            )
+        )
         assertTrue(parentSpan.start())
-        assertNotNull(spanService.createSpan(name = "failed-span", parent = parentSpan, internal = true))
-        assertNotNull(spanService.recordSpan(name = "failed-span", parent = parentSpan, internal = true) { })
+        assertNotNull(
+            spanService.createSpan(
+                name = "failed-span",
+                parent = parentSpan,
+                internal = true,
+            )
+        )
+        assertNotNull(
+            spanService.recordSpan(
+                name = "failed-span",
+                parent = parentSpan,
+                internal = true,
+            ) { }
+        )
         assertTrue(
             spanService.recordCompletedSpan(
                 name = "failed-span",
                 startTimeMs = 100L,
                 endTimeMs = 200L,
                 parent = parentSpan,
-                internal = true
+                internal = true,
             )
         )
 
         repeat(SpanServiceImpl.MAX_NON_INTERNAL_SPANS_PER_SESSION) {
-            assertNotNull(spanService.createSpan(name = "spanzzz$it", parent = parentSpan, internal = false))
+            assertNotNull(
+                spanService.createSpan(
+                    name = "spanzzz$it",
+                    parent = parentSpan,
+                    internal = false,
+                )
+            )
         }
-        assertNull(spanService.createSpan(name = "failed-span", parent = parentSpan, internal = false))
-        assertNotNull(spanService.createSpan(name = "internal-span", parent = parentSpan, internal = true))
+        assertNull(
+            spanService.createSpan(
+                name = "failed-span",
+                parent = parentSpan,
+                internal = false,
+            )
+        )
+        assertNotNull(
+            spanService.createSpan(
+                name = "internal-span",
+                parent = parentSpan,
+                internal = true,
+            )
+        )
     }
 
     @Test
@@ -325,10 +447,12 @@ internal class CurrentSessionSpanImplTests {
 
     @Test
     fun `validate tracked spans update when session is ended`() {
-        val embraceSpan = checkNotNull(spanService.createSpan(name = "test-span"))
+        val embraceSpan =
+            checkNotNull(spanService.createSpan(name = "test-span"))
         assertTrue(embraceSpan.start())
         val embraceSpanId = checkNotNull(embraceSpan.spanId)
-        val parentSpan = checkNotNull(spanService.createSpan(name = "parent-span"))
+        val parentSpan =
+            checkNotNull(spanService.createSpan(name = "parent-span"))
         assertTrue(parentSpan.start())
         val parentSpanId = checkNotNull(parentSpan.spanId)
         val parentSpanFromService = checkNotNull(spanRepository.getSpan(parentSpanId))
@@ -339,7 +463,12 @@ internal class CurrentSessionSpanImplTests {
         assertNull(spanRepository.getSpan(parentSpanId))
 
         // existing reference to completed span can still be used
-        checkNotNull(spanService.createSpan(name = "child-span", parent = parentSpan))
+        checkNotNull(
+            spanService.createSpan(
+                name = "child-span",
+                parent = parentSpan,
+            )
+        )
 
         // active span from before flush is still available and working
         val activeSpanFromBeforeFlush = checkNotNull(spanRepository.getSpan(embraceSpanId))
@@ -433,6 +562,7 @@ internal class CurrentSessionSpanImplTests {
             type: TelemetryType,
             internal: Boolean,
             private: Boolean,
+            autoTerminationMode: AutoTerminationMode,
             parent: EmbraceSpan?,
         ): PersistableEmbraceSpan = stoppedSpan
 

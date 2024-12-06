@@ -35,6 +35,11 @@ public interface EmbraceSpan {
     public val parent: EmbraceSpan?
 
     /**
+     * The auto termination mode for this span
+     */
+    public val autoTerminationMode: AutoTerminationMode
+
+    /**
      * Start recording of the Span. Returns true if this call triggered the start of the recording. Returns false if the Span has already
      * been started or has been stopped.
      */

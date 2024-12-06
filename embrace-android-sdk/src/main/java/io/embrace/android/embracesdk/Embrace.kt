@@ -8,6 +8,7 @@ import android.webkit.ConsoleMessage
 import io.embrace.android.embracesdk.internal.Systrace
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -209,41 +210,70 @@ public class Embrace private constructor(
         return impl.endView(name)
     }
 
-    override fun createSpan(name: String): EmbraceSpan? {
+    override fun createSpan(
+        name: String,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? {
         return impl.createSpan(name)
     }
 
-    override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? {
         return impl.createSpan(name, parent)
     }
 
-    override fun startSpan(name: String): EmbraceSpan? {
+    override fun startSpan(
+        name: String,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? {
         return impl.startSpan(name)
     }
 
-    override fun startSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? {
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? {
         return impl.startSpan(name, parent)
     }
 
-    override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? {
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? {
         return impl.startSpan(name, parent, startTimeMs)
     }
 
-    override fun <T> recordSpan(name: String, code: Function0<T>): T {
-        return impl.recordSpan(name, code)
+    override fun <T> recordSpan(
+        name: String,
+        autoTerminationMode: AutoTerminationMode,
+        code: () -> T,
+    ): T {
+        return impl.recordSpan(name, autoTerminationMode, code)
     }
 
-    override fun <T> recordSpan(name: String, parent: EmbraceSpan?, code: Function0<T>): T {
-        return impl.recordSpan(name, parent, code)
+    override fun <T> recordSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
+        code: () -> T,
+    ): T {
+        return impl.recordSpan(name, parent, autoTerminationMode, code)
     }
 
     override fun <T> recordSpan(
         name: String,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: Function0<T>,
+        autoTerminationMode: AutoTerminationMode,
+        code: () -> T,
     ): T {
-        return impl.recordSpan(name, attributes, events, code)
+        return impl.recordSpan(name, attributes, events, autoTerminationMode, code)
     }
 
     override fun <T> recordSpan(
@@ -251,9 +281,10 @@ public class Embrace private constructor(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        code: Function0<T>,
+        autoTerminationMode: AutoTerminationMode,
+        code: () -> T,
     ): T {
-        return impl.recordSpan(name, parent, attributes, events, code)
+        return impl.recordSpan(name, parent, attributes, events, autoTerminationMode, code)
     }
 
     override fun recordCompletedSpan(
@@ -264,6 +295,7 @@ public class Embrace private constructor(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode,
     ): Boolean {
         return impl.recordCompletedSpan(
             name,
@@ -276,7 +308,12 @@ public class Embrace private constructor(
         )
     }
 
-    override fun recordCompletedSpan(name: String, startTimeMs: Long, endTimeMs: Long): Boolean {
+    override fun recordCompletedSpan(
+        name: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode,
+    ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs)
     }
 
@@ -285,6 +322,7 @@ public class Embrace private constructor(
         startTimeMs: Long,
         endTimeMs: Long,
         errorCode: ErrorCode?,
+        autoTerminationMode: AutoTerminationMode,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode)
     }
@@ -294,6 +332,7 @@ public class Embrace private constructor(
         startTimeMs: Long,
         endTimeMs: Long,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, parent)
     }
@@ -304,6 +343,7 @@ public class Embrace private constructor(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent)
     }
@@ -314,6 +354,7 @@ public class Embrace private constructor(
         endTimeMs: Long,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode,
     ): Boolean {
         return impl.recordCompletedSpan(name, startTimeMs, endTimeMs, attributes, events)
     }

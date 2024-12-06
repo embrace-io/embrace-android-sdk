@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.spans
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -11,21 +12,33 @@ class EmbraceTracer(
     private val clock: Clock,
     private val spanService: SpanService,
 ) : TracingApi {
-    override fun createSpan(name: String, parent: EmbraceSpan?): EmbraceSpan? =
+
+    override fun createSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? =
         spanService.createSpan(
             name = name,
             parent = parent,
             internal = false,
             private = false,
+            autoTerminationMode = autoTerminationMode
         )
 
-    override fun startSpan(name: String, parent: EmbraceSpan?, startTimeMs: Long?): EmbraceSpan? =
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan? =
         spanService.startSpan(
             name = name,
             parent = parent,
             startTimeMs = startTimeMs?.normalizeTimestampAsMillis(),
             internal = false,
             private = false,
+            autoTerminationMode = autoTerminationMode
         )
 
     override fun <T> recordSpan(
@@ -33,6 +46,7 @@ class EmbraceTracer(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T = spanService.recordSpan(
         name = name,
@@ -41,6 +55,7 @@ class EmbraceTracer(
         private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
+        autoTerminationMode = autoTerminationMode,
         code = code
     )
 
@@ -52,6 +67,7 @@ class EmbraceTracer(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
+        autoTerminationMode: AutoTerminationMode,
     ): Boolean = spanService.recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
@@ -61,6 +77,7 @@ class EmbraceTracer(
         private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
+        autoTerminationMode = autoTerminationMode,
         errorCode = errorCode
     )
 

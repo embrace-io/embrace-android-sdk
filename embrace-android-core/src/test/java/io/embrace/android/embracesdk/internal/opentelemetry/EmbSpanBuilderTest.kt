@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -60,6 +61,7 @@ internal class EmbSpanBuilderTest {
             internal = true,
             private = true,
             parentSpan = spanParent,
+            autoTerminationMode = AutoTerminationMode.ON_BACKGROUND,
         )
         embSpanBuilder = EmbSpanBuilder(
             embraceSpanBuilder = newEmbraceSpanBuilder,
@@ -73,6 +75,7 @@ internal class EmbSpanBuilderTest {
             assertEquals(spanParent, parent)
             assertEquals("emb-custom", name)
             assertEquals(EmbType.Performance.Default, type)
+            assertEquals(AutoTerminationMode.ON_BACKGROUND, autoTerminationMode)
         }
     }
 

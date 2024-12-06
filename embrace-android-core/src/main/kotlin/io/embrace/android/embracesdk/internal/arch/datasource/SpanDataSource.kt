@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 
 /**
@@ -34,11 +35,16 @@ interface SpanDataSource : DataSource<SpanService> {
     ): Boolean
 }
 
-fun SpanService.startSpanCapture(schemaType: SchemaType, startTimeMs: Long): PersistableEmbraceSpan? {
+fun SpanService.startSpanCapture(
+    schemaType: SchemaType,
+    startTimeMs: Long,
+    autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+): PersistableEmbraceSpan? {
     return startSpan(
         name = schemaType.fixedObjectName,
         startTimeMs = startTimeMs,
-        type = schemaType.telemetryType
+        type = schemaType.telemetryType,
+        autoTerminationMode = autoTerminationMode,
     )?.apply {
         schemaType.attributes().forEach {
             addAttribute(it.key, it.value)

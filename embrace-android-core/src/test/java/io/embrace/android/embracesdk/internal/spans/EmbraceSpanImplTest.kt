@@ -71,7 +71,7 @@ internal class EmbraceSpanImplTest {
                 name = EXPECTED_SPAN_NAME,
                 type = EmbType.Performance.Default,
                 internal = false,
-                private = false
+                private = false,
             )
         )
         fakeClock.tick(100)
@@ -489,7 +489,7 @@ internal class EmbraceSpanImplTest {
         name = EXPECTED_SPAN_NAME,
         type = EmbType.System.LowPower,
         internal = true,
-        private = true
+        private = true,
     )
 
     private fun createEmbraceSpanImpl(

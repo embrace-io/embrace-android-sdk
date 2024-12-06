@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -75,6 +76,8 @@ internal class EmbraceSpanImpl(
 
     override val isRecording: Boolean
         get() = startedSpan.get()?.isRecording == true
+
+    override val autoTerminationMode: AutoTerminationMode = spanBuilder.autoTerminationMode
 
     override fun start(startTimeMs: Long?): Boolean {
         if (spanStarted()) {

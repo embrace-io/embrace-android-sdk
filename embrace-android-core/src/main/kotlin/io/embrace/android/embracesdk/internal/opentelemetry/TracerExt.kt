@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.opentelemetry
 
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
@@ -14,6 +15,7 @@ internal fun Tracer.embraceSpanBuilder(
     type: TelemetryType,
     internal: Boolean,
     private: Boolean,
+    autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
     parent: EmbraceSpan? = null,
 ): EmbraceSpanBuilder = EmbraceSpanBuilder(
     tracer = this,
@@ -21,5 +23,6 @@ internal fun Tracer.embraceSpanBuilder(
     telemetryType = type,
     internal = internal,
     private = private,
+    autoTerminationMode = autoTerminationMode,
     parentSpan = parent,
 )

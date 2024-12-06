@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.spans.EmbraceSpanBuilder
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.SpanService
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -12,7 +13,7 @@ import io.opentelemetry.context.Context
 
 class FakeSpanService : SpanService {
 
-    val createdSpans: MutableList<FakePersistableEmbraceSpan> = mutableListOf<FakePersistableEmbraceSpan>()
+    val createdSpans: MutableList<FakePersistableEmbraceSpan> = mutableListOf()
 
     override fun initializeService(sdkInitStartTimeMs: Long) {
     }
@@ -21,6 +22,7 @@ class FakeSpanService : SpanService {
 
     override fun createSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -30,7 +32,8 @@ class FakeSpanService : SpanService {
         parentContext = parent?.run { Context.root().with(parent as PersistableEmbraceSpan) } ?: Context.root(),
         type = type,
         internal = internal,
-        private = private
+        private = private,
+        autoTerminationMode = autoTerminationMode
     ).apply {
         createdSpans.add(this)
     }
@@ -42,13 +45,15 @@ class FakeSpanService : SpanService {
         parentContext = embraceSpanBuilder.parentContext,
         type = embraceSpanBuilder.getFixedAttributes().filterIsInstance<TelemetryType>().single(),
         internal = embraceSpanBuilder.internal,
-        private = embraceSpanBuilder.getFixedAttributes().contains(PrivateSpan)
+        private = embraceSpanBuilder.getFixedAttributes().contains(PrivateSpan),
+        autoTerminationMode = embraceSpanBuilder.autoTerminationMode,
     ).apply {
         createdSpans.add(this)
     }
 
     override fun <T> recordSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -64,6 +69,7 @@ class FakeSpanService : SpanService {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,

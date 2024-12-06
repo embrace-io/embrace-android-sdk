@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -32,6 +33,7 @@ internal class SpanServiceImpl(
 
     override fun createSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -43,7 +45,8 @@ internal class SpanServiceImpl(
                 type = type,
                 internal = internal,
                 private = private,
-                parent = parent
+                parent = parent,
+                autoTerminationMode = autoTerminationMode,
             )
         } else {
             null
@@ -63,6 +66,7 @@ internal class SpanServiceImpl(
 
     override fun <T> recordSpan(
         name: String,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -72,7 +76,14 @@ internal class SpanServiceImpl(
         code: () -> T,
     ): T {
         val returnValue: T
-        val span = createSpan(name = name, parent = parent, type = type, internal = internal, private = private)
+        val span = createSpan(
+            name = name,
+            autoTerminationMode = autoTerminationMode,
+            parent = parent,
+            type = type,
+            internal = internal,
+            private = private
+        )
         try {
             val started = span?.start() ?: false
             if (started) {
@@ -101,6 +112,7 @@ internal class SpanServiceImpl(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
+        autoTerminationMode: AutoTerminationMode,
         parent: EmbraceSpan?,
         type: TelemetryType,
         internal: Boolean,
@@ -119,7 +131,8 @@ internal class SpanServiceImpl(
                 type = type,
                 internal = internal,
                 private = private,
-                parent = parent
+                parent = parent,
+                autoTerminationMode = autoTerminationMode,
             )
             if (newSpan.start(startTimeMs)) {
                 attributes.forEach {

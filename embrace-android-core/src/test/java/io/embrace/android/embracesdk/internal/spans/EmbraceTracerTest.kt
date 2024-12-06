@@ -270,7 +270,7 @@ internal class EmbraceTracerTest {
 
     @Test
     fun `get same EmbraceSpan using spanId`() {
-        val embraceSpan = checkNotNull(spanService.createSpan(name = "test-span"))
+        val embraceSpan = checkNotNull(spanService.createSpan("test-span"))
         assertTrue(embraceSpan.start())
         val spanId = checkNotNull(embraceSpan.spanId)
         val spanFromTracer = checkNotNull(embraceTracer.getSpan(spanId))

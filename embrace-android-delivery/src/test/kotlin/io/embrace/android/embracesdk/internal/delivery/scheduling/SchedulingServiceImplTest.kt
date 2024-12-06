@@ -73,7 +73,7 @@ internal class SchedulingServiceImplTest {
         schedulingExecutor.blockingMode = true
         schedulingService.onPayloadIntake()
         schedulingService.onPayloadIntake()
-        assertEquals(1, schedulingExecutor.submitCount)
+        assertEquals(2, schedulingExecutor.submitCount)
     }
 
     @Test

@@ -97,8 +97,8 @@ internal sealed class DeliveryTraceState {
     /**
      * The delivery loop was started
      */
-    internal class StartDeliveryLoop(private val loopAlreadyActive: Boolean) : DeliveryTraceState() {
-        override fun toString(): String = "StartDeliveryLoop loopAlreadyActive=$loopAlreadyActive"
+    internal object StartDeliveryLoop : DeliveryTraceState() {
+        override fun toString(): String = "StartDeliveryLoop"
     }
 
     /**

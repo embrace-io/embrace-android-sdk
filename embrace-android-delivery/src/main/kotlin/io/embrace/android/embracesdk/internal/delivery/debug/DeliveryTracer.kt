@@ -78,4 +78,12 @@ class DeliveryTracer {
     fun onPayloadResult(payload: StoredTelemetryMetadata, result: ExecutionResult) {
         events.add(DeliveryTraceState.PayloadResult(payload, result))
     }
+
+    fun onServerReceivedRequest(endpoint: String) {
+        events.add(DeliveryTraceState.ServerReceivedRequest(endpoint))
+    }
+
+    fun onServerCompletedRequest(endpoint: String, sessionId: String) {
+        events.add(DeliveryTraceState.ServerCompletedRequest(endpoint, sessionId))
+    }
 }

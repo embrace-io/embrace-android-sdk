@@ -59,6 +59,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
 ) {
     fun createBootstrapper(
         instrumentedConfig: FakeInstrumentedConfig,
+        deliveryTracer: DeliveryTracer,
     ): ModuleInitBootstrapper = ModuleInitBootstrapper(
         initModule = overriddenInitModule.apply {
             this.instrumentedConfig = instrumentedConfig
@@ -102,7 +103,7 @@ internal class EmbraceSetupInterface @JvmOverloads constructor(
                 cacheStorageServiceProvider = cacheStorageServiceProvider,
                 requestExecutionServiceProvider = requestExecutionServiceProvider,
                 deliveryServiceProvider = deliveryServiceProvider,
-                deliveryTracer = DeliveryTracer()
+                deliveryTracer = deliveryTracer
             )
         },
         anrModuleSupplier = { _, _, _ -> fakeAnrModule },

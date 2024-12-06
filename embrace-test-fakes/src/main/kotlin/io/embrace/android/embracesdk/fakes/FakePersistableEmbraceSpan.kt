@@ -7,11 +7,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.FixedAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
 import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.EXCEPTION_EVENT_NAME
 import io.embrace.android.embracesdk.internal.spans.PersistableEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.spans.hasFixedAttribute
@@ -109,7 +109,7 @@ class FakePersistableEmbraceSpan(
     }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        addEvent(EXCEPTION_EVENT_NAME, null, attributes)
+        addEvent(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), null, attributes)
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
         addEvent(name, timestampMs, attributes)

@@ -86,7 +86,7 @@ internal class EmbracePayloadAssertionInterface(
                     "hashCodes" to envelope.data.logs?.map { it.hashCode() }?.joinToString { ", " }
                 )
             }
-            throwPayloadErrMsg(expectedSize, envelopes, exc)
+            throwPayloadErrMsg(expectedSize, envelopes.size, envelopes, exc)
         }
     }
 
@@ -161,14 +161,15 @@ internal class EmbracePayloadAssertionInterface(
         try {
             return retrievePayload(expectedSize, waitTimeMs, supplier)
         } catch (exc: TimeoutException) {
-            val sessions: List<Map<String, String?>> = supplier().map {
+            val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
+            val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
                     "sessionId" to it.getSessionId(),
                     "cleanExit" to it.findSessionSpan().attributes?.findAttributeValue(embCleanExit.name),
                     "state" to it.findSessionSpan().attributes?.findAttributeValue(embState.name)
                 )
             }
-            throwPayloadErrMsg(expectedSize, sessions, exc)
+            throwPayloadErrMsg(expectedSize, envelopes.filter { it.findAppState() == appState }.size, sessions, exc)
         }
     }
 
@@ -379,12 +380,13 @@ internal class EmbracePayloadAssertionInterface(
 
     private fun throwPayloadErrMsg(
         expectedSize: Int,
+        observedSize: Int,
         envelopes: List<Map<String, String?>>,
         exc: TimeoutException,
     ): Nothing {
         throw IllegalStateException(
-            "Expected $expectedSize envelopes, but got ${envelopes.size}. " +
-                "Envelopes: $envelopes.\n${deliveryTracer.generateReport()}", exc
+            "Expected $expectedSize envelopes, but got $observedSize matching criteria. " +
+                "All received envelopes: $envelopes.\n${deliveryTracer.generateReport()}", exc
         )
     }
 }

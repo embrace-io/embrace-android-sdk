@@ -9,15 +9,13 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.isAttributeValid
+import io.embrace.android.embracesdk.internal.config.instrumented.isNameValid
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.toNewPayload
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.EXCEPTION_EVENT_NAME
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_ATTRIBUTE_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_CUSTOM_EVENT_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.MAX_TOTAL_EVENT_COUNT
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isAttributeValid
-import io.embrace.android.embracesdk.internal.spans.EmbraceSpanLimits.isNameValid
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -43,6 +41,7 @@ internal class EmbraceSpanImpl(
     private val openTelemetryClock: Clock,
     private val spanRepository: SpanRepository,
     private val sensitiveKeysBehavior: SensitiveKeysBehavior?,
+    private val limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
 ) : PersistableEmbraceSpan {
 
     private val startedSpan: AtomicReference<io.opentelemetry.api.trace.Span?> = AtomicReference(null)
@@ -166,7 +165,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        recordEvent(customEvents, customEventCount, MAX_CUSTOM_EVENT_COUNT) {
+        recordEvent(customEvents, customEventCount, limits.getMaxCustomEventCount()) {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -175,7 +174,7 @@ internal class EmbraceSpanImpl(
         }
 
     override fun recordException(exception: Throwable, attributes: Map<String, String>?): Boolean =
-        recordEvent(customEvents, customEventCount, MAX_CUSTOM_EVENT_COUNT) {
+        recordEvent(customEvents, customEventCount, limits.getMaxCustomEventCount()) {
             val eventAttributes = mutableMapOf<String, String>()
             if (attributes != null) {
                 eventAttributes.putAll(attributes)
@@ -192,14 +191,14 @@ internal class EmbraceSpanImpl(
             eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE.key] = exception.truncatedStacktraceText()
 
             EmbraceSpanEvent.create(
-                name = EXCEPTION_EVENT_NAME,
+                name = limits.getExceptionEventName(),
                 timestampMs = openTelemetryClock.now().nanosToMillis(),
                 attributes = eventAttributes
             )
         }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, String>?): Boolean =
-        recordEvent(systemEvents, systemEventCount, MAX_TOTAL_EVENT_COUNT) {
+        recordEvent(systemEvents, systemEventCount, limits.getMaxTotalEventCount()) {
             EmbraceSpanEvent.create(
                 name = name,
                 timestampMs = timestampMs?.normalizeTimestampAsMillis() ?: openTelemetryClock.now().nanosToMillis(),
@@ -232,9 +231,9 @@ internal class EmbraceSpanImpl(
     }
 
     override fun addAttribute(key: String, value: String): Boolean {
-        if (customAttributes.size < MAX_CUSTOM_ATTRIBUTE_COUNT && isAttributeValid(key, value, spanBuilder.internal)) {
+        if (customAttributes.size < limits.getMaxCustomAttributeCount() && limits.isAttributeValid(key, value, spanBuilder.internal)) {
             synchronized(customAttributes) {
-                if (customAttributes.size < MAX_CUSTOM_ATTRIBUTE_COUNT && isRecording) {
+                if (customAttributes.size < limits.getMaxCustomAttributeCount() && isRecording) {
                     customAttributes[key] = value
                     spanRepository.notifySpanUpdate()
                     return true
@@ -246,7 +245,7 @@ internal class EmbraceSpanImpl(
     }
 
     override fun updateName(newName: String): Boolean {
-        if (newName.isNameValid(spanBuilder.internal)) {
+        if (limits.isNameValid(newName, spanBuilder.internal)) {
             synchronized(startedSpan) {
                 if (!spanStarted() || isRecording) {
                     updatedName = newName

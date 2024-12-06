@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.envelope.session
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionSpan
 import io.embrace.android.embracesdk.fakes.FakePersistableEmbraceSpan
+import io.embrace.android.embracesdk.fakes.FakeProcessStateService
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.EmbLoggerImpl
@@ -49,6 +51,8 @@ internal class SessionPayloadSourceImplTest {
                     crashId: String?,
                 ): List<Span> = emptyList()
             },
+            FakeProcessStateService(),
+            FakeClock(),
             EmbLoggerImpl()
         )
     }

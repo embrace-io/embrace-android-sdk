@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPayload
@@ -240,6 +241,10 @@ class PayloadResurrectionServiceImplTest {
                 "native-crash-1",
                 envelope.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
             )
+            assertEquals(
+                "foreground",
+                envelope.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
+            )
         }
 
         with(sessionPayloads.last()) {
@@ -248,6 +253,10 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(
                 "native-crash-2",
                 envelope.getSessionSpan()?.attributes?.findAttributeValue(embCrashId.name)
+            )
+            assertEquals(
+                "foreground",
+                envelope.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
             )
         }
 
@@ -278,7 +287,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         with(nativeCrashService.nativeCrashesSent.first()) {
             assertEquals(deadSessionCrashData, first)
-            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() })
+            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() || embState.name == it })
         }
     }
 

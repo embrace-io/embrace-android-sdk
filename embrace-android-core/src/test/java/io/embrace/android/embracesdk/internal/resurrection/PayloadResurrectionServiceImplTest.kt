@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
+import io.embrace.android.embracesdk.assertions.findAttributeValue
 import io.embrace.android.embracesdk.assertions.findSpansByName
 import io.embrace.android.embracesdk.assertions.getLastHeartbeatTimeMs
 import io.embrace.android.embracesdk.assertions.getSessionId
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.isSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -206,7 +208,8 @@ class PayloadResurrectionServiceImplTest {
         val earlierDeadSession = fakeIncompleteSessionEnvelope(
             sessionId = "anotherFakeSessionId",
             startMs = deadSessionEnvelope.getStartTime() - 100_000L,
-            lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L
+            lastHeartbeatTimeMs = deadSessionEnvelope.getStartTime() - 90_000L,
+            sessionProperties = mapOf("prop" to "earlier")
 
         )
         val earlierSessionCrashData = createNativeCrashData(
@@ -249,8 +252,34 @@ class PayloadResurrectionServiceImplTest {
         }
 
         assertEquals(2, nativeCrashService.nativeCrashesSent.size)
-        assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.first().first)
-        assertEquals(earlierSessionCrashData, nativeCrashService.nativeCrashesSent.last().first)
+        with(nativeCrashService.nativeCrashesSent.first()) {
+            assertEquals(deadSessionCrashData, first)
+            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() })
+        }
+        with(nativeCrashService.nativeCrashesSent.last()) {
+            assertEquals(earlierSessionCrashData, first)
+            assertEquals(
+                "earlier",
+                second.findAttributeValue(second.keys.single { it.isSessionPropertyAttributeName() })
+            )
+        }
+    }
+
+    @Test
+    fun `native crashes without sessions are sent properly`() {
+        val deadSessionCrashData = createNativeCrashData(
+            nativeCrashId = "native-crash-1",
+            sessionId = "no-session-id"
+        )
+        nativeCrashService.addNativeCrashData(deadSessionCrashData)
+        resurrectionService.resurrectOldPayloads({ nativeCrashService })
+
+        assertEquals(0, intakeService.getIntakes<SessionPayload>().size)
+        assertEquals(1, nativeCrashService.nativeCrashesSent.size)
+        with(nativeCrashService.nativeCrashesSent.first()) {
+            assertEquals(deadSessionCrashData, first)
+            assertTrue(second.keys.none { it.isSessionPropertyAttributeName() })
+        }
     }
 
     private fun Envelope<SessionPayload>.resurrectPayload() {

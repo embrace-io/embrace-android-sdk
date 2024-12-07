@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.toSessionPropertyAttributeName
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.testframework.IntegrationTestRule
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.assertMatches
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -157,7 +157,7 @@ internal class ReactNativeInternalInterfaceTest {
                     "name" to "MyAction",
                     "outcome" to "SUCCESS",
                     "payload_size" to "100",
-                    "emb.properties.key" to "value",
+                    "key".toSessionPropertyAttributeName() to "value",
                 ))
             }
         )

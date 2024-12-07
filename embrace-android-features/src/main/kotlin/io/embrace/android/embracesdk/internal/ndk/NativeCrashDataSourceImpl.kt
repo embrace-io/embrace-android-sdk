@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.capture.session.SessionPropertiesService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.EmbLogger
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashNumber
@@ -15,10 +14,10 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.prefs.PreferencesService
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.toOtelSeverity
+import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.semconv.incubating.SessionIncubatingAttributes
 
 internal class NativeCrashDataSourceImpl(
-    private val sessionPropertiesService: SessionPropertiesService,
     private val nativeCrashProcessor: NativeCrashProcessor,
     private val preferencesService: PreferencesService,
     private val logWriter: LogWriter,
@@ -32,17 +31,21 @@ internal class NativeCrashDataSourceImpl(
 ) {
     override fun getAndSendNativeCrash(): NativeCrashData? {
         return nativeCrashProcessor.getLatestNativeCrash()?.apply {
-            sendNativeCrash(this)
+            sendNativeCrash(nativeCrash = this, sessionProperties = emptyMap())
         }
     }
 
     override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashProcessor.getNativeCrashes()
 
-    override fun sendNativeCrash(nativeCrash: NativeCrashData) {
+    override fun sendNativeCrash(
+        nativeCrash: NativeCrashData,
+        sessionProperties: Map<String, String>,
+        metadata: Map<AttributeKey<String>, String>,
+    ) {
         val nativeCrashNumber = preferencesService.incrementAndGetNativeCrashNumber()
         val crashAttributes = TelemetryAttributes(
             configService = configService,
-            sessionPropertiesProvider = sessionPropertiesService::getProperties
+            sessionPropertiesProvider = { sessionProperties }
         )
         crashAttributes.setAttribute(
             key = SessionIncubatingAttributes.SESSION_ID,
@@ -50,19 +53,15 @@ internal class NativeCrashDataSourceImpl(
             keepBlankishValues = false,
         )
 
+        metadata.forEach { attribute ->
+            crashAttributes.setAttribute(attribute.key, attribute.value)
+        }
+
         crashAttributes.setAttribute(
             key = embCrashNumber,
             value = nativeCrashNumber.toString(),
             keepBlankishValues = false,
         )
-
-//        nativeCrash.appState?.let { appState ->
-//            crashAttributes.setAttribute(
-//                key = embState,
-//                value = appState,
-//                keepBlankishValues = false,
-//            )
-//        }
 
         nativeCrash.crash?.let { crashData ->
             crashAttributes.setAttribute(

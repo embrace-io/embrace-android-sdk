@@ -87,8 +87,12 @@ internal class NativeCrashDataSourceImplTest {
     }
 
     @Test
-    fun `native crash sent with session properties`() {
-        nativeCrashDataSource.sendNativeCrash(testNativeCrashData, mapOf("prop" to "value"))
+    fun `native crash sent with session properties and metadata`() {
+        nativeCrashDataSource.sendNativeCrash(
+            nativeCrash = testNativeCrashData,
+            sessionProperties = mapOf("prop" to "value"),
+            metadata = mapOf(embState.attributeKey to "background")
+        )
 
         with(otelLogger.builders.single()) {
             assertEquals(1, emitCalled)
@@ -96,6 +100,7 @@ internal class NativeCrashDataSourceImplTest {
             assertEquals(0, observedTimestampEpochNanos.nanosToMillis())
             assertTrue(attributes.hasFixedAttribute(EmbType.System.NativeCrash))
             assertEquals("value", attributes.findAttributeValue("prop".toSessionPropertyAttributeName()))
+            assertEquals("background", attributes.getAttribute(embState))
             assertNotNull(attributes.getAttribute(LogIncubatingAttributes.LOG_RECORD_UID))
             assertEquals(testNativeCrashData.sessionId, attributes.getAttribute(SessionIncubatingAttributes.SESSION_ID))
             assertEquals("1", attributes.getAttribute(embCrashNumber))

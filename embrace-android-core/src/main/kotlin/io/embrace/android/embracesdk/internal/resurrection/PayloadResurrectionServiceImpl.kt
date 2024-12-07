@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.opentelemetry.embCrashId
 import io.embrace.android.embracesdk.internal.opentelemetry.embHeartbeatTimeUnixNano
+import io.embrace.android.embracesdk.internal.opentelemetry.embState
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -51,7 +52,7 @@ internal class PayloadResurrectionServiceImpl(
     private fun processUndeliveredPayload(
         payloadMetadata: List<StoredTelemetryMetadata>,
         nativeCrashes: Map<String, NativeCrashData>,
-        nativeCrashService: NativeCrashService?
+        nativeCrashService: NativeCrashService?,
     ) {
         val processedCrashes = mutableSetOf<NativeCrashData>()
         payloadMetadata.forEach { payload ->
@@ -65,12 +66,18 @@ internal class PayloadResurrectionServiceImpl(
                             )
 
                             val sessionId = deadSession.getSessionId()
+                            val appState = deadSession.getSessionSpan()?.attributes?.findAttributeValue(embState.name)
                             val nativeCrash = if (sessionId != null) {
                                 nativeCrashes[sessionId]?.apply {
                                     processedCrashes.add(this)
                                     nativeCrashService?.sendNativeCrash(
                                         nativeCrash = this,
-                                        sessionProperties = deadSession.getSessionProperties()
+                                        sessionProperties = deadSession.getSessionProperties(),
+                                        metadata = if (appState != null) {
+                                            mapOf(embState.attributeKey to appState)
+                                        } else {
+                                            emptyMap()
+                                        }
                                     )
                                 }
                             } else {

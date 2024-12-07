@@ -27,6 +27,6 @@ internal fun String.toEmbraceAttributeName(isPrivate: Boolean = false): String {
     return prefix + this
 }
 
-internal fun String.toSessionPropertyAttributeName(): String = EMBRACE_SESSION_PROPERTY_NAME_PREFIX + this
+fun String.toSessionPropertyAttributeName(): String = EMBRACE_SESSION_PROPERTY_NAME_PREFIX + this
 
-internal fun String.isSessionPropertyAttributeName(): Boolean = startsWith(EMBRACE_SESSION_PROPERTY_NAME_PREFIX)
+fun String.isSessionPropertyAttributeName(): Boolean = startsWith(EMBRACE_SESSION_PROPERTY_NAME_PREFIX)

@@ -111,7 +111,7 @@ internal class PayloadResurrectionServiceImpl(
         }
         if (nativeCrashService != null) {
             nativeCrashes.values.filterNot { processedCrashes.contains(it) }.forEach { nativeCrash ->
-                nativeCrashService.sendNativeCrash(nativeCrash, emptyMap())
+                nativeCrashService.sendNativeCrash(nativeCrash = nativeCrash, sessionProperties = emptyMap())
             }
         }
     }

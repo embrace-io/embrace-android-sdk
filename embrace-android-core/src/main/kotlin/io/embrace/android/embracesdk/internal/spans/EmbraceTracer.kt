@@ -67,7 +67,6 @@ class EmbraceTracer(
         parent: EmbraceSpan?,
         attributes: Map<String, String>?,
         events: List<EmbraceSpanEvent>?,
-        autoTerminationMode: AutoTerminationMode,
     ): Boolean = spanService.recordCompletedSpan(
         name = name,
         startTimeMs = startTimeMs.normalizeTimestampAsMillis(),
@@ -77,7 +76,6 @@ class EmbraceTracer(
         private = false,
         attributes = attributes ?: emptyMap(),
         events = events ?: emptyList(),
-        autoTerminationMode = autoTerminationMode,
         errorCode = errorCode
     )
 
